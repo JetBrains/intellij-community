@@ -173,7 +173,7 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
 
   @Override
   @NotNull
-  protected PsiElement[] create(final String newName, final PsiDirectory directory) throws IncorrectOperationException {
+  protected PsiElement[] create(@NotNull final String newName, final PsiDirectory directory) throws IncorrectOperationException {
     PsiFile sourceFile = PsiFileFactory.getInstance(directory.getProject())
       .createFileFromText(newName + ".java", createClassBody(newName, myRecentGenerateOK, myRecentGenerateCancel, myRecentGenerateMain));
     sourceFile = (PsiFile)directory.add(sourceFile);

@@ -24,6 +24,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.FileContentImpl;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomUtil;
@@ -47,6 +48,11 @@ class RegistrationIndexer {
 
   @NotNull
   Map<String, List<RegistrationEntry>> indexFile() {
+    CharSequence text = myContent.getContentAsText();
+    if (CharArrayUtil.indexOf(text, "<idea-plugin", 0) == -1) {
+      return Collections.emptyMap();
+    }
+
     final PsiFile file = ((FileContentImpl)myContent).getPsiFileForPsiDependentIndex();
     if (!(file instanceof XmlFile)) return Collections.emptyMap();
 

@@ -38,7 +38,7 @@ public class VcsRootErrorsFinder {
   }
 
   @NotNull
-  private Collection<VcsRootError> calcErrors(@NotNull Collection<VcsRoot> detectedRoots) {
+  private Collection<VcsRootError> calcErrors(@NotNull Collection<? extends VcsRoot> detectedRoots) {
     List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings();
     Collection<VcsRootError> errors = new ArrayList<>();
     errors.addAll(findExtraMappings(mappings));
@@ -47,8 +47,8 @@ public class VcsRootErrorsFinder {
   }
 
   @NotNull
-  private Collection<VcsRootError> findUnregisteredRoots(@NotNull List<VcsDirectoryMapping> mappings,
-                                                         @NotNull Collection<VcsRoot> vcsRoots) {
+  private Collection<VcsRootError> findUnregisteredRoots(@NotNull List<? extends VcsDirectoryMapping> mappings,
+                                                         @NotNull Collection<? extends VcsRoot> vcsRoots) {
     Collection<VcsRootError> errors = new ArrayList<>();
     List<String> mappedPaths = mappingsToPathsWithSelectedVcs(mappings);
     for (VcsRoot root : vcsRoots) {
@@ -65,7 +65,7 @@ public class VcsRootErrorsFinder {
   }
 
   @NotNull
-  private Collection<VcsRootError> findExtraMappings(@NotNull List<VcsDirectoryMapping> mappings) {
+  private Collection<VcsRootError> findExtraMappings(@NotNull List<? extends VcsDirectoryMapping> mappings) {
     Collection<VcsRootError> errors = new ArrayList<>();
     for (VcsDirectoryMapping mapping : mappings) {
       if (!hasVcsChecker(mapping.getVcs())) {
@@ -98,7 +98,7 @@ public class VcsRootErrorsFinder {
     return false;
   }
 
-  private List<String> mappingsToPathsWithSelectedVcs(@NotNull List<VcsDirectoryMapping> mappings) {
+  private List<String> mappingsToPathsWithSelectedVcs(@NotNull List<? extends VcsDirectoryMapping> mappings) {
     List<String> paths = new ArrayList<>();
     for (VcsDirectoryMapping mapping : mappings) {
       if (StringUtil.isEmptyOrSpaces(mapping.getVcs())) {

@@ -227,7 +227,7 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
     });
   }
 
-  public static void withProcessHandlerFrom(@NotNull Process testProcess, @NotNull Consumer<ProcessHandler> actionToTest) {
+  public static void withProcessHandlerFrom(@NotNull Process testProcess, @NotNull Consumer<? super ProcessHandler> actionToTest) {
     KillableColoredProcessHandler handler = new KillableColoredProcessHandler(testProcess, "testProcess");
     handler.setShouldDestroyProcessRecursively(false);
     handler.setShouldKillProcessSoftly(false);

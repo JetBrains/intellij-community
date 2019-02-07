@@ -3,6 +3,6 @@ class A{
   String toHex(short i) {}
 
   void f(){
-    <ref>toHex('i');
+    <caret>toHex('i');
   }
 }

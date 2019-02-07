@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.readOnlyHandler;
 
 import com.intellij.openapi.project.Project;
@@ -22,7 +22,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -32,16 +31,16 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
   private static final SimpleTextAttributes BOLD_ATTRIBUTES =
     new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, JBColor.foreground());
   private static final SimpleTextAttributes SELECTED_BOLD_ATTRIBUTES =
-    new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, new JBColor(UIUtil::getListSelectionForeground));
+    new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, new JBColor(() -> UIUtil.getListSelectionForeground(true)));
 
   private JPanel myTopPanel;
   private JList<VirtualFile> myFileList;
   private JRadioButton myUsingFileSystemRadioButton;
   private JRadioButton myUsingVcsRadioButton;
   private JComboBox<String> myChangelist;
-  private FileInfo[] myFiles;
+  private List<FileInfo> myFiles;
 
-  public ReadOnlyStatusDialog(Project project, final FileInfo[] files) {
+  public ReadOnlyStatusDialog(Project project, @NotNull List<FileInfo> files) {
     super(project);
     setTitle(VcsBundle.message("dialog.title.clear.read.only.file.status"));
     myFiles = files;
@@ -73,12 +72,12 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
     myFileList.setModel(new AbstractListModel<VirtualFile>() {
       @Override
       public int getSize() {
-        return myFiles.length;
+        return myFiles.size();
       }
 
       @Override
       public VirtualFile getElementAt(final int index) {
-        return myFiles[index].getFile();
+        return myFiles.get(index).getFile();
       }
     });
 
@@ -153,8 +152,7 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
       }
     }
 
-    List<FileInfo> files = new ArrayList<>();
-    Collections.addAll(files, myFiles);
+    List<FileInfo> files = new ArrayList<>(myFiles);
     String changelist = (String)myChangelist.getSelectedItem();
     ReadonlyStatusHandlerImpl.processFiles(files, changelist);
 
@@ -165,7 +163,7 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
       String list = StringUtil.join(files, info -> info.getFile().getPresentableUrl(), "<br>");
       String message = VcsBundle.message("handle.ro.file.status.failed", list);
       Messages.showErrorDialog(getRootPane(), message, VcsBundle.message("dialog.title.clear.read.only.file.status"));
-      myFiles = files.toArray(new FileInfo[0]);
+      myFiles = files;
       initFileList();
     }
   }

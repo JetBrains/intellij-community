@@ -175,7 +175,17 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
       minOffset = Math.min(minOffset, expressionOccurences[i].getTextRange().getStartOffset());
     }
 
-    final PsiCodeBlock block = PsiTreeUtil.getParentOfType(parent, PsiCodeBlock.class, false);
+    PsiCodeBlock block = null;
+    while (parent != null) {
+      if (parent instanceof PsiCodeBlock) {
+        block = (PsiCodeBlock)parent;
+        break;
+      } else if (parent instanceof PsiSwitchLabeledRuleStatement) {
+        parent = ((PsiSwitchLabeledRuleStatement)parent).getEnclosingSwitchBlock();
+      } else {
+        parent = parent.getParent();
+      }
+    }
     LOG.assertTrue(block != null && !block.isEmpty(), "block: " + block +"; parent: " + parent);
     PsiStatement[] statements = block.getStatements();
     for (int i = 1; i < statements.length; i++) {

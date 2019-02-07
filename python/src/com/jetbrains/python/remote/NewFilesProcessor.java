@@ -54,7 +54,7 @@ public final class NewFilesProcessor {
     assert sdk != null : String.format("Sdk can't be null on module %s", module);
     final PyProjectSynchronizer synchronizer = PythonRemoteInterpreterManager.getSynchronizerInstance(sdk);
 
-    final String[] fileNames = StringUtil.split(files, ",").toArray(ArrayUtil.EMPTY_STRING_ARRAY);
+    final String[] fileNames = ArrayUtil.toStringArray(StringUtil.split(files, ","));
     if (fileNames.length == 0) {
       return "";
     }

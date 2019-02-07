@@ -10,7 +10,6 @@ import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/23/2014
  */
 public class ExternalProjectsState {
   private final Map<String, State> myExternalSystemsState = FactoryMap.create(key -> new State());

@@ -55,7 +55,7 @@ public final class StandardMethodContract extends MethodContract {
   }
 
   public List<ValueConstraint> getConstraints() {
-    return Collections.unmodifiableList(Arrays.asList(myParameters));
+    return ContainerUtil.immutableList(myParameters);
   }
 
   @NotNull

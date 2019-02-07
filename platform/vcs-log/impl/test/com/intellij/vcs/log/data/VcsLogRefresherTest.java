@@ -83,6 +83,9 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
         fail("Only one refresh should have happened, an error happened instead: " + myDataWaiter.getExceptionText());
       }
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
@@ -197,7 +200,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
     assertNull(message, myDataWaiter.myQueue.poll(500, TimeUnit.MILLISECONDS));
   }
 
-  private VcsLogRefresherImpl createLoader(Consumer<DataPack> dataPackConsumer) {
+  private VcsLogRefresherImpl createLoader(Consumer<? super DataPack> dataPackConsumer) {
     myLogData = new VcsLogData(myProject, myLogProviders, new FatalErrorHandler() {
       @Override
       public void consume(@Nullable Object source, @NotNull Throwable throwable) {
@@ -228,13 +231,13 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
     return refresher;
   }
 
-  private void assertDataPack(@NotNull List<TimedVcsCommit> expectedLog, @NotNull List<GraphCommit<Integer>> actualLog) {
+  private void assertDataPack(@NotNull List<TimedVcsCommit> expectedLog, @NotNull List<? extends GraphCommit<Integer>> actualLog) {
     List<TimedVcsCommit> convertedActualLog = convert(actualLog);
     assertOrderedEquals(convertedActualLog, expectedLog);
   }
 
   @NotNull
-  private List<TimedVcsCommit> convert(@NotNull List<GraphCommit<Integer>> actualLog) {
+  private List<TimedVcsCommit> convert(@NotNull List<? extends GraphCommit<Integer>> actualLog) {
     return ContainerUtil.map(actualLog, commit -> {
       Function<Integer, Hash> convertor = integer -> myLogData.getCommitId(integer).getHash();
       return new TimedVcsCommitImpl(convertor.fun(commit.getId()), ContainerUtil.map(commit.getParents(), convertor),

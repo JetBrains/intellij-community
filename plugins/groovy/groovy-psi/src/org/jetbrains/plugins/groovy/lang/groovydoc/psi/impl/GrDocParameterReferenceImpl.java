@@ -31,6 +31,7 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
     super(node);
   }
 
+  @Override
   public String toString() {
     return "GrDocParameterReference";
   }

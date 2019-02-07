@@ -78,7 +78,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       if (target != DefaultExecutionTarget.INSTANCE && !target.isExternallyManaged()) {
         name += " | " + target.getDisplayName();
       } else {
-        if (!ExecutionTargetManager.canRun(settings, target)) {
+        if (!ExecutionTargetManager.canRun(settings.getConfiguration(), target)) {
           name += " | Nothing to run on";
         }
       }
@@ -184,7 +184,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     RunnerAndConfigurationSettings selected = RunManager.getInstance(project).getSelectedConfiguration();
     if (selected != null) {
       ExecutionTarget activeTarget = ExecutionTargetManager.getActiveTarget(project);
-      for (ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsToChooseFor(project, selected)) {
+      for (ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsToChooseFor(project, selected.getConfiguration())) {
         allActionsGroup.add(new SelectTargetAction(project, eachTarget, eachTarget.equals(activeTarget)));
       }
       allActionsGroup.addSeparator();

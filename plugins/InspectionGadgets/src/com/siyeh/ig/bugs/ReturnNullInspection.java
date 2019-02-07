@@ -22,6 +22,7 @@ import com.intellij.codeInspection.AnnotateMethodFix;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -145,7 +146,7 @@ public class ReturnNullInspection extends BaseInspection {
 
     @NotNull
     private String getReplacementText() {
-      return myTypeText + "." + ("com.google.common.base.Optional".equals(myTypeText) ? "absent" : "empty") + "()";
+      return myTypeText + "." + (OptionalUtil.GUAVA_OPTIONAL.equals(myTypeText) ? "absent" : "empty") + "()";
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,10 +32,12 @@ public class FileChangedNotificationProvider extends EditorNotifications.Provide
 
   private final Project myProject;
 
-  public FileChangedNotificationProvider(@NotNull Project project, @NotNull FrameStateManager frameStateManager) {
+  public FileChangedNotificationProvider(@NotNull Project project) {
     myProject = project;
 
-    frameStateManager.addListener(new FrameStateListener() {
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(myProject);
+
+    connection.subscribe(FrameStateListener.TOPIC, new FrameStateListener() {
       @Override
       public void onFrameActivated() {
         if (!myProject.isDisposed() && !GeneralSettings.getInstance().isSyncOnFrameActivation()) {
@@ -45,9 +47,8 @@ public class FileChangedNotificationProvider extends EditorNotifications.Provide
           }
         }
       }
-    }, project);
+    });
 
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(myProject);
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {

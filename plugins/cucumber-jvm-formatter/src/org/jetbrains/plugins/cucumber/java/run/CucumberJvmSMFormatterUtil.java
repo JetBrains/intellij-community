@@ -14,6 +14,8 @@ public class CucumberJvmSMFormatterUtil {
     TEAMCITY_PREFIX + "[testStarted timestamp = '%s' locationHint = '%s' captureStandardOutput = 'true' name = '%s']";
   public static final String TEMPLATE_TEST_FAILED =
     TEAMCITY_PREFIX + "[testFailed timestamp = '%s' details = '%s' message = '%s' name = '%s' %s]";
+  public static final String TEMPLATE_COMPARISON_TEST_FAILED =
+    TEAMCITY_PREFIX + "[testFailed timestamp = '%s' details = '%s' message = '%s' expected='%s' actual='%s' name = '%s' %s]";
   public static final String TEMPLATE_SCENARIO_FAILED = TEAMCITY_PREFIX + "[customProgressStatus timestamp='%s' type='testFailed']";
   public static final String TEMPLATE_TEST_PENDING =
     TEAMCITY_PREFIX + "[testIgnored name = '%s' message = 'Skipped step' timestamp = '%s']";

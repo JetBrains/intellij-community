@@ -1,32 +1,24 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.search;
 
 import com.intellij.application.options.OptionsContainingConfigurable;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable;
+import com.intellij.ide.fileTemplates.impl.BundledFileTemplate;
 import com.intellij.ide.plugins.AvailablePluginsManagerMain;
-import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerConfigurableProxy;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationStarterEx;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
@@ -34,6 +26,10 @@ import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.PathUtil;
+import com.intellij.util.io.URLUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -42,11 +38,15 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import static com.intellij.util.containers.ContainerUtil.newHashMap;
+
 /**
  * Used in installer's "build searchable options" step.
  *
  * In order to run locally, use "TraverseUi" run configuration (pass corresponding "idea.platform.prefix" property via VM options,
  * and choose correct main module).
+ * 
+ * Pass {@code true} as the second parameter to have searchable options split by modules.
  */
 @SuppressWarnings({"CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
 public class TraverseUIStarter extends ApplicationStarterEx {
@@ -59,7 +59,10 @@ public class TraverseUIStarter extends ApplicationStarterEx {
   private static final String PATH = "path";
   private static final String HIT = "hit";
 
+  private static final String ROOT_ACTION_MODULE = "intellij.platform.ide";
+
   private String OUTPUT_PATH;
+  private boolean SPLIT_BY_RESOURCE_PATH;
 
   @Override
   public boolean isHeadless() {
@@ -74,13 +77,14 @@ public class TraverseUIStarter extends ApplicationStarterEx {
   @Override
   public void premain(String[] args) {
     OUTPUT_PATH = args[1];
+    SPLIT_BY_RESOURCE_PATH = args.length > 2 && Boolean.valueOf(args[2]); 
   }
 
   @Override
   public void main(String[] args) {
     System.out.println("Starting searchable options index builder");
     try {
-      startup(OUTPUT_PATH);
+      startup(OUTPUT_PATH, SPLIT_BY_RESOURCE_PATH);
       ((ApplicationEx)ApplicationManager.getApplication()).exit(true, true);
     }
     catch (Throwable e) {
@@ -90,19 +94,16 @@ public class TraverseUIStarter extends ApplicationStarterEx {
     }
   }
 
-  public static void startup(String outputPath) throws IOException {
+  public static void startup(@NotNull final String outputPath, final boolean splitByResourcePath) throws IOException {
     Map<SearchableConfigurable, Set<OptionDescription>> options = new LinkedHashMap<>();
     try {
       SearchUtil.processProjectConfigurables(ProjectManager.getInstance().getDefaultProject(), options);
 
-      Element root = new Element(OPTIONS);
+      final Map<String, Element> roots = newHashMap();
       for (SearchableConfigurable option : options.keySet()) {
         SearchableConfigurable configurable = option;
 
-        Element configurableElement = new Element(CONFIGURABLE);
-        String id = configurable.getId();
-        configurableElement.setAttribute(ID, id);
-        configurableElement.setAttribute(CONFIGURABLE_NAME, configurable.getDisplayName());
+        Element configurableElement = createConfigurableElement(configurable);
         Set<OptionDescription> sortedOptions = options.get(configurable);
         writeOptions(configurableElement, sortedOptions);
 
@@ -113,25 +114,40 @@ public class TraverseUIStarter extends ApplicationStarterEx {
           }
         }
         if (configurable instanceof KeymapPanel) {
-          processKeymap(configurableElement);
+          for (final Map.Entry<String, Set<OptionDescription>> entry : processKeymap(splitByResourcePath).entrySet()) {
+            final Element entryElement = createConfigurableElement(configurable);
+            writeOptions(entryElement, entry.getValue());
+            addElement(roots, entryElement, entry.getKey());
+          }
         }
         else if (configurable instanceof OptionsContainingConfigurable) {
           processOptionsContainingConfigurable((OptionsContainingConfigurable)configurable, configurableElement);
         }
-        else if (configurable instanceof PluginManagerConfigurable) {
+        else if (configurable instanceof PluginManagerConfigurableProxy) {
           for (OptionDescription description : wordsToOptionDescriptors(Collections.singleton(AvailablePluginsManagerMain.MANAGE_REPOSITORIES))) {
             append(null, AvailablePluginsManagerMain.MANAGE_REPOSITORIES, description.getOption(), configurableElement);
           }
         }
         else if (configurable instanceof AllFileTemplatesConfigurable) {
-          processFileTemplates(configurableElement);
+          for (final Map.Entry<String, Set<OptionDescription>> entry : processFileTemplates(splitByResourcePath).entrySet()) {
+            final Element entryElement = createConfigurableElement(configurable);
+            writeOptions(entryElement, entry.getValue());
+            addElement(roots, entryElement, entry.getKey());
+          }
         }
 
-        root.addContent(configurableElement);
+        final String module = splitByResourcePath ? getModuleByClass(configurable.getOriginalClass()) : "";
+        addElement(roots, configurableElement, module);
       }
 
-      FileUtil.ensureCanCreateFile(new File(outputPath));
-      JDOMUtil.writeDocument(new Document(root), outputPath, "\n");
+      for (final Map.Entry<String, Element> entry : roots.entrySet()) {
+        final String module = entry.getKey();
+        final String directory = module.isEmpty() ? "" : module + "/search/";
+        final String filePrefix = module.isEmpty() ? "" : module + ".";
+        final File output = new File(outputPath, directory + filePrefix + SearchableOptionsRegistrar.SEARCHABLE_OPTIONS_XML);
+        FileUtil.ensureCanCreateFile(output);
+        JDOMUtil.writeDocument(new Document(entry.getValue()), output, "\n");
+      }
 
       System.out.println("Searchable options index builder completed");
     }
@@ -142,23 +158,50 @@ public class TraverseUIStarter extends ApplicationStarterEx {
     }
   }
 
-  private static void processFileTemplates(Element configurableElement) {
-    SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
-    Set<OptionDescription> options = new TreeSet<>();
-
-    FileTemplateManager fileTemplateManager = FileTemplateManager.getDefaultInstance();
-    processTemplates(optionsRegistrar, options, fileTemplateManager.getAllTemplates());
-    processTemplates(optionsRegistrar, options, fileTemplateManager.getAllPatterns());
-    processTemplates(optionsRegistrar, options, fileTemplateManager.getAllCodeTemplates());
-    processTemplates(optionsRegistrar, options, fileTemplateManager.getAllJ2eeTemplates());
-
-    writeOptions(configurableElement, options);
+  @NotNull
+  private static Element createConfigurableElement(@NotNull final SearchableConfigurable configurable) {
+    Element configurableElement = new Element(CONFIGURABLE);
+    String id = configurable.getId();
+    configurableElement.setAttribute(ID, id);
+    configurableElement.setAttribute(CONFIGURABLE_NAME, configurable.getDisplayName());
+    return configurableElement;
   }
 
-  private static void processTemplates(SearchableOptionsRegistrar registrar, Set<? super OptionDescription> options, FileTemplate[] templates) {
+  private static void addElement(@NotNull final Map<String, Element> roots, @NotNull final Element element, @NotNull final String module) {
+    roots.computeIfAbsent(module, __ -> new Element(OPTIONS)).addContent(element);
+  }
+
+  private static Map<String, Set<OptionDescription>> processFileTemplates(final boolean splitByResourcePath) {
+    SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
+    final Map<String, Set<OptionDescription>> options = newHashMap();
+
+    FileTemplateManager fileTemplateManager = FileTemplateManager.getDefaultInstance();
+    processTemplates(optionsRegistrar, options, fileTemplateManager.getAllTemplates(), splitByResourcePath);
+    processTemplates(optionsRegistrar, options, fileTemplateManager.getAllPatterns(), splitByResourcePath);
+    processTemplates(optionsRegistrar, options, fileTemplateManager.getAllCodeTemplates(), splitByResourcePath);
+    processTemplates(optionsRegistrar, options, fileTemplateManager.getAllJ2eeTemplates(), splitByResourcePath);
+
+    return options;
+  }
+
+  private static void processTemplates(SearchableOptionsRegistrar registrar, Map<String, Set<OptionDescription>> options,
+                                       FileTemplate[] templates, boolean splitByResourcePath) {
     for (FileTemplate template : templates) {
-      collectOptions(registrar, options, template.getName(), null);
+      final String module =
+        splitByResourcePath && template instanceof BundledFileTemplate ? getModuleByTemplate((BundledFileTemplate)template) : "";
+      collectOptions(registrar, options.computeIfAbsent(module, __ -> new TreeSet<>()), template.getName(), null);
     }
+  }
+
+  @NotNull
+  private static String getModuleByTemplate(@NotNull final BundledFileTemplate template) {
+    final String url = template.toString();
+    String path = StringUtil.substringBefore(url, "fileTemplates");
+    assert path != null : "Template URL doesn't contain 'fileTemplates' directory.";
+    if (path.startsWith(URLUtil.JAR_PROTOCOL)) {
+      path = StringUtil.trimEnd(path, URLUtil.JAR_SEPARATOR);
+    }
+    return PathUtil.getFileName(path);
   }
 
   private static void collectOptions(SearchableOptionsRegistrar registrar, Set<? super OptionDescription> options, @NotNull String text, String path) {
@@ -186,14 +229,17 @@ public class TraverseUIStarter extends ApplicationStarterEx {
     return result;
   }
 
-  private static void processKeymap(Element configurableElement) {
+  private static Map<String, Set<OptionDescription>> processKeymap(final boolean splitByResourcePath) {
+    final Map<String, Set<OptionDescription>> map = newHashMap();
     final ActionManager actionManager = ActionManager.getInstance();
-    final String componentName = actionManager.getComponentName();
+    final Map<String, PluginId> actionToPluginId = splitByResourcePath ? getActionToPluginId() : Collections.emptyMap();
+    final String componentName = "ActionManager";
     final SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
     final Set<String> ids = ((ActionManagerImpl)actionManager).getActionIds();
-    final TreeSet<OptionDescription> options = new TreeSet<>();
     for (String id : ids) {
-      final AnAction anAction = actionManager.getAction(id);
+      final AnAction anAction = ObjectUtils.notNull(actionManager.getAction(id));
+      final String module = splitByResourcePath ? getModuleByAction(anAction, actionToPluginId) : "";
+      final Set<OptionDescription> options = map.computeIfAbsent(module, __ -> new TreeSet<>());
       final String text = anAction.getTemplatePresentation().getText();
       if (text != null) {
         collectOptions(searchableOptionsRegistrar, options, text, componentName);
@@ -203,7 +249,49 @@ public class TraverseUIStarter extends ApplicationStarterEx {
         collectOptions(searchableOptionsRegistrar, options, description, componentName);
       }
     }
-    writeOptions(configurableElement, options);
+    return map;
+  }
+
+  @NotNull
+  private static Map<String, PluginId> getActionToPluginId() {
+    final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+    final Map<String, PluginId> actionToPluginId = newHashMap();
+    for (final PluginId id : PluginId.getRegisteredIds().values()) {
+      for (final String action : actionManager.getPluginActions(id)) {
+        actionToPluginId.put(action, id);
+      }
+    }
+    return actionToPluginId;
+  }
+
+  @NotNull
+  private static String getModuleByAction(@NotNull final AnAction rootAction, @NotNull final Map<String, PluginId> actionToPluginId) {
+    final Deque<AnAction> actions = new ArrayDeque<>();
+    actions.add(rootAction);
+    while (!actions.isEmpty()) {
+      final AnAction action = actions.remove();
+      final String module = getModuleByClass(action.getClass());
+      if (!ROOT_ACTION_MODULE.equals(module)) {
+        return module;
+      }
+      if (action instanceof ActionGroup) {
+        Collections.addAll(actions, ((ActionGroup)action).getChildren(null));
+      }
+    }
+    final ActionManager actionManager = ActionManager.getInstance();
+    final PluginId id = actionToPluginId.get(actionManager.getId(rootAction));
+    if (id != null) {
+      final IdeaPluginDescriptor plugin = PluginManager.getPlugin(id);
+      if (plugin != null && !plugin.getName().equals("IDEA CORE")) {
+        return PathUtil.getFileName(plugin.getPath().getPath());
+      }
+    }
+    return ROOT_ACTION_MODULE;
+  }
+
+  @NotNull
+  private static String getModuleByClass(@NotNull final Class<?> aClass) {
+    return PathUtil.getFileName(PathUtil.getJarPathForClass(aClass));
   }
 
   private static void writeOptions(Element configurableElement, Set<? extends OptionDescription> options) {

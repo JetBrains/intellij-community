@@ -15,7 +15,6 @@ import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.TestVcsNotifier
 import com.intellij.openapi.vcs.VcsNotifier
-import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
@@ -28,6 +27,7 @@ import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ThrowableRunnable
+import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import java.io.File
 import java.nio.file.Path
 import java.util.*
@@ -61,7 +61,7 @@ abstract class VcsPlatformTest : PlatformTestCase() {
     projectRoot = project.baseDir
     projectPath = projectRoot.path
 
-    changeListManager = ChangeListManager.getInstance(project) as ChangeListManagerImpl
+    changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
     vcsManager = ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl
 
     vcsNotifier = overrideService<VcsNotifier, TestVcsNotifier>(project)
@@ -72,6 +72,7 @@ abstract class VcsPlatformTest : PlatformTestCase() {
   @Throws(Exception::class)
   override fun tearDown() {
     RunAll()
+      .append(ThrowableRunnable { AsyncVfsEventsPostProcessorImpl.waitEventsProcessed() })
       .append(ThrowableRunnable { changeListManager.waitEverythingDoneInTestMode() })
       .append(ThrowableRunnable { if (wasInit { vcsNotifier }) vcsNotifier.cleanup() })
       .append(ThrowableRunnable { waitForPendingTasks() })
@@ -128,9 +129,8 @@ abstract class VcsPlatformTest : PlatformTestCase() {
   }
 
   protected fun updateChangeListManager() {
-    val changeListManager = ChangeListManager.getInstance(project)
     VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
-    changeListManager.ensureUpToDate(false)
+    changeListManager.ensureUpToDate()
   }
 
   private fun waitForPendingTasks() {

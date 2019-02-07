@@ -129,7 +129,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
             return;
           }
         }
-        if (isWriteAndRaiseInsideWith(node, resolved)) {
+        if (resolvedUnderWithStatement(node, resolved)) {
           return;
         }
         if (PyUnreachableCodeInspection.hasAnyInterruptedControlFlowPaths(node)) {
@@ -153,25 +153,10 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
       }
     }
 
-    private static boolean isWriteAndRaiseInsideWith(@NotNull PyReferenceExpression node, @Nullable PsiElement resolvedElement) {
-      if (resolvedElement != null && !PyUtil.inSameFile(node, resolvedElement)) {
-        return false;
-      }
-      boolean isExceptionRaised = false;
-      boolean isUnderContextManager = false;
-      PsiElement firstWith = PsiTreeUtil.getParentOfType(resolvedElement, PyWithStatement.class, true, ScopeOwner.class);
-      if (firstWith != null && PsiTreeUtil.findChildOfType(firstWith, PyRaiseStatement.class) != null) {
-        isExceptionRaised = true;
-        PyWithStatement withStatement = (PyWithStatement)firstWith;
-        for (PyWithItem withItem : withStatement.getWithItems()) {
-          PyExpression contextManager = withItem.getExpression();
-          if (contextManager != null) {
-            isUnderContextManager = true;
-            break;
-          }
-        }
-      }
-      return isExceptionRaised && isUnderContextManager;
+    private static boolean resolvedUnderWithStatement(@NotNull PyReferenceExpression node, @Nullable PsiElement resolved) {
+      return resolved != null &&
+             PyUtil.inSameFile(node, resolved) &&
+             PsiTreeUtil.getParentOfType(resolved, PyWithStatement.class, true, ScopeOwner.class) != null;
     }
 
     private static boolean isFirstUnboundRead(@NotNull PyReferenceExpression node, @NotNull ScopeOwner owner) {

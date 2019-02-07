@@ -134,6 +134,7 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
     }
   }
 
+  @NotNull
   public String calcGenerics(@NotNull PsiElement context, InsertionContext insertionContext) {
     if (insertionContext.getCompletionChar() == '<') {
       return "";

@@ -7,6 +7,11 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @SomeQueue
 public class ZipperUpdater {
@@ -88,5 +93,15 @@ public class ZipperUpdater {
 
   public void stop() {
     myAlarm.cancelAllRequests();
+  }
+
+  @TestOnly
+  public void waitForAllExecuted(long timeout, @NotNull TimeUnit unit) {
+    try {
+      myAlarm.waitForAllExecuted(timeout, unit);
+    }
+    catch (InterruptedException | ExecutionException | TimeoutException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

@@ -18,7 +18,6 @@ import java.awt.event.MouseEvent;
 
 /**
  * @author Denis Zhdanov
- * @since 1/16/12 5:20 PM
  */
 public class RichTextActionProcessor implements RichTextControlBuilder.RichTextProcessor {
 

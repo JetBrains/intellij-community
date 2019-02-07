@@ -46,10 +46,10 @@ public abstract class VcsCherryPicker {
    *
    * @param commits to cherry-pick
    */
-  public abstract void cherryPick(@NotNull final List<VcsFullCommitDetails> commits);
+  public abstract void cherryPick(@NotNull final List<? extends VcsFullCommitDetails> commits);
 
   /**
    * Return true if cherry picker can manage all commits from roots
    */
-  public abstract boolean canHandleForRoots(@NotNull Collection<VirtualFile> roots);
+  public abstract boolean canHandleForRoots(@NotNull Collection<? extends VirtualFile> roots);
 }

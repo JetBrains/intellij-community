@@ -344,7 +344,7 @@ private class CallArgumentInfo(val parameter: PsiParameter, val argument: PsiExp
 
 
 private fun PsiParameter.isAssignable(argument: PsiExpression, substitutor: PsiSubstitutor = PsiSubstitutor.EMPTY): Boolean {
-  val substitutedType = substitutor.substitute(type)
+  val substitutedType = substitutor.substitute(type) ?: return false
   if (PsiPolyExpressionUtil.isPolyExpression(argument)) return true
   return argument.type?.isAssignableTo(substitutedType) ?: false
 }

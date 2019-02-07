@@ -24,6 +24,7 @@
     <orderEntry type="module" module-name="intellij.platform.debugger" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
+    <orderEntry type="library" name="NanoXML" level="project" />
   </component>
   <component name="copyright">
     <Base>

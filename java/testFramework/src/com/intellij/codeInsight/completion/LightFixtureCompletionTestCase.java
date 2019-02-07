@@ -25,6 +25,7 @@ import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -53,7 +54,11 @@ public abstract class LightFixtureCompletionTestCase extends LightCodeInsightFix
       myItems = null;
       CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
+
       super.tearDown();
     }
   }
@@ -103,7 +108,7 @@ public abstract class LightFixtureCompletionTestCase extends LightCodeInsightFix
   protected void assertFirstStringItems(String... items) {
     List<String> strings = myFixture.getLookupElementStrings();
     assertNotNull(strings);
-    assertOrderedEquals(strings.subList(0, Math.min(items.length, strings.size())), items);
+    assertOrderedEquals(ContainerUtil.getFirstItems(strings, items.length), items);
   }
   protected void assertStringItems(String... items) {
     List<String> strings = myFixture.getLookupElementStrings();

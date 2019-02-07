@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 5/19/11 10:42 AM
  */
 public class StartNewLineBeforeAction extends EditorAction {
 

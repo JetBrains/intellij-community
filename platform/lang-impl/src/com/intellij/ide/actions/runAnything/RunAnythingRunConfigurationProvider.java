@@ -11,8 +11,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowId;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import static com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject;
 
@@ -20,7 +20,7 @@ public class RunAnythingRunConfigurationProvider extends com.intellij.ide.action
   @NotNull
   @Override
   public Collection<ChooseRunConfigurationPopup.ItemWrapper> getValues(@NotNull DataContext dataContext, @NotNull String pattern) {
-    return Arrays.asList(getWrappers(dataContext));
+    return getWrappers(dataContext);
   }
 
   @NotNull
@@ -30,7 +30,7 @@ public class RunAnythingRunConfigurationProvider extends com.intellij.ide.action
   }
 
   @NotNull
-  private static ChooseRunConfigurationPopup.ItemWrapper[] getWrappers(@NotNull DataContext dataContext) {
+  private static List<ChooseRunConfigurationPopup.ItemWrapper> getWrappers(@NotNull DataContext dataContext) {
     Project project = fetchProject(dataContext);
     return ChooseRunConfigurationPopup.createSettingsList(project, new ExecutorProvider() {
       @Override

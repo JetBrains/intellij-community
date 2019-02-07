@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -144,9 +145,8 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
     Map<String, YAMLKeyValue> existingByKey = existingPairs.stream().collect(
       Collectors.toMap(kv -> kv.getKeyText().trim(), kv -> kv, (oldValue, newValue) -> oldValue));
 
-    final List<Field> fieldList = metaClass.getFeatures().stream()
-      .filter(childField -> !existingByKey.containsKey(childField.getName()) && childField.isEditable())
-      .collect(Collectors.toList());
+    final List<Field> fieldList = ContainerUtil
+      .filter(metaClass.getFeatures(), childField -> !existingByKey.containsKey(childField.getName()) && childField.isEditable());
 
     final boolean needsSequenceItemMark = existingPairs.isEmpty() && needsSequenceItem(meta.getField());
 
@@ -220,7 +220,7 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
       result.add(fieldPath);
       final YamlMetaType metaType = field.getType(field.getDefaultRelation());
             if (metaType instanceof YamlMetaClass) {
-        doCollectPathsRec(((YamlMetaClass)metaType).getFeatures().stream().filter(Field::isEditable).collect(Collectors.toList()),
+        doCollectPathsRec(ContainerUtil.filter(((YamlMetaClass)metaType).getFeatures(), Field::isEditable),
                           fieldPath, result, deepness);
       }
     });

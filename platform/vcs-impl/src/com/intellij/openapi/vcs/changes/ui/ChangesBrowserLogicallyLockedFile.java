@@ -19,19 +19,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.LogicalLock;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 public class ChangesBrowserLogicallyLockedFile extends ChangesBrowserFileNode {
   private final LogicalLock myLogicalLock;
 
-  public ChangesBrowserLogicallyLockedFile(Project project, VirtualFile userObject, LogicalLock logicalLock) {
+  public ChangesBrowserLogicallyLockedFile(@Nullable Project project, VirtualFile userObject, LogicalLock logicalLock) {
     super(project, userObject);
     myLogicalLock = logicalLock;
   }
 
   @Override
-  public void render(ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
+  public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
     super.render(renderer, selected, expanded, hasFocus);
     renderer.append(spaceAndThinSpace() + "locked by ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
     renderer.append(myLogicalLock.getOwner(), SimpleTextAttributes.REGULAR_ATTRIBUTES);

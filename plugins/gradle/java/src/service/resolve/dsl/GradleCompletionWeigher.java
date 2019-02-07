@@ -26,7 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/7/2016
  */
 public class GradleCompletionWeigher extends CompletionWeigher {
 

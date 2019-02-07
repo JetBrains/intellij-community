@@ -29,7 +29,6 @@ import javax.swing.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/30/2014
  */
 public class GradleBeforeRunTaskProvider extends ExternalSystemBeforeRunTaskProvider {
   public static final Key<ExternalSystemBeforeRunTask> ID = Key.create("Gradle.BeforeRunTask");

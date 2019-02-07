@@ -25,15 +25,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author mike
  */
 public class CompoundRuntimeException extends RuntimeException {
-  private final List<Throwable> myExceptions;
+  private final List<? extends Throwable> myExceptions;
 
-  public CompoundRuntimeException(@NotNull List<Throwable> throwables) {
+  public CompoundRuntimeException(@NotNull List<? extends Throwable> throwables) {
     myExceptions = throwables;
   }
 
@@ -43,7 +44,7 @@ public class CompoundRuntimeException extends RuntimeException {
   }
 
   public List<Throwable> getExceptions() {
-    return myExceptions;
+    return new ArrayList<Throwable>(myExceptions);
   }
 
   @Override
@@ -144,7 +145,7 @@ public class CompoundRuntimeException extends RuntimeException {
     return sb.toString();
   }
 
-  public static void throwIfNotEmpty(@Nullable List<Throwable> throwables) {
+  public static void throwIfNotEmpty(@Nullable List<? extends Throwable> throwables) {
     if (ContainerUtil.isEmpty(throwables)) {
       return;
     }

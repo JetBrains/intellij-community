@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
@@ -15,6 +15,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -26,6 +27,7 @@ import org.junit.Assert;
 import org.junit.Assume;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 @TestOnly
@@ -122,8 +124,7 @@ public class IdeaTestUtil extends PlatformTestUtil {
   }
 
   private static File getPathForJdkNamed(String name) {
-    File mockJdkCEPath = new File(PathManager.getHomePath(), "java/" + name);
-    return mockJdkCEPath.exists() ? mockJdkCEPath : new File(PathManager.getHomePath(), "community/java/" + name);
+    return new File(PathManager.getCommunityHomePath(), "java/" + name);
   }
 
   public static Sdk getWebMockJdk17() {
@@ -181,5 +182,36 @@ public class IdeaTestUtil extends PlatformTestUtil {
     //noinspection ConstantConditions
     Assume.assumeTrue("Cannot find JDK, checked paths: " + paths, false);
     return null;
+  }
+
+  public static File findSourceFile(@NotNull String basePath) {
+    File testFile = new File(basePath + ".java");
+    if (!testFile.exists()) testFile = new File(basePath + ".groovy");
+    if (!testFile.exists()) throw new IllegalArgumentException("No test source for " + basePath);
+    return testFile;
+  }
+
+  @SuppressWarnings("UnnecessaryFullyQualifiedName")
+  public static void compileFile(@NotNull File source, @NotNull File out, String... options) {
+    Assert.assertTrue("source does not exist: " + source.getPath(), source.isFile());
+
+    List<String> args = new ArrayList<>();
+    args.add("-d");
+    args.add(out.getAbsolutePath());
+    ContainerUtil.addAll(args, options);
+    args.add(source.getAbsolutePath());
+
+    if (source.getName().endsWith(".groovy")) {
+      try {
+        org.codehaus.groovy.tools.FileSystemCompiler.commandLineCompile(ArrayUtil.toStringArray(args));
+      }
+      catch (Exception e) {
+        throw new IllegalStateException(e);
+      }
+    }
+    else {
+      int result = com.sun.tools.javac.Main.compile(ArrayUtil.toStringArray(args));
+      if (result != 0) throw new IllegalStateException("javac failed with exit code " + result);
+    }
   }
 }

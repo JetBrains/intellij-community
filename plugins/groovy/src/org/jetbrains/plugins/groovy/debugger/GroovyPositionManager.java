@@ -354,7 +354,7 @@ public class GroovyPositionManager implements PositionManager {
     return StringUtil.getQualifiedName(packageName, fileName);
   }
 
-  @Nullable
+  @NotNull
   private static String getRuntimeScriptName(@NotNull GroovyFile groovyFile) {
     if (groovyFile.isScript()) {
       for (ScriptPositionManagerHelper helper : ScriptPositionManagerHelper.EP_NAME.getExtensions()) {

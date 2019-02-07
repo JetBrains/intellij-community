@@ -108,15 +108,49 @@ public class ForwardBackwardParagraphActionTest extends AbstractEditorTest {
                    "abc");
   }
 
+  public void testForwardWithSelection() {
+    doTestForwardWithSelection("ab<caret>c\n" +
+                               "\n" +
+                               "def\n" +
+                               "\n",
+
+                               "ab<selection>c\n" +
+                               "<caret></selection>\n" +
+                               "def\n" +
+                               "\n");
+  }
+
+  public void testBackwardWithSelection() {
+    doTestBackwardWithSelection("\n" +
+                                "abc\n" +
+                                "\n" +
+                                "de<caret>f",
+
+                                "\n" +
+                                "abc\n" +
+                                "<selection><caret>\n" +
+                                "de</selection>f");
+  }
+
   private void doTestForward(String initialText, String resultText) {
-    initText(initialText);
-    executeAction(IdeActions.ACTION_EDITOR_FORWARD_PARAGRAPH);
-    checkResultByText(resultText);
+    doTest(initialText, resultText, IdeActions.ACTION_EDITOR_FORWARD_PARAGRAPH);
   }
 
   private void doTestBackward(String initialText, String resultText) {
+    doTest(initialText, resultText, IdeActions.ACTION_EDITOR_BACKWARD_PARAGRAPH);
+  }
+
+  private void doTestForwardWithSelection(String initialText, String resultText) {
+    doTest(initialText, resultText, IdeActions.ACTION_EDITOR_FORWARD_PARAGRAPH_WITH_SELECTION);
+  }
+
+  private void doTestBackwardWithSelection(String initialText, String resultText) {
+    doTest(initialText, resultText, IdeActions.ACTION_EDITOR_BACKWARD_PARAGRAPH_WITH_SELECTION);
+  }
+
+  private void doTest(String initialText, String resultText, String action) {
     initText(initialText);
-    executeAction(IdeActions.ACTION_EDITOR_BACKWARD_PARAGRAPH);
+    executeAction(action);
     checkResultByText(resultText);
   }
 }

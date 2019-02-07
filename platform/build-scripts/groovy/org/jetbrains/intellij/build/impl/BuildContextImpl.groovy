@@ -70,12 +70,17 @@ class BuildContextImpl extends BuildContext {
 
     def appInfoFile = findApplicationInfoInSources(project, productProperties, messages)
     applicationInfo = new ApplicationInfoProperties(appInfoFile.absolutePath)
+    if (productProperties.productCode != null && applicationInfo.productCode == null) {
+      applicationInfo.productCode = productProperties.productCode
+    }
+    else if (productProperties.productCode == null && applicationInfo.productCode != null) {
+      productProperties.productCode = applicationInfo.productCode
+    }
     // Android Studio: modified by Change Idc07b110 / commit f20681e
     bundledJreManager = new BundledJreManager(this, compilationContext.paths.communityHome)
 
-    // Android Studio: buildNumber is either SNAPSHOT or the one passed from build_studio.sh. fullBuildNumber includes the branch.
-    buildNumber = options.buildNumber ?: "SNAPSHOT"
-    fullBuildNumber = "$productProperties.productCode-" + readSnapshotBuildNumber().replace("SNAPSHOT", buildNumber)
+    buildNumber = options.buildNumber ?: readSnapshotBuildNumber()
+    fullBuildNumber = "$applicationInfo.productCode-$buildNumber"
     systemSelector = productProperties.getSystemSelector(applicationInfo)
 
     bootClassPathJarNames = ["bootstrap.jar", "extensions.jar", "util.jar", "jdom.jar", "log4j.jar", "trove4j.jar", "jna.jar"]

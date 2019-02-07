@@ -2,13 +2,13 @@
 package com.intellij.testGuiFramework.fixtures
 
 import com.intellij.testGuiFramework.driver.CheckboxTreeDriver
-import com.intellij.testGuiFramework.util.FinderPredicate
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
 import com.intellij.testGuiFramework.impl.GuiRobotHolder
+import com.intellij.testGuiFramework.util.FinderPredicate
 import com.intellij.testGuiFramework.util.Predicate
-import com.intellij.testGuiFramework.util.currentTimeInHumanString
 import com.intellij.ui.CheckboxTree
 import org.fest.swing.core.Robot
+import org.fest.swing.timing.Pause
 
 class CheckboxTreeFixture(
   checkboxTree: CheckboxTree,
@@ -27,15 +27,16 @@ class CheckboxTreeFixture(
   private fun getCheckboxComponent() = myDriver.getCheckboxComponent(target() as CheckboxTree, path)
 
   private fun setCheckboxValue(value: Boolean) {
+    val maxNumberOfAttempts = 3
+    var currentAttempt = maxNumberOfAttempts
     clickPath()
-    val checkbox = getCheckboxComponent()
-    if (checkbox != null && checkbox.isSelected != value) {
+    while (currentAttempt > 0 && value != isSelected()) {
       clickCheckbox()
-      val actualValue = getCheckboxComponent()?.isSelected
-      assert(actualValue == value) {
-        "Checkbox at path $path: actual value is $actualValue, but expected is $value"
-      }
+      currentAttempt--
+      Pause.pause(500) // let's wait for animation of check drawing finishing
     }
+    val actualValue = isSelected()
+    assert(actualValue == value) {"Checkbox at path $path: actual value is $actualValue, but expected is $value, after ${maxNumberOfAttempts - currentAttempt} attempts"}
   }
 
   fun check() = setCheckboxValue(true)

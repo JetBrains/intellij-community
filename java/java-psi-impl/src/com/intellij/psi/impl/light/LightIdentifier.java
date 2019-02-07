@@ -53,6 +53,7 @@ public class LightIdentifier extends LightElement implements PsiIdentifier, PsiJ
     return new LightIdentifier(getManager(), myText);
   }
 
+  @Override
   public String toString(){
     return "PsiIdentifier:" + getText();
   }

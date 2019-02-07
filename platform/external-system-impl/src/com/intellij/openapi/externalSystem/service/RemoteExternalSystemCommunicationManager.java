@@ -65,7 +65,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Denis Zhdanov
- * @since 8/9/13 3:37 PM
  */
 public class RemoteExternalSystemCommunicationManager implements ExternalSystemCommunicationManager, Disposable {
 

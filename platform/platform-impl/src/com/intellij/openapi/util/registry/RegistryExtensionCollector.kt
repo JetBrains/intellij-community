@@ -2,6 +2,7 @@
 package com.intellij.openapi.util.registry
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.xmlb.annotations.Attribute
 
 /**
@@ -21,7 +22,15 @@ class RegistryKeyBean {
 class RegistryExtensionCollector {
   init {
     for (extension in RegistryKeyBean.EP_NAME.extensions) {
-      Registry.addKey(extension.key, extension.description, extension.defaultValue, extension.restartRequired)
+      Registry.addKey(extension.key, extension.description.unescapeString(), extension.defaultValue, extension.restartRequired)
     }
+  }
+
+  private companion object {
+    // Since the XML parser removes all the '\n' chars joining indented lines together,
+    // we can't really tell whether multiple whitespaces actually refer to indentation spaces or just regular ones.
+    val CONSECUTIVE_SPACES_REGEX = """\s{2,}""".toRegex()
+
+    fun String.unescapeString(): String = StringUtil.unescapeStringCharacters(replace(CONSECUTIVE_SPACES_REGEX, " "))
   }
 }

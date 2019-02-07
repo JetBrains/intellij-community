@@ -71,6 +71,7 @@ public class PsiBlockStatementImpl extends CompositePsiElement implements PsiBlo
     }
   }
 
+  @Override
   public String toString() {
     return "PsiBlockStatement";
   }

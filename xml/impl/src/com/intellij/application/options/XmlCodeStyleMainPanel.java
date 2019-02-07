@@ -19,6 +19,7 @@ public class XmlCodeStyleMainPanel extends TabbedLanguageCodeStylePanel {
     addIndentOptionsTab(settings);
     addTab(new CodeStyleXmlPanel(settings));
     addTab(new ArrangementSettingsPanel(settings, XMLLanguage.INSTANCE));
+    addTab(new GenerationCodeStylePanel(settings, XMLLanguage.INSTANCE));
 
     for (CodeStyleSettingsProvider provider : CodeStyleSettingsProvider.EXTENSION_POINT_NAME.getExtensionList()) {
       if (provider.getLanguage() == XMLLanguage.INSTANCE && !provider.hasSettingsPage()) {

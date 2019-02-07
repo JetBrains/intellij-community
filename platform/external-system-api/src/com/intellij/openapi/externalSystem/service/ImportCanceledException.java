@@ -19,7 +19,6 @@ package com.intellij.openapi.externalSystem.service;
  * {@link ImportCanceledException} indicates interruption of the import process due to optimization needs or user 'cancel' action.
  *
  * @author Vladislav.Soroka
- * @since 9/30/13
  */
 public class ImportCanceledException extends RuntimeException {
 

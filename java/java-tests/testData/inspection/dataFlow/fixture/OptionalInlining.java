@@ -134,7 +134,7 @@ public class OptionalInlining {
       System.out.println("impossible");
     }
     if(opt.isPresent()) {
-      if(<warning descr="Condition 'opt.transform(x -> x.isEmpty() ? null : x).toJavaUtil().isPresent()' is always 'true'">opt.transform(x -> <warning descr="Function may return null, but it's not allowed here">x.isEmpty() ? null : x</warning>).toJavaUtil().isPresent()</warning>) {
+      if(<warning descr="Condition 'opt.transform(x -> x.isEmpty() ? null : x).toJavaUtil().isPresent()' is always 'true'">opt.transform(x -> x.isEmpty() ? <warning descr="Function may return null, but it's not allowed here">null</warning> : x).toJavaUtil().isPresent()</warning>) {
         System.out.println("Always");
       }
       if(opt.toJavaUtil().map(x -> x.isEmpty() ? null : x).isPresent()) {
@@ -157,7 +157,7 @@ public class OptionalInlining {
     opt.flatMap(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
     opt.flatMap(x -> <warning descr="Function may return null, but it's not allowed here">null</warning>);
     opt.flatMap(<warning descr="Function may return null, but it's not allowed here">this::nullableOptionalMethod</warning>);
-    opt.flatMap(x -> <warning descr="Function may return null, but it's not allowed here">x.isEmpty() ? null : Optional.of(x)</warning>);
+    opt.flatMap(x -> x.isEmpty() ? <warning descr="Function may return null, but it's not allowed here">null</warning> : Optional.of(x));
     opt.flatMap(x -> {
       if (x.isEmpty()) {
         return <warning descr="Function may return null, but it's not allowed here">null</warning>;

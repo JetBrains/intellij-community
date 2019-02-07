@@ -2,6 +2,8 @@
 package com.intellij.formatting;
 
 import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
@@ -21,9 +23,16 @@ class RangesAssert {
 
     final StringBuilder messageBuffer =  new StringBuilder();
     messageBuffer.append(message);
+    Class problematicLanguageClass;
     if (model instanceof FormattingDocumentModelImpl) {
-      messageBuffer.append(" in #").append(((FormattingDocumentModelImpl)model).getFile().getLanguage().getDisplayName());
+      Language language = ((FormattingDocumentModelImpl)model).getFile().getLanguage();
+      messageBuffer.append(" in #").append(language.getDisplayName());
+      problematicLanguageClass = language.getClass();
     }
+    else {
+      problematicLanguageClass = null;
+    }
+
     messageBuffer.append(" #formatter");
     messageBuffer.append("\nRange: [").append(startOffset).append(",").append(newEndOffset).append("], ")
                  .append("text fragment: [").append(minOffset).append(",").append(maxOffset).append("] - '")
@@ -46,6 +55,7 @@ class RangesAssert {
       buffer.append('\n');
     }
 
-    LOG.error(messageBuffer.toString(), new Throwable(), AttachmentFactory.createContext(buffer));
+    Throwable t = problematicLanguageClass != null ? PluginManagerCore.createPluginException("", null, problematicLanguageClass) : null;
+    LOG.error(messageBuffer.toString(), t, AttachmentFactory.createContext(buffer));
   }
 }

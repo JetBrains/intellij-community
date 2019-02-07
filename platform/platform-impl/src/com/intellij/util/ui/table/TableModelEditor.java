@@ -21,7 +21,6 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
-import gnu.trove.TObjectObjectProcedure;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -92,43 +91,34 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
   }
 
   private void addDialogActions() {
-    toolbarDecorator.setEditAction(new AnActionButtonRunnable() {
-      @Override
-      public void run(AnActionButton button) {
-        T item = table.getSelectedObject();
-        if (item != null) {
-          Function<T, T> mutator;
-          if (helper.isMutable(item)) {
-            mutator = FunctionUtil.id();
-          }
-          else {
-            final int selectedRow = table.getSelectedRow();
-            mutator = item12 -> helper.getMutable(item12, selectedRow);
-          }
-          ((DialogItemEditor<T>)itemEditor).edit(item, mutator, false);
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(table, true);
-          });
+    toolbarDecorator.setEditAction(button -> {
+      T item = table.getSelectedObject();
+      if (item != null) {
+        Function<T, T> mutator;
+        if (helper.isMutable(item)) {
+          mutator = FunctionUtil.id();
         }
+        else {
+          final int selectedRow = table.getSelectedRow();
+          mutator = item12 -> helper.getMutable(item12, selectedRow);
+        }
+        ((DialogItemEditor<T>)itemEditor).edit(item, mutator, false);
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(table, true);
+        });
       }
-    }).setEditActionUpdater(new AnActionButtonUpdater() {
-      @Override
-      public boolean isEnabled(@NotNull AnActionEvent e) {
-        T item = table.getSelectedObject();
-        return item != null && ((DialogItemEditor<T>)itemEditor).isEditable(item);
-      }
+    }).setEditActionUpdater(e -> {
+      T item = table.getSelectedObject();
+      return item != null && ((DialogItemEditor<T>)itemEditor).isEditable(item);
     });
 
     if (((DialogItemEditor)itemEditor).isUseDialogToAdd()) {
-      toolbarDecorator.setAddAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          T item = createElement();
-          ((DialogItemEditor<T>)itemEditor).edit(item, item1 -> {
-            model.addRow(item1);
-            return item1;
-          }, true);
-        }
+      toolbarDecorator.setAddAction(button -> {
+        T item = createElement();
+        ((DialogItemEditor<T>)itemEditor).edit(item, item1 -> {
+          model.addRow(item1);
+          return item1;
+        }, true);
       });
     }
   }
@@ -282,14 +272,11 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     final Ref<T> ref;
     if (helper.hasModifiedItems()) {
       ref = Ref.create();
-      helper.process(new TObjectObjectProcedure<T, T>() {
-        @Override
-        public boolean execute(T modified, T original) {
-          if (item == original) {
-            ref.set(modified);
-          }
-          return ref.isNull();
+      helper.process((modified, original) -> {
+        if (item == original) {
+          ref.set(modified);
         }
+        return ref.isNull();
       });
     }
     else {
@@ -304,22 +291,19 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     if (helper.hasModifiedItems()) {
       @SuppressWarnings("unchecked")
       final ColumnInfo<T, Object>[] columns = model.getColumnInfos();
-      helper.process(new TObjectObjectProcedure<T, T>() {
-        @Override
-        public boolean execute(T newItem, @NotNull T oldItem) {
-          for (ColumnInfo<T, Object> column : columns) {
-            if (column.isCellEditable(newItem)) {
-              column.setValue(oldItem, column.valueOf(newItem));
-            }
+      helper.process((newItem, oldItem) -> {
+        for (ColumnInfo<T, Object> column : columns) {
+          if (column.isCellEditable(newItem)) {
+            column.setValue(oldItem, column.valueOf(newItem));
           }
-
-          if (itemEditor instanceof DialogItemEditor) {
-            ((DialogItemEditor<T>)itemEditor).applyEdited(oldItem, newItem);
-          }
-
-          model.items.set(ContainerUtil.indexOfIdentity(model.items, newItem), oldItem);
-          return true;
         }
+
+        if (itemEditor instanceof DialogItemEditor) {
+          ((DialogItemEditor<T>)itemEditor).applyEdited(oldItem, newItem);
+        }
+
+        model.items.set(ContainerUtil.indexOfIdentity(model.items, newItem), oldItem);
+        return true;
       });
     }
 

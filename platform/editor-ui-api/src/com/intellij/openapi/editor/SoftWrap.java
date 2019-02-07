@@ -20,7 +20,6 @@ package com.intellij.openapi.editor;
  * but is used exclusively during document representation.
  *
  * @author Denis Zhdanov
- * @since Aug 30, 2010 6:07:00 PM
  */
 public interface SoftWrap extends TextChange {
 

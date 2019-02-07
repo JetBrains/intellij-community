@@ -46,7 +46,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author Denis Zhdanov
- * @since 3/14/13 5:11 PM
  */
 public class GradleExecutionHelper {
 
@@ -101,7 +100,7 @@ public class GradleExecutionHelper {
                              @NotNull final OutputStream standardOutput,
                              @NotNull final OutputStream standardError) {
     Set<String> jvmArgs = settings.getVmOptions();
-    BuildEnvironment buildEnvironment = getBuildEnvironment(connection, id, listener);
+    BuildEnvironment buildEnvironment = getBuildEnvironment(connection, id, listener, null);
 
     String gradleVersion = buildEnvironment != null ? buildEnvironment.getGradle().getGradleVersion() : null;
     if (!jvmArgs.isEmpty()) {
@@ -543,7 +542,8 @@ public class GradleExecutionHelper {
       buf.append('[');
       for (Iterator<String> iterator = testIncludePatterns.iterator(); iterator.hasNext(); ) {
         String pattern = iterator.next();
-        buf.append('\'').append(pattern).append('\'');
+        String groovyPattern = toGroovyString(pattern);
+        buf.append('\'').append(groovyPattern).append('\'');
         if (iterator.hasNext()) {
           buf.append(',');
         }
@@ -555,6 +555,26 @@ public class GradleExecutionHelper {
         ContainerUtil.addAll(args, GradleConstants.INIT_SCRIPT_CMD_OPTION, path);
       }
     }
+  }
+
+  @NotNull
+  public static String toGroovyString(@NotNull String string) {
+    StringBuilder stringBuilder = new StringBuilder();
+    for (char ch : string.toCharArray()) {
+      if (ch == '\\') {
+        stringBuilder.append("\\\\");
+      }
+      else if (ch == '\'') {
+        stringBuilder.append("\\'");
+      }
+      else if (ch == '"') {
+        stringBuilder.append("\\\"");
+      }
+      else {
+        stringBuilder.append(ch);
+      }
+    }
+    return stringBuilder.toString();
   }
 
   @Nullable

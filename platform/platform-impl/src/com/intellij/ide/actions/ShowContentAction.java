@@ -19,6 +19,8 @@ import javax.swing.*;
 import java.awt.*;
 
 public class ShowContentAction extends AnAction implements DumbAware {
+  public static final String ACTION_ID = "ShowContent";
+
   private ToolWindow myWindow;
 
   @SuppressWarnings({"UnusedDeclaration"})
@@ -27,7 +29,7 @@ public class ShowContentAction extends AnAction implements DumbAware {
 
   public ShowContentAction(ToolWindow window, JComponent c, @NotNull Disposable parentDisposable) {
     myWindow = window;
-    AnAction original = ActionManager.getInstance().getAction("ShowContent");
+    AnAction original = ActionManager.getInstance().getAction(ACTION_ID);
     new ShadowAction(this, original, c, parentDisposable);
     copyFrom(original);
   }

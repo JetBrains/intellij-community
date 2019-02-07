@@ -70,7 +70,7 @@ public class CopyHandler {
     }
   }
 
-  static void updateSelectionInActiveProjectView(@NotNull PsiElement newElement, Project project, boolean selectInActivePanel) {
+  public static void updateSelectionInActiveProjectView(@NotNull PsiElement newElement, Project project, boolean selectInActivePanel) {
     String id = ToolWindowManager.getInstance(project).getActiveToolWindowId();
     if (id != null) {
       ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(id);

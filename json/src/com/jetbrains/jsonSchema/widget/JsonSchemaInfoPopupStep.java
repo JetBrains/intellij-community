@@ -4,6 +4,7 @@ package com.jetbrains.jsonSchema.widget;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.ListPopupStepEx;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
@@ -12,6 +13,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StatusText;
 import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
 import com.jetbrains.jsonSchema.UserDefinedJsonSchemaConfiguration;
 import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
@@ -27,15 +29,15 @@ import java.util.Objects;
 
 import static com.jetbrains.jsonSchema.widget.JsonSchemaStatusPopup.*;
 
-class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> {
+public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> implements ListPopupStepEx<JsonSchemaInfo> {
   private final Project myProject;
-  private final VirtualFile myVirtualFile;
+  @Nullable private final VirtualFile myVirtualFile;
   @NotNull private final JsonSchemaService myService;
   private static final Icon EMPTY_ICON = JBUI.scale(EmptyIcon.create(AllIcons.General.Add.getIconWidth()));
 
-  JsonSchemaInfoPopupStep(@NotNull List<JsonSchemaInfo> allSchemas, @NotNull Project project, @NotNull VirtualFile virtualFile,
-                                 @NotNull JsonSchemaService service) {
-    super(null, allSchemas);
+  public JsonSchemaInfoPopupStep(@NotNull List<JsonSchemaInfo> allSchemas, @NotNull Project project, @Nullable VirtualFile virtualFile,
+                                 @NotNull JsonSchemaService service, @Nullable String title) {
+    super(title, allSchemas);
     myProject = project;
     myVirtualFile = virtualFile;
     myService = service;
@@ -44,7 +46,7 @@ class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> {
   @NotNull
   @Override
   public String getTextFor(JsonSchemaInfo value) {
-    return value.getDescription();
+    return value == null ? "" : value.getDescription();
   }
 
   @Override
@@ -98,7 +100,8 @@ class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> {
     return PopupStep.FINAL_CHOICE;
   }
 
-  private void runSchemaEditorForCurrentFile() {
+  protected void runSchemaEditorForCurrentFile() {
+    assert myVirtualFile != null: "override this method to do without a virtual file!";
     JsonSchemaMappingsConfigurable configurable = new JsonSchemaMappingsConfigurable(myProject);
     JsonSchemaMappingsProjectConfiguration mappingsConf = JsonSchemaMappingsProjectConfiguration.getInstance(myProject);
 
@@ -121,7 +124,31 @@ class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> {
     return true;
   }
 
-  private static void setMapping(@Nullable JsonSchemaInfo selectedValue, @NotNull VirtualFile virtualFile, @NotNull Project project) {
+  @Nullable
+  @Override
+  public String getTooltipTextFor(JsonSchemaInfo value) {
+    return getDoc(value);
+  }
+
+  @Nullable
+  private static String getDoc(JsonSchemaInfo schema) {
+    if (schema == null) return null;
+    if (schema.getName() == null) return schema.getDocumentation();
+    if (schema.getDocumentation() == null) return schema.getName();
+    return "<b>" + schema.getName() + "</b><br/>" + schema.getDocumentation();
+  }
+
+  @Override
+  public void setEmptyText(@NotNull StatusText emptyText) {
+  }
+
+  @Override
+  public PopupStep onChosen(JsonSchemaInfo selectedValue, boolean finalChoice, int eventModifiers) {
+    return onChosen(selectedValue, finalChoice);
+  }
+
+  protected void setMapping(@Nullable JsonSchemaInfo selectedValue, @Nullable VirtualFile virtualFile, @NotNull Project project) {
+    assert virtualFile != null: "override this method to do without a virtual file!";
     JsonSchemaMappingsProjectConfiguration configuration = JsonSchemaMappingsProjectConfiguration.getInstance(project);
 
     VirtualFile projectBaseDir = project.getBaseDir();
@@ -145,7 +172,7 @@ class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> {
 
     if (selectedValue == null) return;
 
-    String path = VfsUtilCore.getRelativePath(virtualFile, projectBaseDir);
+    String path = projectBaseDir == null ? null : VfsUtilCore.getRelativePath(virtualFile, projectBaseDir);
     if (path == null) {
       path = virtualFile.getUrl();
     }

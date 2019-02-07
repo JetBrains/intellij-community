@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,7 +14,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -23,7 +26,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author nik
@@ -40,16 +42,26 @@ public class VfsTestUtil {
 
   @NotNull
   public static VirtualFile createFile(@NotNull VirtualFile root, @NotNull String relativePath, @NotNull String text) {
-    return createFileOrDir(root, relativePath, text, false);
+    try {
+      return createFileOrDir(root, relativePath, VfsUtil.toByteArray(root, text), false);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @NotNull
+  public static VirtualFile createFile(@NotNull VirtualFile root, @NotNull String relativePath, @NotNull byte[] data) {
+    return createFileOrDir(root, relativePath, data, false);
   }
 
   @NotNull
   public static VirtualFile createDir(@NotNull VirtualFile root, @NotNull String relativePath) {
-    return createFileOrDir(root, relativePath, "", true);
+    return createFileOrDir(root, relativePath, ArrayUtilRt.EMPTY_BYTE_ARRAY, true);
   }
 
   @NotNull
-  private static VirtualFile createFileOrDir(VirtualFile root, String relativePath, String text, boolean dir) {
+  private static VirtualFile createFileOrDir(VirtualFile root, String relativePath, @NotNull byte[] data, boolean dir) {
     try {
       return WriteAction.computeAndWait(() -> {
         VirtualFile parent = root;
@@ -73,7 +85,7 @@ public class VfsTestUtil {
           if (file == null) {
             file = parent.createChildData(VfsTestUtil.class, name);
           }
-          VfsUtil.saveText(file, text);
+          file.setBinaryContent(data);
           // update the document now, otherwise MemoryDiskConflictResolver will do it later at unexpected moment of time
           FileDocumentManager.getInstance().reloadFiles(file);
         }
@@ -86,7 +98,12 @@ public class VfsTestUtil {
   }
 
   public static void deleteFile(@NotNull VirtualFile file) {
-    UtilKt.deleteFile(file);
+    try {
+      WriteAction.runAndWait(() -> file.delete(null));
+    }
+    catch (Throwable throwable) {
+      ExceptionUtilRt.rethrow(throwable);
+    }
   }
 
   public static void clearContent(@NotNull final VirtualFile file) {
@@ -159,7 +176,7 @@ public class VfsTestUtil {
 
   @NotNull
   public static List<String> print(@NotNull List<? extends VFileEvent> events) {
-    return events.stream().map(VfsTestUtil::print).collect(Collectors.toList());
+    return ContainerUtil.map(events, VfsTestUtil::print);
   }
 
   private static String print(VFileEvent e) {

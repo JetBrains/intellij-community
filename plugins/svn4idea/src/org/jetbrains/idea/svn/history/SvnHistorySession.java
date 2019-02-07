@@ -51,7 +51,7 @@ public class SvnHistorySession extends VcsAbstractHistorySession {
 
   public static VcsRevisionNumber getCurrentCommittedRevision(final SvnVcs vcs, final File file) {
     Info info = vcs.getInfo(file);
-    return info != null ? new SvnRevisionNumber(info.getCommittedRevision()) : null;
+    return info != null ? new SvnRevisionNumber(info.getCommitInfo().getRevision()) : null;
   }
 
   public FilePath getCommittedPath() {

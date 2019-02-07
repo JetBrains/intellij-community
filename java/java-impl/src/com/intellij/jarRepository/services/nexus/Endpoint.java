@@ -76,7 +76,7 @@ public class Endpoint {
             if (_retVal == null) {
                 return null;
             }
-            if (JAXBElement.class.isInstance(_retVal)) {
+            if (_retVal instanceof JAXBElement) {
                 JAXBElement jaxbElement = ((JAXBElement) _retVal);
                 _retVal = jaxbElement.getValue();
             }
@@ -113,7 +113,7 @@ public class Endpoint {
             if (_retVal == null) {
                 return null;
             }
-            if (JAXBElement.class.isInstance(_retVal)) {
+            if (_retVal instanceof JAXBElement) {
                 JAXBElement jaxbElement = ((JAXBElement) _retVal);
                 _retVal = jaxbElement.getValue();
             }
@@ -183,7 +183,7 @@ public class Endpoint {
             if (_retVal == null) {
                 return null;
             }
-            if (JAXBElement.class.isInstance(_retVal)) {
+            if (_retVal instanceof JAXBElement) {
                 JAXBElement jaxbElement = ((JAXBElement) _retVal);
                 _retVal = jaxbElement.getValue();
             }
@@ -219,7 +219,7 @@ public class Endpoint {
             if (_retVal == null) {
                 return null;
             }
-            if (JAXBElement.class.isInstance(_retVal)) {
+            if (_retVal instanceof JAXBElement) {
                 JAXBElement jaxbElement = ((JAXBElement) _retVal);
                 _retVal = jaxbElement.getValue();
             }
@@ -273,7 +273,7 @@ public class Endpoint {
             if (_retVal == null) {
                 return null;
             }
-            if (JAXBElement.class.isInstance(_retVal)) {
+            if (_retVal instanceof JAXBElement) {
                 JAXBElement jaxbElement = ((JAXBElement) _retVal);
                 _retVal = jaxbElement.getValue();
             }

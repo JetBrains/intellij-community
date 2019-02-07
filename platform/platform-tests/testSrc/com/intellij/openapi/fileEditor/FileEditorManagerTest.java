@@ -47,6 +47,9 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
       uiSettings.setReuseNotModifiedTabs(template.getReuseNotModifiedTabs());
       uiSettings.setEditorTabPlacement(template.getEditorTabPlacement());
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

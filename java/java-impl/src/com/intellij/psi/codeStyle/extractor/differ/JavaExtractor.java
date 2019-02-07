@@ -32,7 +32,6 @@ import java.util.LinkedList;
 
 /**
  * @author Roman.Shein
- * @since 05.08.2015
  */
 public class JavaExtractor implements LangCodeStyleExtractor {
   @NotNull

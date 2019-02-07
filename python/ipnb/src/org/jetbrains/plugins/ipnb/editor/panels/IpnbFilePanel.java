@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.ipnb.editor.panels;
 
 import com.google.common.collect.Lists;
@@ -61,7 +61,6 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   public static final Topic<EditingModeChangeListener> TOPIC = Topic.create("IPNB.EditingMode", EditingModeChangeListener.class);
   private final DocumentListener myDocumentListener;
   private final Document myDocument;
-  private final MessageBusConnection myBusConnection;
   private final EditActionsProvider myEditable;
   private IpnbFile myIpnbFile;
   private final Project myProject;
@@ -120,16 +119,15 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     }, 10, ModalityState.stateForComponent(this));
     myParent.loaded();
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(this, true));
-    myBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
-    myBusConnection.subscribe(ProjectEx.ProjectSaved.TOPIC,
-                              new ProjectEx.ProjectSaved() {
-                                @Override
-                                public void saved(@NotNull Project project) {
-                                  executeSaveFileCommand();
-                                }
-                              });
+    MessageBusConnection busConnection = project.getMessageBus().connect(this);
+    busConnection.subscribe(ProjectEx.ProjectSaved.TOPIC, new ProjectEx.ProjectSaved() {
+      @Override
+      public void duringSave(@NotNull Project project) {
+        ApplicationManager.getApplication().invokeAndWait(() -> executeSaveFileCommand());
+      }
+    });
 
-    myBusConnection.subscribe(TOPIC, (wasInEditing, isEditing) -> {
+    busConnection.subscribe(TOPIC, (wasInEditing, isEditing) -> {
       if (wasInEditing && !isEditing) {
         executeSaveFileCommand();
     }
@@ -144,7 +142,6 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   @Override
   public void dispose() {
     myDocument.removeDocumentListener(myDocumentListener);
-    Disposer.dispose(myBusConnection);
     for (IpnbEditablePanel panel : myIpnbPanels) {
       panel.dispose();
     }
@@ -274,14 +271,13 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       add(selectedCellPanel, index + 1);
 
       selectPrev(selectedCellPanel);
-      setSelectedCellPanel(selectedCellPanel);
     }
     else {
       final IpnbEditablePanel siblingPanel = myIpnbPanels.get(siblingIndex);
       deleteCell(siblingPanel);
       addCell(siblingPanel, true);
-      setSelectedCellPanel(selectedCellPanel);
     }
+    setSelectedCellPanel(selectedCellPanel);
     saveToFile(false);
   }
 

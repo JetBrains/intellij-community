@@ -1,0 +1,5 @@
+deprecated: config_folder_closed.png -> com.intellij.icons.AllIcons@/nodes/configFolder.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.ConfigFolder
+deprecated: controller.png -> com.intellij.icons.AllIcons@/nodes/controller.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Controller
+deprecated: domain_class.png -> com.intellij.icons.AllIcons@/nodes/DataTables.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.DataTables
+deprecated: modelsNode.png -> com.intellij.icons.AllIcons@/nodes/models.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Models
+deprecated: service.png -> com.intellij.icons.AllIcons@/fileTypes/config.svg; to be removed in IDEA 2020 - use AllIcons.FileTypes.Config

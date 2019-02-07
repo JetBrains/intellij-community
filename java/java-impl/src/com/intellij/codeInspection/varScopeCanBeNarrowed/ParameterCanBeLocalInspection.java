@@ -183,16 +183,25 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
         final JavaChangeInfo changeInfo = new JavaChangeInfoImpl(visibilityModifier, method, method.getName(),
                                                                  returnType != null ? CanonicalTypes.createTypeWrapper(returnType) : null,
                                                                  newParams, null, false, ContainerUtil.newHashSet(), ContainerUtil.newHashSet());
-        final ChangeSignatureProcessor cp = new ChangeSignatureProcessor(project, changeInfo) {
+        class ParameterToLocalProcessor extends ChangeSignatureProcessor {
+          private PsiElement newDeclaration;
+
+          ParameterToLocalProcessor(Project project, JavaChangeInfo changeInfo) {
+            super(project, changeInfo);
+          }
+
           @Override
           protected void performRefactoring(@NotNull UsageInfo[] usages) {
             final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-            final PsiElement newDeclaration = moveDeclaration(elementFactory, localName, parameter, initializer, action, references);
+            newDeclaration = moveDeclaration(elementFactory, localName, parameter, initializer, action, references);
             super.performRefactoring(usages);
-            positionCaretToDeclaration(project, newDeclaration.getContainingFile(), newDeclaration);
           }
-        };
-        cp.run();
+        }
+
+        final ParameterToLocalProcessor processor = new ParameterToLocalProcessor(project, changeInfo);
+        processor.run();
+
+        return processor.newDeclaration;
       }
       return null;
     }

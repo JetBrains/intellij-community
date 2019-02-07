@@ -1,22 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.utils
 
 import com.intellij.ide.plugins.*
 import com.intellij.internal.statistic.beans.UsageDescriptor
+import com.intellij.internal.statistic.eventLog.EventLogConfiguration
+import com.intellij.internal.statistic.eventLog.newData
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -25,6 +13,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCacheFileName
+import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -36,21 +25,11 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 fun getProjectId(project: Project): String {
-  return project.getProjectCacheFileName(false, ".").hashCode().toString()
+  return EventLogConfiguration.anonymize(project.getProjectCacheFileName())
 }
 
 fun createData(project: Project?, context: FUSUsageContext?): Map<String, Any> {
-  if (project == null && context == null) return Collections.emptyMap()
-
-  val data = ContainerUtil.newHashMap<String, Any>()
-  if (context != null) {
-    data.putAll(context.data)
-  }
-
-  if (project != null) {
-    data["project"] = getProjectId(project)
-  }
-  return data
+  return newData(project, context)
 }
 
 fun mergeWithEventData(data: Map<String, Any>, context: FUSUsageContext?, value : Int): Map<String, Any> {
@@ -147,7 +126,7 @@ fun getCountingUsage(key: String, value: Int): UsageDescriptor {
   return UsageDescriptor("$key.$stepName+", 1)
 }
 
-private val kilo = 1000
+private const val kilo = 1000
 private val mega = kilo * kilo
 
 private fun humanize(number: Int): String {
@@ -159,6 +138,21 @@ private fun humanize(number: Int): String {
   val ks = if (k > 0) "${k}K" else ""
   val rs = if (r > 0) "${r}" else ""
   return ms + ks + rs
+}
+
+fun <T> addIfDiffers(set: MutableSet<in UsageDescriptor>, settingsBean: T, defaultSettingsBean: T,
+                     valueFunction: (T) -> Any, featureIdPrefix: String) {
+  addIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction, { "$featureIdPrefix.$it" })
+}
+
+fun <T, V> addIfDiffers(set: MutableSet<in UsageDescriptor>, settingsBean: T, defaultSettingsBean: T,
+                        valueFunction: (T) -> V,
+                        featureIdFunction: (V) -> String) {
+  val value = valueFunction(settingsBean)
+  val defaultValue = valueFunction(defaultSettingsBean)
+  if (!Comparing.equal(value, defaultValue)) {
+    set.add(UsageDescriptor(featureIdFunction(value), 1))
+  }
 }
 
 fun toUsageDescriptors(result: ObjectIntHashMap<String>): Set<UsageDescriptor> {
@@ -290,22 +284,6 @@ fun getPluginType(clazz: Class<*>): PluginType {
   // they are also considered bundled) would be reported
   val listed = !plugin.isBundled && isSafeToReport(pluginId.idString)
   return if (listed) PluginType.LISTED else PluginType.NOT_LISTED
-}
-
-enum class PluginType {
-  PLATFORM, JB_BUNDLED, JB_NOT_BUNDLED, LISTED, NOT_LISTED, UNKNOWN;
-
-  fun isPlatformOrJBBundled() : Boolean {
-    return this == PLATFORM || this == JB_BUNDLED
-  }
-
-  fun isDevelopedByJetBrains() : Boolean {
-    return isPlatformOrJBBundled() || this == JB_NOT_BUNDLED
-  }
-
-  fun isSafeToReport() : Boolean {
-    return isDevelopedByJetBrains() || this == LISTED;
-  }
 }
 
 private class DelayModificationTracker internal constructor(delay: Long, unit: TimeUnit) : ModificationTracker {

@@ -71,16 +71,22 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
   public void selectionChanged(@NotNull FileEditorManagerEvent event) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     VirtualFile newFile = event.getNewFile();
-    fileChanged(newFile);
-  }
 
-  private void fileChanged(VirtualFile newFile) {
     Project project = getProject();
     assert project != null;
     FileEditor fileEditor = newFile == null ? null : FileEditorManager.getInstance(project).getSelectedEditor(newFile);
     Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
     myEditor = new WeakReference<>(editor);
+
+    fileChanged(newFile);
+  }
+
+  private void fileChanged(VirtualFile newFile) {
+    handleFileChange(newFile);
     update();
+  }
+
+  protected void handleFileChange(VirtualFile file) {
   }
 
   @Override
@@ -171,6 +177,10 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
     return StringUtil.isEmpty(myComponent.getText()) && !myComponent.hasIcon();
   }
 
+  public boolean isActionEnabled() {
+    return actionEnabled;
+  }
+
   @TestOnly
   public void updateInTests(boolean immediately) {
     update();
@@ -218,7 +228,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
 
       myComponent.setVisible(true);
 
-      actionEnabled = state.actionEnabled && file != null && file.isWritable();
+      actionEnabled = state.actionEnabled && file != null && (!requiresWritableFile() || file.isWritable());
 
       String widgetText = state.text;
       String toolTipText = state.toolTip;
@@ -266,7 +276,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
      */
     public static final WidgetState NO_CHANGE_MAKE_VISIBLE = new WidgetState();
 
-    private final String toolTip;
+    protected final String toolTip;
     private final String text;
     private final boolean actionEnabled;
     private Icon icon;
@@ -296,6 +306,10 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
     public void setIcon(Icon icon) {
       this.icon = icon;
     }
+  }
+
+  protected boolean requiresWritableFile() {
+    return true;
   }
 
   @NotNull

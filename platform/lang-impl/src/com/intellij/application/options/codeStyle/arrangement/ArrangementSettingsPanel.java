@@ -36,7 +36,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 10/30/12 5:17 PM
  */
 public class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 

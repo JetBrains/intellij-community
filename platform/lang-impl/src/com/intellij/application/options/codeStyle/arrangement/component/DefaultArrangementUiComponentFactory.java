@@ -28,7 +28,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 3/12/13 2:23 PM
  */
 public class DefaultArrangementUiComponentFactory implements ArrangementUiComponent.Factory {
 

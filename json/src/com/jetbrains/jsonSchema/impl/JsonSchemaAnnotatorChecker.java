@@ -2,6 +2,7 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.JsonBundle;
+import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.json.psi.JsonContainer;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
@@ -27,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
+
+import static com.jetbrains.jsonSchema.impl.JsonSchemaVariantsTreeBuilder.doSingleStep;
 
 /**
  * @author Irina.Chernushina on 4/25/2017.
@@ -68,8 +71,8 @@ class JsonSchemaAnnotatorChecker {
       if (!result.myExcludingSchemas.isEmpty()) {
         // we can have several oneOf groups, each about, for instance, a part of properties
         // - then we should allow properties from neighbour schemas (even if additionalProperties=false)
-        final List<JsonSchemaAnnotatorChecker> list = result.myExcludingSchemas.stream()
-          .map(group -> processSchemasVariants(group, elementToCheck, true, options).getSecond()).collect(Collectors.toList());
+        final List<JsonSchemaAnnotatorChecker> list =
+          ContainerUtil.map(result.myExcludingSchemas, group -> processSchemasVariants(group, elementToCheck, true, options).getSecond());
         checkers.add(mergeErrors(list, options, result.myExcludingSchemas));
       }
     }
@@ -279,8 +282,8 @@ class JsonSchemaAnnotatorChecker {
         }
       }
 
-      final JsonSchemaVariantsTreeBuilder.Step step = JsonSchemaVariantsTreeBuilder.Step.createPropertyStep(name);
-      final Pair<ThreeState, JsonSchemaObject> pair = step.step(schema, true);
+      final JsonPointerPosition step = JsonPointerPosition.createSingleProperty(name);
+      final Pair<ThreeState, JsonSchemaObject> pair = doSingleStep(step, schema, true);
       if (ThreeState.NO.equals(pair.getFirst()) && !set.contains(name)) {
         error(JsonBundle.message("json.schema.annotation.not.allowed.property", name), property.getDelegate(),
               JsonValidationError.FixableIssueKind.ProhibitedProperty,
@@ -432,11 +435,10 @@ class JsonSchemaAnnotatorChecker {
     final JsonSchemaObject schemaObject = JsonSchemaService.Impl.get(object.getProject()).getSchemaObjectForSchemaFile(schemaFile);
     if (schemaObject == null) return;
 
-    final List<JsonSchemaVariantsTreeBuilder.Step> position = JsonOriginalPsiWalker.INSTANCE.findPosition(object, true);
+    final JsonPointerPosition position = JsonOriginalPsiWalker.INSTANCE.findPosition(object, true);
     if (position == null) return;
-    final List<JsonSchemaVariantsTreeBuilder.Step> steps = skipProperties(position);
     // !! not root schema, because we validate the schema written in the file itself
-    final MatchResult result = new JsonSchemaResolver(schemaObject, false, steps).detailedResolve();
+    final MatchResult result = new JsonSchemaResolver(schemaObject, false, position).detailedResolve();
     for (JsonSchemaObject s: result.mySchemas) {
       reportInvalidPatternProperties(s);
       reportPatternErrors(s);
@@ -481,22 +483,6 @@ class JsonSchemaAnnotatorChecker {
     }
   }
 
-  private static List<JsonSchemaVariantsTreeBuilder.Step> skipProperties(List<JsonSchemaVariantsTreeBuilder.Step> position) {
-    final Iterator<JsonSchemaVariantsTreeBuilder.Step> iterator = position.iterator();
-    boolean canSkip = true;
-    while (iterator.hasNext()) {
-      final JsonSchemaVariantsTreeBuilder.Step step = iterator.next();
-      if (canSkip && step.isFromObject() && JsonSchemaObject.PROPERTIES.equals(step.getName())) {
-        iterator.remove();
-        canSkip = false;
-      }
-      else {
-        canSkip = true;
-      }
-    }
-    return position;
-  }
-
   private static boolean checkEnumValue(@NotNull Object object,
                                         @NotNull JsonLikePsiWalker walker,
                                         @Nullable JsonValueAdapter adapter,
@@ -532,11 +518,11 @@ class JsonSchemaAnnotatorChecker {
       }
     }
     else {
-      if (walker.onlyDoubleQuotesForStringLiterals()) {
+      if (!walker.allowsSingleQuotes()) {
         if (stringEq.apply(object.toString(), text)) return true;
       }
       else {
-        if (equalsIgnoreQuotes(object.toString(), text, walker.quotesForStringLiterals(), stringEq)) return true;
+        if (equalsIgnoreQuotes(object.toString(), text, walker.requiresValueQuotes(), stringEq)) return true;
       }
     }
 
@@ -1128,8 +1114,8 @@ class JsonSchemaAnnotatorChecker {
                                      errors.stream().map(e -> (JsonValidationError.MissingMultiplePropsIssueData)e.getIssueData())
                                     .map(d -> d.getMessage(false)).collect(Collectors.joining(", or ")),
                                      isOneOf ? JsonValidationError.FixableIssueKind.MissingOneOfProperty : JsonValidationError.FixableIssueKind.MissingAnyOfProperty,
-                                     new JsonValidationError.MissingOneOfPropsIssueData(errors.stream().map(e -> (JsonValidationError.MissingMultiplePropsIssueData)e.getIssueData()).collect(
-                                       Collectors.toList())), errors.iterator().next().getPriority());
+                                     new JsonValidationError.MissingOneOfPropsIssueData(
+                                       ContainerUtil.map(errors, e -> (JsonValidationError.MissingMultiplePropsIssueData)e.getIssueData())), errors.iterator().next().getPriority());
     }
 
     if (commonIssueKind == JsonValidationError.FixableIssueKind.ProhibitedType) {

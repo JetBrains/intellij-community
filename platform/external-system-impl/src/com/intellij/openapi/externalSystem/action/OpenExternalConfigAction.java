@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/17/2014
  */
 public class OpenExternalConfigAction extends ExternalSystemNodeAction<ExternalConfigPathAware> {
 

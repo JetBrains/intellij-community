@@ -18,6 +18,7 @@ package org.jetbrains.idea.devkit.testAssistant;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
@@ -25,6 +26,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 
@@ -69,63 +72,86 @@ public class TestDataGuessByExistingFilesUtilTest extends TestDataPathTestCase {
                                          "Test/testdata_file.txt", "TestMore/testdata_file.txt", "TestMoreRelevant/testdata_file.txt");
     PsiClass testClass = (PsiClass)testMethod.getParent();
 
-    List<String> result = TestDataGuessByExistingFilesUtil.suggestTestDataFiles("testdata_file", null, testClass);
-    String resultPath = assertOneElement(result);
+    List<TestDataFile> result = TestDataGuessByExistingFilesUtil.suggestTestDataFiles("testdata_file", null, testClass);
+    String resultPath = assertOneElement(result).getPath();
     assertTrue(resultPath, resultPath.endsWith("TestMoreRelevant/testdata_file.txt"));
   }
 
   public void testCollectTestDataByExistingFilesBeforeAndAfter() {
     PsiMethod testMethod = getTestMethodWithBeforeAndAfterTestData();
-    List<String> result = TestDataGuessByExistingFilesUtil.collectTestDataByExistingFiles(testMethod);
+    List<TestDataFile> result = TestDataGuessByExistingFilesUtil.collectTestDataByExistingFiles(testMethod, null);
     verifyResultForBeforeAndAfter(result);
   }
 
   public void testSuggestTestDataFilesBeforeAndAfter() {
     PsiMethod testMethod = getTestMethodWithBeforeAndAfterTestData();
-    List<String> result = TestDataGuessByExistingFilesUtil.suggestTestDataFiles(
+    List<TestDataFile> result = TestDataGuessByExistingFilesUtil.suggestTestDataFiles(
       TestDataGuessByExistingFilesUtil.getTestName(testMethod.getName()), null, testMethod.getContainingClass());
     verifyResultForBeforeAndAfter(result);
   }
 
   public void testCollectTestDataByExistingFilesBeforeAndSame() {
     PsiMethod testMethod = getTestMethodWithBeforeAndSameTestData();
-    List<String> result = TestDataGuessByExistingFilesUtil.collectTestDataByExistingFiles(testMethod);
+    List<TestDataFile> result = TestDataGuessByExistingFilesUtil.collectTestDataByExistingFiles(testMethod, null);
     verifyResultForBeforeAndSame(result);
   }
 
   public void testSuggestTestDataFilesBeforeAndSame() {
     PsiMethod testMethod = getTestMethodWithBeforeAndSameTestData();
-    List<String> result = TestDataGuessByExistingFilesUtil.suggestTestDataFiles(
+    List<TestDataFile> result = TestDataGuessByExistingFilesUtil.suggestTestDataFiles(
       TestDataGuessByExistingFilesUtil.getTestName(testMethod.getName()), null, testMethod.getContainingClass());
     verifyResultForBeforeAndSame(result);
   }
 
   public void testCollectTestDataByExistingFilesAfterAndSame() {
     PsiMethod testMethod = getTestMethodWithAfterAndSameTestData();
-    List<String> result = TestDataGuessByExistingFilesUtil.collectTestDataByExistingFiles(testMethod);
+    List<TestDataFile> result = TestDataGuessByExistingFilesUtil.collectTestDataByExistingFiles(testMethod, null);
     verifyResultForAfterAndSame(result);
   }
 
   public void testSuggestTestDataFilesAfterAndSame() {
     PsiMethod testMethod = getTestMethodWithAfterAndSameTestData();
-    List<String> result = TestDataGuessByExistingFilesUtil.suggestTestDataFiles(
+    List<TestDataFile> result = TestDataGuessByExistingFilesUtil.suggestTestDataFiles(
       TestDataGuessByExistingFilesUtil.getTestName(testMethod.getName()), null, testMethod.getContainingClass());
     verifyResultForAfterAndSame(result);
   }
 
   public void testCollectTestDataByExistingFilesOnlySame() {
     PsiMethod testMethod = getTestMethodWithOnlySameTestData();
-    List<String> result = TestDataGuessByExistingFilesUtil.collectTestDataByExistingFiles(testMethod);
+    List<TestDataFile> result = TestDataGuessByExistingFilesUtil.collectTestDataByExistingFiles(testMethod, null);
     verifyResultForOnlySame(result);
   }
 
   public void testSuggestTestDataFilesOnlySame() {
     PsiMethod testMethod = getTestMethodWithOnlySameTestData();
-    List<String> result = TestDataGuessByExistingFilesUtil.suggestTestDataFiles(
+    List<TestDataFile> result = TestDataGuessByExistingFilesUtil.suggestTestDataFiles(
       TestDataGuessByExistingFilesUtil.getTestName(testMethod.getName()), null, testMethod.getContainingClass());
     verifyResultForOnlySame(result);
   }
 
+  public void testCollectTestDataByDirName() {
+    PsiMethod testMethod = getTestMethodWithTestDataDir();
+    List<TestDataFile> result = TestDataGuessByExistingFilesUtil.suggestTestDataFiles(
+      TestDataGuessByExistingFilesUtil.getTestName(testMethod.getName()), null, testMethod.getContainingClass());
+    assertSize(2, result);
+    assertTrue(result.get(0).exists() && result.get(1).exists());
+    assertEquals(ContainerUtil.set("before.java", "after.java"), ContainerUtil.map2Set(result, TestDataFile::getName));
+  }
+
+  public void testGuessTestDataByRelatedByDirName() {
+    PsiMethod testMethod = getTestMethodWithTestDataDirAndSibling();
+
+    List<TestDataFile> result = TestDataGuessByExistingFilesUtil.guessTestDataName(testMethod);
+    assertSize(2, result);
+    assertTrue(!result.get(0).exists() && !result.get(1).exists());
+    assertEquals(ContainerUtil.set("before.java", "after.java"), ContainerUtil.map2Set(result, TestDataFile::getName));
+    String parentName1 = PathUtil.getFileName(PathUtil.getParentPath(result.get(0).getPath()));
+    String parentName2 = PathUtil.getFileName(PathUtil.getParentPath(result.get(1).getPath()));
+
+    String expected = StringUtil.decapitalize(TestDataGuessByExistingFilesUtil.getTestName(testMethod.getName()));
+    assertEquals(expected, parentName1);
+    assertEquals(expected, parentName2);
+  }
 
   private PsiMethod getTestMethodWithBeforeAndAfterTestData() {
     return getTestMethod("SomeTest_BeforeAndAfter.java", "somethingBA_before.java", "somethingBA_after.java");
@@ -137,6 +163,14 @@ public class TestDataGuessByExistingFilesUtilTest extends TestDataPathTestCase {
 
   private PsiMethod getTestMethodWithAfterAndSameTestData() {
     return getTestMethod("SomeTest_AfterAndSame.java", "somethingAS_after.java", "somethingAS.java");
+  }
+
+  private PsiMethod getTestMethodWithTestDataDir() {
+    return getTestMethod("SomeTestWithTestDataDir.java", "testDataForThisTest/before.java", "testDataForThisTest/after.java");
+  }
+
+  private PsiMethod getTestMethodWithTestDataDirAndSibling() {
+    return getTestMethod("SomeTestWithTestDataDirAndSibling.java", "testDataForThisTest/before.java", "testDataForThisTest/after.java");
   }
 
   private PsiMethod getTestMethodWithOnlySameTestData() {
@@ -154,34 +188,37 @@ public class TestDataGuessByExistingFilesUtilTest extends TestDataPathTestCase {
     return testMethod;
   }
 
-
-  private static void verifyResultForBeforeAndAfter(List<String> names) {
+  private static void verifyResultForBeforeAndAfter(List<TestDataFile> testDataFiles) {
+    List<String> names = ContainerUtil.map(testDataFiles, TestDataFile::getName);
     assertNotNull(names);
     assertEquals(names.toString(), 2, names.size());
     Collections.sort(names);
-    assertTrue(names.get(0), names.get(0).endsWith("somethingBA_after.java"));
-    assertTrue(names.get(1), names.get(1).endsWith("somethingBA_before.java"));
+    assertEquals("somethingBA_after.java", names.get(0));
+    assertEquals("somethingBA_before.java", names.get(1));
   }
 
-  private static void verifyResultForBeforeAndSame(List<String> names) {
+  private static void verifyResultForBeforeAndSame(List<TestDataFile> testDataFiles) {
+    List<String> names = ContainerUtil.map(testDataFiles, TestDataFile::getName);
     assertNotNull(names);
     assertEquals(names.toString(), 2, names.size());
     Collections.sort(names);
-    assertTrue(names.get(0), names.get(0).endsWith("somethingBS.java"));
-    assertTrue(names.get(1), names.get(1).endsWith("somethingBS_before.java"));
+    assertEquals("somethingBS.java", names.get(0));
+    assertEquals("somethingBS_before.java", names.get(1));
   }
 
-  private static void verifyResultForAfterAndSame(List<String> names) {
+  private static void verifyResultForAfterAndSame(List<TestDataFile> testDataFiles) {
+    List<String> names = ContainerUtil.map(testDataFiles, TestDataFile::getName);
     assertNotNull(names);
     assertEquals(names.toString(), 2, names.size());
     Collections.sort(names);
-    assertTrue(names.get(0), names.get(0).endsWith("somethingAS.java"));
-    assertTrue(names.get(1), names.get(1).endsWith("somethingAS_after.java"));
+    assertEquals("somethingAS.java", names.get(0));
+    assertEquals("somethingAS_after.java", names.get(1));
   }
 
-  private static void verifyResultForOnlySame(List<String> names) {
+  private static void verifyResultForOnlySame(List<TestDataFile> testDataFiles) {
+    List<String> names = ContainerUtil.map(testDataFiles, TestDataFile::getName);
     assertNotNull(names);
-    assertEquals(names.toString(), 1, names.size());
-    assertTrue(names.get(0), names.get(0).endsWith("somethingS.java"));
+    assertSize(1, names);
+    assertEquals("somethingS.java", names.get(0));
   }
 }

@@ -9,7 +9,6 @@ import java.io.Serializable;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/15/13
  */
 public interface ExtIdeaContentRoot extends IdeaContentRoot, Serializable {
 

@@ -42,7 +42,6 @@ import java.util.Set;
 
 /**
  * @author Denis Zhdanov
- * @since 4/15/13 8:37 AM
  */
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public class ModuleDependencyDataService extends AbstractDependencyDataService<ModuleDependencyData, ModuleOrderEntry> {

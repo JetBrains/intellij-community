@@ -71,7 +71,7 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
           border.append(new Rectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2), false);
 
           boolean editable = !(c instanceof JTextComponent) || ((JTextComponent)c).isEditable();
-          g2.setColor(getOutlineColor(c.isEnabled() && editable, c.hasFocus()));
+          g2.setColor(getOutlineColor(c.isEnabled() && editable, focused));
           g2.fill(border);
         }
       }

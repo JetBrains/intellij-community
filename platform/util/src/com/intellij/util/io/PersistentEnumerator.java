@@ -74,7 +74,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
     lockStorage();
     try {
       for (int slotIdx = 0; slotIdx < slotsCount; slotIdx++) {
-        final int vector = myStorage.getInt(vectorStart + slotIdx * 4);
+        final int vector = myStorage.getInt(vectorStart + slotIdx * 4L);
         if (vector < 0) {
           for (int record = -vector; record != 0; record = nextCandidate(record)) {
             if (!p.process(record)) return false;
@@ -158,12 +158,12 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
             final int oldHCByte = hcByte(candidateHC, depth);
             if (valueHCByte == oldHCByte) {
               int newVector = allocVector(EMPTY_VECTOR);
-              myStorage.putInt(lastVector + oldHCByte * 4, newVector);
+              myStorage.putInt(lastVector + oldHCByte * 4L, newVector);
               lastVector = newVector;
             }
             else {
-              myStorage.putInt(lastVector + valueHCByte * 4, -newId);
-              myStorage.putInt(lastVector + oldHCByte * 4, vector);
+              myStorage.putInt(lastVector + valueHCByte * 4L, -newId);
+              myStorage.putInt(lastVector + oldHCByte * 4L, vector);
               break;
             }
             depth++;

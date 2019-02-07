@@ -25,7 +25,6 @@ import javax.swing.event.HyperlinkEvent;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/11/2014
  */
 public class OpenProjectJdkSettingsCallback extends NotificationListener.Adapter {
 

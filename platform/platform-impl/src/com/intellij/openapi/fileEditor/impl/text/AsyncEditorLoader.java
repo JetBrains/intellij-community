@@ -95,10 +95,12 @@ public class AsyncEditorLoader {
      * to be (optionally) called on EDT
      * @see AsyncEditorLoader#scheduleLoading()
      */
+    @NotNull
     final Future<Runnable> continuationFuture;
+    @NotNull
     final Future<?> totalProgressFuture;
 
-    private LoadingProgress(Future<Runnable> future, Future<?> progressFuture) {
+    private LoadingProgress(@NotNull Future<Runnable> future, @NotNull Future<?> progressFuture) {
       continuationFuture = future;
       totalProgressFuture = progressFuture;
     }
@@ -148,7 +150,7 @@ public class AsyncEditorLoader {
     final long docStamp;
     @NotNull final Runnable continuation;
 
-    public LoadEditorResult(long docStamp, @NotNull Runnable continuation) {
+    private LoadEditorResult(long docStamp, @NotNull Runnable continuation) {
       this.docStamp = docStamp;
       this.continuation = continuation;
     }
@@ -185,11 +187,12 @@ public class AsyncEditorLoader {
            !ApplicationManager.getApplication().isWriteAccessAllowed();
   }
 
-  private static <T> T resultInTimeOrNull(Future<T> future, long timeMs) {
+  private static <T> T resultInTimeOrNull(@NotNull Future<T> future, long timeMs) {
     try {
       return future.get(timeMs, TimeUnit.MILLISECONDS);
     }
-    catch (InterruptedException | TimeoutException ignored) {}
+    catch (InterruptedException | TimeoutException ignored) {
+    }
     catch (ExecutionException e) {
       throw new RuntimeException(e);
     }

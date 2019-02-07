@@ -22,7 +22,6 @@ import static org.junit.Assert.assertSame;
 
 /**
  * @author Denis Zhdanov
- * @since 09/21/2010
  */
 public class StaticTextWhiteSpaceDefinitionStrategyTest {
 

@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
-import com.intellij.ui.JBColor;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.AbstractLayoutManager;
@@ -211,7 +211,7 @@ public class BaselinePanel extends NonOpaquePanel {
   public void addErrorComponents(@NotNull String message, boolean enableAction, @NotNull Runnable enableCallback) {
     if (myErrorComponent == null) {
       myErrorComponent = new JLabel();
-      myErrorComponent.setForeground(JBColor.red);
+      myErrorComponent.setForeground(DialogWrapper.ERROR_FOREGROUND_COLOR);
       myErrorComponent.setOpaque(false);
       add(myErrorComponent, null);
 

@@ -16,6 +16,7 @@
 package com.intellij.terminal;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.ide.actions.ShowContentAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
@@ -55,10 +56,10 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
 
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
     connection.subscribe(UISettingsListener.TOPIC, uiSettings -> {
-      int size = consoleFontSize(this.myColorScheme);
-
-      if (myColorScheme.getConsoleFontSize() != size) {
-        myColorScheme.setConsoleFontSize(size);
+      int oldSize = myColorScheme.getConsoleFontSize();
+      int newSize = consoleFontSize(myColorScheme);
+      if (oldSize != newSize) {
+        myColorScheme.setConsoleFontSize(newSize);
         fireFontChanged();
       }
     });
@@ -66,6 +67,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
       @Override
       public void globalSchemeChange(EditorColorsScheme scheme) {
         myColorScheme.updateGlobalScheme(scheme);
+        myColorScheme.setConsoleFontSize(consoleFontSize(myColorScheme));
         fireFontChanged();
       }
     });
@@ -135,6 +137,11 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
     }
   }
 
+  @NotNull
+  public KeyStroke[] getShowTabsKeyStrokes() {
+    return getKeyStrokesByActionId(ShowContentAction.ACTION_ID);
+  }
+
   protected static int consoleFontSize(MyColorSchemeDelegate colorScheme) {
     int size;
     if (UISettings.getInstance().getPresentationMode()) {
@@ -146,7 +153,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
     return size;
   }
 
-  protected static class MyColorSchemeDelegate implements EditorColorsScheme {
+  private static class MyColorSchemeDelegate implements EditorColorsScheme {
 
     private final FontPreferencesImpl myFontPreferences = new FontPreferencesImpl();
     private final HashMap<TextAttributesKey, TextAttributes> myOwnAttributes = new HashMap<>();

@@ -83,7 +83,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       int index = grouper.index;
       SuffixMatches group = grouper.nextGroup(base);
       if (group == null) break;
-      if (!group.processFiles(pattern, sanitized, everywhere, consumer, hasSuggestions, dirMatcher)) {
+      if (!group.processFiles(pattern, dirMatcher.dirPattern, everywhere, consumer, hasSuggestions, dirMatcher)) {
         return false;
       }
       dirMatcher = dirMatcher.appendChar(grouper.namePattern.charAt(index));
@@ -118,7 +118,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       VirtualFile vFile = LocalFileSystem.getInstance().findFileByPathIfCached(path);
       if (vFile != null) {
         ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(myProject);
-        if (index.isInContent(vFile) || index.isInLibraryClasses(vFile) || index.isInLibrarySource(vFile)) {
+        if (index.isInContent(vFile) || index.isInLibrary(vFile)) {
           return vFile.isDirectory() ? PsiManager.getInstance(myProject).findDirectory(vFile) : PsiManager.getInstance(myProject).findFile(vFile);
         }
       }
@@ -129,7 +129,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   @NotNull
   private List<PsiFileSystemItem> getFilesMatchingPath(@NotNull String pattern,
                                                        boolean everywhere,
-                                                       MinusculeMatcher fullMatcher,
+                                                       MinusculeMatcher qualifierMatcher,
                                                        List<String> fileNames,
                                                        DirectoryPathMatcher dirMatcher,
                                                        @NotNull ProgressIndicator indicator) {
@@ -146,17 +146,18 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
         ProgressManager.checkCanceled();
         String fullName = myModel.getFullName(o);
         if (o instanceof PsiFileSystemItem && fullName != null) {
-          fullName = FileUtilRt.toSystemIndependentName(fullName);
-          FList<TextRange> fragments = fullMatcher.matchingFragments(fullName);
-          if (fragments != null && !fragments.isEmpty()) {
+          String qualifier = StringUtil.getPackageName(FileUtilRt.toSystemIndependentName(fullName), '/') + '/';
+          FList<TextRange> fragments = qualifierMatcher.matchingFragments(qualifier);
+          if (fragments != null) {
             group.add((PsiFileSystemItem)o);
 
-            qualifierMatchingDegrees.put((PsiFileSystemItem)o, -fullMatcher.matchingDegree(fullName, false, fragments));
+            int gapPenalty = fragments.isEmpty() ? 0 : qualifier.length() - fragments.get(fragments.size() - 1).getEndOffset();
+            qualifierMatchingDegrees.put((PsiFileSystemItem)o, -qualifierMatcher.matchingDegree(qualifier, false, fragments) + gapPenalty);
 
-            String matchingArea = fullName.substring(fragments.getHead().getStartOffset(), fragments.get(fragments.size() - 1).getEndOffset());
+            String matchingArea = qualifier.substring(fragments.isEmpty() ? 0 : fragments.getHead().getStartOffset());
             dirCloseness.put((PsiFileSystemItem)o, StringUtil.countChars(matchingArea, '/'));
 
-            nesting.put((PsiFileSystemItem)o, StringUtil.countChars(fullName, '/'));
+            nesting.put((PsiFileSystemItem)o, StringUtil.countChars(qualifier, '/'));
           }
         }
       }
@@ -270,12 +271,12 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }
 
     boolean processFiles(@NotNull String pattern,
-                         String sanitizedPattern,
+                         String qualifierPattern,
                          boolean everywhere,
                          Processor<? super PsiFileSystemItem> processor,
                          Ref<Boolean> hasSuggestions,
                          DirectoryPathMatcher dirMatcher) {
-      MinusculeMatcher fullMatcher = getQualifiedNameMatcher(sanitizedPattern);
+      MinusculeMatcher qualifierMatcher = getQualifiedNameMatcher(qualifierPattern);
 
       List<MatchResult> matchingNames = this.matchingNames;
       if (patternSuffix.length() <= 3) {
@@ -289,7 +290,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
 
       List<List<String>> groups = groupByMatchingDegree(!pattern.startsWith("*"), matchingNames);
       for (List<String> group : groups) {
-        List<PsiFileSystemItem> files = getFilesMatchingPath(pattern, everywhere, fullMatcher, group, dirMatcher, indicator);
+        List<PsiFileSystemItem> files = getFilesMatchingPath(pattern, everywhere, qualifierMatcher, group, dirMatcher, indicator);
         if (!files.isEmpty()) {
           hasSuggestions.set(true);
         }
@@ -298,7 +299,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
         }
       }
 
-      if (!hasSuggestions.get() && !everywhere && hasSuggestionsOutsideProject(pattern, fullMatcher, groups, dirMatcher)) {
+      if (!hasSuggestions.get() && !everywhere && hasSuggestionsOutsideProject(pattern, qualifierMatcher, groups, dirMatcher)) {
         // let the framework switch to searching outside project to display these well-matching suggestions
         // instead of worse-matching ones in project (that are very expensive to calculate)
         return false;
@@ -307,9 +308,9 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }
 
     private boolean hasSuggestionsOutsideProject(@NotNull String pattern,
-                                                 MinusculeMatcher fullMatcher,
+                                                 MinusculeMatcher qualifierMatcher,
                                                  List<List<String>> groups, DirectoryPathMatcher dirMatcher) {
-      return ContainerUtil.exists(groups, group -> !getFilesMatchingPath(pattern, true, fullMatcher, group, dirMatcher, indicator).isEmpty());
+      return ContainerUtil.exists(groups, group -> !getFilesMatchingPath(pattern, true, qualifierMatcher, group, dirMatcher, indicator).isEmpty());
     }
 
     private List<List<String>> groupByMatchingDegree(boolean preferStartMatches, List<MatchResult> matchingNames) {

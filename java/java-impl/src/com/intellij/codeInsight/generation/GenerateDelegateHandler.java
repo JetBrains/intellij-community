@@ -34,8 +34,6 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
-import java.util.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -260,6 +258,10 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
         if (overridden != null && overridden.getContainingClass() != containingClass) {
           continue;
         }
+      }
+
+      if (MethodSignatureUtil.findMethodBySuperMethod(containingClass, method, false) != null) {
+        continue;
       }
 
       PsiSubstitutor superSubstitutor = superSubstitutors.get(superClass);

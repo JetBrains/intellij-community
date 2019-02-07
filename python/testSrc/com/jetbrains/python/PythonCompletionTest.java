@@ -1408,6 +1408,15 @@ public class PythonCompletionTest extends PyTestCase {
     assertContainsElements(suggested, "_make", "_asdict", "_replace", "_fields");
   }
 
+  // PY-31938
+  public void testReassignedDictKeys() {
+    final List<String> suggested = doTestByText("foo = {'k1': '1', 'k2': '2'}\n" +
+                                                "bar = foo\n" +
+                                                "bar['<caret>']");
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "'k1'", "'k2'");
+  }
+
   private void assertNoVariantsInExtendedCompletion() {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     myFixture.configureByFile("a.py");

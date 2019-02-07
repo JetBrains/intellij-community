@@ -62,7 +62,7 @@ public class OneProjectItemCompileScope extends ExportableUserDataHolderBase imp
   }
 
   @Override
-  public boolean belongs(String url) {
+  public boolean belongs(@NotNull String url) {
     if (myFile.isDirectory()){
       return FileUtil.startsWith(url, myUrl);
     }

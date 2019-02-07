@@ -8,8 +8,8 @@ class NegatedConditional {
 
     final NegatedConditional that = (NegatedConditional)object;
 
-      //comment
-      return text != null ? text.equals(that.text) : that.text == null;
+      return text != null ? text.equals(that.text) : that.text == null; //comment
+
   }
 
   public int hashCode() {

@@ -2,7 +2,6 @@ package com.intellij.tasks;
 
 import com.intellij.CommonBundle;
 import com.intellij.reference.SoftReference;
-import org.apache.commons.httpclient.HttpStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
@@ -27,17 +26,6 @@ public class TaskBundle {
 
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
     return CommonBundle.message(getBundle(), key, params);
-  }
-
-  @NotNull
-  public static String messageForStatusCode(int statusCode) {
-    if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
-      return message("failure.login");
-    }
-    else if (statusCode == HttpStatus.SC_FORBIDDEN) {
-      return message("failure.permissions");
-    }
-    return message("failure.http.error", statusCode, HttpStatus.getStatusText(statusCode));
   }
 
   private static ResourceBundle getBundle() {

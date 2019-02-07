@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.overhead;
 
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.EventDispatcher;
-import one.util.streamex.StreamEx;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,22 +23,26 @@ public class OverheadTimings {
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final List<Pair<Long, Timings>> myLast10Elements = new LinkedList<Pair<Long, Timings>>() {
+    private long totalTime = 0;
+
     @Override
-    public boolean add(Pair<Long, Timings> o) {
+    public synchronized boolean add(Pair<Long, Timings> o) {
       if (size() > 10) {
-        removeFirst();
+        if (isExcessive()) {
+          myEventDispatcher.getMulticaster().excessiveOverheadDetected();
+        }
+        Pair<Long, Timings> first = removeFirst();
+        if (first != null) {
+          totalTime -= ObjectUtils.notNull(first.getSecond().myTime, 0L);
+        }
       }
-      boolean res = super.add(o);
-      if (isExcessive()) {
-        myEventDispatcher.getMulticaster().excessiveOverheadDetected();
-      }
-      return res;
+      totalTime += ObjectUtils.notNull(o.getSecond().myTime, 0L);
+      return super.add(o);
     }
 
     private boolean isExcessive() {
-      if (size() < 5) return false;
-      long totalTime = StreamEx.of(this).map(p -> p.getSecond().myTime).nonNull().mapToLong(l -> l).sum();
-      return totalTime > (getLast().first - getFirst().first);
+      long timeframe = getLast().first - getFirst().first;
+      return totalTime > timeframe || timeframe < 5;
     }
   };
 

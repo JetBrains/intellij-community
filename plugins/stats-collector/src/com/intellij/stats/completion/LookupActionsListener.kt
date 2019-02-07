@@ -4,40 +4,20 @@ package com.intellij.stats.completion
 
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
-import com.intellij.openapi.diagnostic.ControlFlowException
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
+
+private val LOG = logger<LookupActionsListener>()
 
 class LookupActionsListener : AnActionListener {
-  private companion object {
-    val LOG = Logger.getInstance(LookupActionsListener::class.java)
-  }
-
   private val down = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)
   private val up = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)
   private val backspace = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_BACKSPACE)
 
   var listener: CompletionPopupListener = CompletionPopupListener.Adapter()
 
-  private fun logThrowables(block: () -> Unit) {
-    try {
-      block()
-    }
-    catch (e: Throwable) {
-      logIfNotControlFlow(e)
-    }
-  }
-
-  private fun logIfNotControlFlow(e: Throwable) {
-    if (e is ControlFlowException) {
-      throw e
-    }
-    else {
-      LOG.error(e)
-    }
-  }
-
-  override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent?) {
-    logThrowables {
+  override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+    LOG.runAndLogException {
       when (action) {
         down -> listener.downPressed()
         up -> listener.upPressed()
@@ -46,8 +26,8 @@ class LookupActionsListener : AnActionListener {
     }
   }
 
-  override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent?) {
-    logThrowables {
+  override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+    LOG.runAndLogException {
       when (action) {
         down -> listener.beforeDownPressed()
         up -> listener.beforeUpPressed()
@@ -57,7 +37,7 @@ class LookupActionsListener : AnActionListener {
   }
 
   override fun beforeEditorTyping(c: Char, dataContext: DataContext) {
-    logThrowables {
+    LOG.runAndLogException {
       listener.beforeCharTyped(c)
     }
   }

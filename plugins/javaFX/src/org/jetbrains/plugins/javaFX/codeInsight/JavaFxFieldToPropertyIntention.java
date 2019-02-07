@@ -3,6 +3,7 @@ package org.jetbrains.plugins.javaFX.codeInsight;
 
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -206,7 +207,7 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
       if (PsiDiamondTypeUtil.canCollapseToDiamond(newInitializer, (PsiNewExpression)myField.getInitializer(), fieldType)) {
         final PsiJavaCodeReferenceElement classReference = newInitializer.getClassOrAnonymousClassReference();
         if (classReference != null) {
-          PsiDiamondTypeUtil.replaceExplicitWithDiamond(classReference.getParameterList());
+          RemoveRedundantTypeArgumentsUtil.replaceExplicitWithDiamond(classReference.getParameterList());
         }
       }
       myField.setInitializer(newInitializer);

@@ -36,6 +36,7 @@ public class GrExtendsClauseImpl extends GrReferenceListImpl implements GrExtend
     visitor.visitExtendsClause(this);
   }
 
+  @Override
   public String toString() {
     return "Extends clause";
   }

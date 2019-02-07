@@ -26,7 +26,6 @@ import java.util.List;
  * (e.g. imports missing libraries).
  *
  * @author Vladislav.Soroka
- * @since 9/18/13
  */
 public class RefreshExternalProjectAction extends ExternalSystemNodeAction<AbstractExternalEntityData> {
 

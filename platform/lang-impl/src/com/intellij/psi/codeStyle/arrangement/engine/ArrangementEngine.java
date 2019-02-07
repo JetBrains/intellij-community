@@ -58,7 +58,6 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Se
  * engine which works on top of that API and performs the arrangement.
  *
  * @author Denis Zhdanov
- * @since 7/20/12 1:56 PM
  */
 public class ArrangementEngine {
   private boolean myCodeChanged;

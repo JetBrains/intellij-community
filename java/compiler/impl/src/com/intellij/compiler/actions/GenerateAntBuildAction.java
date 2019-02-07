@@ -1,28 +1,14 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.actions;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.ant.*;
 import com.intellij.compiler.impl.CompilerUtil;
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -103,8 +89,8 @@ public class GenerateAntBuildAction extends CompileActionBase {
     presentation.setEnabled(e.getProject() != null);
   }
 
-  private void generate(final Project project, final GenerationOptions genOptions) {
-    ApplicationManager.getApplication().saveAll();
+  private void generate(@NotNull Project project, final GenerationOptions genOptions) {
+    StoreUtil.saveDocumentsAndProjectSettings(project);
     final List<File> filesToRefresh = new ArrayList<>();
     final IOException[] _ex = new IOException[]{null};
     final List<File> _generated = new ArrayList<>();
@@ -266,14 +252,14 @@ public class GenerateAntBuildAction extends CompileActionBase {
       }
     }
     final ReadonlyStatusHandler.OperationStatus status =
-      ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(VfsUtil.toVirtualFileArray(toCheck));
+      ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(toCheck);
     if (status.hasReadonlyFiles()) {
       throw new IOException(status.getReadonlyFilesMessage());
     }
   }
 
   public File[] generateMultipleFileBuild(Project project, GenerationOptions genOptions, List<? super File> filesToRefresh) throws IOException {
-    final File projectBuildFileDestDir = VfsUtil.virtualToIoFile(project.getBaseDir());
+    final File projectBuildFileDestDir = VfsUtilCore.virtualToIoFile(project.getBaseDir());
     projectBuildFileDestDir.mkdirs();
     final List<File> generated = new ArrayList<>();
     final File projectBuildFile = new File(projectBuildFileDestDir, genOptions.getBuildFileName());

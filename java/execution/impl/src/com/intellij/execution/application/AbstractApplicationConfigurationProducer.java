@@ -5,7 +5,6 @@ import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.execution.junit.JavaRunConfigurationProducerBase;
 import com.intellij.openapi.module.Module;
@@ -20,11 +19,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractApplicationConfigurationProducer<T extends ApplicationConfiguration> extends JavaRunConfigurationProducerBase<T> {
-  public AbstractApplicationConfigurationProducer(@NotNull ConfigurationType configurationType) {
-    super(configurationType);
+  public AbstractApplicationConfigurationProducer() {
+    super();
   }
 
-  // backward compatibility
+  /**
+   * @deprecated Override {@link #getConfigurationFactory()}.
+   */
+  @Deprecated
   public AbstractApplicationConfigurationProducer(@NotNull ApplicationConfigurationType configurationType) {
     super(configurationType);
   }

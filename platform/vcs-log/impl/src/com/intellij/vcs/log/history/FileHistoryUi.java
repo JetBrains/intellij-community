@@ -93,6 +93,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       getTable().getSelectionModel().addListSelectionListener(selectionListener);
 
       myDiffPreviewSplitter = new OnePixelSplitter(false, "vcs.history.diff.splitter.proportion", 0.7f);
+      myDiffPreviewSplitter.setHonorComponentsMinimumSize(false);
       myDiffPreviewSplitter.setFirstComponent(myFileHistoryPanel);
       showDiffPreview(myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW));
       myMainComponent = myDiffPreviewSplitter;

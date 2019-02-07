@@ -12,8 +12,8 @@ import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginType;
 import com.intellij.internal.statistic.utils.StatisticsUtilKt;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +32,7 @@ public abstract class AbstractRunConfigurationTypeUsagesCollector extends Projec
   @Override
   public Set<UsageDescriptor> getUsages(@NotNull Project project) {
     final TObjectIntHashMap<Template> templates = new TObjectIntHashMap<>();
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
       if (project.isDisposed()) return;
       final RunManager runManager = RunManager.getInstance(project);
       for (RunnerAndConfigurationSettings settings : runManager.getAllSettings()) {

@@ -19,24 +19,25 @@ import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.importing.ExternalProjectStructureCustomizer;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.Identifiable;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 
 import javax.swing.*;
-import java.util.Collections;
 import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/13/2015
  */
 public class GradleProjectStructureCustomizer extends ExternalProjectStructureCustomizer {
 
-  private final Set<Key<GradleSourceSetData>> myKeys = Collections.singleton(GradleSourceSetData.KEY);
+  private final Set<Key<? extends Identifiable>> myKeys = ContainerUtil.newHashSet(GradleSourceSetData.KEY, ProjectKeys.MODULE);
 
   @NotNull
   @Override
@@ -68,6 +69,10 @@ public class GradleProjectStructureCustomizer extends ExternalProjectStructureCu
     if (node.getKey().equals(GradleSourceSetData.KEY)) {
       final GradleSourceSetData data = (GradleSourceSetData)node.getData();
       return Couple.of("Source Set", StringUtil.substringAfter(data.getExternalName(), ":"));
+    }
+    if (node.getKey().equals(ProjectKeys.MODULE)) {
+      ModuleData moduleData = (ModuleData)node.getData();
+      return Couple.of(moduleData.getExternalName(), null);
     }
     return super.getRepresentationName(node);
   }

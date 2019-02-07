@@ -54,7 +54,12 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   // constructor which creates marker without document and saves it in the virtual file directly. Can be cheaper than loading document.
   RangeMarkerImpl(@NotNull VirtualFile virtualFile, int start, int end, boolean register) {
     // unfortunately we don't know the exact document size until we load it
-    this(virtualFile, Integer.MAX_VALUE, start, end, register, false, false);
+    this(virtualFile, estimateDocumentLength(virtualFile), start, end, register, false, false);
+  }
+
+  private static int estimateDocumentLength(@NotNull VirtualFile virtualFile) {
+    Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
+    return document == null ? Integer.MAX_VALUE : document.getTextLength();
   }
 
   private RangeMarkerImpl(@NotNull Object documentOrFile, int documentTextLength, int start,

@@ -35,7 +35,6 @@ import static org.junit.Assert.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 1/16/14
  */
 public class ModuleExtendedModelBuilderImplTest extends AbstractModelBuilderTest {
 

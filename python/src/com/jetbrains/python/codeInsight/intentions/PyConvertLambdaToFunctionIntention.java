@@ -118,7 +118,7 @@ public class PyConvertLambdaToFunctionIntention extends PyBaseIntentionAction {
       }
     }
   }
-  private class ReferenceNameExpression extends Expression {
+  private static class ReferenceNameExpression extends Expression {
     ReferenceNameExpression(String oldReferenceName) {
       myOldReferenceName = oldReferenceName;
     }

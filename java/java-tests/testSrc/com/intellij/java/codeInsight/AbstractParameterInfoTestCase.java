@@ -35,12 +35,8 @@ public abstract class AbstractParameterInfoTestCase extends LightFixtureCompleti
 
   @Override
   protected void tearDown() throws Exception {
-    try {
-      CodeInsightSettings.getInstance().PARAMETER_INFO_DELAY = myStoredAutoPopupDelay;
-    }
-    finally {
-      super.tearDown();
-    }
+    CodeInsightSettings.getInstance().PARAMETER_INFO_DELAY = myStoredAutoPopupDelay;
+    super.tearDown();
   }
 
   protected void configureJava(String text) {

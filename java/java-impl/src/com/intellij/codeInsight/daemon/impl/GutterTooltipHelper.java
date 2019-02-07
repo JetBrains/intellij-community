@@ -25,9 +25,9 @@ import static com.intellij.psi.util.PsiUtilCore.getVirtualFile;
 import static com.intellij.ui.ColorUtil.toHex;
 
 public final class GutterTooltipHelper {
-  private static final JBColor BORDER_COLOR = JBColor.namedColor("GutterTooltip.borderColor", HintUtil.INFORMATION_BORDER_COLOR);
+  private static final JBColor SEPARATOR_COLOR = JBColor.namedColor("GutterTooltip.lineSeparatorColor", HintUtil.INFORMATION_BORDER_COLOR);
   private static final JBColor CONTEXT_HELP_FOREGROUND
-    = JBColor.namedColor("GutterTooltip.ContextHelp.foreground", new JBColor(0x787878, 0x878787));
+    = JBColor.namedColor("GutterTooltip.infoForeground", new JBColor(0x787878, 0x878787));
 
   private GutterTooltipHelper() {
   }
@@ -53,7 +53,7 @@ public final class GutterTooltipHelper {
     if (elementsCount <= 1) return " ";
     StringBuilder sb = new StringBuilder("</p><p style='margin-top:2pt");
     if (marginLeft) sb.append(";margin-left:20pt");
-    if (!firstElement) sb.append(";border-top:thin solid #").append(toHex(BORDER_COLOR));
+    if (!firstElement) sb.append(";border-top:thin solid #").append(toHex(SEPARATOR_COLOR));
     return sb.append(";'>").toString();
   }
 
@@ -142,7 +142,7 @@ public final class GutterTooltipHelper {
     if (action == null) return; // action is not exist
     String text = getPreferredShortcutText(action.getShortcutSet().getShortcuts());
     if (StringUtil.isEmpty(text)) return; // action have no shortcuts
-    sb.append("</p><p style='margin-top:8px'><font size='2' color='#");
+    sb.append("</p><p style='margin-top:8px;'><font size='2' color='#");
     sb.append(toHex(CONTEXT_HELP_FOREGROUND));
     sb.append("'>Press ").append(text).append(" to navigate</font>");
   }

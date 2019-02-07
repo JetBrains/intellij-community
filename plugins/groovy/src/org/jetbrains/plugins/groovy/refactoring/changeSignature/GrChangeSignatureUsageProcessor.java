@@ -129,7 +129,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
         if (methodCallUsageInfo.isToChangeArguments()){
           final PsiElement element = methodCallUsageInfo.getElement();
           if (element == null) continue;
-          final PsiMethod caller = RefactoringUtil.getEnclosingMethod(element);
+          final PsiMethod caller = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
           final boolean needDefaultValue = !((JavaChangeInfo)changeInfo).getMethodsToPropagateParameters().contains(caller);
           final PsiMethod referencedMethod = methodCallUsageInfo.getReferencedMethod();
           if (needDefaultValue &&

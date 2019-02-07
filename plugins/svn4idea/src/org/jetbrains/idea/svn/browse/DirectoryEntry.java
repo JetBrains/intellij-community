@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.browse;
 
 import com.intellij.util.ObjectUtils;
@@ -17,7 +17,7 @@ import static java.util.Comparator.comparing;
 public class DirectoryEntry extends BaseNodeDescription implements Comparable<DirectoryEntry> {
 
   public static final Comparator<DirectoryEntry> CASE_INSENSITIVE_ORDER =
-    comparing(DirectoryEntry::getKind).thenComparing(entry -> entry.getUrl().toDecodedString(), String.CASE_INSENSITIVE_ORDER);
+    comparing(DirectoryEntry::getNodeKind).thenComparing(entry -> entry.getUrl().toDecodedString(), String.CASE_INSENSITIVE_ORDER);
 
   private final String myName;
   @NotNull private final CommitInfo myCommitInfo;
@@ -51,17 +51,12 @@ public class DirectoryEntry extends BaseNodeDescription implements Comparable<Di
     return myName;
   }
 
-  @NotNull
-  public NodeKind getKind() {
-    return myKind;
-  }
-
   public Date getDate() {
     return myCommitInfo.getDate();
   }
 
   public long getRevision() {
-    return myCommitInfo.getRevision();
+    return myCommitInfo.getRevisionNumber();
   }
 
   public String getAuthor() {
@@ -74,7 +69,7 @@ public class DirectoryEntry extends BaseNodeDescription implements Comparable<Di
 
   @Override
   public int compareTo(@NotNull DirectoryEntry o) {
-    int result = getKind().compareTo(o.getKind());
+    int result = getNodeKind().compareTo(o.getNodeKind());
 
     return result != 0 ? result : myUrl.toString().compareTo(o.getUrl().toString());
   }

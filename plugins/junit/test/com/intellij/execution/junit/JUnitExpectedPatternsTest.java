@@ -27,6 +27,11 @@ public class JUnitExpectedPatternsTest {
   }
 
   @Test
+  public void testWithTailNotMatch() {
+    Assert.assertNull(createNotification("line1 expected:<java.lang.String<Text>> but was:<java.lang.StringBuilder<Text>> and here some very important tail"));
+  }
+
+  @Test
   public void testMultiplePatternsInOneAssertion() {
     Assert.assertNull(createNotification("line1 expected:<java.lang.String<Text>> but was:<java.lang.StringBuilder<Text>>\n" + 
                                          "line2 expected:<java.lang.String<Text1>> but was:<java.lang.StringBuilder<Text1>>"));

@@ -13,14 +13,6 @@ import com.intellij.util.io.decodeBase64
 
 @State(name = "ErrorReportConfigurable", storages = [(Storage(value = "other.xml", deprecated = true, roamingType = RoamingType.DISABLED))])
 internal class ErrorReportConfigurable : PersistentStateComponent<OldState> {
-  override fun getState() = OldState()
-
-  override fun loadState(state: OldState) {
-    if (!state.ITN_LOGIN.isNullOrEmpty() || !state.ITN_PASSWORD_CRYPT.isNullOrEmpty()) {
-      PasswordSafe.instance.set(CredentialAttributes(SERVICE_NAME, state.ITN_LOGIN), Credentials(state.ITN_LOGIN, state.ITN_PASSWORD_CRYPT!!.decodeBase64()))
-    }
-  }
-
   companion object {
     @JvmStatic
     val SERVICE_NAME = "$SERVICE_NAME_PREFIX — JetBrains Account"
@@ -28,8 +20,17 @@ internal class ErrorReportConfigurable : PersistentStateComponent<OldState> {
     @JvmStatic
     fun getCredentials() = PasswordSafe.instance.get(CredentialAttributes(SERVICE_NAME))
   }
+
+  override fun getState() = OldState()
+
+  override fun loadState(state: OldState) {
+    if (!state.ITN_LOGIN.isNullOrEmpty() || !state.ITN_PASSWORD_CRYPT.isNullOrEmpty()) {
+      PasswordSafe.instance.set(CredentialAttributes(SERVICE_NAME, state.ITN_LOGIN), Credentials(state.ITN_LOGIN, state.ITN_PASSWORD_CRYPT!!.decodeBase64()))
+    }
+  }
 }
 
+@Suppress("PropertyName")
 internal class OldState {
   var ITN_LOGIN: String? = null
   var ITN_PASSWORD_CRYPT: String? = null

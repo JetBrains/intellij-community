@@ -47,7 +47,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 8/29/2016
  */
 public class MavenGroovyPomScriptType extends GroovyRunnableScriptType {
 

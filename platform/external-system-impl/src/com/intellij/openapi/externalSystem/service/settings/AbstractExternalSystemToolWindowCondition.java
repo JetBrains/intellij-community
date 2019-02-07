@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 5/11/13 5:44 PM
  */
 public abstract class AbstractExternalSystemToolWindowCondition implements Condition<Project> {
   

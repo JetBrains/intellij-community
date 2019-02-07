@@ -4,9 +4,12 @@ package com.intellij.vcs.log.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 
@@ -66,7 +69,21 @@ public class VcsLogTabsManager {
     if (resetFilters) myUiProperties.resetState(tabId);
 
     VcsLogManager.VcsLogUiFactory<? extends VcsLogUiImpl> factory = new PersistentVcsLogUiFactory(manager.getMainLogUiFactory(tabId));
-    return VcsLogContentUtil.openLogTab(myProject, manager, VcsLogContentProvider.TAB_NAME, tabId, factory, focus);
+    VcsLogUiImpl ui = VcsLogContentUtil.openLogTab(myProject, manager, VcsLogContentProvider.TAB_NAME, tabId, factory, focus);
+    updateTabName(ui);
+    ui.addFilterListener(() -> updateTabName(ui));
+    return ui;
+  }
+
+  private void updateTabName(@NotNull VcsLogUiImpl ui) {
+    VcsLogContentUtil.renameLogUi(myProject, ui, generateDisplayName(ui));
+  }
+
+  @NotNull
+  private static String generateDisplayName(@NotNull VcsLogUiImpl ui) {
+    VcsLogFilterCollection filters = ui.getFilterUi().getFilters();
+    if (filters.isEmpty()) return "all";
+    return StringUtil.shortenTextWithEllipsis(VcsLogFiltersKt.getPresentation(filters), 150, 20);
   }
 
   private class PersistentVcsLogUiFactory implements VcsLogManager.VcsLogUiFactory<VcsLogUiImpl> {

@@ -11,6 +11,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ConvertRawToStringLiteralAction implements IntentionAction {
@@ -42,8 +43,12 @@ public class ConvertRawToStringLiteralAction implements IntentionAction {
         PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
         PsiElement literalToken = elementFactory.createExpressionFromText("\"\"", file).getFirstChild();
         String preprocessedValue = new StringLiteralCopyPasteProcessor().escapeAndSplit(text, literalToken);
-        CodeStyleManager.getInstance(project).reformat(
-          parent.replace(elementFactory.createExpressionFromText('\"' + preprocessedValue + '\"', null)));
+        PsiExpression replacement = elementFactory.createExpressionFromText('\"' + preprocessedValue + '\"', null);
+        PsiElement replacedExpression = ExpressionUtils.replacePolyadicWithParent((PsiExpression)parent, replacement);
+        if (replacedExpression == null) {
+          replacedExpression = parent.replace(replacement);
+        }
+        CodeStyleManager.getInstance(project).reformat(replacedExpression);
       }
     }
   }

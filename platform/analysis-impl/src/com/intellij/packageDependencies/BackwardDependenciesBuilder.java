@@ -36,13 +36,15 @@ import java.util.Set;
 
 public class BackwardDependenciesBuilder extends DependenciesBuilder {
   private final AnalysisScope myForwardScope;
+  private final AnalysisScope myScopeOfInterest;
 
   public BackwardDependenciesBuilder(final Project project, final AnalysisScope scope) {
     this(project, scope, null);
   }
 
   public BackwardDependenciesBuilder(final Project project, final AnalysisScope scope, final @Nullable AnalysisScope scopeOfInterest) {
-    super(project, scope, scopeOfInterest);
+    super(project, scope);
+    myScopeOfInterest = scopeOfInterest;
     myForwardScope = scopeOfInterest != null
                      ? scopeOfInterest
                      : ReadAction.compute(() -> getScope().getNarrowedComplementaryScope(getProject()));
@@ -61,13 +63,18 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
   }
 
   @Override
+  public AnalysisScope getScopeOfInterest() {
+    return myScopeOfInterest;
+  }
+
+  @Override
   public boolean isBackward() {
     return true;
   }
 
   @Override
   public void analyze() {
-    final DependenciesBuilder builder = new ForwardDependenciesBuilder(getProject(), myForwardScope, getScopeOfInterest());
+    final DependenciesBuilder builder = new ForwardDependenciesBuilder(getProject(), myForwardScope);
     builder.setTotalFileCount(myTotalFileCount);
     builder.analyze();
 

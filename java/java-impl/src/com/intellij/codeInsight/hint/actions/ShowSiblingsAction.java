@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint.actions;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.daemon.impl.PsiElementListNavigator;
+import com.intellij.codeInsight.hint.PsiImplementationViewSession;
 import com.intellij.codeInsight.navigation.BackgroundUpdaterTask;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.ide.util.PsiClassListCellRenderer;
@@ -43,9 +30,9 @@ public class ShowSiblingsAction extends ShowImplementationsAction {
     if (project == null) return;
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    final Editor editor = getEditor(dataContext);
+    final Editor editor = PsiImplementationViewSession.getEditor(dataContext);
 
-    PsiElement element = getElement(project, file, editor, CommonDataKeys.PSI_ELEMENT.getData(dataContext));
+    PsiElement element = PsiImplementationViewSession.getElement(project, file, editor, CommonDataKeys.PSI_ELEMENT.getData(dataContext));
 
     if (element == null && file == null) return;
     PsiFile containingFile = element != null ? element.getContainingFile() : file;
@@ -90,9 +77,10 @@ public class ShowSiblingsAction extends ShowImplementationsAction {
                             PsiFile file,
                             boolean invokedFromEditor,
                             @NotNull PsiElement element) {
-    final PsiElement[] impls = getSelfAndImplementations(editor, element, createImplementationsSearcher(), false);
+    final PsiElement[] impls = PsiImplementationViewSession
+      .getSelfAndImplementations(editor, element, PsiImplementationViewSession.createImplementationsSearcher(true), false);
     final String text = SymbolPresentationUtil.getSymbolPresentableText(element);
-    showImplementations(impls, project, text, editor, file, element, invokedFromEditor, invokedByShortcut);
+    showImplementations(new PsiImplementationViewSession(project, element, impls, text, editor, file), invokedFromEditor, invokedByShortcut);
   }
 
   @Override

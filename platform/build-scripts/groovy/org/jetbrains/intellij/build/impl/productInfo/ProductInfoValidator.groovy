@@ -5,6 +5,7 @@ import com.google.gson.Gson
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.CharsetToolkit
+import groovy.transform.CompileStatic
 import org.apache.tools.tar.TarEntry
 import org.apache.tools.tar.TarInputStream
 import org.jetbrains.intellij.build.BuildContext
@@ -15,6 +16,7 @@ import java.util.zip.ZipFile
 /**
  * Validates that paths specified in product-info.json file are correct
  */
+@CompileStatic
 class ProductInfoValidator {
   private final BuildContext context
 

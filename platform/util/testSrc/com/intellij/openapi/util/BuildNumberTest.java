@@ -59,6 +59,7 @@ public class BuildNumberTest {
   public void isSnapshot() {
     assertTrue(BuildNumber.fromString("SNAPSHOT").isSnapshot());
     assertTrue(BuildNumber.fromString("__BUILD_NUMBER__").isSnapshot());
+    assertTrue(BuildNumber.fromString("IU-__BUILD_NUMBER__").isSnapshot());
     assertTrue(BuildNumber.fromString("IU-90.SNAPSHOT").isSnapshot());
     assertTrue(BuildNumber.fromString("IU-145.1.2.3.4.SNAPSHOT").isSnapshot());
     assertFalse(BuildNumber.fromString("IU-145.1.2.3.4").isSnapshot());
@@ -74,6 +75,14 @@ public class BuildNumberTest {
     assertTrue(b.isSnapshot());
 
     assertEquals(BuildNumber.fromString("__BUILD_NUMBER__"), BuildNumber.fromString("SNAPSHOT"));
+  }
+
+  @Test
+  public void devSnapshotVersionWithProductCode() {
+    BuildNumber b = BuildNumber.fromString("IU-__BUILD__");
+    assertTrue(b.asString(), b.getBaselineVersion() >= 145 && b.getBaselineVersion() <= 3000);
+    assertTrue(b.isSnapshot());
+    assertEquals("IU", b.getProductCode());
   }
 
   @Test

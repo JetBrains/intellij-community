@@ -1,5 +1,6 @@
 package com.jetbrains.python.edu.debugger;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTextContainer;
@@ -8,7 +9,6 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.jetbrains.python.debugger.PyFrameAccessor;
 import com.jetbrains.python.debugger.PyStackFrame;
 import com.jetbrains.python.debugger.PyStackFrameInfo;
-import icons.PythonEducationalIcons;
 import icons.PythonPsiApiIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +36,7 @@ public class PyEduStackFrame extends PyStackFrame {
     }
     final VirtualFile file = myPosition.getFile();
     String frameName = myFrameInfo.getName();
-    component.setIcon(MODULE.equals(frameName) ? PythonPsiApiIcons.PythonFile : PythonEducationalIcons.Field);
+    component.setIcon(MODULE.equals(frameName) ? PythonPsiApiIcons.PythonFile : AllIcons.Nodes.Field);
     if (MODULE.equals(frameName)) {
       component.append(GLOBAL_FRAME, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       component.append(" (" + file.getName() + ")", getGrayAttributes(SimpleTextAttributes.REGULAR_ATTRIBUTES));

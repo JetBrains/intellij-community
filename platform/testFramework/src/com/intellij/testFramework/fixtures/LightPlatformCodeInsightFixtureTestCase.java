@@ -2,7 +2,6 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
@@ -32,10 +31,7 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
     TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor());
     IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
 
-    IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
-    TempDirTestFixture tempDirFixture = policy != null
-        ? policy.createTempDirTestFixture()
-        : new LightTempDirTestFixtureImpl(true);
+    TempDirTestFixture tempDirFixture = createTempDirTestFixture();
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, tempDirFixture);
 
     myFixture.setTestDataPath(getTestDataPath());
@@ -44,10 +40,20 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
     myModule = myFixture.getModule();
   }
 
+  protected TempDirTestFixture createTempDirTestFixture() {
+    IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
+    return policy != null
+        ? policy.createTempDirTestFixture()
+        : new LightTempDirTestFixtureImpl(true);
+  }
+
   @Override
   protected void tearDown() throws Exception {
     try {
       myFixture.tearDown();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       myFixture = null;
@@ -74,7 +80,7 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
     * @see #getBasePath()
     */
    protected String getTestDataPath() {
-     String path = isCommunity() ? PlatformTestUtil.getCommunityPath() : PathManager.getHomePath();
+     String path = isCommunity() ? PlatformTestUtil.getCommunityPath() : IdeaTestExecutionPolicy.getHomePathWithPolicy();
      return StringUtil.trimEnd(FileUtil.toSystemIndependentName(path), "/") + '/' +
             StringUtil.trimStart(FileUtil.toSystemIndependentName(getBasePath()), "/");
    }

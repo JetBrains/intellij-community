@@ -49,4 +49,9 @@ public class TemplateGroup extends CompoundScheme<TemplateImpl> {
   public boolean containsTemplate(@NotNull final String key, @Nullable final String id) {
     return ContainerUtil.or(getElements(), template -> key.equals(template.getKey()) || id != null && id.equals(template.getId()));
   }
+
+  @Override
+  public String toString() {
+    return getName();
+  }
 }

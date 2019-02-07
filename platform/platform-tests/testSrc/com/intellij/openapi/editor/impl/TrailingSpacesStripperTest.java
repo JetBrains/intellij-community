@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,8 +50,15 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
 
   @Override
   protected void tearDown() throws Exception {
-    EditorSettingsExternalizable.getInstance().loadState(oldSettings);
-    super.tearDown();
+    try {
+      EditorSettingsExternalizable.getInstance().loadState(oldSettings);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   private void doTest(@NonNls String before, @NonNls String after) {

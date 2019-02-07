@@ -6,7 +6,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/25/14
  */
 public class GradleSMTestProxy extends SMTestProxy {
 

@@ -22,6 +22,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +31,9 @@ import org.jetbrains.annotations.Nullable;
 public interface DomElementAnnotationHolder extends Iterable<DomElementProblemDescriptor>{
 
   boolean isOnTheFly();
+
+  @NotNull
+  DomFileElement<?> getFileElement();
 
   @NotNull
   DomElementProblemDescriptor createProblem(@NotNull DomElement domElement, @Nullable String message, LocalQuickFix... fixes);

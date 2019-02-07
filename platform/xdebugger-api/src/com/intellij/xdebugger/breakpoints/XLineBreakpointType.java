@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -128,7 +129,7 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
 
   @NotNull
   public Promise<List<? extends XLineBreakpointVariant>> computeVariantsAsync(@NotNull Project project, @NotNull XSourcePosition position) {
-    return Promise.resolve(computeVariants(project, position));
+    return Promises.resolvedPromise(computeVariants(project, position));
   }
 
   public abstract class XLineBreakpointVariant {

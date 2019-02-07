@@ -27,7 +27,6 @@ import java.util.List;
  * Used to group ordered collections of {@link StdArrangementTokens} along with their {@link StdArrangementTokenUiRole roles}.
  * 
  * @author Denis Zhdanov
- * @since 3/6/13 8:01 PM
  */
 public class CompositeArrangementSettingsToken {
 

@@ -26,7 +26,6 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
  * a global one).
  * 
  * @author Denis Zhdanov
- * @since 4/28/13 11:06 AM
  */
 public class GradleSystemSettingsControl implements ExternalSystemSettingsControl<GradleSettings> {
 

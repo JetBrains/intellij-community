@@ -43,6 +43,7 @@
   <project-components>
     <component>
       <implementation-class>com.intellij.remoteServer.impl.runtime.ui.DefaultServersToolWindowManager</implementation-class>
+      <headless-implementation-class/>
     </component>
   </project-components>
 

@@ -27,6 +27,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.usages.UsageView;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -325,7 +326,13 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
           return name;
         }
       }
-      return element.getContainingFile().getName();
+      PsiFile file = element.getContainingFile();
+      if (file == null) {
+        PsiUtilCore.ensureValid(element);
+        LOG.error("No file for " + element.getClass());
+        return element.toString();
+      }
+      return file.getName();
     }
 
     @Override

@@ -142,24 +142,24 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     myTransportCombo.setSelectedItem(Transport.SOCKET);
 
     myPort.setMinimumSize(myPort.getPreferredSize());
-    new ComponentValidator(project).withValidator(v -> {
+    new ComponentValidator(project).withValidator(() -> {
       String pt = myPort.getText();
       if (StringUtil.isNotEmpty(pt)) {
         try {
           int portValue = Integer.parseInt(pt);
           if (portValue >= MIN_PORT_VALUE && portValue <= MAX_PORT_VALUE) {
-            v.updateInfo(null);
+            return null;
           }
           else {
-            v.updateInfo(new ValidationInfo("Incorrect port range. Set value between 0 and 65535", myPort));
+            return new ValidationInfo("Incorrect port range. Set value between 0 and 65535", myPort);
           }
         }
         catch (NumberFormatException nfe) {
-          v.updateInfo(new ValidationInfo("Port value should be a number between 0 and 65535", myPort));
+          return new ValidationInfo("Port value should be a number between 0 and 65535", myPort);
         }
       }
       else {
-        v.updateInfo(null);
+        return null;
       }
     }).installOn(myPort);
 

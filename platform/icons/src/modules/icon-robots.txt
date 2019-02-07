@@ -9,3 +9,7 @@ deprecated: sourceFolder.svg -> /nodes/package.svg; to be removed in IDEA 2020 -
 deprecated: testSourceFolder.svg -> /nodes/testSourceFolder.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.TestSourceFolder
 deprecated: webRoot.svg -> /nodes/webFolder.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.WebFolder
 deprecated: sources.svg; to be removed in IDEA 2020
+deprecated: deleteContentFolder.png -> /action/close.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Close
+deprecated: deleteContentFolderRollover.png -> /action/closeHovered.svg; to be removed in IDEA 2020 - use AllIcons.Actions.CloseHovered
+deprecated: deleteContentRoot.png -> /action/close.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Close
+deprecated: deleteContentRootRollover.png -> /action/closeHovered.svg; to be removed in IDEA 2020 - use AllIcons.Actions.CloseHovered

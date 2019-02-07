@@ -22,7 +22,6 @@ import com.intellij.execution.testframework.sm.UITestUtil;
 import com.intellij.execution.testframework.sm.runner.BaseSMTRunnerTestCase;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
-import com.intellij.execution.testframework.ui.TestsProgressAnimator;
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nls;
@@ -731,11 +730,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
   }
 
   private static void assertIsAnimatorProgressIcon(final Icon icon) {
-    for (Icon frame : TestsProgressAnimator.FRAMES) {
-      if (icon == frame) {
-        return;
-      }
-    }
+    if (icon == SMPoolOfTestIcons.RUNNING_ICON) return;
 
     fail("Icon isn't an Animator progress frame");
   }

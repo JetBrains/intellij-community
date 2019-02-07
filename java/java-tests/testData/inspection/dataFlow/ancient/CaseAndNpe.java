@@ -37,8 +37,8 @@ public class aaa {
     //System.exit(0);
 
     switch(i) {
-      <warning descr="Switch label 'case 1:' is unreachable">case 1:</warning> System.out.println("1 not reachable"); break;
-      <warning descr="Switch label 'case 2:' is unreachable">case 2:</warning> System.out.println("2 not reachable"); break;
+      case <warning descr="Switch label '1' is unreachable">1</warning>: System.out.println("1 not reachable"); break;
+      case <warning descr="Switch label '2' is unreachable">2</warning>: System.out.println("2 not reachable"); break;
       case 6: System.out.println("6 reachable"); break;
       case 5: System.out.println("5 reachable"); break;
       default: System.out.println("Default not reachable"); break;

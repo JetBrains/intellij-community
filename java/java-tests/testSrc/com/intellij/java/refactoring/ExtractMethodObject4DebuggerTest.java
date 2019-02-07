@@ -68,6 +68,9 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
       Registry.get("debugger.compiling.evaluator.magic.accessor").resetToDefault();
       Registry.get("debugger.compiling.evaluator.reflection.access.with.java8").resetToDefault();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

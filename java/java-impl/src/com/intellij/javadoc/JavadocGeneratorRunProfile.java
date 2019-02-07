@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.javadoc;
 
-import com.google.common.collect.Streams;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
@@ -74,7 +73,7 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
   }
 
   @Override
-  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
+  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
     return new MyJavaCommandLineState(myConfiguration, myProject, myGenerationScope, env);
   }
 
@@ -97,10 +96,7 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
     private final JavadocConfiguration myConfiguration;
     private final ArgumentFileFilter myArgFileFilter = new ArgumentFileFilter();
 
-    MyJavaCommandLineState(JavadocConfiguration configuration,
-                                  Project project,
-                                  AnalysisScope generationOptions,
-                                  ExecutionEnvironment env) {
+    MyJavaCommandLineState(JavadocConfiguration configuration, Project project, AnalysisScope generationOptions, ExecutionEnvironment env) {
       super(env);
       myGenerationOptions = generationOptions;
       myProject = project;
@@ -289,7 +285,7 @@ Android Studio: See Change Ic0e27ac6 / commit 85eff73 */
             else {
               // placing source roots on a classpath is perfectly legal and allows to generate correct Javadoc
               // when a module without a module-info.java file depends on another module which has one
-              Stream<VirtualFile> roots = Streams.concat(sourceRoots.stream(), classRoots.stream());
+              Stream<VirtualFile> roots = Stream.concat(sourceRoots.stream(), classRoots.stream());
               String path = roots.map(MyJavaCommandLineState::localPath).collect(Collectors.joining(File.pathSeparator));
               writer.println("-classpath");
               writer.println(StringUtil.wrapWithDoubleQuote(path));

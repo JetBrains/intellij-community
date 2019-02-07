@@ -27,6 +27,8 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -37,6 +39,11 @@ public class DeleteLineAction extends TextComponentEditorAction {
   }
 
   private static class Handler extends EditorWriteActionHandler {
+    @Override
+    public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      if (CtrlYActionChooser.isCurrentShortcutOk(dataContext)) super.doExecute(editor, caret, dataContext);
+    }
+
     @Override
     public void executeWriteAction(final Editor editor, Caret caret, DataContext dataContext) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("editor.delete.line");

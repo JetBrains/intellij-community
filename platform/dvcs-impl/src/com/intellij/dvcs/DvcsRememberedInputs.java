@@ -3,6 +3,7 @@ package com.intellij.dvcs;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -78,5 +79,11 @@ public class DvcsRememberedInputs {
 
   public void setCloneParentDir(String cloneParentDir) {
     myState.cloneParentDir = cloneParentDir;
+  }
+
+  @TestOnly
+  public void clear() {
+    myState.visitedUrls.clear();
+    myState.cloneParentDir = "";
   }
 }

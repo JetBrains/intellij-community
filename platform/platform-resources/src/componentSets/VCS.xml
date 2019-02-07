@@ -3,9 +3,6 @@
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.VetoSavingCommittingDocumentsAdapter</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.lifecycle.PeriodicalTasksCloser</implementation-class>
-    </component>
   </application-components>
   <project-components>
     <component>
@@ -84,6 +81,9 @@
     </component>
     <component><interface-class>com.intellij.openapi.vcs.impl.VcsBaseContentProvider</interface-class>
       <implementation-class>com.intellij.openapi.vcs.impl.VcsFileStatusProvider</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.openapi.vcs.changes.VcsIgnoreFilesChecker</implementation-class>
     </component>
   </project-components>
 </idea-plugin>

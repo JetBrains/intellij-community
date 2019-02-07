@@ -186,7 +186,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   }
 
   protected void onDoubleClick() {
-    showDiff();
+    if (canShowDiff()) showDiff();
   }
 
   protected void onIncludedChanged() {
@@ -249,12 +249,12 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   }
 
   public boolean canShowDiff() {
-    ListSelection<Object> selection = VcsTreeModelData.getListSelection(myViewer);
+    ListSelection<Object> selection = VcsTreeModelData.getListSelectionOrAll(myViewer);
     return ContainerUtil.exists(selection.getList(), entry -> getDiffRequestProducer(entry) != null);
   }
 
   public void showDiff() {
-    ListSelection<Object> selection = VcsTreeModelData.getListSelection(myViewer);
+    ListSelection<Object> selection = VcsTreeModelData.getListSelectionOrAll(myViewer);
     ListSelection<ChangeDiffRequestChain.Producer> producers = selection.map(this::getDiffRequestProducer);
     DiffRequestChain chain = new ChangeDiffRequestChain(producers.getList(), producers.getSelectedIndex());
     updateDiffContext(chain);
@@ -265,7 +265,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     chain.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, createDiffActions());
   }
 
-  private class MyShowDiffAction extends DumbAwareAction {
+  private class MyShowDiffAction extends DumbAwareAction implements UpdateInBackground {
     MyShowDiffAction() {
       ActionUtil.copyFrom(this, IdeActions.ACTION_SHOW_DIFF_COMMON);
     }

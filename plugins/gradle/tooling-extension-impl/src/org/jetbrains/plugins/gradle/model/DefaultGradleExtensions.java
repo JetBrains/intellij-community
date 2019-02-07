@@ -24,7 +24,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/16/2016
  */
 public class DefaultGradleExtensions implements GradleExtensions {
   private static final long serialVersionUID = 1L;

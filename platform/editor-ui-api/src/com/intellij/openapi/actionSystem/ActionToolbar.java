@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.util.ui.JBUI;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -32,6 +33,11 @@ public interface ActionToolbar {
    */
   int AUTO_LAYOUT_POLICY = 2;
 
+
+  @MagicConstant(intValues = {NOWRAP_LAYOUT_POLICY, WRAP_LAYOUT_POLICY, AUTO_LAYOUT_POLICY})
+  @interface LayoutPolicy {
+  }
+
   /** This is default minimum size of the toolbar button */
   Dimension DEFAULT_MINIMUM_BUTTON_SIZE = JBUI.size(22, 22);
 
@@ -48,13 +54,14 @@ public interface ActionToolbar {
    * @see #NOWRAP_LAYOUT_POLICY
    * @see #WRAP_LAYOUT_POLICY
    */
+  @LayoutPolicy
   int getLayoutPolicy();
 
   /**
    * Sets new component layout policy. Method accepts {@link #WRAP_LAYOUT_POLICY} and
    * {@link #NOWRAP_LAYOUT_POLICY} values.
    */
-  void setLayoutPolicy(int layoutPolicy);
+  void setLayoutPolicy(@LayoutPolicy int layoutPolicy);
 
   /**
    * If the value is {@code true} then the all button on toolbar are
@@ -79,7 +86,7 @@ public interface ActionToolbar {
    * @see SwingConstants#HORIZONTAL
    * @see SwingConstants#VERTICAL
    */
-  void setOrientation(int orientation);
+  void setOrientation(@MagicConstant(intValues = {SwingConstants.HORIZONTAL, SwingConstants.VERTICAL}) int orientation);
 
   /**
    * @return maximum button height
@@ -100,7 +107,7 @@ public interface ActionToolbar {
 
   void setReservePlaceAutoPopupIcon(boolean reserve);
 
-  void setSecondaryActionsTooltip(String secondaryActionsTooltip);
+  void setSecondaryActionsTooltip(@NotNull String secondaryActionsTooltip);
 
   void setSecondaryActionsIcon(Icon icon);
 
@@ -109,6 +116,7 @@ public interface ActionToolbar {
 
   void setMiniMode(boolean minimalMode);
 
+  @NotNull
   DataContext getToolbarDataContext();
 
   /**

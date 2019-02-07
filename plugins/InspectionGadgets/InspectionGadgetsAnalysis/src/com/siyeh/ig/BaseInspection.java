@@ -176,9 +176,9 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
     final NumberFormat formatter = NumberFormat.getIntegerInstance();
     formatter.setParseIntegerOnly(true);
     final JFormattedTextField valueField = new JFormattedTextField(formatter);
-    Object value = ReflectionUtil.getField(getClass(), this, null, fieldName);
+    final Object value = ReflectionUtil.getField(getClass(), this, null, fieldName);
     valueField.setValue(value);
-    valueField.setColumns(2);
+    valueField.setColumns(4);
 
     // hack to work around text field becoming unusably small sometimes when using GridBagLayout
     valueField.setMinimumSize(valueField.getPreferredSize());

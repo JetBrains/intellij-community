@@ -62,6 +62,7 @@ public class LanguageLevelModuleExtensionImpl extends ModuleExtension implements
     myState = state;
   }
 
+  @NotNull
   @Override
   public ModuleExtension getModifiableModel(final boolean writable) {
     return new LanguageLevelModuleExtensionImpl(this, writable);

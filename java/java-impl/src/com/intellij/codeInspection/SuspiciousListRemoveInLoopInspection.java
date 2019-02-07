@@ -29,7 +29,7 @@ public class SuspiciousListRemoveInLoopInspection extends AbstractBaseJavaLocalI
         PsiElement parent = parentStatement.getParent();
         while (parent instanceof PsiLabeledStatement ||
                parent instanceof PsiIfStatement ||
-               parent instanceof PsiSwitchLabelStatement ||
+               parent instanceof PsiSwitchLabelStatementBase ||
                parent instanceof PsiSwitchStatement ||
                parent instanceof PsiBlockStatement ||
                parent instanceof PsiCodeBlock) {

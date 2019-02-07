@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 5/18/13 10:51 PM
  */
 public class ExternalProjectPojo implements Comparable<ExternalProjectPojo> {
 

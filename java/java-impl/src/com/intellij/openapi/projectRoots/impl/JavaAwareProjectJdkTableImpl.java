@@ -3,16 +3,16 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.lang.JavaVersion;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 public class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
   public static JavaAwareProjectJdkTableImpl getInstanceEx() {
@@ -29,29 +29,29 @@ public class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
   @NotNull
   public Sdk getInternalJdk() {
     if (myInternalJdk == null) {
-      final String jdkHome = SystemProperties.getJavaHome();
-      final String versionName = ProjectBundle.message("sdk.java.name.template", SystemInfo.JAVA_VERSION);
+      String jdkHome = SystemProperties.getJavaHome();
+      String versionName = JdkVersionDetector.formatVersionString(JavaVersion.current());
       myInternalJdk = myJavaSdk.createJdk(versionName, jdkHome);
     }
     return myInternalJdk;
   }
 
   @Override
-  public void removeJdk(@NotNull final Sdk jdk) {
+  public void removeJdk(@NotNull Sdk jdk) {
     super.removeJdk(jdk);
     if (jdk.equals(myInternalJdk)) {
       myInternalJdk = null;
     }
   }
 
-  @Override
   @NotNull
+  @Override
   public SdkTypeId getDefaultSdkType() {
     return myJavaSdk;
   }
 
   @Override
-  public void loadState(@NotNull final Element element) {
+  public void loadState(@NotNull Element element) {
     myInternalJdk = null;
     try {
       super.loadState(element);
@@ -62,7 +62,7 @@ public class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
   }
 
   @Override
-  protected String getSdkTypeName(final String type) {
+  protected String getSdkTypeName(String type) {
     return type != null ? type : JavaSdk.getInstance().getName();
   }
 
@@ -75,5 +75,4 @@ public class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
       }
     });
   }
-
 }

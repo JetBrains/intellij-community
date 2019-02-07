@@ -102,6 +102,7 @@ public class PsiTypeCastExpressionImpl extends ExpressionPsiElement implements P
     }
   }
 
+  @Override
   public String toString() {
     return "PsiTypeCastExpression:" + getText();
   }

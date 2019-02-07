@@ -36,6 +36,7 @@ import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.ui.EditorComboBox;
 import com.intellij.ui.components.JBLabel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -180,7 +181,7 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
 
   @Nullable
   @Override
-  protected String validateQualifiedName(String packageName, String extractedSuperName) {
+  protected String validateQualifiedName(String packageName, @NotNull String extractedSuperName) {
     return StringUtil.getQualifiedName(packageName, extractedSuperName).equals(mySourceClass.getQualifiedName()) ? "Different name expected"
                                                                                                                  : null;
   }

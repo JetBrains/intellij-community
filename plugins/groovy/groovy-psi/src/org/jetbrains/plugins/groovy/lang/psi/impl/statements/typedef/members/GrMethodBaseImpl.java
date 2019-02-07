@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
@@ -29,7 +28,8 @@ import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyEmptyStubElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -148,12 +148,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
     if (isConstructor()) {
       return null;
     }
-
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      //todo uncomment when EAP is on
-      //LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread()); //this is a potentially long action
-    }
-    return TypeInferenceHelper.getCurrentContext().getExpressionType(this, ourTypesCalculator);
+    return TypeInferenceHelper.inTopContext(() -> GroovyPsiManager.getInstance(getProject()).getType(this, ourTypesCalculator));
   }
 
   @Override
@@ -266,8 +261,8 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
     final GrTypeElement stub = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(newReturnType);
     GrTypeElement newTypeElement;
     if (typeElement == null) {
-      final GrTypeParameterList typeParemeterList = getTypeParameterList();
-      PsiElement anchor = typeParemeterList != null ? typeParemeterList : getModifierList();
+      final GrTypeParameterList typeParameterList = getTypeParameterList();
+      PsiElement anchor = typeParameterList != null ? typeParameterList : getModifierList();
       newTypeElement = (GrTypeElement)addAfter(stub, anchor);
     }
     else {
@@ -309,7 +304,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   @Override
   @NotNull
   public GrParameterList getParameterList() {
-    final GrParameterList parameterList = getStubOrPsiChild(GroovyElementTypes.PARAMETERS_LIST);
+    final GrParameterList parameterList = getStubOrPsiChild(GroovyEmptyStubElementTypes.PARAMETER_LIST);
     LOG.assertTrue(parameterList != null);
     return parameterList;
   }
@@ -317,7 +312,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   @Override
   @NotNull
   public PsiReferenceList getThrowsList() {
-    return ObjectUtils.assertNotNull(getStubOrPsiChild(GroovyElementTypes.THROW_CLAUSE));
+    return ObjectUtils.assertNotNull(getStubOrPsiChild(GroovyStubElementTypes.THROWS_CLAUSE));
   }
 
   @Override
@@ -397,7 +392,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   @Override
   @NotNull
   public GrModifierList getModifierList() {
-    return ObjectUtils.assertNotNull(getStubOrPsiChild(GroovyElementTypes.MODIFIERS));
+    return ObjectUtils.assertNotNull(getStubOrPsiChild(GroovyStubElementTypes.MODIFIER_LIST));
   }
 
   @Override
@@ -451,7 +446,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   @Override
   @Nullable
   public GrTypeParameterList getTypeParameterList() {
-    return getStubOrPsiChild(GroovyElementTypes.TYPE_PARAMETER_LIST);
+    return getStubOrPsiChild(GroovyEmptyStubElementTypes.TYPE_PARAMETER_LIST);
   }
 
   @Override
@@ -469,9 +464,9 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   public PsiClass getContainingClass() {
     PsiElement parent = getParent();
     if (parent instanceof GrTypeDefinitionBody) {
-      final PsiElement pparent = parent.getParent();
-      if (pparent instanceof PsiClass) {
-        return (PsiClass)pparent;
+      final PsiElement grandParent = parent.getParent();
+      if (grandParent instanceof PsiClass) {
+        return (PsiClass)grandParent;
       }
     }
 
@@ -554,7 +549,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
     GrTypeElement typeElement = firstParameter.getTypeElementGroovy();
     //equalsToText can't be called here because of stub creating
 
-    if (type != null && typeElement != null && type.getPresentableText() != null && !type.getPresentableText().endsWith("Map")) {
+    if (type != null && typeElement != null && !type.getPresentableText().endsWith("Map")) {
       return Collections.emptyMap();
     }
 

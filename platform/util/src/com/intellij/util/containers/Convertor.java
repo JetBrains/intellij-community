@@ -15,6 +15,9 @@
  */
 package com.intellij.util.containers;
 
+/**
+ * Please use {@link java.util.function.Function} instead
+ */
 public interface Convertor<Src, Dst> {
   IntoSelf SELF = new IntoSelf();
 

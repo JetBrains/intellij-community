@@ -10,12 +10,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.ui.AbstractLayoutManager;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBValue;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +27,8 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class ListPluginComponent extends CellPluginComponent {
+  public static final Color DisabledColor = JBColor.namedColor("Plugins.disabledForeground", new JBColor(0xB1B1B1, 0x696969));
+
   private final MyPluginModel myPluginModel;
   private boolean myUninstalled;
 
@@ -39,6 +39,8 @@ public class ListPluginComponent extends CellPluginComponent {
   private RestartButton myRestartButton;
   private final BaselinePanel myBaselinePanel = new BaselinePanel();
   private ProgressIndicatorEx myIndicator;
+
+  private IdeaPluginDescriptor myUpdateDescriptor;
 
   public ListPluginComponent(@NotNull MyPluginModel pluginModel, @NotNull IdeaPluginDescriptor plugin, boolean pluginForUpdate) {
     super(plugin);
@@ -73,9 +75,7 @@ public class ListPluginComponent extends CellPluginComponent {
     addNameComponent(myBaselinePanel);
     myName.setVerticalAlignment(SwingConstants.TOP);
 
-    if (pluginForUpdate) {
-      createVersion();
-    }
+    createVersion(pluginForUpdate);
     updateErrors();
 
     if (!pluginForUpdate) {
@@ -93,9 +93,7 @@ public class ListPluginComponent extends CellPluginComponent {
     myEnableDisableButton.setOpaque(false);
 
     if (myPlugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)myPlugin).isDeleted()) {
-      myRestartButton = new RestartButton(myPluginModel);
-      myRestartButton.setFocusable(false);
-      myBaselinePanel.addButtonComponent(myRestartButton);
+      myBaselinePanel.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
 
       myEnableDisableButton.setSelected(false);
       myEnableDisableButton.setEnabled(false);
@@ -108,13 +106,10 @@ public class ListPluginComponent extends CellPluginComponent {
       PluginId id = myPlugin.getPluginId();
 
       if (pluginsState.wasInstalled(id) || pluginsState.wasUpdated(id)) {
-        myRestartButton = new RestartButton(myPluginModel);
-        myRestartButton.setFocusable(false);
-        myBaselinePanel.addButtonComponent(myRestartButton);
+        myBaselinePanel.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
       }
       else if (update) {
         myUpdateButton = new UpdateButton();
-        myUpdateButton.setFocusable(false);
         myUpdateButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, false));
         myBaselinePanel.addButtonComponent(myUpdateButton);
       }
@@ -161,7 +156,7 @@ public class ListPluginComponent extends CellPluginComponent {
   @NotNull
   private static AbstractLayoutManager createCheckboxIconLayout() {
     return new AbstractLayoutManager() {
-      JBValue offset = new JBValue.Float(12);
+      final JBValue offset = new JBValue.Float(12);
 
       @Override
       public Dimension preferredLayoutSize(Container parent) {
@@ -196,10 +191,24 @@ public class ListPluginComponent extends CellPluginComponent {
     };
   }
 
-  private void createVersion() {
+  private void createVersion(boolean pluginForUpdate) {
     String version = StringUtil.defaultIfEmpty(myPlugin.getVersion(), null);
-    if (version != null) {
-      myVersion = new JLabel("Version " + version);
+
+    if (version != null && (pluginForUpdate || !myPlugin.isBundled() || myPlugin.allowBundledUpdate())) {
+      String oldVersion = null;
+
+      if (pluginForUpdate) {
+        IdeaPluginDescriptor installedPlugin = PluginManager.getPlugin(myPlugin.getPluginId());
+        oldVersion = installedPlugin == null ? null : StringUtil.defaultIfEmpty(installedPlugin.getVersion(), null);
+      }
+      if (oldVersion == null) {
+        version = "v" + version;
+      }
+      else {
+        version = "Version " + oldVersion + " " + UIUtil.rightArrow() + " " + version;
+      }
+
+      myVersion = new JLabel(version);
       myVersion.setOpaque(false);
       myBaselinePanel.addVersionComponent(PluginManagerConfigurableNew.installTiny(myVersion));
     }
@@ -212,6 +221,42 @@ public class ListPluginComponent extends CellPluginComponent {
         myBaselinePanel.addVersionComponent(PluginManagerConfigurableNew.installTiny(myLastUpdated));
       }
     }
+  }
+
+  public void setUpdateDescriptor(@Nullable IdeaPluginDescriptor descriptor) {
+    if (myUpdateDescriptor == null && descriptor == null) {
+      return;
+    }
+
+    myUpdateDescriptor = descriptor;
+
+    if (descriptor == null) {
+      if (myVersion != null) {
+        myVersion.setText("v" + myPlugin.getVersion());
+      }
+      if (myUpdateButton != null) {
+        myUpdateButton.setVisible(false);
+      }
+    }
+    else {
+      if (myVersion == null) {
+        myVersion = new JLabel();
+        myVersion.setOpaque(false);
+        myBaselinePanel.addVersionComponent(PluginManagerConfigurableNew.installTiny(myVersion));
+      }
+      myVersion.setText("Version " + myPlugin.getVersion() + " " + UIUtil.rightArrow() + " " + descriptor.getVersion());
+
+      if (myUpdateButton == null) {
+        myUpdateButton = new UpdateButton();
+        myUpdateButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myUpdateDescriptor, false));
+        myBaselinePanel.addButtonComponent(myUpdateButton);
+      }
+      else {
+        myUpdateButton.setVisible(true);
+      }
+    }
+
+    myBaselinePanel.doLayout();
   }
 
   public void updateErrors() {
@@ -233,13 +278,29 @@ public class ListPluginComponent extends CellPluginComponent {
                            @NotNull LinkListener<String> searchListener,
                            @NotNull EventHandler eventHandler) {
     super.setListeners(listener, searchListener, eventHandler);
-    eventHandler.addAll(this);
     myBaselinePanel.setListeners(eventHandler);
   }
 
   @Override
   protected void updateColors(@NotNull Color grayedFg, @NotNull Color background) {
-    super.updateColors(grayedFg, background);
+    setBackground(background);
+
+    if (mySelection != EventHandler.SelectionType.NONE) {
+      Color color = UIManager.getColor("Plugins.selectionForeground");
+      if (color != null) {
+        if (myVersion != null) {
+          myVersion.setForeground(color);
+        }
+        if (myLastUpdated != null) {
+          myLastUpdated.setForeground(color);
+        }
+        myName.setForeground(color);
+        if (myDescription != null) {
+          myDescription.setForeground(color);
+        }
+        return;
+      }
+    }
 
     if (myVersion != null) {
       myVersion.setForeground(grayedFg);
@@ -249,10 +310,10 @@ public class ListPluginComponent extends CellPluginComponent {
     }
 
     boolean enabled = !myUninstalled && (MyPluginModel.isInstallingOrUpdate(myPlugin) || myPluginModel.isEnabled(myPlugin));
-    myName.setForeground(enabled ? null : PluginManagerConfigurableNew.DisabledColor);
+    myName.setForeground(enabled ? null : DisabledColor);
 
     if (myDescription != null) {
-      myDescription.setForeground(enabled ? grayedFg : PluginManagerConfigurableNew.DisabledColor);
+      myDescription.setForeground(enabled ? grayedFg : DisabledColor);
     }
   }
 
@@ -280,9 +341,7 @@ public class ListPluginComponent extends CellPluginComponent {
       layout = true;
     }
     if (myRestartButton == null) {
-      myRestartButton = new RestartButton(myPluginModel);
-      myRestartButton.setFocusable(false);
-      myBaselinePanel.addButtonComponent(myRestartButton);
+      myBaselinePanel.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
       layout = true;
     }
 

@@ -298,15 +298,11 @@ public class GithubConnection {
 
   @NotNull
   private static JsonElement parseResponse(@NotNull InputStream githubResponse) throws IOException {
-    Reader reader = new InputStreamReader(githubResponse, CharsetToolkit.UTF8_CHARSET);
-    try {
+    try (Reader reader = new InputStreamReader(githubResponse, CharsetToolkit.UTF8_CHARSET)) {
       return new JsonParser().parse(reader);
     }
     catch (JsonParseException jse) {
       throw new GithubJsonException("Couldn't parse GitHub response", jse);
-    }
-    finally {
-      reader.close();
     }
   }
 

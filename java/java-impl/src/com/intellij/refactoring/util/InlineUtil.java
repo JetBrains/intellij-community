@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -32,8 +33,11 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -44,6 +48,24 @@ public class InlineUtil {
   private static final Logger LOG = Logger.getInstance("com.intellij.refactoring.util.InlineUtil");
 
   private InlineUtil() {}
+
+  /**
+   * Replace variable with its initializer for every variable reference.
+   *
+   * @return references after replacement
+   */
+  @NotNull
+  public static Collection<PsiElement> inlineVariable(@NotNull PsiVariable variable, @NotNull PsiExpression initializer) {
+    final Collection<PsiElement> replacedElements = new ArrayList<>();
+    final Collection<PsiReference> references = ReferencesSearch.search(variable).findAll();
+
+    for (PsiReference reference : references) {
+      final PsiExpression expression = inlineVariable(variable, initializer, (PsiJavaCodeReferenceElement)reference);
+      replacedElements.add(expression);
+    }
+
+    return replacedElements;
+  }
 
   @NotNull
   public static PsiExpression inlineVariable(PsiVariable variable, PsiExpression initializer, PsiJavaCodeReferenceElement ref) throws IncorrectOperationException {
@@ -101,7 +123,8 @@ public class InlineUtil {
             LOG.assertTrue(containingClass != null);
             if (method.getModifierList().hasModifierProperty(PsiModifier.STATIC)) {
               methodExpression.setQualifierExpression(elementFactory.createReferenceExpression(containingClass));
-            } else {
+            }
+            else {
               methodExpression.setQualifierExpression(createThisExpression(method.getManager(), thisClass, refParent));
             }
           }
@@ -180,15 +203,10 @@ public class InlineUtil {
 
   private static PsiThisExpression createThisExpression(PsiManager manager, PsiClass thisClass, PsiClass refParent) {
     PsiThisExpression thisAccessExpr = null;
-    if (Comparing.equal(thisClass, refParent))
-
-    {
+    if (Comparing.equal(thisClass, refParent)) {
       thisAccessExpr = RefactoringChangeUtil.createThisExpression(manager, null);
     }
-
-    else
-
-    {
+    else {
       if (!(thisClass instanceof PsiAnonymousClass)) {
         thisAccessExpr = RefactoringChangeUtil.createThisExpression(manager, thisClass);
       }
@@ -219,7 +237,7 @@ public class InlineUtil {
         arrayCreation.delete();
         return;
       }
-      
+
       CommentTracker cm = new CommentTracker();
       PsiExpression[] initializers = arrayInitializer.getInitializers();
       if (initializers.length > 0) {
@@ -351,7 +369,8 @@ public class InlineUtil {
   public static void substituteTypeParams(PsiElement scope, final PsiSubstitutor substitutor, final PsiElementFactory factory) {
     final Map<PsiElement, PsiElement> replacement = new HashMap<>();
     scope.accept(new JavaRecursiveElementVisitor() {
-      @Override public void visitTypeElement(PsiTypeElement typeElement) {
+      @Override
+      public void visitTypeElement(PsiTypeElement typeElement) {
         super.visitTypeElement(typeElement);
         PsiType type = typeElement.getType();
         if (type instanceof PsiClassType) {
@@ -453,14 +472,61 @@ public class InlineUtil {
         PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
         if (expression instanceof PsiMethodCallExpression) {
           PsiReferenceExpression methodExpr = ((PsiMethodCallExpression)expression).getMethodExpression();
-            if ("this".equals(methodExpr.getReferenceName())) {
-              PsiElement resolved = methodExpr.resolve();
-              return resolved instanceof PsiMethod && ((PsiMethod)resolved).isConstructor() ? (PsiMethod)resolved : null; //delegated via "this" call
-            }
+          if ("this".equals(methodExpr.getReferenceName())) {
+            PsiElement resolved = methodExpr.resolve();
+            return resolved instanceof PsiMethod && ((PsiMethod)resolved).isConstructor() ? (PsiMethod)resolved : null; //delegated via "this" call
+          }
         }
       }
     }
     return null;
+  }
+
+  /**
+   * Extracts all references from initializer and checks whether
+   * referenced variables are changed after variable initialization and before last usage of variable.
+   * If so, referenced value change returned with appropriate error message.
+   *
+   * @param conflicts map for found conflicts
+   * @param initializer variable initializer
+   * @return found changes and errors
+   */
+  public static void getChangedBeforeLastAccessConflicts(@NotNull MultiMap<PsiElement, String> conflicts,
+                                                         @NotNull PsiExpression initializer,
+                                                         @NotNull PsiVariable variable) {
+
+    Set<PsiVariable> referencedVars = VariableAccessUtils.collectUsedVariables(initializer);
+    if (referencedVars.isEmpty()) return;
+
+    PsiElement scope = PsiUtil.getTopLevelEnclosingCodeBlock(initializer, null);
+    if (scope == null) return;
+
+    ControlFlow flow = createControlFlow(scope);
+    if (flow == null) return;
+
+    int start = flow.getEndOffset(initializer);
+    if (start < 0) return;
+
+    Map<PsiElement, PsiVariable> writePlaces = ControlFlowUtil.getWritesBeforeReads(flow, referencedVars, Collections.singleton(variable), start);
+
+    String readVarName = variable.getName();
+    for (Map.Entry<PsiElement, PsiVariable> writePlaceEntry : writePlaces.entrySet()) {
+      String message = RefactoringBundle.message("variable.0.is.changed.before.last.access", writePlaceEntry.getValue().getName(), readVarName);
+      conflicts.putValue(writePlaceEntry.getKey(), message);
+    }
+  }
+
+  @Nullable
+  private static ControlFlow createControlFlow(@NotNull PsiElement scope) {
+    ControlFlowFactory factory = ControlFlowFactory.getInstance(scope.getProject());
+    ControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
+
+    try {
+      return factory.getControlFlow(scope, policy);
+    }
+    catch (AnalysisCanceledException e) {
+      return null;
+    }
   }
 
   public enum TailCallType {

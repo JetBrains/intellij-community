@@ -5,6 +5,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.AsyncStacksUtils;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.memory.agent.MemoryAgentUtil;
 import com.intellij.debugger.settings.CaptureSettingsProvider;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.GetJPDADialog;
@@ -44,6 +45,7 @@ public class RemoteConnectionBuilder {
   private final String myAddress;
   private boolean myCheckValidity;
   private boolean myAsyncAgent;
+  private boolean myMemoryAgent;
   private boolean myQuiet;
 
   public RemoteConnectionBuilder(boolean server, int transport, String address) {
@@ -59,6 +61,11 @@ public class RemoteConnectionBuilder {
 
   public RemoteConnectionBuilder asyncAgent(boolean useAgent) {
     myAsyncAgent = useAgent;
+    return this;
+  }
+
+  public RemoteConnectionBuilder memoryAgent(boolean useAgent) {
+    myMemoryAgent = useAgent;
     return this;
   }
 
@@ -114,6 +121,10 @@ public class RemoteConnectionBuilder {
 
       if (myAsyncAgent) {
         addDebuggerAgent(parameters);
+      }
+
+      if (myMemoryAgent) {
+        MemoryAgentUtil.addMemoryAgent(parameters);
       }
 
       final Sdk jdk = parameters.getJdk();
@@ -209,7 +220,7 @@ public class RemoteConnectionBuilder {
             }
             if (agentFile.exists()) {
               String agentPath = JavaExecutionUtil.handleSpacesInAgentPath(
-                agentFile.getAbsolutePath(), "captureAgent", null, f -> AGENT_FILE_NAME.equals(f.getName()));
+                agentFile.getAbsolutePath(), "captureAgent", null, f -> f.getName().startsWith("debugger-agent"));
               if (agentPath != null) {
                 parametersList.add(prefix + agentPath + generateAgentSettings());
               }

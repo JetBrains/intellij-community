@@ -25,7 +25,7 @@ import com.intellij.openapi.keymap.impl.MacOSDefaultKeymap;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -40,10 +40,9 @@ import java.util.*;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
-public abstract class KeymapsTestCaseBase extends PlatformTestCase {
+public abstract class KeymapsTestCaseBase extends LightPlatformTestCase {
   private static final Set<String> LINUX_KEYMAPS = ContainerUtil.newHashSet("Default for XWin", "Default for GNOME", "Default for KDE");
   protected static final String SECOND_STROKE = "SECOND_STROKE_SHORTCUT";
-
 
   /**
    * @return Keymap -> Shortcut -> [ActionId]
@@ -100,12 +99,9 @@ public abstract class KeymapsTestCaseBase extends PlatformTestCase {
 
       Keymap keymap = km.getKeymap(keymapName);
       for (String shortcut : baseMap.keySet()) {
-        Shortcut sc = parseShortcut(shortcut);
-
-        List<String> actionIds = ContainerUtil.filter(baseMap.get(shortcut), actionId -> {
-          return ActionManager.getInstance().getAction(actionId) != null ||
-                 keymap.getShortcuts(actionId).length > 0;
-        });
+        List<String> actionIds = ContainerUtil.filter(
+          baseMap.get(shortcut),
+          actionId -> ActionManager.getInstance().getAction(actionId) != null || keymap.getShortcuts(actionId).length > 0);
 
         if (actionIds.size() >= 2) {
           map.put(shortcut, actionIds);

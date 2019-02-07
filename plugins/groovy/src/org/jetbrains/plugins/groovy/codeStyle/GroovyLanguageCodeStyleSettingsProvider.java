@@ -18,8 +18,6 @@ import org.jetbrains.plugins.groovy.GroovyLanguage;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.util.EnumMap;
-import java.util.Map;
 
 import static com.intellij.openapi.util.io.StreamUtil.readText;
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.*;
@@ -266,17 +264,13 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
 
   @Override
   public String getCodeSample(@NotNull SettingsType settingsType) {
-    return SAMPLES.get(settingsType);
-  }
-
-  private static final Map<SettingsType, String> SAMPLES;
-
-  static {
-    Map<SettingsType, String> samples = new EnumMap<>(SettingsType.class);
-    for (SettingsType type: new SettingsType[]{BLANK_LINES_SETTINGS, SPACING_SETTINGS, WRAPPING_AND_BRACES_SETTINGS, INDENT_SETTINGS}) {
-      samples.put(type, loadSample(type));
+    if (settingsType == BLANK_LINES_SETTINGS ||
+        settingsType == SPACING_SETTINGS ||
+        settingsType == WRAPPING_AND_BRACES_SETTINGS ||
+        settingsType == INDENT_SETTINGS) {
+        return loadSample(settingsType);
     }
-    SAMPLES = samples;
+    return null;
   }
 
   private static String loadSample(@NotNull SettingsType settingsType) {

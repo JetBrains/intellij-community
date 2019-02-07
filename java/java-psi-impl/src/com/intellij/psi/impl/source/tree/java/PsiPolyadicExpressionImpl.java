@@ -131,6 +131,7 @@ public class PsiPolyadicExpressionImpl extends ExpressionPsiElement implements P
     super.clearCaches();
   }
 
+  @Override
   public String toString() {
     return "PsiPolyadicExpression: " + getText();
   }

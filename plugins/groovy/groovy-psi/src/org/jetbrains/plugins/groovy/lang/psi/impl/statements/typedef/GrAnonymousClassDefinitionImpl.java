@@ -32,7 +32,7 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   }
 
   public GrAnonymousClassDefinitionImpl(GrTypeDefinitionStub stub) {
-    this(stub, GroovyElementTypes.ANONYMOUS_CLASS_DEFINITION);
+    this(stub, GroovyElementTypes.ANONYMOUS_TYPE_DEFINITION);
   }
 
   public GrAnonymousClassDefinitionImpl(GrTypeDefinitionStub stub, final GrStubElementType nodeType) {

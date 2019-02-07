@@ -17,7 +17,6 @@ package org.jetbrains.plugins.gradle.settings;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/17/2017
  */
 public enum CompositeDefinitionSource {
   IDE, SCRIPT

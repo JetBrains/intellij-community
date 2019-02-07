@@ -64,17 +64,20 @@ public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
     workingDirsFile = aPackage.getWorkingDirsFile();
     assertNotNull(workingDirsFile);
     file = preparePathsForComparison(FileUtil.loadFile(workingDirsFile), mod1, mod2);
-    assertEquals("p\n" +
-                 "MODULE_1\n" +
-                 "mod1\n" +
+    assertEquals("p\n" + //package name
+                 "MODULE_1\n" +   //working dir
+                 "mod1\n" +       //module name
                  "CLASSPATH\n" +
-                 "1\n" +
-                 "p.T1\n" +
-                 "MODULE_2\n" +
-                 "mod2\n" +
+                 "1\n" +          //number of classes
+                 "p.T1\n" +       //list of classes 
+                 "\n" +           //empty filters
+                 //second module
+                 "MODULE_2\n" +   //working dir
+                 "mod2\n" +       //module name
                  "CLASSPATH\n" +
-                 "1\n" +
-                 "p.T2", file);
+                 "1\n" +          //number of classes
+                 "p.T2",          //class names 
+                 file);
   }
 
   @NotNull
@@ -126,7 +129,7 @@ public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
     fileContent = StringUtil.convertLineSeparators(fileContent);
     final String[] lines = fileContent.split("\n");
     lines[3] = "CLASSPATH";
-    lines[8] = "CLASSPATH";
+    lines[9] = "CLASSPATH";
     return StringUtil.join(lines, "\n");
   }
 

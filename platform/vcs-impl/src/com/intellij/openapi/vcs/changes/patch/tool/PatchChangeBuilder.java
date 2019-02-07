@@ -44,7 +44,7 @@ class PatchChangeBuilder {
 
   private int totalLines = 0;
 
-  public void exec(@NotNull List<AppliedSplitPatchHunk> splitHunks) {
+  public void exec(@NotNull List<? extends AppliedSplitPatchHunk> splitHunks) {
     int lastBeforeLine = -1;
     for (AppliedSplitPatchHunk hunk : splitHunks) {
       List<String> contextBefore = hunk.getContextBefore();

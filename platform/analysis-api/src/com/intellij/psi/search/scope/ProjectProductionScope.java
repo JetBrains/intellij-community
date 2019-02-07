@@ -27,8 +27,7 @@ public final class ProjectProductionScope extends NamedScope {
         ProjectFileIndex index = ProjectFilesScope.getFileIndex(project);
         return index != null
                && index.isInSource(file)
-               && !index.isInLibraryClasses(file)
-               && !index.isInLibrarySource(file)
+               && !index.isInLibrary(file)
                && !TestSourcesFilter.isTestSources(file, project);
       }
     });

@@ -90,7 +90,7 @@ public class DataPack extends DataPackBase {
   }
 
   @NotNull
-  private static Set<Integer> getBranchCommitHashIndexes(@NotNull Collection<VcsRef> branches, @NotNull VcsLogStorage storage) {
+  private static Set<Integer> getBranchCommitHashIndexes(@NotNull Collection<? extends VcsRef> branches, @NotNull VcsLogStorage storage) {
     Set<Integer> result = new HashSet<>();
     for (VcsRef vcsRef : branches) {
       result.add(storage.getCommitIndex(vcsRef.getCommitHash(), vcsRef.getRoot()));

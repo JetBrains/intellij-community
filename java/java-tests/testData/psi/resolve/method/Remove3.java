@@ -6,6 +6,6 @@ public class Remove3{
     THashMap map = new THashMap();
     
     void foo(){
-        map.<ref>size();
+        map.<caret>size();
     }
 }

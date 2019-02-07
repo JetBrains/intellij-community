@@ -287,7 +287,7 @@ public class PyBlock implements ASTBlock {
     }
     else if (parentType == PyElementTypes.DICT_LITERAL_EXPRESSION || parentType == PyElementTypes.SET_LITERAL_EXPRESSION ||
              parentType == PyElementTypes.SET_COMP_EXPRESSION || parentType == PyElementTypes.DICT_COMP_EXPRESSION) {
-      if ((childType == PyTokenTypes.RBRACE && !settings.HANG_CLOSING_BRACKETS) || !hasLineBreaksBeforeInSameParent(child, 1)) {
+      if ((childType == PyTokenTypes.RBRACE && !settings.HANG_CLOSING_BRACKETS) || childType == PyTokenTypes.LBRACE) {
         childIndent = Indent.getNoneIndent();
       }
       else {
@@ -407,7 +407,6 @@ public class PyBlock implements ASTBlock {
     }
     if (childType == PyElementTypes.KEY_VALUE_EXPRESSION && isChildOfDictLiteral(child)) {
       childWrap = myDictWrapping;
-      childIndent = settings.USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS ? Indent.getContinuationIndent() : Indent.getNormalIndent();
     }
 
     if (isAfterStatementList(child) &&

@@ -47,7 +47,6 @@ import java.util.stream.Collectors;
 
 /**
  * @author Vladislav.Soroka
- * @since 3/21/2015
  */
 public class IgnoreExternalProjectAction extends ExternalSystemToggleAction {
 

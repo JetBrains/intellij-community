@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 12/6/11 3:58 PM
  */
 public class WhiteSpaceFormattingStrategyAdapter implements WhiteSpaceFormattingStrategy {
   

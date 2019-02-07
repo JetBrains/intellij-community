@@ -13,12 +13,16 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiPackage;
+import com.intellij.rt.execution.junit.RepeatCount;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import jetbrains.buildServer.messages.serviceMessages.TestFailed;
+import jetbrains.buildServer.messages.serviceMessages.TestStarted;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
+
+import java.util.LinkedHashSet;
 
 public class JUnitForkIntegrationTest extends AbstractTestFrameworkCompilingIntegrationTest {
 
@@ -39,6 +43,10 @@ public class JUnitForkIntegrationTest extends AbstractTestFrameworkCompilingInte
       String contentUrl = getTestContentRoot() + "/module2";
       ContentEntry contentEntry = model.addContentEntry(contentUrl);
       contentEntry.addSourceFolder(contentUrl + "/test", true);
+      //add dependency between modules
+      if (getTestName(false).endsWith("WithDependency")) {
+        model.addModuleOrderEntry(myModule);
+      }
     });
 
     JpsMavenRepositoryLibraryDescriptor junit4Lib =
@@ -53,7 +61,24 @@ public class JUnitForkIntegrationTest extends AbstractTestFrameworkCompilingInte
   }
 
   public void testForkPerModule() throws ExecutionException {
-    JUnitConfiguration configuration = createRunPackageConfiguration("junit4");
+    doTestForkPerModule(createRunPackageConfiguration("junit4"));
+  }
+
+  public void testForkPerModuleWithDependency() throws ExecutionException {
+    doTestForkPerModule(createRunPackageConfiguration("junit4"));
+  }
+
+  public void testForkPatternPerModuleWithDependency() throws ExecutionException {
+    JUnitConfiguration configuration = new JUnitConfiguration("pattern", getProject());
+    JUnitConfiguration.Data data = configuration.getPersistentData();
+    data.TEST_OBJECT = JUnitConfiguration.TEST_PATTERN;
+    LinkedHashSet<String> pattern = new LinkedHashSet<>();
+    pattern.add(".*MyTest.*");
+    data.setPatterns(pattern);
+    doTestForkPerModule(configuration);
+  }
+
+  private static void doTestForkPerModule(final JUnitConfiguration configuration) throws ExecutionException {
     configuration.setWorkingDirectory("$MODULE_WORKING_DIR$");
     configuration.setSearchScope(TestSearchScope.WHOLE_PROJECT);
 
@@ -64,8 +89,56 @@ public class JUnitForkIntegrationTest extends AbstractTestFrameworkCompilingInte
     assertSize(2, ContainerUtil.filter(processOutput.messages, TestFailed.class::isInstance));
   }
 
+  public void testForkPerClassOnTwoEngines() throws ExecutionException {
+    final JUnitConfiguration configuration = createRunPackageConfiguration("klass");
+    configuration.setSearchScope(TestSearchScope.SINGLE_MODULE);
+    configuration.setModule(myModule);
+    configuration.setForkMode(JUnitConfiguration.FORK_KLASS);
+
+    ProcessOutput processOutput = doStartTestsProcess(configuration);
+
+    assertTrue(processOutput.sys.toString().contains("-junit5"));
+    assertEmpty(processOutput.out);
+    assertSize(2, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance));
+  }
+
+  public void testForkPerClassOnTwoEnginesWithRepeat() throws ExecutionException {
+    final JUnitConfiguration configuration = createRunPackageConfiguration("klass");
+    configuration.setSearchScope(TestSearchScope.SINGLE_MODULE);
+    configuration.setModule(myModule);
+    configuration.setForkMode(JUnitConfiguration.FORK_KLASS);
+
+    configuration.setRepeatCount(2);
+    configuration.setRepeatMode(RepeatCount.N);
+
+    ProcessOutput processOutput = doStartTestsProcess(configuration);
+
+    assertTrue(processOutput.sys.toString().contains("-junit5"));
+    assertEmpty(processOutput.out);
+    assertSize(4, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance));
+  }
+
+  public void testForkPerClassOnRepeat() throws ExecutionException {
+    PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage("klass");
+    assertNotNull(aPackage);
+    JUnitConfiguration configuration = createConfiguration(aPackage);
+    configuration.setModule(myModule);
+    configuration.setForkMode(JUnitConfiguration.FORK_KLASS);
+    configuration.setRepeatCount(2);
+    configuration.setRepeatMode(RepeatCount.N);
+    JUnitConfiguration.Data data = configuration.getPersistentData();
+    data.TEST_OBJECT = JUnitConfiguration.TEST_CLASS;
+    data.MAIN_CLASS_NAME = "klass.MyTest5";
+
+    ProcessOutput processOutput = doStartTestsProcess(configuration);
+
+    assertTrue(processOutput.sys.toString().contains("-junit5"));
+    assertEmpty(processOutput.out);
+    assertSize(2, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance));
+  }
+
   @NotNull
-  public JUnitConfiguration createRunPackageConfiguration(final String packageName) {
+  private JUnitConfiguration createRunPackageConfiguration(final String packageName) {
     PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage(packageName);
     assertNotNull(aPackage);
     RunConfiguration configuration = createConfiguration(aPackage);

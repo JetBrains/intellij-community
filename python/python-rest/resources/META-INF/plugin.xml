@@ -1,7 +1,6 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <name>Python ReStructureText Integration</name>
   <id>org.jetbrains.plugins.python-rest</id>
-  <version>1.0</version>
   <vendor>JetBrains</vendor>
   <idea-version since-build="130.1"/>
   <depends>com.intellij.modules.python</depends>

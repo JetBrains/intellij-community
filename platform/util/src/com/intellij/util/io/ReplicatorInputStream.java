@@ -30,7 +30,7 @@ public class ReplicatorInputStream extends InputStream {
   private final InputStream mySource;
   private int markedSize;
 
-  public ReplicatorInputStream(final InputStream source, final BufferExposingByteArrayOutputStream target) {
+  public ReplicatorInputStream(@NotNull InputStream source, @NotNull BufferExposingByteArrayOutputStream target) {
     mySource = source;
     myTarget = target;
   }

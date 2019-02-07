@@ -93,7 +93,7 @@ public class GitFileHistory {
     GitLogParser logParser = new GitLogParser(myProject, GitLogParser.NameStatus.STATUS,
                                               HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, PARENTS,
                                               SUBJECT, BODY, RAW_BODY, AUTHOR_TIME);
-    GitLogRecordConsumer recordConsumer = new GitLogRecordConsumer(consumer, exceptionConsumer);
+    GitLogRecordConsumer recordConsumer = new GitLogRecordConsumer(consumer);
 
     String firstCommitParent = myStartingRevision.asString();
     FilePath currentPath = myPath;
@@ -257,12 +257,9 @@ public class GitFileHistory {
     @NotNull private final AtomicBoolean mySkipFurtherOutput = new AtomicBoolean();
     @NotNull private final AtomicReference<String> myFirstCommit = new AtomicReference<>();
     @NotNull private final AtomicReference<FilePath> myCurrentPath = new AtomicReference<>();
-    @NotNull private final Consumer<VcsException> myExceptionConsumer;
     @NotNull private final Consumer<GitFileRevision> myRevisionConsumer;
 
-    GitLogRecordConsumer(@NotNull Consumer<GitFileRevision> revisionConsumer,
-                         @NotNull Consumer<VcsException> exceptionConsumer) {
-      myExceptionConsumer = exceptionConsumer;
+    GitLogRecordConsumer(@NotNull Consumer<GitFileRevision> revisionConsumer) {
       myRevisionConsumer = revisionConsumer;
     }
 
@@ -279,24 +276,19 @@ public class GitFileHistory {
 
       myFirstCommit.set(record.getHash());
 
-      try {
-        myRevisionConsumer.consume(createGitFileRevision(record));
-        List<VcsFileStatusInfo> statusInfos = record.getStatusInfos();
-        if (statusInfos.isEmpty()) {
-          // can safely be empty, for example, for simple merge commits that don't change anything.
-          return;
-        }
-        if (statusInfos.get(0).getType() == Change.Type.NEW && !myPath.isDirectory()) {
-          mySkipFurtherOutput.set(true);
-        }
+      myRevisionConsumer.consume(createGitFileRevision(record));
+      List<VcsFileStatusInfo> statusInfos = record.getStatusInfos();
+      if (statusInfos.isEmpty()) {
+        // can safely be empty, for example, for simple merge commits that don't change anything.
+        return;
       }
-      catch (VcsException e) {
-        myExceptionConsumer.consume(e);
+      if (statusInfos.get(0).getType() == Change.Type.NEW && !myPath.isDirectory()) {
+        mySkipFurtherOutput.set(true);
       }
     }
 
     @NotNull
-    private GitFileRevision createGitFileRevision(@NotNull GitLogRecord record) throws VcsException {
+    private GitFileRevision createGitFileRevision(@NotNull GitLogRecord record) {
       GitRevisionNumber revision = new GitRevisionNumber(record.getHash(), record.getDate());
       FilePath revisionPath = getRevisionPath(record);
       Couple<String> authorPair = Couple.of(record.getAuthorName(), record.getAuthorEmail());
@@ -310,7 +302,7 @@ public class GitFileHistory {
     }
 
     @NotNull
-    private FilePath getRevisionPath(@NotNull GitLogRecord record) throws VcsException {
+    private FilePath getRevisionPath(@NotNull GitLogRecord record) {
       List<FilePath> paths = record.getFilePaths(myRoot);
       if (paths.size() > 0) {
         return paths.get(0);

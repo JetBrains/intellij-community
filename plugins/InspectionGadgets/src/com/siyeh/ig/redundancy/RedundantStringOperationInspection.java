@@ -59,6 +59,12 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
 
   @NotNull
   @Override
+  public String getShortName() {
+    return "StringOperationCanBeSimplified";
+  }
+
+  @NotNull
+  @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new RedundantStringOperationVisitor(holder, isOnTheFly);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.siyeh.ig.junit.AbstractTestClassNamingConvention
@@ -133,7 +133,7 @@ class A {
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".java")
   }
 
-  void testSuperConstructorInvocation() { doTest() }
+  void testSuperConstructorInvocation() { doTest(new GroovyAssignabilityCheckInspection()) }
 
   void testDuplicateMapKeys() { doTest() }
 
@@ -1387,7 +1387,6 @@ assert book.toString() == 'Other Title by Other Name'
   }
 
   void testArrayAccessForMapProperty() {
-
     testHighlighting('''\
 def bar() {
     return [list:[1, 2, 3]]
@@ -1395,8 +1394,8 @@ def bar() {
 
 def testConfig = bar()
 print testConfig.list[0]
-print testConfig.<warning descr="Cannot resolve symbol 'foo'">foo</warning>()
-''', true, false, false, GrUnresolvedAccessInspection)
+print <warning descr="Method call is ambiguous">testConfig.foo<warning descr="'testConfig.foo' cannot be applied to '()'">()</warning></warning>
+''', true, false, false, GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection)
   }
 
   void testGStringInjectionLFs() {
@@ -2135,5 +2134,14 @@ w.width.compareTo(2f)
 
   void "test no warning on extension method with spread operator"() {
     testHighlighting '[1, 2, 3]*.multiply(4)', GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection
+  }
+
+  void 'test type arguments in import references'() {
+    testHighlighting '''\
+import java.util.List<error descr="Type argument list is not allowed here"><String></error>
+import java.util.Map<error descr="Type argument list is not allowed here"><Integer, String></error>.Entry
+import static java.util.Map<error descr="Type argument list is not allowed here"><Integer, String></error>.*
+import java.util.List<error descr="Type argument list is not allowed here"><String></error> as Foo
+''', false
   }
 }

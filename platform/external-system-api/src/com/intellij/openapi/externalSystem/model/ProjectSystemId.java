@@ -1,9 +1,12 @@
 package com.intellij.openapi.externalSystem.model;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  * The general idea of 'external system' integration is to provide management facilities for the project structure defined in
@@ -12,11 +15,11 @@ import java.io.Serializable;
  * This class serves as an id of a system which defines project structure, i.e. it might be any external system or the ide itself.
  * 
  * @author Denis Zhdanov
- * @since 2/14/12 12:59 PM
  */
 public class ProjectSystemId implements Serializable {
 
   private static final long serialVersionUID = 1L;
+  private static final Map<String, ProjectSystemId> ourExistingIds = ContainerUtil.newConcurrentMap();
   
   @NotNull public static final ProjectSystemId IDE = new ProjectSystemId("IDE");
 
@@ -30,6 +33,7 @@ public class ProjectSystemId implements Serializable {
   public ProjectSystemId(@NotNull String id, @NotNull String readableName) {
     myId = id;
     myReadableName = readableName;
+    ourExistingIds.put(id, this);
   }
 
   @Override
@@ -60,5 +64,19 @@ public class ProjectSystemId implements Serializable {
   @Override
   public String toString() {
     return myId;
+  }
+
+  @Nullable
+  public static ProjectSystemId findById(@NotNull String id) {
+    return ourExistingIds.get(id);
+  }
+
+  private Object readResolve() {
+    ProjectSystemId cached = ourExistingIds.get(myId);
+    if (cached != null) {
+      return cached;
+    } else {
+      return this;
+    }
   }
 }

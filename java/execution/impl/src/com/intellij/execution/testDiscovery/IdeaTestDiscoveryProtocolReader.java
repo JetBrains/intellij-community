@@ -3,13 +3,16 @@ package com.intellij.execution.testDiscovery;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.rt.coverage.data.api.TestDiscoveryProtocolReader;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, TestDiscoveryProtocolReader.NameEnumeratorReader {
   private static final Logger LOG = Logger.getInstance(IdeaTestDiscoveryProtocolReader.class);
@@ -90,7 +93,7 @@ class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, Te
       private final String myTestClassName = myTestExecutionNameEnumerator.get(testClassId);
       private final String myTestMethodName = myTestExecutionNameEnumerator.get(testMethodId);
       private final MultiMap<String, String> myUsedMethods = new MultiMap<>();
-      private String[] myUsedFiles = ArrayUtil.EMPTY_STRING_ARRAY;
+      private final List<String> myUsedFiles = new SmartList<>();
       private int myCurrentClassId;
 
       @Override
@@ -121,7 +124,7 @@ class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, Te
 
       @Override
       public void processAffectedFile(int[] ints) {
-        myUsedFiles = Arrays.stream(ints).mapToObj(id -> myTestExecutionNameEnumerator.get(id)).toArray(ArrayUtil.STRING_ARRAY_FACTORY::create);
+        myUsedFiles.add(Arrays.stream(ints).mapToObj(id1 -> myTestExecutionNameEnumerator.get(id1)).collect(Collectors.joining(File.separator)));
       }
     };
   }

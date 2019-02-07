@@ -119,9 +119,9 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
     private final String myDescription;
 
     RemoteProjectTemplate(String name,
-                                 Element element,
-                                 ModuleType moduleType,
-                                 String path, String description) {
+                          Element element,
+                          ModuleType moduleType,
+                          String path, String description) {
       super(name, element.getChildTextTrim("category"));
       myModuleType = moduleType;
       myPath = path;

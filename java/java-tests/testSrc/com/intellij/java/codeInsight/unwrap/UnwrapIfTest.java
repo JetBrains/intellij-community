@@ -1,36 +1,22 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.unwrap;
 
 import com.intellij.codeInsight.unwrap.UnwrapTestCase;
 
 public class UnwrapIfTest extends UnwrapTestCase {
-  public void testDoesNothingOutsideOfStatements() throws Exception {
+  public void testDoesNothingOutsideOfStatements() {
     assertUnwrapped("<caret>int i = 0;\n",
 
                     "<caret>int i = 0;\n");
   }
 
-  public void testIfWithSingleStatement() throws Exception {
+  public void testIfWithSingleStatement() {
     assertUnwrapped("if(true) Sys<caret>tem.gc();\n",
 
                     "Sys<caret>tem.gc();\n");
   }
 
-  public void testIfBlock() throws Exception {
+  public void testIfBlock() {
     assertUnwrapped("if(true) {\n" +
                     "    int i;<caret>\n" +
                     "}\n",
@@ -38,7 +24,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                     "int i;<caret>\n");
   }
 
-  public void testIfBlockWithComment() throws Exception {
+  public void testIfBlockWithComment() {
     assertUnwrapped("if(true) {\n" +
                     "    // a comment\n" +
                     "    int i;<caret>\n" +
@@ -48,7 +34,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                     "int i;<caret>\n");
   }
 
-  public void testIfMultiStatementBlock() throws Exception {
+  public void testIfMultiStatementBlock() {
     assertUnwrapped("if(true) {\n" +
                     "    int i;\n" +
                     "\n" +
@@ -60,7 +46,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                     "int j;<caret>\n");
   }
 
-  public void testIfEmpty()throws Exception {
+  public void testIfEmpty() {
     assertUnwrapped("{\n" +
                     "    if(true<caret>);\n" +
                     "}\n",
@@ -69,7 +55,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                     "<caret>}\n");
   }
 
-  public void testIfEmptyBlock() throws Exception {
+  public void testIfEmptyBlock() {
     assertUnwrapped("{\n" +
                     "    if(true<caret>) {}\n" +
                     "}\n",
@@ -78,7 +64,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                     "<caret>}\n");
   }
 
-  public void testIfIncomplete() throws Exception {
+  public void testIfIncomplete() {
     assertUnwrapped("{\n" +
                     "    if(true<caret>)\n" +
                     "}\n",
@@ -87,7 +73,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                     "<caret>}\n");
   }
 
-  public void testDoesNotAffectNeighbours() throws Exception {
+  public void testDoesNotAffectNeighbours() {
     assertUnwrapped("if(true) {}\n" +
                     "if(false) {<caret>}\n" +
                     "if(true && false) {}\n",
@@ -96,7 +82,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                     "<caret>if(true && false) {}\n");
   }
 
-  public void testIfWithElse() throws Exception {
+  public void testIfWithElse() {
     assertUnwrapped("if(true) {\n" +
                     "    int i;<caret>\n" +
                     "} else {\n" +
@@ -106,7 +92,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                     "int i;<caret>\n");
   }
 
-  public void testIfWithElses() throws Exception {
+  public void testIfWithElses() {
     assertUnwrapped("if(true) {\n" +
                     "    int i;<caret>\n" +
                     "} else if (true) {\n" +
@@ -118,7 +104,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                     "int i;<caret>\n");
   }
 
-  public void testIfElseIncomplete() throws Exception {
+  public void testIfElseIncomplete() {
     assertUnwrapped("if(true) {\n" +
                     "    int i;<caret>\n" +
                     "} else \n",
@@ -126,7 +112,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                     "int i;<caret>\n");
   }
 
-  public void testUnwrapElse() throws Exception {
+  public void testUnwrapElse() {
     assertUnwrapped("{\n" +
                     "    if(true) {\n" +
                     "        int i;\n" +
@@ -138,7 +124,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                     "}\n");
   }
 
-  public void testUnwrapElseBlock() throws Exception {
+  public void testUnwrapElseBlock() {
     assertUnwrapped("{\n" +
                     "    if(true) {\n" +
                     "        int i;\n" +
@@ -152,7 +138,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                     "}\n");
   }
 
-  public void testUnwrapElseIf() throws Exception {
+  public void testUnwrapElseIf() {
     assertUnwrapped("{\n" +
                     "    if(true) {\n" +
                     "        int i;\n" +
@@ -166,7 +152,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                     "}\n");
   }
 
-  public void testUnwrapIfElseIfElse() throws Exception {
+  public void testUnwrapIfElseIfElse() {
     assertUnwrapped("{\n" +
                     "    if(true) {\n" +
                     "        int i;\n" +
@@ -182,7 +168,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                     "}\n");
   }
 
-  public void testUnwrapElseWhenCaretRightInTheElseKeyword() throws Exception {
+  public void testUnwrapElseWhenCaretRightInTheElseKeyword() {
     assertUnwrapped("{\n" +
                     "    if(true) {\n" +
                     "        int i;\n" +
@@ -196,7 +182,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                     "}\n");
   }
 
-  public void testRemovesWhileIfWhenElseIsIsIncomplete() throws Exception {
+  public void testRemovesWhileIfWhenElseIsIsIncomplete() {
     assertUnwrapped("{\n" +
                     "    if(true) {\n" +
                     "        int i;\n" +
@@ -208,7 +194,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                     "}\n");
   }
 
-  public void testRemoveElse() throws Exception {
+  public void testRemoveElse() {
     assertUnwrapped("{\n" +
                     "    if(true) {\n" +
                     "        int i;\n" +
@@ -226,7 +212,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                     1);
   }
 
-  public void testRemoveElseWhenCaretRightInTheElseKeyword() throws Exception {
+  public void testRemoveElseWhenCaretRightInTheElseKeyword() {
     assertUnwrapped("{\n" +
                     "    if(true) {\n" +
                     "        int i;\n" +
@@ -244,7 +230,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                     1);
   }
 
-  public void testRemoveElseIf() throws Exception {
+  public void testRemoveElseIf() {
     assertUnwrapped("{\n" +
                     "    if(true) {\n" +
                     "        int i;\n" +
@@ -262,7 +248,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                     1);
   }
 
-  public void testRemoveElseIfElse() throws Exception {
+  public void testRemoveElseIfElse() {
     assertUnwrapped("if(true) {\n" +
                     "    int i;\n" +
                     "} else if (true) {\n" +
@@ -280,7 +266,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                     1);
   }
 
-  public void testIfOption() throws Exception {
+  public void testIfOption() {
     assertOptions("if (true) {\n" +
                   "    <caret>\n" +
                   "}\n",
@@ -288,7 +274,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                   "Unwrap 'if...'");
   }
 
-  public void testIfElseOption() throws Exception {
+  public void testIfElseOption() {
     assertOptions("if (true) {\n" +
                   "} else {\n" +
                   "    <caret>\n" +
@@ -298,7 +284,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                   "Remove 'else...'");
   }
 
-  public void testDoesNotIncludeDirectParentIfsWhenElseIsSelected() throws Exception {
+  public void testDoesNotIncludeDirectParentIfsWhenElseIsSelected() {
     assertOptions("if (true) {\n" +
                   "} else if (true) {\n" +
                   "} else if (true) {\n" +
@@ -310,7 +296,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                   "Remove 'else...'");
   }
 
-  public void testDoesNotIncludeIndirectParentIfsWhenElseIsSelected() throws Exception {
+  public void testDoesNotIncludeIndirectParentIfsWhenElseIsSelected() {
     assertOptions("if (true) {\n" +
                   "} else if (true) {\n" +
                   "} else {\n" +
@@ -326,7 +312,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                   "Remove 'else...'");
   }
 
-  public void testIfElseIfOption() throws Exception {
+  public void testIfElseIfOption() {
     assertOptions("if (true) {\n" +
                   "} else if (false) {\n" +
                   "    <caret>\n" +
@@ -336,7 +322,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                   "Remove 'else...'");
   }
 
-  public void testIfInsideElseOption() throws Exception {
+  public void testIfInsideElseOption() {
     assertOptions("if (true) {\n" +
                   "} else {\n" +
                   "  if (false) {\n" +
@@ -349,7 +335,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                   "Remove 'else...'");
   }
 
-  public void testIfElseOptionWhenCaretIsRughtOnTheElseKeyword() throws Exception {
+  public void testIfElseOptionWhenCaretIsRughtOnTheElseKeyword() {
     assertOptions("if (true) {\n" +
                   "} el<caret>se {\n" +
                   "}\n",

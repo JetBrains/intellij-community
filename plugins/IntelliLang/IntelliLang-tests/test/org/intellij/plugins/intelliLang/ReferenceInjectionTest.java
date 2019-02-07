@@ -246,7 +246,14 @@ public class ReferenceInjectionTest extends AbstractLanguageInjectionTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myFixture.disableInspections(new InjectedReferencesInspection());
-    super.tearDown();
+    try {
+      myFixture.disableInspections(new InjectedReferencesInspection());
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 }

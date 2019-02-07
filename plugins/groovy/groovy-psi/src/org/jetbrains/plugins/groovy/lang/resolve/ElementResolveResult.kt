@@ -10,13 +10,15 @@ open class ElementResolveResult<out T : PsiElement>(private val element: T) : Gr
 
   final override fun getElement(): T = element
 
-  override fun isValidResult(): Boolean = element.isValid && isStaticsOK && isAccessible && isApplicable
+  final override fun isValidResult(): Boolean = element.isValid && isStaticsOK && isAccessible && isApplicable
 
   override fun isStaticsOK(): Boolean = true
 
   override fun isAccessible(): Boolean = true
 
   override fun getCurrentFileResolveContext(): PsiElement? = null
+
+  override fun getContextSubstitutor(): PsiSubstitutor = PsiSubstitutor.EMPTY
 
   override fun getSubstitutor(): PsiSubstitutor = PsiSubstitutor.EMPTY
 

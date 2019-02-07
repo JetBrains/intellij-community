@@ -53,7 +53,7 @@ final class ObjectNode<T> {
     myParent = parentNode;
     myObject = object;
 
-    myTrace = Disposer.isDebugMode() ? ThrowableInterner.intern(new Throwable()) : null;
+    myTrace = parentNode == null && Disposer.isDebugMode() ? ThrowableInterner.intern(new Throwable()) : null;
     myOwnModification = modification;
   }
 
@@ -202,10 +202,6 @@ final class ObjectNode<T> {
         }
       }
     }
-  }
-
-  Throwable getAllocation() {
-    return myTrace;
   }
 
   long getOwnModification() {

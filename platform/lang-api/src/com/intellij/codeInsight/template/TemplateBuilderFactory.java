@@ -18,6 +18,7 @@ package com.intellij.codeInsight.template;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -27,5 +28,5 @@ public abstract class TemplateBuilderFactory {
     return ServiceManager.getService(TemplateBuilderFactory.class);
   }
 
-  public abstract TemplateBuilder createTemplateBuilder(PsiElement element);
+  public abstract TemplateBuilder createTemplateBuilder(@NotNull PsiElement element);
 }

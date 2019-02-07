@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,16 +61,24 @@ public class BaseQuoteHandler extends SimpleTokenSetQuoteHandler implements Mult
     final String text = iterator.getDocument().getText();
     char theQuote = text.charAt(offset);
 
+    final IElementType tokenType = iterator.getTokenType();
     // if we're next to two same quotes, auto-close triple quote
-    if (myLiteralTokenSet.contains(iterator.getTokenType())) {
+    if (myLiteralTokenSet.contains(tokenType)) {
       if (
         offset >= 2 &&
         text.charAt(offset - 1) == theQuote &&
         text.charAt(offset - 2) == theQuote &&
         (offset < 3 || text.charAt(offset - 3) != theQuote)
         ) {
-        final int start = iterator.getStart();
-        if (getLiteralStartOffset(text, start) == offset - 2) return true;
+        final int tokenStart = iterator.getStart();
+        // offset + 1 is the current offset of the iterator
+        if (offset + 1 == tokenStart && tokenType == PyTokenTypes.FSTRING_TEXT) {
+          iterator.retreat();
+          final boolean afterFStringStart = iterator.getTokenType() == PyTokenTypes.FSTRING_START;
+          iterator.advance();
+          return afterFStringStart;
+        }
+        return getLiteralStartOffset(text, tokenStart) == offset - 2;
       }
     }
     return false;
@@ -107,7 +116,7 @@ public class BaseQuoteHandler extends SimpleTokenSetQuoteHandler implements Mult
         if (doc == null) return false;
         CharSequence chars = doc.getCharsSequence();
         if (chars.length() > offset + 1) {
-          Character ch = chars.charAt(offset + 1);
+          char ch = chars.charAt(offset + 1);
           if (Arrays.binarySearch(ourAutoClosingChars, ch) < 0) {
             return false;
           }

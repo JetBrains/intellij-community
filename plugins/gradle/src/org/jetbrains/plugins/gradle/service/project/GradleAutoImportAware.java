@@ -46,7 +46,6 @@ import java.util.stream.Stream;
 
 /**
  * @author Denis Zhdanov
- * @since 6/8/13 3:49 PM
  */
 public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
   private static final Logger LOG = Logger.getInstance(GradleAutoImportAware.class);

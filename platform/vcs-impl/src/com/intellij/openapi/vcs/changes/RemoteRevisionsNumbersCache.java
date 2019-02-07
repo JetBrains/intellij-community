@@ -223,7 +223,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
       if (queue != null) return queue;
 
       queue = new LazyRefreshingSelfQueue<>(() -> myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL > 0
-             ? myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL * 60000
+             ? myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL * 60000L
              : ourRottenPeriod, new MyShouldUpdateChecker(vcsRoot), new MyUpdater(vcsRoot));
       myRefreshingQueues.put(vcsRoot, queue);
       return queue;

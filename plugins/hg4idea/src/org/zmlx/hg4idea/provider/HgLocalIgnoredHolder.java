@@ -15,166 +15,37 @@
  */
 package org.zmlx.hg4idea.provider;
 
-import com.intellij.dvcs.repo.AsyncFilesManagerListener;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Alarm;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.command.HgStatusCommand;
 import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.repo.HgRepositoryManager;
 
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class HgLocalIgnoredHolder implements Disposable {
-  private static final Logger LOG = Logger.getInstance(HgLocalIgnoredHolder.class);
-  @NotNull private final MergingUpdateQueue myUpdateQueue;
-  @NotNull private final AtomicBoolean myInUpdateMode;
-  @NotNull private final HgRepository myRepository;
-  @NotNull private final Set<VirtualFile> myIgnoredSet;
-  @NotNull private final ReentrantReadWriteLock SET_LOCK = new ReentrantReadWriteLock();
-  private final EventDispatcher<AsyncFilesManagerListener> myListeners = EventDispatcher.create(AsyncFilesManagerListener.class);
+public class HgLocalIgnoredHolder extends VcsRepositoryIgnoredFilesHolderBase<HgRepository> {
 
-  public HgLocalIgnoredHolder(@NotNull HgRepository repository) {
-    myRepository = repository;
-    myIgnoredSet = ContainerUtil.newHashSet();
-    myInUpdateMode = new AtomicBoolean(false);
-    myUpdateQueue = new MergingUpdateQueue("HgIgnoreUpdate", 500, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD);
+  public HgLocalIgnoredHolder(@NotNull HgRepository repository, @NotNull HgRepositoryManager repositoryManager) {
+    super(repository, repositoryManager, "HgIgnoreUpdate", "hgRescanIgnored");
   }
 
-  public void addUpdateStateListener(@NotNull AsyncFilesManagerListener listener) {
-    myListeners.addListener(listener, this);
-  }
-
-  public void startRescan() {
-    if (Registry.is("hg4idea.process.ignored")) {
-      myUpdateQueue.queue(new Update("hgRescanIgnored") {
-        @Override
-        public boolean canEat(Update update) {
-          return true;
-        }
-
-        @Override
-        public void run() {
-          if (myInUpdateMode.compareAndSet(false, true)) {
-            fireUpdateStarted();
-            rescanAllIgnored();
-            myInUpdateMode.set(false);
-            fireUpdateFinished();
-          }
-        }
-      });
-    }
-  }
-
-  private void fireUpdateStarted() {
-    myListeners.getMulticaster().updateStarted();
-  }
-
-  private void fireUpdateFinished() {
-    myListeners.getMulticaster().updateFinished();
-  }
-
-  private void rescanAllIgnored() {
+  @NotNull
+  @Override
+  protected Set<VirtualFile> requestIgnored(@Nullable Collection<? extends FilePath> paths) {
     Set<VirtualFile> ignored = ContainerUtil.newHashSet();
-    ignored.addAll(new HgStatusCommand.Builder(false).ignored(true).build(myRepository.getProject())
-                     .getFiles(myRepository.getRoot(), null));
-    try {
-      SET_LOCK.writeLock().lock();
-      myIgnoredSet.clear();
-      myIgnoredSet.addAll(ignored);
-    }
-    finally {
-      SET_LOCK.writeLock().unlock();
-    }
-  }
-
-  @NotNull
-  public List<FilePath> removeIgnoredFiles(@NotNull Collection<FilePath> files) {
-    List<FilePath> removedIgnoredFiles = ContainerUtil.newArrayList();
-    try {
-      SET_LOCK.writeLock().lock();
-      Iterator<VirtualFile> iter = myIgnoredSet.iterator();
-      while (iter.hasNext()) {
-        FilePath filePath = VcsUtil.getFilePath(iter.next());
-        if (files.contains(filePath)) {
-          iter.remove();
-          removedIgnoredFiles.add(filePath);
-        }
-      }
-    }
-    finally {
-      SET_LOCK.writeLock().unlock();
-    }
-    return removedIgnoredFiles;
-  }
-
-  public void addFiles(@NotNull List<VirtualFile> files) {
-    try {
-      SET_LOCK.writeLock().lock();
-      myIgnoredSet.addAll(files);
-    }
-    finally {
-      SET_LOCK.writeLock().unlock();
-    }
-  }
-
-  public boolean contains(@NotNull VirtualFile file) {
-    try {
-      SET_LOCK.readLock().lock();
-      return myIgnoredSet.contains(file);
-    }
-    finally {
-      SET_LOCK.readLock().unlock();
-    }
-  }
-
-  public boolean isInUpdateMode() {
-    return myInUpdateMode.get();
-  }
-
-  @NotNull
-  public Set<VirtualFile> getIgnoredFiles() {
-    try {
-      SET_LOCK.readLock().lock();
-      return ContainerUtil.newHashSet(myIgnoredSet);
-    }
-    finally {
-      SET_LOCK.readLock().unlock();
-    }
+    ignored.addAll(new HgStatusCommand.Builder(false).ignored(true).build(repository.getProject())
+                     .getFiles(repository.getRoot(), paths != null ? ContainerUtil.newArrayList(paths) : null));
+    return ignored;
   }
 
   @Override
-  public void dispose() {
-    try {
-      myUpdateQueue.cancelAllUpdates();
-      SET_LOCK.writeLock().lock();
-      myIgnoredSet.clear();
-    }
-    finally {
-      SET_LOCK.writeLock().unlock();
-    }
-  }
-
-  public int getSize() {
-    try {
-      SET_LOCK.readLock().lock();
-      return myIgnoredSet.size();
-    }
-    finally {
-      SET_LOCK.readLock().unlock();
-    }
+  protected boolean scanTurnedOff() {
+    return !Registry.is("hg4idea.process.ignored");
   }
 }

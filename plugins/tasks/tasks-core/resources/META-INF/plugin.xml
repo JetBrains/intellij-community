@@ -1,0 +1,146 @@
+<!--
+  ~ Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+  -->
+
+<idea-plugin>
+  <id>com.intellij.tasks</id>
+  <name>Task Management</name>
+  <description>Enables task and context management</description>
+  <vendor>JetBrains</vendor>
+
+  <!--fake dependency for Web IDE-->
+  <depends>com.intellij.modules.xml</depends>
+  <depends optional="true" config-file="java-contexts.xml">com.intellij.modules.java</depends>
+  <!-- Optional dependency on XPath plugin for syntax highlighting in GenericRepository configuration dialog -->
+  <depends optional="true">XPathView</depends>
+
+  <project-components>
+    <component>
+      <interface-class>com.intellij.tasks.TaskManager</interface-class>
+      <implementation-class>com.intellij.tasks.impl.TaskManagerImpl</implementation-class>
+    </component>
+  </project-components>
+
+  <actions>
+
+    <group id="task.actions">
+      <action id="tasks.switch" class="com.intellij.tasks.actions.SwitchTaskAction" text="_Switch Task...">
+        <keyboard-shortcut keymap="$default" first-keystroke="alt shift T"/>
+      </action>
+      <action id="tasks.goto" class="com.intellij.tasks.actions.GotoTaskAction">
+        <keyboard-shortcut keymap="$default" first-keystroke="alt shift N"/>
+      </action>
+      <action id="tasks.close" class="com.intellij.tasks.actions.CloseTaskAction" text="_Close Active Task...">
+        <keyboard-shortcut keymap="$default" first-keystroke="alt shift W"/>
+      </action>
+      <separator/>
+      <action id="tasks.edit" class="com.intellij.tasks.actions.EditTaskAction" text="Edit Task..."/>
+      <action id="tasks.create.changelist" class="com.intellij.tasks.actions.CreateChangelistAction" text="Create Change_list..."/>
+      <action id="tasks.show.task.description" class="com.intellij.tasks.actions.ShowTaskDescription" text="Show Description"/>
+      <action id="tasks.open.in.browser" class="com.intellij.tasks.actions.OpenTaskInBrowserAction" text="Open in _Browser">
+        <keyboard-shortcut keymap="$default" first-keystroke="alt shift B"/>
+      </action>
+      <action id="tasks.analyze.stacktrace" class="com.intellij.tasks.actions.AnalyzeTaskStacktraceAction"
+              text="Analyze _Stack Trace From Task..."/>
+      <separator/>
+      <action id="tasks.configure.servers" class="com.intellij.tasks.actions.ConfigureServersAction" text="Configure Servers..."/>
+    </group>
+
+    <group id="working.context">
+      <action id="context.save" class="com.intellij.tasks.actions.context.SaveContextAction" text="_Save Context...">
+        <keyboard-shortcut keymap="$default" first-keystroke="alt shift S"/>
+      </action>
+      <action id="context.load" class="com.intellij.tasks.actions.context.LoadContextAction" text="_Load Context...">
+        <keyboard-shortcut keymap="$default" first-keystroke="alt shift L"/>
+        <keyboard-shortcut keymap="Mac OS X" first-keystroke="alt shift L" remove="true"/>
+      </action>
+      <action id="context.clear" class="com.intellij.tasks.actions.context.ClearContextAction" text="_Clear Context">
+        <keyboard-shortcut keymap="$default" first-keystroke="alt shift X"/>
+      </action>
+    </group>
+
+    <group id="tasks.internal" text="_Tasks" internal="true" popup="true">
+      <action id="show.certificate" class="com.intellij.tasks.actions.ShowCertificateInfoAction" text="_Show certificate dialog"/>
+      <action id="deadlock.with.certificate.dialog" class="com.intellij.tasks.actions.DeadlockWithCertificateDialogAction"
+              text="_Deadlock IDE with certificate dialog"/>
+      <add-to-group group-id="Internal"/>
+    </group>
+
+    <group id="tasks.and.contexts" text="_Tasks &amp; Contexts" popup="true">
+      <reference ref="task.actions"/>
+      <separator/>
+      <reference ref="working.context"/>
+      <!-- <reference ref="tasks.util"/> -->
+    </group>
+
+    <group id="tasks.group">
+      <reference ref="tasks.and.contexts"/>
+      <separator/>
+      <add-to-group group-id="ToolsMenu" anchor="first"/>
+    </group>
+
+    <group id="tasks.toolbar.group" text="Tasks toolbar">
+      <separator/>
+      <reference id="tasks.switch"/>
+      <add-to-group group-id="MainToolBar" anchor="last"/>
+      <add-to-group group-id="NavBarToolBarOthers" anchor="last"/>
+    </group>
+  </actions>
+
+  <extensionPoints>
+    <extensionPoint name="repositoryType" interface="com.intellij.tasks.TaskRepositoryType"/>
+    <extensionPoint name="dialogPanelProvider" interface="com.intellij.tasks.ui.TaskDialogPanelProvider"/>
+    <extensionPoint name="commitPlaceholderProvider" interface="com.intellij.tasks.CommitPlaceholderProvider"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+
+    <projectConfigurable groupId="tools" instance="com.intellij.tasks.config.TaskConfigurable" id="tasks" displayName="Tasks" nonDefaultProject="true">
+      <configurable instance="com.intellij.tasks.config.TaskRepositoriesConfigurable" displayName="Servers" id="tasks.servers"/>
+    </projectConfigurable>
+    <tasks.dialogPanelProvider implementation="com.intellij.tasks.actions.vcs.VcsTaskDialogPanelProvider"/>
+
+    <editChangelistSupport implementation="com.intellij.tasks.impl.TaskChangelistSupport"/>
+
+    <projectService serviceImplementation="com.intellij.tasks.impl.TaskProjectConfiguration"/>
+    <applicationService serviceImplementation="com.intellij.tasks.config.RecentTaskRepositories"/>
+    <applicationInitializedListener implementation="com.intellij.tasks.config.PasswordConversionEnforcer"/>
+    <applicationService serviceImplementation="com.intellij.tasks.config.TaskSettings"/>
+    <search.optionContributor implementation="com.intellij.tasks.config.TaskSearchableOptionContributor"/>
+
+    <lang.documentationProvider language="TEXT" implementationClass="com.intellij.tasks.doc.TaskDocumentationProvider"/>
+
+    <tasks.repositoryType implementation="com.intellij.tasks.jira.JiraRepositoryType"/>
+    <tasks.repositoryType implementation="com.intellij.tasks.youtrack.YouTrackRepositoryType"/>
+    <tasks.repositoryType implementation="com.intellij.tasks.lighthouse.LighthouseRepositoryType"/>
+    <tasks.repositoryType implementation="com.intellij.tasks.pivotal.PivotalTrackerRepositoryType"/>
+    <tasks.repositoryType implementation="com.intellij.tasks.redmine.RedmineRepositoryType"/>
+    <tasks.repositoryType implementation="com.intellij.tasks.trac.TracRepositoryType"/>
+    <tasks.repositoryType implementation="com.intellij.tasks.fogbugz.FogBugzRepositoryType"/>
+    <tasks.repositoryType implementation="com.intellij.tasks.mantis.MantisRepositoryType"/>
+    <tasks.repositoryType implementation="com.intellij.tasks.generic.GenericRepositoryType"/>
+    <tasks.repositoryType implementation="com.intellij.tasks.trello.TrelloRepositoryType"/>
+    <tasks.repositoryType implementation="com.intellij.tasks.gitlab.GitlabRepositoryType"/>
+    <tasks.repositoryType implementation="com.intellij.tasks.bugzilla.BugzillaRepositoryType"/>
+
+    <!-- JQL support -->
+    <fileTypeFactory implementation="com.intellij.tasks.jira.jql.JqlFileTypeFactory"/>
+    <lang.parserDefinition language="JQL"
+                           implementationClass="com.intellij.tasks.jira.jql.JqlParserDefinition"/>
+    <lang.syntaxHighlighterFactory language="JQL" implementationClass="com.intellij.tasks.jira.jql.JqlHighlighterFactory"/>
+    <lang.braceMatcher language="JQL" implementationClass="com.intellij.tasks.jira.jql.JqlBraceMatcher"/>
+    <completion.contributor language="JQL"
+                            implementationClass="com.intellij.tasks.jira.jql.codeinsight.JqlCompletionContributor"/>
+    <annotator language="JQL" implementationClass="com.intellij.tasks.jira.jql.codeinsight.JqlAnnotator"/>
+
+    <checkinHandlerFactory implementation="com.intellij.tasks.impl.TaskCheckinHandlerFactory"/>
+    <!-- YouTrack support -->
+    <!--<annotator language="TEXT" implementationClass="com.intellij.tasks.youtrack.lang.YouTrackHighlightingAnnotator"/>-->
+    <lang.parserDefinition language="YouTrack" implementationClass="com.intellij.tasks.youtrack.lang.YouTrackParserDefinition"/>
+    <completion.contributor language="YouTrack"
+                            implementationClass="com.intellij.tasks.youtrack.lang.codeinsight.YouTrackCompletionContributor"/>
+    <externalAnnotator language="YouTrack" implementationClass="com.intellij.tasks.youtrack.lang.YouTrackHighlightingAnnotator"/>
+    <tasks.commitPlaceholderProvider implementation="com.intellij.tasks.impl.DefaultCommitPlaceholderProvider"/>
+  </extensions>
+
+</idea-plugin>

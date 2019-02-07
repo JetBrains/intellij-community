@@ -63,10 +63,7 @@ public final class ModuleCompilerUtil {
   @NotNull 
   private static <Node> List<Chunk<Node>> getSortedChunks(@NotNull Graph<Node> graph) {
     final Graph<Chunk<Node>> chunkGraph = toChunkGraph(graph);
-    final List<Chunk<Node>> chunks = new ArrayList<>(chunkGraph.getNodes().size());
-    for (final Chunk<Node> chunk : chunkGraph.getNodes()) {
-      chunks.add(chunk);
-    }
+    final List<Chunk<Node>> chunks = new ArrayList<>(chunkGraph.getNodes());
     DFSTBuilder<Chunk<Node>> builder = new DFSTBuilder<>(chunkGraph);
     if (!builder.isAcyclic()) {
       LOG.error("Acyclic graph expected");

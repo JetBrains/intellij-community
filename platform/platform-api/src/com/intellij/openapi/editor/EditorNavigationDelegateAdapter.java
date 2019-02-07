@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 5/26/11 4:21 PM
  */
 public class EditorNavigationDelegateAdapter implements EditorNavigationDelegate {
 

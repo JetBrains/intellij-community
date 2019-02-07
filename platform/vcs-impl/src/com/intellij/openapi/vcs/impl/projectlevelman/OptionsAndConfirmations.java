@@ -34,7 +34,7 @@ public class OptionsAndConfirmations {
     myConfirmations = new LinkedHashMap<>();
   }
 
-  public void init(final Convertor<String, VcsShowConfirmationOption.Value> initOptions) {
+  public void init(final Convertor<? super String, ? extends VcsShowConfirmationOption.Value> initOptions) {
     createSettingFor(VcsConfiguration.StandardOption.ADD);
     createSettingFor(VcsConfiguration.StandardOption.REMOVE);
     createSettingFor(VcsConfiguration.StandardOption.CHECKOUT);
@@ -59,7 +59,7 @@ public class OptionsAndConfirmations {
   }
 
   private void restoreReadConfirm(final VcsConfiguration.StandardConfirmation confirm,
-                                  final Convertor<String, VcsShowConfirmationOption.Value> initOptions) {
+                                  final Convertor<? super String, ? extends VcsShowConfirmationOption.Value> initOptions) {
     final VcsShowConfirmationOption.Value initValue = initOptions.convert(confirm.getId());
     if (initValue != null) {
       getConfirmation(confirm).setValue(initValue);

@@ -72,6 +72,20 @@ public class FlipCommaIntentionTest extends IPPTestCase {
            "}");
   }
 
+  public void testFlippingBrokenEnumConstantDoesNotCrashWithStubTextMismatch() {
+    doTest("enum E {\n" +
+           "  A(1)/*_Flip ','*/,\n" +
+           "  B(C(2), \n" +
+           "  D(5);\n" +
+           "}\n",
+
+           "enum E {\n" +
+           "  B(C(2), \n" +
+           "  D(5),\n" +
+           "  A(1);\n" +
+           "}\n");
+  }
+
   public void testUnavailableForDangling() {
     doTestIntentionNotAvailable("class C {\n" +
                                 "    int a[] = new int[]{1,2,/*_Flip ','*/};" +

@@ -18,7 +18,6 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
 
 /**
  * @author anna
- * @since 19-Aug-2008
  */
 public interface OverrideImplementsAnnotationsHandler {
   ExtensionPointName<OverrideImplementsAnnotationsHandler> EP_NAME = ExtensionPointName.create("com.intellij.overrideImplementsAnnotationsHandler");

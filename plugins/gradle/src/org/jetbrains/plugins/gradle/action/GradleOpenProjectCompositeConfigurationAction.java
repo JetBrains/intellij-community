@@ -31,7 +31,6 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/12/2015
  */
 public class GradleOpenProjectCompositeConfigurationAction extends ExternalSystemAction {
 

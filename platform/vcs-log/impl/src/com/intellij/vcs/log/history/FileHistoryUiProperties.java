@@ -20,7 +20,7 @@ import java.util.Map;
 import static com.intellij.vcs.log.impl.CommonUiProperties.*;
 import static com.intellij.vcs.log.ui.table.GraphTableModel.*;
 
-@State(name = "Vcs.Log.History.Properties", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
+@State(name = "Vcs.Log.History.Properties", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentStateComponent<FileHistoryUiProperties.State> {
   public static final VcsLogUiProperty<Boolean> SHOW_ALL_BRANCHES = new VcsLogUiProperty<>("Table.ShowOtherBranches");
   @NotNull private final Collection<PropertiesChangeListener> myListeners = ContainerUtil.newLinkedHashSet();

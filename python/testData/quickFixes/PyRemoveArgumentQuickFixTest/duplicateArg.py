@@ -3,6 +3,6 @@ def foo(*args):
 
 a = ()
 b = ()
-foo(*a, <error descr="Python versions < 3.5 do not allow duplicate *expressions">*<caret>b</error>)
+foo(*a, <error descr="Python version 2.7 does not allow duplicate *expressions">*<caret>b</error>)
 
 

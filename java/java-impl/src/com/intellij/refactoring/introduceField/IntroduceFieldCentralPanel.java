@@ -118,7 +118,8 @@ public abstract class IntroduceFieldCentralPanel {
       return true;
     }
     return updateInitializationPlaceModel(!locals && initializedInSetUp(fields),
-                                          !locals && !superOrThis && initializedInConstructor(fields));
+                                          !locals && !superOrThis && initializedInConstructor(fields), 
+                                          locals || !fields.isEmpty());
   }
 
   private static boolean initializedInConstructor(Set<PsiField> fields) {
@@ -330,7 +331,7 @@ public abstract class IntroduceFieldCentralPanel {
     }
   }
 
-  protected abstract boolean updateInitializationPlaceModel(boolean initializedInsetup, boolean initializedInConstructor);
+  protected abstract boolean updateInitializationPlaceModel(boolean initializedInsetup, boolean initializedInConstructor, boolean locals);
 
   protected abstract boolean hasSetUpChoice();
 }

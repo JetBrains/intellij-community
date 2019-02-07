@@ -259,14 +259,14 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
                  "a\n" +
                  "Expected :expected1\n" +
                  "Actual   :actual1\n" +
-                 " <Click to see difference>\n" +
+                 "<Click to see difference>\n" +
                  "\n" +
                  "stacktrace\n" +
                  "\n" +
                  "b\n" +
                  "Expected :expected2\n" +
                  "Actual   :actual2\n" +
-                 " <Click to see difference>\n" +
+                 "<Click to see difference>\n" +
                  "\n" +
                  "stacktrace\n" +
                  "\n" +

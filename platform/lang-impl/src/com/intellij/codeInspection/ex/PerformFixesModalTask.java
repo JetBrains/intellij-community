@@ -69,22 +69,20 @@ public abstract class PerformFixesModalTask implements SequentialTask {
   }
 
   @Override
-  public boolean iteration(ProgressIndicator indicator) {
+  public boolean iteration(@NotNull ProgressIndicator indicator) {
     final Pair<CommonProblemDescriptor, Boolean> pair = nextDescriptor();
     CommonProblemDescriptor descriptor = pair.getFirst();
     boolean shouldDoPostponedOperations = pair.getSecond();
 
-    if (indicator != null) {
-      indicator.setFraction((double)myProcessed++ / myLength);
-      String presentableText = "usages";
-      if (descriptor instanceof ProblemDescriptor) {
-        final PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
-        if (psiElement != null) {
-          presentableText = SymbolPresentationUtil.getSymbolPresentableText(psiElement);
-        }
+    indicator.setFraction((double)myProcessed++ / myLength);
+    String presentableText = "usages";
+    if (descriptor instanceof ProblemDescriptor) {
+      final PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
+      if (psiElement != null) {
+        presentableText = SymbolPresentationUtil.getSymbolPresentableText(psiElement);
       }
-      indicator.setText("Processing " + presentableText);
     }
+    indicator.setText("Processing " + presentableText);
 
     final boolean[] runInReadAction = {false};
     final QuickFix[] fixes = descriptor.getFixes();

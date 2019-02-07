@@ -53,12 +53,16 @@ class LazyStubList extends StubList {
     StubBase<?> stub = getCachedStub(index);
     if (stub != null) return stub;
 
-    if (myStubs.compareAndSet(index, null, instantiateStub(index))) {
+    StubBase<?> newStub = instantiateStub(index);
+    if (myStubs.compareAndSet(index, null, newStub)) {
       if (myInstantiated.incrementAndGet() == myStubs.length()) {
         myData = null; // free some memory
       }
     }
-    return getCachedStub(index);
+    else {
+      newStub = getCachedStub(index);
+    }
+    return newStub;
   }
 
   @Nullable

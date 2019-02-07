@@ -15,7 +15,6 @@ import static org.junit.Assert.assertEquals;
 
 /**
  * @author Denis Zhdanov
- * @since 10/19/11 5:25 PM
  */
 public class GradleLibraryNamesMixerTest {
   

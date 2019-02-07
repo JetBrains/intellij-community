@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -113,8 +113,8 @@ public class ForNestedRootChecker {
           result = new Node(myFile, Url.EMPTY, Url.EMPTY, myError);
         }
       }
-      else if (myInfo != null && myInfo.getRepositoryRootURL() != null && myInfo.getURL() != null) {
-        result = new Node(myFile, myInfo.getURL(), myInfo.getRepositoryRootURL());
+      else if (myInfo != null && myInfo.getRepositoryRootUrl() != null && myInfo.getUrl() != null) {
+        result = new Node(myFile, myInfo.getUrl(), myInfo.getRepositoryRootUrl());
       }
 
       return result;

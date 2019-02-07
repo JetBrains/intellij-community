@@ -98,19 +98,14 @@ public abstract class AbstractConfigUtils {
       if (jars.length > 1) {
         Arrays.sort(jars);
       }
-      JarFile jarFile = new JarFile(jars[0]);
-      try {
+      try (JarFile jarFile = new JarFile(jars[0])) {
         JarEntry jarEntry = jarFile.getJarEntry(manifestPath);
         if (jarEntry == null) {
           return null;
         }
-        final InputStream inputStream = jarFile.getInputStream(jarEntry);
         Manifest manifest;
-        try {
+        try (InputStream inputStream = jarFile.getInputStream(jarEntry)) {
           manifest = new Manifest(inputStream);
-        }
-        finally {
-          inputStream.close();
         }
         final String version = manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
         if (version != null) {
@@ -127,9 +122,6 @@ public abstract class AbstractConfigUtils {
           }
         }
         return null;
-      }
-      finally {
-        jarFile.close();
       }
     }
     catch (Exception e) {

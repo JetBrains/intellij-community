@@ -34,7 +34,6 @@ import java.util.Map;
 
 /**
  * @author Roman.Shein
- * @since 03.08.2015.
  */
 public class CodeStyleSettingsNameProvider implements CodeStyleSettingsCustomizable {
 

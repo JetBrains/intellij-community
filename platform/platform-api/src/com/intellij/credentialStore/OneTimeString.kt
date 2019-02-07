@@ -2,10 +2,13 @@
 package com.intellij.credentialStore
 
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.ArrayUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.io.toByteArray
 import com.intellij.util.text.CharArrayCharSequence
+import java.nio.ByteBuffer
 import java.nio.CharBuffer
+import java.nio.charset.CodingErrorAction
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -89,4 +92,29 @@ class OneTimeString @JvmOverloads constructor(value: CharArray, offset: Int = 0,
     consume(false)
     builder.append(myChars, myStart, length)
   }
+}
+
+@Suppress("FunctionName")
+@JvmOverloads
+fun OneTimeString(value: ByteArray, offset: Int = 0, length: Int = value.size - offset, clearable: Boolean = false): OneTimeString {
+  if (length == 0) {
+    return OneTimeString(ArrayUtil.EMPTY_CHAR_ARRAY)
+  }
+
+  // jdk decodes to heap array, but since this code is very critical, we cannot rely on it, so, we don't use Charsets.UTF_8.decode()
+  val charsetDecoder = Charsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPLACE).onUnmappableCharacter(CodingErrorAction.REPLACE)
+  val charArray = CharArray((value.size * charsetDecoder.maxCharsPerByte().toDouble()).toInt())
+  charsetDecoder.reset()
+  val charBuffer = CharBuffer.wrap(charArray)
+  var cr = charsetDecoder.decode(ByteBuffer.wrap(value, offset, length), charBuffer, true)
+  if (!cr.isUnderflow) {
+    cr.throwException()
+  }
+  cr = charsetDecoder.flush(charBuffer)
+  if (!cr.isUnderflow) {
+    cr.throwException()
+  }
+
+  value.fill(0, offset, offset + length)
+  return OneTimeString(charArray, 0, charBuffer.position(), clearable = clearable)
 }

@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.refactoring.changeSignature.GrParameterInfo;
 
 public class GroovyIntroduceObjectClassDescriptor extends IntroduceParameterObjectClassDescriptor<GrMethod, GrParameterInfo> {
-  public GroovyIntroduceObjectClassDescriptor(String className,
+  public GroovyIntroduceObjectClassDescriptor(@NotNull String className,
                                               String packageName,
                                               boolean useExistingClass,
                                               boolean createInnerClass,

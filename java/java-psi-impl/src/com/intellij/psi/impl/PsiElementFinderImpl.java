@@ -23,7 +23,6 @@ import java.util.*;
 
 /**
  * @author kosyakov
- * @since 05.12.2014
  */
 public class PsiElementFinderImpl extends PsiElementFinder implements DumbAware {
   private final Project myProject;

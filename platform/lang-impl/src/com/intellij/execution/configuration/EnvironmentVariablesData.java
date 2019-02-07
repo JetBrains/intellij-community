@@ -5,7 +5,6 @@ import com.google.common.collect.ImmutableMap;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
@@ -20,13 +19,13 @@ import java.util.Map;
  * Instances of this class are immutable objects, so it can be safely passed across threads.
  */
 public class EnvironmentVariablesData {
-
   public static final EnvironmentVariablesData DEFAULT = new EnvironmentVariablesData(ImmutableMap.of(), true);
-  @NonNls private static final String ENVS = "envs";
-  @NonNls private static final String PASS_PARENT_ENVS = "pass-parent-envs";
-  @NonNls private static final String ENV = EnvironmentVariablesComponent.ENV;
-  @NonNls private static final String NAME = EnvironmentVariablesComponent.NAME;
-  @NonNls private static final String VALUE = EnvironmentVariablesComponent.VALUE;
+
+  private static final String ENVS = "envs";
+  private static final String PASS_PARENT_ENVS = "pass-parent-envs";
+  private static final String ENV = EnvironmentVariablesComponent.ENV;
+  private static final String NAME = EnvironmentVariablesComponent.NAME;
+  private static final String VALUE = EnvironmentVariablesComponent.VALUE;
 
   private final ImmutableMap<String, String> myEnvs;
   private final boolean myPassParentEnvs;
@@ -98,22 +97,15 @@ public class EnvironmentVariablesData {
       envsElement.setAttribute(PASS_PARENT_ENVS, Boolean.FALSE.toString());
     }
     for (Map.Entry<String, String> entry : myEnvs.entrySet()) {
-      Element envElement = new Element(ENV);
-      envElement.setAttribute(NAME, entry.getKey());
-      envElement.setAttribute(VALUE, entry.getValue());
-      envsElement.addContent(envElement);
+      envsElement.addContent(new Element(ENV).setAttribute(NAME, entry.getKey()).setAttribute(VALUE, entry.getValue()));
     }
     parent.addContent(envsElement);
   }
 
   public void configureCommandLine(@NotNull GeneralCommandLine commandLine, boolean consoleParentEnvs) {
-    if (myPassParentEnvs) {
-      commandLine.withParentEnvironmentType(consoleParentEnvs ? GeneralCommandLine.ParentEnvironmentType.CONSOLE
-                                                              : GeneralCommandLine.ParentEnvironmentType.SYSTEM);
-    }
-    else {
-      commandLine.withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.NONE);
-    }
+    commandLine.withParentEnvironmentType(!myPassParentEnvs ? GeneralCommandLine.ParentEnvironmentType.NONE :
+                                          consoleParentEnvs ? GeneralCommandLine.ParentEnvironmentType.CONSOLE
+                                                            : GeneralCommandLine.ParentEnvironmentType.SYSTEM);
     commandLine.withEnvironment(myEnvs);
   }
 
@@ -124,9 +116,6 @@ public class EnvironmentVariablesData {
    */
   @NotNull
   public static EnvironmentVariablesData create(@NotNull Map<String, String> envs, boolean passParentEnvs) {
-    if (passParentEnvs && envs.isEmpty()) {
-      return DEFAULT;
-    }
-    return new EnvironmentVariablesData(envs, passParentEnvs);
+    return passParentEnvs && envs.isEmpty() ? DEFAULT : new EnvironmentVariablesData(envs, passParentEnvs);
   }
 }

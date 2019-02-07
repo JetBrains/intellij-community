@@ -43,6 +43,7 @@ public class PsiIdentifierImpl extends LeafPsiElement implements PsiIdentifier, 
     }
   }
 
+  @Override
   public String toString(){
     return "PsiIdentifier:" + getText();
   }

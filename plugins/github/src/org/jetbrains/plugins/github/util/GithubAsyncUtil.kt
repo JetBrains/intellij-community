@@ -2,51 +2,35 @@
 package org.jetbrains.plugins.github.util
 
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.progress.PerformInBackgroundOption
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
-import com.intellij.openapi.project.Project
 import java.util.concurrent.*
 import java.util.function.BiFunction
 
 object GithubAsyncUtil {
 
-  /**
-   * Run [consumer] on EDT with the result of [future]
-   * If future is cancelled, [consumer] will not be executed
-   *
-   * This is a naive implementation with timeout waiting
-   */
   @JvmStatic
-  fun <R : Future<T>, T> awaitFutureAndRunOnEdt(future: R,
-                                                project: Project, title: String, errorTitle: String,
-                                                consumer: (T) -> Unit) {
-    object : Task.Backgroundable(project, title, true, PerformInBackgroundOption.DEAF) {
-      var result: T? = null
-
-      override fun run(indicator: ProgressIndicator) {
-        while (true) {
-          try {
-            result = future.get(50, TimeUnit.MILLISECONDS)
-            break
-          }
-          catch (e: TimeoutException) {
-            indicator.checkCanceled()
-          }
+  fun <T> awaitMutableFuture(progressIndicator: ProgressIndicator, futureSupplier: () -> Future<T>): T {
+    var result: T
+    var future = futureSupplier()
+    while (true) {
+      try {
+        result = future.get(50, TimeUnit.MILLISECONDS)
+        break
+      }
+      catch (e: TimeoutException) {
+        progressIndicator.checkCanceled()
+      }
+      catch (e: Exception) {
+        if (isCancellation(e)) {
+          future = futureSupplier()
+          continue
         }
-        indicator.checkCanceled()
+        if (e is ExecutionException) throw e.cause ?: e
+        throw e
       }
-
-      override fun onSuccess() {
-        result?.let(consumer)
-      }
-
-      override fun onThrowable(error: Throwable) {
-        if (isCancellation(error)) return
-        GithubNotifications.showError(project, errorTitle, error)
-      }
-    }.queue()
+    }
+    return result
   }
 
   fun isCancellation(error: Throwable): Boolean {

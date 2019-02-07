@@ -2,6 +2,7 @@
 package org.jetbrains.yaml.meta.model;
 
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,7 +11,6 @@ import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLScalar;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @ApiStatus.Experimental
 @SuppressWarnings("UnusedReturnValue")
@@ -114,7 +114,7 @@ public class YamlMetaClass extends YamlMetaType {
       markup.newLineAndTabs(manyNotOne);
 
       List<Field> allRequired =
-        myFeatures.stream().filter(field -> field.isRequired() || iteration.isNextOnPath(field)).collect(Collectors.toList());
+        ContainerUtil.filter(myFeatures, field -> field.isRequired() || iteration.isNextOnPath(field));
       if (allRequired.isEmpty() && iteration.isEndOfPathReached()) {
         markup.appendCaret();
       }

@@ -75,7 +75,7 @@ public class CommonDataKeys {
   public static final DataKey<PsiElement> PSI_ELEMENT = DataKey.create("psi.Element");
 
   /**
-   * This key can be used to obtain several {@link PsiFile} instance.
+   * This key can be used to obtain the currently selected {@link PsiFile} instance.
    *<br>
    * Note that if {@link DataContext} has a value for {@link #VIRTUAL_FILE} key it will automatically return the corresponding {@link PsiFile}
    * for this key if explicit value isn't provided. Also it'll return the containing file if a value for {@link #PSI_ELEMENT} key is provided.

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.highlighting
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.fileTypes.SyntaxHighlighter
 import com.intellij.openapi.options.colors.AttributesDescriptor
@@ -8,13 +9,12 @@ import com.intellij.openapi.options.colors.ColorDescriptor
 import com.intellij.openapi.options.colors.ColorSettingsPage
 import com.intellij.psi.codeStyle.DisplayPriority
 import com.intellij.psi.codeStyle.DisplayPrioritySortable
-import icons.EditorconfigIcons
 import org.editorconfig.language.filetype.EditorConfigFileConstants
 import org.editorconfig.language.messages.EditorConfigBundle.get
 import javax.swing.Icon
 
 class EditorConfigColorSettingsPage : ColorSettingsPage, DisplayPrioritySortable {
-  override fun getIcon(): Icon = EditorconfigIcons.Editorconfig
+  override fun getIcon(): Icon = AllIcons.Nodes.Editorconfig
   override fun getHighlighter(): SyntaxHighlighter = EditorConfigSyntaxHighlighter
   override fun getDemoText() =
     """<propertyKey>root</propertyKey> = <propertyValue>true</propertyValue>

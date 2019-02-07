@@ -6,7 +6,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Denis Zhdanov
- * @since 1/24/12 7:16 AM
  */
 public interface ExternalSystemTask {
 

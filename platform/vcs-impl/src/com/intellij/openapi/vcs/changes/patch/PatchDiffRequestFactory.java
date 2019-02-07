@@ -144,7 +144,7 @@ public class PatchDiffRequestFactory {
                                                 @NotNull String baseContent,
                                                 @NotNull String localContent,
                                                 @NotNull String patchedContent,
-                                                @Nullable Consumer<MergeResult> callback)
+                                                @Nullable Consumer<? super MergeResult> callback)
     throws InvalidDiffRequestException {
     List<String> titles = ContainerUtil.list(null, null, null);
     List<String> contents = ContainerUtil.list(localContent, baseContent, patchedContent);
@@ -158,7 +158,7 @@ public class PatchDiffRequestFactory {
                                                    @NotNull VirtualFile file,
                                                    @NotNull String localContent,
                                                    @NotNull AppliedTextPatch textPatch,
-                                                   @Nullable Consumer<MergeResult> callback)
+                                                   @Nullable Consumer<? super MergeResult> callback)
     throws InvalidDiffRequestException {
     return createBadMergeRequest(project, document, file, localContent, textPatch, null, null, null, null, callback);
   }
@@ -170,7 +170,7 @@ public class PatchDiffRequestFactory {
                                                 @NotNull List<String> contents,
                                                 @Nullable String windowTitle,
                                                 @NotNull List<String> titles,
-                                                @Nullable Consumer<MergeResult> callback)
+                                                @Nullable Consumer<? super MergeResult> callback)
     throws InvalidDiffRequestException {
     assert contents.size() == 3;
     assert titles.size() == 3;

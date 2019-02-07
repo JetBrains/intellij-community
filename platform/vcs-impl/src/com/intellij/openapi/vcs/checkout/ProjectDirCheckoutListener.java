@@ -13,7 +13,6 @@ import java.util.EnumSet;
 
 /**
  * @author irengrig
- * @since 5/27/11
  */
 public class ProjectDirCheckoutListener implements CheckoutListener {
   @Override

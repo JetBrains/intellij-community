@@ -106,7 +106,7 @@ public class GitCheckoutProvider extends CheckoutProviderEx {
       return true;
     }
     String description = result.getErrorOutput().stream().
-      filter(msg -> !StringUtil.startsWithIgnoreCase(msg, "Cloning into")
+      filter(msg -> !StringUtil.startsWithIgnoreCase(msg, "Cloning into") 
                     && !StringUtil.startsWithIgnoreCase(msg, "remote:")
                     && !StringUtil.startsWithIgnoreCase(msg, "submodule")).
       map (msg -> GitUtil.cleanupErrorPrefixes(msg)).

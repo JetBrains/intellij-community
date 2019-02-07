@@ -24,13 +24,13 @@ public class InspectionResultViewTest extends LightJava9ModulesCodeInsightFixtur
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    GlobalInspectionContextImpl.CREATE_VIEW_FORCE = true;
+    GlobalInspectionContextImpl.TESTING_VIEW = true;
     InspectionProfileImpl.INIT_INSPECTIONS = true;
   }
 
   @Override
   public void tearDown() {
-    GlobalInspectionContextImpl.CREATE_VIEW_FORCE = false;
+    GlobalInspectionContextImpl.TESTING_VIEW = false;
     InspectionProfileImpl.INIT_INSPECTIONS = false;
     super.tearDown();
   }
@@ -41,14 +41,15 @@ public class InspectionResultViewTest extends LightJava9ModulesCodeInsightFixtur
 
     updateTree(view);
     TreeUtil.expandAll(view.getTree());
-    PlatformTestUtil.assertTreeEqual(view.getTree(), "-" + getProject() + "\n" +
+    updateTree(view);
+    PlatformTestUtil.assertTreeEqual(view.getTree(), "-InspectionViewTree\n" +
                                                      " -Java\n" +
                                                      "  -Code maturity\n" +
-                                                     "   -MarkedForRemoval\n" +
+                                                     "   -Usage of API marked for removal\n" +
                                                      "    -some.module\n" +
                                                      "     'M2' is deprecated and marked for removal(LIKE_DEPRECATED)\n" +
                                                      "  -Declaration redundancy\n" +
-                                                     "   -Java9RedundantRequiresStatement\n" +
+                                                     "   -Redundant 'requires' statement in module-info\n" +
                                                      "    -some.module\n" +
                                                      "     Redundant directive 'requires M2'\n");
 
@@ -57,16 +58,17 @@ public class InspectionResultViewTest extends LightJava9ModulesCodeInsightFixtur
 
     updateTree(view);
     TreeUtil.expandAll(view.getTree());
-    PlatformTestUtil.assertTreeEqual(view.getTree(), "-" + getProject() + "\n" +
+    updateTree(view);
+    PlatformTestUtil.assertTreeEqual(view.getTree(), "-InspectionViewTree\n" +
                                                      " -Java\n" +
                                                      "  -Code maturity\n" +
-                                                     "   -MarkedForRemoval\n" +
-                                                     "    -Module: 'light_idea_test_case'\n" +
+                                                     "   -Usage of API marked for removal\n" +
+                                                     "    -light_idea_test_case\n" +
                                                      "     -some.module\n" +
                                                      "      'M2' is deprecated and marked for removal(LIKE_DEPRECATED)\n" +
                                                      "  -Declaration redundancy\n" +
-                                                     "   -Java9RedundantRequiresStatement\n" +
-                                                     "    -Module: 'light_idea_test_case'\n" +
+                                                     "   -Redundant 'requires' statement in module-info\n" +
+                                                     "    -light_idea_test_case\n" +
                                                      "     -some.module\n" +
                                                      "      Redundant directive 'requires M2'\n");
   }

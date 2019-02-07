@@ -34,7 +34,7 @@ public abstract class HandleType {
 
   public static final HandleType USE_FILE_SYSTEM = new HandleType(VcsBundle.message("handle.ro.file.status.type.using.file.system"), false) {
     @Override
-    public void processFiles(final Collection<VirtualFile> files, String changelist) {
+    public void processFiles(final Collection<? extends VirtualFile> files, String changelist) {
       ApplicationManager.getApplication().runWriteAction(() -> {
         List<VirtualFile> toRefresh = ContainerUtil.newArrayListWithCapacity(files.size());
 
@@ -88,7 +88,7 @@ public abstract class HandleType {
     return result;
   }
 
-  public abstract void processFiles(final Collection<VirtualFile> virtualFiles, @Nullable String changelist);
+  public abstract void processFiles(final Collection<? extends VirtualFile> virtualFiles, @Nullable String changelist);
   
   public List<String> getChangelists() {
     return Collections.emptyList();

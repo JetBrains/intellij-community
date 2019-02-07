@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -23,6 +23,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,7 +41,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     NotNullLazyValue.createValue(() -> TemplateContextType.EP_NAME.getPoint(null));
 
   private final Project myProject;
-  private boolean myTemplateTesting;
+  private static final Key<Boolean> ourTemplateTesting = Key.create("TemplateTesting");
 
   private static final Key<TemplateState> TEMPLATE_STATE_KEY = Key.create("TEMPLATE_STATE_KEY");
   private final TemplateManagerListener myEventPublisher;
@@ -69,10 +70,14 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   }
 
   @TestOnly
+  @Deprecated
   public static void setTemplateTesting(Project project, Disposable parentDisposable) {
-    final TemplateManagerImpl instance = (TemplateManagerImpl)getInstance(project);
-    instance.myTemplateTesting = true;
-    Disposer.register(parentDisposable, () -> instance.myTemplateTesting = false);
+    setTemplateTesting(parentDisposable);
+  }
+
+  @TestOnly
+  public static void setTemplateTesting(Disposable parentDisposable) {
+    TestModeFlags.set(ourTemplateTesting, true, parentDisposable);
   }
 
   @Override
@@ -178,7 +183,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   }
 
   public boolean shouldSkipInTests() {
-    return ApplicationManager.getApplication().isUnitTestMode() && !myTemplateTesting;
+    return ApplicationManager.getApplication().isUnitTestMode() && !TestModeFlags.is(ourTemplateTesting);
   }
 
   @Override

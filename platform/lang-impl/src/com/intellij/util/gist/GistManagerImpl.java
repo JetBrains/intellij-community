@@ -17,12 +17,19 @@ package com.intellij.util.gist;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataExternalizer;
@@ -37,6 +44,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author peter
  */
 public class GistManagerImpl extends GistManager {
+  private static final Logger LOG = Logger.getInstance(GistManagerImpl.class);
   private static final Set<String> ourKnownIds = ContainerUtil.newConcurrentSet();
   private static final String ourPropertyName = "file.gist.reindex.count";
   private final AtomicInteger myReindexCount = new AtomicInteger(PropertiesComponent.getInstance().getInt(ourPropertyName, 0));
@@ -46,7 +54,7 @@ public class GistManagerImpl extends GistManager {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         if (events.stream().anyMatch(this::shouldDropCache)) {
-          invalidateData();
+          invalidateGists();
         }
       }
 
@@ -85,10 +93,27 @@ public class GistManagerImpl extends GistManager {
     return myReindexCount.get();
   }
 
+  @Override
   public void invalidateData() {
+    invalidateGists();
+    invalidateDependentCaches();
+  }
+
+  private void invalidateGists() {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Invalidating gists", new Throwable());
+    }
     // Clear all cache at once to simplify and speedup this operation.
     // It can be made per-file if cache recalculation ever becomes an issue.
     PropertiesComponent.getInstance().setValue(ourPropertyName, myReindexCount.incrementAndGet(), 0);
+  }
+
+  private static void invalidateDependentCaches() {
+    GuiUtils.invokeLaterIfNeeded(() -> {
+      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        PsiManager.getInstance(project).dropPsiCaches();
+      }
+    }, ModalityState.NON_MODAL);
   }
 
   @TestOnly

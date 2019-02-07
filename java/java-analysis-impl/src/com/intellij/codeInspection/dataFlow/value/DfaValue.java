@@ -59,6 +59,10 @@ public abstract class DfaValue {
   public DfaValue createNegated() {
     return DfaUnknownValue.getInstance();
   }
+  
+  public boolean dependsOn(DfaVariableValue other) {
+    return false;
+  }
 
   public boolean equals(Object obj) {
     return obj instanceof DfaValue && getID() == ((DfaValue)obj).getID();

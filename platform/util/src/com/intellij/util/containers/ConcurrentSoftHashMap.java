@@ -42,21 +42,17 @@ final class ConcurrentSoftHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
   private static class SoftKey<K, V> extends SoftReference<K> implements KeyReference<K, V> {
     private final int myHash; // Hashcode of key, stored here since the key may be tossed by the GC
     private final TObjectHashingStrategy<? super K> myStrategy;
-    private final V value;
 
-    private SoftKey(@NotNull K k, final int hash, @NotNull TObjectHashingStrategy<? super K> strategy, V v, @NotNull ReferenceQueue<K> q) {
+    private SoftKey(@NotNull K k,
+                    final int hash,
+                    @NotNull TObjectHashingStrategy<? super K> strategy,
+                    @NotNull ReferenceQueue<K> q) {
       super(k, q);
       myStrategy = strategy;
-      value = v;
       myHash = hash;
     }
 
-    @NotNull
     @Override
-    public V getValue() {
-      return value;
-    }
-
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof KeyReference)) return false;
@@ -67,6 +63,7 @@ final class ConcurrentSoftHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
       return myStrategy.equals(t, u);
     }
 
+    @Override
     public int hashCode() {
       return myHash;
     }
@@ -74,7 +71,8 @@ final class ConcurrentSoftHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
 
   @NotNull
   @Override
-  protected KeyReference<K, V> createKeyReference(@NotNull K key, @NotNull V value, @NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
-    return new SoftKey<K, V>(key, hashingStrategy.computeHashCode(key), hashingStrategy, value, myReferenceQueue);
+  protected KeyReference<K, V> createKeyReference(@NotNull K key,
+                                                  @NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
+    return new SoftKey<K, V>(key, hashingStrategy.computeHashCode(key), hashingStrategy, myReferenceQueue);
   }
 }

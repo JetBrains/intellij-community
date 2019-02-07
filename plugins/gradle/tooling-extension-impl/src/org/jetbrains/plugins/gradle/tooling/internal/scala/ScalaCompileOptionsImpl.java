@@ -22,7 +22,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 1/31/14
  */
 public class ScalaCompileOptionsImpl implements ScalaCompileOptions {
   private boolean useCompileDaemon;

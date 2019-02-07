@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
 import com.google.common.net.InetAddresses
@@ -37,13 +37,6 @@ import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
-// used in Go
-fun oioClientBootstrap(): Bootstrap {
-  val bootstrap = Bootstrap().group(OioEventLoopGroup(1, PooledThreadExecutor.INSTANCE)).channel(OioSocketChannel::class.java)
-  bootstrap.option(ChannelOption.TCP_NODELAY, true).option(ChannelOption.SO_KEEPALIVE, true)
-  return bootstrap
-}
-
 inline fun Bootstrap.handler(crossinline task: (Channel) -> Unit): Bootstrap {
   handler(object : ChannelInitializer<Channel>() {
     override fun initChannel(channel: Channel) {
@@ -61,11 +54,13 @@ fun serverBootstrap(group: EventLoopGroup): ServerBootstrap {
   return bootstrap
 }
 
-private fun EventLoopGroup.serverSocketChannelClass(): Class<out ServerSocketChannel> = when {
-  this is NioEventLoopGroup -> NioServerSocketChannel::class.java
-  this is OioEventLoopGroup -> OioServerSocketChannel::class.java
-//  SystemInfo.isMacOSSierra && this is KQueueEventLoopGroup -> KQueueServerSocketChannel::class.java
-  else -> throw Exception("Unknown event loop group type: ${this.javaClass.name}")
+private fun EventLoopGroup.serverSocketChannelClass(): Class<out ServerSocketChannel> {
+  return when {
+    this is NioEventLoopGroup -> NioServerSocketChannel::class.java
+    this is OioEventLoopGroup -> OioServerSocketChannel::class.java
+    //  SystemInfo.isMacOSSierra && this is KQueueEventLoopGroup -> KQueueServerSocketChannel::class.java
+    else -> throw Exception("Unknown event loop group type: ${this.javaClass.name}")
+  }
 }
 
 inline fun ChannelFuture.addChannelListener(crossinline listener: (future: ChannelFuture) -> Unit) {
@@ -266,7 +261,11 @@ fun HttpRequest.isLocalOrigin(onlyAnyOrLoopback: Boolean = true, hostsOnly: Bool
 }
 
 private fun isTrustedChromeExtension(url: Url): Boolean {
-  return url.scheme == "chrome-extension" && (url.authority == "hmhgeddbohgjknpmjagkdomcpobmllji" || url.authority == "offnedcbhjldheanlbojaefbfbllddna")
+  return url.scheme == "chrome-extension" &&
+         (url.authority == "hmhgeddbohgjknpmjagkdomcpobmllji" ||
+          url.authority == "offnedcbhjldheanlbojaefbfbllddna" ||
+          System.getProperty("idea.trusted.chrome.extension.id")?.equals(url.authority) ?: false
+         )
 }
 
 private val Url.host: String?

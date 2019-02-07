@@ -50,6 +50,7 @@ public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatabl
     }
   }
 
+  @Override
   public String toString() {
     if(getTokenType() instanceof IDTDElementType){
       return "DTDToken:" + getTokenType().toString();

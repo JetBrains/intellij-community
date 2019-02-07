@@ -139,7 +139,7 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   }
 
   @Override
-  public void iterateCommits(@NotNull Function<CommitId, Boolean> consumer) {
+  public void iterateCommits(@NotNull Function<? super CommitId, Boolean> consumer) {
     checkDisposed();
     try {
       myCommitIdEnumerator.iterateData(new CommonProcessors.FindProcessor<CommitId>() {
@@ -203,10 +203,10 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   }
 
   private static class MyCommitIdKeyDescriptor implements KeyDescriptor<CommitId> {
-    @NotNull private final List<VirtualFile> myRoots;
+    @NotNull private final List<? extends VirtualFile> myRoots;
     @NotNull private final TObjectIntHashMap<VirtualFile> myRootsReversed;
 
-    MyCommitIdKeyDescriptor(@NotNull List<VirtualFile> roots) {
+    MyCommitIdKeyDescriptor(@NotNull List<? extends VirtualFile> roots) {
       myRoots = roots;
 
       myRootsReversed = new TObjectIntHashMap<>();
@@ -258,7 +258,7 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     }
 
     @Override
-    public void iterateCommits(@NotNull Function<CommitId, Boolean> consumer) {
+    public void iterateCommits(@NotNull Function<? super CommitId, Boolean> consumer) {
     }
 
     @Override

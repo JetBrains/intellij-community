@@ -33,6 +33,7 @@ public class Java8ArraySetAllInspection extends AbstractBaseJavaLocalInspectionT
         super.visitForStatement(statement);
         CountingLoop loop = CountingLoop.from(statement);
         if (loop == null || loop.isIncluding() || loop.isDescending()) return;
+        if (!ExpressionUtils.isZero(loop.getInitializer())) return;
         IndexedContainer container = IndexedContainer.fromLengthExpression(loop.getBound());
         if (container == null || !(container.getQualifier().getType() instanceof PsiArrayType)) return;
         if (!StreamApiUtil.isSupportedStreamElement(container.getElementType())) return;

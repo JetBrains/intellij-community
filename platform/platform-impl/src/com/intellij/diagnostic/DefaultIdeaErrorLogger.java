@@ -3,7 +3,7 @@ package com.intellij.diagnostic;
 
 import com.android.tools.analytics.AnalyticsSettings;
 import com.intellij.diagnostic.VMOptions.MemoryKind;
-import com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector;
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.AndroidStudioSystemHealthMonitorAdapter;
 import com.intellij.ide.ExceptionRegistry;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -74,7 +74,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
       else {
         pluginIdToReport = null;
       }
-      AppLifecycleUsageTriggerCollector.onError(isOOM, isMappingFailed, pluginIdToReport);
+      LifecycleUsageTriggerCollector.onError(isOOM, isMappingFailed, pluginIdToReport);
 
       return notificationEnabled ||
              showPluginError ||

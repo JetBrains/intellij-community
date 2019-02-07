@@ -29,7 +29,6 @@ import org.jetbrains.jps.service.JpsServiceManager;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/10/2014
  */
 public abstract class JpsGradleExtensionService {
   @Nullable

@@ -1,6 +1,6 @@
 class Test {
   static Test createTest(int value) {
-    return new Test(<ref>value) {};
+    return new Test(<caret>value) {};
   }
 
   int value;

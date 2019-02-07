@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.groovydoc.parser;
 
 import com.intellij.lang.*;
@@ -24,7 +9,6 @@ import com.intellij.psi.tree.ILazyParseableElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocElementType;
-import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocElementTypeImpl;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocLexer;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentImpl;
 
@@ -60,13 +44,13 @@ public interface GroovyDocElementTypes {
     }
   };
 
-  GroovyDocElementType GDOC_TAG = new GroovyDocElementTypeImpl("GroovyDocTag");
-  GroovyDocElementType GDOC_INLINED_TAG = new GroovyDocElementTypeImpl("GroovyDocInlinedTag");
+  GroovyDocElementType GDOC_TAG = new GroovyDocElementType("GroovyDocTag");
+  GroovyDocElementType GDOC_INLINED_TAG = new GroovyDocElementType("GroovyDocInlinedTag");
 
-  GroovyDocElementType GDOC_REFERENCE_ELEMENT = new GroovyDocElementTypeImpl("GroovyDocReferenceElement");
-  GroovyDocElementType GDOC_PARAM_REF = new GroovyDocElementTypeImpl("GroovyDocParameterReference");
-  GroovyDocElementType GDOC_METHOD_REF = new GroovyDocElementTypeImpl("GroovyDocMethodReference");
-  GroovyDocElementType GDOC_FIELD_REF = new GroovyDocElementTypeImpl("GroovyDocFieldReference");
-  GroovyDocElementType GDOC_METHOD_PARAMS = new GroovyDocElementTypeImpl("GroovyDocMethodParameterList");
-  GroovyDocElementType GDOC_METHOD_PARAMETER = new GroovyDocElementTypeImpl("GroovyDocMethodParameter");
+  GroovyDocElementType GDOC_REFERENCE_ELEMENT = new GroovyDocElementType("GroovyDocReferenceElement");
+  GroovyDocElementType GDOC_PARAM_REF = new GroovyDocElementType("GroovyDocParameterReference");
+  GroovyDocElementType GDOC_METHOD_REF = new GroovyDocElementType("GroovyDocMethodReference");
+  GroovyDocElementType GDOC_FIELD_REF = new GroovyDocElementType("GroovyDocFieldReference");
+  GroovyDocElementType GDOC_METHOD_PARAMS = new GroovyDocElementType("GroovyDocMethodParameterList");
+  GroovyDocElementType GDOC_METHOD_PARAMETER = new GroovyDocElementType("GroovyDocMethodParameter");
 }

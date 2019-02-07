@@ -35,6 +35,13 @@ public class DGMMemberContributor extends NonCodeMembersContributor {
                                      @NotNull PsiScopeProcessor processor,
                                      @NotNull PsiElement place,
                                      @NotNull ResolveState state) {
+    processDgmMethods(qualifierType, processor, place, state);
+  }
+
+  public static void processDgmMethods(@NotNull PsiType qualifierType,
+                                        @NotNull PsiScopeProcessor processor,
+                                        @NotNull PsiElement place,
+                                        @NotNull ResolveState state) {
     if (!ResolveUtil.shouldProcessMethods(processor.getHint(ElementClassHint.KEY))) return;
 
     final Project project = place.getProject();

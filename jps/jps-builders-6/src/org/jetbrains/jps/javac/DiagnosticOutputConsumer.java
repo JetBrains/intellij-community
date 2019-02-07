@@ -15,17 +15,18 @@
  */
 package org.jetbrains.jps.javac;
 
+import org.jetbrains.jps.javac.ast.api.JavacFileData;
+
 import javax.tools.DiagnosticListener;
 import javax.tools.JavaFileObject;
 import java.io.File;
-import java.util.Collection;
 
 /**
 * @author Eugene Zhuravlev
 */
 public interface DiagnosticOutputConsumer extends DiagnosticListener<JavaFileObject> {
   void outputLineAvailable(String line);
-  void registerImports(String className, Collection<String> imports, Collection<String> staticImports);
+  void registerJavacFileData(JavacFileData data);
   void javaFileLoaded(File file);
   void customOutputData(String pluginId, String dataName, byte[] data);
 }

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -65,7 +64,7 @@ public class WrapWithMutableCollectionFix implements LocalQuickFix {
     CommentTracker ct = new CommentTracker();
     PsiElement replacement =
       ct.replaceAndRestoreComments(initializer, "new " + myCollectionName + typeParameters + "(" + ct.text(initializer) + ")");
-    PsiDiamondTypeUtil.removeRedundantTypeArguments(replacement);
+    RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(replacement);
     if (myOnTheFly) {
       HighlightUtils.highlightElement(replacement);
     }

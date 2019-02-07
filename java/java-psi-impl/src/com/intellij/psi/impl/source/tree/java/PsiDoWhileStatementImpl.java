@@ -130,6 +130,7 @@ public class PsiDoWhileStatementImpl extends PsiLoopStatementImpl implements Psi
     }
   }
 
+  @Override
   public String toString(){
     return "PsiDoWhileStatement";
   }

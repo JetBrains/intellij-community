@@ -344,11 +344,11 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       StringBuilder message = new StringBuilder(XDebuggerBundle.message("message.confirm.breakpoint.removal.message"));
       if (!isEmptyExpression(breakpoint.getConditionExpression())) {
         message.append(XDebuggerBundle.message("message.confirm.breakpoint.removal.message.condition",
-                                               StringUtil.escapeXml(breakpoint.getConditionExpression().getExpression())));
+                                               StringUtil.escapeXmlEntities(breakpoint.getConditionExpression().getExpression())));
       }
       if (!isEmptyExpression(breakpoint.getLogExpressionObject())) {
         message.append(XDebuggerBundle.message("message.confirm.breakpoint.removal.message.log",
-                                               StringUtil.escapeXml(breakpoint.getLogExpressionObject().getExpression())));
+                                               StringUtil.escapeXmlEntities(breakpoint.getLogExpressionObject().getExpression())));
       }
       if (Messages.showOkCancelDialog(message.toString(),
                                       XDebuggerBundle.message("message.confirm.breakpoint.removal.title"),

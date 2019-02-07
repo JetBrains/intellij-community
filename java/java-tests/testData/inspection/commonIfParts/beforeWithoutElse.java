@@ -1,4 +1,4 @@
-// "Common parts of if statement can be extracted" "false"
+// "Common parts of 'if' statement can be extracted" "false"
 
 import java.util.List;
 import java.util.Map;

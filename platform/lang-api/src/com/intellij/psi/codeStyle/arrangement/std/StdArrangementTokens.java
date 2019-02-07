@@ -33,7 +33,6 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.En
  * Holds settings tokens used by built-in IJ arrangers.
  *
  * @author Denis Zhdanov
- * @since 3/6/13 3:16 PM
  */
 public class StdArrangementTokens {
 

@@ -26,6 +26,7 @@ import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 /**
  * @author max
@@ -64,7 +65,7 @@ public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
       return myIndex.isInLibraryClasses(file) && (myIncludeVersions || !isVersioned(file, myIndex));
     }
 
-    return myIndex.isInSourceContent(file) ||
+    return myIndex.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES) ||
            myBaseScope.isForceSearchingInLibrarySources() && myIndex.isInLibrarySource(file);
   }
 

@@ -357,7 +357,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
   }
 
   @Nullable
-  protected static PsiDirectory resolveDirectory(@NotNull PsiDirectory defaultTargetDirectory) {
+  public static PsiDirectory resolveDirectory(@NotNull PsiDirectory defaultTargetDirectory) {
     final Project project = defaultTargetDirectory.getProject();
     final Boolean showDirsChooser = defaultTargetDirectory.getCopyableUserData(CopyPasteDelegator.SHOW_CHOOSER_KEY);
     if (showDirsChooser != null && showDirsChooser.booleanValue()) {

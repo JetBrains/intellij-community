@@ -114,6 +114,7 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
     return value;
   }
 
+  @Override
   public String toString() {
     return "HtmlTag:" + getName();
   }

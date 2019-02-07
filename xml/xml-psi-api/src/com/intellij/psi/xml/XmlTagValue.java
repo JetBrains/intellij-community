@@ -26,12 +26,20 @@ public interface XmlTagValue {
   @NotNull
   XmlText[] getTextElements();
 
+  /**
+   * @return raw tag value text
+   * @see #getTrimmedText()
+   */
   @NotNull
   String getText();
   
   @NotNull
   TextRange getTextRange();
 
+  /**
+   * @return concatenated child XmlTexts values.
+   * @see XmlText#getValue()
+   */
   @NotNull
   String getTrimmedText();
 

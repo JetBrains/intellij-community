@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/11/2014
  */
 public class ExternalSystemNotificationExtensionImpl implements ExternalSystemNotificationExtension {
   @NotNull

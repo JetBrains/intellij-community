@@ -15,18 +15,21 @@
  */
 package com.intellij.java.execution.filters;
 
-import com.intellij.execution.filters.ExceptionExFilterFactory;
-import com.intellij.execution.filters.ExceptionInfoCache;
-import com.intellij.execution.filters.ExceptionWorker;
-import com.intellij.execution.filters.FilterMixin;
+import com.intellij.execution.filters.*;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.intellij.lang.annotations.Language;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author gregsh
@@ -124,5 +127,74 @@ public class ExceptionWorkerTest extends LightCodeInsightFixtureTestCase {
     String line = "2016-12-20 10:58:36,617 [   5740]   INFO - llij.ide.plugins.PluginManager - Loaded bundled plugins: Android Support (10.2.2), Ant Support (1.0), Application Servers View (0.2.0), AspectJ Support (1.2), CFML Support (3.53), CSS Support (163.7743.44), CVS Integration (11), Cloud Foundry integration (1.0), CloudBees integration (1.0), Copyright (8.1), Coverage (163.7743.44), DSM Analysis (1.0.0), Database Tools and SQL (1.0), Eclipse Integration (3.0), EditorConfig (163.7743.44), Emma (163.7743.44), Flash/Flex Support (163.7743.44)";
     assertNull(ExceptionWorker.parseExceptionLine(line));
     assertNull(ExceptionWorker.parseExceptionLine(line + "\n"));
+  }
+
+  public void testColumnFinder() {
+    @Language("JAVA") String classText =
+      "/** @noinspection ALL*/\n" +
+      "class SomeClass {\n" +
+      "  SomeClass() {\n" +
+      "    System.out.println((new int[0])[1]);\n" +
+      "  }\n" +
+      "  static class Inner implements Runnable {\n" +
+      "    int test = 4;\n" +
+      "    public void run() {\n" +
+      "      try {\n" +
+      "        System.out.println(test + test() + SomeClass.test());\n" +
+      "      } catch(Exception ex) {\n" +
+      "        throw new RuntimeException(ex);\n" +
+      "      }\n" +
+      "    }\n" +
+      "    int test() { return 0; }\n" +
+      "  }\n" +
+      "  private static int test() {\n" +
+      "    new SomeClass() {};\n" +
+      "    return 1;\n" +
+      "  }\n" +
+      "  public static void main(String[] args) {\n" +
+      "    class X {\n" +
+      "      public void run() {\n" +
+      "        new Runnable() {\n" +
+      "          public void run() {\n" +
+      "            Runnable inner = new Inner();\n" +
+      "            inner.run();X.this.run();\n" +
+      "          }\n" +
+      "        }.run();\n" +
+      "      }\n" +
+      "    }\n" +
+      "    new X().run();\n" +
+      "  }\n" +
+      "}";
+    myFixture.configureByText("SomeClass.java", classText);
+    Editor editor = myFixture.getEditor();
+    assertEquals(classText, editor.getDocument().getText());
+    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
+      Trinity.create("Exception in thread \"main\" java.lang.RuntimeException: java.lang.ArrayIndexOutOfBoundsException: Index 1 out of bounds for length 0\n", null, null),
+      Trinity.create("\tat SomeClass$Inner.run(SomeClass.java:12)\n", 12, 9),
+      Trinity.create("\tat SomeClass$1X$1.run(SomeClass.java:27)\n", 27, 19),
+      Trinity.create("\tat SomeClass$1X.run(SomeClass.java:29)\n", 29, 11),
+      Trinity.create("\tat SomeClass.main(SomeClass.java:32)\n", 32, 13),
+      Trinity.create("Caused by: java.lang.ArrayIndexOutOfBoundsException: Index 1 out of bounds for length 0\n", null, null),
+      Trinity.create("\tat SomeClass.<init>(SomeClass.java:4)\n", 4, 36),
+      Trinity.create("\tat SomeClass$1.<init>(SomeClass.java:18)\n", 18, 9),
+      Trinity.create("\tat SomeClass.test(SomeClass.java:18)\n", 18, 9),
+      Trinity.create("\tat SomeClass$Inner.run(SomeClass.java:10)\n", 10, 54));
+    ExceptionFilter filter = new ExceptionFilter(myFixture.getFile().getResolveScope());
+    for (Trinity<String, Integer, Integer> line : traceAndPositions) {
+      String stackLine = line.getFirst();
+      Filter.Result result = filter.applyFilter(stackLine, stackLine.length());
+      Integer row = line.getSecond();
+      Integer column = line.getThird();
+      if (row == null) {
+        assertNull(result);
+      }
+      else {
+        HyperlinkInfo info = result.getFirstHyperlinkInfo();
+        assertNotNull(info);
+        info.navigate(getProject());
+        LogicalPosition actualPos = editor.getCaretModel().getLogicalPosition();
+        assertEquals(new LogicalPosition(row - 1, column - 1), actualPos);
+      }
+    }
   }
 }

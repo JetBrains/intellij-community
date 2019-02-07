@@ -46,6 +46,11 @@ public abstract class DomStubTest extends LightCodeInsightFixtureTestCase {
     }
 
     @Override
+    public int getStubVersion() {
+      return 0;
+    }
+
+    @Override
     protected void initializeFileDescription() {
       registerNamespacePolicy("foo", HTTP_FOO_DTD);
     }

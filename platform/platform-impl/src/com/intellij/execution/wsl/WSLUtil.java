@@ -10,6 +10,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,10 +123,13 @@ public class WSLUtil {
    * Temporary hack method to fix <a href="https://github.com/Microsoft/BashOnWindows/issues/2592">WSL bug</a>
    * Must be invoked just before execution, see RUBY-20358
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.2")
   @NotNull
   public static <T extends ProcessHandler> T addInputCloseListener(@NotNull T processHandler) {
-    processHandler.removeProcessListener(INPUT_CLOSE_LISTENER);
-    processHandler.addProcessListener(INPUT_CLOSE_LISTENER);
+    if (Experiments.isFeatureEnabled("wsl.close.process.input")) {
+      processHandler.removeProcessListener(INPUT_CLOSE_LISTENER);
+      processHandler.addProcessListener(INPUT_CLOSE_LISTENER);
+    }
     return processHandler;
   }
 

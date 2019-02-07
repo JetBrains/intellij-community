@@ -28,4 +28,20 @@ interface UReferenceExpression : UExpression, UResolvable {
   override fun asLogString(): String = log()
 
   override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitReferenceExpression(this, data)
+
+  @JvmDefault
+  val referenceNameElement: UElement?
+    get() = null
+
+}
+
+tailrec fun unwrapReferenceNameElement(element: UElement?): UElement? {
+  when (element) {
+    is UReferenceExpression -> {
+      val referenceNameElement = element.referenceNameElement ?: return element
+      if (referenceNameElement == element) return element
+      return unwrapReferenceNameElement(referenceNameElement)
+    }
+    else -> return element
+  }
 }

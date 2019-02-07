@@ -8,5 +8,5 @@ for (e in [1,2,3,4]) {
 3(4) element: Block statement
 4(5) READ print
 5(6) READ e
-6(1) ARGUMENT element: Reference expression
+6(1) ARGUMENTS element: Call expression
 7() element: null

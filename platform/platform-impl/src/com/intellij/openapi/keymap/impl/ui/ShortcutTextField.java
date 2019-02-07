@@ -5,6 +5,7 @@ package com.intellij.openapi.keymap.impl.ui;
 import com.intellij.icons.AllIcons.General;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.JBPopupMenu;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.ui.components.fields.ExtendableTextField;
@@ -21,6 +22,7 @@ import java.util.ArrayList;
 
 public final class ShortcutTextField extends ExtendableTextField {
   private KeyStroke myKeyStroke;
+  private int myLastPressedKeyCode = KeyEvent.VK_UNDEFINED;
 
   ShortcutTextField(boolean isFocusTraversalKeysEnabled) {
     enableEvents(AWTEvent.KEY_EVENT_MASK);
@@ -52,17 +54,28 @@ public final class ShortcutTextField extends ExtendableTextField {
         return;
       }
     }
-    if (e.getID() == KeyEvent.KEY_PRESSED) {
-      if (keyCode != KeyEvent.VK_SHIFT &&
-          keyCode != KeyEvent.VK_ALT &&
-          keyCode != KeyEvent.VK_CONTROL &&
-          keyCode != KeyEvent.VK_ALT_GRAPH &&
-          keyCode != KeyEvent.VK_META &&
-          !absolutelyUnknownKey(e))
-      {
+
+    final boolean isNotModifierKey = keyCode != KeyEvent.VK_SHIFT &&
+                                     keyCode != KeyEvent.VK_ALT &&
+                                     keyCode != KeyEvent.VK_CONTROL &&
+                                     keyCode != KeyEvent.VK_ALT_GRAPH &&
+                                     keyCode != KeyEvent.VK_META &&
+                                     !absolutelyUnknownKey(e);
+
+    if (isNotModifierKey) {
+      // NOTE: when user presses 'Alt + Right' at Linux the IDE can receive next sequence KeyEvents: ALT_PRESSED -> RIGHT_RELEASED ->  ALT_RELEASED
+      // RIGHT_PRESSED can be skipped, it depends on WM
+      if (
+        e.getID() == KeyEvent.KEY_PRESSED
+        || (e.getID() == KeyEvent.KEY_RELEASED && SystemInfo.isLinux && (e.isAltDown() || e.isAltGraphDown()) && myLastPressedKeyCode != keyCode) // press-event was skipped
+      ) {
         setKeyStroke(KeyStrokeAdapter.getDefaultKeyStroke(e));
       }
+
+      if (e.getID() == KeyEvent.KEY_PRESSED)
+        myLastPressedKeyCode = keyCode;
     }
+
     // Ensure TAB/Shift-TAB work as focus traversal keys, otherwise
     // there is no proper way to move the focus outside the text field.
     if (!getFocusTraversalKeysEnabled() && ScreenReader.isActive()) {

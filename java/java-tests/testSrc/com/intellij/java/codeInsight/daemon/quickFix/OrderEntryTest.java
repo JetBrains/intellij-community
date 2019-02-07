@@ -69,6 +69,9 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     try {
       removeLibs();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

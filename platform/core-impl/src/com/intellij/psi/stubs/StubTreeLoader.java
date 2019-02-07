@@ -65,7 +65,9 @@ public abstract class StubTreeLoader {
   }
 
   @NotNull
-  public RuntimeException stubTreeAndIndexDoNotMatch(@NotNull String _message, @Nullable ObjectStubTree stubTree, @NotNull PsiFileWithStubSupport psiFile) {
+  public RuntimeException stubTreeAndIndexDoNotMatch(@Nullable ObjectStubTree stubTree,
+                                                     @NotNull PsiFileWithStubSupport psiFile,
+                                                     @Nullable Throwable cause) {
     VirtualFile file = psiFile.getViewProvider().getVirtualFile();
     StubTree stubTreeFromIndex = (StubTree)readFromVFile(psiFile.getProject(), file);
     boolean compiled = psiFile instanceof PsiCompiledElement;
@@ -75,7 +77,7 @@ public abstract class StubTreeLoader {
 
     boolean canBePrebuilt = isPrebuilt(psiFile.getVirtualFile());
 
-    String msg = _message + "\nPlease report the problem to JetBrains with the files attached\n";
+    String msg = "PSI and index do not match.\nPlease report the problem to JetBrains with the files attached\n";
 
     if (canBePrebuilt) {
       msg += "This stub can have pre-built origin\n";
@@ -130,19 +132,24 @@ public abstract class StubTreeLoader {
       msg += "; committed: " + PsiDocumentManager.getInstance(psiFile.getProject()).isCommitted(document);
     }
 
-    msg += "\nin many projects: " + hasPsiInManyProjects(file);
     msg += "\nindexing info: " + indexingStampInfo;
 
     Attachment[] attachments = createAttachments(stubTree, psiFile, file, stubTreeFromIndex);
 
     // separate methods and separate exception classes for EA to treat these situations differently
-    return upToDate ? handleUpToDateMismatch(msg, attachments) : new RuntimeExceptionWithAttachments(msg, attachments);
+    return hasPsiInManyProjects(file) ? handleManyProjectsMismatch(msg, attachments, cause) :
+           upToDate ? handleUpToDateMismatch(msg, attachments, cause) :
+           new RuntimeExceptionWithAttachments(msg, cause, attachments);
   }
 
   protected abstract boolean isPrebuilt(@NotNull VirtualFile virtualFile);
 
-  private static UpToDateStubIndexMismatch handleUpToDateMismatch(@NotNull String message, Attachment[] attachments) {
-    return new UpToDateStubIndexMismatch(message, attachments);
+  private static RuntimeExceptionWithAttachments handleUpToDateMismatch(@NotNull String message, Attachment[] attachments, @Nullable Throwable cause) {
+    return new UpToDateStubIndexMismatch(message, cause, attachments);
+  }
+
+  private static RuntimeExceptionWithAttachments handleManyProjectsMismatch(@NotNull String message, Attachment[] attachments, @Nullable Throwable cause) {
+    return new ManyProjectsStubIndexMismatch(message, cause, attachments);
   }
 
   @NotNull
@@ -176,7 +183,14 @@ public abstract class StubTreeLoader {
 
 @SuppressWarnings("ExceptionClassNameDoesntEndWithException")
 class UpToDateStubIndexMismatch extends RuntimeExceptionWithAttachments {
-  UpToDateStubIndexMismatch(String message, Attachment... attachments) {
-    super(message, attachments);
+  UpToDateStubIndexMismatch(String message, Throwable cause, Attachment... attachments) {
+    super(message, cause, attachments);
+  }
+}
+
+@SuppressWarnings("ExceptionClassNameDoesntEndWithException")
+class ManyProjectsStubIndexMismatch extends RuntimeExceptionWithAttachments {
+  ManyProjectsStubIndexMismatch(String message, Throwable cause, Attachment... attachments) {
+    super(message, cause, attachments);
   }
 }

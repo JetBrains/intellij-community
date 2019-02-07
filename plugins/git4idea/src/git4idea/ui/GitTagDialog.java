@@ -161,12 +161,8 @@ public class GitTagDialog extends DialogWrapper {
       try {
         messageFile = FileUtil.createTempFile(MESSAGE_FILE_PREFIX, MESSAGE_FILE_SUFFIX);
         messageFile.deleteOnExit();
-        Writer out = new OutputStreamWriter(new FileOutputStream(messageFile), MESSAGE_FILE_ENCODING);
-        try {
+        try (Writer out = new OutputStreamWriter(new FileOutputStream(messageFile), MESSAGE_FILE_ENCODING)) {
           out.write(message);
-        }
-        finally {
-          out.close();
         }
       }
       catch (IOException ex) {

@@ -22,7 +22,6 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
  * {@code Project Settings - Code Style - Alignment and Braces}).
  *
  * @author Denis Zhdanov
- * @since Apr 27, 2010 6:39:24 PM
  */
 public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
 

@@ -23,6 +23,7 @@ public class ExperimentsDialog extends DialogWrapper {
   protected ExperimentsDialog(@Nullable Project project) {
     super(project);
     init();
+    setTitle("Experimental Features");
   }
 
   @Nullable
@@ -36,7 +37,9 @@ public class ExperimentsDialog extends DialogWrapper {
     table.getColumnModel().getColumn(1).setCellEditor(new BooleanTableCellEditor());
     table.setStriped(true);
     table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
     JTextArea myDescription = new JTextArea(4, 50);
+    myDescription.setMargin(JBUI.insets(2));
     myDescription.setWrapStyleWord(true);
     myDescription.setLineWrap(true);
     myDescription.setEditable(false);
@@ -48,6 +51,12 @@ public class ExperimentsDialog extends DialogWrapper {
 
     return JBUI.Panels.simplePanel(ScrollPaneFactory.createScrollPane(table))
       .addToBottom(descriptionPanel);
+  }
+
+  @Nullable
+  @Override
+  protected String getDimensionServiceKey() {
+    return "ExperimentsDialog";
   }
 
   private TableCellRenderer getValueRenderer() {
@@ -96,7 +105,7 @@ public class ExperimentsDialog extends DialogWrapper {
       public String getColumnName(int column) {
         switch (column) {
           case 0: return "Name";
-          case 1: return "Value";
+          case 1: return "Enabled";
           default: throw new IllegalArgumentException("Wrong column number");
         }
       }

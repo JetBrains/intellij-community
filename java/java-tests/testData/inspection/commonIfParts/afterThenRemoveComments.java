@@ -1,4 +1,4 @@
-// "Extract variables from if " "true"
+// "Extract variables from 'if'" "true"
 
 import java.util.Collection;
 import java.util.List;

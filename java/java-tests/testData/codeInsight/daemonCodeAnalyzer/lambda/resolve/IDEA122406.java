@@ -12,7 +12,7 @@ abstract class Test {
       }
     }
 
-    final ArrayList<String> guavaList = newArrayList(fil<ref>ter(tweetList, new Predicate<String>() {
+    final ArrayList<String> guavaList = newArrayList(fil<caret>ter(tweetList, new Predicate<String>() {
       @Override
       public boolean test(String tweet) {
         return false;

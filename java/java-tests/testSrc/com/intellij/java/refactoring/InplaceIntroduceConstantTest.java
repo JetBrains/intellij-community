@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author anna
- * @since 16.03.2011
  */
 public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTest {
   private static final String BASE_PATH = "/refactoring/inplaceIntroduceConstant/";

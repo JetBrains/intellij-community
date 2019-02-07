@@ -7,9 +7,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.structuralsearch.MatchOptions;
+import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.iterators.DocValuesIterator;
@@ -66,27 +68,22 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       return;
     }
 
-    final Object userData = comment.getUserData(CompiledPattern.HANDLER_KEY);
-
-    if (userData instanceof String) {
-      final String str = (String)userData;
-      int end = comment2.getTextLength();
-
-      if (comment2.getTokenType() == JavaTokenType.C_STYLE_COMMENT) {
-        end -= 2;
-      }
-      myMatchingVisitor.setResult(((SubstitutionHandler)myMatchingVisitor.getMatchContext().getPattern().getHandler(str)).handle(
-        comment2,
-        2,
-        end,
-        myMatchingVisitor.getMatchContext()
-      ));
+    final MatchingHandler handler = (MatchingHandler)comment.getUserData(CompiledPattern.HANDLER_KEY);
+    if (handler instanceof SubstitutionHandler) {
+      final IElementType tokenType = comment2.getTokenType();
+      final int end = comment2.getTextLength();
+      final SubstitutionHandler substitutionHandler = (SubstitutionHandler)handler;
+      myMatchingVisitor.setResult(substitutionHandler.handle(comment2,
+                                                             tokenType == JavaDocTokenType.DOC_COMMENT_START ? 3 : 2,
+                                                             tokenType == JavaTokenType.END_OF_LINE_COMMENT ? end : end - 2,
+                                                             myMatchingVisitor.getMatchContext()));
     }
-    else if (userData instanceof MatchingHandler) {
-      myMatchingVisitor.setResult(((MatchingHandler)userData).match(comment, comment2, myMatchingVisitor.getMatchContext()));
+    else if (handler != null) {
+      myMatchingVisitor.setResult(handler.match(comment, comment2, myMatchingVisitor.getMatchContext()));
     }
     else {
-      myMatchingVisitor.setResult(myMatchingVisitor.matchText(comment, comment2));
+      myMatchingVisitor.setResult(myMatchingVisitor.matchText(StructuralSearchUtil.normalize(JavaMatchUtil.getCommentText(comment)),
+                                                              StructuralSearchUtil.normalize(JavaMatchUtil.getCommentText(comment2))));
     }
   }
 
@@ -813,7 +810,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
           regExpPredicate.setNodeTextGenerator(new RegExpPredicate.NodeTextGenerator() {
             @Override
             public String getText(PsiElement element) {
-              StringBuilder builder = new StringBuilder(RegExpPredicate.getMeaningfulText(element));
+              StringBuilder builder = new StringBuilder(StructuralSearchUtil.getMeaningfulText(element));
               for (int i = 0; i < matchedArrayDimensions; ++i) builder.append("[]");
               return builder.toString();
             }
@@ -1112,7 +1109,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       final Object value1 = const1.getValue();
       final Object value2 = const2.getValue();
       if ((value1 instanceof String || value1 instanceof Character) && (value2 instanceof String || value2 instanceof Character)) {
-        myMatchingVisitor.setResult(myMatchingVisitor.matchText(value1.toString(), value2.toString()));
+        myMatchingVisitor.setResult(myMatchingVisitor.matchText(StructuralSearchUtil.normalize(value1.toString()),
+                                                                StructuralSearchUtil.normalize(value2.toString())));
       }
       else if (value1 != null && value2 != null) {
         myMatchingVisitor.setResult(value1.equals(value2));
@@ -1282,7 +1280,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   public void visitBreakStatement(final PsiBreakStatement break1) {
     final PsiBreakStatement break2 = (PsiBreakStatement)myMatchingVisitor.getElement();
 
-    myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(break1.getLabelIdentifier(), break2.getLabelIdentifier()));
+    myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(break1.getExpression(), break2.getExpression()));
   }
 
   @Override

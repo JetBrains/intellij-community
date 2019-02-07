@@ -32,7 +32,7 @@ class PyiFile(viewProvider: FileViewProvider) : PyFileImpl(viewProvider, PyiLang
 
   override fun toString(): String = "PyiFile:$name"
 
-  override fun getLanguageLevel(): LanguageLevel = LanguageLevel.PYTHON37
+  override fun getLanguageLevel(): LanguageLevel = LanguageLevel.getLatest()
 
   override fun multiResolveName(name: String, exported: Boolean): List<RatedResolveResult> {
     if (name == "function" && PyBuiltinCache.getInstance(this).builtinsFile == this) return emptyList()

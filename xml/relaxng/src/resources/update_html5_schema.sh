@@ -7,6 +7,7 @@ PATCHES="$ROOT/patches"
 
 rm -rf temp
 rm -rf result
+rm -rf browser-compat-data
 mkdir temp
 cd temp
 
@@ -30,6 +31,7 @@ cp temp/validator/schema/*.rnc result
 rsync -r --include=*.rnc temp/validator/schema/* result
 rm -rf result/xhtml10
 ruby html5charref.rb > result/html5chars.ent
+git clone https://github.com/mdn/browser-compat-data
 
 echo
 echo ">>>>> Patching html5 schema"
@@ -39,7 +41,8 @@ for f in `ls $PATCHES`
 do
   if [[ "$f" == 0*\.* ]]
   then
-	patch -p0 -u < "$PATCHES/$f"
+  echo "$f"
+  patch -p0 -u < "$PATCHES/$f"
   fi
 done
 cd ..
@@ -51,4 +54,8 @@ cp result/xhtml5-all.rnc result/xhtml5.rnc
 mv result/html5/LICENSE result
 rm -rf html5-schema
 mv result html5-schema
+rsync -r --include=*.json browser-compat-data/mathml/* ../../../xml-psi-impl/src/com/intellij/xml/util/documentation/compatData
+rsync -r --include=*.json browser-compat-data/svg/* ../../../xml-psi-impl/src/com/intellij/xml/util/documentation/compatData
+rsync -r --include=*.json browser-compat-data/html/* ../../../xml-psi-impl/src/com/intellij/xml/util/documentation/compatData
 rm -rf temp
+rm -rf browser-compat-data

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.credentialStore.CredentialAttributesKt;
 import com.intellij.credentialStore.Credentials;
@@ -48,6 +49,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @NotNull private final Project myProject;
   @Nullable private final String myPresetUrl; //taken from GitHandler, used if git does not provide url
   @NotNull private final GitAuthenticationGate myAuthenticationGate;
+  @NotNull private final GitAuthenticationMode myAuthenticationMode;
 
   private String myUnifiedUrl = null; //remote url with http schema and no username
   private String myPassword = null;
@@ -56,10 +58,14 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @NotNull private final DialogProvider myDialogProvider;
   @NotNull private AuthDataProvider myCurrentProvider;
 
-  GitHttpGuiAuthenticator(@NotNull Project project, @NotNull Collection<String> urls, @NotNull GitAuthenticationGate authenticationGate) {
+  GitHttpGuiAuthenticator(@NotNull Project project,
+                          @NotNull Collection<String> urls,
+                          @NotNull GitAuthenticationGate authenticationGate,
+                          @NotNull GitAuthenticationMode authenticationMode) {
     myProject = project;
     myPresetUrl = findFirstHttpUrl(urls);
     myAuthenticationGate = authenticationGate;
+    myAuthenticationMode = authenticationMode;
 
     myPasswordSafeProvider = new PasswordSafeProvider(GitRememberedInputs.getInstance(), PasswordSafe.getInstance());
     myDialogProvider = new DialogProvider(myProject, myPasswordSafeProvider);
@@ -151,10 +157,14 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @NotNull
   private List<AuthDataProvider> getProviders() {
     List<AuthDataProvider> delegates = new ArrayList<>();
-    delegates.add(myPasswordSafeProvider);
-    delegates.addAll(ContainerUtil.map(GitHttpAuthDataProvider.EP_NAME.getExtensions(),
-                                       (provider) -> new ExtensionAdapterProvider(myProject, provider)));
-    delegates.add(myDialogProvider);
+    if(myAuthenticationMode != GitAuthenticationMode.NONE) {
+      delegates.add(myPasswordSafeProvider);
+    }
+    if (myAuthenticationMode == GitAuthenticationMode.FULL) {
+      delegates.addAll(ContainerUtil.map(GitHttpAuthDataProvider.EP_NAME.getExtensions(),
+                                         (provider) -> new ExtensionAdapterProvider(myProject, provider)));
+      delegates.add(myDialogProvider);
+    }
     return delegates;
   }
 
@@ -359,7 +369,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }
   }
 
-  private static class PasswordSafeProvider implements AuthDataProvider {
+  @VisibleForTesting
+  static class PasswordSafeProvider implements AuthDataProvider {
     @NotNull private final DvcsRememberedInputs myRememberedInputs;
     @NotNull private final PasswordSafe myPasswordSafe;
 
@@ -435,8 +446,9 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       myPasswordSafe.set(credentialAttributes(key), credentials);
     }
 
+    @VisibleForTesting
     @NotNull
-    private static CredentialAttributes credentialAttributes(@NotNull String key) {
+    static CredentialAttributes credentialAttributes(@NotNull String key) {
       return new CredentialAttributes(CredentialAttributesKt.generateServiceName("Git HTTP", key), key, PASS_REQUESTER);
     }
 
@@ -448,8 +460,9 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     /**
      * Makes the password database key for the URL: inserts the login after the scheme: http://login@url.
      */
+    @VisibleForTesting
     @NotNull
-    private static String makeKey(@NotNull String url, @Nullable String login) {
+    static String makeKey(@NotNull String url, @Nullable String login) {
       if (login == null) {
         return url;
       }

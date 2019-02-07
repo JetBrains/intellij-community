@@ -32,6 +32,11 @@ public interface XmlNSDescriptor extends PsiMetaData {
   @NotNull
   XmlElementDescriptor[] getRootElementsDescriptors(@Nullable final XmlDocument document);
 
+  @NotNull
+  default XmlElementDescriptor[] getAllElementsDescriptors(@Nullable final XmlDocument document) {
+    return getRootElementsDescriptors(document);
+  }
+
   @Nullable
   XmlFile getDescriptorFile();
 }

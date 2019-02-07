@@ -16,10 +16,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
 
+import static git4idea.commands.GitAuthenticationMode.FULL;
+
 class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
   @NotNull private final Project myProject;
   @NotNull private final GitAuthenticationGate myAuthenticationGate;
-  private final boolean myIgnoreAuthenticationRequest;
+  @NotNull private final GitAuthenticationMode myAuthenticationMode;
   private final boolean myDoNotRememberPasswords;
 
   @Nullable private String myLastAskedKeyPath = null;
@@ -27,17 +29,18 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
 
   GitNativeSshGuiAuthenticator(@NotNull Project project,
                                @NotNull GitAuthenticationGate authenticationGate,
-                               boolean isIgnoreAuthenticationRequest,
+                               @NotNull GitAuthenticationMode authenticationMode,
                                boolean doNotRememberPasswords) {
     myProject = project;
     myAuthenticationGate = authenticationGate;
-    myIgnoreAuthenticationRequest = isIgnoreAuthenticationRequest;
+    myAuthenticationMode = authenticationMode;
     myDoNotRememberPasswords = doNotRememberPasswords;
   }
 
   @Nullable
   @Override
   public String handleInput(@NotNull String description) {
+    if(myAuthenticationMode == GitAuthenticationMode.NONE) return null;
     return myAuthenticationGate.waitAndCompute(() -> {
       if (isKeyPassphrase(description)) return askKeyPassphraseInput(description);
       if (isSshPassword(description)) return askSshPasswordInput(description);
@@ -68,7 +71,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
       });
     }
     else {
-      return GitSSHGUIHandler.askPassphrase(myProject, keyPath, resetPassword, myIgnoreAuthenticationRequest, null);
+      return GitSSHGUIHandler.askPassphrase(myProject, keyPath, resetPassword, myAuthenticationMode, null);
     }
   }
 
@@ -92,7 +95,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
       });
     }
     else {
-      return GitSSHGUIHandler.askPassword(myProject, username, resetPassword, myIgnoreAuthenticationRequest, null);
+      return GitSSHGUIHandler.askPassword(myProject, username, resetPassword, myAuthenticationMode, null);
     }
   }
 
@@ -129,7 +132,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
 
   @Nullable
   private String askUser(@NotNull Computable<String> query) {
-    if (myIgnoreAuthenticationRequest) return null;
+    if (myAuthenticationMode != FULL) return null;
 
     Ref<String> answerRef = new Ref<>();
     ApplicationManager.getApplication().invokeAndWait(() -> {

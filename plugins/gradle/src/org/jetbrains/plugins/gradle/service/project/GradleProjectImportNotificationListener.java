@@ -38,7 +38,6 @@ import static org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/13/2014
  */
 public class GradleProjectImportNotificationListener extends ExternalSystemTaskNotificationListenerAdapter {
   @Override

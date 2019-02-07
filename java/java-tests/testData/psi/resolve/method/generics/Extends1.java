@@ -9,6 +9,6 @@ class Test{
 
     {
         HashMap map = new HashMap();
-        map.put(new Integer(1), new Integer(1)).<ref>byteValue();
+        map.put(new Integer(1), new Integer(1)).<caret>byteValue();
     }
 }

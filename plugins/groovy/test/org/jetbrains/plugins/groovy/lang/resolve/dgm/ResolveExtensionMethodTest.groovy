@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.dgm
 
 import com.intellij.psi.PsiFileFactory
@@ -19,7 +19,7 @@ class ResolveExtensionMethodTest extends GroovyResolveTestCase {
   final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
 
   private void addExtension(String directory = "services", @Language("Groovy") String text) {
-    def factory = PsiFileFactory.getInstance(project);
+    def factory = PsiFileFactory.getInstance(project)
     def file = factory.createFileFromText('a.groovy', GroovyFileType.GROOVY_FILE_TYPE, text) as GroovyFile
     def fqn = file.typeDefinitions.first().qualifiedName
     def path = fqn.split('\\.').join('/') + '.groovy'

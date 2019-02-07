@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -119,6 +120,10 @@ public class ControlFlowUtils {
     else if (statement instanceof PsiSwitchStatement) {
       return switchStatementMayCompleteNormally((PsiSwitchStatement)statement);
     }
+    else if (statement instanceof PsiSwitchLabeledRuleStatement) {
+      PsiStatement body = ((PsiSwitchLabeledRuleStatement)statement).getBody();
+      return body != null && statementMayCompleteNormally(body);
+    }
     else if (statement instanceof PsiTemplateStatement || statement instanceof PsiClassLevelDeclarationStatement) {
       return true;
     }
@@ -200,7 +205,7 @@ public class ControlFlowUtils {
       }
       if (statement instanceof PsiBreakStatement) {
         final PsiBreakStatement breakStatement = (PsiBreakStatement)statement;
-        if (breakStatement.getLabelIdentifier() == null) {
+        if (breakStatement.getLabelExpression() == null) {
           return true;
         }
       }
@@ -397,7 +402,7 @@ public class ControlFlowUtils {
     return PsiTreeUtil.getParentOfType(expression, PsiThrowStatement.class) != null;
   }
 
-  @Nullable
+  @Contract("null -> null; !null -> !null")
   public static PsiStatement stripBraces(@Nullable PsiStatement statement) {
     if (statement instanceof PsiBlockStatement) {
       final PsiBlockStatement block = (PsiBlockStatement)statement;
@@ -422,11 +427,11 @@ public class ControlFlowUtils {
   public static boolean statementCompletesWithStatement(@NotNull PsiStatement containingStatement, @NotNull PsiStatement statement) {
     PsiElement statementToCheck = statement;
     while (true) {
-      if (statementToCheck.equals(containingStatement)) {
+      if (containingStatement.equals(statementToCheck)) {
         return true;
       }
       final PsiElement container = getContainingStatementOrBlock(statementToCheck);
-      if (container == null) {
+      if (container == null || container instanceof PsiLoopStatement) {
         return false;
       }
       if (container instanceof PsiCodeBlock) {
@@ -434,24 +439,19 @@ public class ControlFlowUtils {
           return false;
         }
       }
-      if (container instanceof PsiLoopStatement) {
-        return false;
-      }
+      
       statementToCheck = container;
+      if (statementToCheck instanceof PsiSwitchLabeledRuleStatement) {
+        statementToCheck = PsiTreeUtil.getParentOfType(statementToCheck, PsiStatement.class);
+      }
     }
   }
 
   public static boolean blockCompletesWithStatement(@NotNull PsiCodeBlock body, @NotNull PsiStatement statement) {
     PsiElement statementToCheck = statement;
     while (true) {
-      if (statementToCheck == null) {
-        return false;
-      }
       final PsiElement container = getContainingStatementOrBlock(statementToCheck);
-      if (container == null) {
-        return false;
-      }
-      if (container instanceof PsiLoopStatement) {
+      if (container == null || container instanceof PsiLoopStatement) {
         return false;
       }
       if (container instanceof PsiCodeBlock) {
@@ -465,12 +465,16 @@ public class ControlFlowUtils {
       }
       else {
         statementToCheck = container;
+        if (statementToCheck instanceof PsiSwitchLabeledRuleStatement) {
+          statementToCheck = PsiTreeUtil.getParentOfType(statementToCheck, PsiStatement.class);
+        }
       }
     }
   }
 
   @Nullable
-  private static PsiElement getContainingStatementOrBlock(@NotNull PsiElement statement) {
+  @Contract("null -> null")
+  private static PsiElement getContainingStatementOrBlock(@Nullable PsiElement statement) {
     return PsiTreeUtil.getParentOfType(statement, PsiStatement.class, PsiCodeBlock.class);
   }
 
@@ -612,7 +616,7 @@ public class ControlFlowUtils {
   @Contract("null, _ -> false")
   public static boolean statementBreaksLoop(PsiStatement statement, PsiLoopStatement loop) {
     if(statement instanceof PsiBreakStatement) {
-      return ((PsiBreakStatement)statement).findExitedStatement() == loop;
+      return ((PsiBreakStatement)statement).findExitedElement() == loop;
     }
     if(statement instanceof PsiReturnStatement) {
       PsiExpression returnValue = ((PsiReturnStatement)statement).getReturnValue();
@@ -898,44 +902,43 @@ public class ControlFlowUtils {
   }
 
   /**
-   * @param expression expression to check
-   * @return true if given expression is always executed and can be converted to a statement
+   * @param expression    expression to check
+   * @return true if given expression can be extracted to a statement
    */
   public static boolean canExtractStatement(PsiExpression expression) {
-    return canExtractStatement(expression, true);
-  }
-
-  /**
-   * @param expression    expression to check
-   * @param checkExecuted if true, expression will be considered non-extractable if it is not always executed within its topmost expression
-   *                      (e.g. appears in then/else branches in ?: expression)
-   * @return true if given expression can be converted to a statement
-   */
-  public static boolean canExtractStatement(PsiExpression expression, boolean checkExecuted) {
     PsiElement cur = expression;
     PsiElement parent = cur.getParent();
     while(parent instanceof PsiExpression || parent instanceof PsiExpressionList) {
       if(parent instanceof PsiLambdaExpression) {
         return true;
       }
-      if (checkExecuted && parent instanceof PsiPolyadicExpression) {
+      if (parent instanceof PsiPolyadicExpression) {
         PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
         IElementType type = polyadicExpression.getOperationTokenType();
         if (type.equals(JavaTokenType.ANDAND) && polyadicExpression.getOperands()[0] != cur) {
           PsiElement polyParent = PsiUtil.skipParenthesizedExprUp(polyadicExpression.getParent());
-          // not the first in the &&/|| chain: we cannot properly generate code which would short-circuit as well
+          // not the first in the && chain: we cannot properly generate code which would short-circuit as well
           // except some special cases
           return (polyParent instanceof PsiIfStatement && ((PsiIfStatement)polyParent).getElseBranch() == null) ||
                  (polyParent instanceof PsiWhileStatement) || (polyParent instanceof PsiReturnStatement) ||
                  (polyParent instanceof PsiLambdaExpression);
         }
         else if (type.equals(JavaTokenType.OROR) && polyadicExpression.getOperands()[0] != cur) {
-          // not the first in the &&/|| chain: we cannot properly generate code which would short-circuit as well
-          return false;
+          PsiElement polyParent = PsiUtil.skipParenthesizedExprUp(polyadicExpression.getParent());
+          // not the first in the || chain: we cannot properly generate code which would short-circuit as well
+          // except some special cases
+          return (polyParent instanceof PsiReturnStatement) || (polyParent instanceof PsiLambdaExpression);
         }
       }
-      if (checkExecuted && parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != cur) {
-        return false;
+      if (parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != cur) {
+        PsiElement ternaryParent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
+        return ternaryParent instanceof PsiReturnStatement ||
+               (ternaryParent instanceof PsiLocalVariable && 
+                (!((PsiLocalVariable)ternaryParent).getTypeElement().isInferredType() || 
+                 PsiTypesUtil.isDenotableType(((PsiLocalVariable)ternaryParent).getType(), ternaryParent))) ||
+               (ternaryParent instanceof PsiAssignmentExpression && ternaryParent.getParent() instanceof PsiExpressionStatement &&
+                !(ternaryParent.getParent().getParent() instanceof PsiSwitchLabeledRuleStatement) &&
+                PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)ternaryParent).getRExpression()) == parent);
       }
       if(parent instanceof PsiMethodCallExpression) {
         PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)parent).getMethodExpression();
@@ -948,7 +951,7 @@ public class ControlFlowUtils {
     }
     if (parent instanceof PsiStatement) {
       PsiElement grandParent = parent.getParent();
-      if (checkExecuted && grandParent instanceof PsiForStatement && ((PsiForStatement)grandParent).getUpdate() == parent) {
+      if (grandParent instanceof PsiForStatement && ((PsiForStatement)grandParent).getUpdate() == parent) {
         return false;
       }
     }
@@ -1067,6 +1070,28 @@ public class ControlFlowUtils {
     return false;
   }
 
+  /**
+   * Ensures that the {@code if} statement has the {@code else} branch which is a block statement (adding it if absent) 
+   * @param ifStatement an {@code if} statement to add an else branch or expand it to the block
+   */
+  public static void ensureElseBranch(PsiIfStatement ifStatement) {
+    PsiStatement elseBranch = ifStatement.getElseBranch();
+    if (elseBranch != null) {
+      if (!(elseBranch instanceof PsiBlockStatement)) {
+        BlockUtils.expandSingleStatementToBlockStatement(elseBranch);
+      }
+    } else {
+      PsiStatement thenBranch = ifStatement.getThenBranch();
+      PsiBlockStatement emptyBlock = BlockUtils.createBlockStatement(ifStatement.getProject());
+      if (thenBranch == null) {
+        ifStatement.setThenBranch(emptyBlock);
+      } else if (!(thenBranch instanceof PsiBlockStatement)) {
+        BlockUtils.expandSingleStatementToBlockStatement(thenBranch);
+      }
+      ifStatement.setElseBranch(emptyBlock);
+    }
+  }
+
   public enum InitializerUsageStatus {
     // Variable is declared just before the wanted place
     DECLARED_JUST_BEFORE,
@@ -1100,7 +1125,7 @@ public class ControlFlowUtils {
 
     @Override
     public void visitBreakStatement(PsiBreakStatement statement) {
-      if (statement.getLabelIdentifier() != null) {
+      if (statement.getLabelExpression() != null) {
         return;
       }
       m_found = true;
@@ -1214,7 +1239,7 @@ public class ControlFlowUtils {
         return;
       }
       super.visitBreakStatement(statement);
-      final PsiStatement exitedStatement = statement.findExitedStatement();
+      final PsiStatement exitedStatement = ObjectUtils.tryCast(statement.findExitedElement(), PsiStatement.class);
       if (exitedStatement == null) {
         return;
       }

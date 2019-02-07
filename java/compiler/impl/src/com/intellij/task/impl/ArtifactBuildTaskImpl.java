@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
  * @deprecated to be removed, use {@link ProjectModelBuildTask}
  *
  * @author Vladislav.Soroka
- * @since 5/14/2016
  */
 @Deprecated
 public class ArtifactBuildTaskImpl extends AbstractBuildTask implements ArtifactBuildTask {

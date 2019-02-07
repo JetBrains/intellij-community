@@ -15,6 +15,8 @@
  */
 package com.intellij.java.psi.codeStyle.arrangement
 
+import groovy.transform.CompileStatic
+
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PRIVATE
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PUBLIC
 
@@ -22,6 +24,7 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Mo
  * @author Denis Zhdanov
  * @since 11/20/12 3:34 PM
  */
+@CompileStatic
 class JavaRearrangerFoldingTest extends AbstractJavaRearrangerTest {
   
   void "test dummy"() {

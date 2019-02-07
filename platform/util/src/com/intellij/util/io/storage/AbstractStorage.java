@@ -64,11 +64,6 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     return deletedRecordsFile && deletedDataFile;
   }
 
-  public static void convertFromOldExtensions(String storageFilePath) {
-    FileUtil.delete(new File(storageFilePath + ".rindex"));
-    FileUtil.delete(new File(storageFilePath + ".data"));
-  }
-
   protected AbstractStorage(String storageFilePath) throws IOException {
     this(storageFilePath, PagePool.SHARED);
   }
@@ -91,8 +86,6 @@ public abstract class AbstractStorage implements Disposable, Forceable {
   }
 
   private void tryInit(String storageFilePath, PagePool pool, int retryCount) throws IOException {
-    convertFromOldExtensions(storageFilePath);
-
     final File recordsFile = new File(storageFilePath + INDEX_EXTENSION);
     final File dataFile = new File(storageFilePath + DATA_EXTENSION);
 
@@ -379,7 +372,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     public void close() throws IOException {
       super.close();
       final BufferExposingByteArrayOutputStream byteStream = getByteStream();
-      myStorage.writeBytes(myRecordId, new ByteArraySequence(byteStream.getInternalBuffer(), 0, byteStream.size()), myFixedSize);
+      myStorage.writeBytes(myRecordId, byteStream.toByteArraySequence(), myFixedSize);
     }
 
     protected BufferExposingByteArrayOutputStream getByteStream() {
@@ -404,7 +397,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     public void close() throws IOException {
       super.close();
       final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
-      appendBytes(myRecordId, new ByteArraySequence(_out.getInternalBuffer(), 0, _out.size()));
+      appendBytes(myRecordId, _out.toByteArraySequence());
     }
   }
 }

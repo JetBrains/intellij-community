@@ -71,7 +71,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     }
   };
 
-  abstract class TagOrBranchColumn extends ColumnInfo {
+  abstract static class TagOrBranchColumn extends ColumnInfo {
     TagOrBranchColumn(final String name) {
       super(name);
     }

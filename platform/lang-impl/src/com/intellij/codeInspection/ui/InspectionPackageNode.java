@@ -17,24 +17,29 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-/**
- * @author max
- */
 public class InspectionPackageNode extends InspectionTreeNode {
+  private final String myPackageName;
 
-  public InspectionPackageNode(String packageName) {
-    super(packageName);
+  public InspectionPackageNode(@NotNull String packageName, InspectionTreeNode parent) {
+    super(parent);
+    myPackageName = packageName;
   }
 
   public String getPackageName() {
-    return (String) getUserObject();
+    return myPackageName;
   }
 
   @Override
   public Icon getIcon(boolean expanded) {
     return PlatformIcons.PACKAGE_ICON;
+  }
+
+  @Override
+  public String getPresentableText() {
+    return myPackageName;
   }
 }

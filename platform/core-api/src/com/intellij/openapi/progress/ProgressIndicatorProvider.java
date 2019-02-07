@@ -32,7 +32,8 @@ public abstract class ProgressIndicatorProvider {
 
   @Nullable
   public static ProgressIndicator getGlobalProgressIndicator() {
-    return getInstance().getProgressIndicator();
+    ProgressManager instance = ProgressManager.ourInstance;
+    return instance == null ? null : instance.getProgressIndicator();
   }
 
   /** use {@link ProgressManager#executeNonCancelableSection(Runnable)} instead */

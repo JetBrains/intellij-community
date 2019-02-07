@@ -18,7 +18,6 @@ package com.intellij.psi.impl.source;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 
 public class PsiDiamondTypeElementImpl extends PsiTypeElementImpl {
-  @SuppressWarnings({"UnusedDeclaration"})
   public PsiDiamondTypeElementImpl() {
     super(JavaElementType.DIAMOND_TYPE);
   }

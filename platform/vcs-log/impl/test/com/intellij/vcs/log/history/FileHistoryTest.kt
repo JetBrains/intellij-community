@@ -277,6 +277,117 @@ class FileHistoryTest {
       7()
     }
   }
+
+  /*
+   * Two file histories: `create initialFile.txt, rename to file.txt, rename to otherFile.txt` and some time later `create file.txt`
+   */
+  @Test
+  fun twoFileByTheSameName() {
+    val file = LocalFilePath("file.txt", false)
+    val otherFile = LocalFilePath("otherFile.txt", false)
+    val initialFile = LocalFilePath("initialFile.txt", false)
+    val fileNamesData = FileNamesDataBuilder(file)
+      .addChange(file, 0, listOf(MODIFIED), listOf(1))
+      .addChange(otherFile, 1, listOf(MODIFIED), listOf(2))
+      .addChange(file, 2, listOf(ADDED), listOf(3))
+      .addChange(otherFile, 3, listOf(ADDED), listOf(4))
+      .addChange(file, 3, listOf(REMOVED), listOf(4))
+      .addRename(4, 3, file, otherFile)
+      .addChange(file, 5, listOf(ADDED), listOf(6))
+      .addChange(initialFile, 5, listOf(REMOVED), listOf(6))
+      .addRename(6, 5, initialFile, file)
+      .addChange(initialFile, 6, listOf(ADDED), listOf(6))
+      .build()
+
+    graph {
+      0(1)
+      1(2)
+      2(3)
+      3(4)
+      4(5)
+      5(6)
+      6()
+    }.assert(0, file, fileNamesData) {
+      0(2.dot)
+      2()
+    }
+  }
+
+  @Test
+  fun revertedDeletion() {
+    val file = LocalFilePath("file.txt", false)
+    val renamedFile = LocalFilePath("renamedFile.txt", false)
+    val fileNamesData = FileNamesDataBuilder(file)
+      .addChange(renamedFile, 0, listOf(ADDED), listOf(1))
+      .addChange(file, 0, listOf(REMOVED), listOf(1))
+      .addRename(1, 0, file, renamedFile)
+      .addChange(file, 1, listOf(ADDED), listOf(2))
+      .addChange(file, 3, listOf(REMOVED), listOf(4))
+      .addChange(file, 4, listOf(MODIFIED), listOf(5))
+      .addChange(file, 5, listOf(ADDED), listOf(6))
+      .build()
+
+    graph {
+      0(1)
+      1(2)
+      2(3)
+      3(4)
+      4(5)
+      5(6)
+      6()
+    }.assert(0, renamedFile, fileNamesData) {
+      0(1)
+      1(3.dot)
+      3(4)
+      4(5)
+      5()
+    }
+  }
+
+
+  @Test
+  fun modifyRenameConflict() {
+    val file = LocalFilePath("file.txt", false)
+    val renamedFile = LocalFilePath("renamedFile.txt", false)
+
+    val fileNamesData = FileNamesDataBuilder(file)
+      .addChange(renamedFile, 0, listOf(MODIFIED), listOf(1))
+
+      .addChange(renamedFile, 1, listOf(MODIFIED, ADDED), listOf(3, 2))
+      .addChange(file, 1, listOf(NOT_CHANGED, REMOVED), listOf(3, 2))
+      .addRename(2, 1, file, renamedFile)
+
+      .addChange(file, 2, listOf(MODIFIED), listOf(5))
+
+      .addChange(renamedFile, 4, listOf(ADDED), listOf(5))
+      .addChange(file, 4, listOf(REMOVED), listOf(5))
+      .addRename(5, 4, file, renamedFile)
+
+      .addChange(file, 5, listOf(MODIFIED), listOf(6))
+      .addChange(file, 6, listOf(ADDED), listOf(6))
+      .build()
+
+    // in order to trigger the bug, parent commits for node 1 in the filtered graph should be in the different order
+    // than in the permanent graph
+    // this is achieved by filtering out node 3, since in the filtered graph usual edges go first, and only then dotted edges
+
+    graph {
+      0(1)
+      1(3, 2)
+      2(5)
+      3(4)
+      4(5)
+      5(6)
+      6()
+    }.assert(0, renamedFile, fileNamesData) {
+      0(1)
+      1(4.dot, 2.u)
+      2(5)
+      4(5)
+      5(6)
+      6()
+    }
+  }
 }
 
 private class FileNamesDataBuilder(private val path: FilePath) {

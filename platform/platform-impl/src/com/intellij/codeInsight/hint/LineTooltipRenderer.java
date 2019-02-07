@@ -54,6 +54,14 @@ import java.util.ArrayList;
  */
 public class LineTooltipRenderer extends ComparableObject.Impl implements TooltipRenderer {
 
+  /**
+   * Html-like text for showing
+   * Please note that the tooltip size is calculated dynamically based on the html so 
+   * if the html content doesn't allow soft line breaks the tooltip can be too big for showing
+   * e.g.
+   * <br>
+   * very nbsp; long nbsp; text nbsp; with nbsp; 'nbsp;' as spaces cannot be break
+   */
   @NonNls @Nullable protected String myText;
 
   //is used for suppressing some events while processing links  

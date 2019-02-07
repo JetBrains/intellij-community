@@ -55,7 +55,6 @@ import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
  * {@link JavaEEGradleProjectResolverExtension} provides JavaEE project info based on gradle tooling API models.
  *
  * @author Vladislav.Soroka
- * @since 10/14/13
  */
 @Order(ExternalSystemConstants.UNORDERED)
 public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolverExtension {

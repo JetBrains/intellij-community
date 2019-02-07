@@ -45,6 +45,14 @@ public class HidpiInfo extends AnAction implements DumbAware {
     (ENABLED ? "false" : "true") + "</code> and restart.</span></html>" :
     "The mode can not be changed on this platform.");
 
+  private static final String MONITOR_RESOLUTION_TEXT = "Monitor resolution";
+  private static final String MONITOR_RESOLUTION_DESC =
+    "<html><span style='font-size:x-small'>" +
+      (ENABLED ?
+    "The current monitor resolution" :
+    "The main monitor resolution") +
+    " (in user space).</span></html>";
+
   private static final String SYS_SCALE_TEXT = "Monitor scale";
   private static final String SYS_SCALE_DESC =
     "<html><span style='font-size:x-small'>" +
@@ -68,6 +76,7 @@ public class HidpiInfo extends AnAction implements DumbAware {
   public void actionPerformed(@NotNull AnActionEvent anActionEvent) {
     Window activeFrame = IdeFrameImpl.getActiveFrame();
     if (activeFrame == null) return;
+    Rectangle bounds = activeFrame.getGraphicsConfiguration().getBounds();
 
     String _USR_SCALE_DESC = USR_SCALE_DESC.replace("$LABEL_FONT_SIZE", "" + UIUtil.getLabelFont().getSize());
 
@@ -77,6 +86,7 @@ public class HidpiInfo extends AnAction implements DumbAware {
 
     String[][] data = new String[][] {
       {JRE_HIDPI_MODE_TEXT, ENABLED ? "enabled" : "disabled", JRE_HIDPI_MODE_DESC},
+      {MONITOR_RESOLUTION_TEXT, "" + bounds.width + "x" + bounds.height, MONITOR_RESOLUTION_DESC},
       {SYS_SCALE_TEXT, "" + JBUI.sysScale(activeFrame), SYS_SCALE_DESC},
       {USR_SCALE_TEXT, "" + JBUI.scale(1f), _USR_SCALE_DESC},
     };
@@ -94,17 +104,17 @@ public class HidpiInfo extends AnAction implements DumbAware {
     };
 
     BiFunction<Integer, Integer, Dimension> size = (row, col) -> label(data[row][col]).getPreferredSize();
-
-    int maxDescColumnWidth = Math.max(size.apply(0, 2).width, Math.max(size.apply(1, 2).width, size.apply(2, 2).width));
+    int padding = JBUI.scale(10);
 
     table.setColumnSelectionAllowed(true);
     TableColumnModel tcm = table.getColumnModel();
-    tcm.getColumn(0).setPreferredWidth(size.apply(0, 0).width + JBUI.scale(10));
-    tcm.getColumn(1).setPreferredWidth(size.apply(0, 1).width + JBUI.scale(10));
-    tcm.getColumn(2).setPreferredWidth(maxDescColumnWidth + JBUI.scale(10));
+    tcm.getColumn(0).setPreferredWidth(size.apply(0, 0).width + padding);
+    tcm.getColumn(1).setPreferredWidth(size.apply(1, 1).width + padding);
+    tcm.getColumn(2).setPreferredWidth(size.apply(0, 2).width + padding);
     table.setRowHeight(0, size.apply(0, 2).height);
     table.setRowHeight(1, size.apply(0, 2).height);
-    table.setRowHeight(2, size.apply(2, 2).height);
+    table.setRowHeight(2, size.apply(0, 2).height);
+    table.setRowHeight(3, size.apply(3, 2).height);
 
     JPanel tablePanel = new JPanel(new BorderLayout());
     tablePanel.add(table, BorderLayout.CENTER);

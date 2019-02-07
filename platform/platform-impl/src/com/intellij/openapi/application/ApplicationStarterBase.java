@@ -17,7 +17,7 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
   private final String myCommandName;
   private final int[] myArgsCount;
 
-  protected ApplicationStarterBase(String commandName, int... possibleArgumentsCount) {
+  protected ApplicationStarterBase(@NotNull String commandName, int... possibleArgumentsCount) {
     myCommandName = commandName;
     myArgsCount = possibleArgumentsCount;
   }
@@ -62,7 +62,7 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
 
   public abstract String getUsageMessage();
 
-  protected abstract void processCommand(String[] args, @Nullable String currentDirectory) throws Exception;
+  protected abstract void processCommand(@NotNull String[] args, @Nullable String currentDirectory) throws Exception;
 
   @Override
   public void premain(String[] args) {

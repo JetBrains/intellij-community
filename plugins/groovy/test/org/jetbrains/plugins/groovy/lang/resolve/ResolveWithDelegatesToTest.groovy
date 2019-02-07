@@ -10,6 +10,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 
 import static org.jetbrains.plugins.groovy.util.ThrowingTransformation.disableTransformations
 
@@ -169,21 +170,6 @@ def test() {
     assert obj.called
 }
 test()
-''', 'Foo'
-  }
-
-  void testInConstructor() {
-    assertScript '''
-        class Foo {
-          def foo() {}
-        }
-
-        class Abc {
-          def Abc(@DelegatesTo(Foo) Closure cl) {
-          }
-        }
-
-        new Abc({fo<caret>o()})
 ''', 'Foo'
   }
 
@@ -743,6 +729,24 @@ Methods.m1 {
 ''').with {
       assert it instanceof PsiClass
     }
+  }
+
+  void 'test implicit call'() {
+    resolveByText '''\
+class D { def foo() { 42 } }
+
+class C {
+  def call(@DelegatesTo(D) Closure cl) {
+    cl.delegate = new D()
+    cl()
+  }
+}
+
+def c = new C()
+c {
+  <caret>foo()
+}
+''', GrMethod
   }
 
   private void assertScript(String text, String resolvedClass) {

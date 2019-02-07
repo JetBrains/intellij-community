@@ -26,7 +26,7 @@ public class TextCompareProcessorTest extends TestCase {
   public void testIgnoreWrappingEqualText() throws FilesTooBigForDiffException {
     TextCompareProcessor processor = new TextCompareProcessor(ComparisonPolicy.IGNORE_SPACE);
     List<LineFragment> lineFragments = processor.process("f(a, b)\n", "f(a,\nb)\n");
-    assertTrue(lineFragments.size() == 1);
+    assertEquals(1, lineFragments.size());
     assertNull(lineFragments.get(0).getType());
   }
 }

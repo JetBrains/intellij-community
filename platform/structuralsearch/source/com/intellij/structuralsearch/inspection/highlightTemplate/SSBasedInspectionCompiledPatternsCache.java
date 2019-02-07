@@ -28,13 +28,10 @@ public class SSBasedInspectionCompiledPatternsCache {
       final Matcher matcher = new Matcher(project);
       matcher.precompileOptions(configurations, cache);
       project.putUserData(COMPILED_OPTIONS_KEY, cache);
+      cache.keySet().retainAll(configurations);
     }
 
-    final Map<Configuration, MatchContext> copy = ContainerUtilRt.newHashMap(configurations.size());
-    for (Configuration configuration : configurations) {
-      copy.put(configuration, cache.get(configuration));
-    }
-    return copy;
+    return ContainerUtilRt.newHashMap(cache);
   }
 
   private static boolean areConfigurationsInCache(@NotNull List<Configuration> configurations,

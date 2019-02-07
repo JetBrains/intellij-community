@@ -11,6 +11,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.DomCustomAnnotationChecker;
@@ -67,11 +68,11 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
                                                                    final boolean allowEnum,
                                                                    final DomElementAnnotationHolder holder) {
     final Project project = element.getManager().getProject();
-    PsiClass extendClass = JavaPsiFacade.getInstance(project).findClass(name, GlobalSearchScope.allScope(project));
+    PsiClass[] extendClasses = JavaPsiFacade.getInstance(project).findClasses(name, GlobalSearchScope.allScope(project));
     final SmartList<DomElementProblemDescriptor> list = new SmartList<>();
-    if (extendClass != null) {
-      if (!name.equals(value.getQualifiedName()) && !value.isInheritor(extendClass, true)) {
-        String message = DomBundle.message("class.is.not.a.subclass", value.getQualifiedName(), extendClass.getQualifiedName());
+    if (extendClasses.length > 0) {
+      if (!name.equals(value.getQualifiedName()) && ContainerUtil.find(extendClasses, aClass -> value.isInheritor(aClass, true)) == null) {
+        String message = DomBundle.message("class.is.not.a.subclass", value.getQualifiedName(), name);
         list.add(holder.createProblem(element, message));
       }
     }
@@ -95,7 +96,7 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
               final PsiType psiType = typeElement.getType();
               if (psiType instanceof PsiClassType) {
                 final PsiClass psiClass = ((PsiClassType)psiType).resolve();
-                if (psiClass != null && InheritanceUtil.isInheritorOrSelf(psiClass, extendClass, true)) {
+                if (psiClass != null && ContainerUtil.find(extendClasses, aClass -> InheritanceUtil.isInheritorOrSelf(psiClass, aClass, true)) != null) {
                   hasConstructor = true;
                   break;
                 }

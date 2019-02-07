@@ -45,7 +45,7 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
     ProjectAndLibrariesScope result = new ProjectAndLibrariesScope(myProject) {
       @Override
       public boolean contains(@NotNull VirtualFile file) {
-        return myProjectFileIndex.isInLibrarySource(file) || myProjectFileIndex.isInLibraryClasses(file);
+        return myProjectFileIndex.isInLibrary(file);
       }
 
       @Override

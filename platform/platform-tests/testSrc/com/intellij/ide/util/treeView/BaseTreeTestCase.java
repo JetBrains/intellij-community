@@ -307,20 +307,23 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    invokeLaterIfNeeded(() -> {
-      if (getBuilder() != null) {
-        Disposer.dispose(getBuilder());
-      }
-    });
+    try {
+      invokeLaterIfNeeded(() -> {
+        if (getBuilder() != null) {
+          Disposer.dispose(getBuilder());
+        }
+      });
 
-    new WaitFor(6000) {
-      @Override
-      protected boolean condition() {
-        return getBuilder() == null || getBuilder().getUi() == null;
-      }
-    };
-
-    super.tearDown();
+      new WaitFor(6000) {
+        @Override
+        protected boolean condition() {
+          return getBuilder() == null || getBuilder().getUi() == null;
+        }
+      };
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   void assertTree(final String expected) {

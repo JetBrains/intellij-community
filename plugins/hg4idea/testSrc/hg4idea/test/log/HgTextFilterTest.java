@@ -1,25 +1,12 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package hg4idea.test.log;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.TimedVcsCommit;
+import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogTextFilter;
-import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import hg4idea.test.HgPlatformTest;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
@@ -32,7 +19,6 @@ import java.util.List;
 
 import static com.intellij.openapi.vcs.Executor.cd;
 import static com.intellij.openapi.vcs.Executor.overwrite;
-import static com.intellij.vcs.log.ui.filter.VcsLogTextFilterImpl.createTextFilter;
 import static hg4idea.test.HgExecutor.hg;
 import static hg4idea.test.log.HgUserFilterTest.findLogProvider;
 
@@ -53,11 +39,11 @@ public class HgTextFilterTest extends HgPlatformTest {
     String text = "[hg]";
 
     assertSameElements(Arrays.asList(bigBrackets, smallBrackets),
-                       getFilteredCommits(provider, createTextFilter(text, false, false)));
+                       getFilteredCommits(provider, VcsLogFilterObject.fromPattern(text, false, false)));
     assertSameElements(Collections.singletonList(smallBrackets),
-                       getFilteredCommits(provider, createTextFilter(text, false, true)));
+                       getFilteredCommits(provider, VcsLogFilterObject.fromPattern(text, false, true)));
     assertSameElements(Arrays.asList(bigNoBrackets, smallNoBrackets, bigBrackets, smallBrackets),
-                       getFilteredCommits(provider, createTextFilter(text, true, false)));
+                       getFilteredCommits(provider, VcsLogFilterObject.fromPattern(text, true, false)));
   }
 
   public void testRegexp() throws Exception {
@@ -70,9 +56,9 @@ public class HgTextFilterTest extends HgPlatformTest {
     HgLogProvider provider = findLogProvider(myProject);
 
     assertSameElements(Collections.singletonList(numberedBigBug),
-                       getFilteredCommits(provider, createTextFilter("Bug \\d+", true, true)));
+                       getFilteredCommits(provider, VcsLogFilterObject.fromPattern("Bug \\d+", true, true)));
     assertSameElements(Collections.singletonList(bigBug),
-                       getFilteredCommits(provider, createTextFilter("BUG.*", true, true)));
+                       getFilteredCommits(provider, VcsLogFilterObject.fromPattern("BUG.*", true, true)));
   }
 
   public void _testRegexpCaseInsensitive() throws Exception {
@@ -85,15 +71,14 @@ public class HgTextFilterTest extends HgPlatformTest {
     HgLogProvider provider = findLogProvider(myProject);
 
     assertSameElements(Arrays.asList(numberedSmallBug, numberedBigBug),
-                       getFilteredCommits(provider, createTextFilter("Bug \\d+", true, false)));
+                       getFilteredCommits(provider, VcsLogFilterObject.fromPattern("Bug \\d+", true, false)));
     assertSameElements(Arrays.asList(numberedBigBug, numberedSmallBug, smallBug, bigBug),
-                       getFilteredCommits(provider, createTextFilter("BUG.*", true, false)));
+                       getFilteredCommits(provider, VcsLogFilterObject.fromPattern("BUG.*", true, false)));
   }
 
   @NotNull
   private List<String> getFilteredCommits(@NotNull HgLogProvider provider, @NotNull VcsLogTextFilter filter) throws VcsException {
-    VcsLogFilterCollectionImpl filterCollection = new VcsLogFilterCollectionImpl(null, null, null, null,
-                                                                                 filter, null, null);
+    VcsLogFilterCollection filterCollection = VcsLogFilterObject.collection(filter);
     List<TimedVcsCommit> commits = provider.getCommitsMatchingFilter(myProject.getBaseDir(), filterCollection, -1);
     return ContainerUtil.map(commits, commit -> commit.getId().asString());
   }

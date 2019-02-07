@@ -28,10 +28,10 @@ public class PyConsoleHighlightingLexer extends PythonHighlightingLexer {
     super(languageLevel);
   }
 
-  @Override
   /**
    * Treats special symbols used in IPython console
    */
+  @Override
   public IElementType getTokenType() {
     IElementType type = super.getTokenType();
     if (type == PyTokenTypes.BAD_CHARACTER && PythonConsoleLexer.isSpecialSymbols(getTokenText())) {

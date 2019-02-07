@@ -32,7 +32,6 @@ import java.util.Set;
 
 /**
  * @author anna
- * @since 20.11.2012
  */
 class AddModuleDependencyFix extends OrderEntryFix {
   private final Module myCurrentModule;

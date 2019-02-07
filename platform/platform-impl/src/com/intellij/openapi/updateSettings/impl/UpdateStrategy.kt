@@ -10,7 +10,7 @@ import java.util.*
 
 private val NUMBER = Regex("\\d+")
 
-class UpdateStrategy(private val currentBuild: BuildNumber, private val updates: UpdatesInfo, private val settings: UserUpdateSettings) {
+class UpdateStrategy(private val currentBuild: BuildNumber, private val updates: UpdatesInfo, private val settings: UpdateSettings) {
   constructor(currentBuild: BuildNumber, updates: UpdatesInfo) :
     this(currentBuild, updates, UpdateSettings.getInstance())
 
@@ -94,20 +94,4 @@ class UpdateStrategy(private val currentBuild: BuildNumber, private val updates:
     }
     return UpdateChain(path, if (total > 0) total.toString() else null)
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-  @Deprecated("use {@link #UpdateStrategy(BuildNumber, UpdatesInfo, UserUpdateSettings)}")
-  constructor(@Suppress("UNUSED_PARAMETER") majorVersion: Int,
-              @Suppress("UNUSED_PARAMETER") currentBuild: BuildNumber,
-              @Suppress("UNUSED_PARAMETER") updatesInfo: UpdatesInfo,
-              @Suppress("UNUSED_PARAMETER") updateSettings: UserUpdateSettings) : this(currentBuild, updatesInfo, updateSettings)
-
-
-  @Deprecated("use {@link #UpdateStrategy(BuildNumber, UpdatesInfo, UserUpdateSettings)}")
-  constructor(@Suppress("UNUSED_PARAMETER") majorVersion: Int,
-              @Suppress("UNUSED_PARAMETER") currentBuild: BuildNumber,
-              @Suppress("UNUSED_PARAMETER") updatesInfo: UpdatesInfo,
-              @Suppress("UNUSED_PARAMETER") updateSettings: UserUpdateSettings,
-              @Suppress("UNUSED_PARAMETER") customization: UpdateStrategyCustomization) : this(currentBuild, updatesInfo, updateSettings)
-  //</editor-fold>
 }

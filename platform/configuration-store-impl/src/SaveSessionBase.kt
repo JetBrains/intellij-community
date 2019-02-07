@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
-import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.WriteExternalException
@@ -9,7 +8,7 @@ import com.intellij.openapi.vfs.LargeFileWriteRequestor
 import com.intellij.openapi.vfs.SafeWriteRequestor
 import org.jdom.Element
 
-abstract class SaveSessionBase : StateStorage.SaveSession, StateStorage.SaveSessionProducer, SafeWriteRequestor, LargeFileWriteRequestor {
+abstract class SaveSessionBase : SaveSessionProducer, SafeWriteRequestor, LargeFileWriteRequestor {
   final override fun setState(component: Any?, componentName: String, state: Any?) {
     if (state == null) {
       setSerializedState(componentName, null)

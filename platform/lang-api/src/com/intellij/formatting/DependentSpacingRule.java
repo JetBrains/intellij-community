@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
  * target region changes its 'contains line feeds' status.
  * 
  * @author Denis Zhdanov
- * @since 6/28/12 1:08 PM
  */
 public class DependentSpacingRule {
 

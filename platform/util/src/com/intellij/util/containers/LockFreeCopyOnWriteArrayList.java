@@ -18,6 +18,7 @@ package com.intellij.util.containers;
 
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.Functions;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -679,30 +680,28 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
    */
   @Override
   public int addAllAbsent(@NotNull Collection<? extends E> c) {
-    Object[] cs = c.toArray();
-    if (cs.length == 0) {
+    // optimization: faster than calling .add() one by one
+    if (c.isEmpty()) {
       return 0;
     }
 
-    Object[] uniq = new Object[cs.length];
     Object[] elements;
     Object[] newElements;
     int added;
     do {
       elements = array;
-      added = 0;
-      int len = elements.length;
-      for (Object e : cs) { // scan for duplicates
-        if (indexOf(e, elements, 0, len) < 0 &&
-            indexOf(e, uniq, 0, added) < 0) {
-          uniq[added++] = e;
-        }
+      Set<Object> existing = ContainerUtil.map2Set(elements, Functions.identity());
+      List<Object> toAddList = new ArrayList<Object>(c.size());
+      for (E e : c) {
+        if (!existing.contains(e)) toAddList.add(e);
       }
+
+      added = toAddList.size();
       if (added == 0) {
         return 0;
       }
-      newElements = Arrays.copyOf(elements, len + added, Object[].class);
-      System.arraycopy(uniq, 0, newElements, len, added);
+
+      newElements = ArrayUtil.mergeArrays(elements, toAddList.toArray());
     }
     while (!replaceArray(elements, newElements));
     return added;

@@ -73,7 +73,7 @@ public class RollbackProgressModifier implements RollbackProgressListener {
   }
 
   @Override
-  public void accept(final List<FilePath> paths) {
+  public void accept(final List<? extends FilePath> paths) {
     if (myIndicator != null) {
       if (paths != null && (! paths.isEmpty())) {
         for (FilePath path : paths) {

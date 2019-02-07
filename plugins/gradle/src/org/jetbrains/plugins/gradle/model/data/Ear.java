@@ -22,7 +22,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/11/2015
  */
 public class Ear extends Jar {
   private static final long serialVersionUID = 1L;

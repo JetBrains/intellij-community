@@ -30,7 +30,6 @@ import java.util.Map;
 
 /**
  * @author Denis Zhdanov
- * @since 10/24/12 4:25 PM
  */
 public class ArrangementColorsProviderImpl implements ArrangementColorsProvider {
 

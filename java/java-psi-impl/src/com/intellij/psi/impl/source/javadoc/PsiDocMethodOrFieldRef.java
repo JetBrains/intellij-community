@@ -116,9 +116,9 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       methodSignature = null;
     }
 
-    for (PsiMethod method : getAllMethods(scope, this)) {
-      if (!method.getName().equals(name) ||
-          methodSignature != null && !MethodSignatureUtil.areSignaturesErasureEqual(methodSignature, method.getSignature(PsiSubstitutor.EMPTY))) continue;
+    PsiMethod method = findMethod(methodSignature, name, getAllMethods(scope, this));
+
+    if (method != null) {
       return new MyReference(method) {
 
         @Override
@@ -138,14 +138,6 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
 
     return null;
   }
-  
-   @NotNull 
-   private static PsiMethod[] getAllMethods(PsiElement scope, PsiElement place) {
-    final SmartList<PsiMethod> result = new SmartList<>();
-    scope.processDeclarations(new FilterScopeProcessor<>(ElementClassFilter.METHOD, result), ResolveState.initial(), null, place);
-    return result.toArray(PsiMethod.EMPTY_ARRAY);
-  }
-
 
   @Override
   public int getTextOffset() {
@@ -208,6 +200,25 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       }
     }
     return JavaResolveUtil.getContextClass(this);
+  }
+
+  @Nullable
+  public static PsiMethod findMethod(@Nullable MethodSignature methodSignature, @Nullable String name, @NotNull PsiMethod[] allMethods) {
+    for (PsiMethod method : allMethods) {
+      if (method.getName().equals(name) &&
+          (methodSignature == null || MethodSignatureUtil.areSignaturesErasureEqual(methodSignature, method.getSignature(PsiSubstitutor.EMPTY)))) {
+        return method;
+      }
+    }
+
+    return null;
+  }
+
+  @NotNull
+  public static PsiMethod[] getAllMethods(PsiElement scope, PsiElement place) {
+    final SmartList<PsiMethod> result = new SmartList<>();
+    scope.processDeclarations(new FilterScopeProcessor<>(ElementClassFilter.METHOD, result), ResolveState.initial(), null, place);
+    return result.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
   public class MyReference implements PsiJavaReference {

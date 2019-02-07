@@ -77,6 +77,7 @@ public class PsiClassInitializerImpl extends JavaStubPsiElement<PsiClassInitiali
     }
   }
 
+  @Override
   public String toString(){
     return "PsiClassInitializer";
   }

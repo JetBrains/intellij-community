@@ -47,6 +47,7 @@ public class CachingConstructorInjectionComponentAdapter extends InstantiatingCo
     return instance;
   }
 
+  @NotNull
   private Object instantiateGuarded(PicoContainer container, Class stackFrame) {
     Set<CachingConstructorInjectionComponentAdapter> currentStack = ourGuard.get();
     if (currentStack == null) {
@@ -60,14 +61,17 @@ public class CachingConstructorInjectionComponentAdapter extends InstantiatingCo
     try {
       currentStack.add(this);
       return doGetComponentInstance(container);
-    } catch (final CyclicDependencyException e) {
+    }
+    catch (final CyclicDependencyException e) {
       e.push(stackFrame);
       throw e;
-    } finally {
+    }
+    finally {
       currentStack.remove(this);
     }
   }
 
+  @NotNull
   private Object doGetComponentInstance(PicoContainer guardedContainer) {
     final Constructor constructor;
     try {
@@ -102,7 +106,7 @@ public class CachingConstructorInjectionComponentAdapter extends InstantiatingCo
   }
 
   @NotNull
-  private Object[] getConstructorArguments(PicoContainer container, Constructor ctor) {
+  private Object[] getConstructorArguments(PicoContainer container, @NotNull Constructor ctor) {
     Class[] parameterTypes = ctor.getParameterTypes();
     Object[] result = new Object[parameterTypes.length];
     Parameter[] currentParameters = parameters != null ? parameters : createDefaultParameters(parameterTypes);
@@ -113,6 +117,7 @@ public class CachingConstructorInjectionComponentAdapter extends InstantiatingCo
     return result;
   }
 
+  @NotNull
   @Override
   protected Constructor getGreediestSatisfiableConstructor(PicoContainer container) throws
                                                                                     PicoIntrospectionException,
@@ -162,12 +167,15 @@ public class CachingConstructorInjectionComponentAdapter extends InstantiatingCo
     }
     if (!conflicts.isEmpty()) {
       throw new TooManySatisfiableConstructorsException(getComponentImplementation(), conflicts);
-    } else if (greediestConstructor == null && !unsatisfiableDependencyTypes.isEmpty()) {
+    }
+    if (greediestConstructor == null && !unsatisfiableDependencyTypes.isEmpty()) {
       throw new UnsatisfiableDependenciesException(this, unsatisfiedDependencyType, unsatisfiableDependencyTypes, container);
-    } else if (greediestConstructor == null) {
+    }
+    if (greediestConstructor == null) {
       // be nice to the user, show all constructors that were filtered out
-      final Set<Constructor> nonMatching = ContainerUtil.newHashSet(getConstructors());
-      throw new PicoInitializationException("Either do the specified parameters not match any of the following constructors: " + nonMatching.toString() + " or the constructors were not accessible for '" + getComponentImplementation() + "'");
+      final Set<Constructor<?>> nonMatching = ContainerUtil.newHashSet(getConstructors());
+      throw new PicoInitializationException("Either do the specified parameters not match any of the following constructors: " +
+                                            nonMatching + " or the constructors were not accessible for '" + getComponentImplementation() + "'");
     }
     return greediestConstructor;
   }
@@ -175,7 +183,7 @@ public class CachingConstructorInjectionComponentAdapter extends InstantiatingCo
   private List<Constructor> getSortedMatchingConstructors() {
     List<Constructor> matchingConstructors = new ArrayList<>();
     // filter out all constructors that will definitely not match
-    for (Constructor constructor : getConstructors()) {
+    for (Constructor<?> constructor : getConstructors()) {
       if ((parameters == null || constructor.getParameterTypes().length == parameters.length) &&
           (allowNonPublicClasses || (constructor.getModifiers() & Modifier.PUBLIC) != 0)) {
         matchingConstructors.add(constructor);
@@ -189,12 +197,7 @@ public class CachingConstructorInjectionComponentAdapter extends InstantiatingCo
   }
 
   @NotNull
-  private Constructor[] getConstructors() {
-    return (Constructor[]) AccessController.doPrivileged(new PrivilegedAction() {
-      @Override
-      public Object run() {
-        return getComponentImplementation().getDeclaredConstructors();
-      }
-    });
+  private Constructor<?>[] getConstructors() {
+    return AccessController.doPrivileged((PrivilegedAction<Constructor<?>[]>)() -> getComponentImplementation().getDeclaredConstructors());
   }
 }

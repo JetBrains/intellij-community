@@ -40,7 +40,6 @@ import java.io.File;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/21/2015
  */
 public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSettingsControlBuilder {
 

@@ -13,14 +13,13 @@ import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import java.util.HashMap;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -33,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -57,7 +57,7 @@ public class OldReferencesResolver {
   private final PsiElement myParameterInitializer;
   private final PsiManager myManager;
   private final PsiParameter[] myParameters;
-  private final GrClosureSignature mySignature;
+  private final GrSignature mySignature;
   
   private final Set<PsiParameter> myParamsToNotInline = new HashSet<>();
 
@@ -66,7 +66,7 @@ public class OldReferencesResolver {
                                PsiElement toReplaceIn,
                                int replaceFieldsWithGetters,
                                PsiElement parameterInitializer,
-                               final GrClosureSignature signature,
+                               final GrSignature signature,
                                final GrClosureSignatureUtil.ArgInfo<PsiElement>[] actualArgs, PsiParameter[] parameters) throws IncorrectOperationException {
     myContext = context;
     myExpr = expr;

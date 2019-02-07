@@ -38,7 +38,7 @@ public class ImportSettingsFilenameFilter implements FilenameFilter, Serializabl
   private final String[] myRelativeNamesToExtract;
 
   public ImportSettingsFilenameFilter(@NotNull Set<String> relativeNamesToExtract) {
-    myRelativeNamesToExtract = relativeNamesToExtract.toArray(ArrayUtil.EMPTY_STRING_ARRAY);
+    myRelativeNamesToExtract = ArrayUtil.toStringArray(relativeNamesToExtract);
   }
 
   @Override

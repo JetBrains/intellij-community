@@ -24,6 +24,7 @@ public class GrBuiltinTypeClassExpressionImpl extends GrExpressionImpl implement
     visitor.visitBuiltinTypeClassExpression(this);
   }
 
+  @Override
   public String toString() {
     return "builtin type class expression";
   }

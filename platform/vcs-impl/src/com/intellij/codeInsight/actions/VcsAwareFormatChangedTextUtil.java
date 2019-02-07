@@ -9,10 +9,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.ex.LineStatusTracker;
-import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
-import com.intellij.openapi.vcs.ex.Range;
-import com.intellij.openapi.vcs.ex.RangesBuilder;
+import com.intellij.openapi.vcs.ex.*;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -127,7 +124,7 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
     if (tracker != null) {
       if (change instanceof ChangeListChange && tracker instanceof PartialLocalLineStatusTracker) {
         String changeListId = ((ChangeListChange)change).getChangeListId();
-        List<PartialLocalLineStatusTracker.LocalRange> ranges = ((PartialLocalLineStatusTracker)tracker).getRanges();
+        List<LocalRange> ranges = ((PartialLocalLineStatusTracker)tracker).getRanges();
         if (ranges != null) {
           return ContainerUtil.filter(ranges, range -> range.getChangelistId().equals(changeListId));
         }

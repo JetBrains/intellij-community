@@ -253,6 +253,7 @@ public class LazyParseablePsiElement extends LazyParseableElement implements Psi
     return true;
   }
 
+  @Override
   public String toString() {
     return "PsiElement" + "(" + getElementType().toString() + ")";
   }

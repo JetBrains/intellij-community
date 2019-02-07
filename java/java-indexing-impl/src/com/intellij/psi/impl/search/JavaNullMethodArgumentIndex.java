@@ -4,12 +4,12 @@ package com.intellij.psi.impl.search;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
+import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiKeyword;
-import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.source.JavaLightTreeUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
@@ -172,7 +172,7 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
     return new DefaultFileTypeSpecificInputFilter(JavaFileType.INSTANCE) {
       @Override
       public boolean acceptInput(@NotNull VirtualFile file) {
-        return JavaStubElementTypes.JAVA_FILE.shouldBuildStubFor(file);
+        return JavaParserDefinition.JAVA_FILE.shouldBuildStubFor(file);
       }
     };
   }

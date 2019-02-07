@@ -157,6 +157,7 @@ public class PsiVFSListener implements BulkFileListener {
     );
   }
 
+  // optimization: call myFileManager.removeInvalidFilesAndDirs() once for group of delete events, instead of once for each event
   private void filesDeleted(@NotNull List<? extends VFileEvent> events) {
     boolean needToRemoveInvalidFilesAndDirs = false;
     for (VFileEvent event : events) {
@@ -456,6 +457,7 @@ public class PsiVFSListener implements BulkFileListener {
     );
   }
 
+  // optimization: call myFileManager.removeInvalidFilesAndDirs() once for group of move events, instead of once for each event
   private void filesMoved(@NotNull List<? extends VFileEvent> events) {
     List<PsiElement> oldElements = new ArrayList<>(events.size());
     List<PsiDirectory> oldParentDirs = new ArrayList<>(events.size());
@@ -647,7 +649,7 @@ public class PsiVFSListener implements BulkFileListener {
     }
 
     ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(myProject);
-    return index.isInContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file);
+    return index.isInContent(file) || index.isInLibrary(file);
   }
 
   @Override
@@ -672,10 +674,10 @@ public class PsiVFSListener implements BulkFileListener {
     myReportedUnloadedPsiChange = false;
   }
 
-  // group same type events together and call fireForGrouped() for the whole batch
+  // group same type events together and call fireForGrouped() for the each batch
   private void groupAndFire(@NotNull List<? extends VFileEvent> events) {
     StreamEx.of(events)
-      // group sequential VFileDeleteEvent or VFileMoveEvent together, place all other events into one-element lists
+      // group several VFileDeleteEvents together, several VFileMoveEvents together, place all other events into one-element lists
       .groupRuns((event1, event2) ->
                     event1 instanceof VFileDeleteEvent && event2 instanceof VFileDeleteEvent
                  || event1 instanceof VFileMoveEvent && event2 instanceof VFileMoveEvent)

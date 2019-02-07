@@ -92,7 +92,7 @@ public class SvnChangelistListener implements ChangeListListener {
   public static String getCurrentMapping(@NotNull SvnVcs vcs, @NotNull File file) {
     try {
       final Status status = vcs.getFactory(file).createStatusClient().doStatus(file, false);
-      return status == null ? null : status.getChangelistName();
+      return status == null ? null : status.getChangeListName();
     }
     catch (SvnBindException e) {
       if (e.contains(ErrorCode.WC_NOT_WORKING_COPY) || e.contains(ErrorCode.WC_NOT_FILE)) {

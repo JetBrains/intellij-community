@@ -17,6 +17,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.profile.ProfileChangeAdapter
@@ -25,7 +26,6 @@ import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.getAttributeBooleanValue
-import com.intellij.util.loadElement
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters
 import com.intellij.util.xmlb.XmlSerializer
@@ -42,7 +42,7 @@ import java.util.function.Function
 private const val VERSION = "1.0"
 private const val PROJECT_DEFAULT_PROFILE_NAME = "Project Default"
 
-private val defaultSchemeDigest = loadElement("""<component name="InspectionProjectProfileManager">
+private val defaultSchemeDigest = JDOMUtil.load("""<component name="InspectionProjectProfileManager">
   <profile version="1.0">
     <option name="myName" value="Project Default" />
   </profile>

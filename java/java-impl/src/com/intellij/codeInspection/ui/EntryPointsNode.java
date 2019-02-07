@@ -2,9 +2,7 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInspection.deadCode.DummyEntryPointsEP;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
-import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.icons.AllIcons;
 import gnu.trove.TObjectIntHashMap;
@@ -13,18 +11,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author max
- */
 public class EntryPointsNode extends InspectionNode {
-  public EntryPointsNode(@NotNull GlobalInspectionContextImpl context) {
-    super(createDummyWrapper(context), context.getCurrentProfile());
-  }
+  private volatile boolean myExcluded;
 
-  private static InspectionToolWrapper createDummyWrapper(@NotNull GlobalInspectionContextImpl context) {
-    InspectionToolWrapper toolWrapper = new GlobalInspectionToolWrapper(new DummyEntryPointsEP());
-    toolWrapper.initialize(context);
-    return toolWrapper;
+  public EntryPointsNode(@NotNull InspectionToolWrapper dummyWrapper,
+                         @NotNull GlobalInspectionContextImpl context,
+                         @NotNull InspectionTreeNode parent) {
+    super(dummyWrapper, context.getCurrentProfile(), parent);
   }
 
   @Override
@@ -44,7 +37,17 @@ public class EntryPointsNode extends InspectionNode {
   }
 
   @Override
-  public int getProblemCount(boolean allowSuppressed) {
-    return 0;
+  public boolean isExcluded() {
+    return myExcluded;
+  }
+
+  @Override
+  public void excludeElement() {
+    myExcluded = true;
+  }
+
+  @Override
+  public void amnestyElement() {
+    myExcluded = false;
   }
 }

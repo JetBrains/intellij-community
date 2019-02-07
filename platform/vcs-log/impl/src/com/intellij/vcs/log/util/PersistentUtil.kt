@@ -99,7 +99,7 @@ class StorageId(private val subdirName: String,
   private fun iterateOverOtherFeatures(function: (BooleanArray) -> Unit) {
     if (features.isEmpty()) return
 
-    val f = BooleanArray(features.size) { _ -> false }
+    val f = BooleanArray(features.size) { false }
     mainLoop@ while (true) {
       if (!features.contentEquals(f)) {
         function(f)

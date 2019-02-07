@@ -117,12 +117,8 @@ public class CmdlineProtoUtil {
     }
     if (cause != null) {
       final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      final PrintStream stream = new PrintStream(baos);
-      try {
+      try (PrintStream stream = new PrintStream(baos)) {
         cause.printStackTrace(stream);
-      }
-      finally {
-        stream.close();
       }
       final String stacktrace = new String(baos.toByteArray());
       builder.setStacktrace(stacktrace);

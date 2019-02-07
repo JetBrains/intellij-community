@@ -208,7 +208,10 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
 
 //[102] ns-anchor-char ::= ns-char - c-flow-indicator
 //[103] ns-anchor-name ::= ns-anchor-char+
-NS_ANCHOR_NAME = [^,\[\]\{\}\s]+
+// It seems colon is not permitted as a part of anchor name. See RUBY-23179
+// But the standard id not mentioned it directly.
+// Through online YAML validator and ruby YAML implementation both don't allow colon in anchor names.
+NS_ANCHOR_NAME = [^:,\[\]\{\}\s]+
 
 BS_HEADER_ERR_WORD = [^ \t#\n] [^ \t\n]*
 

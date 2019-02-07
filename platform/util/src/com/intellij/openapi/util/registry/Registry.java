@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.util.ConcurrencyUtil;
@@ -168,8 +168,7 @@ public class Registry  {
   }
 
   void restoreDefaults() {
-    Map<String, String> old = new HashMap<String, String>();
-    old.putAll(myUserProperties);
+    Map<String, String> old = new HashMap<String, String>(myUserProperties);
     for (String each : old.keySet()) {
       try {
         get(each).resetToDefault();

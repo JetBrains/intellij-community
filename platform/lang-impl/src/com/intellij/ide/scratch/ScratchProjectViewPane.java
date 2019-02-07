@@ -292,8 +292,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     @NotNull
     @Override
     public Collection<VirtualFile> getRoots() {
-      VirtualFile root = getVirtualFile();
-      return root == null ? EMPTY_ROOTS : Collections.singleton(root);
+      return getDefaultRootsFor(getVirtualFile());
     }
 
     @NotNull

@@ -4,7 +4,7 @@ package com.intellij.testGuiFramework.util.scenarios
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.util.Key
-import com.intellij.testGuiFramework.util.logTestStep
+import com.intellij.testGuiFramework.util.step
 import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
 
@@ -23,16 +23,18 @@ val GuiTestCase.runConfigScenarios by RunConfigurationScenarios
 fun RunConfigurationScenarios.openRunConfiguration(configurationName: String) {
   with(guiTestCase) {
     ideFrame {
-      logTestStep("Going to check presence of run/debug configuration `$configurationName`")
-      navigationBar {
-        assert(exists { button(configurationName) }) { "Button `$configurationName` not found on Navigation bar" }
+      step("check presence of run/debug configuration `$configurationName`") {
+        navigationBar {
+          assert(exists { button(configurationName) }) { "Button `$configurationName` not found on Navigation bar" }
+        }
+        GuiTestUtilKt.waitUntil("Menu item '${RunConfigurationScenarios.Constants.editConfigurationMenuItem}' is enabled",
+                                Timeouts.minutes05) {
+          shortcut(Key.ESCAPE)
+          button(configurationName).click()
+          popupMenu(RunConfigurationScenarios.Constants.editConfigurationMenuItem, Timeouts.noTimeout).isSearchedItemEnable()
+        }
+        popupMenu(RunConfigurationScenarios.Constants.editConfigurationMenuItem).clickSearchedItem()
       }
-      GuiTestUtilKt.waitUntil("Menu item '${RunConfigurationScenarios.Constants.editConfigurationMenuItem}' is enabled", Timeouts.minutes05){
-        shortcut(Key.ESCAPE)
-        button(configurationName).click()
-        popupMenu(RunConfigurationScenarios.Constants.editConfigurationMenuItem, Timeouts.noTimeout).isSearchedItemEnable()
-      }
-      popupMenu(RunConfigurationScenarios.Constants.editConfigurationMenuItem).clickSearchedItem()
     }
   }
 }
@@ -41,13 +43,15 @@ fun RunConfigurationScenarios.openRunConfiguration(configurationName: String) {
 fun RunConfigurationScenarios.checkRunConfiguration(
   expectedValues: Map<RunConfigurationModel.ConfigurationField, String>,
   vararg configuration: String) {
-  with(guiTestCase) {
-    openRunConfiguration(configuration.last())
-    runConfigModel.checkConfigurationExistsAndSelect(*configuration)
-    for ((field, expectedValue) in expectedValues) {
-      runConfigModel.checkOneValue(field, expectedValue)
+  step("check values in 'Run/Debug Configuration' dialog") {
+    with(guiTestCase) {
+      openRunConfiguration(configuration.last())
+      runConfigModel.checkConfigurationExistsAndSelect(*configuration)
+      for ((field, expectedValue) in expectedValues) {
+        runConfigModel.checkOneValue(field, expectedValue)
+      }
+      runConfigModel.closeWithCancel()
     }
-    runConfigModel.closeWithCancel()
   }
 }
 

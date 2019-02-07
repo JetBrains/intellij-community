@@ -72,7 +72,8 @@ public class ExternalizableStringSet extends OrderedSet<String>
         clear(); // remove default values
         dataFound = true;
       }
-      add(StringUtil.unescapeXml(item.getAttributeValue(VALUE)));
+      String value = item.getAttributeValue(VALUE);
+      add(value == null ? null : StringUtil.unescapeXmlEntities(value));
     }
   }
 
@@ -85,7 +86,7 @@ public class ExternalizableStringSet extends OrderedSet<String>
     for (String value : this) {
       if (value != null) {
         final Element item = new Element(ITEM);
-        item.setAttribute(VALUE, StringUtil.escapeXml(value));
+        item.setAttribute(VALUE, StringUtil.escapeXmlEntities(value));
         element.addContent(item);
       }
     }

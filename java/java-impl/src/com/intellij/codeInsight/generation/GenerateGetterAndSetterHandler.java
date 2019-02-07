@@ -16,6 +16,8 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.IncorrectOperationException;
@@ -24,7 +26,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 public class GenerateGetterAndSetterHandler extends GenerateGetterSetterHandlerBase{
   private final GenerateGetterHandler myGenerateGetterHandler = new GenerateGetterHandler();
@@ -55,6 +59,17 @@ public class GenerateGetterAndSetterHandler extends GenerateGetterSetterHandlerB
     }
 
     return array.toArray(GenerationInfo.EMPTY_ARRAY);
+  }
+
+  @Override
+  protected void notifyOnSuccess(Editor editor,
+                                 ClassMember[] members,
+                                 List<? extends GenerationInfo> generatedMembers) {
+    super.notifyOnSuccess(editor, members, generatedMembers);
+    if (Arrays.stream(members).anyMatch(fm -> fm instanceof PsiFieldMember && 
+                                              GetterSetterPrototypeProvider.isReadOnlyProperty(((PsiFieldMember)fm).getElement()))) {
+      HintManager.getInstance().showErrorHint(editor, "Setters for read-only fields were not generated", HintManager.ABOVE);
+    }
   }
 
   @Override

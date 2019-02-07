@@ -20,6 +20,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NonNls;
@@ -57,7 +58,7 @@ public class DefaultRunExecutor extends Executor {
 
   @Override
   public Icon getDisabledIcon() {
-    return AllIcons.Process.DisabledRun;
+    return IconLoader.getDisabledIcon(getIcon());
   }
 
   @Override

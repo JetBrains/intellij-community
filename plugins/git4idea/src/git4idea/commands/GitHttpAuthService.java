@@ -53,7 +53,7 @@ public abstract class GitHttpAuthService extends GitXmlRpcHandlerService<GitHttp
   public abstract GitHttpAuthenticator createAuthenticator(@NotNull Project project,
                                                            @NotNull Collection<String> urls,
                                                            @NotNull GitAuthenticationGate authenticationGate,
-                                                           boolean ignoreAuthenticationRequest);
+                                                           @NotNull GitAuthenticationMode authenticationMode);
 
   /**
    * Internal handler implementation class, it is made public to be accessible via XML RPC.

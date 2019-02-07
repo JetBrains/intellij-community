@@ -23,7 +23,23 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RevertSelectedChangesAction extends RevertCommittedStuffAbstractAction {
+public abstract class RevertSelectedChangesAction extends RevertCommittedStuffAbstractAction {
+  public static class Revert extends RevertSelectedChangesAction {
+    public Revert() {
+      super(true);
+    }
+  }
+
+  public static class Apply extends RevertSelectedChangesAction {
+    public Apply() {
+      super(false);
+    }
+  }
+
+  protected RevertSelectedChangesAction(boolean reverse) {
+    super(reverse);
+  }
+
   @Override
   protected boolean isEnabled(@NotNull AnActionEvent e) {
     return super.isEnabled(e) && allSelectedChangeListsAreRevertable(e);

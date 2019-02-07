@@ -150,5 +150,24 @@ class UElementAsPsiInspectionTest : PluginModuleTestCase() {
 
   }
 
+  fun testArrays() {
+    //language=JAVA
+    myFixture.addClass("""
+      import org.jetbrains.uast.UClass;
+      import com.intellij.psi.*;
+
+      class UastUsage {
+
+        UClass[] getClasses() { return null; }
+
+        void usage() {
+          PsiClass[] classes = <warning descr="Usage of UElement as PsiElement is not recommended">getClasses()</warning>;
+        }
+
+      }
+    """.trimIndent())
+    myFixture.testHighlighting("UastUsage.java")
+  }
+
 
 }

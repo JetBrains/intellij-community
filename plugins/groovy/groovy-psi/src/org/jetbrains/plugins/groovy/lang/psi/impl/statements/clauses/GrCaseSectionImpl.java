@@ -38,6 +38,7 @@ public class GrCaseSectionImpl extends GroovyPsiElementImpl implements GrCaseSec
     visitor.visitCaseSection(this);
   }
 
+  @Override
   public String toString() {
     return "Case section";
   }

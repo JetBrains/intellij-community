@@ -34,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 6/14/13 1:28 PM
  */
 public class AttachExternalProjectAction extends AnAction {
 

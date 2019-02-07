@@ -493,7 +493,7 @@ public class SimplifyExprentsHelper {
 
     return false;
   }
-
+  
   private static boolean isMonitorExit(Exprent first) {
     if (first.type == Exprent.EXPRENT_MONITOR) {
       MonitorExprent expr = (MonitorExprent)first;

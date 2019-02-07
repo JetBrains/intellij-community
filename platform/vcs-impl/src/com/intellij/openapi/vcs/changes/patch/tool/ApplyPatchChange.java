@@ -19,7 +19,6 @@ import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.merge.MergeModelBase;
 import com.intellij.diff.util.*;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -310,7 +309,7 @@ class ApplyPatchChange {
     final String tooltipText = DiffUtil.createTooltipText(text, null);
     return new DiffGutterRenderer(icon, tooltipText) {
       @Override
-      protected void performAction(@NotNull AnActionEvent e) {
+      protected void handleMouseClick() {
         perform.run();
       }
     };

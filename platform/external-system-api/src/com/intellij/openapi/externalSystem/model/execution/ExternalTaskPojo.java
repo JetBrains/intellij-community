@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
  * fields which are initialized at constructor and ide serialization is not capable to handle such scenario properly.
  * 
  * @author Denis Zhdanov
- * @since 5/18/13 11:28 PM
  */
 public class ExternalTaskPojo implements Comparable<ExternalTaskPojo> {
   

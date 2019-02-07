@@ -334,6 +334,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
     return this;
   }
 
+  @Override
   public String toString() {
     return myMethodKind + ":" + getName();
   }

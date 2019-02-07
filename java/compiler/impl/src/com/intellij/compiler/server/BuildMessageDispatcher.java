@@ -134,11 +134,13 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
       sessionId = sessionData.sessionId;
     }
 
+    final BuilderMessageHandler handler = sessionData != null? sessionData.handler : null;
     try {
-      final BuilderMessageHandler handler = sessionData != null? sessionData.handler : null;
       if (handler == null) {
-        // todo
-        LOG.info("No message handler registered for session " + sessionId);
+        if (!isBuilderEvent(message)) {
+          // do not pollute logs, just silently skip events in case handler is missing
+          LOG.info("No message handler registered for session " + sessionId);
+        }
         return;
       }
 
@@ -184,11 +186,16 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
       }
     }
     finally {
-      if (isFirstMessage && myCanceledSessions.contains(sessionId)) {
-        // handle the case when the session had been cancelled before communication even started
+      if ((isFirstMessage && myCanceledSessions.contains(sessionId)) || (handler == null && !isBuilderEvent(message))) {
+        // handle the case when the session had been cancelled before communication even started  
+        // or if message handling is not possible due to missing handler
         context.channel().writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCancelCommand()));
       }
     }
+  }
+
+  private static boolean isBuilderEvent(CmdlineRemoteProto.Message message) {
+    return message.hasBuilderMessage() && message.getBuilderMessage().getType() == CmdlineRemoteProto.Message.BuilderMessage.Type.BUILD_EVENT;
   }
 
   @Override

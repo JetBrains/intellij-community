@@ -25,12 +25,13 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.vcs.log.VcsLogUserFilter;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
-import com.intellij.vcs.log.impl.VcsLogUserFilterImpl;
+import com.intellij.vcs.log.visible.filters.VcsLogUserFilterImpl;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.TreeSet;
 
@@ -86,7 +87,7 @@ public class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<
   @NotNull
   @Override
   protected List<String> getAllValues() {
-    return collectUsers(myLogData);
+    return ContainerUtil.concat(Collections.singletonList(VcsLogUserFilterImpl.ME), collectUsers(myLogData));
   }
 
   @NotNull

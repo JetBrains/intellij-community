@@ -4,7 +4,6 @@
   <description>
     Copyright Notice. This plugin is used to ensure files in a project or module have a consistent copyright notice.
   </description>
-  <version>8.1</version>
   <vendor>JetBrains</vendor>
   <depends optional="true" config-file="java.xml">com.intellij.modules.java</depends>
 

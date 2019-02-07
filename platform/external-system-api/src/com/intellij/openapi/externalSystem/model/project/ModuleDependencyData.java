@@ -6,7 +6,6 @@ import java.util.Collection;
 
 /**
  * @author Denis Zhdanov
- * @since 8/10/11 6:40 PM
  */
 public class ModuleDependencyData extends AbstractDependencyData<ModuleData> {
 

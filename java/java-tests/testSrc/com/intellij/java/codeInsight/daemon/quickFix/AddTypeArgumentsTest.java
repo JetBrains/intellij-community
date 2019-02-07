@@ -26,7 +26,7 @@ public class AddTypeArgumentsTest extends LightQuickFixParameterizedTestCase {
   }
 
   @Override
-  protected LanguageLevel getLanguageLevel() {
+  protected LanguageLevel getDefaultLanguageLevel() {
     return LanguageLevel.JDK_1_5;
   }
 }

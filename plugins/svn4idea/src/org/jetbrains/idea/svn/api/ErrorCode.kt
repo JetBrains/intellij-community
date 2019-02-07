@@ -1,10 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.api
 
 import org.jetbrains.idea.svn.api.ErrorCategory.*
 
-private val ERROR_BASE = 120000
-private val ERROR_CATEGORY_SIZE = 5000
+private const val ERROR_BASE = 120000
+private const val ERROR_CATEGORY_SIZE = 5000
 
 enum class ErrorCategory(val code: Int) {
   ENTRY(6),

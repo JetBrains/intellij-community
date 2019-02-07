@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -58,7 +57,7 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
   }
 
   private static PsiLocalVariable findVariable(PsiElement element) {
-    PsiLocalVariable variable = PsiTreeUtil.getParentOfType(element, PsiLocalVariable.class);
+    PsiLocalVariable variable = PsiTreeUtil.getNonStrictParentOfType(element, PsiLocalVariable.class);
 
     if (variable != null &&
         variable.getParent() instanceof PsiDeclarationStatement &&
@@ -85,7 +84,7 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
   }
 
   private static PsiExpression findExpression(PsiElement element) {
-    PsiExpression expression = PsiTreeUtil.getParentOfType(element, PsiExpression.class);
+    PsiExpression expression = PsiTreeUtil.getNonStrictParentOfType(element, PsiExpression.class);
 
     if (expression != null &&
         expression.getParent() instanceof PsiExpressionStatement &&
@@ -221,7 +220,7 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
 
   private static void processExpression(Project project, Editor editor, PsiExpression expression) {
     PsiType type = ObjectUtils.assertNotNull(expression.getType());
-    PsiElement statement = expression.getParent();
+    PsiStatement statement = (PsiStatement)expression.getParent();
 
     CommentTracker commentTracker = new CommentTracker();
     String text = "try (" + type.getCanonicalText(true) + " r = " + commentTracker.text(expression) + ") {}";
@@ -291,11 +290,13 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
     @NotNull
     @Override
     public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
-      PsiExpression expr = CodeInsightUtil.findExpressionInRange(file, startOffset, endOffset);
-      if (expr == null) {
-        expr = findExpression(file.findElementAt(endOffset));
+      if (!PsiUtil.isLanguageLevel7OrHigher(file)) return PsiElement.EMPTY_ARRAY;
+      PsiElement element = file.findElementAt(endOffset);
+      PsiElement target = findExpression(element);
+      if (target == null) {
+        target = findVariable(element);
       }
-      return expr != null && rightType(expr.getType()) ? new PsiElement[]{expr} : PsiElement.EMPTY_ARRAY;
+      return target != null ? new PsiElement[]{target} : PsiElement.EMPTY_ARRAY;
     }
 
     @NotNull
@@ -316,14 +317,14 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
 
     @Override
     public boolean isApplicable(@NotNull PsiElement[] elements) {
-      return true;
+      return elements.length == 1 && (findExpression(elements[0]) != null || findVariable(elements[0]) != null);
     }
 
     @Nullable
     @Override
     public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement[] elements) {
-      if (elements.length == 1 && elements[0] instanceof PsiExpression) {
-        processExpression(project, editor, (PsiExpression)elements[0]);
+      if (elements.length == 1) {
+        new SurroundAutoCloseableAction().invoke(project, editor, elements[0]);
       }
 
       return null;

@@ -66,10 +66,4 @@ public interface JsonSchemaService {
   List<JsonSchemaInfo> getAllUserVisibleSchemas();
 
   boolean isApplicableToFile(@Nullable VirtualFile file);
-
-  @NotNull
-  static String normalizeId(@NotNull String id) {
-    id = id.endsWith("#") ? id.substring(0, id.length() - 1) : id;
-    return id.startsWith("#") ? id.substring(1) : id;
-  }
 }

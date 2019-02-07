@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.customize
 
@@ -43,12 +43,12 @@ class WelcomeWizardHelper : BaseComponent {
       UISettings.instance.editorTabPlacement = it
     }
     WelcomeWizardUtil.getAppearanceFontSize()?.let {
-      val settings = UISettings.instance.state
+      val settings = UISettings.instance
       settings.overrideLafFonts = true
-      UISettings.instance.state.fontSize = it
+      UISettings.instance.fontSize = it
     }
     WelcomeWizardUtil.getAppearanceFontFace()?.let {
-      val settings = UISettings.instance.state
+      val settings = UISettings.instance
       settings.overrideLafFonts = true
       settings.fontFace = it
     }

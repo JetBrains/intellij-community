@@ -34,7 +34,6 @@ import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author Vladislav.Soroka
@@ -116,7 +115,7 @@ public class DaemonsUi implements Disposable {
   private void updateDaemonsList(List<DaemonState> daemonStateList) {
     myDaemonStateList = daemonStateList;
     if (!myShowStopped) {
-      daemonStateList = daemonStateList.stream().filter(state -> state.getToken() != null).collect(Collectors.toList());
+      daemonStateList = ContainerUtil.filter(daemonStateList, state -> state.getToken() != null);
     }
     else {
       daemonStateList = myDaemonStateList;

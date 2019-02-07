@@ -28,7 +28,7 @@ import java.util.List;
 public abstract class ExpressionTypeProvider<T extends PsiElement> {
   /**
    * Returns HTML string for type info hint.
-   * @see com.intellij.openapi.util.text.StringUtil#escapeXml(String)
+   * @see com.intellij.openapi.util.text.StringUtil#escapeXmlEntities(String)
    */
   @NotNull
   public abstract String getInformationHint(@NotNull T element);

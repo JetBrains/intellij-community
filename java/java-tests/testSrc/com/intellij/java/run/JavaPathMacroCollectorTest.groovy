@@ -6,7 +6,9 @@ package com.intellij.java.run
 import com.intellij.application.options.PathMacrosCollector
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.JdomKt
+import groovy.transform.CompileStatic
 
+@CompileStatic
 class JavaPathMacroCollectorTest extends LightCodeInsightFixtureTestCase {
   void testJunitConfiguration() {
     String text = '''

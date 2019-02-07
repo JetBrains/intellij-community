@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 3/21/2015
  */
 public class ShowIgnoredAction extends ExternalSystemViewGearAction {
   @Override

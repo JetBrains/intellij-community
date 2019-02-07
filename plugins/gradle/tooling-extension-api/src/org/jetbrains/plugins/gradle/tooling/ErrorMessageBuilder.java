@@ -25,7 +25,6 @@ import java.io.StringWriter;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/13/2014
  */
 public class ErrorMessageBuilder {
   public static final String GROUP_TAG = "<ij_msg_gr>";

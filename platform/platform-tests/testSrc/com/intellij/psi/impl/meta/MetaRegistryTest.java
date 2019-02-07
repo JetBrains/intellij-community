@@ -43,7 +43,7 @@ public class MetaRegistryTest extends LightPlatformTestCase {
       public boolean isClassAcceptable(Class hintClass) {
         return true;
       }
-    }, MyTrueMetaData.class, getTestRootDisposable());
+    }, MyTrueMetaData::new, getTestRootDisposable());
     MetaRegistry.addMetadataBinding(new ElementFilter() {
       @Override
       public boolean isAcceptable(Object element, PsiElement context) {
@@ -54,7 +54,7 @@ public class MetaRegistryTest extends LightPlatformTestCase {
       public boolean isClassAcceptable(Class hintClass) {
         return true;
       }
-    }, MyFalseMetaData.class, getTestRootDisposable());
+    }, MyFalseMetaData::new, getTestRootDisposable());
 
     final XmlTag tag = ((XmlFile)LightPlatformTestCase.createFile("a.xml", "<a/>")).getDocument().getRootTag();
     UsefulTestCase.assertInstanceOf(tag.getMetaData(), MyFalseMetaData.class);

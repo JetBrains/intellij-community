@@ -39,7 +39,6 @@ import com.intellij.util.TreeItem;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
 import java.util.*;
@@ -66,7 +65,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
       result.addAll(each.getGeneralProjectScopes());
     }
 
-    if (ModuleUtil.isSupportedRootType(project, JavaSourceRootType.TEST_SOURCE)) {
+    if (ModuleUtil.hasTestSourceRoots(project)) {
       result.add(GlobalSearchScopesCore.projectProductionScope(project));
       result.add(GlobalSearchScopesCore.projectTestScope(project));
     }

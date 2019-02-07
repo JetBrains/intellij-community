@@ -4,7 +4,7 @@ package com.intellij.testGuiFramework.util.scenarios
 import com.intellij.testGuiFramework.fixtures.PluginDialogFixture
 import com.intellij.testGuiFramework.fixtures.WelcomeFrameFixture
 import com.intellij.testGuiFramework.impl.GuiTestCase
-import com.intellij.testGuiFramework.util.logTestStep
+import com.intellij.testGuiFramework.util.step
 import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
 
@@ -32,8 +32,9 @@ fun WelcomePageDialogModel.createNewProject() {
 
 fun WelcomePageDialogModel.openPluginsDialog(): PluginDialogFixture {
   with(testCase) {
-    logTestStep("Open `Plugins` dialog")
-    WelcomeFrameFixture.findSimple().openPluginsDialog()
-    return pluginDialog()
+    return step("open `Plugins` dialog") {
+      WelcomeFrameFixture.findSimple().openPluginsDialog()
+      return@step pluginDialog()
+    }
   }
 }

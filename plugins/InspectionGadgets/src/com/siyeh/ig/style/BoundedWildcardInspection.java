@@ -73,10 +73,15 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
         if (owner instanceof PsiClass && !REPORT_INVARIANT_CLASSES && VarianceUtil.getClassVariance((PsiClass)owner, candidate.typeParameter) == Variance.INVARIANT) {
           return; // Nikolay despises List<? extends T>
         }
-        if (!REPORT_PRIVATE_METHODS && candidate.method.hasModifierProperty(PsiModifier.PRIVATE)) {
+        PsiClass containingClass = candidate.method.getContainingClass();
+        if (!REPORT_PRIVATE_METHODS && (candidate.method.hasModifierProperty(PsiModifier.PRIVATE)
+                                        // methods of private class considered private for the purpose of this inspection
+                                        || containingClass != null && containingClass.hasModifierProperty(PsiModifier.PRIVATE))) {
           return; // somebody hates his precious private methods highlighted
         }
-        if (!REPORT_INSTANCE_METHODS && !candidate.method.hasModifierProperty(PsiModifier.STATIC)) {
+        if (!REPORT_INSTANCE_METHODS &&
+            !candidate.method.hasModifierProperty(PsiModifier.STATIC) &&
+            !candidate.method.isConstructor()) {
           return; // somebody don't want to report instance methods highlighted because they can be already overridden
         }
         Project project = holder.getProject();

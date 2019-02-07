@@ -62,9 +62,7 @@ internal class RunDashboardTypesPanel(private val myProject: Project) : JPanel(B
       toolbarDecorator.setAsUsualTopToolbar()
     }
     toolbarDecorator.setAddAction { showAddPopup(it, true) }
-    toolbarDecorator.setRemoveAction { _ ->
-      list.selectedValuesList.forEach { listModel.remove(it) }
-    }
+    toolbarDecorator.setRemoveAction { list.selectedValuesList.forEach { listModel.remove(it) } }
     toolbarDecorator.setMoveUpAction(null)
     toolbarDecorator.setMoveDownAction(null)
 

@@ -217,6 +217,13 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     }
   }
 
+  protected void fireOnBeforeTestingFinished(@NotNull SMTestProxy.SMRootTestProxy root) {
+    myEventPublisher.onBeforeTestingFinished(root);
+     for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+      adapter.onBeforeTestingFinished(root);
+    }
+  }
+
   // custom progress statistics
 
   /**

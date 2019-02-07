@@ -115,9 +115,7 @@ public class PyIncorrectDocstringInspection extends PyBaseDocstringInspection {
     }
 
     for (PyParameter p : realParams) {
-      if (unexpected.containsKey(p.getName())) {
-        unexpected.remove(p.getName());
-      }
+      unexpected.remove(p.getName());
     }
     return Lists.newArrayList(unexpected.values());
   }

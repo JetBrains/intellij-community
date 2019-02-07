@@ -58,7 +58,7 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
     return null;
   }
 
-  protected static class FileUsageGroup implements UsageGroup, TypeSafeDataProvider, NamedPresentably {
+  public static class FileUsageGroup implements UsageGroup, TypeSafeDataProvider, NamedPresentably {
     private final Project myProject;
     private final VirtualFile myFile;
     private String myPresentableName;

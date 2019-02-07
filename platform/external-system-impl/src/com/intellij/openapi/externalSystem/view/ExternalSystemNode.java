@@ -42,7 +42,6 @@ import java.util.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/15/2014
  */
 public abstract class ExternalSystemNode<T> extends SimpleNode implements Comparable<ExternalSystemNode> {
 
@@ -119,7 +118,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
 
   @Override
   public String getName() {
-    String displayName = ((ExternalProjectsViewImpl)getExternalProjectsView()).getDisplayName(myDataNode);
+    String displayName = getExternalProjectsView().getDisplayName(myDataNode);
     return displayName == null ? super.getName() : displayName;
   }
 

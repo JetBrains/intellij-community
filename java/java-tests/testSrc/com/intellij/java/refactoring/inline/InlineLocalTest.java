@@ -25,11 +25,17 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.inline.InlineLocalHandler;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author ven
@@ -41,11 +47,11 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testInference () {
+  public void testInference() {
     doTest(false);
   }
 
-  public void testQualifier () {
+  public void testQualifier() {
     doTest(false);
   }
 
@@ -53,15 +59,15 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     doTest(true);
   }
 
-  public void testIDEADEV950 () {
+  public void testIDEADEV950() {
     doTest(false);
   }
 
-  public void testNoRedundantCasts () {
+  public void testNoRedundantCasts() {
     doTest(false);
   }
 
-  public void testIdeaDEV9404 () {
+  public void testIdeaDEV9404() {
     doTest(false);
   }
 
@@ -70,15 +76,15 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     return IdeaTestUtil.getMockJdk17(); // there is JPanel inside
   }
 
-  public void testIDEADEV12244 () {
+  public void testIDEADEV12244() {
     doTest(false);
   }
 
-  public void testIDEADEV10376 () {
+  public void testIDEADEV10376() {
     doTest(true);
   }
 
-  public void testIDEADEV13151 () {
+  public void testIDEADEV13151() {
     doTest(true);
   }
 
@@ -107,7 +113,7 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     try {
       doTest(false);
     }
-    catch(RuntimeException ex) {
+    catch (RuntimeException ex) {
       exception = ex.getMessage();
     }
     String error = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing", "text"));
@@ -179,19 +185,19 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
   public void testInlineFromTryCatch() {
     doTest(true, "Unable to inline outside try/catch statement");
   }
-  
+
   public void testInlineFromTryCatchAvailable() {
     doTest(true);
   }
-  
+
   public void testConditionExpr() {
     doTest(true);
   }
-  
+
   public void testLambdaExpr() {
     doTest(true, LanguageLevel.JDK_1_8);
   }
-  
+
   public void testLambdaExprAsRefQualifier() {
     doTest(true, LanguageLevel.JDK_1_8);
   }
@@ -207,7 +213,7 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
   public void testLocalVarInsideLambdaBody1() {
     doTest(true, LanguageLevel.JDK_1_8);
   }
-  
+
   public void testLocalVarInsideLambdaBody2() { doTest(true, LanguageLevel.JDK_1_8); }
   public void testLocalVarUsedInLambdaBody() { doTest(true, LanguageLevel.JDK_1_8); }
   public void testCastAroundLambda() { doTest(true, LanguageLevel.JDK_1_8); }
@@ -299,6 +305,32 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
   public void testDefInMultiAssignmentStatement() { doTest(true); }
   public void testPrivateOverload() { doTest(true); }
 
+  public void testAssignedVarsUpdatedBeforeRead() {
+    doTestConflict("Variable `p2` is changed before last access to variable `f`.",
+                   "Variable `p1` is changed before last access to variable `f`.",
+                   "Variable `p2` is changed before last access to variable `f`.");
+  }
+
+  public void testAssignedVarUpdatedAfterRead() {
+    doTest(false);
+  }
+
+  public void testAssignmentAndReassignmentInLoop() {
+    doTestConflict("Variable `replacement` is changed before last access to variable `original`.");
+  }
+
+  public void testLoopReassignment() {
+    doTestConflict("Variable `replacement` is changed before last access to variable `original`.");
+  }
+
+  public void testOuterLoopReassignment() {
+    doTestConflict("Variable `replacement` is changed before last access to variable `original`.");
+  }
+
+  public void testUnusedReassignmentInLoop() {
+    doTest(false);
+  }
+
   private void doTest(final boolean inlineDef, String conflictMessage) {
     try {
       doTest(inlineDef);
@@ -319,10 +351,7 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
   }
 
   private void doTest(final boolean inlineDef, LanguageLevel languageLevel) {
-    setLanguageLevel(languageLevel);
-    String name = getTestName(false);
-    String fileName = "/refactoring/inlineLocal/" + name + ".java";
-    configureByFile(fileName);
+    String fileName = prepareTest(languageLevel);
     if (!inlineDef) {
       performInline(getProject(), myEditor);
     }
@@ -332,12 +361,38 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     checkResultByFile(fileName + ".after");
   }
 
-  public static void performInline(Project project, Editor editor) {
+  private void doTestConflict(@NotNull final String conflict, @NotNull final String... rest) {
+    List<String> expected = new ArrayList<>(Arrays.asList(rest));
+    expected.add(conflict);
+
+    try {
+      doTest(false);
+      fail("Conflict weren't found");
+    } catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      Collection<String> actual = e.getMessages();
+      assertSameElements(expected, actual);
+    }
+  }
+
+  private String prepareTest(LanguageLevel languageLevel) {
+    setLanguageLevel(languageLevel);
+    String name = getTestName(false);
+    String fileName = "/refactoring/inlineLocal/" + name + ".java";
+    configureByFile(fileName);
+    return fileName;
+  }
+
+  private static PsiLocalVariable getTarget(Editor editor) {
     PsiElement element = TargetElementUtil
       .findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     assertTrue(element instanceof PsiLocalVariable);
 
-    InlineLocalHandler.invoke(project, editor, (PsiLocalVariable)element, null);
+    return (PsiLocalVariable)element;
+  }
+
+  public static void performInline(Project project, Editor editor) {
+    PsiLocalVariable element = getTarget(editor);
+    InlineLocalHandler.invoke(project, editor, element, null);
   }
 
   public static void performDefInline(Project project, Editor editor) {

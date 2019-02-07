@@ -86,6 +86,9 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
       Clock.reset();
       Paths.useSystemCaseSensitivity();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

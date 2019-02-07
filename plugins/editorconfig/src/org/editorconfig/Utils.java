@@ -10,6 +10,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
@@ -26,6 +27,7 @@ import org.editorconfig.core.EditorConfig.OutPair;
 import org.editorconfig.plugincomponents.EditorConfigNotifier;
 import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -34,6 +36,10 @@ import java.util.Locale;
 import java.util.Map;
 
 public class Utils {
+
+  public static final String FULL_SETTINGS_SUPPORT_REG_KEY = "editor.config.full.settings.support";
+  private static boolean ourIsFullSettingsSupportEnabledInTest;
+
   public static String configValueForKey(List<? extends OutPair> outPairs, String key) {
     for (OutPair outPair : outPairs) {
       if (outPair.getKey().equals(key)) {
@@ -46,6 +52,19 @@ public class Utils {
 
   public static boolean isEnabled(CodeStyleSettings currentSettings) {
     return currentSettings != null && currentSettings.getCustomSettings(EditorConfigSettings.class).ENABLED;
+  }
+
+  public static boolean isFullIntellijSettingsSupport() {
+    return
+      ourIsFullSettingsSupportEnabledInTest ||
+      Registry.is(FULL_SETTINGS_SUPPORT_REG_KEY) && !EditorConfigRegistry.shouldSupportCSharp();
+  }
+
+  @TestOnly
+  public static void setFullIntellijSettingsSupportEnabledInTest(boolean enabled) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      ourIsFullSettingsSupportEnabledInTest = enabled;
+    }
   }
 
   public static void invalidConfigMessage(Project project, String configValue, String configKey, String filePath) {

@@ -24,6 +24,7 @@ public class GrBuiltInTypeElementImpl extends GroovyPsiElementImpl implements Gr
     visitor.visitBuiltinTypeElement(this);
   }
 
+  @Override
   public String toString() {
     return "Built in type";
   }

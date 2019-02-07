@@ -29,7 +29,6 @@ import java.io.Serializable;
 
 /**
  * @author Vladislav.Soroka
- * @since 9/22/2014
  */
 public class InternalExternalProjectInfo implements ExternalProjectInfo, Serializable {
 

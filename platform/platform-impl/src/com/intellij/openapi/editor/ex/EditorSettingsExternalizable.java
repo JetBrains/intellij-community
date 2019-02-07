@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.editor.ex;
 
@@ -25,7 +25,7 @@ import java.util.Set;
 @State(name = "EditorSettings", storages = @Storage("editor.xml"))
 public class EditorSettingsExternalizable implements PersistentStateComponent<EditorSettingsExternalizable.OptionSet> {
   @NonNls
-  public static String PROP_VIRTUAL_SPACE = "VirtualSpace";
+  public static final String PROP_VIRTUAL_SPACE = "VirtualSpace";
 
   public static final UINumericRange BLINKING_RANGE = new UINumericRange(500, 10, 1500);
   public static final UINumericRange QUICK_DOC_DELAY_RANGE = new UINumericRange(500, 1, 5000);
@@ -74,12 +74,12 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean RENAME_VARIABLES_INPLACE = true;
     public boolean PRESELECT_RENAME = true;
     public boolean SHOW_INLINE_DIALOG = true;
-    
+
     public boolean REFRAIN_FROM_SCROLLING = false;
 
     public boolean SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION = true;
     public boolean SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION = true;
-    
+
     public boolean ADD_CARETS_ON_DOUBLE_CTRL = true;
 
     public BidiTextDirection BIDI_TEXT_DIRECTION = BidiTextDirection.CONTENT_BASED;
@@ -566,7 +566,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   public void setPreselectRename(final boolean val) {
     myOptions.PRESELECT_RENAME = val;
   }
-  
+
   public boolean isShowInlineLocalDialog() {
     return myOptions.SHOW_INLINE_DIALOG;
   }
@@ -574,11 +574,11 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   public void setShowInlineLocalDialog(final boolean val) {
     myOptions.SHOW_INLINE_DIALOG = val;
   }
-  
+
   public boolean addCaretsOnDoubleCtrl() {
     return myOptions.ADD_CARETS_ON_DOUBLE_CTRL;
   }
-  
+
   public void setAddCaretsOnDoubleCtrl(boolean val) {
     myOptions.ADD_CARETS_ON_DOUBLE_CTRL = val;
   }
@@ -602,7 +602,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   public boolean isKeepTrailingSpacesOnCaretLine() {
     return myOptions.KEEP_TRAILING_SPACE_ON_CARET_LINE;
   }
-  
+
   public void setKeepTrailingSpacesOnCaretLine(boolean keep) {
     myOptions.KEEP_TRAILING_SPACE_ON_CARET_LINE = keep;
   }

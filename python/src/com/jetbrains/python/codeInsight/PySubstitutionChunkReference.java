@@ -209,13 +209,13 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
         if (!LanguageLevel.forElement(element).isAtLeast(LanguageLevel.PYTHON35)) continue;
         final PyExpression underStarExpr = PyPsiUtils.flattenParens(((PyStarExpression)element).getExpression());
         if (PsiTreeUtil.instanceOf(underStarExpr, PyListLiteralExpression.class, PyTupleExpression.class)) {
-          PyExpression[] subsequenсeElements = getElementsFromListOrTuple(underStarExpr);
+          PyExpression[] subSequenceElements = getElementsFromListOrTuple(underStarExpr);
           int subsequenceElementIndex = index - seenElementsNumber;
-          if (subsequenceElementIndex < subsequenсeElements.length) {
-            return Ref.create(subsequenсeElements[subsequenceElementIndex]);
+          if (subsequenceElementIndex < subSequenceElements.length) {
+            return Ref.create(subSequenceElements[subsequenceElementIndex]);
           }
-          if (noElementsForSure) noElementsForSure = Arrays.stream(subsequenсeElements).noneMatch(it -> it instanceof PyStarExpression);
-          seenElementsNumber += subsequenсeElements.length;
+          if (noElementsForSure) noElementsForSure = Arrays.stream(subSequenceElements).noneMatch(it -> it instanceof PyStarExpression);
+          seenElementsNumber += subSequenceElements.length;
         }
         else {
           noElementsForSure = false;

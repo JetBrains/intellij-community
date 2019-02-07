@@ -51,13 +51,7 @@ public enum AntialiasingType {
   }
 
   public Object getTextInfo() {
-    try {
-      return isEnabled || SystemInfo.isJetBrainsJvm ? GraphicsUtil.createAATextInfo(myHint) : null;
-    }
-    // [tav] todo: to support JBSDK prior to 8u152 b1248.5, remove in 2018.3, see JRE-772
-    catch (InternalError ignored) {
-      return null;
-    }
+    return isEnabled || SystemInfo.isJetBrainsJvm ? GraphicsUtil.createAATextInfo(myHint) : null;
   }
 
   @Override

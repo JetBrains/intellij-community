@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.util;
 
+/**
+ * Please use {@link java.util.function.Consumer} instead
+ */
 public abstract class Pass<T> {
 
   public abstract void pass(T t);

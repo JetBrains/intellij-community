@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
@@ -30,7 +30,9 @@ import java.util.concurrent.Future;
 public interface Application extends ComponentManager {
   /**
    * Runs the specified read action. Can be called from any thread. The action is executed immediately
-   * if no write action is currently running, or blocked until the currently running write action completes.
+   * if no write action is currently running, or blocked until the currently running write action completes.<p></p>
+   *
+   * See also {@link ReadAction#run} for a more lambda-friendly version.
    *
    * @param action the action to run.
    */
@@ -39,7 +41,9 @@ public interface Application extends ComponentManager {
   /**
    * Runs the specified computation in a read action. Can be called from any thread. The action is executed
    * immediately if no write action is currently running, or blocked until the currently running write action
-   * completes.
+   * completes.<p></p>
+   *
+   * See also {@link ReadAction#compute} for a more lambda-friendly version.
    *
    * @param computation the computation to perform.
    * @return the result returned by the computation.
@@ -49,7 +53,9 @@ public interface Application extends ComponentManager {
   /**
    * Runs the specified computation in a read action. Can be called from any thread. The action is executed
    * immediately if no write action is currently running, or blocked until the currently running write action
-   * completes.
+   * completes.<p></p>
+   *
+   * See also {@link ReadAction#compute} for a more lambda-friendly version.
    *
    * @param computation the computation to perform.
    * @return the result returned by the computation.
@@ -59,7 +65,9 @@ public interface Application extends ComponentManager {
 
   /**
    * Runs the specified write action. Must be called from the Swing dispatch thread. The action is executed
-   * immediately if no read actions are currently running, or blocked until all read actions complete.
+   * immediately if no read actions are currently running, or blocked until all read actions complete.<p></p>
+   *
+   * See also {@link WriteAction#run} for a more lambda-friendly version.
    *
    * @param action the action to run
    */
@@ -68,7 +76,9 @@ public interface Application extends ComponentManager {
   /**
    * Runs the specified computation in a write action. Must be called from the Swing dispatch thread.
    * The action is executed immediately if no read actions or write actions are currently running,
-   * or blocked until all read actions and write actions complete.
+   * or blocked until all read actions and write actions complete.<p></p>
+   *
+   * See also {@link WriteAction#compute} for a more lambda-friendly version.
    *
    * @param computation the computation to run
    * @return the result returned by the computation.
@@ -78,7 +88,9 @@ public interface Application extends ComponentManager {
   /**
    * Runs the specified computation in a write action. Must be called from the Swing dispatch thread.
    * The action is executed immediately if no read actions or write actions are currently running,
-   * or blocked until all read actions and write actions complete.
+   * or blocked until all read actions and write actions complete.<p></p>
+   *
+   * See also {@link WriteAction#compute} for a more lambda-friendly version.
    *
    * @param computation the computation to run
    * @return the result returned by the computation.
@@ -140,15 +152,6 @@ public interface Application extends ComponentManager {
    * Saves application settings.
    */
   void saveSettings();
-
-  /**
-   * Saves application settings.
-   * If `isForce` is `false`, non-roamable component configuration will be saved only if more than 4 minutes have been passed after the last save.
-   * @param isForce Whether to force save non-roamable component configuration.
-   */
-  default void saveSettings(boolean isForce) {
-    saveSettings();
-  }
 
   /**
    * Exits the application, showing the exit confirmation prompt if it is enabled.
@@ -267,49 +270,36 @@ public interface Application extends ComponentManager {
   void invokeAndWait(@NotNull Runnable runnable) throws ProcessCanceledException;
 
   /**
-   * Returns current modality state corresponding to the currently opened modal dialogs. Can only be invoked on AWT thread.
-   *
+   * Please use {@link ModalityState#current()} instead.
    * @return the current modality state.
-   * @see ModalityState#current()
    */
   @NotNull
   ModalityState getCurrentModalityState();
 
   /**
-   * Returns the modality state for the dialog to which the specified component belongs.
-   *
-   * @param c the component for which the modality state is requested.
-   * @return the modality state.
-   * @see ModalityState#stateForComponent(Component)
+   * Please use {@link ModalityState#stateForComponent(Component)} instead.
+   * @return the modality state for the dialog to which the specified component belongs.
    */
   @NotNull
   ModalityState getModalityStateForComponent(@NotNull Component c);
 
   /**
-   * When invoked on AWT thread, returns {@link #getCurrentModalityState()} ()}. When invoked in the thread of some modal progress, returns modality state
-   * corresponding to that progress' dialog. Otherwise, returns {@link #getNoneModalityState()}.
-   *
+   * Please use {@link ModalityState#defaultModalityState()} instead.
    * @return the modality state for the current thread.
-   * @see ModalityState#defaultModalityState()
    */
   @NotNull
   ModalityState getDefaultModalityState();
 
   /**
-   * Returns the modality state representing the state when no modal dialogs
-   * are active.
-   *
+   * Please use {@link ModalityState#NON_MODAL} instead of this method.
    * @return the modality state for no modal dialogs.
-   * @see ModalityState#NON_MODAL
    */
   @NotNull
   ModalityState getNoneModalityState();
 
   /**
-   * Returns modality state which is active anytime. Please don't use it unless absolutely needed for the reasons described in
-   * {@link ModalityState} documentation.
-   * @return modality state
-   * @see ModalityState#any()
+   * Please use {@link ModalityState#any()} instead of this method, and only if you absolutely must, after carefully reading its documentation.
+   * @return modality state which is always applicable
    */
   @NotNull
   ModalityState getAnyModalityState();

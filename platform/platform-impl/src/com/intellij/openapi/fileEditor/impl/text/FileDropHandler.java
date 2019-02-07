@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.ide.dnd.FileCopyPasteUtil;
@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -65,7 +66,7 @@ public class FileDropHandler implements EditorDropHandler {
       final VirtualFile vFile = fileSystem.refreshAndFindFileByIoFile(file);
       final FileEditorManagerEx fileEditorManager = (FileEditorManagerEx) FileEditorManager.getInstance(project);
       if (vFile != null) {
-        NonProjectFileWritingAccessProvider.allowWriting(vFile);
+        NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(vFile));
 
         if (editorWindow != null) {
           fileEditorManager.openFileWithProviders(vFile, true, editorWindow);

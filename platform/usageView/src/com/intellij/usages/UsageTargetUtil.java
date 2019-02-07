@@ -56,6 +56,6 @@ public class UsageTargetUtil {
 
   @NotNull
   private static List<UsageTargetProvider> getProviders(@NotNull Project project) {
-    return DumbService.getInstance(project).filterByDumbAwareness(EP_NAME.getExtensionList());
+    return DumbService.getDumbAwareExtensions(project, EP_NAME);
   }
 }

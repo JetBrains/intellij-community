@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.DocumentReference;
@@ -98,7 +99,9 @@ public class TemplateState implements Disposable {
     myEditorDocumentListener = new DocumentListener() {
       @Override
       public void beforeDocumentChange(@NotNull DocumentEvent e) {
-        myDocumentChanged = true;
+        if (CommandProcessor.getInstance().getCurrentCommand() != null) {
+          myDocumentChanged = true;
+        }
       }
     };
     myLookupListener = new LookupListener() {
@@ -328,9 +331,9 @@ public class TemplateState implements Disposable {
     }
   }
 
-  public void start(@NotNull TemplateImpl template,
-                    @Nullable final PairProcessor<? super String, ? super String> processor,
-                    @Nullable Map<String, String> predefinedVarValues) {
+  void start(@NotNull TemplateImpl template,
+             @Nullable PairProcessor<? super String, ? super String> processor,
+             @Nullable Map<String, String> predefinedVarValues) {
     LOG.assertTrue(!myStarted, "Already started");
     myStarted = true;
 
@@ -379,6 +382,8 @@ public class TemplateState implements Disposable {
     }
     myTemplateRange.setGreedyToLeft(true);
     myTemplateRange.setGreedyToRight(true);
+
+    LiveTemplateRunLogger.log(template, file.getLanguage());
 
     processAllExpressions(myTemplate);
   }
@@ -1075,7 +1080,7 @@ public class TemplateState implements Disposable {
     }
   }
 
-  public boolean isDisposed() {
+  boolean isDisposed() {
     return myDocument == null;
   }
 
@@ -1237,8 +1242,7 @@ public class TemplateState implements Disposable {
     final PsiFile file = getPsiFile();
     if (file != null) {
       CodeStyleManager style = CodeStyleManager.getInstance(myProject);
-      DumbService dumbService = DumbService.getInstance(myProject);
-      for (TemplateOptionalProcessor processor : dumbService.filterByDumbAwareness(TemplateOptionalProcessor.EP_NAME.getExtensionList())) {
+      for (TemplateOptionalProcessor processor : DumbService.getDumbAwareExtensions(myProject, TemplateOptionalProcessor.EP_NAME)) {
         try {
           processor.processText(myProject, myTemplate, myDocument, myTemplateRange, myEditor);
         }

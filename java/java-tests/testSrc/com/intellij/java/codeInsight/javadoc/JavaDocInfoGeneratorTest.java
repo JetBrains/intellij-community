@@ -20,18 +20,17 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Flow;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
@@ -41,144 +40,77 @@ import java.util.List;
 public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   private static final String TEST_DATA_FOLDER = "/codeInsight/javadocIG/";
 
-  private boolean myUseJava8Sdk;
-  
-  public void testSimpleField() throws Exception {
-    doTestField();
+  private int myJdkVersion = 7;
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testFieldValue() throws Exception {
-    doTestField();
+  @Override
+  protected Sdk getTestProjectJdk() {
+    return IdeaTestUtil.getMockJdk(JavaVersion.compose(myJdkVersion));
   }
 
-  public void testValueInMethod() throws Exception {
-    doTestMethod();
-  }
+  public void testSimpleField() { doTestField(); }
+  public void testFieldValue() { doTestField(); }
+  public void testValueInMethod() { doTestMethod(); }
+  public void testValueInMethodNoHash() { doTestMethod(); }
+  public void testEscapingStringValue() { doTestMethod(); }
+  public void testIdeadev2326() { doTestMethod(); }
+  public void testMethodTypeParameter() { doTestMethod(); }
+  public void testInheritedDocInThrows() { doTestMethod(); }
+  public void testInheritedDocInThrows1() { doTestMethod(); }
+  public void testEscapeValues() { doTestClass(); }
+  public void testClassTypeParameter() { doTestClass(); }
+  public void testUnicodeEscapes() { doTestClass(); }
+  public void testEnumValueOf() { doTestMethod(); }
+  public void testMethodFormatting() { doTestMethod(); }
+  public void testConstantFieldInitializer() { doTestField(); }
+  public void testInitializerWithNew() { doTestField(); }
+  public void testInitializerWithLiteral() { doTestField(); }
+  public void testMethodExpressionWithLiteral() { doTestField(); }
+  public void testInitializerWithReference() { doTestField(); }
+  public void testAnnotations() { doTestField(); }
+  public void testAnnotationsInParams() { doTestMethod(); }
+  public void testApiNotes() { doTestMethod(); }
+  public void testLiteral() { doTestField(); }
+  public void testEscapingInLiteral() { doTestField(); }
+  public void testCode() { useJava8(); doTestField(); }
+  public void testPInsidePre() { doTestField(); }
+  public void testCommaInsideArgsList() { doTestField(); }
+  public void testFieldInitializedWithLambda() { doTestField(); }
+  public void testFieldInitializedWithArray() { doTestField(); }
+  public void testFieldInitializedWithSizedArray() { doTestField(); }
+  public void testDoubleLt() { doTestClass(); }
+  public void testNoSpaceAfterTagName() { doTestClass(); }
+  public void testLambdaParameter() { doTestLambdaParameter(); }
+  public void testLocalClassInsideAnonymous() { doTestAtCaret(); }
+  public void testPackageInfoFromComment() { doTestPackageInfo("some"); }
+  public void testPackageInfoWithCopyright() { doTestPackageInfo("packageInfoWithCopyright"); }
+  public void testHtmlLinkWithRef() { verifyJavaDoc(getTestClass()); }
+  public void testMultipleSpacesInLiteral() { useJava8(); verifyJavaDoc(getTestClass()); }
+  public void testLegacySpacesInLiteral() { useJava7(); verifyJavaDoc(getTestClass()); }
+  public void testDocumentationForJdkClassWithReferencesToClassesFromJavaLang() { doTestAtCaret(); }
+  public void testDocumentationForUncheckedExceptionsInSupers() { doTestAtCaret(); }
+  public void testDocumentationForGetterByField() { doTestAtCaret(); }
+  public void testParamInJavadoc() { doTestAtCaret(); }
+  public void testLiteralInsideCode() { useJava8(); doTestClass(); }
+  public void testSuperJavadocExactResolve() { doTestAtCaret(); }
+  public void testSuperJavadocErasureResolve() { doTestAtCaret(); }
+  public void testPackageInfo() { doTestPackageInfo(); }
+  public void testPackageHtml() { doTestPackageInfo(); }
+  public void testSyntheticEnumValues() { doTestAtCaret(); }
+  public void testVariableDoc() { doTestAtCaret(); }
 
-  public void testValueInMethodNoHash() throws Exception {
-    doTestMethod();
-  }
-
-  public void testEscapingStringValue() throws Exception {
-    doTestMethod();
-  }
-
-  public void testIdeadev2326() throws Exception {
-    doTestMethod();
-  }
-
-  public void testMethodTypeParameter() throws Exception {
-    doTestMethod();
-  }
-
-  public void testAnonymousAndSuperJavadoc() throws Exception {
-    PsiClass psiClass = getTestClass();
+  public void testAnonymousAndSuperJavadoc() {
+    PsiClass psiClass = PsiTreeUtil.findChildOfType(getTestClass(), PsiAnonymousClass.class);
     assertNotNull(psiClass);
-    psiClass = PsiTreeUtil.findChildOfType(psiClass, PsiAnonymousClass.class);
-    assertNotNull(psiClass);
-    PsiMethod method = psiClass.getMethods() [0];
+    PsiMethod method = psiClass.getMethods()[0];
     verifyJavaDoc(method);
   }
-  
-  public void testInheritedDocInThrows() throws Exception {
-    doTestMethod();
-  }
-  
-  public void testInheritedDocInThrows1() throws Exception {
-    doTestMethod();
-  }
-  
-  public void testEscapeValues() throws Exception {
-    PsiClass psiClass = getTestClass();
-    verifyJavaDoc(psiClass);
-  }
 
-  public void testClassTypeParameter() throws Exception {
-    verifyJavaDoc(getTestClass());
-  }
-  
-  public void testUnicodeEscapes() throws Exception {
-    verifyJavaDoc(getTestClass());
-  }
-  
-  public void testEnumValueOf() throws Exception {
-    doTestMethod();
-  }
-
-  public void testMethodFormatting() throws Exception {
-    doTestMethod();
-  }
-
-  public void testConstantFieldInitializer() throws Exception {
-    doTestField();
-  }
-
-  public void testInitializerWithNew() throws Exception {
-    doTestField();
-  }
-
-  public void testInitializerWithLiteral() throws Exception {
-    doTestField();
-  }
-
-  public void testMethodExpressionWithLiteral() throws Exception {
-    doTestField();
-  }
-
-  public void testInitializerWithReference() throws Exception {
-    doTestField();
-  }
-
-  public void testAnnotations() throws Exception {
-    doTestField();
-  }
-
-  public void testAnnotationsInParams() throws Exception {
-    doTestMethod();
-  }
-
-  public void testApiNotes() throws Exception {
-    doTestMethod();
-  }
-
-  public void testLiteral() throws Exception {
-    doTestField();
-  }
-
-  public void testEscapingInLiteral() throws Exception {
-    doTestField();
-  }
-
-  public void testCode() throws Exception {
-    useJava8();
-    doTestField();
-  }
-
-  public void testPInsidePre() throws Exception {
-    doTestField();
-  }
-
-  public void testCommaInsideArgsList() throws Exception {
-    doTestField();
-  }
-
-  public void testFieldInitializedWithLambda() throws Exception {
-    doTestField();
-  }
-
-  public void testFieldInitializedWithArray() throws Exception {
-    doTestField();
-  }
-
-  public void testFieldInitializedWithSizedArray() throws Exception {
-    doTestField();
-  }
-
-  public void testDoubleLt() throws Exception {
-    doTestClass();
-  }
-
-  public void testEnumConstantOrdinal() throws Exception {
+  public void testEnumConstantOrdinal() {
     PsiClass psiClass = getTestClass();
     PsiField field = psiClass.getFields() [0];
     String docInfo = new JavaDocumentationProvider().generateDoc(field, field);
@@ -187,10 +119,11 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
 
     docInfo = new JavaDocumentationProvider().getQuickNavigateInfo(field, field);
     assertNotNull(docInfo);
-    assertEquals(exampleHtmlFileText(getTestName(true) + "_quick"), replaceEnvironmentDependentContent(UIUtil.getHtmlBody(docInfo)));
+    String htmlText = loadFile(new File(getTestDataPath() + TEST_DATA_FOLDER + getTestName(true) + "_quick.html"));
+    assertEquals(htmlText, replaceEnvironmentDependentContent(UIUtil.getHtmlBody(docInfo)));
   }
 
-  public void testClickableFieldReference() throws Exception {
+  public void testClickableFieldReference() {
     PsiClass aClass = getTestClass();
     PsiTypeElement element = aClass.getFields()[0].getTypeElement();
     assertNotNull(element);
@@ -200,116 +133,19 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     assertNotNull(docInfo);
     assertFileTextEquals(docInfo);
   }
-  
-  public void testNoSpaceAfterTagName() throws Exception {
-    verifyJavaDoc(getTestClass());
-  }
 
-  private static String exampleHtmlFileText(String name) throws IOException {
-    final File htmlPath = new File(JavaTestUtil.getJavaTestDataPath() + TEST_DATA_FOLDER + name + ".html");
-    return StringUtil.convertLineSeparators(FileUtil.loadFile(htmlPath).trim());
-  }
-
-  public void testClassTypeParamsPresentation() throws Exception {
+  public void testClassTypeParamsPresentation() {
     PsiClass psiClass = getTestClass();
-    final PsiReferenceList extendsList = psiClass.getExtendsList();
+    PsiReferenceList extendsList = psiClass.getExtendsList();
     assertNotNull(extendsList);
-    final PsiJavaCodeReferenceElement referenceElement = extendsList.getReferenceElements()[0];
-    final PsiClass superClass = extendsList.getReferencedTypes()[0].resolve();
-
+    PsiJavaCodeReferenceElement referenceElement = extendsList.getReferenceElements()[0];
+    PsiClass superClass = extendsList.getReferencedTypes()[0].resolve();
     String docInfo = new JavaDocumentationProvider().getQuickNavigateInfo(superClass, referenceElement);
     assertNotNull(docInfo);
     assertFileTextEquals(UIUtil.getHtmlBody(docInfo));
   }
 
-  void assertFileTextEquals(String docInfo) throws IOException {
-    String actualText = replaceEnvironmentDependentContent(docInfo);
-    final File htmlPath = new File(JavaTestUtil.getJavaTestDataPath() + TEST_DATA_FOLDER + getTestName(true) + ".html");
-    String expectedText = StringUtil.convertLineSeparators(FileUtil.loadFile(htmlPath).trim());
-    if (!StringUtil.equals(expectedText, actualText)) {
-      throw new FileComparisonFailure("Text mismatch in file: " + htmlPath.getName(), expectedText, actualText, FileUtil.toSystemIndependentName(htmlPath.getPath()));
-    }
-  }
-
-  public void testLambdaParameter() throws Exception {
-    doTestLambdaParameter();
-  }
-
-  public void testLocalClassInsideAnonymous() throws Exception {
-    doTestAtCaret();
-  }
-
-  private void doTestClass() throws Exception {
-    PsiClass psiClass = getTestClass();
-    verifyJavaDoc(psiClass);
-  }
-
-  private void doTestField() throws Exception {
-    PsiClass psiClass = getTestClass();
-    PsiField field = psiClass.getFields() [0];
-    verifyJavaDoc(field);
-  }
-
-  private void doTestMethod() throws Exception {
-    PsiClass psiClass = getTestClass();
-    PsiMethod method = psiClass.getMethods() [0];
-    verifyJavaDoc(method);
-  }
-
-  private void doTestLambdaParameter() throws Exception {
-    PsiClass psiClass = getTestClass();
-    final PsiLambdaExpression lambdaExpression = PsiTreeUtil.findChildOfType(psiClass, PsiLambdaExpression.class);
-    assertNotNull(lambdaExpression);
-    verifyJavaDoc(lambdaExpression.getParameterList().getParameters()[0]);
-  }
-
-  private PsiClass getTestClass() throws Exception{
-    configureByFile();
-    return ((PsiJavaFile)myFile).getClasses() [0];
-  }
-
-  private void verifyJavaDoc(final PsiElement field) throws IOException {
-    verifyJavaDoc(field, null);
-  }
-
-  private void verifyJavaDoc(final PsiElement field, List<String> docUrls) throws IOException {
-    String docInfo = JavaDocumentationProvider.generateExternalJavadoc(field, docUrls);
-    assertNotNull(docInfo);
-    assertFileTextEquals(docInfo);
-  }
-
-  public void testPackageInfo() throws Exception {
-    final String path = JavaTestUtil.getJavaTestDataPath() + TEST_DATA_FOLDER;
-    final String packageInfo = path + getTestName(true);
-    createTestProjectStructure(path);
-    PsiPackage psiPackage = JavaPsiFacade.getInstance(getProject()).findPackage(getTestName(true));
-    final String info = JavaDocumentationProvider.generateExternalJavadoc(psiPackage, (List<String>)null);
-    String htmlText = FileUtil.loadFile(new File(packageInfo + File.separator + "packageInfo.html"));
-    assertNotNull(info);
-    assertEquals(StringUtil.convertLineSeparators(htmlText.trim()), replaceEnvironmentDependentContent(info));
-  }
-  
-  public void testPackageInfoFromComment() throws Exception {
-    doTestPackageInfo("some");
-  }
-
-  public void testPackageInfoWithCopyright() throws Exception {
-    doTestPackageInfo("packageInfoWithCopyright");
-  }
-  
-  private void doTestPackageInfo(String caretPositionedAt) throws Exception {
-    final String rootPath = getTestDataPath() + TEST_DATA_FOLDER;
-    VirtualFile root = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootPath, myFilesToDelete);
-    VirtualFile piFile = root.findFileByRelativePath(getTestName(true) + "/package-info.java");
-    assertNotNull(piFile);
-    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(piFile);
-    assertNotNull(psiFile);
-    final String info = JavaExternalDocumentationTest.getDocumentationText(psiFile, psiFile.getText().indexOf(caretPositionedAt));
-    String htmlText = FileUtil.loadFile(new File(rootPath + getTestName(true) + File.separator + "packageInfo.html"));
-    assertEquals(StringUtil.convertLineSeparators(htmlText.trim()), replaceEnvironmentDependentContent(info));
-  }
-
-  public void testInheritedParameter() throws Exception {
+  public void testInheritedParameter() {
     configureByFile();
     PsiClass outerClass = ((PsiJavaFile) myFile).getClasses()[0];
     PsiClass innerClass = outerClass.findInnerClassByName("Impl", false);
@@ -317,51 +153,23 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     PsiParameter parameter = innerClass.getMethods()[0].getParameterList().getParameters()[0];
     verifyJavaDoc(parameter);
   }
-  
-  public void testHtmlLink() throws Exception {
-    PsiTestUtil.createTestProjectStructure(myProject, myModule, 
-                                           getTestDataPath() + TEST_DATA_FOLDER + "htmlLinkProject", myFilesToDelete);
+
+  public void testHtmlLink() {
+    createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "htmlLinkProject");
     verifyJavadocFor("htmlLink");
     verifyJavadocFor("pack.htmlLinkDeep");
   }
 
-  private void verifyJavadocFor(String className) throws IOException {
-    PsiClass psiClass = JavaPsiFacade.getInstance(myProject).findClass(className, GlobalSearchScope.allScope(myProject));
-    assertNotNull(psiClass);
-    String doc = JavaDocumentationProvider.generateExternalJavadoc(psiClass, (List<String>)null);
-    assertNotNull(doc);
-    PsiDirectory dir = (PsiDirectory)psiClass.getParent().getParent();
-    PsiFile htmlFile = dir.findFile(psiClass.getName() + ".html");
-    assertNotNull(htmlFile);
-    assertEquals(StringUtil.convertLineSeparators(new String(htmlFile.getVirtualFile().contentsToByteArray(), StandardCharsets.UTF_8).trim()),
-                 replaceEnvironmentDependentContent(doc));
-  }
-  
-  public void testHtmlLinkWithRef() throws Exception {
-    verifyJavaDoc(getTestClass());
-  }
-  
-  public void testHtmlLinkToPackageInfo() throws Exception {
-    PsiTestUtil.createTestProjectStructure(myProject, myModule,
-                                           getTestDataPath() + TEST_DATA_FOLDER + "htmlLinkToPackageInfo", myFilesToDelete);
+  public void testHtmlLinkToPackageInfo() {
+    createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "htmlLinkToPackageInfo");
     verifyJavadocFor("pack.A");
-  }
-  
-  public void testMultipleSpacesInLiteral() throws Exception {
-    useJava8();
-    verifyJavaDoc(getTestClass());
-  }
-
-  public void testLegacySpacesInLiteral() throws Exception {
-    useJava7();
-    verifyJavaDoc(getTestClass());
   }
 
   public void testHideNonDocumentedFlowAnnotations() {
     ModuleRootModificationUtil.setModuleSdk(myModule, removeAnnotationsJar(PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk17())));
 
-    PsiMethod mapPut = myJavaFacade.findClass(CommonClassNames.JAVA_UTIL_MAP, GlobalSearchScope.allScope(myProject))
-      .findMethodsByName("put", false)[0];
+    PsiClass mapClass = myJavaFacade.findClass(CommonClassNames.JAVA_UTIL_MAP);
+    PsiMethod mapPut = mapClass.findMethodsByName("put", false)[0];
 
     PsiAnnotation annotation = AnnotationUtil.findAnnotation(mapPut, Flow.class.getName());
     assertNotNull(annotation);
@@ -379,39 +187,27 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     return sdk;
   }
 
-  public void testMatchingParameterNameFromParent() throws Exception {
+  public void testMatchingParameterNameFromParent() {
     configureByFile();
     PsiClass psiClass = ((PsiJavaFile)myFile).getClasses()[1];
     PsiMethod method = psiClass.getMethods()[0];
     verifyJavaDoc(method);
   }
 
-  public void testMatchingTypeParameterNameFromParent() throws Exception {
+  public void testMatchingTypeParameterNameFromParent() {
     configureByFile();
     PsiClass psiClass = ((PsiJavaFile)myFile).getClasses()[1];
     PsiMethod method = psiClass.getMethods()[0];
     verifyJavaDoc(method);
   }
-  
-  public void testDocumentationForJdkClassWhenExternalDocIsNotAvailable() throws Exception {
-    PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass("java.lang.String", GlobalSearchScope.allScope(myProject));
+
+  public void testDocumentationForJdkClassWhenExternalDocIsNotAvailable() {
+    PsiClass aClass = myJavaFacade.findClass("java.lang.String");
     assertNotNull(aClass);
     verifyJavaDoc(aClass, Collections.singletonList("dummyUrl"));
   }
 
-  public void testDocumentationForJdkClassWithReferencesToClassesFromJavaLang() throws Exception {
-    doTestAtCaret();
-  }
-
-  public void testDocumentationForUncheckedExceptionsInSupers() throws Exception {
-    doTestAtCaret();
-  }
-
-  public void testDocumentationForGetterByField() throws Exception {
-    doTestAtCaret();
-  }
-
-  public void testDumbMode() throws Exception {
+  public void testDumbMode() {
     DumbServiceImpl.getInstance(myProject).setDumb(true);
     try {
       doTestAtCaret();
@@ -419,30 +215,15 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     finally {
       DumbServiceImpl.getInstance(myProject).setDumb(false);
     }
-   }
-
-  public void testCaretAtLinkInJavadoc() throws Exception { doTestAtCaret(); }
-
-  public void testParamInJavadoc() throws Exception { doTestAtCaret(); }
-
-  private void doTestAtCaret() throws Exception {
-    configureByFile();
-    String docInfo = JavaExternalDocumentationTest.getDocumentationText(myFile, myEditor.getCaretModel().getOffset());
-    assertNotNull(docInfo);
-    assertFileTextEquals(docInfo);
   }
 
-  private void configureByFile() throws Exception {
-    configureByFile(TEST_DATA_FOLDER + getTestName(true) + ".java");
-  }
-
-  public void testLibraryPackageDocumentation() throws Exception {
-    final VirtualFile libClasses = JavaExternalDocumentationTest.getJarFile("library.jar");
-    final VirtualFile libSources = JavaExternalDocumentationTest.getJarFile("library-src.jar");
+  public void testLibraryPackageDocumentation() {
+    VirtualFile libClasses = JavaExternalDocumentationTest.getJarFile("library.jar");
+    VirtualFile libSources = JavaExternalDocumentationTest.getJarFile("library-src.jar");
 
     ApplicationManager.getApplication().runWriteAction(() -> {
-      final Library library = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).createLibrary("myLib");
-      final Library.ModifiableModel model = library.getModifiableModel();
+      Library library = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).createLibrary("myLib");
+      Library.ModifiableModel model = library.getModifiableModel();
       model.addRoot(libClasses, OrderRootType.CLASSES);
       model.addRoot(libSources, OrderRootType.SOURCES);
       model.commit();
@@ -451,39 +232,139 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
       assertSize(1, modules);
       ModuleRootModificationUtil.addDependency(modules[0], library);
     });
-    
-    PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage("com.jetbrains");
+
+    PsiPackage aPackage = myJavaFacade.findPackage("com.jetbrains");
     assertNotNull(aPackage);
     verifyJavaDoc(aPackage);
   }
 
-  public void testLiteralInsideCode() throws Exception {
-    useJava8();
-    doTestClass();
+  private void doTestClass() {
+    PsiClass psiClass = getTestClass();
+    verifyJavaDoc(psiClass);
   }
 
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
+  private void doTestField() {
+    PsiClass psiClass = getTestClass();
+    PsiField field = psiClass.getFields()[0];
+    verifyJavaDoc(field);
   }
 
-  @Override
-  protected Sdk getTestProjectJdk() {
-    return myUseJava8Sdk ? IdeaTestUtil.getMockJdk18() : IdeaTestUtil.getMockJdk17();
+  private void doTestMethod() {
+    PsiClass psiClass = getTestClass();
+    PsiMethod method = psiClass.getMethods()[0];
+    verifyJavaDoc(method);
   }
-  
-  private void useJava8() {
-    myUseJava8Sdk = true;
-    setUpJdk();
+
+  private void doTestLambdaParameter() {
+    PsiClass psiClass = getTestClass();
+    final PsiLambdaExpression lambdaExpression = PsiTreeUtil.findChildOfType(psiClass, PsiLambdaExpression.class);
+    assertNotNull(lambdaExpression);
+    verifyJavaDoc(lambdaExpression.getParameterList().getParameters()[0]);
   }
-  
+
+  private PsiClass getTestClass() {
+    configureByFile();
+    return ((PsiJavaFile)myFile).getClasses()[0];
+  }
+
+  private void verifyJavaDoc(PsiElement element) {
+    verifyJavaDoc(element, null);
+  }
+
+  private void verifyJavaDoc(PsiElement element, List<String> docUrls) {
+    String docInfo = JavaDocumentationProvider.generateExternalJavadoc(element, docUrls);
+    assertNotNull(docInfo);
+    assertFileTextEquals(docInfo);
+  }
+
+  private void verifyJavadocFor(String className) {
+    PsiClass psiClass = myJavaFacade.findClass(className);
+    assertNotNull(psiClass);
+    String doc = JavaDocumentationProvider.generateExternalJavadoc(psiClass, (List<String>)null);
+    assertNotNull(doc);
+    PsiDirectory dir = (PsiDirectory)psiClass.getParent().getParent();
+    PsiFile htmlFile = dir.findFile(psiClass.getName() + ".html");
+    assertNotNull(htmlFile);
+    assertEquals(StringUtil.convertLineSeparators(htmlFile.getText().trim()), replaceEnvironmentDependentContent(doc));
+  }
+
+  private void doTestPackageInfo() {
+    createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER);
+    PsiPackage psiPackage = myJavaFacade.findPackage(getTestName(true));
+    assertNotNull(psiPackage);
+    String info = JavaDocumentationProvider.generateExternalJavadoc(psiPackage, (List<String>)null);
+    assertFileTextEquals(info, getTestName(true) + "/packageInfo.html");
+  }
+
+  private void doTestPackageInfo(String caretPositionedAt) {
+    VirtualFile root = createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER);
+    VirtualFile file = root.findFileByRelativePath(getTestName(true) + "/package-info.java");
+    assertNotNull(file);
+    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
+    assertNotNull(psiFile);
+    String info = JavaExternalDocumentationTest.getDocumentationText(psiFile, psiFile.getText().indexOf(caretPositionedAt));
+    assertFileTextEquals(info, getTestName(true) + "/packageInfo.html");
+  }
+
+  private VirtualFile createProjectStructure(String rootPath) {
+    try {
+      return PsiTestUtil.createTestProjectStructure(myProject, myModule, rootPath, myFilesToDelete);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private void doTestAtCaret() {
+    configureByFile();
+    String docInfo = JavaExternalDocumentationTest.getDocumentationText(myFile, myEditor.getCaretModel().getOffset());
+    assertNotNull(docInfo);
+    assertFileTextEquals(docInfo);
+  }
+
+  private void configureByFile() {
+    try {
+      configureByFile(TEST_DATA_FOLDER + getTestName(true) + ".java");
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private void assertFileTextEquals(String docInfo) {
+    assertFileTextEquals(docInfo, getTestName(true) + ".html");
+  }
+
+  private void assertFileTextEquals(String docInfo, String expectedFile) {
+    String actualText = replaceEnvironmentDependentContent(docInfo);
+    File htmlPath = new File(getTestDataPath() + TEST_DATA_FOLDER + expectedFile);
+    String expectedText = loadFile(htmlPath);
+    if (!StringUtil.equals(expectedText, actualText)) {
+      String message = "Text mismatch in file: " + htmlPath.getName();
+      throw new FileComparisonFailure(message, expectedText, actualText, FileUtil.toSystemIndependentName(htmlPath.getPath()));
+    }
+  }
+
   private void useJava7() {
-    myUseJava8Sdk = false;
+    myJdkVersion = 7;
     setUpJdk();
+  }
+
+  private void useJava8() {
+    myJdkVersion = 8;
+    setUpJdk();
+  }
+
+  private static String loadFile(File file) {
+    try {
+      return StringUtil.convertLineSeparators(FileUtil.loadFile(file).trim());
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private static String replaceEnvironmentDependentContent(String html) {
-    return html == null ? null : StringUtil.convertLineSeparators(html.trim()).replaceAll("<base href=\"[^\"]*\">", 
-                                                                                          "<base href=\"placeholder\">");
+    return html != null ? StringUtil.convertLineSeparators(html.trim()).replaceAll("<base href=\"[^\"]*\">", "<base href=\"placeholder\">") : null;
   }
 }

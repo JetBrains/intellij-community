@@ -193,12 +193,6 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
     return myArgumentTypes;
   }
 
-  @Nullable
-  @Override
-  public PsiType[] getTypeArguments() {
-    return mySubstitutorComputer.getTypeArguments();
-  }
-
   @Override
   public void handleEvent(@NotNull Event event, Object associated) {
     super.handleEvent(event, associated);

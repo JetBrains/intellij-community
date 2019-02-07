@@ -23,7 +23,9 @@ import com.jetbrains.python.PyTokenTypes;
  */
 public class PythonQuoteHandler extends BaseQuoteHandler {
   private static final TokenSet APPLICABLE_TOKENS = TokenSet.orSet(PyTokenTypes.STRING_NODES, 
-                                                                   TokenSet.create(PyTokenTypes.FSTRING_START, PyTokenTypes.FSTRING_END));
+                                                                   TokenSet.create(PyTokenTypes.FSTRING_START,
+                                                                                   PyTokenTypes.FSTRING_TEXT,
+                                                                                   PyTokenTypes.FSTRING_END));
 
   public PythonQuoteHandler() {
     super(APPLICABLE_TOKENS, new char[]{'}', ']', ')', ',', ':', ';', ' ', '\t', '\n'});

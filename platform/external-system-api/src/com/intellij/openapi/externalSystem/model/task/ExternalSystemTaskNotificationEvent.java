@@ -8,7 +8,6 @@ import java.io.Serializable;
  * Encapsulates information about processing state change of the {@link #getId() target task}.
  * 
  * @author Denis Zhdanov
- * @since 11/10/11 9:19 AM
  */
 public class ExternalSystemTaskNotificationEvent implements Serializable {
 

@@ -15,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
- * @since 02.11.2006
  */
 public class RefreshAction extends AnAction implements DumbAware {
   @Override

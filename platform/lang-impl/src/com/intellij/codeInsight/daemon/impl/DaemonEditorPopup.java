@@ -34,12 +34,12 @@ public class DaemonEditorPopup extends PopupHandler {
     if (ApplicationManager.getApplication() == null) return;
     final JRadioButtonMenuItem errorsFirst = createRadioButtonMenuItem(EditorBundle.message("errors.panel.go.to.errors.first.radio"));
     errorsFirst.addActionListener(
-      __ -> DaemonCodeAnalyzerSettings.getInstance().NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = errorsFirst.isSelected());
+      __ -> DaemonCodeAnalyzerSettings.getInstance().setNextErrorActionGoesToErrorsFirst(errorsFirst.isSelected()));
     final JPopupMenu popupMenu = new JBPopupMenu();
     popupMenu.add(errorsFirst);
 
     final JRadioButtonMenuItem next = createRadioButtonMenuItem(EditorBundle.message("errors.panel.go.to.next.error.warning.radio"));
-    next.addActionListener(__ -> DaemonCodeAnalyzerSettings.getInstance().NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = !next.isSelected());
+    next.addActionListener(__ -> DaemonCodeAnalyzerSettings.getInstance().setNextErrorActionGoesToErrorsFirst(!next.isSelected()));
     popupMenu.add(next);
 
     ButtonGroup group = new ButtonGroup();
@@ -50,7 +50,7 @@ public class DaemonEditorPopup extends PopupHandler {
     final JMenuItem hLevel = new JBMenuItem(EditorBundle.message("customize.highlighting.level.menu.item"));
     popupMenu.add(hLevel);
 
-    final boolean isErrorsFirst = DaemonCodeAnalyzerSettings.getInstance().NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST;
+    final boolean isErrorsFirst = DaemonCodeAnalyzerSettings.getInstance().isNextErrorActionGoesToErrorsFirst();
     errorsFirst.setSelected(isErrorsFirst);
     next.setSelected(!isErrorsFirst);
     hLevel.addActionListener(__ -> {

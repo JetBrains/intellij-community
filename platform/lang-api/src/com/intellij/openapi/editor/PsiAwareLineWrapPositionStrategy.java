@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
  * only for particular elements/tokens (e.g. we may want to avoid line wrap in the middle of xml tag name etc).
  * 
  * @author Denis Zhdanov
- * @since 5/12/11 12:30 PM
  */
 public abstract class PsiAwareLineWrapPositionStrategy implements LineWrapPositionStrategy {
 

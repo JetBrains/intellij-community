@@ -32,13 +32,12 @@ import org.jetbrains.annotations.NotNull;
  * Is intended to test formatting in editor behavior, i.e. check how formatting affects things like caret position, selection etc.
  *
  * @author Denis Zhdanov
- * @since 6/1/11 6:17 PM
  */
 public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase {
 
   public void testCaretPositionOnLongLineWrapping() {
     // Inspired by IDEA-70242
-    CommonCodeStyleSettings javaCommonSettings = getCurrentCodeStyleSettings(ourProject).getCommonSettings(JavaLanguage.INSTANCE);
+    CommonCodeStyleSettings javaCommonSettings = getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE);
     javaCommonSettings.WRAP_LONG_LINES = true;
     javaCommonSettings.RIGHT_MARGIN = 40;
     doTest(

@@ -73,7 +73,7 @@ class SlowerTypeConversions implements Runnable {
       });
     }
     if (!psiElement().afterLeaf(".").accepts(myElement)) {
-      BasicExpressionCompletionContributor.processDataflowExpressionTypes(myElement, null, TRUE_MATCHER,
+      BasicExpressionCompletionContributor.processDataflowExpressionTypes(myParameters, null, TRUE_MATCHER,
                                                                           baseItem -> addSecondCompletionVariants(myElement, myReference, baseItem, myParameters, lookupElement -> {
                                                                             if (!processedChains.contains(chainInfo(lookupElement))) {
                                                                               myResult.consume(lookupElement);

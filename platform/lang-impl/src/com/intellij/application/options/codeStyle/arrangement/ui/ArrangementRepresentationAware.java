@@ -21,7 +21,6 @@ import javax.swing.*;
 
 /**
  * @author Denis Zhdanov
- * @since 11/7/12 6:24 PM
  */
 public interface ArrangementRepresentationAware {
   

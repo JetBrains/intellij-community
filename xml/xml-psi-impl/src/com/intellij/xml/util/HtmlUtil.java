@@ -190,6 +190,10 @@ public class HtmlUtil {
     if (name != null && isOptionalEndForHtmlTag(name)) {
       PsiElement parent = element.getParent();
 
+      if (parent instanceof XmlTag && XmlChildRole.CLOSING_TAG_START_FINDER.findChild(parent.getNode()) != null) {
+        return;
+      }
+
       if (parent != null) {
         // we need grand parent since completion already uses parent's descriptor
         parent = parent.getParent();

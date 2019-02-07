@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author nik
@@ -67,7 +66,7 @@ public class XDebuggerHistoryManager implements PersistentStateComponent<Element
     Element state = new Element(STATE_TAG);
     for (String id : myRecentExpressions.keySet()) {
       LinkedList<XExpression> expressions = myRecentExpressions.get(id);
-      List<ExpressionState> states = expressions.stream().map(ExpressionState::new).collect(Collectors.toList());
+      List<ExpressionState> states = ContainerUtil.map(expressions, ExpressionState::new);
       Element entryElement = new Element(EXPRESSIONS_TAG);
       entryElement.setAttribute(ID_ATTRIBUTE, id);
       for (ExpressionState expressionState : states) {

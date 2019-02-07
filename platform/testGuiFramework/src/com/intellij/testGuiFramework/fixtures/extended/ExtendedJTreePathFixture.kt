@@ -95,6 +95,8 @@ import javax.swing.tree.TreePath
     myDriver.expandPath(tree, path)
   }
 
+  fun isPathSelected(): Boolean = myDriver.isPathSelected(tree, path)
+
   protected fun expandAndGetPathStepByStep(stringPath: List<String>): TreePath {
     fun <T> List<T>.list2tree() = map { subList(0, indexOf(it) + 1) }
     if (!cachePaths.containsKey(stringPath)){

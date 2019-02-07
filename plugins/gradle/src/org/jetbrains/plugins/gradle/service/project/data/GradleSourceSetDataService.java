@@ -37,7 +37,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 8/5/2015
  */
 @Order(ExternalSystemConstants.BUILTIN_MODULE_DATA_SERVICE_ORDER + 1)
 public class GradleSourceSetDataService extends AbstractModuleDataService<GradleSourceSetData> {

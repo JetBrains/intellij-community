@@ -7,6 +7,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +23,7 @@ public abstract class PsiFileFactory {
   }
 
   /**
-   * Please use {@link #createFileFromText(String, com.intellij.openapi.fileTypes.FileType, CharSequence)},
+   * Please use {@link #createFileFromText(String, FileType, CharSequence)} instead,
    * since file type detecting by file extension becomes vulnerable when file type mappings are changed.
    * <p/>
    * Creates a file from the specified text.
@@ -30,42 +31,42 @@ public abstract class PsiFileFactory {
    * @param name the name of the file to create (the extension of the name determines the file type).
    * @param text the text of the file to create.
    * @return the created file.
-   * @throws com.intellij.util.IncorrectOperationException
+   * @throws IncorrectOperationException
    *          if the file type with specified extension is binary.
    */
   @Deprecated
   @NotNull
-  public abstract PsiFile createFileFromText(@NotNull @NonNls String name, @NotNull @NonNls String text);
+  public abstract PsiFile createFileFromText(@NotNull @NonNls String name, @NotNull @NonNls String text) throws IncorrectOperationException;
 
   @NotNull
-  public abstract PsiFile createFileFromText(@NonNls @NotNull String fileName, @NotNull FileType fileType, @NotNull CharSequence text);
-
-  @NotNull
-  public abstract PsiFile createFileFromText(@NonNls @NotNull String name, @NotNull FileType fileType, @NotNull CharSequence text,
-                                             long modificationStamp, boolean eventSystemEnabled);
+  public abstract PsiFile createFileFromText(@NonNls @NotNull String fileName, @NotNull FileType fileType, @NotNull CharSequence text) throws IncorrectOperationException;
 
   @NotNull
   public abstract PsiFile createFileFromText(@NonNls @NotNull String name, @NotNull FileType fileType, @NotNull CharSequence text,
-                                             long modificationStamp, boolean eventSystemEnabled, boolean markAsCopy);
+                                             long modificationStamp, boolean eventSystemEnabled) throws IncorrectOperationException;
 
-  public abstract PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text);
+  @NotNull
+  public abstract PsiFile createFileFromText(@NonNls @NotNull String name, @NotNull FileType fileType, @NotNull CharSequence text,
+                                             long modificationStamp, boolean eventSystemEnabled, boolean markAsCopy) throws IncorrectOperationException;
 
-  public PsiFile createFileFromText(@NotNull Language language, @NotNull CharSequence text) {
+  public abstract PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text) throws IncorrectOperationException;
+
+  public PsiFile createFileFromText(@NotNull Language language, @NotNull CharSequence text) throws IncorrectOperationException {
     return createFileFromText("foo.bar", language, text);
   }
 
   public abstract PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text,
-                                             boolean eventSystemEnabled, boolean markAsCopy);
+                                             boolean eventSystemEnabled, boolean markAsCopy) throws IncorrectOperationException;
 
   public abstract PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text,
-                                             boolean eventSystemEnabled, boolean markAsCopy, boolean noSizeLimit);
+                                             boolean eventSystemEnabled, boolean markAsCopy, boolean noSizeLimit) throws IncorrectOperationException;
 
   public abstract PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text,
                                              boolean eventSystemEnabled, boolean markAsCopy, boolean noSizeLimit,
-                                             @Nullable VirtualFile original);
+                                             @Nullable VirtualFile original) throws IncorrectOperationException;
 
-  public abstract PsiFile createFileFromText(FileType fileType, String fileName, CharSequence chars, int startOffset, int endOffset);
+  public abstract PsiFile createFileFromText(FileType fileType, String fileName, CharSequence chars, int startOffset, int endOffset) throws IncorrectOperationException;
 
   @Nullable
-  public abstract PsiFile createFileFromText(@NotNull CharSequence chars, @NotNull PsiFile original);
+  public abstract PsiFile createFileFromText(@NotNull CharSequence chars, @NotNull PsiFile original) throws IncorrectOperationException;
 }

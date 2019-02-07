@@ -89,6 +89,10 @@
       <action id="ExternalSystem.GroupTasks"
               class="com.intellij.openapi.externalSystem.action.task.GroupTasksAction" text="Group Tasks">
       </action>
+
+      <action id="ExternalSystem.GroupModules"
+              class="com.intellij.openapi.externalSystem.action.task.GroupModulesAction" text="Group Modules">
+      </action>
       <action id="ExternalSystem.ShowInheritedTasks"
               class="com.intellij.openapi.externalSystem.action.task.ShowInheritedTasksAction" text="Display tasks inherited from sub-projects">
       </action>

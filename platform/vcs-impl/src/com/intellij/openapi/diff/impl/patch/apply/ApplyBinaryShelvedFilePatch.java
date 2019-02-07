@@ -26,7 +26,7 @@ public class ApplyBinaryShelvedFilePatch extends ApplyFilePatchBase<ShelvedBinar
   }
 
   @Override
-  protected Result applyChange(Project project, final VirtualFile fileToPatch, FilePath pathBeforeRename, Getter<CharSequence> baseContents)
+  protected Result applyChange(Project project, final VirtualFile fileToPatch, FilePath pathBeforeRename, Getter<? extends CharSequence> baseContents)
     throws IOException {
     ShelvedBinaryFile shelvedBinaryFile = myPatch.getShelvedBinaryFile();
     if (shelvedBinaryFile.SHELVED_PATH == null) {

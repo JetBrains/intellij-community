@@ -39,13 +39,11 @@ public abstract class AntDomPropertyDefiningElement extends AntDomElement implem
     final List<String> result = new ArrayList<>(attribs.size());
     for (GenericAttributeValue<String> attribValue : attribs) {
       final String name = attribValue.getStringValue();
-      if (name != null && name.length() > 0) {
+      if (name != null && !name.isEmpty()) {
         result.add(name);
       }
     }
-    for (String name : getImplicitPropertyNames()) {
-      result.add(name);
-    }
+    result.addAll(getImplicitPropertyNames());
     return result.iterator();
   }
 

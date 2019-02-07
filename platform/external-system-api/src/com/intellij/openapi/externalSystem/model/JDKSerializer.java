@@ -19,13 +19,9 @@ public class JDKSerializer<T> implements DataNodeSerializer<T> {
   @Override
   public byte[] getBytes(T data) throws IOException {
     ByteArrayOutputStream bOut = new ByteArrayOutputStream();
-    ObjectOutputStream oOut = new ObjectOutputStream(bOut);
-    try {
+    try (ObjectOutputStream oOut = new ObjectOutputStream(bOut)) {
       oOut.writeObject(data);
       return bOut.toByteArray();
-    }
-    finally {
-      oOut.close();
     }
   }
 

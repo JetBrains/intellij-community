@@ -1,4 +1,4 @@
-// "Create method 'f'" "true"
+// "Create method 'f' in 'Nested" "true"
 public class CreateMethodTest {
   public <T> void aMethod(final T t) {
     class Nested {

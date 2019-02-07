@@ -27,7 +27,6 @@ import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/29/2016
  */
 public abstract class ProjectTaskRunner {
 

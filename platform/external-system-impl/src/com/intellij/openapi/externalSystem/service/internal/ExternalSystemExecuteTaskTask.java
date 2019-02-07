@@ -44,7 +44,6 @@ import java.util.Map;
 
 /**
  * @author Denis Zhdanov
- * @since 3/15/13 10:02 PM
  */
 public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
 

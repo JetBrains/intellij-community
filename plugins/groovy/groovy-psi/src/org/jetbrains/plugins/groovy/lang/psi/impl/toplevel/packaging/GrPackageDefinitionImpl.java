@@ -33,6 +33,7 @@ public class GrPackageDefinitionImpl extends GrStubElementBase<GrPackageDefiniti
     visitor.visitPackageDefinition(this);
   }
 
+  @Override
   public String toString() {
     return "Package definition";
   }
@@ -55,7 +56,7 @@ public class GrPackageDefinitionImpl extends GrStubElementBase<GrPackageDefiniti
   @Override
   @NotNull
   public GrModifierList getAnnotationList() {
-    return getStubOrPsiChild(GroovyElementTypes.MODIFIERS);
+    return getStubOrPsiChild(GroovyElementTypes.MODIFIER_LIST);
   }
 
   @Override

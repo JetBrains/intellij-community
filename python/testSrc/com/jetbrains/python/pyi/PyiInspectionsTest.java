@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,17 +35,23 @@ public class PyiInspectionsTest extends PyTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    if (myRootsDisposable != null) {
-      Disposer.dispose(myRootsDisposable);
-      myRootsDisposable = null;
+    try {
+      if (myRootsDisposable != null) {
+        Disposer.dispose(myRootsDisposable);
+        myRootsDisposable = null;
+      }
+
+      // clear cached extensions
+      // see com.jetbrains.python.PyFunctionTypeAnnotationParsingTest.tearDown()
+      PythonVisitorFilter.INSTANCE.removeExplicitExtension(PythonLanguage.INSTANCE, (visitorClass, file) -> false);
+      PythonVisitorFilter.INSTANCE.removeExplicitExtension(PyiLanguageDialect.getInstance(), (visitorClass, file) -> false);
     }
-
-    // clear cached extensions
-    // see com.jetbrains.python.PyFunctionTypeAnnotationParsingTest.tearDown()
-    PythonVisitorFilter.INSTANCE.removeExplicitExtension(PythonLanguage.INSTANCE, (visitorClass, file) -> false);
-    PythonVisitorFilter.INSTANCE.removeExplicitExtension(PyiLanguageDialect.getInstance(), (visitorClass, file) -> false);
-
-    super.tearDown();
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   private void doTestByExtension(@NotNull Class<? extends LocalInspectionTool> inspectionClass, @NotNull String extension) {

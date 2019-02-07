@@ -84,7 +84,7 @@ public abstract class FileBasedIndex {
   public abstract <K, V> boolean processValues(@NotNull ID<K, V> indexId,
                                                @NotNull K dataKey,
                                                @Nullable VirtualFile inFile,
-                                               @NotNull FileBasedIndex.ValueProcessor<V> processor,
+                                               @NotNull ValueProcessor<? super V> processor,
                                                @NotNull GlobalSearchScope filter);
 
   /**
@@ -93,17 +93,17 @@ public abstract class FileBasedIndex {
   public <K, V> boolean processValues(@NotNull ID<K, V> indexId,
                                                @NotNull K dataKey,
                                                @Nullable VirtualFile inFile,
-                                               @NotNull FileBasedIndex.ValueProcessor<V> processor,
+                                               @NotNull ValueProcessor<? super V> processor,
                                                @NotNull GlobalSearchScope filter,
                                                @Nullable IdFilter idFilter) {
     return processValues(indexId, dataKey, inFile, processor, filter);
   }
 
   public abstract <K, V> boolean processFilesContainingAllKeys(@NotNull ID<K, V> indexId,
-                                                               @NotNull Collection<K> dataKeys,
+                                                               @NotNull Collection<? extends K> dataKeys,
                                                                @NotNull GlobalSearchScope filter,
-                                                               @Nullable Condition<V> valueChecker,
-                                                               @NotNull Processor<VirtualFile> processor);
+                                                               @Nullable Condition<? super V> valueChecker,
+                                                               @NotNull Processor<? super VirtualFile> processor);
 
   /**
    * @param project it is guaranteed to return data which is up-to-date withing the project
@@ -125,17 +125,16 @@ public abstract class FileBasedIndex {
   public abstract void requestReindex(@NotNull VirtualFile file);
 
   public abstract <K, V> boolean getFilesWithKey(@NotNull ID<K, V> indexId,
-                                                 @NotNull Set<K> dataKeys,
-                                                 @NotNull Processor<VirtualFile> processor,
+                                                 @NotNull Set<? extends K> dataKeys,
+                                                 @NotNull Processor<? super VirtualFile> processor,
                                                  @NotNull GlobalSearchScope filter);
 
   /**
    * @param project it is guaranteed to return data which is up-to-date withing the project
-   *                Keys obtained from the files which do not belong to the project specified may not be up-to-date or even exist
    */
-  public abstract <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<K> processor, @Nullable Project project);
+  public abstract <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<? super K> processor, @Nullable Project project);
 
-  public <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<K> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
+  public <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<? super K> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
     return processAllKeys(indexId, processor, scope.getProject());
   }
 

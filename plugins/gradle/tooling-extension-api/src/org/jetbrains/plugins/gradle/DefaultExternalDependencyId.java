@@ -23,7 +23,6 @@ import java.io.Serializable;
 
 /**
  * @author Vladislav.Soroka
- * @since 1/19/2015
  */
 public class DefaultExternalDependencyId implements ExternalDependencyId, Serializable {
 

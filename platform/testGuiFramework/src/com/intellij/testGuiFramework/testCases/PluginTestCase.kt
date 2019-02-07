@@ -26,6 +26,7 @@ import com.intellij.testGuiFramework.remote.transport.MessageType
 import com.intellij.testGuiFramework.remote.transport.RestartIdeAndResumeContainer
 import com.intellij.testGuiFramework.remote.transport.RestartIdeCause
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
+import com.intellij.testGuiFramework.util.step
 import org.fest.swing.exception.WaitTimedOutError
 import java.io.File
 import javax.swing.JDialog
@@ -78,29 +79,31 @@ open class PluginTestCase : GuiTestCase() {
   }
 
   fun installPluginFromDisk(pluginPath: String, pluginName: String) {
-    welcomeFrame {
-      actionLink("Configure").click()
-      popupMenu("Plugins").clickSearchedItem()
-      pluginDialog {
-        showInstalledPlugins()
-        if (isPluginInstalled(pluginName).not()) {
-          showInstallPluginFromDiskDialog()
-          installPluginFromDiskDialog {
-            setPath(pluginPath)
-            clickOk()
-            ignoreComponentLookupException {
-              dialog(title = "Warning", timeout = seconds05) {
-                message("Warning") {
-                  button("OK").click()
+    step("install plugin '$pluginName' from path '$pluginPath'") {
+      welcomeFrame {
+        actionLink("Configure").click()
+        popupMenu("Plugins").clickSearchedItem()
+        pluginDialog {
+          showInstalledPlugins()
+          if (isPluginInstalled(pluginName).not()) {
+            showInstallPluginFromDiskDialog()
+            installPluginFromDiskDialog {
+              setPath(pluginPath)
+              clickOk()
+              ignoreComponentLookupException {
+                dialog(title = "Warning", timeout = seconds05) {
+                  message("Warning") {
+                    button("OK").click()
+                  }
                 }
               }
             }
           }
-        }
-        button("OK").click()
-        ignoreComponentLookupException {
-          dialog(title = "IDE and Plugin Updates", timeout = seconds05) {
-            button("Postpone").click()
+          button("OK").click()
+          ignoreComponentLookupException {
+            dialog(title = "IDE and Plugin Updates", timeout = seconds05) {
+              button("Postpone").click()
+            }
           }
         }
       }

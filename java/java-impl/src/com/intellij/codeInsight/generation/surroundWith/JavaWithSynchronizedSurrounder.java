@@ -47,14 +47,14 @@ public class JavaWithSynchronizedSurrounder extends JavaStatementsSurrounder{
     PsiSynchronizedStatement synchronizedStatement = (PsiSynchronizedStatement)factory.createStatementFromText(text, null);
     synchronizedStatement = (PsiSynchronizedStatement)codeStyleManager.reformat(synchronizedStatement);
 
-    synchronizedStatement = (PsiSynchronizedStatement)container.addAfter(synchronizedStatement, statements[statements.length - 1]);
+    synchronizedStatement = (PsiSynchronizedStatement)addAfter(synchronizedStatement, container, statements);
 
     PsiCodeBlock synchronizedBlock = synchronizedStatement.getBody();
     if (synchronizedBlock == null) {
       return null;
     }
     SurroundWithUtil.indentCommentIfNecessary(synchronizedBlock, statements);
-    synchronizedBlock.addRange(statements[0], statements[statements.length - 1]);
+    addRangeWithinContainer(synchronizedBlock, container, statements, true);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
     synchronizedStatement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(synchronizedStatement);

@@ -61,7 +61,7 @@ public class HectorComponent extends JPanel {
     final VirtualFile virtualFile = myFile.getContainingFile().getVirtualFile();
     LOG.assertTrue(virtualFile != null);
     final boolean notInLibrary =
-      !fileIndex.isInLibrarySource(virtualFile) && !fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInContent(virtualFile);
+      !fileIndex.isInLibrary(virtualFile) || fileIndex.isInContent(virtualFile);
     final FileViewProvider viewProvider = myFile.getViewProvider();
     List<Language> languages = new ArrayList<>(viewProvider.getLanguages());
     Collections.sort(languages, PsiUtilBase.LANGUAGE_COMPARATOR);

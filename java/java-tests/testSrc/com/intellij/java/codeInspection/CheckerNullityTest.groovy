@@ -118,5 +118,5 @@ class Test {
 }"""
     assert NullableNotNullManager.isNotNull(clazz.methods[0].parameterList.parameters[0])
   }
-
+  
 }

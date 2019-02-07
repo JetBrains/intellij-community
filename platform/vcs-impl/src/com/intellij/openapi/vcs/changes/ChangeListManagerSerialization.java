@@ -20,7 +20,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Element;
+import org.jdom.Verifier;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +47,7 @@ class ChangeListManagerSerialization {
   @NonNls private static final String NODE_CHANGE = "change";
   @NonNls private static final String MANUALLY_REMOVED_FROM_IGNORED = "manually-removed-from-ignored";
   @NonNls private static final String DIRECTORY_TAG = "directory";
+  @NonNls private static final String ESCAPED_PATH_SUFFIX = "@intellij_escaped@";
 
   public static void writeExternal(@NotNull Element element, @NotNull IgnoredFilesComponent ignoredFilesComponent, @NotNull ChangeListWorker worker) {
     for (LocalChangeList list : worker.getChangeLists()) {
@@ -229,13 +232,13 @@ class ChangeListManagerSerialization {
   private static void writeContentRevision(@NotNull Element changeNode, @Nullable ContentRevision rev, @NotNull RevisionSide side) {
     if (rev == null) return;
     FilePath filePath = rev.getFile();
-    changeNode.setAttribute(side.getPathKey(), filePath.getPath());
+    changeNode.setAttribute(side.getPathKey(), escapeIllegalXmlChars(filePath.getPath()));
     changeNode.setAttribute(side.getIsDirKey(), String.valueOf(filePath.isDirectory()));
   }
 
   @Nullable
   private static FakeRevision readContentRevision(@NotNull Element changeNode, @NotNull RevisionSide side) {
-    String path = changeNode.getAttributeValue(side.getPathKey());
+    String path = unescapeIllegalXmlChars(changeNode.getAttributeValue(side.getPathKey()));
     if (StringUtil.isEmpty(path)) return null;
 
     String value = changeNode.getAttributeValue(side.getIsDirKey());
@@ -270,5 +273,22 @@ class ChangeListManagerSerialization {
     public String getIsDirKey() {
       return myIsDirKey;
     }
+  }
+
+  private static String escapeIllegalXmlChars(@NotNull String text) {
+    boolean needsEscaping = text.chars().anyMatch(c -> !Verifier.isXMLCharacter(c));
+    if (needsEscaping) {
+      return XmlStringUtil.escapeIllegalXmlChars(text) + ESCAPED_PATH_SUFFIX;
+    }
+    return text;
+  }
+
+  @Nullable
+  private static String unescapeIllegalXmlChars(@Nullable String text) {
+    if (text == null) return null;
+    if (text.endsWith(ESCAPED_PATH_SUFFIX)) {
+      return XmlStringUtil.unescapeIllegalXmlChars(StringUtil.trimEnd(text, ESCAPED_PATH_SUFFIX));
+    }
+    return text;
   }
 }

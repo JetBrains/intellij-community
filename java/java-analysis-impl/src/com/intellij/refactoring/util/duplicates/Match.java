@@ -126,6 +126,8 @@ public final class Match {
     final List<PsiElement> currentValue = myParameterValues.get(psiVariable);
     final boolean isVararg = psiVariable instanceof PsiParameter && ((PsiParameter)psiVariable).isVarArgs();
     if (!(value instanceof PsiExpression)) return false;
+    final PsiElement parent = value.getParent();
+    if (parent instanceof PsiMethodCallExpression && value == ((PsiMethodCallExpression)parent).getMethodExpression()) return false;
     final PsiType type = ((PsiExpression)value).getType();
     final PsiType parameterType = parameter.getType();
     if (type == null) return false;

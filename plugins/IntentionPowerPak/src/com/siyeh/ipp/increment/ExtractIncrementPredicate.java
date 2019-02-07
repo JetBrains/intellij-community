@@ -15,25 +15,15 @@
  */
 package com.siyeh.ipp.increment;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpressionStatement;
-import com.intellij.psi.PsiStatement;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.*;
+import com.siyeh.ig.assignment.IncrementDecrementUsedAsExpressionInspection;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ExtractIncrementPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (IncrementUtil.getIncrementOrDecrementOperand(element) == null) {
-      return false;
-    }
-    final PsiElement parent = element.getParent();
-    if (parent instanceof PsiExpressionStatement) {
-      return false;
-    }
-    final PsiStatement containingStatement =
-      PsiTreeUtil.getParentOfType(element, PsiStatement.class);
-    return containingStatement != null;
+    return element instanceof PsiUnaryExpression &&
+           IncrementDecrementUsedAsExpressionInspection.isSuitableForReplacement((PsiUnaryExpression)element);
   }
 }

@@ -71,4 +71,9 @@ public class CompletionParameterTypeInferencePolicy extends ProcessCandidatePara
   public boolean inferLowerBoundForFreshVariables() {
     return true;
   }
+
+  @Override
+  public boolean requestForBoxingExplicitly() {
+    return true;
+  }
 }

@@ -1,0 +1,38 @@
+A -> UClass (name = A) from PsiIdentifier:A
+B -> USimpleNameReferenceExpression (identifier = B) from PsiIdentifier:B
+foo -> UMethod (name = foo) from PsiIdentifier:foo
+B -> UClass (name = B) from PsiIdentifier:B
+A -> USimpleNameReferenceExpression (identifier = A) from PsiIdentifier:A
+a -> UField (name = a) from PsiIdentifier:a
+A -> USimpleNameReferenceExpression (identifier = A) from PsiIdentifier:A
+A -> USimpleNameReferenceExpression (identifier = A) from PsiIdentifier:A
+bar -> UMethod (name = bar) from PsiIdentifier:bar
+    A -> USimpleNameReferenceExpression (identifier = A) from PsiIdentifier:A
+A -> USimpleNameReferenceExpression (identifier = A) from PsiIdentifier:A
+barR -> UMethod (name = barR) from PsiIdentifier:barR
+String -> USimpleNameReferenceExpression (identifier = String) from PsiIdentifier:String
+a -> UParameter (name = a) from PsiIdentifier:a
+    bar -> USimpleNameReferenceExpression (identifier = bar) from PsiIdentifier:bar
+main -> UMethod (name = main) from PsiIdentifier:main
+String -> USimpleNameReferenceExpression (identifier = String) from PsiIdentifier:String
+args -> UParameter (name = args) from PsiIdentifier:args
+    B -> USimpleNameReferenceExpression (identifier = B) from PsiIdentifier:B
+    b -> ULocalVariable (name = b) from PsiIdentifier:b
+    B -> USimpleNameReferenceExpression (identifier = B) from PsiIdentifier:B
+    b -> USimpleNameReferenceExpression (identifier = b) from PsiIdentifier:b
+    bar -> UQualifiedReferenceExpression from PsiIdentifier:bar
+    barR -> UQualifiedReferenceExpression from PsiIdentifier:barR
+    bar -> UQualifiedReferenceExpression from PsiIdentifier:bar
+    foo -> UQualifiedReferenceExpression from PsiIdentifier:foo
+    b -> USimpleNameReferenceExpression (identifier = b) from PsiIdentifier:b
+    bar -> UQualifiedReferenceExpression from PsiIdentifier:bar
+    bar -> UQualifiedReferenceExpression from PsiIdentifier:bar
+    bar -> UQualifiedReferenceExpression from PsiIdentifier:bar
+    foo -> UQualifiedReferenceExpression from PsiIdentifier:foo
+    b -> USimpleNameReferenceExpression (identifier = b) from PsiIdentifier:b
+    a -> UQualifiedReferenceExpression from PsiIdentifier:a
+    a -> UQualifiedReferenceExpression from PsiIdentifier:a
+    a -> UQualifiedReferenceExpression from PsiIdentifier:a
+    bar -> UQualifiedReferenceExpression from PsiIdentifier:bar
+    a -> UQualifiedReferenceExpression from PsiIdentifier:a
+    foo -> UQualifiedReferenceExpression from PsiIdentifier:foo

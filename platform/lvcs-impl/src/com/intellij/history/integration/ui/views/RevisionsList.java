@@ -6,6 +6,11 @@ import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
 import com.intellij.history.integration.ui.models.RevisionItem;
+import com.intellij.ide.CopyProvider;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -18,10 +23,12 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
@@ -32,6 +39,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableModel;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
@@ -56,6 +64,14 @@ public class RevisionsList {
     table.getEmptyText().setText(VcsBundle.message("history.empty"));
 
     addSelectionListener(l);
+
+    CopyProvider copyProvider = new MyCellRenderer.MyCopyProvider(table);
+    DataManager.registerDataProvider(table, dataId -> {
+      if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+        return copyProvider;
+      }
+      return null;
+    });
   }
 
   public JComponent getComponent() {
@@ -335,11 +351,11 @@ public class RevisionsList {
       return myWrapperPanel;
     }
 
-    private String ensureString(String s) {
+    private static String ensureString(String s) {
       return StringUtil.isEmpty(s) ? " " : s;
     }
 
-    private LabelsAndColor getLabelsAndColor(RevisionItem item) {
+    private static LabelsAndColor getLabelsAndColor(RevisionItem item) {
       Revision r = item.revision;
 
       final Pair<List<String>, Integer> affected = r.getAffectedFileNames();
@@ -457,6 +473,44 @@ public class RevisionsList {
         g2d.setColor(getBackground().darker());
         g2d.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, getHeight() - 2, getHeight() - 2);
         g2d.dispose();
+      }
+    }
+
+    private static class MyCopyProvider implements CopyProvider {
+      @NotNull private final JBTable myTable;
+
+      private MyCopyProvider(@NotNull JBTable table) {
+        myTable = table;
+      }
+
+      @Override
+      public void performCopy(@NotNull DataContext dataContext) {
+        TableModel model = myTable.getModel();
+
+        StringBuilder sb = new StringBuilder();
+        for (int row : myTable.getSelectedRows()) {
+          RevisionItem r = (RevisionItem)model.getValueAt(row, 0);
+
+          LabelsAndColor labelsAndColor = getLabelsAndColor(r);
+          String time = DateFormatUtil.formatDateTime(r.revision.getTimestamp());
+          String title = labelsAndColor.title;
+          String filesCount = labelsAndColor.filesCount;
+          if (sb.length() != 0) sb.append("\n");
+          sb.append(time).append(", ")
+            .append(filesCount).append(": ")
+            .append(title);
+        }
+        CopyPasteManager.getInstance().setContents(new TextTransferable(sb.toString()));
+      }
+
+      @Override
+      public boolean isCopyEnabled(@NotNull DataContext dataContext) {
+        return myTable.getSelectedRowCount() > 0;
+      }
+
+      @Override
+      public boolean isCopyVisible(@NotNull DataContext dataContext) {
+        return true;
       }
     }
   }

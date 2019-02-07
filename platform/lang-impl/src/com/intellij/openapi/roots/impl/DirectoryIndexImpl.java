@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -17,9 +18,12 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.Query;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +59,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }, project);
   }
 
-  protected void subscribeToFileChanges() {
+  private void subscribeToFileChanges() {
     myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
       @Override
       public void fileTypesChanged(@NotNull FileTypeEvent event) {
@@ -64,6 +68,11 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     });
 
     myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      @Override
+      public void beforeRootsChange(@NotNull ModuleRootEvent event) {
+        myRootIndex = null;
+      }
+
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         myRootIndex = null;
@@ -74,14 +83,39 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         RootIndex rootIndex = myRootIndex;
-        if (rootIndex != null && rootIndex.resetOnEvents(events)) {
-          myRootIndex = null;
+        if (rootIndex != null && shouldResetOnEvents(events)) {
+          rootIndex.myPackageDirectoryCache.clear();
+          for (VFileEvent event : events) {
+            // TempFileSystem doesn't properly support virtual file pointers, so reset unconditionally
+            if (event.getFileSystem() instanceof TempFileSystem ||
+                isIgnoredFileCreated(event)) {
+              myRootIndex = null;
+              break;
+            }
+          }
         }
       }
     });
   }
 
-  protected void dispatchPendingEvents() {
+  private static boolean shouldResetOnEvents(@NotNull List<? extends VFileEvent> events) {
+    for (VFileEvent event : events) {
+      VirtualFile file = event.getFile();
+      if (file == null || file.isDirectory()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isIgnoredFileCreated(@NotNull VFileEvent event) {
+    return event instanceof VFileMoveEvent && FileTypeRegistry.getInstance().isFileIgnored(((VFileMoveEvent)event).getNewParent()) ||
+           event instanceof VFilePropertyChangeEvent &&
+           ((VFilePropertyChangeEvent)event).getPropertyName().equals(VirtualFile.PROP_NAME) &&
+           FileTypeRegistry.getInstance().isFileIgnored(((VFilePropertyChangeEvent)event).getFile());
+  }
+
+  private void dispatchPendingEvents() {
     myConnection.deliverImmediately();
   }
 

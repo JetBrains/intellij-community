@@ -75,8 +75,8 @@ public class DescriptorComposer extends HTMLComposerImpl {
     return ArrayUtil.toStringArray(texts);
   }
 
-  private static String escapeQuickFixText(String text) {
-    return XmlStringUtil.isWrappedInHtml(text) ? XmlStringUtil.stripHtml(text) : StringUtil.escapeXml(text);
+  private static String escapeQuickFixText(@NotNull String text) {
+    return XmlStringUtil.isWrappedInHtml(text) ? XmlStringUtil.stripHtml(text) : StringUtil.escapeXmlEntities(text);
   }
 
   protected void composeAdditionalDescription(@NotNull StringBuffer buf, @NotNull RefEntity refEntity) {}

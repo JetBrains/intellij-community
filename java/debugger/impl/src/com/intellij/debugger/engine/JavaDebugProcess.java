@@ -87,7 +87,7 @@ public class JavaDebugProcess extends XDebugProcess {
     final DebugProcessImpl process = javaSession.getProcess();
 
     myBreakpointHandlers = StreamEx.of(ourDefaultBreakpointHandlerFactories)
-      .append(JavaBreakpointHandlerFactory.EP_NAME.getExtensionList())
+      .append(JavaBreakpointHandlerFactory.EP_NAME.extensions())
       .map(factory -> factory.createHandler(process))
       .toArray(XBreakpointHandler[]::new);
 
@@ -475,7 +475,7 @@ public class JavaDebugProcess extends XDebugProcess {
   }
 
   @Nullable
-  private static DebugProcessImpl getCurrentDebugProcess(@Nullable Project project) {
+  public static DebugProcessImpl getCurrentDebugProcess(@Nullable Project project) {
     if (project != null) {
       XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
       if (session != null) {

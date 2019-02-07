@@ -33,7 +33,6 @@ import java.util.List;
  * Implementations of this interface are not obliged to be thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 7/16/12 3:31 PM
  */
 public interface ArrangementEntry {
 

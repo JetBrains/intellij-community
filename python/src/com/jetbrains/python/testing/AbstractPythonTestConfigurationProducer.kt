@@ -7,14 +7,18 @@ import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.execution.configurations.ConfigurationFactory
-import com.intellij.execution.configurations.ConfigurationType
 
 /**
  * Parent of all test configuration producers
  */
 abstract class AbstractPythonTestConfigurationProducer<T : AbstractPythonTestRunConfiguration<*>> : RunConfigurationProducer<T> {
+  constructor() : super(true)
+
+  /**
+   * @deprecated Override [getConfigurationFactory].
+   */
+  @Deprecated("Override getConfigurationFactory")
   constructor(configurationFactory: ConfigurationFactory) : super(configurationFactory)
-  constructor(configurationType: ConfigurationType) : super(configurationType)
 
   /**
    * Configuration type this producer accepts/creates

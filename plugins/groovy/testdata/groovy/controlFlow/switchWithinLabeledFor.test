@@ -12,7 +12,7 @@ for (def i in arr) {
 0(1) element: null
 1(2) element: Labeled statement
 2(3) READ arr
-3(4,12) element: For statement
+3(4,13) element: For statement
 4(5) WRITE i
 5(6) element: Block statement
 6(7) READ i
@@ -20,5 +20,6 @@ for (def i in arr) {
 8(1) READ a
 9(1) READ b
 10(1) READ i
-11(3) READ println
-12() element: null
+11(12) READ println
+12(3) ARGUMENTS element: Method call
+13() element: null

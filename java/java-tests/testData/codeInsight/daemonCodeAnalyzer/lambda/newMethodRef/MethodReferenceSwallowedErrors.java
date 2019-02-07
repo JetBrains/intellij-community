@@ -38,7 +38,7 @@ interface SimplifiedTest<B> {
   <FB extends Functor<B>> FB apply(Supplier<? extends FB> fn);
 
   static <A> SimplifiedTest<A> simple(final SimplifiedTest<? super A> regression) {
-    return regression::<error descr="no instance(s) of type variable(s)  exist so that capture of ? extends FB conforms to Functor<capture of ? super A>">apply</error>;
+    return regression::<error descr="no instance(s) of type variable(s) exist so that capture of ? extends FB conforms to Functor<capture of ? super A>">apply</error>;
   }
 
   interface Functor<X> { }

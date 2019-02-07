@@ -112,7 +112,7 @@ public class GrStubUtils {
 
   public static boolean isGroovyStaticMemberStub(StubElement<?> stub) {
     StubElement<?> modifierOwner = stub instanceof GrMethodStub ? stub : stub.getParentStub();
-    GrModifierListStub type = modifierOwner.findChildStubByType(GroovyElementTypes.MODIFIERS);
+    GrModifierListStub type = modifierOwner.findChildStubByType(GroovyElementTypes.MODIFIER_LIST);
     if (type == null) {
       return false;
     }

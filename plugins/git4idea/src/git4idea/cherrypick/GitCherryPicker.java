@@ -45,7 +45,7 @@ public class GitCherryPicker extends VcsCherryPicker {
   }
 
   @Override
-  public void cherryPick(@NotNull List<VcsFullCommitDetails> commits) {
+  public void cherryPick(@NotNull List<? extends VcsFullCommitDetails> commits) {
     GitApplyChangesProcess applyProcess = new GitApplyChangesProcess(myProject, commits, isAutoCommit(), "cherry-pick", "applied",
                                                                      (repository, commit, autoCommit, listeners) ->
       myGit.cherryPick(repository, commit.asString(), autoCommit, shouldAddSuffix(repository, commit),
@@ -116,7 +116,7 @@ public class GitCherryPicker extends VcsCherryPicker {
   }
 
   @Override
-  public boolean canHandleForRoots(@NotNull Collection<VirtualFile> roots) {
+  public boolean canHandleForRoots(@NotNull Collection<? extends VirtualFile> roots) {
     return roots.stream().allMatch(r -> myRepositoryManager.getRepositoryForRoot(r) != null);
   }
 }

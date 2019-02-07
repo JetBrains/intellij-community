@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsShortCommitDetails;
@@ -362,9 +363,7 @@ public class GraphTableController {
       @Nullable
       @Override
       public Object getTagAt(@NotNull MouseEvent e) {
-        Object tag = super.getTagAt(e);
-        if (!(tag instanceof SimpleColoredComponent.BrowserLauncherTag)) return null;
-        return tag;
+        return ObjectUtils.tryCast(super.getTagAt(e), SimpleColoredComponent.BrowserLauncherTag.class);
       }
     }
   }

@@ -17,4 +17,26 @@
 package com.intellij.stats.completion
 
 
-class LookupEntryInfo(val id: Int, val length: Int, val relevance: Map<String, String?>?)
+class LookupEntryInfo(val id: Int, val length: Int, val relevance: Map<String, String?>?) {
+    // returns null if no difference found
+    fun calculateDiff(newValue: LookupEntryInfo): LookupEntryDiff? {
+        assert(id == newValue.id) { "Could not compare infos for differenece lookup elements" }
+        if (this === newValue) return null
+        if (relevance == null && newValue.relevance == null) {
+            return null
+        }
+
+        return relevanceDiff(id, relevance ?: emptyMap(), newValue.relevance ?: emptyMap())
+    }
+
+    private fun relevanceDiff(id: Int, before: Map<String, String?>, after: Map<String, String?>): LookupEntryDiff? {
+        val added = after.filter { it.key !in before }
+        val removed = before.keys.filter { it !in after }
+        val changed = after.filter { it.key in before && it.value != before[it.key] }
+
+        if (changed.isEmpty() && added.isEmpty() && removed.isEmpty()) {
+            return null
+        }
+        return LookupEntryDiff(id, added, changed, removed)
+    }
+}

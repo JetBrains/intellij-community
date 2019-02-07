@@ -321,6 +321,11 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
 
+  // PY-32827 EA-90746
+  public void testInvalidElementAccessAfterPostReformatOfUsageSite() {
+    doTestInplace(null);
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/refactoring/introduceVariable";

@@ -74,7 +74,7 @@ public class UpdateEventHandler implements ProgressTracker {
 
   public void finishUpdate() {
     while (!myFilesWaitingForRevision.isEmpty()) {
-      setRevisionForWaitingFiles(CommitInfo.EMPTY.getRevision());
+      setRevisionForWaitingFiles(CommitInfo.EMPTY.getRevisionNumber());
     }
   }
 

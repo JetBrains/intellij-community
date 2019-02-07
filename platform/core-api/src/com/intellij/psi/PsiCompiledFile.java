@@ -17,7 +17,6 @@ package com.intellij.psi;
 
 /**
  * @author Evgeny Gerashchenko
- * @since 3/1/12
  */
 public interface PsiCompiledFile extends PsiFile, PsiCompiledElement {
   PsiFile getDecompiledPsiFile();

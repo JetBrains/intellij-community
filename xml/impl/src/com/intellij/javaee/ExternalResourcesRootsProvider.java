@@ -32,13 +32,13 @@ import java.util.Set;
  * @author Dmitry Avdeev
  */
 public class ExternalResourcesRootsProvider extends IndexableSetContributor {
-  private final NotNullLazyValue<Set<String>> myStandardResources = new NotNullLazyValue<Set<String>>() {
+  private final NotNullLazyValue<Set<VirtualFile>> myStandardResources = new NotNullLazyValue<Set<VirtualFile>>() {
     @NotNull
     @Override
-    protected Set<String> compute() {
+    protected Set<VirtualFile> compute() {
       ExternalResourceManagerExImpl manager = (ExternalResourceManagerExImpl)ExternalResourceManager.getInstance();
       Set<ExternalResourceManagerExImpl.Resource> dirs = new THashSet<>();
-      Set<String> set = new THashSet<>();
+      Set<VirtualFile> set = new THashSet<>();
       for (Map<String, ExternalResourceManagerExImpl.Resource> map : manager.getStandardResources()) {
         for (ExternalResourceManagerExImpl.Resource resource : map.values()) {
           ExternalResourceManagerExImpl.Resource dir = new ExternalResourceManagerExImpl.Resource(
@@ -47,7 +47,7 @@ public class ExternalResourcesRootsProvider extends IndexableSetContributor {
           if (dirs.add(dir)) {
             String url = resource.getResourceUrl();
             if (url != null) {
-              set.add(url.substring(0, url.lastIndexOf('/') + 1));
+              ContainerUtil.addIfNotNull(set, VfsUtilCore.findRelativeFile(url.substring(0, url.lastIndexOf('/') + 1), null));
             }
           }
         }
@@ -59,13 +59,7 @@ public class ExternalResourcesRootsProvider extends IndexableSetContributor {
   @NotNull
   @Override
   public Set<VirtualFile> getAdditionalRootsToIndex() {
-    Set<VirtualFile> roots = new THashSet<>();
-    for (String url : myStandardResources.getValue()) {
-      VirtualFile file = VfsUtilCore.findRelativeFile(url, null);
-      if (file != null) {
-        roots.add(file);
-      }
-    }
+    Set<VirtualFile> roots = new THashSet<>(myStandardResources.getValue());
 
     String path = FetchExtResourceAction.getExternalResourcesPath();
     VirtualFile extResources = LocalFileSystem.getInstance().findFileByPath(path);

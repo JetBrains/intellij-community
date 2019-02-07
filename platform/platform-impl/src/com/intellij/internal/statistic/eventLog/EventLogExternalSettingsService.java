@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Set;
@@ -16,6 +17,7 @@ import java.util.Set;
 public class EventLogExternalSettingsService extends SettingsConnectionService implements EventLogSettingsService {
   private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService");
   private static final String APPROVED_GROUPS_SERVICE = "white-list-service";
+  private static final String DICTIONARY_SERVICE = "dictionary-service";
   private static final String PERCENT_TRAFFIC = "percent-traffic";
 
   public static EventLogExternalSettingsService getInstance() {
@@ -29,7 +31,7 @@ public class EventLogExternalSettingsService extends SettingsConnectionService i
   @NotNull
   @Override
   public String[] getAttributeNames() {
-    return ArrayUtil.mergeArrays(super.getAttributeNames(), PERCENT_TRAFFIC, APPROVED_GROUPS_SERVICE);
+    return ArrayUtil.mergeArrays(super.getAttributeNames(), PERCENT_TRAFFIC, APPROVED_GROUPS_SERVICE, DICTIONARY_SERVICE);
   }
 
   @Override
@@ -46,6 +48,12 @@ public class EventLogExternalSettingsService extends SettingsConnectionService i
     return 0;
   }
 
+  @Override
+  @Nullable
+  public String getDictionaryServiceUrl() {
+    return getSettingValue(DICTIONARY_SERVICE);
+  }
+
   @NotNull
   public Set<String> getApprovedGroups() {
     return getWhitelistedGroups();
@@ -58,23 +66,23 @@ public class EventLogExternalSettingsService extends SettingsConnectionService i
     return new LogEventCompositeFilter(new LogEventWhitelistFilter(whitelist), LogEventSnapshotBuildFilter.INSTANCE);
   }
 
+  @Override
+  public boolean isInternal() {
+    return false;
+  }
+
   @NotNull
   private Set<String> getWhitelistedGroups() {
     final String approvedGroupsServiceUrl = getSettingValue(APPROVED_GROUPS_SERVICE);
     if (approvedGroupsServiceUrl == null) {
       return Collections.emptySet();
     }
-    final BuildNumber build = ApplicationInfo.getInstance().getBuild();
-    final String productUrl = approvedGroupsServiceUrl + build.getProductCode() + ".json";
-    return FUStatisticsWhiteListGroupsService.getApprovedGroups(productUrl, toReportedBuild(build));
+    final String productUrl = approvedGroupsServiceUrl + ApplicationInfo.getInstance().getBuild().getProductCode() + ".json";
+    return FUStatisticsWhiteListGroupsService.getApprovedGroups(productUrl, getReportedBuild());
   }
 
   @NotNull
-  private static BuildNumber toReportedBuild(@NotNull BuildNumber build) {
-    if (build.isSnapshot()) {
-      final String buildString = build.asStringWithoutProductCodeAndSnapshot();
-      return BuildNumber.fromString(buildString.endsWith(".") ? buildString + "0" : buildString);
-    }
-    return build;
+  private static BuildNumber getReportedBuild() {
+    return BuildNumber.fromString(EventLogConfiguration.INSTANCE.getBuild());
   }
 }

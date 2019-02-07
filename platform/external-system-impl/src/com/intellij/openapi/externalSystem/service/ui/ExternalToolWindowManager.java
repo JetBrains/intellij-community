@@ -1,5 +1,6 @@
 package com.intellij.openapi.externalSystem.service.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
@@ -11,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.impl.ToolWindowHeadlessManagerImpl;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +28,6 @@ import java.util.Set;
  * This class encapsulates that functionality.
  * 
  * @author Denis Zhdanov
- * @since 6/14/13 7:01 PM
  */
 public class ExternalToolWindowManager {
 
@@ -72,7 +73,7 @@ public class ExternalToolWindowManager {
   }
 
   @Nullable
-  private static ToolWindow getToolWindow(@NotNull Project project, @NotNull ProjectSystemId externalSystemId) {
+  public static ToolWindow getToolWindow(@NotNull Project project, @NotNull ProjectSystemId externalSystemId) {
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
     if (toolWindowManager == null) {
       return null;
@@ -80,6 +81,9 @@ public class ExternalToolWindowManager {
     ToolWindow result = toolWindowManager.getToolWindow(externalSystemId.getReadableName());
     if (result instanceof ToolWindowImpl) {
       ((ToolWindowImpl)result).ensureContentInitialized();
+    }
+    if (result == null && ApplicationManager.getApplication().isUnitTestMode()) {
+      result = new ToolWindowHeadlessManagerImpl.MockToolWindow(project);
     }
     return result;
   }

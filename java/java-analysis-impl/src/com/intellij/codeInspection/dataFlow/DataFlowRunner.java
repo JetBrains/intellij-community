@@ -402,8 +402,8 @@ public class DataFlowRunner {
   @Nullable
   private static DfaValue makeInitialValue(DfaVariableValue var, @NotNull PsiMethod method) {
     DfaValueFactory factory = var.getFactory();
-    if (var.getSource() instanceof DfaExpressionFactory.ThisSource) {
-      PsiClass aClass = ((DfaExpressionFactory.ThisSource)var.getSource()).getPsiElement();
+    if (var.getDescriptor() instanceof DfaExpressionFactory.ThisDescriptor) {
+      PsiClass aClass = ((DfaExpressionFactory.ThisDescriptor)var.getDescriptor()).getPsiElement();
       DfaValue value = factory.createTypeValue(var.getType(), Nullability.NOT_NULL);
       if (method.getContainingClass() == aClass && MutationSignature.fromMethod(method).preservesThis()) {
         // Unmodifiable view, because we cannot call mutating methods, but it's not guaranteed that all fields are stable
@@ -620,13 +620,13 @@ public class DataFlowRunner {
     
     void startMerge() {
       if (myMxBean != null) {
-        myMergeStart = myMxBean.getCurrentThreadCpuTime();
+        myMergeStart = System.nanoTime();
       }
     }
     
     void endMerge() {
       if (myMxBean != null) {
-        myMergeTime += myMxBean.getCurrentThreadCpuTime() - myMergeStart;
+        myMergeTime += System.nanoTime() - myMergeStart;
       }
     }
     

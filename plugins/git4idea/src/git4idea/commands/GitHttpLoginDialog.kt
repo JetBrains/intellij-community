@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands
 
+import com.google.common.annotations.VisibleForTesting
 import com.intellij.CommonBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -86,8 +87,25 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
     additionalProvidersButton.isVisible = true
   }
 
-  val username: String get() = usernameField.text
-  val password: String get() = String(passwordField.password!!)
-  val rememberPassword: Boolean get() = rememberCheckbox.isSelected
+  @set:VisibleForTesting
+  var username: String
+    get() = usernameField.text
+    internal set(value) {
+      usernameField.text = value
+    }
+
+  @set:VisibleForTesting
+  var password: String
+    get() = String(passwordField.password!!)
+    internal set(value) {
+      passwordField.text = value
+    }
+
+  @set:VisibleForTesting
+  var rememberPassword: Boolean
+    get() = rememberCheckbox.isSelected
+    internal set(value) {
+      rememberCheckbox.isSelected = value
+    }
 }
 

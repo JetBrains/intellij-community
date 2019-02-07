@@ -3,7 +3,6 @@ package com.jetbrains.python.sdk;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
@@ -68,6 +67,7 @@ import com.jetbrains.python.sdk.pipenv.PyPipEnvSdkAdditionalData;
 import icons.PythonIcons;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,10 +76,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -95,7 +93,7 @@ public final class PythonSdkType extends SdkType {
 
   private static final int MINUTE = 60 * 1000; // 60 seconds, used with script timeouts
   @NonNls private static final String SKELETONS_TOPIC = "Skeletons";
-  private static final String[] DIRS_WITH_BINARY = {"", "bin", "Scripts"};
+  private static final String[] DIRS_WITH_BINARY = {"", "bin", "Scripts", "net45"};
   private static final String[] UNIX_BINARY_NAMES = {"jython", "pypy", "python", "python3"};
   private static final String[] WIN_BINARY_NAMES = {"jython.bat", "ipy.exe", "pypy.exe", "python.exe", "python3.exe"};
 
@@ -258,18 +256,21 @@ public final class PythonSdkType extends SdkType {
     return isVirtualEnv(path);
   }
 
-  public static boolean isVirtualEnv(String path) {
+  @Contract("null -> false")
+  public static boolean isVirtualEnv(@Nullable String path) {
     return path != null && getVirtualEnvRoot(path) != null;
   }
 
   public static boolean isConda(@NotNull Sdk sdk) {
-    final String path = sdk.getHomePath();
-    return path != null && PyCondaPackageManagerImpl.isConda(sdk);
+    return PyCondaPackageManagerImpl.isConda(sdk);
+  }
+
+  public static boolean isConda(@Nullable String sdkPath) {
+    return PyCondaPackageManagerImpl.isConda(sdkPath);
   }
 
   public static boolean isCondaVirtualEnv(@NotNull Sdk sdk) {
-    final String path = sdk.getHomePath();
-    return path != null && PyCondaPackageManagerImpl.isCondaVEnv(sdk);
+    return PyCondaPackageManagerImpl.isCondaVirtualEnv(sdk);
   }
 
   @Nullable
@@ -702,12 +703,18 @@ public final class PythonSdkType extends SdkType {
     final VirtualFile resolved = ObjectUtils.notNull(vFile.getCanonicalFile(), vFile);
     if (pythonSdk != null) {
       final VirtualFile libDir = PyProjectScopeBuilder.findLibDir(pythonSdk);
-      if (libDir != null && VfsUtilCore.isAncestor(libDir, resolved, false)) {
-        return isNotSitePackages(resolved, libDir);
+      if (libDir != null) {
+        final VirtualFile resolvedLibDir = ObjectUtils.notNull(libDir.getCanonicalFile(), libDir);
+        if (VfsUtilCore.isAncestor(resolvedLibDir, resolved, false)) {
+          return isNotSitePackages(resolved, resolvedLibDir);
+        }
       }
       final VirtualFile venvLibDir = PyProjectScopeBuilder.findVirtualEnvLibDir(pythonSdk);
-      if (venvLibDir != null && VfsUtilCore.isAncestor(venvLibDir, resolved, false)) {
-        return isNotSitePackages(resolved, venvLibDir);
+      if (venvLibDir != null) {
+        final VirtualFile resolvedVenvLibDir = ObjectUtils.notNull(venvLibDir.getCanonicalFile(), venvLibDir);
+        if (VfsUtilCore.isAncestor(resolvedVenvLibDir, resolved, false)) {
+          return isNotSitePackages(resolved, resolvedVenvLibDir);
+        }
       }
       final VirtualFile skeletonsDir = PySdkUtil.findSkeletonsDir(pythonSdk);
       if (skeletonsDir != null &&
@@ -916,21 +923,17 @@ public final class PythonSdkType extends SdkType {
 
   @NotNull
   public static Map<String, String> activateVirtualEnv(@NotNull String sdkHome) {
-    Map<String, String> env = Maps.newHashMap();
-
     PyVirtualEnvReader reader = new PyVirtualEnvReader(sdkHome);
     if (reader.getActivate() != null) {
       try {
-        env.putAll(reader.readPythonEnv().entrySet().stream()
-                     .filter((entry) -> PyVirtualEnvReader.Companion.getVirtualEnvVars().contains(entry.getKey())
-                     ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+        return Collections.unmodifiableMap(PyVirtualEnvReader.Companion.filterVirtualEnvVars(reader.readPythonEnv()));
       }
       catch (Exception e) {
         LOG.error("Couldn't read virtualenv variables", e);
       }
     }
 
-    return ImmutableMap.copyOf(env);
+    return Collections.emptyMap();
   }
 }
 

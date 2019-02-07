@@ -41,7 +41,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/23/13
  */
 class AddGradleDslDependencyActionHandler implements CodeInsightActionHandler {
 

@@ -60,7 +60,7 @@ public class ShowQuickActionPopupAction extends AnAction {
         if (parentProvider != null) {
           List<AnAction> parentActions = parentProvider.getActions(false);
           if (!parentActions.isEmpty()) {
-            String name = StringUtil.notNullize(parentProvider.getName(), "");
+            String name = StringUtil.notNullize(parentProvider.getName());
             DefaultActionGroup parentGroup = new DefaultActionGroup(name, parentActions);
             if (!StringUtil.isEmpty(name)) {
               parentGroup.setPopup(true);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,10 +147,15 @@ public class UninitializedReadCollector {
     }
     else if (statement instanceof PsiSwitchStatement) {
       final PsiSwitchStatement switchStatement = (PsiSwitchStatement)statement;
-      return switchStatementAssignsVariable(switchStatement, variable, stamp, checkedMethods);
+      return switchBlockAssignsVariable(switchStatement, variable, stamp, checkedMethods);
     }
     else if (statement instanceof PsiSwitchLabelStatement) {
       return false;
+    }
+    else if (statement instanceof PsiSwitchLabeledRuleStatement) {
+      final PsiSwitchLabeledRuleStatement switchLabeledRuleStatement = (PsiSwitchLabeledRuleStatement)statement;
+      final PsiStatement body = switchLabeledRuleStatement.getBody();
+      return statementAssignsVariable(body, variable, stamp, checkedMethods);
     }
     else {
       assert false : "unknown statement: " + statement;
@@ -158,13 +163,13 @@ public class UninitializedReadCollector {
     }
   }
 
-  private boolean switchStatementAssignsVariable(@NotNull PsiSwitchStatement switchStatement, @NotNull PsiVariable variable,
-                                                 int stamp, @NotNull Set<MethodSignature> checkedMethods) {
-    final PsiExpression expression = switchStatement.getExpression();
+  private boolean switchBlockAssignsVariable(@NotNull PsiSwitchBlock switchBlock, @NotNull PsiVariable variable,
+                                             int stamp, @NotNull Set<MethodSignature> checkedMethods) {
+    final PsiExpression expression = switchBlock.getExpression();
     if (expressionAssignsVariable(expression, variable, stamp, checkedMethods)) {
       return true;
     }
-    final PsiCodeBlock body = switchStatement.getBody();
+    final PsiCodeBlock body = switchBlock.getBody();
     if (body == null) {
       return false;
     }
@@ -185,13 +190,13 @@ public class UninitializedReadCollector {
       }
       else if (statement instanceof PsiBreakStatement) {
         final PsiBreakStatement breakStatement = (PsiBreakStatement)statement;
-        if (breakStatement.getLabelIdentifier() != null) {
+        final PsiExpression valueExpression = breakStatement.getValueExpression();
+        if (expressionAssignsVariable(valueExpression, variable, stamp, checkedMethods)) {
+          assigns = true;
+        }
+        if (breakStatement.getLabelIdentifier() != null || !assigns) {
           return false;
         }
-        if (!assigns) {
-          return false;
-        }
-        assigns = false;
       }
       else {
         assigns |= statementAssignsVariable(statement, variable, stamp, checkedMethods);
@@ -200,7 +205,7 @@ public class UninitializedReadCollector {
         }
       }
     }
-    return containsDefault;
+    return assigns && (containsDefault || switchBlock instanceof PsiSwitchExpression);
   }
 
   private boolean declarationStatementAssignsVariable(@NotNull PsiDeclarationStatement declarationStatement, @NotNull PsiVariable variable,
@@ -318,7 +323,8 @@ public class UninitializedReadCollector {
     if (expression instanceof PsiThisExpression ||
         expression instanceof PsiLiteralExpression ||
         expression instanceof PsiSuperExpression ||
-        expression instanceof PsiClassObjectAccessExpression) {
+        expression instanceof PsiClassObjectAccessExpression ||
+        expression instanceof PsiLambdaExpression) {
       return false;
     }
     else if (expression instanceof PsiReferenceExpression) {
@@ -394,6 +400,10 @@ public class UninitializedReadCollector {
       final PsiInstanceOfExpression instanceOfExpression = (PsiInstanceOfExpression)expression;
       final PsiExpression operand = instanceOfExpression.getOperand();
       return expressionAssignsVariable(operand, variable, stamp, checkedMethods);
+    }
+    else if (expression instanceof PsiSwitchExpression) {
+      final PsiSwitchExpression switchExpression = (PsiSwitchExpression)expression;
+      return switchBlockAssignsVariable(switchExpression, variable, stamp, checkedMethods);
     }
     else {
       return false;

@@ -38,8 +38,13 @@ public abstract class GuessManager {
   public abstract PsiType[] guessTypeToCast(PsiExpression expr);
 
   @NotNull 
-  public abstract MultiMap<PsiExpression, PsiType> getControlFlowExpressionTypes(@NotNull PsiExpression forPlace);
+  public abstract MultiMap<PsiExpression, PsiType> getControlFlowExpressionTypes(@NotNull PsiExpression forPlace, boolean honorAssignments);
 
   @NotNull
-  public abstract List<PsiType> getControlFlowExpressionTypeConjuncts(@NotNull PsiExpression expr);
+  public List<PsiType> getControlFlowExpressionTypeConjuncts(@NotNull PsiExpression expr) {
+    return getControlFlowExpressionTypeConjuncts(expr, true);
+  }
+
+  @NotNull
+  public abstract List<PsiType> getControlFlowExpressionTypeConjuncts(@NotNull PsiExpression expr, boolean honorAssignments);
 }

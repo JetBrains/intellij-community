@@ -18,5 +18,6 @@ fun Path.safeOutputStream(requestor: Any?): OutputStream {
 }
 
 // note: keep in sync with LocalFileSystemBase#useSafeStream
-private fun useSafeStream(requestor: Any?, file: Path) =
-  requestor is SafeWriteRequestor && GeneralSettings.getInstance().isUseSafeWrite && !Files.isSymbolicLink(file)
+private fun useSafeStream(requestor: Any?, file: Path): Boolean {
+  return requestor is SafeWriteRequestor && GeneralSettings.getInstance().isUseSafeWrite && !Files.isSymbolicLink(file)
+}

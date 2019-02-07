@@ -93,13 +93,11 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
       public void visitFile(PsiFile file) {
         fileCount[0]++;
         final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-        if (progressIndicator != null) {
-          final VirtualFile virtualFile = file.getVirtualFile();
-          if (virtualFile != null) {
-            progressIndicator.setText2(ProjectUtil.calcRelativeToProjectPath(virtualFile, project));
-          }
-          progressIndicator.setText(AnalysisScopeBundle.message("scanning.scope.progress.title"));
+        final VirtualFile virtualFile = file.getVirtualFile();
+        if (virtualFile != null) {
+          progressIndicator.setText2(ProjectUtil.calcRelativeToProjectPath(virtualFile, project));
         }
+        progressIndicator.setText(AnalysisScopeBundle.message("scanning.scope.progress.title"));
         if (!(file instanceof PsiJavaFile)) return;
         final Module module = ModuleUtilCore.findModuleForPsiElement(file);
         if (module != null && processed.add(module)) {
@@ -181,26 +179,28 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
                                  final int fileCount) {
     final NullityInferrer inferrer = new NullityInferrer(isAnnotateLocalVariables(), project);
     final PsiManager psiManager = PsiManager.getInstance(project);
-    final Runnable searchForUsages = () -> scope.accept(new PsiElementVisitor() {
-      int myFileCount;
+    final Runnable searchForUsages = () -> {
+      scope.accept(new PsiElementVisitor() {
+        int myFileCount;
 
-      @Override
-      public void visitFile(final PsiFile file) {
-        myFileCount++;
-        final VirtualFile virtualFile = file.getVirtualFile();
-        final FileViewProvider viewProvider = psiManager.findViewProvider(virtualFile);
-        final Document document = viewProvider == null ? null : viewProvider.getDocument();
-        if (document == null || virtualFile.getFileType().isBinary()) return; //do not inspect binary files
-        final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-        if (progressIndicator != null) {
-          progressIndicator.setText2(ProjectUtil.calcRelativeToProjectPath(virtualFile, project));
-          progressIndicator.setFraction(((double)myFileCount) / fileCount);
+        @Override
+        public void visitFile(final PsiFile file) {
+          myFileCount++;
+          final VirtualFile virtualFile = file.getVirtualFile();
+          final FileViewProvider viewProvider = psiManager.findViewProvider(virtualFile);
+          final Document document = viewProvider == null ? null : viewProvider.getDocument();
+          if (document == null || virtualFile.getFileType().isBinary()) return; //do not inspect binary files
+          final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+          if (progressIndicator != null) {
+            progressIndicator.setText2(ProjectUtil.calcRelativeToProjectPath(virtualFile, project));
+            progressIndicator.setFraction(((double)myFileCount) / fileCount);
+          }
+          if (file instanceof PsiJavaFile) {
+            inferrer.collect(file);
+          }
         }
-        if (file instanceof PsiJavaFile) {
-          inferrer.collect(file);
-        }
-      }
-    });
+      });
+    };
     if (ApplicationManager.getApplication().isDispatchThread()) {
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(searchForUsages, INFER_NULLITY_ANNOTATIONS, true, project)) {
         return null;

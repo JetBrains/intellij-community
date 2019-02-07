@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("JvmElementActionFactories")
 
 package com.intellij.lang.jvm.actions
@@ -16,7 +16,7 @@ fun useInterlaguageActions(): Boolean = ApplicationManager.getApplication().isUn
 val EP_NAME: ExtensionPointName<JvmElementActionsFactory> = ExtensionPointName.create<JvmElementActionsFactory>("com.intellij.lang.jvm.actions.jvmElementActionsFactory")
 
 private inline fun createActions(crossinline actions: (JvmElementActionsFactory) -> List<IntentionAction>): List<IntentionAction> {
-  return EP_NAME.extensions.flatMap {
+  return EP_NAME.extensionList.flatMap {
     actions(it)
   }
 }

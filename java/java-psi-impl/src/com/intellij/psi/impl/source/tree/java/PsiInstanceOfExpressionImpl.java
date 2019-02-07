@@ -93,6 +93,7 @@ public class PsiInstanceOfExpressionImpl extends ExpressionPsiElement implements
     }
   }
 
+  @Override
   public String toString() {
     return "PsiInstanceofExpression:" + getText();
   }

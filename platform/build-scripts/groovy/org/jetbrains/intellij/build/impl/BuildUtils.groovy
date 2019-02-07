@@ -81,11 +81,20 @@ class BuildUtils {
       //if the build script is running under Ant or AntBuilder it may replace the standard System.out
       def field = Main.class.getDeclaredField("out")
       field.accessible = true
-      return (PrintStream) field.get(null)
+      return (PrintStream) field.get(null) // No longer works in recent Ant 1.9.x and 1.10
     }
     catch (Throwable ignored) {
-      return System.out
     }
+    try {
+      def clazz = Class.forName("org.jetbrains.jps.gant.GantWithClasspathTask")
+      def field = clazz.getDeclaredField("out")
+      field.setAccessible(true)
+      def out = field.get(null)
+      if (out != null) return out as PrintStream
+    }
+    catch (Throwable ignored) {
+    }
+    return System.out
   }
 
   static void defineFtpTask(BuildContext context) {

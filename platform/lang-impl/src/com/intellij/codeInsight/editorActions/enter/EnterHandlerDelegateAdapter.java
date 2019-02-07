@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 5/30/11 2:23 PM
  */
 public class EnterHandlerDelegateAdapter implements EnterHandlerDelegate {
 

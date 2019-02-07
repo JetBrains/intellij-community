@@ -7,7 +7,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 class EditorConfigMoveElementLeftRightHandlerTest : LightCodeInsightFixtureTestCase() {
   override fun getBasePath() =
-    "/plugins/editorconfig/testSrc/org/editorconfig/language/codeinsight/actions/moveLeftRight/"
+    "/plugins/editorconfig/testData/org/editorconfig/language/codeinsight/actions/moveLeftRight/"
 
   fun testMoveCentralValue() = doTest()
   fun testMoveFirstValue() = doTest()

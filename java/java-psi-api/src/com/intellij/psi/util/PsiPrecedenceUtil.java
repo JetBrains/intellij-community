@@ -128,7 +128,7 @@ public class PsiPrecedenceUtil {
     if (expression instanceof PsiPrefixExpression) {
       return PREFIX_PRECEDENCE;
     }
-    if (expression instanceof PsiPostfixExpression) {
+    if (expression instanceof PsiPostfixExpression || expression instanceof PsiSwitchExpression) {
       return POSTFIX_PRECEDENCE;
     }
     if (expression instanceof PsiPolyadicExpression) {

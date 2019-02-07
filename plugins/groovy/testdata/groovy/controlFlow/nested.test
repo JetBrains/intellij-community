@@ -8,7 +8,7 @@ for (e in [1,2,3,4]) {
 -----
 0(1) element: null
 1(2) element: Labeled statement
-2(3,13) element: For statement
+2(3,14) element: For statement
 3(4) WRITE e
 4(5) element: Block statement
 5(6,2) element: For statement
@@ -18,5 +18,6 @@ for (e in [1,2,3,4]) {
 9(10) End element: IF statement
 10(11) READ print
 11(12) READ e
-12(5) READ ee
-13() element: null
+12(13) READ ee
+13(5) ARGUMENTS element: Method call
+14() element: null

@@ -15,29 +15,72 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiStatement;
-import com.intellij.psi.PsiSwitchLabelStatement;
-import com.intellij.psi.PsiSwitchStatement;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class DefaultNotLastCaseInSwitchInspection extends BaseInspection {
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "default.not.last.case.in.switch.display.name");
+    return InspectionGadgetsBundle.message("default.not.last.case.in.switch.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "default.not.last.case.in.switch.problem.descriptor");
+    return InspectionGadgetsBundle.message("default.not.last.case.in.switch.problem.descriptor", infos[1]);
+  }
+
+  @Nullable
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    PsiSwitchLabelStatementBase lbl = (PsiSwitchLabelStatementBase)infos[0];
+    if (lbl instanceof PsiSwitchLabelStatement) {
+      PsiElement lastDefaultStmt = PsiTreeUtil.skipWhitespacesAndCommentsBackward(PsiTreeUtil.getNextSiblingOfType(lbl, PsiSwitchLabelStatementBase.class));
+      if (!(lastDefaultStmt instanceof PsiBreakStatement)) {
+        return null;
+      }
+
+      PsiSwitchLabelStatementBase prevLbl = PsiTreeUtil.getPrevSiblingOfType(lbl, PsiSwitchLabelStatementBase.class);
+      if (prevLbl != null && !(PsiTreeUtil.skipWhitespacesAndCommentsBackward(lbl) instanceof PsiBreakStatement)) {
+        return null;
+      }
+    }
+    return new InspectionGadgetsFix() {
+      @Override
+      protected void doFix(Project project, ProblemDescriptor descriptor) {
+        PsiSwitchLabelStatementBase labelStatementBase = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiSwitchLabelStatementBase.class);
+        if (labelStatementBase == null) return;
+        PsiSwitchBlock switchBlock = labelStatementBase.getEnclosingSwitchBlock();
+        if (switchBlock == null) return;
+        PsiCodeBlock blockBody = switchBlock.getBody();
+        if (blockBody == null) return;
+        PsiSwitchLabelStatementBase nextLabel = 
+          PsiTreeUtil.getNextSiblingOfType(labelStatementBase, PsiSwitchLabelStatementBase.class);//include comments and spaces
+        if (nextLabel != null) {
+          PsiElement lastStmtInDefaultCase = nextLabel.getPrevSibling();
+          blockBody.addRange(labelStatementBase, lastStmtInDefaultCase);
+          blockBody.deleteChildRange(labelStatementBase, lastStmtInDefaultCase);
+        }
+      }
+
+      @Nls(capitalization = Nls.Capitalization.Sentence)
+      @NotNull
+      @Override
+      public String getFamilyName() {
+        return "Make 'default' the last case";
+      }
+    };
   }
 
   @Override
@@ -45,13 +88,21 @@ public class DefaultNotLastCaseInSwitchInspection extends BaseInspection {
     return new DefaultNotLastCaseInSwitchVisitor();
   }
 
-  private static class DefaultNotLastCaseInSwitchVisitor
-    extends BaseInspectionVisitor {
+  private static class DefaultNotLastCaseInSwitchVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitSwitchStatement(
-      @NotNull PsiSwitchStatement statement) {
+    public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
       super.visitSwitchStatement(statement);
+      visitSwitchBlock(statement, "statement");
+    }
+
+    @Override
+    public void visitSwitchExpression(PsiSwitchExpression expression) {
+      super.visitSwitchExpression(expression);
+      visitSwitchBlock(expression, "expression");
+    }
+
+    private void visitSwitchBlock(@NotNull PsiSwitchBlock statement, String locationDescription) {
       final PsiCodeBlock body = statement.getBody();
       if (body == null) {
         return;
@@ -60,12 +111,11 @@ public class DefaultNotLastCaseInSwitchInspection extends BaseInspection {
       boolean labelSeen = false;
       for (int i = statements.length - 1; i >= 0; i--) {
         final PsiStatement child = statements[i];
-        if (child instanceof PsiSwitchLabelStatement) {
-          final PsiSwitchLabelStatement label =
-            (PsiSwitchLabelStatement)child;
+        if (child instanceof PsiSwitchLabelStatementBase) {
+          final PsiSwitchLabelStatementBase label = (PsiSwitchLabelStatementBase)child;
           if (label.isDefaultCase()) {
             if (labelSeen) {
-              registerStatementError(label);
+              registerStatementError(label, label, locationDescription);
             }
             return;
           }

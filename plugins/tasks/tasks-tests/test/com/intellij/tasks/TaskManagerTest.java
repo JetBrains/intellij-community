@@ -49,7 +49,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
         count.set(count.get() + 1);
       }
     };
-    myTaskManager.addTaskListener(listener, myFixture.getTestRootDisposable());
+    myTaskManager.addTaskListener(listener, getTestRootDisposable());
     LocalTask localTask = myTaskManager.createLocalTask("foo");
     myTaskManager.activateTask(localTask, false);
     assertEquals(1, count.get().intValue());
@@ -62,7 +62,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
   public void testNotifications() {
 
     final Ref<Notification> notificationRef = new Ref<>();
-    getProject().getMessageBus().connect(myFixture.getTestRootDisposable()).subscribe(Notifications.TOPIC, new NotificationsAdapter() {
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(Notifications.TOPIC, new NotificationsAdapter() {
       @Override
       public void notify(@NotNull Notification notification) {
         notificationRef.set(notification);

@@ -77,9 +77,7 @@ public class ReductionSystem {
     if ((Util.bindsTypeVariables(left) || Util.bindsTypeVariables(right))
     ) {
       final Subtype c = new Subtype(left, right);
-      if (!myConstraints.contains(c)) {
-        myConstraints.add(c);
-      }
+      myConstraints.add(c);
     }
   }
 

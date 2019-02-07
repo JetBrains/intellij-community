@@ -39,7 +39,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.io.PersistentEnumeratorBase;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
@@ -467,7 +466,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
 
     public static ElementPlace get(VirtualFile file, ProjectFileIndex index) {
       if (file == null) return null;
-      return index.isInSourceContent(file) ? SRC : ((index.isInLibrarySource(file) || index.isInLibraryClasses(file)) ? LIB : null);
+      return index.isInSourceContent(file) ? SRC : (index.isInLibrary(file) ? LIB : null);
     }
   }
 

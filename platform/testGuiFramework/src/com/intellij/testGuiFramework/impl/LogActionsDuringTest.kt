@@ -22,7 +22,7 @@ class LogActionsDuringTest : TestWatcher() {
   private var disposable: Disposable? = null
 
   private val actionListener = object : AnActionListener {
-    override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent?) {
+    override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
       LOG.info("Action: $action (actionId: ${ActionManager.getInstance().getId(action)}); DataContext: $dataContext; Event: $event")
     }
   }

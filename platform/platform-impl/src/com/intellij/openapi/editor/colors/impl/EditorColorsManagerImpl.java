@@ -145,24 +145,10 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     loadSchemesFromThemes();
     mySchemeManager.loadSchemes();
 
-    String wizardEditorScheme = WelcomeWizardUtil.getWizardEditorScheme();
-    EditorColorsScheme scheme = null;
-    if (wizardEditorScheme != null) {
-      scheme = getScheme(wizardEditorScheme);
-      LOG.assertTrue(scheme != null, "Wizard scheme " + wizardEditorScheme + " not found");
-    }
-
     initEditableDefaultSchemesCopies();
     initEditableBundledSchemesCopies();
     resolveLinksToBundledSchemes();
-    if (scheme == null) {
-      scheme = UIUtil.isUnderDarcula() ? getScheme("Darcula") : getDefaultScheme();
-      if (scheme == null) {
-        LOG.warn("Editor scheme 'Darcula' not found");
-        scheme = getDefaultScheme();
-      }
-    }
-    setGlobalSchemeInner(scheme);
+    initScheme();
   }
 
   private void initDefaultSchemes() {
@@ -178,6 +164,33 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
         createEditableCopy(defaultScheme, defaultScheme.getEditableCopyName());
       }
     }
+  }
+
+  private void initScheme() {
+    String wizardEditorScheme = WelcomeWizardUtil.getWizardEditorScheme();
+    EditorColorsScheme scheme = null;
+
+    if (wizardEditorScheme != null) {
+      scheme = getScheme(wizardEditorScheme);
+      LOG.assertTrue(scheme != null, "Wizard scheme " + wizardEditorScheme + " not found");
+    }
+
+    if (scheme == null) {
+      LafManager lm = LafManager.getInstance();
+      UIManager.LookAndFeelInfo laf = lm.getCurrentLookAndFeel();
+
+      if (laf instanceof UIThemeBasedLookAndFeelInfo) {
+        String schemeName = ((UIThemeBasedLookAndFeelInfo)laf).getTheme().getEditorSchemeName();
+        if (schemeName != null) {
+          scheme = getScheme(schemeName);
+        }
+      }
+    }
+
+    if (scheme == null) {
+      scheme = UIUtil.isUnderDarcula() ? getScheme("Darcula") : getDefaultScheme();
+    }
+    setGlobalSchemeInner(scheme);
   }
 
   private void loadBundledSchemes() {
@@ -430,15 +443,16 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   @Override
   public EditorColorsScheme getSchemeForCurrentUITheme() {
     LookAndFeelInfo lookAndFeelInfo = LafManager.getInstance().getCurrentLookAndFeel();
-    EditorColorsScheme scheme;
+    EditorColorsScheme scheme = null;
     if (lookAndFeelInfo instanceof UIThemeBasedLookAndFeelInfo) {
       UITheme theme = ((UIThemeBasedLookAndFeelInfo)lookAndFeelInfo).getTheme();
-      String schemeName= theme.getEditorSchemeName();
-      scheme = getScheme(schemeName);
-      assert scheme != null :
-        "Theme " + theme.getName() + " refers to unknown color scheme " + schemeName;
+      String schemeName = theme.getEditorSchemeName();
+      if (schemeName != null) {
+        scheme = getScheme(schemeName);
+        assert scheme != null : "Theme " + theme.getName() + " refers to unknown color scheme " + schemeName;
+      }
     }
-    else {
+    if (scheme == null) {
       String schemeName = UIUtil.isUnderDarcula() ? "Darcula" : DEFAULT_SCHEME_NAME;
       scheme = myDefaultColorSchemeManager.getScheme(schemeName);
       assert scheme != null :

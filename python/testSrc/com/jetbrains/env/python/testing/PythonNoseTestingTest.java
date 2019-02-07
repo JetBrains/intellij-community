@@ -43,9 +43,9 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
                                       @NotNull final String stderr,
                                       @NotNull final String all, int exitCode) {
         assertEquals("Nose genenerator produced bad tree", "Test tree:\n" +
-                                                           "[root]\n" +
-                                                           ".test_nose_generator\n" +
-                                                           "..test_evens\n" +
+                                                           "[root](-)\n" +
+                                                           ".test_nose_generator(-)\n" +
+                                                           "..test_evens(-)\n" +
                                                            "...(0, 0)(+)\n" +
                                                            "...(1, 3)(-)\n" +
                                                            "...(2, 6)(+)\n" +
@@ -285,8 +285,8 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
                                     @NotNull String stderr,
                                     @NotNull String all, int exitCode) {
       assertEquals("--slow runner broken on arguments" + myArguments, "Test tree:\n" +
-                                                                      "[root]\n" +
-                                                                      ".test_with_slow\n" +
+                                                                      "[root](+)\n" +
+                                                                      ".test_with_slow(+)\n" +
                                                                       "..test_fast(+)\n",
                    runner.getFormattedTestTree());
     }

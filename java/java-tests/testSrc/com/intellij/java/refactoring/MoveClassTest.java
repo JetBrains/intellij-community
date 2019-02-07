@@ -2,52 +2,52 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.PackageWrapper;
-import com.intellij.refactoring.RefactoringTestCase;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NonNls;
 
-import java.io.File;
-
-public class MoveClassTest extends RefactoringTestCase {
-  public void testContextChange() throws Exception{
-    doTest("contextChange1", new String[]{"pack1.Class1"}, "pack2");
-    doTest("contextChange2", new String[]{"pack1.Class1"}, "pack2");
+public class MoveClassTest extends LightMultiFileTestCase {
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/moveClass/";
   }
 
-  public void testMoveMultiple() throws Exception{
-    doTest("moveMultiple1", new String[]{"pack1.Class1", "pack1.Class2"}, "pack2");
+  public void testContextChange1() {
+    doTest(new String[]{"pack1.Class1"}, "pack2");
+  }
+  public void testContextChange2() {
+    doTest(new String[]{"pack1.Class1"}, "pack2");
   }
 
-  public void testSecondaryClass() throws Exception{
-    doTest("secondaryClass", new String[]{"pack1.Class2"}, "pack1");
+  public void testMoveMultiple1() {
+    doTest(new String[]{"pack1.Class1", "pack1.Class2"}, "pack2");
   }
 
-  public void testStringsAndComments() throws Exception{
-    doTest("stringsAndComments", new String[]{"pack1.Class1"}, "pack2");
+  public void testSecondaryClass() {
+    doTest(new String[]{"pack1.Class2"}, "pack1");
   }
 
-  public void testStringsAndComments2() throws Exception{
-    doTest("stringsAndComments2", new String[]{"pack1.AClass"}, "pack2");
+  public void testStringsAndComments() {
+    doTest(new String[]{"pack1.Class1"}, "pack2");
   }
 
-  public void testNonJava() throws Exception{
-    doTest("nonJava", new String[]{"pack1.Class1"}, "pack2");
+  public void testStringsAndComments2() {
+    doTest(new String[]{"pack1.AClass"}, "pack2");
   }
 
-  public void testRefInPropertiesFile() throws Exception{
-    doTest("refInPropertiesFile", new String[]{"p1.MyClass"}, "p");
+  public void testNonJava() {
+    doTest(new String[]{"pack1.Class1"}, "pack2");
+  }
+
+  public void testRefInPropertiesFile() {
+    doTest(new String[]{"p1.MyClass"}, "p");
   }
 
   /* IMPLEMENT: getReferences() in JspAttributeValueImpl should be dealed with (soft refs?)
@@ -57,13 +57,13 @@ public class MoveClassTest extends RefactoringTestCase {
   }
   */
 
-  public void testLocalClass() throws Exception{
-    doTest("localClass", new String[]{"pack1.A"}, "pack2");
+  public void testLocalClass() {
+    doTest(new String[]{"pack1.A"}, "pack2");
   }
 
-  public void testClassAndSecondary() throws Exception{
+  public void testClassAndSecondary() {
     try {
-      doTest("classAndSecondary", new String[]{"pack1.Class1", "pack1.Class2"}, "pack2");
+      doTest(new String[]{"pack1.Class1", "pack1.Class2"}, "pack2");
       fail("Conflicts expected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
@@ -71,55 +71,41 @@ public class MoveClassTest extends RefactoringTestCase {
     }
   }
 
-  public void testIdeadev27996() throws Exception {
-    doTest("ideadev27996", new String[] { "pack1.X" }, "pack2");
+  public void testIdeadev27996() {
+    doTest(new String[] { "pack1.X" }, "pack2");
   }
 
-  public void testUnusedImport() throws Exception {
-    doTest("unusedImport", new String[]{"p2.F2"}, "p1");
+  public void testUnusedImport() {
+    doTest(new String[]{"p2.F2"}, "p1");
   }
   
-  public void testQualifiedReferenceAfterFailedMethodConflictResolution() throws Exception {
-    doTest("qualifiedRef", new String[]{"p1.Test"}, "p2");
+  public void testQualifiedRef() {
+    doTest(new String[]{"p1.Test"}, "p2");
   }
 
-  public void testConflictingClassNames() throws Exception {
-    doTest("conflictingNames", new String[] {"p1.First", "p1.Second"}, "p3");
+  public void testConflictingNames() {
+    doTest(new String[] {"p1.First", "p1.Second"}, "p3");
   }
 
-  private void doTest(@NonNls String testName, @NonNls String[] classNames, @NonNls String newPackageName) throws Exception{
-    String root = JavaTestUtil.getJavaTestDataPath() + "/refactoring/moveClass/" + testName;
-
-    String rootBefore = root + "/before";
-    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
-    VirtualFile rootDir = createTestProjectStructure(rootBefore);
-
-    performAction(classNames, newPackageName);
-
-    String rootAfter = root + "/after";
-    VirtualFile rootDir2 = LocalFileSystem.getInstance().findFileByPath(rootAfter.replace(File.separatorChar, '/'));
-    myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
-    PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir);
+  private void doTest(@NonNls String[] classNames, @NonNls String newPackageName) {
+    doTest(() -> performAction(classNames, newPackageName));
   }
 
   private void performAction(String[] classNames, String newPackageName) {
     final PsiClass[] classes = new PsiClass[classNames.length];
     for(int i = 0; i < classes.length; i++){
       String className = classNames[i];
-      classes[i] = myJavaFacade.findClass(className, GlobalSearchScope.projectScope(getProject()));
-      assertNotNull("Class " + className + " not found", classes[i]);
+      classes[i] = myFixture.findClass(className);
     }
 
-    PsiPackage aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage(newPackageName);
+    PsiPackage aPackage = myFixture.findPackage(newPackageName);
     assertNotNull("Package " + newPackageName + " not found", aPackage);
     final PsiDirectory[] dirs = aPackage.getDirectories();
-    assertEquals(dirs.length, 1);
+    assertEquals(1, dirs.length);
 
-    new MoveClassesOrPackagesProcessor(myProject, classes,
+    new MoveClassesOrPackagesProcessor(getProject(), classes,
                                        new SingleSourceRootMoveDestination(PackageWrapper.create(JavaDirectoryService
                                          .getInstance().getPackage(dirs[0])), dirs[0]),
                                        true, true, null).run();
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    FileDocumentManager.getInstance().saveAllDocuments();
   }
 }

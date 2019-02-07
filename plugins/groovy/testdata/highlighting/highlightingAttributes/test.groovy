@@ -1,4 +1,4 @@
-<info descr="null" textAttributesKey="Annotation">@</info><info descr="null" textAttributesKey="Annotation"><info descr="null" textAttributesKey="Annotation">Annotation</info></info>(<info descr="null" textAttributesKey="Anotation attribute name">parameter</info> = 'value')
+<info descr="null" textAttributesKey="Annotation">@</info><info descr="null" textAttributesKey="Annotation">Annotation</info>(<info descr="null" textAttributesKey="Anotation attribute name">parameter</info> = 'value')
 class <info descr="null" textAttributesKey="Class">C</info> {
   <info descr="null" textAttributesKey="Groovy constructor declaration">C</info>() {
     this(1, 2)
@@ -83,6 +83,7 @@ def <info descr="null" textAttributesKey="Groovy var">c</info> = new <info descr
 class <info descr="null" textAttributesKey="Class">Outer</info> {
   def <info descr="null" textAttributesKey="Groovy method declaration">getThis</info>() {}
   def <info descr="null" textAttributesKey="Groovy method declaration">getSuper</info>() {}
+  def <info descr="null" textAttributesKey="Groovy method declaration">getDef</info>() {}
 
   class <info descr="null" textAttributesKey="Class">Inner</info> {
     def <info descr="null" textAttributesKey="Groovy method declaration">foo</info>() {
@@ -97,3 +98,4 @@ class <info descr="null" textAttributesKey="Class">Outer</info> {
 def <info descr="null" textAttributesKey="Groovy var">outer</info> = new <info descr="null" textAttributesKey="Class">Outer</info>()
 <info descr="null" textAttributesKey="Groovy var">outer</info>.<info descr="null" textAttributesKey="Instance property reference ID">this</info>
 <info descr="null" textAttributesKey="Groovy var">outer</info>.<info descr="null" textAttributesKey="Instance property reference ID">super</info>
+<info descr="null" textAttributesKey="Groovy var">outer</info>.<info descr="null" textAttributesKey="Instance property reference ID">def</info>

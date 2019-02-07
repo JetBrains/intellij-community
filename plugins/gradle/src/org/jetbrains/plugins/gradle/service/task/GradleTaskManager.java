@@ -58,7 +58,6 @@ import static org.jetbrains.plugins.gradle.util.GradleUtil.determineRootProject;
 
 /**
  * @author Denis Zhdanov
- * @since 3/14/13 5:09 PM
  */
 public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecutionSettings> {
 

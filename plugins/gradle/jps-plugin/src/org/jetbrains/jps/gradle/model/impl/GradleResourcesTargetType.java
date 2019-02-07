@@ -16,7 +16,6 @@ import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/10/2014
  */
 public class GradleResourcesTargetType extends ModuleBasedBuildTargetType<GradleResourcesTarget> {
   public static final GradleResourcesTargetType PRODUCTION = new GradleResourcesTargetType("gradle-resources-production", false);

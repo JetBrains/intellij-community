@@ -105,7 +105,7 @@ public abstract class GroovySpacingProcessorBasic {
     }
 
     //todo:check it for multiple assignments
-    if ((GroovyElementTypes.VARIABLE_DEFINITION.equals(leftType) || GroovyElementTypes.VARIABLE_DEFINITION.equals(rightType)) &&
+    if ((GroovyElementTypes.VARIABLE_DECLARATION.equals(leftType) || GroovyElementTypes.VARIABLE_DECLARATION.equals(rightType)) &&
         !(leftNode.getTreeNext() instanceof PsiErrorElement)) {
       return getStatementSpacing(context);
     }

@@ -15,31 +15,26 @@
  */
 package com.siyeh.ig.dataflow;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.JavaSuppressionUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.RedundantCastUtil;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.InlineVariableFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public class UnnecessaryLocalVariableInspection extends BaseInspection {
   /**
@@ -116,7 +111,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
           }
         }
       }
-      if (isCopyVariable(variable)) {
+      if (VariableAccessUtils.localVariableIsCopy(variable)) {
         registerVariableError(variable);
       }
       else if (!m_ignoreImmediatelyReturnedVariables && isImmediatelyReturned(variable)) {
@@ -125,118 +120,15 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
       else if (!m_ignoreImmediatelyReturnedVariables && isImmediatelyThrown(variable)) {
         registerVariableError(variable);
       }
+      else if (isImmediatelyUsedByBreak(variable)) {
+        registerVariableError(variable);
+      }
       else if (isImmediatelyAssigned(variable)) {
         registerVariableError(variable);
       }
       else if (isImmediatelyAssignedAsDeclaration(variable)) {
         registerVariableError(variable);
       }
-    }
-
-    private boolean isCopyVariable(PsiVariable variable) {
-      PsiExpression initializer = ParenthesesUtils.stripParentheses(variable.getInitializer());
-      if (initializer instanceof PsiTypeCastExpression) {
-        PsiExpression operand = ((PsiTypeCastExpression)initializer).getOperand();
-        if (operand instanceof PsiReferenceExpression && RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)initializer)) {
-          initializer = operand;
-        }
-      }
-      if (!(initializer instanceof PsiReferenceExpression)) {
-        return false;
-      }
-      final PsiReferenceExpression reference = (PsiReferenceExpression)initializer;
-      final PsiVariable initialization = ObjectUtils.tryCast(reference.resolve(), PsiVariable.class);
-      if (initialization == null) {
-        return false;
-      }
-      if (!(initialization instanceof PsiResourceVariable) && variable instanceof PsiResourceVariable) {
-        return false;
-      }
-      if (!(initialization instanceof PsiLocalVariable || initialization instanceof PsiParameter)) {
-        if (!isFinalChain(reference) || ReferencesSearch.search(variable).findAll().size() != 1) {
-          // only warn when variable is referenced once, to avoid warning when a field is cached in local variable
-          // as in e.g. gnu.trove.TObjectHash#forEach()
-          return false;
-        }
-      }
-      final PsiCodeBlock containingScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
-      if (containingScope == null) {
-        return false;
-      }
-      if (variableMayChange(containingScope, null, variable)) {
-        return false;
-      }
-      if (variableMayChange(containingScope, PsiUtil.skipParenthesizedExprDown(reference.getQualifierExpression()), initialization)) {
-        return false;
-      }
-
-      final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(containingScope.getProject()).getResolveHelper();
-      final String initializationName = initialization.getName();
-      if (initializationName == null) {
-        return false;
-      }
-
-      final boolean finalVariableIntroduction =
-        !initialization.hasModifierProperty(PsiModifier.FINAL) && variable.hasModifierProperty(PsiModifier.FINAL) ||
-        PsiUtil.isLanguageLevel8OrHigher(initialization) &&
-        !HighlightControlFlowUtil.isEffectivelyFinal(initialization, containingScope, null) &&
-        HighlightControlFlowUtil.isEffectivelyFinal(variable, containingScope, null);
-
-      final PsiType variableType = variable.getType();
-      final PsiType initializationType = initialization.getType();
-      final boolean sameType = Comparing.equal(variableType, initializationType);
-      for (PsiReference ref : ReferencesSearch.search(variable, new LocalSearchScope(containingScope))) {
-        final PsiElement refElement = ref.getElement();
-        if (finalVariableIntroduction) {
-          final PsiElement element = PsiTreeUtil.getParentOfType(refElement, PsiClass.class, PsiLambdaExpression.class);
-          if (element != null && PsiTreeUtil.isAncestor(containingScope, element, true)) {
-            return false;
-          }
-        }
-
-        if (resolveHelper.resolveReferencedVariable(initializationName, refElement) != initialization) {
-          return false;
-        }
-
-        if (!sameType) {
-          final PsiElement parent = refElement.getParent();
-          if (parent instanceof PsiReferenceExpression) {
-            final PsiElement resolve = ((PsiReferenceExpression)parent).resolve();
-            if (resolve instanceof PsiMember &&
-                ((PsiMember)resolve).hasModifierProperty(PsiModifier.PRIVATE)) {
-              return false;
-            }
-          }
-        }
-      }
-
-      return !TypeConversionUtil.boxingConversionApplicable(variableType, initializationType);
-    }
-
-    private boolean isFinalChain(PsiReferenceExpression reference) {
-      while (true) {
-        PsiElement element = reference.resolve();
-        if (!(element instanceof PsiField)) return true;
-        if (!((PsiField)element).hasModifierProperty(PsiModifier.FINAL)) return false;
-        PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(reference.getQualifierExpression());
-        if (qualifier == null || qualifier instanceof PsiThisExpression) return true;
-        if (!(qualifier instanceof PsiReferenceExpression)) return false;
-        reference = (PsiReferenceExpression)qualifier;
-      }
-    }
-
-    private boolean variableMayChange(PsiCodeBlock containingScope, PsiExpression qualifier, PsiVariable variable) {
-      while (variable != null) {
-        if (!variable.hasModifierProperty(PsiModifier.FINAL) &&
-            VariableAccessUtils.variableIsAssigned(variable, containingScope, false)) {
-          return true;
-        }
-        if (!(qualifier instanceof PsiReferenceExpression)) break;
-        PsiReferenceExpression qualifierReference = (PsiReferenceExpression)qualifier;
-        qualifier = PsiUtil.skipParenthesizedExprDown(qualifierReference.getQualifierExpression());
-        variable = ObjectUtils.tryCast(qualifierReference.resolve(), PsiVariable.class);
-      }
-      return false;
     }
 
     private boolean isImmediatelyReturned(PsiVariable variable) {
@@ -263,6 +155,22 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
       if (referent == null || !referent.equals(variable)) {
         return false;
       }
+      return !isVariableUsedInFollowingDeclarations(variable, declarationStatement);
+    }
+
+    private boolean isImmediatelyUsedByBreak(PsiVariable variable) {
+      final PsiCodeBlock containingScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, true, PsiClass.class);
+      if (containingScope == null) {
+        return false;
+      }
+      PsiDeclarationStatement declarationStatement = tryCast(variable.getParent(), PsiDeclarationStatement.class);
+      if (declarationStatement == null) return false;
+      PsiBreakStatement breakStatement =
+        tryCast(PsiTreeUtil.getNextSiblingOfType(declarationStatement, PsiStatement.class), PsiBreakStatement.class);
+      if (breakStatement == null) return false;
+      final PsiExpression returnValue = ParenthesesUtils.stripParentheses(breakStatement.getValueExpression());
+      if (!(returnValue instanceof PsiReferenceExpression)) return false;
+      if (!ExpressionUtils.isReferenceTo(returnValue, variable)) return false;
       return !isVariableUsedInFollowingDeclarations(variable, declarationStatement);
     }
 

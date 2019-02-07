@@ -60,9 +60,7 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
     if (!exceptionsString.isEmpty()) {
       exceptions.clear();
       final List<String> strings = StringUtil.split(exceptionsString, ",");
-      for (String string : strings) {
-        exceptions.add(string);
-      }
+      exceptions.addAll(strings);
       exceptionsString = "";
     }
   }

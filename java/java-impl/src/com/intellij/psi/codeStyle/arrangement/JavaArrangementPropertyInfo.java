@@ -23,7 +23,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 9/18/12 3:33 PM
  */
 public class JavaArrangementPropertyInfo {
 

@@ -52,10 +52,8 @@ import static com.intellij.formatting.FormatterTestUtils.Action.REFORMAT;
  * Base class for java formatter tests that holds utility methods.
  *
  * @author Denis Zhdanov
- * @since Apr 27, 2010 6:26:29 PM
  */
 public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
-  private JavaCodeStyleBean myCodeStyleBean;
 
   @NotNull
   public static String shiftIndentInside(@NotNull String initial, final int i, boolean shiftEmptyLines) {
@@ -86,14 +84,6 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     return result.toString();
   }
 
-  @NotNull
-  public JavaCodeStyleBean getCodeStyleBean() {
-    if (myCodeStyleBean == null) {
-      myCodeStyleBean = new JavaCodeStyleBean();
-      myCodeStyleBean.setRootSettings(CodeStyle.getSettings(getProject()));
-    }
-    return myCodeStyleBean;
-  }
 
   public static JavaCodeStyleSettings getJavaSettings() {
     return getSettings().getRootSettings().getCustomSettings(JavaCodeStyleSettings.class);

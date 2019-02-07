@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -8,7 +8,6 @@ package com.intellij.openapi.fileEditor.impl.text;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -20,13 +19,13 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.util.Producer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Supplier;
+
 public class PsiAwareTextEditorProvider extends TextEditorProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider");
   @NonNls
   private static final String FOLDING_ELEMENT = "folding";
 
@@ -76,7 +75,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
       }
     }
     else {
-      Producer<CodeFoldingState> delayedProducer = state.getDelayedFoldState();
+      Supplier<CodeFoldingState> delayedProducer = state.getDelayedFoldState();
       if (delayedProducer instanceof MyDelayedFoldingState) {
         element.addContent(((MyDelayedFoldingState)delayedProducer).getSerializedState());
       }
@@ -146,7 +145,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
     }
   }
 
-  private static class MyDelayedFoldingState implements Producer<CodeFoldingState> {
+  private static final class MyDelayedFoldingState implements Supplier<CodeFoldingState> {
     private final Project myProject;
     private final VirtualFile myFile;
     private final Element mySerializedState;
@@ -158,7 +157,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
     }
 
     @Override
-    public CodeFoldingState produce() {
+    public CodeFoldingState get() {
       Document document = FileDocumentManager.getInstance().getCachedDocument(myFile);
       return document == null ? null : CodeFoldingManager.getInstance(myProject).readFoldingState(mySerializedState, document);
     }

@@ -19,6 +19,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -122,27 +123,23 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         final PsiElement element = rrr.getElement();
         if (element instanceof PyClass) {
           final PyClass cls = (PyClass)element;
-          final List<PyFunction> ownInits = cls.multiFindMethodByName(PyNames.INIT, false, null);
-          if (!ownInits.isEmpty()) {
+          final List<PyFunction> initAndNew = cls.multiFindInitOrNew(false, null);
+          if (!initAndNew.isEmpty()) {
             // replace
             iterator.remove();
-            ownInits.forEach(init -> iterator.add(rrr.replace(init)));
-          }
-          else {// init not found; maybe it's ancestor's
-            for (PyClass ancestor : cls.getAncestorClasses(myContext.getTypeEvalContext())) {
-              final List<PyFunction> ancestorInits = ancestor.multiFindMethodByName(PyNames.INIT, false, null);
-              if (!ancestorInits.isEmpty()) {
-                // add to results as low priority
-                ancestorInits.forEach(init -> iterator.add(new RatedResolveResult(RatedResolveResult.RATE_LOW, init)));
-                break;
-              }
-            }
+            preferInitOverNew(initAndNew).forEach(init -> iterator.add(rrr.replace(init)));
           }
         }
       }
     }
 
     return RatedResolveResult.sorted(targets).toArray(ResolveResult.EMPTY_ARRAY);
+  }
+
+  @NotNull
+  private static Collection<? extends PyFunction> preferInitOverNew(@NotNull List<PyFunction> initAndNew) {
+    final MultiMap<String, PyFunction> functions = ContainerUtil.groupBy(initAndNew, PyFunction::getName);
+    return functions.containsKey(PyNames.INIT) ? functions.get(PyNames.INIT) : functions.values();
   }
 
   @NotNull

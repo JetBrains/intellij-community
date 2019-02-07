@@ -34,7 +34,7 @@ import java.util.HashSet;
 public class ChangeSignatureTest extends ChangeSignatureBaseTest {
 
   private CommonCodeStyleSettings getJavaSettings() {
-    return getCurrentCodeStyleSettings(ourProject).getCommonSettings(JavaLanguage.INSTANCE);
+    return getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE);
   }
 
   public void testSimple() {
@@ -357,6 +357,13 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, false);
   }
 
+  public void testReorderWithVarargsFromSimpleType() {
+    doTest(null, new ParameterInfoImpl[]{
+      new ParameterInfoImpl(1),
+      new ParameterInfoImpl(0, "s", myFactory.createTypeFromText("java.lang.String...", getFile()))
+    }, false);
+  }
+
   public void testIntroduceParameterWithDefaultValueInHierarchy() {
     doTest(null, new ParameterInfoImpl[]{new ParameterInfoImpl(-1, "i", PsiType.INT, "0")}, false);
   }
@@ -442,6 +449,10 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   }
 
   public void testPreserveOverride() {
+    doTest(null, null, null, new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
+  }
+
+  public void testKeepTryWithResources() {
     doTest(null, null, null, new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
   }
 

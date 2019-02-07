@@ -16,6 +16,8 @@
 
 package com.intellij.openapi.ui;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.awt.*;
 import java.util.Map;
 
@@ -28,7 +30,7 @@ public class GraphicsConfig {
   private final Composite myComposite;
   private final Stroke myStroke;
 
-  public GraphicsConfig(Graphics g) {
+  public GraphicsConfig(@NotNull Graphics g) {
     myG = (Graphics2D)g;
     myHints = (Map)myG.getRenderingHints().clone();
     myComposite = myG.getComposite();

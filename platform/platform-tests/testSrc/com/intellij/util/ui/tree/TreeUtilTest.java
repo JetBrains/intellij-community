@@ -15,17 +15,17 @@
  */
 package com.intellij.util.ui.tree;
 
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.ui.TreeExpandCollapse;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Assertion;
+import junit.framework.TestCase;
 
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 
-public class TreeUtilTest extends PlatformTestCase {
+public class TreeUtilTest extends TestCase {
   private final Assertion CHECK = new Assertion();
 
   public void testFindNodeWithObject() {
@@ -138,7 +138,7 @@ public class TreeUtilTest extends PlatformTestCase {
     DefaultMutableTreeNode node1_1 = new DefaultMutableTreeNode("1_1");
     node1.add(node1_1);
     DefaultTreeModel model = new DefaultTreeModel(root);
-    TreeUtil.sort(model, (o1, o2) -> o1.toString().compareTo(o2.toString()));
+    TreeUtil.sort(model, Comparator.comparing(Object::toString));
     assertEquals(node1, root.getChildAt(0));
     assertEquals(node2, root.getChildAt(1));
     assertEquals(node1_1, node1.getChildAt(0));

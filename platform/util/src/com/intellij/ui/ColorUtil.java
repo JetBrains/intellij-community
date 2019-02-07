@@ -5,9 +5,7 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NotNullProducer;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -202,6 +200,7 @@ public class ColorUtil {
 
   /**
    * Return Color object from string. The following formats are allowed:
+   * {@code 0xA1B2C3},
    * {@code #abc123},
    * {@code ABC123},
    * {@code ab5},
@@ -212,19 +211,29 @@ public class ColorUtil {
    */
   @NotNull
   public static Color fromHex(@NotNull String str) {
-    str = StringUtil.trimStart(str, "#");
-    if (str.length() == 3) {
-      return new Color(
-        17 * Integer.valueOf(String.valueOf(str.charAt(0)), 16).intValue(),
-        17 * Integer.valueOf(String.valueOf(str.charAt(1)), 16).intValue(),
-        17 * Integer.valueOf(String.valueOf(str.charAt(2)), 16).intValue());
-    }
-    else if (str.length() == 6) {
-      return Color.decode("0x" + str);
-    }
-    else {
-      throw new IllegalArgumentException("Should be String of 3 or 6 chars length.");
-    }
+    int pos = str.startsWith("#") ? 1 : str.startsWith("0x") ? 2 : 0;
+    int len = str.length() - pos;
+    if (len == 3) return new Color(fromHex1(str, pos), fromHex1(str, pos + 1), fromHex1(str, pos + 2), 255);
+    if (len == 4) return new Color(fromHex1(str, pos), fromHex1(str, pos + 1), fromHex1(str, pos + 2), fromHex1(str, pos + 3));
+    if (len == 6) return new Color(fromHex2(str, pos), fromHex2(str, pos + 2), fromHex2(str, pos + 4), 255);
+    if (len == 8) return new Color(fromHex2(str, pos), fromHex2(str, pos + 2), fromHex2(str, pos + 4), fromHex2(str, pos + 6));
+    throw new IllegalArgumentException("unsupported length:" + str);
+  }
+
+  private static int fromHex(@NotNull String str, int pos) {
+    char ch = str.charAt(pos);
+    if (ch >= '0' && ch <= '9') return ch - '0';
+    if (ch >= 'A' && ch <= 'F') return ch - 'A' + 10;
+    if (ch >= 'a' && ch <= 'f') return ch - 'a' + 10;
+    throw new IllegalArgumentException("unsupported char at " + pos + ":" + str);
+  }
+
+  private static int fromHex1(@NotNull String str, int pos) {
+    return 17 * fromHex(str, pos);
+  }
+
+  private static int fromHex2(@NotNull String str, int pos) {
+    return 16 * fromHex(str, pos) + fromHex(str, pos + 1);
   }
 
   @Nullable
@@ -236,26 +245,6 @@ public class ColorUtil {
     catch (Exception e) {
       return defaultValue;
     }
-  }
-
-  @Nullable
-  public static Color getColor(@NotNull Class<?> cls) {
-    final Colored colored = cls.getAnnotation(Colored.class);
-    if (colored != null) {
-      return new JBColor(new NotNullProducer<Color>() {
-        @NotNull
-        @Override
-        public Color produce() {
-          String colorString = UIUtil.isUnderDarcula() ? colored.darkVariant() : colored.color();
-          Color color = fromHex(colorString, null);
-          if (color == null) {
-            throw new IllegalArgumentException("Can't parse " + colorString);
-          }
-          return color;
-        }
-      });
-    }
-    return null;
   }
 
   /**
@@ -281,17 +270,9 @@ public class ColorUtil {
 
   @NotNull
   public static Color mix(@NotNull final Color c1, @NotNull final Color c2, double balance) {
-    final double b = Math.min(1, Math.max(0, balance));
-    NotNullProducer<Color> func = new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        return new Color((int)((1 - b) * c1.getRed() + c2.getRed() * b + .5),
-                         (int)((1 - b) * c1.getGreen() + c2.getGreen() * b + .5),
-                         (int)((1 - b) * c1.getBlue() + c2.getBlue() * b + .5),
-                         (int)((1 - b) * c1.getAlpha() + c2.getAlpha() * b + .5));
-      }
-    };
+    if (balance <= 0) return c1;
+    if (balance >= 1) return c2;
+    NotNullProducer<Color> func = new MixedColorProducer(c1, c2, balance);
     return c1 instanceof JBColor || c2 instanceof JBColor ? new JBColor(func) : func.produce();
   }
 }

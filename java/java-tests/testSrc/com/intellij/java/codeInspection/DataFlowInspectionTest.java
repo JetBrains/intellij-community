@@ -604,7 +604,10 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNullableReturn() { doTest(); }
   public void testManyBooleans() { doTest(); }
   public void testPureNoArgMethodAsVariable() { doTest(); }
-  public void testRedundantAssignment() { doTest(); }
+  public void testRedundantAssignment() {
+    doTest();
+    assertIntentionAvailable("Extract side effect");
+  }
   public void testXorNullity() { doTest(); }
   public void testPrimitiveNull() { doTest(); }
   public void testLessThanRelations() { doTest(); }
@@ -660,4 +663,15 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testAlwaysTrueSwitchLabel() { doTest(); }
   public void testWideningToDouble() { doTest(); }
   public void testCompoundAssignment() { doTest(); }
+  public void testNumericCast() { doTest(); }
+  public void testEnumValues() { doTest(); }
+  public void testEmptyCollection() { doTest(); }
+  public void testAssertNullEphemeral() { doTest(); }
+  public void testNotNullAnonymousConstructor() { doTest(); }
+  public void testCaughtNPE() { doTest(); }
+  public void testTernaryNullability() { doTest(); }
+  public void testRewriteFinal() { doTest(); }
+  public void testFinalGettersForFinalFields() { doTest(); }
+  public void testInlineSimpleMethods() { doTest(); }
+  public void testInferenceForNonStableParameters() { doTest(); }
 }

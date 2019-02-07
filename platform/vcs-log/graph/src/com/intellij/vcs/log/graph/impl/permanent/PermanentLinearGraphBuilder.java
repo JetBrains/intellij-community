@@ -150,7 +150,7 @@ public class PermanentLinearGraphBuilder<CommitId> {
     throw new IllegalStateException("Not found underdone edge to not load commit for node: " + upNodeIndex);
   }
 
-  private void fixUnderdoneEdges(@NotNull NotNullFunction<CommitId, Integer> notLoadedCommitToId) {
+  private void fixUnderdoneEdges(@NotNull NotNullFunction<? super CommitId, Integer> notLoadedCommitToId) {
     List<CommitId> commitIds = ContainerUtil.newArrayList(upAdjacentNodes.keySet());
     ContainerUtil.sort(commitIds, Comparator.comparingInt(o -> Collections.min(upAdjacentNodes.get(o))));
     for (CommitId notLoadCommit : commitIds) {
@@ -163,7 +163,7 @@ public class PermanentLinearGraphBuilder<CommitId> {
 
   // id's must be less that -2
   @NotNull
-  public PermanentLinearGraphImpl build(@NotNull NotNullFunction<CommitId, Integer> notLoadedCommitToId) {
+  public PermanentLinearGraphImpl build(@NotNull NotNullFunction<? super CommitId, Integer> notLoadedCommitToId) {
     for (int nodeIndex = 0; nodeIndex < myNodesCount; nodeIndex++) {
       doStep(nodeIndex);
     }

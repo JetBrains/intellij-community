@@ -241,6 +241,10 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "return", "rLocal", "rParam", "rMethod")
   }
 
+  void testPreferReturnBeforeExpression2() {
+    checkPreferredItems(0, "return", "retainAll")
+  }
+
   void testPreferReturnInSingleStatementPlace() {
     checkPreferredItems 0, "return", "registerKeyboardAction"
   }

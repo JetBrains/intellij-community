@@ -733,12 +733,12 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   private class MyProgressListener implements VcsLogProgress.ProgressListener {
     @Override
-    public void progressStarted(@NotNull Collection<VcsLogProgress.ProgressKey> keys) {
+    public void progressStarted(@NotNull Collection<? extends VcsLogProgress.ProgressKey> keys) {
       getEmptyText().setText(LOADING_COMMITS_TEXT);
     }
 
     @Override
-    public void progressChanged(@NotNull Collection<VcsLogProgress.ProgressKey> keys) {
+    public void progressChanged(@NotNull Collection<? extends VcsLogProgress.ProgressKey> keys) {
     }
 
     @Override

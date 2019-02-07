@@ -1,18 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl;
 
-import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsageTriggerCollector;
-import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 
-public class DiffUsageTriggerCollector extends ApplicationUsageTriggerCollector {
-  @NotNull
-  @Override
-  public String getGroupId() {
-    return "statistics.vcs.diff.trigger";
-  }
+public class DiffUsageTriggerCollector {
 
   public static void trigger(String feature) {
-    FUSApplicationUsageTrigger.getInstance().trigger(DiffUsageTriggerCollector.class, feature);
+    FeatureUsageLogger.INSTANCE.log("statistics.vcs.diff.trigger", feature);
   }
 }

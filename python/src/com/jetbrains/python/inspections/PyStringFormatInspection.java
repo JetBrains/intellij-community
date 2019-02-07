@@ -79,7 +79,7 @@ public class PyStringFormatInspection extends PyInspection {
       private final Visitor myVisitor;
       private final TypeEvalContext myTypeEvalContext;
 
-      private final Map<String, String> myFormatSpec = new HashMap<>();
+      private final Map<String, String> myFormatSpec = new LinkedHashMap<>();
 
       Inspection(Visitor visitor, TypeEvalContext typeEvalContext) {
         myVisitor = visitor;
@@ -100,14 +100,7 @@ public class PyStringFormatInspection extends PyInspection {
             final PyType rightType = myTypeEvalContext.getType(rightExpression);
             if (rightType instanceof PyTupleType) {
               final PyTupleType tupleType = (PyTupleType)rightType;
-              for (int i = 0; i < tupleType.getElementCount(); i++) {
-                final PyType elementType = tupleType.getElementType(i);
-                if (elementType != null) {
-                  final String typeName = myFormatSpec.get(String.valueOf(i + 1));
-                  final PyType type = typeName != null ? PyTypeParser.getTypeByName(problemTarget, typeName, myTypeEvalContext) : null;
-                  checkTypeCompatible(problemTarget, elementType, type);
-                }
-              }
+              matchEntireTupleTypes(problemTarget, tupleType);
               return tupleType.getElementCount();
             }
             else {
@@ -142,20 +135,28 @@ public class PyStringFormatInspection extends PyInspection {
         else if (rightExpression instanceof PyParenthesizedExpression) {
           final PyExpression rhs = ((PyParenthesizedExpression)rightExpression).getContainedExpression();
           if (rhs != null) {
-            return inspectArguments(rhs, rhs);
+            return inspectArguments(rhs, problemTarget);
           }
         }
         else if (rightExpression instanceof PyTupleExpression) {
-          final PyExpression[] expressions = ((PyTupleExpression)rightExpression).getElements();
-          int i = 1;
-          for (PyExpression expression : expressions) {
-            final String formatSpec = myFormatSpec.get(Integer.toString(i));
-            if (formatSpec != null) {
-              checkExpressionType(expression, formatSpec, expression);
+          if (PsiTreeUtil.isAncestor(problemTarget, rightExpression, false)) {
+            final PyExpression[] expressions = ((PyTupleExpression)rightExpression).getElements();
+            int i = 1;
+            for (PyExpression expression : expressions) {
+              final String formatSpec = myFormatSpec.get(Integer.toString(i));
+              if (formatSpec != null) {
+                checkExpressionType(expression, formatSpec, expression);
+              }
+              ++i;
             }
-            ++i;
+            return expressions.length;
           }
-          return expressions.length;
+          else {
+            final PyTupleType tupleType = (PyTupleType)myTypeEvalContext.getType(rightExpression);
+            assert tupleType != null;
+            matchEntireTupleTypes(problemTarget, tupleType);
+            return tupleType.getElementCount();
+          }
         }
         else if (rightExpression instanceof PyDictLiteralExpression) {
           return inspectDict(rightExpression, problemTarget, false);
@@ -208,6 +209,22 @@ public class PyStringFormatInspection extends PyInspection {
           return -1;
         }
         return -1;
+      }
+
+      private void matchEntireTupleTypes(@NotNull PsiElement rightExpression, PyTupleType rightExpressionType) {
+        final List<PyType> expectedElementTypes = ContainerUtil.map(myFormatSpec.values(), name -> {
+          if (name == null) {
+            return null;
+          }
+          final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(rightExpression);
+          final PyType expected = PyTypeParser.getTypeByName(rightExpression, name, myTypeEvalContext);
+          if (expected == builtinCache.getStrType()) {
+            return null;
+          }
+          return expected;
+        });
+        final PyTupleType expectedTupleType = PyTupleType.create(rightExpression, expectedElementTypes);
+        checkTypeCompatible(rightExpression, rightExpressionType, expectedTupleType);
       }
 
       private static Map<PyExpression, PyExpression> addSubscriptions(PsiFile file, String operand) {

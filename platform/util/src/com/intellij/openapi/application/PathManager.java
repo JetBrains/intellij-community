@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.Pair;
@@ -37,6 +37,7 @@ public class PathManager {
   public static final String PROPERTY_SCRATCH_PATH = "idea.scratch.path";
   public static final String PROPERTY_PLUGINS_PATH = "idea.plugins.path";
   public static final String PROPERTY_LOG_PATH = "idea.log.path";
+  public static final String PROPERTY_GUI_TEST_LOG_FILE = "idea.gui.tests.log.file";
   public static final String PROPERTY_PATHS_SELECTOR = "idea.paths.selector";
   public static final String DEFAULT_OPTIONS_FILE_NAME = "other";
 
@@ -121,15 +122,6 @@ public class PathManager {
       }
     }
     return false;
-  }
-
-  /**
-   * Check whether IDE is installed via snap packages (https://snapcraft.io/) or not
-   */
-  public static boolean isSnap() {
-    // On Ubuntu snaps are located in /snap/ directory, but for other distros path is /var/lib/snapd/snap/
-    return SystemInfo.isLinux &&
-           (getHomePath().startsWith("/snap/") || getHomePath().startsWith("/var/lib/snapd/snap/"));
   }
 
   private static String[] getBinDirectories(File root) {
@@ -617,5 +609,17 @@ public class PathManager {
     catch (IOException e) {
       return path;
     }
+  }
+
+  public static File getLogFile() throws FileNotFoundException {
+    String logXmlPath = System.getProperty(PROPERTY_GUI_TEST_LOG_FILE);
+    if (logXmlPath != null) {
+      File logXmlFile = new File(logXmlPath);
+      if (logXmlFile.exists()) return logXmlFile;
+      else {
+        throw new FileNotFoundException(String.format("'%s' not found.", logXmlPath));
+      }
+    }
+    return findBinFileWithException("log.xml");
   }
 }

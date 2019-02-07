@@ -82,9 +82,7 @@ public class GitUncommitAction extends GitCommitEditingAction {
   }
 
   @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    super.actionPerformed(e);
-
+  public void actionPerformedAfterChecks(@NotNull AnActionEvent e) {
     Project project = notNull(e.getProject());
     VcsShortCommitDetails commit = getSelectedCommit(e);
     ChangeListChooser chooser = new ChangeListChooser(project, ChangeListManager.getInstance(project).getChangeListsCopy(),

@@ -233,7 +233,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
     }
 
     SortableEntry copy() {
-      List<PsiComment> afterSeparator = myAfterSeparator.stream().map(el -> (PsiComment)el.copy()).collect(Collectors.toList());
+      List<PsiComment> afterSeparator = ContainerUtil.map(myAfterSeparator, el -> (PsiComment)el.copy());
       List<PsiComment> beforeSeparator = myBeforeSeparator.stream().map(el -> (PsiComment)el.copy()).collect(Collectors.toList());
       return new SortableEntry(myElement.copy(), beforeSeparator, afterSeparator);
     }
@@ -330,7 +330,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       if (sm.run()) return null;
 
       List<SortableEntry> entries = sm.mySortableEntries;
-      List<PsiElement> entryElements = entries.stream().map(e -> e.myElement).collect(Collectors.toList());
+      List<PsiElement> entryElements = ContainerUtil.map(entries, e -> e.myElement);
       if (entryElements.size() < MIN_ELEMENTS_COUNT) return null;
       if (!strategy.isSuitableElements(entryElements)) return null;
       return new SortableList(entries, strategy, sm.myLineLayout, beforeFirst);

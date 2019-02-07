@@ -120,7 +120,7 @@ public class PythonSdkUpdater implements StartupActivity {
     final Application application = ApplicationManager.getApplication();
 
     String sdkHome = sdk.getHomePath();
-    if (sdkHome != null && (PythonSdkType.isVirtualEnv(sdkHome) || PythonSdkType.isCondaVirtualEnv(sdk))) {
+    if (sdkHome != null && (PythonSdkType.isVirtualEnv(sdkHome) || PythonSdkType.isConda(sdk))) {
       final Future<?> updateSdkFeature = application.executeOnPooledThread(() -> {
         sdk.putUserData(PythonSdkType.ENVIRONMENT_KEY,
                         PythonSdkType.activateVirtualEnv(sdkHome)); // pre-cache virtualenv activated environment

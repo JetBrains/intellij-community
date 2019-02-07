@@ -20,7 +20,7 @@ public abstract class InspectionElementsMerger {
   private static Map<String, InspectionElementsMerger> ourMergers;
 
   @Nullable
-  public static synchronized InspectionElementsMerger getMerger(String shortName) {
+  public static synchronized InspectionElementsMerger getMerger(@NotNull String shortName) {
     if (ourMergers == null) {
       ourMergers = new HashMap<>();
       for (InspectionElementsMerger merger : EP_NAME.getExtensionList()) {
@@ -59,7 +59,7 @@ public abstract class InspectionElementsMerger {
    * @return new merged tool name
    *         null if merger is not found
    */
-  public static String getMergedToolName(String id) {
+  public static String getMergedToolName(@NotNull String id) {
     for (InspectionElementsMerger merger : EP_NAME.getExtensionList()) {
       for (String sourceToolName : merger.getSourceToolNames()) {
         if (id.equals(sourceToolName)) {

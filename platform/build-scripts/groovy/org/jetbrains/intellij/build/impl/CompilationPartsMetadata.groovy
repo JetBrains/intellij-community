@@ -16,7 +16,8 @@ class CompilationPartsMetadata {
   String branch
   String prefix
   /**
-   * Map compilation part path to a hash
+   * Map compilation part path to a hash, for now SHA-256 is used.
+   * sha256(file) == hash, though that may be changed in the future.
    */
   Map<String, String> files
 

@@ -22,11 +22,13 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
 import org.intellij.lang.annotations.MagicConstant
 
 /**
  * @author peter
  */
+@CompileStatic
 class MagicConstantCompletion4Test extends LightCodeInsightFixtureTestCase {
   LightProjectDescriptor projectDescriptor = new DefaultLightProjectDescriptor() {
     @Override

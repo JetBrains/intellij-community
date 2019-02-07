@@ -27,7 +27,6 @@ import java.util.Map;
  * Encapsulates logic for processing {@link EditorSettings#isWrapWhenTypingReachesRightMargin(Project)} option.
  *
  * @author Denis Zhdanov
- * @since 10/4/10 9:56 AM
  */
 public class AutoHardWrapHandler {
 

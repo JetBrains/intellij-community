@@ -23,9 +23,6 @@ public class StructuralSearchAction extends AnAction {
 
   public static void triggerAction(Configuration config, SearchContext searchContext) {
     final Project project = searchContext.getProject();
-    if (project == null) {
-      return;
-    }
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     if (Registry.is("ssr.use.new.search.dialog")) {

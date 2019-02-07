@@ -15,9 +15,11 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.xml.util.CheckTagEmptyBodyInspection;
 import com.intellij.xml.util.CollapseTagIntention;
 
 /**
@@ -38,5 +40,19 @@ public class CollapseTagTest extends LightPlatformCodeInsightFixtureTestCase{
   public void testAlreadyCollapsed() {
     PsiFile file = myFixture.configureByText(XmlFileType.INSTANCE, "<a/>");
     assertFalse(new CollapseTagIntention().isAvailable(getProject(), myFixture.getEditor(), file));
+  }
+
+  public void testCollapseInnerTag() {
+    myFixture.enableInspections(new CheckTagEmptyBodyInspection());
+    PsiFile file = myFixture.configureByText(XmlFileType.INSTANCE, "<a>\n" +
+                                                                   "    <b></b><caret>\n" +
+                                                                   "</a>");
+    assertFalse(new CollapseTagIntention().isAvailable(getProject(), myFixture.getEditor(), file));
+    IntentionAction action = myFixture.findSingleIntention("Collapse");
+    assertNotNull(action);
+    action.invoke(getProject(), myFixture.getEditor(), file);
+    myFixture.checkResult("<a>\n" +
+                          "    <b/>\n" +
+                          "</a>");
   }
 }

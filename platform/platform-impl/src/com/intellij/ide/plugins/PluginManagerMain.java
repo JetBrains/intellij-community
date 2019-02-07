@@ -417,7 +417,7 @@ public abstract class PluginManagerMain implements Disposable {
                                         Runnable onSuccess,
                                         @Nullable Runnable cleanup) throws IOException {
     return downloadPlugins(plugins,
-                           allPlugins.stream().map(p -> new PluginNode(p, p.getIdString(), "-1")).collect(Collectors.toList()),
+                           ContainerUtil.map(allPlugins, p -> new PluginNode(p, p.getIdString(), "-1")),
                            onSuccess,
                            new PluginEnabler.HEADLESS(),
                            cleanup);

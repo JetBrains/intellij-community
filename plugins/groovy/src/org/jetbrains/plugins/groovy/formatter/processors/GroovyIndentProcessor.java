@@ -79,7 +79,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   public Indent getChildIndent(@NotNull final GroovyBlock parentBlock, @NotNull final ASTNode child) {
     myChildType = child.getElementType();
     if (parentBlock instanceof ClosureBodyBlock) {
-      if (myChildType == GroovyElementTypes.PARAMETERS_LIST) {
+      if (myChildType == GroovyElementTypes.PARAMETER_LIST) {
         return getNoneIndent();
       }
       else if (myChildType != GroovyTokenTypes.mLCURLY && myChildType != GroovyTokenTypes.mRCURLY) {
@@ -157,7 +157,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitAnnotation(@NotNull GrAnnotation annotation) {
-    if (myChildType == GroovyElementTypes.ANNOTATION_ARGUMENTS) {
+    if (myChildType == GroovyElementTypes.ANNOTATION_ARGUMENT_LIST) {
       myResult = getContinuationIndent();
     }
     else {
@@ -280,10 +280,10 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitMethod(@NotNull GrMethod method) {
-    if (myChildType == GroovyElementTypes.PARAMETERS_LIST) {
+    if (myChildType == GroovyElementTypes.PARAMETER_LIST) {
       myResult = getContinuationIndent();
     }
-    else if (myChildType == GroovyElementTypes.THROW_CLAUSE) {
+    else if (myChildType == GroovyElementTypes.THROWS_CLAUSE) {
       myResult = getGroovySettings().ALIGN_THROWS_KEYWORD ? getNoneIndent() : getContinuationIndent();
     } else if (myChildType == GroovyElementTypes.OPEN_BLOCK) {
       myResult = getBlockIndent(getGroovySettings().METHOD_BRACE_STYLE);

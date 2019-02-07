@@ -27904,19 +27904,6 @@
     <option name="ssh" hit="SSH Terminal" />
     <option name="terminal" hit="SSH Terminal" />
   </configurable>
-  <configurable id="asprofile.settings" configurable_name="ActionScript Profiler">
-    <option name="" hit="" />
-    <option name="actionscript" hit="ActionScript Profiler" />
-    <option name="profiler" hit="ActionScript Profiler" />
-    <option name="connection" hit="Connection" />
-    <option name="cfg" hit="Custom mm.cfg file location:" />
-    <option name="custom" hit="Custom mm.cfg file location:" />
-    <option name="file" hit="Custom mm.cfg file location:" />
-    <option name="location" hit="Custom mm.cfg file location:" />
-    <option name="mm" hit="Custom mm.cfg file location:" />
-    <option name="host" hit="Host:" />
-    <option name="port" hit="Port:" />
-  </configurable>
   <configurable id="reference.settings.ide.settings.uml" configurable_name="Diagrams">
     <option name="" hit="" />
     <option name="default" hit="Default Layout:" />

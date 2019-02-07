@@ -44,7 +44,7 @@ public class Preloader implements Disposable, BaseComponent {
 
   @Override
   public void initComponent() {
-    if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
 

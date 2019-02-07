@@ -31,4 +31,9 @@ public interface ReturnValue {
 
   @Nullable
   PsiStatement createReplacement(@NotNull PsiMethod extractedMethod, @NotNull PsiMethodCallExpression methodCallExpression, @Nullable PsiType returnType) throws IncorrectOperationException;
+
+  static boolean areEquivalent(@Nullable ReturnValue value1, @Nullable ReturnValue value2) {
+    return value1 == null && value2 == null ||
+           value1 != null && value1.isEquivalent(value2);
+  }
 }

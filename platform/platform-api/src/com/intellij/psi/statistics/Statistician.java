@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * An extension that allows to provide {@link StatisticsInfo} for various elements in various contexts.
- * Different subsystems can then use that statistics to sort suggestions, preselect most likely variants¸ etc.
+ * Different subsystems can then use that statistics to sort suggestions, preselect most likely variants etc.
  */
 public abstract class Statistician<T,Loc> {
 

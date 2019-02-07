@@ -100,7 +100,7 @@ public class IdeBackgroundUtil {
     if (type == null) return false;
     String spec = System.getProperty(TARGET_PROP, "*");
     boolean allInclusive = spec.startsWith("*");
-    return allInclusive && spec.contains("-" + type) || !allInclusive && !spec.contains(type);
+    return allInclusive ? spec.contains("-" + type) : !spec.contains(type);
   }
 
   private static final Set<String> ourKnownNames = ContainerUtil.newHashSet("navbar", "terminal");
@@ -131,7 +131,7 @@ public class IdeBackgroundUtil {
   }
 
   @NotNull
-  public static Graphics2D withNamedPainters(@NotNull Graphics g, @NotNull String paintersName, @NotNull final JComponent component) {
+  private static Graphics2D withNamedPainters(@NotNull Graphics g, @NotNull String paintersName, @NotNull final JComponent component) {
     JRootPane rootPane = component.getRootPane();
     Component glassPane = rootPane == null ? null : rootPane.getGlassPane();
     PaintersHelper helper = glassPane instanceof IdeGlassPaneImpl? ((IdeGlassPaneImpl)glassPane).getNamedPainters(paintersName) : null;
@@ -139,11 +139,11 @@ public class IdeBackgroundUtil {
     return MyGraphics.wrap(g, helper, component);
   }
 
-  public static void initEditorPainters(@NotNull IdeGlassPaneImpl glassPane) {
+  static void initEditorPainters(@NotNull IdeGlassPaneImpl glassPane) {
     PaintersHelper.initWallpaperPainter(EDITOR_PROP, glassPane.getNamedPainters(EDITOR_PROP));
   }
 
-  public static void initFramePainters(@NotNull IdeGlassPaneImpl glassPane) {
+  static void initFramePainters(@NotNull IdeGlassPaneImpl glassPane) {
     PaintersHelper painters = glassPane.getNamedPainters(FRAME_PROP);
     PaintersHelper.initWallpaperPainter(FRAME_PROP, painters);
 
@@ -156,7 +156,7 @@ public class IdeBackgroundUtil {
       painters.addPainter(PaintersHelper.newImagePainter(centerImage, Fill.PLAIN, Anchor.TOP_CENTER, 1.0f, JBUI.insets(10, 0, 0, 0)), null);
     }
     painters.addPainter(new AbstractPainter() {
-      EditorEmptyTextPainter p = ServiceManager.getService(EditorEmptyTextPainter.class);
+      final EditorEmptyTextPainter p = ServiceManager.getService(EditorEmptyTextPainter.class);
 
       @Override
       public boolean needsRepaint() {

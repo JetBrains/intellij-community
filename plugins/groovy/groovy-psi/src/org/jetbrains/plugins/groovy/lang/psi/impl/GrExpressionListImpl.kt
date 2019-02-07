@@ -2,16 +2,20 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl
 
 import com.intellij.lang.ASTNode
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiListLikeElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GrExpressionList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.util.childrenOfType
 
-class GrExpressionListImpl(node: ASTNode) : GroovyPsiElementImpl(node), GrExpressionList {
+class GrExpressionListImpl(node: ASTNode) : GroovyPsiElementImpl(node), GrExpressionList, PsiListLikeElement {
 
   override fun toString(): String = "Expression list"
 
   override fun accept(visitor: GroovyElementVisitor): Unit = visitor.visitExpressionList(this)
 
   override fun getExpressions(): List<GrExpression> = childrenOfType()
+
+  override fun getComponents(): List<PsiElement> = expressions
 }

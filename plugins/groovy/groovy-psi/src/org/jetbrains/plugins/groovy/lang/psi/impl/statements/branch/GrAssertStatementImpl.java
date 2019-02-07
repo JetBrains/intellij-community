@@ -23,6 +23,7 @@ public class GrAssertStatementImpl extends GroovyPsiElementImpl implements GrAss
     visitor.visitAssertStatement(this);
   }
 
+  @Override
   public String toString() {
     return "ASSERT statement";
   }

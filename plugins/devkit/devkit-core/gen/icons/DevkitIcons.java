@@ -14,6 +14,28 @@ public final class DevkitIcons {
     return IconLoader.getIcon(path, DevkitIcons.class);
   }
 
-  public static final Icon Add_sdk = load("/icons/add_sdk.svg"); // 16x16
-  public static final Icon Sdk_closed = load("/icons/sdk_closed.svg"); // 16x16
+  /**
+   * 16x16
+   */
+  public static final Icon Add_sdk = load("/icons/add_sdk.svg");
+
+  public final static class Gutter {
+    /**
+     * 12x12
+     */
+    public static final Icon DescriptionFile = load("/icons/gutter/descriptionFile.svg");
+    /**
+     * 12x12
+     */
+    public static final Icon Diff = load("/icons/gutter/diff.svg");
+    /**
+     * 12x12
+     */
+    public static final Icon Plugin = load("/icons/gutter/plugin.svg");
+
+  }
+  /**
+   * 16x16
+   */
+  public static final Icon Sdk_closed = load("/icons/sdk_closed.svg");
 }

@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 5/25/13 7:26 PM
  */
 public class ExternalProjectPathLookupElement extends LookupElement {
   

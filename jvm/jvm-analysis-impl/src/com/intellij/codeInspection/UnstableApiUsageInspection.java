@@ -3,11 +3,6 @@ package com.intellij.codeInspection;
 
 import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiReference;
 import com.siyeh.ig.ui.ExternalizableStringSet;
@@ -16,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+
+import static com.intellij.codeInspection.deprecation.DeprecationInspectionBase.getPresentableName;
 
 public class UnstableApiUsageInspection extends AnnotatedElementInspectionBase {
   public final List<String> unstableApiAnnotations = new ExternalizableStringSet(
@@ -36,14 +33,11 @@ public class UnstableApiUsageInspection extends AnnotatedElementInspectionBase {
   }
 
   @Override
-  protected void createProblem(@NotNull PsiReference reference, @NotNull ProblemsHolder holder) {
-    String message = JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.description", getReferenceText(reference));
+  protected void createProblem(@NotNull PsiReference reference,
+                               @NotNull PsiModifierListOwner annotatedTarget,
+                               @NotNull ProblemsHolder holder) {
+    String message = JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.description", getPresentableName(annotatedTarget));
     holder.registerProblem(reference, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-  }
-
-  @Override
-  protected boolean shouldProcessElement(@NotNull PsiModifierListOwner element) {
-    return isLibraryElement(element);
   }
 
   @NotNull
@@ -59,21 +53,5 @@ public class UnstableApiUsageInspection extends AnnotatedElementInspectionBase {
     panel.add(checkboxPanel, BorderLayout.NORTH);
     panel.add(annotationsListControl, BorderLayout.CENTER);
     return panel;
-  }
-
-  private static boolean isLibraryElement(@NotNull PsiElement element) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return true;
-    }
-
-    PsiFile containingPsiFile = element.getContainingFile();
-    if (containingPsiFile == null) {
-      return false;
-    }
-    VirtualFile containingVirtualFile = containingPsiFile.getVirtualFile();
-    if (containingVirtualFile == null) {
-      return false;
-    }
-    return ProjectFileIndex.getInstance(element.getProject()).isInLibraryClasses(containingVirtualFile);
   }
 }

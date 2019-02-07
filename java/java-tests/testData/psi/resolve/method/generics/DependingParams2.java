@@ -9,6 +9,6 @@ public class Foo implements Runnable{
   }
 
   {
-    <ref>foo(new Class<Runnable>(){}, this);
+    <caret>foo(new Class<Runnable>(){}, this);
   }
 }

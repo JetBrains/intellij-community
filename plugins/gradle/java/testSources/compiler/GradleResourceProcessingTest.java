@@ -7,7 +7,6 @@ import java.io.IOException;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/21/2014
  */
 public class GradleResourceProcessingTest extends GradleCompilingTestCase {
 

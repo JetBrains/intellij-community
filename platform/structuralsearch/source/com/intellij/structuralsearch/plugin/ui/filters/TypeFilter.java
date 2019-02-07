@@ -51,7 +51,7 @@ public class TypeFilter extends FilterAction {
 
   @Override
   public FilterEditor getEditor() {
-    return new FilterEditor(myTable.getConstraint()) {
+    return new FilterEditor(myTable.getConstraint(), myTable.getConstraintChangedCallback()) {
 
       private final EditorTextField myTextField = UIUtil.createTextComponent("", myTable.getProject());
       private final JLabel myTypeLabel = new JLabel("type=");
@@ -92,6 +92,7 @@ public class TypeFilter extends FilterAction {
       @Override
       protected void loadValues() {
         myTextField.setText((myConstraint.isInvertExprType() ? "!" : "") + myConstraint.getNameOfExprType());
+        myHierarchyCheckBox.setSelected(myConstraint.isExprTypeWithinHierarchy());
       }
 
       @Override

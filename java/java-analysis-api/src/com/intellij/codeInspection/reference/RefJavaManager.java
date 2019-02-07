@@ -66,8 +66,6 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
 
   public abstract String getAppletQName();
 
-  public abstract PsiClass getServlet();
-
   // Android Framework APIs that apps extend and where the subclasses must be public
   // such that the framework can instantiate them
 
@@ -93,7 +91,7 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
     languages.removeIf(l -> l.isKindOf("Groovy"));
 
     // TODO enable it in production when will be ready
-    if (Registry.is("batch.jvm.inspections") || !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!Registry.is("batch.jvm.inspections") && !ApplicationManager.getApplication().isUnitTestMode()) {
       languages.removeIf(l -> l.isKindOf("kotlin"));
     }
     return languages;

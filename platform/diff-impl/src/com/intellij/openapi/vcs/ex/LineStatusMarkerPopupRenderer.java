@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
@@ -24,10 +22,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
@@ -197,9 +192,8 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     final CharSequence vcsContent = getVcsContent(range);
     final CharSequence currentContent = getCurrentContent(range);
 
-    return BackgroundTaskUtil.tryComputeFast(indicator -> {
-      return ByWord.compare(vcsContent, currentContent, ComparisonPolicy.DEFAULT, indicator);
-    }, 200);
+    return BackgroundTaskUtil.tryComputeFast(
+      indicator -> ByWord.compare(vcsContent, currentContent, ComparisonPolicy.DEFAULT, indicator), 200);
   }
 
   private void installMasterEditorHighlighters(@NotNull Editor editor,
@@ -218,14 +212,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
       highlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, currentStart, currentEnd, type));
     }
 
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        for (RangeHighlighter highlighter : highlighters) {
-          highlighter.dispose();
-        }
-      }
-    });
+    Disposer.register(parentDisposable, () -> highlighters.forEach(RangeMarker::dispose));
   }
 
   @Nullable
@@ -252,13 +239,18 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     field.setFontInheritedFromLAF(false);
 
     field.addSettingsProvider(uEditor -> {
+      uEditor.setVerticalScrollbarVisible(true);
+      uEditor.setHorizontalScrollbarVisible(true);
+
       uEditor.setRendererMode(true);
       uEditor.setBorder(null);
 
       uEditor.setColorsScheme(editor.getColorsScheme());
       uEditor.setBackgroundColor(backgroundColor);
+      uEditor.getSettings().setCaretRowShown(false);
 
-      DiffUtil.setEditorCodeStyle(myTracker.getProject(), uEditor, fileType);
+      uEditor.getSettings().setTabSize(editor.getSettings().getTabSize(editor.getProject()));
+      uEditor.getSettings().setUseTabCharacter(editor.getSettings().isUseTabCharacter(editor.getProject()));
 
       uEditor.setHighlighter(fragmentedHighlighter);
 
@@ -320,9 +312,9 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     @NotNull private final Editor myEditor;
 
     PopupPanel(@NotNull Editor editor,
-                      @NotNull ActionToolbar toolbar,
-                      @Nullable JComponent editorComponent,
-                      @Nullable JComponent additionalInfo) {
+               @NotNull ActionToolbar toolbar,
+               @Nullable JComponent editorComponent,
+               @Nullable JComponent additionalInfo) {
       super(new BorderLayout());
       setOpaque(false);
 

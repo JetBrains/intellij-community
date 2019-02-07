@@ -150,14 +150,21 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
     int elementStart = range.getStartOffset();
     int elementEnd = range.getEndOffset();
 
-    return manager.getParameterHintsInRange(myEditor, elementStart + 1, elementEnd - 1);
+    // Adding hints on the borders is allowed only in case root element is a document
+    // See: canShowHintsAtOffset
+    if (myDocument.getTextLength() != range.getLength()) {
+      ++elementStart;
+      --elementEnd;
+    }
+
+    return manager.getParameterHintsInRange(myEditor, elementStart, elementEnd);
   }
 
   /**
    * Adding hints on the borders of root element (at startOffset or endOffset)
    * is allowed only in the case when root element is a document
    *
-   * @return true iff a given offset can be used for hint rendering
+   * @return true if a given offset can be used for hint rendering
    */
   private boolean canShowHintsAtOffset(int offset) {
     TextRange rootRange = myRootElement.getTextRange();

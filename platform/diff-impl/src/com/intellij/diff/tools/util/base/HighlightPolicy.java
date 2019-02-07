@@ -15,12 +15,14 @@
  */
 package com.intellij.diff.tools.util.base;
 
+import com.intellij.diff.comparison.InnerFragmentsPolicy;
 import org.jetbrains.annotations.NotNull;
 
 public enum HighlightPolicy {
   BY_LINE("Highlight lines"),
   BY_WORD("Highlight words"),
   BY_WORD_SPLIT("Highlight split changes"),
+  BY_CHAR("Highlight symbols"),
   DO_NOT_HIGHLIGHT("Do not highlight");
 
   @NotNull private final String myText;
@@ -39,10 +41,26 @@ public enum HighlightPolicy {
   }
 
   public boolean isFineFragments() {
-    return this == BY_WORD || this == BY_WORD_SPLIT;
+    return getFragmentsPolicy() != InnerFragmentsPolicy.NONE;
   }
 
   public boolean isShouldSquash() {
-    return this == BY_WORD || this == BY_LINE;
+    return this != BY_WORD_SPLIT;
+  }
+
+  @NotNull
+  public InnerFragmentsPolicy getFragmentsPolicy() {
+    switch (this) {
+      case BY_WORD:
+      case BY_WORD_SPLIT:
+        return InnerFragmentsPolicy.WORDS;
+      case BY_CHAR:
+        return InnerFragmentsPolicy.CHARS;
+      case BY_LINE:
+      case DO_NOT_HIGHLIGHT:
+        return InnerFragmentsPolicy.NONE;
+      default:
+        throw new IllegalArgumentException(this.name());
+    }
   }
 }

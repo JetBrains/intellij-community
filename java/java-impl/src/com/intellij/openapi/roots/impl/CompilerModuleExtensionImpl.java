@@ -49,17 +49,18 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
 
   private boolean myInheritedCompilerOutput = true;
   private boolean myExcludeOutput = true;
+  @NotNull
   private final Module myModule;
 
   private CompilerModuleExtensionImpl mySource;
   private boolean myWritable;
   private boolean myDisposed;
 
-  public CompilerModuleExtensionImpl(@NotNull final Module module) {
+  public CompilerModuleExtensionImpl(@NotNull Module module) {
     myModule = module;
   }
 
-  public CompilerModuleExtensionImpl(final CompilerModuleExtensionImpl source, final boolean writable) {
+  private CompilerModuleExtensionImpl(@NotNull CompilerModuleExtensionImpl source, final boolean writable) {
     this(source.myModule);
     myWritable = writable;
     myCompilerOutput = source.myCompilerOutput;
@@ -117,7 +118,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
   }
 
   @Nullable
-  protected VirtualFilePointer getOutputPathValue(Element element, String tag, final boolean createPointer) {
+  private VirtualFilePointer getOutputPathValue(Element element, String tag, final boolean createPointer) {
     final Element outputPathChild = element.getChild(tag);
     VirtualFilePointer vptr = null;
     if (outputPathChild != null && createPointer) {
@@ -128,7 +129,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
   }
 
   @Nullable
-  protected static String getOutputPathValue(Element element, String tag) {
+  private static String getOutputPathValue(@NotNull Element element, @NotNull String tag) {
     final Element outputPathChild = element.getChild(tag);
     if (outputPathChild != null) {
       return outputPathChild.getAttributeValue(ATTRIBUTE_URL);
@@ -180,6 +181,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     return myCompilerOutputPathForTestsPointer == null ? null : myCompilerOutputPathForTestsPointer.getUrl();
   }
 
+  @NotNull
   private String getSanitizedModuleName() {
     Module module = getModule();
     VirtualFile file = module.getModuleFile();
@@ -191,8 +193,9 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     setCompilerOutputPath(file == null ? null : file.getUrl());
   }
 
-  private VirtualFilePointer createPointer(final String url) {
-    return VirtualFilePointerManager.getInstance().create(url, this, null);
+  @NotNull
+  private VirtualFilePointer createPointer(@NotNull String url) {
+    return VirtualFilePointerManager.getInstance().create(url, this, ProjectRootManagerImpl.getInstanceImpl(getProject()).getRootsValidityChangedListener());
   }
 
   @Override
@@ -214,10 +217,12 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     myCompilerOutputPathForTestsPointer = url == null ? null : createPointer(url);
   }
 
+  @NotNull
   public Module getModule() {
     return myModule;
   }
 
+  @NotNull
   public Project getProject() {
     return myModule.getProject();
   }
@@ -260,6 +265,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     return myExcludeOutput;
   }
 
+  @NotNull
   @Override
   public CompilerModuleExtension getModifiableModel(final boolean writable) {
     assert !myDisposed;
@@ -309,9 +315,10 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     myCompilerOutputForTests = null;
   }
 
+  @NotNull
   @Override
   public VirtualFile[] getOutputRoots(final boolean includeTests) {
-    final ArrayList<VirtualFile> result = new ArrayList<>();
+    List<VirtualFile> result = new ArrayList<>();
 
     final VirtualFile outputPathForTests = includeTests ? getCompilerOutputPathForTests() : null;
     if (outputPathForTests != null) {
@@ -325,6 +332,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
+  @NotNull
   @Override
   public String[] getOutputRootUrls(final boolean includeTests) {
     final List<String> result = new ArrayList<>();

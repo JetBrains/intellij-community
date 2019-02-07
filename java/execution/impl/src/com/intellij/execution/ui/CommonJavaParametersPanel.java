@@ -5,6 +5,7 @@ import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.InputRedirectAware;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextComponentAccessor;
@@ -35,6 +36,8 @@ public class CommonJavaParametersPanel extends CommonProgramParametersPanel {
   protected void addComponents() {
     myVMParametersComponent = LabeledComponent.create(new RawCommandLineEditor(),
                                              ExecutionBundle.message("run.configuration.java.vm.parameters.label"));
+    ProgramParametersConfigurator.addMacroSupport(myVMParametersComponent.getComponent().getEditorField());
+
     copyDialogCaption(myVMParametersComponent);
 
     myVMParametersComponent.setLabelLocation(BorderLayout.WEST);

@@ -12,6 +12,7 @@ import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.HighlightUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -43,18 +44,12 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
         }
         PsiElement block = PsiUtil.getVariableCodeBlock(variable, null);
         if (block == null) return;
-        boolean redundantCast = PsiTreeUtil.processElements(block, e -> {
-          if (e instanceof PsiReferenceExpression) {
-            PsiReferenceExpression reference = (PsiReferenceExpression)e;
-            return !reference.isReferenceTo(variable) || isVariableTypeChangeSafeForReference(cast, castType, reference);
-          }
-          return true;
-        });
-        if (redundantCast) {
-          String message = InspectionsBundle
-            .message("inspection.cast.can.be.removed.narrowing.variable.type.message", variable.getName(), castType.getPresentableText());
-          holder.registerProblem(castTypeElement, message, new CastCanBeRemovedNarrowingVariableTypeFix(variable, castType, isOnTheFly));
+        for (PsiReferenceExpression reference : VariableAccessUtils.getVariableReferences(variable, block)) {
+          if (!isVariableTypeChangeSafeForReference(cast, castType, reference)) return;
         }
+        String message = InspectionsBundle
+          .message("inspection.cast.can.be.removed.narrowing.variable.type.message", variable.getName(), castType.getPresentableText());
+        holder.registerProblem(castTypeElement, message, new CastCanBeRemovedNarrowingVariableTypeFix(variable, castType, isOnTheFly));
       }
     };
   }

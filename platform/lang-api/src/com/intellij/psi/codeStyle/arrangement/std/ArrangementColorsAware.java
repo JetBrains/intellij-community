@@ -28,7 +28,6 @@ import java.awt.*;
  * It's save to return 'null' from all color retrieval services - default values will be used then.
  * 
  * @author Denis Zhdanov
- * @since 10/23/12 11:53 PM
  */
 public interface ArrangementColorsAware {
   

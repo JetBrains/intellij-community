@@ -157,7 +157,7 @@ public class InstallPluginAction extends AnAction implements DumbAware {
             cleanup.run();
           }
         };
-        final List<IdeaPluginDescriptor> plugins = myHost.getPluginsModel().getAllPlugins();
+        final List<IdeaPluginDescriptor> plugins = myHost.getPluginsModel().getAllRepoPlugins();
         PluginManagerMain.downloadPlugins(list, plugins, onInstallRunnable, pluginEnabler, cleanupRunnable);
       }
       catch (final IOException e1) {

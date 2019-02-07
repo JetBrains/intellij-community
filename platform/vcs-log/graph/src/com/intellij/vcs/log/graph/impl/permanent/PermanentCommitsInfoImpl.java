@@ -137,12 +137,12 @@ public class PermanentCommitsInfoImpl<CommitId> implements PermanentCommitsInfo<
 
   @Override
   @NotNull
-  public Set<Integer> convertToNodeIds(@NotNull Collection<CommitId> commitIds) {
+  public Set<Integer> convertToNodeIds(@NotNull Collection<? extends CommitId> commitIds) {
     return convertToNodeIds(commitIds, false);
   }
 
   @NotNull
-  public Set<Integer> convertToNodeIds(@NotNull Collection<CommitId> commitIds, boolean reportNotFound) {
+  public Set<Integer> convertToNodeIds(@NotNull Collection<? extends CommitId> commitIds, boolean reportNotFound) {
     Set<Integer> result = ContainerUtil.newHashSet();
     Set<CommitId> matchedIds = ContainerUtil.newHashSet();
     for (int i = 0; i < myCommitIdIndexes.size(); i++) {

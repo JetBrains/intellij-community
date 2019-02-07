@@ -93,10 +93,11 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
     ProgramRunnerUtil.executeConfiguration(environment, settings != null && settings.isEditBeforeRun(), true);
   }
 
-  private static boolean userApprovesStopForSameTypeConfigurations(Project project, String configName, int instancesCount) {
-    RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
-    final RunManagerConfig config = runManager.getConfig();
-    if (!config.isRestartRequiresConfirmation()) return true;
+  private static boolean userApprovesStopForSameTypeConfigurations(@NotNull  Project project, String configName, int instancesCount) {
+    final RunManagerConfig config = RunManagerImpl.getInstanceImpl(project).getConfig();
+    if (!config.isRestartRequiresConfirmation()) {
+      return true;
+    }
 
     DialogWrapper.DoNotAskOption option = new DialogWrapper.DoNotAskOption() {
       @Override
@@ -289,9 +290,19 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
             (RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)task;
           RunnerAndConfigurationSettings settings = runBeforeRun.getSettings();
           if (settings != null) {
-            runBeforeRunExecutorMap.put(task, RunManagerImpl.canRunConfiguration(settings, environment.getExecutor())
-                                              ? environment.getExecutor()
-                                              : DefaultRunExecutor.getRunExecutorInstance());
+            Executor executor = environment.getExecutor();
+            if (!RunManagerImpl.canRunConfiguration(settings, executor)) {
+                executor = DefaultRunExecutor.getRunExecutorInstance();
+                if (!RunManagerImpl.canRunConfiguration(settings, executor)) {
+                  // We should stop here as before run task cannot be executed at all (possibly it's invalid)
+                  if (onCancelRunnable != null) {
+                    onCancelRunnable.run();
+                  }
+                  ExecutionUtil.handleExecutionError(environment, new ExecutionException("cannot start before run task '" + settings + "'."));
+                  return;
+                }
+            }
+            runBeforeRunExecutorMap.put(task, executor);
           }
         }
       }
@@ -385,24 +396,35 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
     }
 
     RunContentDescriptor contentToReuse = environment.getContentToReuse();
-    final List<RunContentDescriptor> runningOfTheSameType = new SmartList<>();
+    List<RunContentDescriptor> runningOfTheSameType = Collections.emptyList();
     if (configuration != null && !configuration.getConfiguration().isAllowRunningInParallel()) {
-      runningOfTheSameType.addAll(getRunningDescriptorsOfTheSameConfigType(configuration));
+      runningOfTheSameType = getRunningDescriptors(it -> configuration == it);
     }
     else if (isProcessRunning(contentToReuse)) {
-      runningOfTheSameType.add(contentToReuse);
+      runningOfTheSameType = Collections.singletonList(contentToReuse);
     }
 
     List<RunContentDescriptor> runningToStop = ContainerUtil.concat(runningOfTheSameType, runningIncompatible);
     if (!runningToStop.isEmpty()) {
       if (configuration != null) {
-        if (!runningOfTheSameType.isEmpty()
-            && (runningOfTheSameType.size() > 1 || contentToReuse == null || runningOfTheSameType.get(0) != contentToReuse) &&
-            !userApprovesStopForSameTypeConfigurations(environment.getProject(), configuration.getName(), runningOfTheSameType.size())) {
-          return;
+        if (!runningOfTheSameType.isEmpty() &&
+            (runningOfTheSameType.size() > 1 || contentToReuse == null || runningOfTheSameType.get(0) != contentToReuse)) {
+
+          final RunConfiguration.RestartSingletonResult result = configuration.getConfiguration().restartSingleton(environment);
+
+          if (result == RunConfiguration.RestartSingletonResult.NO_FURTHER_ACTION) {
+            return;
+          }
+
+          if (result == RunConfiguration.RestartSingletonResult.ASK_AND_RESTART &&
+              !userApprovesStopForSameTypeConfigurations(environment.getProject(), configuration.getName(), runningOfTheSameType.size())) {
+
+            return;
+          }
         }
-        if (!runningIncompatible.isEmpty()
-            && !userApprovesStopForIncompatibleConfigurations(myProject, configuration.getName(), runningIncompatible)) {
+        if (!runningIncompatible.isEmpty() &&
+            !userApprovesStopForIncompatibleConfigurations(myProject, configuration.getName(), runningIncompatible)) {
+
           return;
         }
       }
@@ -418,6 +440,7 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
     }
     myAwaitingRunProfiles.put(environment.getRunProfile(), environment);
 
+    List<RunContentDescriptor> finalRunningOfTheSameType = runningOfTheSameType;
     awaitTermination(new Runnable() {
       @Override
       public void run() {
@@ -431,7 +454,7 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
           return;
         }
 
-        for (RunContentDescriptor descriptor : runningOfTheSameType) {
+        for (RunContentDescriptor descriptor : finalRunningOfTheSameType) {
           ProcessHandler processHandler = descriptor.getProcessHandler();
           if (processHandler != null && !processHandler.isProcessTerminated()) {
             awaitTermination(this, 100);
@@ -451,11 +474,6 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
     else {
       myAwaitingTerminationAlarm.addRequest(request, delayMillis);
     }
-  }
-
-  @NotNull
-  private List<RunContentDescriptor> getRunningDescriptorsOfTheSameConfigType(@NotNull final RunnerAndConfigurationSettings configurationAndSettings) {
-    return getRunningDescriptors(runningConfigurationAndSettings -> configurationAndSettings == runningConfigurationAndSettings);
   }
 
   @NotNull
@@ -508,7 +526,7 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
   public Set<RunnerAndConfigurationSettings> getConfigurations(RunContentDescriptor descriptor) {
     Set<RunnerAndConfigurationSettings> result = new HashSet<>();
     for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
-      if (descriptor == trinity.first) result.add(trinity.second);
+      if (descriptor == trinity.first && trinity.second != null) result.add(trinity.second);
     }
     return result;
   }

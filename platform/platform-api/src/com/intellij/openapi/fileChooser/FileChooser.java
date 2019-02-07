@@ -68,7 +68,7 @@ public class FileChooser {
                                        @Nullable final Component parent,
                                        @Nullable final Project project,
                                        @Nullable final VirtualFile toSelect) {
-    Component parentComponent = (parent == null) ? KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() : parent;
+    Component parentComponent = parent == null ? KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() : parent;
     LOG.assertTrue(!descriptor.isChooseMultiple());
     return ArrayUtil.getFirstElement(chooseFiles(descriptor, parentComponent, project, toSelect));
   }
@@ -87,7 +87,7 @@ public class FileChooser {
   public static void chooseFiles(@NotNull final FileChooserDescriptor descriptor,
                                  @Nullable final Project project,
                                  @Nullable final VirtualFile toSelect,
-                                 @NotNull final Consumer<List<VirtualFile>> callback) {
+                                 @NotNull final Consumer<? super List<VirtualFile>> callback) {
     chooseFiles(descriptor, project, null, toSelect, callback);
   }
 
@@ -107,8 +107,8 @@ public class FileChooser {
                                  @Nullable final Project project,
                                  @Nullable final Component parent,
                                  @Nullable final VirtualFile toSelect,
-                                 @NotNull final Consumer<List<VirtualFile>> callback) {
-    Component parentComponent = (parent == null) ? WindowManager.getInstance().suggestParentWindow(project) : parent;
+                                 @NotNull final Consumer<? super List<VirtualFile>> callback) {
+    Component parentComponent = parent == null ? WindowManager.getInstance().suggestParentWindow(project) : parent;
     final FileChooserFactory factory = FileChooserFactory.getInstance();
     final PathChooserDialog pathChooser = factory.createPathChooser(descriptor, project, parentComponent);
     pathChooser.choose(toSelect, callback);

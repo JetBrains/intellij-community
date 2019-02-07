@@ -8,7 +8,7 @@ import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
 import com.intellij.notification.SingletonNotificationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.concurrency.QueueProcessor
 import com.intellij.util.containers.ContainerUtil
@@ -63,38 +63,39 @@ private class NativeCredentialStoreWrapper(private val store: CredentialStore) :
   }
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
-    LOG.runAndLogException {
-      if (fallbackStore.isInitialized()) {
-        fallbackStore.value.set(attributes, credentials)
-        return
-      }
+    if (fallbackStore.isInitialized()) {
+      fallbackStore.value.set(attributes, credentials)
+      return
+    }
 
-      if (credentials == null) {
-        postponedRemovedCredentials.add(attributes)
-      }
-      else {
-        postponedCredentials.set(attributes, credentials)
-      }
+    if (credentials == null) {
+      postponedRemovedCredentials.add(attributes)
+    }
+    else {
+      postponedCredentials.set(attributes, credentials)
+    }
 
-      queueProcessor.add {
+    queueProcessor.add {
+      try {
+        var store = if (fallbackStore.isInitialized()) fallbackStore.value else store
         try {
-          var store = if (fallbackStore.isInitialized()) fallbackStore.value else store
-          try {
-            store.set(attributes, credentials)
-          }
-          catch (e: UnsatisfiedLinkError) {
-            store = fallbackStore.value
-            notifyUnsatisfiedLinkError(e)
-            store.set(attributes, credentials)
-          }
-          catch (e: Throwable) {
-            LOG.error(e)
-          }
+          store.set(attributes, credentials)
         }
-        finally {
-          if (!postponedRemovedCredentials.remove(attributes)) {
-            postponedCredentials.set(attributes, null)
-          }
+        catch (e: UnsatisfiedLinkError) {
+          store = fallbackStore.value
+          notifyUnsatisfiedLinkError(e)
+          store.set(attributes, credentials)
+        }
+        catch (e: Throwable) {
+          LOG.error(e)
+        }
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      finally {
+        if (!postponedRemovedCredentials.remove(attributes)) {
+          postponedCredentials.set(attributes, null)
         }
       }
     }

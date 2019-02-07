@@ -4,11 +4,9 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -16,7 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.util.Function;
@@ -29,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -42,11 +39,10 @@ import static com.intellij.util.containers.ContainerUtil.newTroveSet;
  */
 public class RefreshWorker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker");
-  private static final Logger LOG_ATTRIBUTES = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker_Attributes");
 
   private final boolean myIsRecursive;
   private final Queue<Pair<NewVirtualFile, FileAttributes>> myRefreshQueue = new Queue<>(100);
-  private final List<VFileEvent> myEvents = new ArrayList<>();
+  private final VfsEventGenerationHelper myHelper = new VfsEventGenerationHelper();
   private volatile boolean myCancelled;
   private final LocalFileSystemRefreshWorker myLocalFileSystemRefreshWorker;
 
@@ -61,7 +57,7 @@ public class RefreshWorker {
   @NotNull
   public List<VFileEvent> getEvents() {
     if (myLocalFileSystemRefreshWorker != null) return myLocalFileSystemRefreshWorker.getEvents();
-    return myEvents;
+    return myHelper.getEvents();
   }
 
   public void cancel() {
@@ -101,7 +97,7 @@ public class RefreshWorker {
 
       FileAttributes attributes = pair.second != null ? pair.second : fs.getAttributes(file);
       if (attributes == null) {
-        scheduleDeletion(file);
+        myHelper.scheduleDeletion(file);
         file.markClean();
         continue;
       }
@@ -123,40 +119,18 @@ public class RefreshWorker {
         }
       }
       else {
-        long currentTimestamp = persistence.getTimeStamp(file);
-        long upToDateTimestamp = attributes.lastModified;
-        long currentLength = persistence.getLastRecordedLength(file);
-        long upToDateLength = attributes.length;
-
-        if (currentTimestamp != upToDateTimestamp || currentLength != upToDateLength) {
-          scheduleUpdateContent(file);
-        }
+        myHelper.checkContentChanged(file, persistence.getTimeStamp(file), attributes.lastModified,
+                                     persistence.getLastRecordedLength(file), attributes.length);
       }
 
-      boolean currentWritable = persistence.isWritable(file);
-      boolean upToDateWritable = attributes.isWritable();
-      if (LOG_ATTRIBUTES.isTraceEnabled()) {
-        LOG_ATTRIBUTES.trace("file=" + file + " writable vfs=" + file.isWritable() + " persistence=" + currentWritable + " real=" + upToDateWritable);
-      }
-      if (currentWritable != upToDateWritable) {
-        scheduleAttributeChange(file, VirtualFile.PROP_WRITABLE, currentWritable, upToDateWritable);
-      }
+      myHelper.checkWritableAttributeChange(file, persistence.isWritable(file), attributes.isWritable());
 
       if (SystemInfo.isWindows) {
-        boolean currentHidden = file.is(VFileProperty.HIDDEN);
-        boolean upToDateHidden = attributes.isHidden();
-        if (currentHidden != upToDateHidden) {
-          scheduleAttributeChange(file, VirtualFile.PROP_HIDDEN, currentHidden, upToDateHidden);
-        }
+        myHelper.checkHiddenAttributeChange(file, file.is(VFileProperty.HIDDEN), attributes.isHidden());
       }
 
       if (attributes.isSymLink()) {
-        String currentTarget = file.getCanonicalPath();
-        String upToDateTarget = fs.resolveSymLink(file);
-        String upToDateVfsTarget = upToDateTarget != null ? FileUtil.toSystemIndependentName(upToDateTarget) : null;
-        if (!Comparing.equal(currentTarget, upToDateVfsTarget)) {
-          scheduleAttributeChange(file, VirtualFile.PROP_SYMLINK_TARGET, currentTarget, upToDateVfsTarget);
-        }
+        myHelper.checkSymbolicLinkChange(file, file.getCanonicalPath(), fs.resolveSymLink(file));
       }
 
       if (myIsRecursive || !file.isDirectory()) {
@@ -204,14 +178,14 @@ public class RefreshWorker {
         }
 
         for (String name : deletedNames) {
-          scheduleDeletion(dir.findChild(name));
+          myHelper.scheduleDeletion(dir.findChild(name));
         }
 
         for (Pair<String, FileAttributes> pair : addedMap) {
           String name = pair.first;
           FileAttributes childAttributes = pair.second;
           if (childAttributes != null) {
-            scheduleCreation(dir, name, childAttributes.isDirectory());
+            myHelper.scheduleCreation(dir, name, childAttributes.isDirectory());
           }
           else {
             if (LOG.isTraceEnabled()) LOG.trace("[+] fs=" + fs + " dir=" + dir + " name=" + name);
@@ -227,7 +201,7 @@ public class RefreshWorker {
           }
           else {
             if (LOG.isTraceEnabled()) LOG.warn("[x] fs=" + fs + " dir=" + dir + " name=" + child.getName());
-            scheduleDeletion(child);
+            myHelper.scheduleDeletion(child);
           }
         }
 
@@ -285,7 +259,7 @@ public class RefreshWorker {
             checkAndScheduleFileNameChange(actualNames, child);
           }
           else {
-            scheduleDeletion(child);
+            myHelper.scheduleDeletion(child);
           }
         }
 
@@ -293,7 +267,7 @@ public class RefreshWorker {
           String name = pair.first;
           FileAttributes childAttributes = pair.second;
           if (childAttributes != null) {
-            scheduleCreation(dir, name, childAttributes.isDirectory());
+            myHelper.scheduleCreation(dir, name, childAttributes.isDirectory());
           }
         }
 
@@ -310,7 +284,7 @@ public class RefreshWorker {
       String currentName = child.getName();
       String actualName = actualNames.get(currentName);
       if (actualName != null && !currentName.equals(actualName)) {
-        scheduleAttributeChange(child, VirtualFile.PROP_NAME, currentName, actualName);
+        myHelper.scheduleAttributeChange(child, VirtualFile.PROP_NAME, currentName, actualName);
       }
     }
   }
@@ -356,34 +330,12 @@ public class RefreshWorker {
     boolean upToDateIsSpecial = childAttributes.isSpecial();
 
     if (currentIsDirectory != upToDateIsDirectory || currentIsSymlink != upToDateIsSymlink || currentIsSpecial != upToDateIsSpecial) {
-      scheduleDeletion(child);
-      scheduleCreation(parent, child.getName(), upToDateIsDirectory);
+      myHelper.scheduleDeletion(child);
+      myHelper.scheduleCreation(parent, child.getName(), upToDateIsDirectory);
       return true;
     }
 
     return false;
-  }
-
-  private void scheduleAttributeChange(@NotNull VirtualFile file, @VirtualFile.PropName @NotNull String property, Object current, Object upToDate) {
-    if (LOG.isTraceEnabled()) LOG.trace("update '" + property + "' file=" + file);
-    myEvents.add(new VFilePropertyChangeEvent(null, file, property, current, upToDate, true));
-  }
-
-  private void scheduleUpdateContent(@NotNull VirtualFile file) {
-    if (LOG.isTraceEnabled()) LOG.trace("update file=" + file);
-    myEvents.add(new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, true));
-  }
-
-  private void scheduleCreation(@NotNull VirtualFile parent, @NotNull String childName, boolean isDirectory) {
-    if (LOG.isTraceEnabled()) LOG.trace("create parent=" + parent + " name=" + childName + " dir=" + isDirectory);
-    myEvents.add(new VFileCreateEvent(null, parent, childName, isDirectory, true));
-  }
-
-  private void scheduleDeletion(@Nullable VirtualFile file) {
-    if (file != null) {
-      if (LOG.isTraceEnabled()) LOG.trace("delete file=" + file);
-      myEvents.add(new VFileDeleteEvent(null, file, true));
-    }
   }
 
   private static Function<? super VirtualFile, Boolean> ourCancellingCondition;

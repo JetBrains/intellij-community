@@ -17,6 +17,7 @@ import org.apache.batik.transcoder.TranscoderInput;
 import org.apache.batik.transcoder.TranscoderOutput;
 import org.apache.batik.transcoder.image.ImageTranscoder;
 import org.apache.batik.util.XMLResourceDescriptor;
+import org.apache.xmlgraphics.java2d.Dimension2DDouble;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
@@ -27,11 +28,10 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Dimension2D;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Arrays;
 
 import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
 
@@ -122,25 +122,59 @@ public class SVGLoader {
   }
 
   /**
-   * Loads an image with the specified {@code width} and {@code height}. Size specified in svg file is ignored.
+   * Loads an image with the specified {@code width} and {@code height} (in user space). Size specified in svg file is ignored.
    */
-  public static Image load(@Nullable URL url, @NotNull InputStream stream, double width, double height) throws IOException {
+  public static Image load(@Nullable URL url, @NotNull InputStream stream, @NotNull ScaleContext ctx, double width, double height) throws IOException {
     try {
-      return new SVGLoader(url, stream, width, height, 1).createImage();
+      double s = ctx.getScale(PIX_SCALE);
+      return new SVGLoader(url, stream, width * s, height * s, 1).createImage();
     }
     catch (TranscoderException ex) {
       throw new IOException(ex);
     }
   }
 
+  /**
+   * Loads a HiDPI-aware image with the specified {@code width} and {@code height} (in user space). Size specified in svg file is ignored.
+   */
+  public static <T extends BufferedImage> T loadHiDPI(@Nullable URL url, @NotNull InputStream stream , ScaleContext ctx, double width, double height) throws IOException {
+    BufferedImage image = (BufferedImage)load(url, stream, ctx, width, height);
+    //noinspection unchecked
+    return (T)ImageUtil.ensureHiDPI(image, ctx);
+  }
+
+  /**
+   * Loads a HiDPI-aware image of the size specified in the svg file.
+   */
   public static <T extends BufferedImage> T loadHiDPI(@Nullable URL url, @NotNull InputStream stream , ScaleContext ctx) throws IOException {
     BufferedImage image = (BufferedImage)load(url, stream, ctx.getScale(PIX_SCALE));
     //noinspection unchecked
     return (T)ImageUtil.ensureHiDPI(image, ctx);
   }
 
-  public static Dimension2D loadInfo(@Nullable URL url, @NotNull InputStream stream , double scale) throws IOException {
-    return new SVGLoader(url, stream, scale).getDocumentSize();
+  @SuppressWarnings("SSBasedInspection")
+  public static Dimension2D getDocumentSize(@Nullable URL url, @NotNull InputStream stream , double scale) throws IOException {
+    // In order to get the size we parse the whole document and build a tree ("GVT"), what might be too expensive.
+    // So, to optimize we extract the svg header (possibly prepended with <?xml> header) and parse only it.
+    StringBuilder builder = new StringBuilder(100);
+    byte[] bytes = new byte[3];
+    boolean checkClosingBracket = false;
+    int ch;
+    while((ch = stream.read()) != -1) {
+      builder.append((char)ch);
+      if (ch == '<') {
+        if (stream.read(bytes, 0, 3) == -1) {
+          break;
+        }
+        String str = new String(bytes);
+        builder.append(str);
+        checkClosingBracket = "svg".equals(str);
+      }
+      else if (checkClosingBracket && ch == '>') {
+        return new SVGLoader(url, new ByteArrayInputStream(builder.append("</svg>").toString().getBytes()), scale).getDocumentSize();
+      }
+    }
+    return new Dimension2DDouble(ICON_DEFAULT_SIZE * scale, ICON_DEFAULT_SIZE * scale);
   }
 
   public static double getMaxZoomFactor(@Nullable URL url, @NotNull InputStream stream, @NotNull ScaleContext ctx) throws IOException {

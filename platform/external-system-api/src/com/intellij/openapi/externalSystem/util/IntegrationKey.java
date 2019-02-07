@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
  * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 4/10/13 11:39 AM
  */
 public class IntegrationKey {
 

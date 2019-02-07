@@ -15,6 +15,8 @@
  */
 package org.fest.swing.core
 
+import com.intellij.testGuiFramework.util.step
+import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.ui.EdtInvocationManager
 import org.fest.swing.awt.AWT
 import org.fest.swing.edt.GuiActionRunner
@@ -25,7 +27,6 @@ import org.fest.swing.timing.Pause.pause
 import org.fest.swing.util.Modifiers
 import java.awt.*
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import javax.swing.JPopupMenu
 import javax.swing.KeyStroke
@@ -46,19 +47,27 @@ class SmartWaitRobot : Robot {
   }
 
   override fun click(component: Component) {
-    basicRobot.click(component)
+    step("click at component ${component.loggedOutput()}") {
+      basicRobot.click(component)
+    }
   }
 
   override fun click(component: Component, mouseButton: MouseButton) {
-    basicRobot.click(component, mouseButton)
+    step("click at component ${component.loggedOutput()}, $mouseButton") {
+      basicRobot.click(component, mouseButton)
+    }
   }
 
   override fun click(component: Component, mouseButton: MouseButton, counts: Int) {
-    basicRobot.click(component, mouseButton, counts)
+    step("click at component ${component.loggedOutput()}, $mouseButton $counts times") {
+      basicRobot.click(component, mouseButton, counts)
+    }
   }
 
   override fun click(component: Component, point: Point) {
-    basicRobot.click(component, point)
+    step("click at component ${component.loggedOutput()} at point ${point.loggedOutput()}") {
+      basicRobot.click(component, point)
+    }
   }
 
   override fun showWindow(window: Window) {
@@ -80,43 +89,61 @@ class SmartWaitRobot : Robot {
     basicRobot.pressAndReleaseKey(p0, *p1)
   }
 
-  override fun showPopupMenu(component: Component): JPopupMenu = basicRobot.showPopupMenu(component)
+  override fun showPopupMenu(component: Component): JPopupMenu =
+    step("show popup menu at component ${component.loggedOutput()}") { basicRobot.showPopupMenu(component) }
 
-  override fun showPopupMenu(component: Component, point: Point): JPopupMenu = basicRobot.showPopupMenu(component, point)
+  override fun showPopupMenu(component: Component, point: Point): JPopupMenu =
+    step("show popup menu at component ${component.loggedOutput()} at point ${point.loggedOutput()}") { basicRobot.showPopupMenu(component, point) }
 
   override fun jitter(component: Component) {
-    basicRobot.jitter(component)
+    step("jitter on component ${component.loggedOutput()}") {
+      basicRobot.jitter(component)
+    }
   }
 
   override fun jitter(component: Component, point: Point) {
-    basicRobot.jitter(component, point)
+    step("jitter on component ${component.loggedOutput()} at point ${point.loggedOutput()}") {
+      basicRobot.jitter(component, point)
+    }
   }
 
   override fun pressModifiers(p0: Int) {
-    basicRobot.pressModifiers(p0)
+    step("press modifiers $p0") {
+      basicRobot.pressModifiers(p0)
+    }
   }
 
   override fun pressMouse(mouseButton: MouseButton) {
-    basicRobot.pressMouse(mouseButton)
+    step("press $mouseButton of mouse") {
+      basicRobot.pressMouse(mouseButton)
+    }
   }
 
   override fun pressMouse(component: Component, point: Point) {
-    basicRobot.pressMouse(component, point)
+    step("press mouse on component ${component.loggedOutput()} at point ${point.loggedOutput()}") {
+      basicRobot.pressMouse(component, point)
+    }
   }
 
   override fun pressMouse(component: Component, point: Point, mouseButton: MouseButton) {
-    basicRobot.pressMouse(component, point, mouseButton)
+    step("press $mouseButton of mouse on component ${component.loggedOutput()} at point ${point.loggedOutput()}") {
+      basicRobot.pressMouse(component, point, mouseButton)
+    }
   }
 
   override fun pressMouse(point: Point, mouseButton: MouseButton) {
-    basicRobot.pressMouse(point, mouseButton)
+    step("press $mouseButton of mouse at point ${point.loggedOutput()}") {
+      basicRobot.pressMouse(point, mouseButton)
+    }
   }
 
   override fun hierarchy(): ComponentHierarchy =
     basicRobot.hierarchy()
 
   override fun releaseKey(p0: Int) {
-    basicRobot.releaseKey(p0)
+    step("release key $p0") {
+      basicRobot.releaseKey(p0)
+    }
   }
 
   override fun isDragging(): Boolean = basicRobot.isDragging
@@ -128,7 +155,9 @@ class SmartWaitRobot : Robot {
   }
 
   override fun type(char: Char, component: Component) {
-    basicRobot.type(char, component)
+    step("type char $char on component ${component.loggedOutput()}") {
+      basicRobot.type(char, component)
+    }
   }
 
   override fun requireNoJOptionPaneIsShowing() {
@@ -140,37 +169,53 @@ class SmartWaitRobot : Robot {
   }
 
   override fun releaseMouse(mouseButton: MouseButton) {
-    basicRobot.releaseMouse(mouseButton)
+    step("release $mouseButton of mouse") {
+      basicRobot.releaseMouse(mouseButton)
+    }
   }
 
   override fun pressKey(p0: Int) {
-    basicRobot.pressKey(p0)
+    step("press key $p0") {
+      basicRobot.pressKey(p0)
+    }
   }
 
   override fun settings(): Settings = basicRobot.settings()
 
   override fun enterText(text: String) {
-    basicRobot.enterText(text)
+    step("enter text '$text'") {
+      basicRobot.enterText(text)
+    }
   }
 
   override fun enterText(text: String, component: Component) {
-    basicRobot.enterText(text, component)
+    step("enter text '$text' on component ${component.loggedOutput()}") {
+      basicRobot.enterText(text, component)
+    }
   }
 
   override fun releaseMouseButtons() {
-    basicRobot.releaseMouseButtons()
+    step("release mouse buttons (all?)") {
+      basicRobot.releaseMouseButtons()
+    }
   }
 
   override fun rightClick(component: Component) {
-    basicRobot.rightClick(component)
+    step("right click on component ${component.loggedOutput()}") {
+      basicRobot.rightClick(component)
+    }
   }
 
   override fun focus(component: Component) {
-    basicRobot.focus(component)
+    step("focus on component ${component.loggedOutput()}") {
+      basicRobot.focus(component)
+    }
   }
 
   override fun doubleClick(component: Component) {
-    basicRobot.doubleClick(component)
+    step("double click on component ${component.loggedOutput()}") {
+      basicRobot.doubleClick(component)
+    }
   }
 
   override fun cleanUpWithoutDisposingWindows() {
@@ -180,25 +225,38 @@ class SmartWaitRobot : Robot {
   override fun isReadyForInput(component: Component): Boolean = basicRobot.isReadyForInput(component)
 
   override fun focusAndWaitForFocusGain(component: Component) {
-    basicRobot.focusAndWaitForFocusGain(component)
+    step("focus and wait for it on component ${component.loggedOutput()}") {
+      basicRobot.focusAndWaitForFocusGain(component)
+    }
   }
 
   override fun releaseModifiers(p0: Int) {
-    basicRobot.releaseModifiers(p0)
+    step("release modifiers $p0") {
+      basicRobot.releaseModifiers(p0)
+    }
   }
 
-  override fun findActivePopupMenu(): JPopupMenu? = basicRobot.findActivePopupMenu()
+  override fun findActivePopupMenu(): JPopupMenu? =
+    step("find active popup menu") {
+      basicRobot.findActivePopupMenu()
+    }
 
   override fun rotateMouseWheel(component: Component, p1: Int) {
-    basicRobot.rotateMouseWheel(component, p1)
+    step("rotate mouse wheel on component ${component.loggedOutput()} on $p1") {
+      basicRobot.rotateMouseWheel(component, p1)
+    }
   }
 
   override fun rotateMouseWheel(p0: Int) {
-    basicRobot.rotateMouseWheel(p0)
+    step("rotate mouse wheel on $p0") {
+      basicRobot.rotateMouseWheel(p0)
+    }
   }
 
   override fun pressAndReleaseKeys(vararg p0: Int) {
-    basicRobot.pressAndReleaseKeys(*p0)
+    step("press and release keys [${p0.joinToString()}]") {
+      basicRobot.pressAndReleaseKeys(*p0)
+    }
   }
 
   override fun finder(): ComponentFinder = basicRobot.finder()
@@ -214,11 +272,14 @@ class SmartWaitRobot : Robot {
   private val fastRobot: java.awt.Robot = java.awt.Robot()
 
   override fun waitForIdle() {
-    if (myAwareClick) {
-      Thread.sleep(50)
-    } else {
-      pause(waitConst)
-      if (!SwingUtilities.isEventDispatchThread()) EdtInvocationManager.getInstance().invokeAndWait({ })
+    step("wait for idle (robot)") {
+      if (myAwareClick) {
+        Thread.sleep(50)
+      }
+      else {
+        pause(waitConst)
+        if (!SwingUtilities.isEventDispatchThread()) EdtInvocationManager.getInstance().invokeAndWait({ })
+      }
     }
   }
 
@@ -229,38 +290,47 @@ class SmartWaitRobot : Robot {
 
   //smooth mouse move
   override fun moveMouse(x: Int, y: Int) {
-    val pauseConstMs = settings().delayBetweenEvents().toLong()
-    val n = 20
-    val start = MouseInfo.getPointerInfo().location
-    val dx = (x - start.x) / n.toDouble()
-    val dy = (y - start.y) / n.toDouble()
-    for (step in 1..n) {
-      try {
-        pause(pauseConstMs)
-      } catch (e: InterruptedException) {
-        e.printStackTrace()
-      }
+    step("move mouse to [$x, $y]") {
+      val pauseConstMs = settings().delayBetweenEvents().toLong()
+      val n = 20
+      val start = MouseInfo.getPointerInfo().location
+      val dx = (x - start.x) / n.toDouble()
+      val dy = (y - start.y) / n.toDouble()
+      for (step in 1..n) {
+        try {
+          pause(pauseConstMs)
+        }
+        catch (e: InterruptedException) {
+          e.printStackTrace()
+        }
 
-      basicRobot.moveMouse(
-        (start.x + dx * ((Math.log(1.0 * step / n) - Math.log(1.0 / n)) * n / (0 - Math.log(1.0 / n)))).toInt(),
-        (start.y + dy * ((Math.log(1.0 * step / n) - Math.log(1.0 / n)) * n / (0 - Math.log(1.0 / n)))).toInt())
+        basicRobot.moveMouse(
+          (start.x + dx * ((Math.log(1.0 * step / n) - Math.log(1.0 / n)) * n / (0 - Math.log(1.0 / n)))).toInt(),
+          (start.y + dy * ((Math.log(1.0 * step / n) - Math.log(1.0 / n)) * n / (0 - Math.log(1.0 / n)))).toInt())
+      }
+      basicRobot.moveMouse(x, y)
     }
-    basicRobot.moveMouse(x, y)
   }
 
   //smooth mouse move to component
   override fun moveMouse(c: Component, x: Int, y: Int) {
-    moveMouseWithAttempts(c, x, y)
+    step("move mouse on component ${c.loggedOutput()} to point [$x, $y]") {
+      moveMouseWithAttempts(c, x, y)
+    }
   }
 
   //smooth mouse move for find and click actions
   override fun click(c: Component, where: Point, button: MouseButton, times: Int) {
-    moveMouseAndClick(c, where, button, times)
+    step("click at component ${c.loggedOutput()}, $button $times times, at ${where.loggedOutput()}") {
+      moveMouseAndClick(c, where, button, times)
+    }
   }
 
   //we are replacing BasicRobot click with our click because the original one cannot handle double click rightly (BasicRobot creates unnecessary move event between click event which breaks clickCount from 2 to 1)
   override fun click(where: Point, button: MouseButton, times: Int) {
-    moveMouseAndClick(null, where, button, times)
+    step("click at ${where.loggedOutput()}, $button $times times") {
+      moveMouseAndClick(null, where, button, times)
+    }
   }
 
   private fun moveMouseAndClick(c: Component? = null, where: Point, button: MouseButton, times: Int) {
@@ -285,16 +355,18 @@ class SmartWaitRobot : Robot {
   }
 
   private fun myInnerClick(button: MouseButton, times: Int, point: Point, component: Component?) {
-    if (component == null)
-      basicRobot.click(point, button, times)
-    else
-      basicRobot.click(component, point, button, times)
+    step("click on component ${component?.loggedOutput()}, $button $times times at point ${point.loggedOutput()}") {
+      if (component == null)
+        basicRobot.click(point, button, times)
+      else
+        basicRobot.click(component, point, button, times)
+    }
   }
 
   private fun waitFor(condition: () -> Boolean) {
     val timeout = 5000 //5 sec
     val cdl = CountDownLatch(1)
-    val executor = Executors.newSingleThreadScheduledExecutor().scheduleWithFixedDelay(Runnable {
+    val executor = ConcurrencyUtil.newSingleScheduledThreadExecutor("SmartWaitRobot").scheduleWithFixedDelay(Runnable {
       if (condition()) {
         cdl.countDown()
       }
@@ -387,3 +459,8 @@ class SmartWaitRobot : Robot {
   }
 
 }
+
+fun Component.loggedOutput(): String =
+  "\"${javaClass.simpleName}, bounds [x=$x, y=$y, width=$width, height=$height]\""
+
+fun Point.loggedOutput(): String = "[$x, $y]"

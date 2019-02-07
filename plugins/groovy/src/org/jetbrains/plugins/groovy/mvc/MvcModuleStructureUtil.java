@@ -21,6 +21,7 @@ import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -34,7 +35,6 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -244,8 +244,8 @@ public class MvcModuleStructureUtil {
     // update facets
     if (!actions.second.isEmpty()) {
       final Application application = ApplicationManager.getApplication();
-      final ModifiableFacetModel model = application.runReadAction(
-        (Computable<ModifiableFacetModel>)() -> FacetManager.getInstance(module).createModifiableModel());
+      final ModifiableFacetModel model =
+        ReadAction.compute(() -> FacetManager.getInstance(module).createModifiableModel());
       for (Consumer<ModifiableFacetModel> action : actions.second) {
         action.consume(model);
       }

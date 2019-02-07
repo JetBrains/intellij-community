@@ -250,6 +250,13 @@ class PassExecutorService implements Disposable {
         @Override
         public void doApplyInformationToEditor() {
           pass.applyInformationToEditor();
+          if (document != null) {
+            VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+            FileEditor[] editors = file == null ? new FileEditor[0] : FileEditorManager.getInstance(myProject).getEditors(file);
+            for (FileEditor editor : editors) {
+              repaintErrorStripeAndIcon(editor);
+            }
+          }
         }
       };
       textEditorHighlightingPass.setId(id.incrementAndGet());
@@ -490,6 +497,7 @@ class PassExecutorService implements Disposable {
       try {
         if (fileEditor.getComponent().isDisplayable() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
           pass.applyInformationToEditor();
+          repaintErrorStripeAndIcon(fileEditor);
           FileStatusMap fileStatusMap = DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap();
           if (document != null) {
             fileStatusMap.markFileUpToDate(document, pass.getId());
@@ -518,6 +526,12 @@ class PassExecutorService implements Disposable {
       }
       callbackOnApplied.run();
     }, updateProgress.getModalityState());
+  }
+
+  private void repaintErrorStripeAndIcon(@NotNull FileEditor fileEditor) {
+    if (fileEditor instanceof TextEditor) {
+      DefaultHighlightInfoProcessor.repaintErrorStripeAndIcon(((TextEditor)fileEditor).getEditor(), myProject);
+    }
   }
 
   protected boolean isDisposed() {

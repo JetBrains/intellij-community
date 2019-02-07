@@ -39,7 +39,7 @@ public class JavaTryUnwrapper extends JavaUnwrapper {
       for (PsiResourceListElement listElement : resourceList) {
         if (listElement instanceof PsiResourceVariable) {
           context.extractElement(listElement, trySt);
-          if (context.myIsEffective) {
+          if (context.isEffective()) {
             PsiStatement emptyStatement = JavaPsiFacade.getElementFactory(resourceList.getProject()).createStatementFromText(";", trySt);
             trySt.getParent().addBefore(emptyStatement, trySt);
           }

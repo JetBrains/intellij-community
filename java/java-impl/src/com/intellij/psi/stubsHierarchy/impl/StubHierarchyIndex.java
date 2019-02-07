@@ -32,19 +32,13 @@ import org.jetbrains.annotations.NotNull;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.stream.IntStream;
 
 /**
  * @author peter
  */
 public class StubHierarchyIndex extends FileBasedIndexExtension<Integer, SerializedUnit> implements PsiDependentIndex {
-  private static final int KEY_COUNT = 20;
-  static final int[] BINARY_KEYS = IntStream.rangeClosed(1, KEY_COUNT).toArray();
-  static final int[] SOURCE_KEYS = IntStream.rangeClosed(-KEY_COUNT, -1).toArray();
   static final ID<Integer, SerializedUnit> INDEX_ID = ID.create("jvm.hierarchy");
-  private static final StubHierarchyIndexer[] ourIndexers = StubHierarchyIndexer.EP_NAME.getExtensions();
 
   @NotNull
   @Override
@@ -56,11 +50,11 @@ public class StubHierarchyIndex extends FileBasedIndexExtension<Integer, Seriali
   @Override
   public DataIndexer<Integer, SerializedUnit, FileContent> getIndexer() {
     return inputData -> {
-      for (StubHierarchyIndexer indexer : ourIndexers) {
+      for (StubHierarchyIndexer indexer : StubHierarchyIndexer.EP_NAME.getExtensionList()) {
         VirtualFile file = inputData.getFile();
         IndexTree.Unit unit = indexer.handlesFile(file) ? indexer.indexFile(inputData) : null;
         if (unit != null && unit.myDecls.length > 0) {
-          int[] keys = file.getFileType().isBinary() ? BINARY_KEYS : SOURCE_KEYS;
+          int[] keys = file.getFileType().isBinary() ? HierarchyServiceImpl.BINARY_KEYS : HierarchyServiceImpl.SOURCE_KEYS;
           return Collections.singletonMap(keys[((VirtualFileWithId) file).getId() % keys.length], new SerializedUnit(unit));
         }
       }
@@ -96,14 +90,15 @@ public class StubHierarchyIndex extends FileBasedIndexExtension<Integer, Seriali
 
   @Override
   public int getVersion() {
-    return IndexTree.STUB_HIERARCHY_ENABLED ? 8 + Arrays.stream(ourIndexers).mapToInt(StubHierarchyIndexer::getVersion).sum() : 0;
+    return IndexTree.STUB_HIERARCHY_ENABLED ? 8 + StubHierarchyIndexer.EP_NAME.extensions().mapToInt(StubHierarchyIndexer::getVersion).sum()
+                                            : 0;
   }
 
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return file -> IndexTree.STUB_HIERARCHY_ENABLED &&
-                   Arrays.stream(ourIndexers).anyMatch(indexer -> indexer.handlesFile(file)) &&
+                   StubHierarchyIndexer.EP_NAME.extensions().anyMatch(indexer -> indexer.handlesFile(file)) &&
                    isSourceOrLibrary(file);
   }
 

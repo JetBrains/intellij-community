@@ -230,12 +230,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
   @NotNull
   protected PerformInBackgroundOption createOption() {
-    return new PerformInBackgroundOption(){
-      @Override
-      public boolean shouldStartInBackground() {
-        return true;
-      }
-    };
+    return () -> true;
   }
 
   protected void notifyInspectionsFinished(@NotNull AnalysisScope scope) {
@@ -306,7 +301,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   }
 
   @NotNull
-  protected List<Tools> getUsedTools() {
+  public List<Tools> getUsedTools() {
     InspectionProfileImpl profile = getCurrentProfile();
     List<Tools> tools = profile.getAllEnabledInspectionTools(myProject);
     Set<InspectionToolWrapper<?, ?>> dependentTools = new LinkedHashSet<>();
@@ -363,7 +358,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
                           @Nullable String commandName,
                           @Nullable Runnable postRunnable,
                           final boolean modal,
-                          Predicate<ProblemDescriptor> shouldApplyFix) {}
+                          @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix) {}
 
   public void codeCleanup(@NotNull AnalysisScope scope,
                           @NotNull InspectionProfile profile,
@@ -383,7 +378,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     cleanupElements(project, runnable, descriptor -> true, scope);
   }
 
-  public static void cleanupElements(@NotNull final Project project, @Nullable final Runnable runnable, Predicate<ProblemDescriptor> shouldApplyFix, @NotNull PsiElement... scope) {
+  public static void cleanupElements(@NotNull final Project project, @Nullable final Runnable runnable, Predicate<? super ProblemDescriptor> shouldApplyFix, @NotNull PsiElement... scope) {
     final List<SmartPsiElementPointer<PsiElement>> elements = new ArrayList<>();
     final SmartPointerManager manager = SmartPointerManager.getInstance(project);
     for (PsiElement element : scope) {
@@ -399,10 +394,10 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     cleanupElements(project, runnable, elements, descriptor -> true);
   }
 
-  public static void cleanupElements(@NotNull final Project project,
-                                     @Nullable final Runnable runnable,
-                                     final List<? extends SmartPsiElementPointer<PsiElement>> elements,
-                                     Predicate<ProblemDescriptor> shouldApplyFix) {
+  private static void cleanupElements(@NotNull final Project project,
+                                      @Nullable final Runnable runnable,
+                                      final List<? extends SmartPsiElementPointer<PsiElement>> elements,
+                                      @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix) {
     Runnable cleanupRunnable = () -> {
       final List<PsiElement> psiElements = new ArrayList<>();
       for (SmartPsiElementPointer<PsiElement> element : elements) {

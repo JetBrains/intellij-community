@@ -152,7 +152,7 @@ public class BlockUtils {
     return forward ? element.getNextSibling() : element.getPrevSibling();
   }
 
-  public static boolean containsConflictingDeclarations(PsiCodeBlock block, PsiCodeBlock parentBlock) {
+  public static boolean containsConflictingDeclarations(@NotNull PsiCodeBlock block, @NotNull PsiCodeBlock parentBlock) {
     final PsiStatement[] statements = block.getStatements();
     if (statements.length == 0) {
       return false;

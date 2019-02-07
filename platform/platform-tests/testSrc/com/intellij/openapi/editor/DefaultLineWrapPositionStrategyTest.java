@@ -20,7 +20,6 @@ import org.junit.Test;
 
 /**
  * @author Denis Zhdanov
- * @since Aug 25, 2010 3:20:41 PM
  */
 public class DefaultLineWrapPositionStrategyTest extends AbstractLineWrapPositionStrategyTest {
   private LineWrapPositionStrategy myStrategy;

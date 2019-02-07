@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ik
- * @since 20.02.2003
  */
 public class KeywordCompletionTest extends LightCompletionTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/keywords/";
@@ -185,6 +184,11 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     configureFromFileText("package-info.java", "@Anno <caret>");
     complete();
     testByCount(1, "package");
+  }
+
+  public void testAfterWildcard() {
+    configureByTestName();
+    assertStringItems("extends", "super");
   }
 
   private void doTest() {

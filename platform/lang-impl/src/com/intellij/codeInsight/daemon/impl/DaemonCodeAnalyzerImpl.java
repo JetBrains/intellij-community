@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -53,7 +52,6 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
-import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
@@ -114,8 +112,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
                                 @NotNull DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings,
                                 @NotNull EditorTracker editorTracker,
                                 @NotNull PsiDocumentManager psiDocumentManager,
-                                @NotNull final NamedScopeManager namedScopeManager,
-                                @NotNull final DependencyValidationManager dependencyValidationManager) {
+                                // DependencyValidationManagerImpl adds scope listener, so, we need to force service creation
+                                @SuppressWarnings("unused") @NotNull DependencyValidationManager dependencyValidationManager) {
     myProject = project;
     mySettings = daemonCodeAnalyzerSettings;
     myEditorTracker = editorTracker;
@@ -159,7 +157,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
   @NotNull
   @TestOnly
-  public static List<HighlightInfo> getHighlights(@NotNull Document document, HighlightSeverity minSeverity, @NotNull Project project) {
+  public static List<HighlightInfo> getHighlights(@NotNull Document document, @Nullable HighlightSeverity minSeverity, @NotNull Project project) {
     List<HighlightInfo> infos = new ArrayList<>();
     processHighlights(document, project, minSeverity, 0, document.getTextLength(), Processors.cancelableCollectProcessor(infos));
     return infos;
@@ -287,12 +285,12 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
   @NotNull
   @TestOnly
-  public List<HighlightInfo> runPasses(@NotNull PsiFile file,
-                                       @NotNull Document document,
-                                       @NotNull List<? extends TextEditor> textEditors,
-                                       @NotNull int[] toIgnore,
-                                       boolean canChangeDocument,
-                                       @Nullable final Runnable callbackWhileWaiting) throws ProcessCanceledException {
+  public void runPasses(@NotNull PsiFile file,
+                        @NotNull Document document,
+                        @NotNull List<? extends TextEditor> textEditors,
+                        @NotNull int[] toIgnore,
+                        boolean canChangeDocument,
+                        @Nullable final Runnable callbackWhileWaiting) throws ProcessCanceledException {
     assert myInitialized;
     assert !myDisposed;
     ApplicationEx application = ApplicationManagerEx.getApplicationEx();
@@ -323,15 +321,14 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     FileStatusMap fileStatusMap = getFileStatusMap();
 
     Map<FileEditor, HighlightingPass[]> map = new HashMap<>();
+
+    try {
+      waitForAllEditorsFinallyLoaded(project, 10, TimeUnit.SECONDS);
+    }
+    catch (TimeoutException e) {
+      throw new RuntimeException("editors have not completed loading in 10 seconds");
+    }
     for (TextEditor textEditor : textEditors) {
-      if (textEditor instanceof TextEditorImpl) {
-        try {
-          ((TextEditorImpl)textEditor).waitForLoaded(10, TimeUnit.SECONDS);
-        }
-        catch (TimeoutException e) {
-          throw new RuntimeException(textEditor + " has not completed loading in 10 seconds");
-        }
-      }
       TextEditorBackgroundHighlighter highlighter = (TextEditorBackgroundHighlighter)textEditor.getBackgroundHighlighter();
       if (highlighter == null) {
         Editor editor = textEditor.getEditor();
@@ -384,14 +381,38 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       UIUtil.dispatchAllInvocationEvents();
       UIUtil.dispatchAllInvocationEvents();
       assert progress.isCanceled() && progress.isDisposed();
-
-      return getHighlights(document, null, project);
     }
     finally {
       DaemonProgressIndicator.setDebug(false);
       fileStatusMap.allowDirt(true);
       waitForTermination();
     }
+  }
+
+  @TestOnly
+  public static void waitForAllEditorsFinallyLoaded(@NotNull Project project, long timeout, @NotNull TimeUnit unit) throws TimeoutException {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    long deadline = unit.toMillis(timeout) + System.currentTimeMillis();
+    while (true) {
+      if (System.currentTimeMillis() > deadline) throw new TimeoutException();
+      if (waitABitForEditorLoading(project)) break;
+      UIUtil.dispatchAllInvocationEvents();
+    }
+  }
+
+  @TestOnly
+  private static boolean waitABitForEditorLoading(@NotNull Project project) {
+    for (FileEditor editor : FileEditorManager.getInstance(project).getAllEditors()) {
+      if (editor instanceof TextEditorImpl) {
+        try {
+          ((TextEditorImpl)editor).waitForLoaded(1, TimeUnit.MILLISECONDS);
+        }
+        catch (TimeoutException ignored) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   @TestOnly
@@ -609,7 +630,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     boolean restart = toRestartAlarm && !myDisposed && myInitialized;
 
     if (restart && myUpdateRunnableFuture.isDone()) {
-      myUpdateRunnableFuture = myAlarm.schedule(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY, TimeUnit.MILLISECONDS);
+      myUpdateRunnableFuture = myAlarm.schedule(myUpdateRunnable, mySettings.getAutoReparseDelay(), TimeUnit.MILLISECONDS);
     }
 
     return canceled;
@@ -892,8 +913,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     // Editors in modal context
-    List<Editor> editors = getActiveEditors();
-
+    List<Editor> editors = myEditorTracker.getActiveEditors();
     Collection<FileEditor> activeTextEditors = new THashSet<>(editors.size());
     for (Editor editor : editors) {
       if (editor.isDisposed()) continue;
@@ -926,11 +946,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       result.add(fileEditor);
     }
     return result;
-  }
-
-  @NotNull
-  private List<Editor> getActiveEditors() {
-    return myEditorTracker.getActiveEditors();
   }
 
   @TestOnly

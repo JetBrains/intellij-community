@@ -82,6 +82,7 @@ class CreateMavenProjectWithKotlinGuiTest(private val testParameters: TestParame
       )
     }
 
+    waitAMoment()
   }
 
   companion object {

@@ -37,9 +37,12 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/4/2015
  */
 public class GradleRunnerUtil {
+
+  public static boolean isGradleModule(@NotNull Module module) {
+    return ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module);
+  }
 
   @Nullable
   public static Location<PsiMethod> getMethodLocation(@NotNull Location contextLocation) {

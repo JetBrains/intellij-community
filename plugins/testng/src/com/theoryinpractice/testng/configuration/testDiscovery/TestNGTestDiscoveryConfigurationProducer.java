@@ -4,6 +4,7 @@ package com.theoryinpractice.testng.configuration.testDiscovery;
 import com.intellij.execution.JavaTestConfigurationBase;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -20,8 +21,10 @@ import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class TestNGTestDiscoveryConfigurationProducer extends TestDiscoveryConfigurationProducer {
-  protected TestNGTestDiscoveryConfigurationProducer() {
-    super(TestNGConfigurationType.getInstance());
+  @NotNull
+  @Override
+  public ConfigurationFactory getConfigurationFactory() {
+    return TestNGConfigurationType.getInstance().getConfigurationFactories()[0];
   }
 
   @Override
@@ -52,7 +55,7 @@ public class TestNGTestDiscoveryConfigurationProducer extends TestDiscoveryConfi
                                        ExecutionEnvironment environment) {
     TestData data = ((TestNGConfiguration)configuration).getPersistantData();
     data.setPatterns(collectMethodPatterns(testMethods));
-    data.TEST_OBJECT = TestType.PATTERN.type; 
+    data.TEST_OBJECT = TestType.PATTERN.type;
     return new TestNGRunnableState(environment, (TestNGConfiguration)configuration);
   }
 }

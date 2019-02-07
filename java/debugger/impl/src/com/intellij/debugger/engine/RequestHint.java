@@ -248,7 +248,7 @@ public class RequestHint {
           }
         }
 
-        for (ExtraSteppingFilter filter : ExtraSteppingFilter.EP_NAME.getExtensions()) {
+        for (ExtraSteppingFilter filter : ExtraSteppingFilter.EP_NAME.getExtensionList()) {
           try {
             if (filter.isApplicable(context)) return filter.getStepRequestDepth(context);
           }

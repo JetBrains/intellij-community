@@ -100,6 +100,7 @@ public class PsiSynchronizedStatementImpl extends CompositePsiElement implements
     }
   }
 
+  @Override
   public String toString() {
     return "PsiSynchronizedStatement";
   }

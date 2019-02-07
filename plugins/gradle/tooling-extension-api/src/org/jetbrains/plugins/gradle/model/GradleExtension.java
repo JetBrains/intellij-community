@@ -22,7 +22,6 @@ import java.io.Serializable;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/16/2016
  */
 public interface GradleExtension extends GradleProperty {
   @Nullable

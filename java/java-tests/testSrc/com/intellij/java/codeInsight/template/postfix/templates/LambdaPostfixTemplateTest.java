@@ -37,6 +37,9 @@ public class LambdaPostfixTemplateTest extends PostfixTemplateTestCase {
       LanguageLevelProjectExtension.getInstance(myFixture.getProject()).setLanguageLevel(myDefaultLanguageLevel);
       myDefaultLanguageLevel = null;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

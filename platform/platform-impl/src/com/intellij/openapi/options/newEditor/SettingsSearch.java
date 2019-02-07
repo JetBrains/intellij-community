@@ -57,11 +57,6 @@ abstract class SettingsSearch extends SearchTextField implements KeyListener {
   }
 
   @Override
-  protected boolean isSearchControlUISupported() {
-    return true;
-  }
-
-  @Override
   protected boolean preprocessEventForTextField(KeyEvent event) {
     if (!myDelegatingNow) {
       KeyStroke stroke = KeyStroke.getKeyStrokeForEvent(event);

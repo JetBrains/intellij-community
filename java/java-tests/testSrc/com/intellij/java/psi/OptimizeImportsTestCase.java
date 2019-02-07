@@ -21,26 +21,23 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 /**
  * @author Dmitry Avdeev
  */
-public abstract class OptimizeImportsTestCase extends PsiTestCase {
+public abstract class OptimizeImportsTestCase extends LightCodeInsightFixtureTestCase {
   protected void doTest(final String extension) {
     CommandProcessor.getInstance().executeCommand(
       getProject(), () -> WriteCommandAction.runWriteCommandAction(null, () -> {
         String fileName = getTestName(false) + extension;
         try {
-          String text = loadFile(fileName);
-          PsiFile file = createFile(fileName, text);
+          PsiFile file = myFixture.configureByFile(fileName);
 
-          JavaCodeStyleManager.getInstance(myProject).optimizeImports(file);
+          JavaCodeStyleManager.getInstance(getProject()).optimizeImports(file);
           PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
           PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-          String textAfter = loadFile(getTestName(false) + "_after" + extension);
-          String fileText = file.getText();
-          assertEquals(textAfter, fileText);
+          myFixture.checkResultByFile(getTestName(false) + "_after" + extension);
         }
         catch (Exception e) {
           LOG.error(e);

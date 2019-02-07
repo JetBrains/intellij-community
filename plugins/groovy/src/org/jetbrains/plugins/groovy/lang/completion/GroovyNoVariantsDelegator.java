@@ -57,39 +57,33 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
     }
 
     if (empty) {
-      delegate(parameters, result);
+      delegate(parameters, result, tracker.session);
     } else if (Registry.is("ide.completion.show.better.matching.classes")) {
       if (parameters.getCompletionType() == CompletionType.BASIC &&
           parameters.getInvocationCount() <= 1 &&
           JavaCompletionContributor.mayStartClassName(result) &&
           GrMainCompletionProvider.isClassNamePossible(parameters.getPosition()) &&
-          !MapArgumentCompletionProvider.isMapKeyCompletion(parameters) &&
-          !areNonImportedInheritorsAlreadySuggested(parameters)) {
+          !MapArgumentCompletionProvider.isMapKeyCompletion(parameters)) {
         result = result.withPrefixMatcher(tracker.betterMatcher);
-        suggestNonImportedClasses(parameters, result);
+        suggestNonImportedClasses(parameters, result, tracker.session);
       }
     }
   }
 
-  private static boolean areNonImportedInheritorsAlreadySuggested(@NotNull CompletionParameters parameters) {
-    return GroovySmartCompletionContributor.AFTER_NEW.accepts(parameters.getPosition()) &&
-           GroovySmartCompletionContributor.getExpectedTypes(parameters).length > 0;
-  }
-
-  private static void delegate(CompletionParameters parameters, CompletionResultSet result) {
+  private static void delegate(CompletionParameters parameters, CompletionResultSet result, JavaCompletionSession session) {
     if (parameters.getCompletionType() == CompletionType.BASIC) {
       if (parameters.getInvocationCount() <= 1 &&
           (JavaCompletionContributor.mayStartClassName(result) || suggestAnnotations(parameters)) &&
           GrMainCompletionProvider.isClassNamePossible(parameters.getPosition()) &&
           !MapArgumentCompletionProvider.isMapKeyCompletion(parameters)) {
-        suggestNonImportedClasses(parameters, result);
+        suggestNonImportedClasses(parameters, result, session);
       }
 
       suggestChainedCalls(parameters, result);
     }
   }
 
-  private static void suggestNonImportedClasses(CompletionParameters parameters, final CompletionResultSet result) {
+  private static void suggestNonImportedClasses(CompletionParameters parameters, final CompletionResultSet result, JavaCompletionSession session) {
     GrMainCompletionProvider.addAllClasses(parameters, element -> {
       JavaPsiClassReferenceElement classElement =
         element.as(JavaPsiClassReferenceElement.CLASS_CONDITION_KEY);
@@ -97,7 +91,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
         classElement.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
       }
       result.addElement(element);
-    }, new JavaCompletionSession(result), result.getPrefixMatcher());
+    }, session, result.getPrefixMatcher());
   }
 
   private static void suggestChainedCalls(CompletionParameters parameters, CompletionResultSet result) {

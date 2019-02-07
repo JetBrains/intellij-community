@@ -1,91 +1,43 @@
 package com.intellij.vcs.log.data;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogBranchFilter;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 public class VcsLogBranchFilterImpl implements VcsLogBranchFilter {
-  private static final Logger LOG = Logger.getInstance(VcsLogBranchFilterImpl.class);
-
   @NotNull private final List<String> myBranches;
   @NotNull private final List<Pattern> myPatterns;
 
   @NotNull private final List<String> myExcludedBranches;
   @NotNull private final List<Pattern> myExcludedPatterns;
 
-  private VcsLogBranchFilterImpl(@NotNull List<String> branches,
-                                 @NotNull List<Pattern> patterns,
-                                 @NotNull List<String> excludedBranches,
-                                 @NotNull List<Pattern> excludedPatterns) {
+  protected VcsLogBranchFilterImpl(@NotNull List<String> branches,
+                                   @NotNull List<Pattern> patterns,
+                                   @NotNull List<String> excludedBranches,
+                                   @NotNull List<Pattern> excludedPatterns) {
     myBranches = branches;
     myPatterns = patterns;
     myExcludedBranches = excludedBranches;
     myExcludedPatterns = excludedPatterns;
   }
 
+  /**
+   * @deprecated use {@link com.intellij.vcs.log.visible.filters.VcsLogFilterObject#fromBranchPatterns(Collection, Set)} or
+   * {@link com.intellij.vcs.log.visible.filters.VcsLogFilterObject#fromBranch(String)}
+   */
   @Deprecated
   public VcsLogBranchFilterImpl(@NotNull Collection<String> branches, @NotNull Collection<String> excludedBranches) {
     myBranches = new ArrayList<>(branches);
     myPatterns = new ArrayList<>();
     myExcludedBranches = new ArrayList<>(excludedBranches);
     myExcludedPatterns = new ArrayList<>();
-  }
-
-  @NotNull
-  public static VcsLogBranchFilterImpl fromBranch(@NotNull String branchName) {
-    return new VcsLogBranchFilterImpl(Collections.singletonList(branchName), Collections.emptyList(),
-                                      Collections.emptyList(), Collections.emptyList());
-  }
-
-  @NotNull
-  public static VcsLogBranchFilterImpl fromTextPresentation(@NotNull Collection<String> strings, @NotNull Set<String> existingBranches) {
-    List<String> branchNames = new ArrayList<>();
-    List<String> excludedBranches = new ArrayList<>();
-    List<Pattern> patterns = new ArrayList<>();
-    List<Pattern> excludedPatterns = new ArrayList<>();
-
-    for (String string : strings) {
-      boolean isExcluded = string.startsWith("-");
-      string = isExcluded ? string.substring(1) : string;
-      boolean isRegexp = !existingBranches.contains(string);
-
-      if (isRegexp) {
-        try {
-          Pattern pattern = Pattern.compile(string);
-          if (isExcluded) {
-            excludedPatterns.add(pattern);
-          }
-          else {
-            patterns.add(pattern);
-          }
-        }
-        catch (PatternSyntaxException e) {
-          LOG.warn("Pattern " + string + " is not a proper regular expression and no branch can be found with that name.", e);
-          if (isExcluded) {
-            excludedBranches.add(string);
-          }
-          else {
-            branchNames.add(string);
-          }
-        }
-      }
-      else {
-        if (isExcluded) {
-          excludedBranches.add(string);
-        }
-        else {
-          branchNames.add(string);
-        }
-      }
-    }
-
-    return new VcsLogBranchFilterImpl(branchNames, patterns, excludedBranches, excludedPatterns);
   }
 
   @NotNull
@@ -130,16 +82,16 @@ public class VcsLogBranchFilterImpl implements VcsLogBranchFilter {
 
   private boolean isIncluded(@NotNull String name) {
     if (myPatterns.isEmpty() && myBranches.isEmpty()) return true;
-    if (myBranches.contains(name)) return true;
-    for (Pattern regexp : myPatterns) {
-      if (regexp.matcher(name).matches()) return true;
-    }
-    return false;
+    return isMatched(name, myBranches, myPatterns);
   }
 
   private boolean isExcluded(@NotNull String name) {
-    if (myExcludedBranches.contains(name)) return true;
-    for (Pattern regexp : myExcludedPatterns) {
+    return isMatched(name, myExcludedBranches, myExcludedPatterns);
+  }
+
+  private static boolean isMatched(@NotNull String name, @NotNull List<String> branches, @NotNull List<Pattern> patterns) {
+    if (branches.contains(name)) return true;
+    for (Pattern regexp : patterns) {
       if (regexp.matcher(name).matches()) return true;
     }
     return false;

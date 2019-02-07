@@ -10,7 +10,7 @@ public class InterfaceConflict7{
 
   public static class C extends B{
     void foo(){
-      System.out.println("" + <ref>a);
+      System.out.println("" + <caret>a);
     }
   }
 }

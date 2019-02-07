@@ -18,7 +18,12 @@ package com.jetbrains.python.documentation;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jsoup.nodes.Document;
+
+import java.util.function.Function;
 
 /**
  * @author yole
@@ -38,5 +43,10 @@ public interface PythonDocumentationLinkProvider {
   @Deprecated
   default String getExternalDocumentationRoot(Sdk sdk) {
     return "";
+  }
+
+  @Nullable
+  default Function<Document, String> quickDocExtractor(@NotNull PsiNamedElement namedElement) {
+    return null;
   }
 }

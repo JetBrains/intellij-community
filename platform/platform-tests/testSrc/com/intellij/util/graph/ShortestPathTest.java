@@ -29,7 +29,6 @@ import static org.junit.Assert.assertNull;
 
 /**
  * @author anna
- * @since Feb 11, 2005
  */
 public class ShortestPathTest extends GraphTestCase {
   @Test

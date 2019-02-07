@@ -8,7 +8,6 @@ import org.jetbrains.plugins.gradle.internal.daemon.GradleDaemonServices;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/8/2017
  */
 public class GradleCleanupService implements Disposable {
   private static final Logger LOG = Logger.getInstance(GradleCleanupService.class);

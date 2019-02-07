@@ -92,4 +92,14 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
         }
       }, progressIndicator);
   }
+
+  @Override
+  public boolean isEmptyPatternSupported() {
+    return true;
+  }
+
+  @Override
+  public boolean isShownInSeparateTab() {
+    return false;
+  }
 }

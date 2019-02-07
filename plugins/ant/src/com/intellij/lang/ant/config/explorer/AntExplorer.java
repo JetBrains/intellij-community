@@ -109,7 +109,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     myTreeStructure.setFilteredTargets(AntConfigurationBase.getInstance(project).isFilterTargets());
     final StructureTreeModel treeModel = new StructureTreeModel(myTreeStructure);
     myTreeModel = treeModel;
-    myTree = new Tree(new AsyncTreeModel(treeModel));
+    myTree = new Tree(new AsyncTreeModel(treeModel, this));
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.setCellRenderer(new NodeRenderer());
@@ -198,11 +198,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       myTree = null;
     }
 
-    final StructureTreeModel treeModel = myTreeModel;
-    if (treeModel != null) {
-      Disposer.dispose(treeModel);
-      myTreeModel = null;
-    }
+    myTreeModel = null;
 
     myProject = null;
     myConfig = null;

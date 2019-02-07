@@ -71,11 +71,8 @@ public class ConflictsDialog extends DialogWrapper{
     myProject = project;
     myDoRefactoringRunnable = doRefactoringRunnable;
     myCanShowConflictsInView = canShowConflictsInView;
-    final LinkedHashSet<String> conflicts = new LinkedHashSet<>();
 
-    for (String conflict : conflictDescriptions.values()) {
-      conflicts.add(conflict);
-    }
+    final LinkedHashSet<String> conflicts = new LinkedHashSet<>(conflictDescriptions.values());
     myConflictDescriptions = ArrayUtil.toStringArray(conflicts);
     myElementConflictDescription = conflictDescriptions;
     setTitle(RefactoringBundle.message("problems.detected.title"));
@@ -227,8 +224,8 @@ public class ConflictsDialog extends DialogWrapper{
     private class DescriptionOnlyUsage implements Usage {
       private final String myConflictDescription;
 
-      DescriptionOnlyUsage(String conflictDescription) {
-        myConflictDescription = StringUtil.unescapeXml(conflictDescription)
+      DescriptionOnlyUsage(@NotNull String conflictDescription) {
+        myConflictDescription = StringUtil.unescapeXmlEntities(conflictDescription)
           .replaceAll("<code>", "")
           .replaceAll("</code>", "")
           .replaceAll("<b>", "")

@@ -28,7 +28,6 @@ import java.io.Serializable;
  * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 4/12/13 11:49 AM
  * @param <T>  data class
  */
 @SuppressWarnings("UnusedDeclaration")

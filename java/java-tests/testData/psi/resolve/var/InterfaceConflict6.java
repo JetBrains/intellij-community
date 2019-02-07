@@ -11,7 +11,7 @@ public class InterfaceConflict6{
   public static class C extends B
   implements A{
     void foo(){
-      System.out.println("" + <ref>a);
+      System.out.println("" + <caret>a);
     }
   }
 }

@@ -16,7 +16,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
@@ -37,7 +36,6 @@ import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.pom.PsiDeclaredTarget;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageTargetUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,8 +45,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class HighlightUsagesHandler extends HighlightHandlerBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.highlighting.HighlightUsagesHandler");
-
   public static void invoke(@NotNull final Project project, @NotNull final Editor editor, @Nullable PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -127,10 +123,11 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     if (file.findElementAt(editor.getCaretModel().getOffset()) instanceof PsiWhiteSpace) return;
     selectionModel.selectWordAtCaret(false);
     String selection = selectionModel.getSelectedText();
-    LOG.assertTrue(selection != null);
-    for (int i = 0; i < selection.length(); i++) {
-      if (!Character.isJavaIdentifierPart(selection.charAt(i))) {
-        selectionModel.removeSelection();
+    if (selection != null) {
+      for (int i = 0; i < selection.length(); i++) {
+        if (!Character.isJavaIdentifierPart(selection.charAt(i))) {
+          selectionModel.removeSelection();
+        }
       }
     }
 
@@ -227,14 +224,6 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       highlightReferences(myProject, myTarget, myRefs, myEditor, myFile, myClearHighlights);
       setStatusText(myProject, getElementName(myTarget), myRefs.size(), myClearHighlights);
     }
-  }
-
-  public static void highlightOtherOccurrences(final List<? extends PsiElement> otherOccurrences, Editor editor, boolean clearHighlights) {
-    EditorColorsManager manager = EditorColorsManager.getInstance();
-    TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-
-    PsiElement[] elements = PsiUtilCore.toPsiElementArray(otherOccurrences);
-    doHighlightElements(editor, elements, attributes, clearHighlights);
   }
 
   public static void highlightReferences(@NotNull Project project,
@@ -418,7 +407,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     return new TextRange(start, end);
   }
 
-  static void setStatusText(@NotNull Project project, @Nullable String elementName, int refCount, boolean clearHighlights) {
+  private static void setStatusText(@NotNull Project project, @Nullable String elementName, int refCount, boolean clearHighlights) {
     String message;
     if (clearHighlights) {
       message = "";

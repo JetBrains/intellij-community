@@ -99,6 +99,15 @@ public class PyEditingTest extends PyTestCase {
     assertEquals("fr''''''", doTestTyping("fr''", 3, "''"));
   }
 
+  // PY-32872
+  public void testClosingQuotesCompletionForTripleQuotedFString() {
+    assertEquals("f''''''\n", doTestTyping("f''\n", 3, "'"));
+  }
+
+  public void testNoClosingQuotesAfterTripleQuotesInsideTripleQuotedFString() {
+    assertEquals("f'''\"\"\"@'''", doTestTyping("f'''\"\"@'''", 6, "\""));
+  }
+
   public void testFStringFragmentBraces() {
     assertEquals("f'{}'", doTestTyping("f''", 2, '{'));
   }
@@ -130,6 +139,12 @@ public class PyEditingTest extends PyTestCase {
   public void testEnterInFStringRightBeforeClosingQuote() {
     doTestEnter("(f'foo{42}bar<caret>')", "(f'foo{42}bar'\n" +
                                           " f'')");
+  }
+
+  // PY-32873
+  public void testEnterInTripleQuotedFStringRightBeforeClosingQuotes() {
+    doTestEnter("f\"\"\"<caret>\"\"\"", "f\"\"\"\n" +
+                                        "<caret>\"\"\"");
   }
 
   public void testOvertypeFromInside() {

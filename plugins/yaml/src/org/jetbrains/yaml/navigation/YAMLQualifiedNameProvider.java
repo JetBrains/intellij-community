@@ -4,6 +4,8 @@ package org.jetbrains.yaml.navigation;
 import com.intellij.ide.actions.QualifiedNameProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.psi.YAMLPsiElement;
@@ -12,7 +14,7 @@ public class YAMLQualifiedNameProvider implements QualifiedNameProvider {
   @Nullable
   @Override
   public PsiElement adjustElementToCopy(PsiElement element) {
-    return null;
+    return element instanceof LeafPsiElement ? PsiTreeUtil.getParentOfType(element, YAMLPsiElement.class) : null;
   }
 
   @Nullable
@@ -20,8 +22,9 @@ public class YAMLQualifiedNameProvider implements QualifiedNameProvider {
   public String getQualifiedName(PsiElement element) {
     if (element instanceof YAMLPsiElement) {
       String configFullName = YAMLUtil.getConfigFullName((YAMLPsiElement)element);
-      if (!configFullName.isEmpty())
+      if (!configFullName.isEmpty()) {
         return configFullName;
+      }
     }
     return null;
   }

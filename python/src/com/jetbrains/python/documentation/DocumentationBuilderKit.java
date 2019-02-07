@@ -23,7 +23,7 @@ class DocumentationBuilderKit {
   public final static @NonNls String BR = "<br>";
 
   @NotNull
-  static final Function<String, String> ESCAPE_ONLY = StringUtil::escapeXml;
+  static final Function<String, String> ESCAPE_ONLY = StringUtil::escapeXmlEntities;
 
   @NotNull
   static final Function<String, String> TO_ONE_LINE_AND_ESCAPE = s -> ESCAPE_ONLY.apply(s.replace('\n', ' '));

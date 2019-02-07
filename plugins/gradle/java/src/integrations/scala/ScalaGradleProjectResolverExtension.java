@@ -37,7 +37,6 @@ import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 1/31/14
  */
 @Order(ExternalSystemConstants.UNORDERED)
 public class ScalaGradleProjectResolverExtension extends AbstractProjectResolverExtension {

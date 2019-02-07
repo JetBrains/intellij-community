@@ -22,7 +22,6 @@ import com.intellij.packaging.artifacts.Artifact;
  * @deprecated tobe removed, use {@link ProjectModelBuildTask}
  *
  * @author Vladislav.Soroka
- * @since 7/18/2016
  */
 @Deprecated
 public interface ArtifactBuildTask extends ProjectModelBuildTask<Artifact> {

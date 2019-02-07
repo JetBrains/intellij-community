@@ -150,7 +150,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     if (myModelUpdateListener != null) myModelUpdateListener.run();
   }
 
-  public void setSelectedDetails(@NotNull List<VcsFullCommitDetails> detailsList) {
+  public void setSelectedDetails(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
     myChanges.clear();
     myChangesToParents.clear();
     myRoots.clear();
@@ -365,7 +365,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
       myModel.insertNodeInto(textNode, myRoot, myRoot.getChildCount());
     }
 
-    public void addChangesFromParentNode(@NotNull Collection<Change> changes, @NotNull CommitId commitId) {
+    public void addChangesFromParentNode(@NotNull Collection<? extends Change> changes, @NotNull CommitId commitId) {
       ChangesBrowserNode parentNode = new ChangesBrowserParentNode(commitId);
       parentNode.markAsHelperNode();
 
@@ -376,13 +376,13 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     }
   }
 
-  private static class ChangesBrowserEmptyTextNode extends ChangesBrowserNode {
+  private static class ChangesBrowserEmptyTextNode extends ChangesBrowserNode<String> {
     protected ChangesBrowserEmptyTextNode(@NotNull String text) {
       super(text);
     }
   }
 
-  private class ChangesBrowserParentNode extends ChangesBrowserNode {
+  private class ChangesBrowserParentNode extends ChangesBrowserNode<String> {
     protected ChangesBrowserParentNode(@NotNull CommitId commitId) {
       super(getText(commitId));
     }

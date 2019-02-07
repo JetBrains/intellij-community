@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
  * E.g. a rule might look like 'keep together class methods which implement methods from particular interface'.
  * 
  * @author Denis Zhdanov
- * @since 9/18/12 8:50 AM
  */
 public class ArrangementGroupingRule {
 

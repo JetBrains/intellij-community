@@ -33,7 +33,6 @@ import java.util.Map;
  * Not thread-safe.
  *
  * @author Denis Zhdanov
- * @since Jul 1, 2010 5:30:43 PM
  */
 public class TextBasedSoftWrapPainter implements SoftWrapPainter {
 

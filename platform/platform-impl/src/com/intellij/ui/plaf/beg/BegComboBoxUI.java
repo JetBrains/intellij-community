@@ -15,7 +15,7 @@ public class BegComboBoxUI extends MetalComboBoxUI {
   @Override
   protected JButton createArrowButton() {
     JButton button = new BegComboBoxButton(
-      comboBox, new MetalComboBoxIcon(), comboBox.isEditable() ? true : false,
+      comboBox, new MetalComboBoxIcon(), comboBox.isEditable(),
       currentValuePane, listBox
     );
     button.setFocusPainted(false);

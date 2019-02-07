@@ -55,6 +55,13 @@ abstract class GradleHighlightingBaseTest extends GradleImportingTestCase {
     }
   }
 
+  void doTest(@NotNull String text, Closure test) {
+    VirtualFile vFile = createProjectSubFile 'build.gradle', text
+    fixture.configureFromExistingVirtualFile(vFile)
+    importProject()
+    ReadAction.run(test)
+  }
+
   @Override
   void tearDownFixtures() {
     fixture.tearDown()

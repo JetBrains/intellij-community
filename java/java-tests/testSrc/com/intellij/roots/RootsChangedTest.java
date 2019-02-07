@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.roots;
 
 import com.intellij.ProjectTopics;
+import com.intellij.configurationStore.StateStorageManagerKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
@@ -16,6 +17,8 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -23,12 +26,15 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.ModuleTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 /**
  * @author dsl
@@ -72,7 +78,7 @@ public class RootsChangedTest extends ModuleTestCase {
     VfsTestUtil.deleteFile(vDir1);
     assertEventsCount(1);
     assertEmpty(ModuleRootManager.getInstance(moduleA).getContentRoots());
- 
+
     File dir2 = new File(root, "dir2");
     assertTrue(dir2.mkdirs());
     VirtualFile vDir2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir2);
@@ -86,7 +92,7 @@ public class RootsChangedTest extends ModuleTestCase {
     rename(vDir2, "dir2");
     assertNoEvents();
     assertSameElements(ModuleRootManager.getInstance(moduleA).getContentRoots(), vDir2);
- 
+
     // and event if it is moved, it's still a root
     File subdir = new File(root, "subdir");
     assertTrue(subdir.mkdirs());
@@ -347,7 +353,7 @@ public class RootsChangedTest extends ModuleTestCase {
     private int afterCount;
     private long modificationCount;
 
-    public MyModuleRootListener(Project project) {
+    MyModuleRootListener(Project project) {
       myProject = project;
     }
 
@@ -383,5 +389,88 @@ public class RootsChangedTest extends ModuleTestCase {
         rename(xxx, dirName);
       }
     }).assertTiming();
+  }
+
+  @NotNull
+  @Override
+  protected Path getProjectDirOrFile() {
+    // create ".idea" - based project because it's 1) needed for testShelveChangesMustNotLeadToRootsChangedEvent and 2) is more common
+    return getProjectDirOrFile(true);
+  }
+
+  public void testShelveChangesMustNotLeadToRootsChangedEvent() {
+    // create .idea
+    StateStorageManagerKt.saveComponentManager(getProject());
+    VirtualFile shelf = createChildDirectory(getProject().getProjectFile().getParent(), "shelf");
+
+    myModuleRootListener.reset();
+
+    VirtualFile xxx = createChildData(shelf, "shelf1.dat");
+    assertTrue(ChangeListManager.getInstance(myProject).isPotentiallyIgnoredFile(xxx));
+
+    assertEquals(myModuleRootListener.modificationCount, ProjectRootManager.getInstance(myProject).getModificationCount());
+
+    VirtualFile newShelf = createChildDirectory(getProject().getBaseDir().getParent(), "newShelf");
+    VcsConfiguration vcs = VcsConfiguration.getInstance(myProject);
+    vcs.USE_CUSTOM_SHELF_PATH = true;
+    vcs.CUSTOM_SHELF_PATH = newShelf.getPath();
+    myModuleRootListener.reset();
+
+    VirtualFile xxx2 = createChildData(newShelf, "shelf1.dat");
+    assertTrue(ChangeListManager.getInstance(myProject).isPotentiallyIgnoredFile(xxx2));
+  }
+
+  public void testCreationDeletionOfRootDirectoriesMustLeadToRootsChanged() {
+    File root = new File(FileUtil.getTempDirectory());
+
+    File dir1 = new File(root, "dir1");
+    assertTrue(dir1.mkdirs());
+    VirtualFile contentRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir1);
+    assertNotNull(contentRoot);
+
+    Module moduleA = createModule("a.iml");
+    ModuleRootModificationUtil.addContentRoot(moduleA, contentRoot.getPath());
+    String excludedUrl = contentRoot.getUrl() + "/excluded";
+    String sourceUrl = contentRoot.getUrl() + "/src";
+    String testSourceUrl = contentRoot.getUrl() + "/testSrc";
+    String outputUrl = contentRoot.getUrl() + "/out";
+    String testOutputUrl = contentRoot.getUrl() + "/testOut";
+    String resourceUrl = contentRoot.getUrl() + "/res";
+    String testResourceUrl = contentRoot.getUrl() + "/testRes";
+
+    ModuleRootModificationUtil.updateModel(moduleA, model -> {
+      ContentEntry entry = ContainerUtil.find(model.getContentEntries(), e-> contentRoot.equals(e.getFile()));
+
+      entry.addExcludeFolder(excludedUrl);
+      entry.addSourceFolder(sourceUrl, false);
+      entry.addSourceFolder(testSourceUrl, true);
+      entry.addSourceFolder(resourceUrl, JavaResourceRootType.RESOURCE);
+      entry.addSourceFolder(testResourceUrl, JavaResourceRootType.TEST_RESOURCE);
+
+      model.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPath(outputUrl);
+      model.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPathForTests(testOutputUrl);
+    });
+
+    checkRootChangedOnDirCreationDeletion(contentRoot, excludedUrl, 1);
+    checkRootChangedOnDirCreationDeletion(contentRoot, sourceUrl, 1);
+    checkRootChangedOnDirCreationDeletion(contentRoot, testSourceUrl, 1);
+    checkRootChangedOnDirCreationDeletion(contentRoot, resourceUrl, 1);
+    checkRootChangedOnDirCreationDeletion(contentRoot, testResourceUrl, 1);
+    checkRootChangedOnDirCreationDeletion(contentRoot, outputUrl, 1);
+    checkRootChangedOnDirCreationDeletion(contentRoot, testOutputUrl, 1);
+    checkRootChangedOnDirCreationDeletion(contentRoot, "xxx", 0);
+  }
+
+  private void checkRootChangedOnDirCreationDeletion(VirtualFile contentRoot, String dirUrl, int mustGenerateEvents) {
+    myModuleRootListener.reset();
+    UIUtil.dispatchAllInvocationEvents();
+
+    VirtualFile dir = createChildDirectory(contentRoot, new File(dirUrl).getName());
+    assertEventsCount(mustGenerateEvents);
+
+    myModuleRootListener.reset();
+    UIUtil.dispatchAllInvocationEvents();
+    delete(dir);
+    assertEventsCount(mustGenerateEvents);
   }
 }

@@ -23,7 +23,7 @@ public class ComponentConfig {
   protected boolean loadForDefaultProject;
 
   @Property(surroundWithTag = false)
-  @MapAnnotation(surroundWithTag = false, entryTagName = "option", keyAttributeName = "name", valueAttributeName = "value")
+  @MapAnnotation(surroundWithTag = false, entryTagName = "option", keyAttributeName = "name")
   @Nullable
   public Map<String, String> options;
 

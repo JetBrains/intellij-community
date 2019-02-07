@@ -31,11 +31,11 @@
     <lang.documentationProvider language="XML" implementationClass="org.intellij.plugins.relaxNG.RngDocumentationProvider" />
     <psi.referenceContributor language="XML" implementation="org.intellij.plugins.relaxNG.RelaxNGReferenceContributor"/>
 
-    <dom.fileDescription implementation="org.intellij.plugins.relaxNG.RngDomFileDescription$RngChoiceDescription"/>
-    <dom.fileDescription implementation="org.intellij.plugins.relaxNG.RngDomFileDescription$RngElementDescription"/>
-    <dom.fileDescription implementation="org.intellij.plugins.relaxNG.RngDomFileDescription$RngGrammarDescription"/>
-    <dom.fileDescription implementation="org.intellij.plugins.relaxNG.RngDomFileDescription$RngGroupDescription"/>
-    <dom.fileDescription implementation="org.intellij.plugins.relaxNG.RngDomFileDescription$RngInterleaveDescription"/>
+    <dom.fileMetaData implementation="org.intellij.plugins.relaxNG.RngDomFileDescription$RngChoiceDescription" rootTagName="choice"/>
+    <dom.fileMetaData implementation="org.intellij.plugins.relaxNG.RngDomFileDescription$RngElementDescription" rootTagName="element"/>
+    <dom.fileMetaData implementation="org.intellij.plugins.relaxNG.RngDomFileDescription$RngGrammarDescription" rootTagName="grammar"/>
+    <dom.fileMetaData implementation="org.intellij.plugins.relaxNG.RngDomFileDescription$RngGroupDescription" rootTagName="group"/>
+    <dom.fileMetaData implementation="org.intellij.plugins.relaxNG.RngDomFileDescription$RngInterleaveDescription" rootTagName="interleave"/>
 
     <dom.implementation interfaceClass="org.intellij.plugins.relaxNG.xml.dom.RngDomElement" implementationClass="org.intellij.plugins.relaxNG.xml.dom.impl.RngDomElementBase"/>
     <dom.implementation interfaceClass="org.intellij.plugins.relaxNG.xml.dom.RngDefine" implementationClass="org.intellij.plugins.relaxNG.xml.dom.impl.RngDefineImpl"/>

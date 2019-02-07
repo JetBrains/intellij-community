@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,8 +122,12 @@ public class SerializationUtils {
       return isProbablySerializable(componentType);
     }
     if (type instanceof PsiClassType) {
-      final PsiClassType classTYpe = (PsiClassType)type;
-      final PsiClass psiClass = classTYpe.resolve();
+      final PsiClassType classType = (PsiClassType)type;
+      final PsiClass psiClass = classType.resolve();
+      if (psiClass == null || psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        // to avoid false positives
+        return true;
+      }
       if (isSerializable(psiClass)) {
         return true;
       }
@@ -132,7 +136,7 @@ public class SerializationUtils {
       }
       if (InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_UTIL_COLLECTION) ||
           InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_UTIL_MAP)) {
-        final PsiType[] parameters = classTYpe.getParameters();
+        final PsiType[] parameters = classType.getParameters();
         for (PsiType parameter : parameters) {
           if (!isProbablySerializable(parameter)) {
             return false;

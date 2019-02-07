@@ -19,8 +19,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.ModuleRootModel;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,13 +38,13 @@ public class ExcludeCompilerOutputPolicy implements DirectoryIndexExcludePolicy 
 
   @NotNull
   @Override
-  public VirtualFile[] getExcludeRootsForProject() {
+  public String[] getExcludeUrlsForProject() {
     CompilerProjectExtension projectExtension = CompilerProjectExtension.getInstance(myProject);
-    VirtualFile outputPath = projectExtension == null ? null : projectExtension.getCompilerOutput();
+    String outputPath = projectExtension == null ? null : projectExtension.getCompilerOutputUrl();
     if (outputPath != null) {
-      return new VirtualFile[] { outputPath };
+      return new String[] { outputPath };
     }
-    return VirtualFile.EMPTY_ARRAY;
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   @NotNull

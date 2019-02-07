@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author anna
- * @since 16-Jun-2009
  */
 public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCase {
   protected String myDefaultHint = null;

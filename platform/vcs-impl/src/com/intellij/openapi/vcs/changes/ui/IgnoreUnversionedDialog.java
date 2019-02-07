@@ -38,7 +38,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
   private JTextField myIgnoreMaskTextField;
   private JPanel myPanel;
   private TextFieldWithBrowseButton myIgnoreFileTextField;
-  private List<VirtualFile> myFilesToIgnore;
+  private List<? extends VirtualFile> myFilesToIgnore;
   private final Project myProject;
   private boolean myInternalChange;
   private final IgnoredPathPresentation myPresentation;
@@ -103,7 +103,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
     return myPanel;
   }
 
-  private void setFilesToIgnore(List<VirtualFile> virtualFiles) {
+  private void setFilesToIgnore(List<? extends VirtualFile> virtualFiles) {
     assert virtualFiles.size() > 0;
     myFilesToIgnore = virtualFiles;
     myInternalChange = true;
@@ -221,7 +221,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
     return "IgnoreUnversionedDialog";
   }
 
-  public static void ignoreSelectedFiles(@NotNull Project project, @NotNull List<VirtualFile> files) {
+  public static void ignoreSelectedFiles(@NotNull Project project, @NotNull List<? extends VirtualFile> files) {
     IgnoreUnversionedDialog dlg = new IgnoreUnversionedDialog(project);
     dlg.setFilesToIgnore(files);
 

@@ -22,6 +22,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +34,12 @@ import javax.swing.*;
 public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAware {
 
   protected static final Icon ourCurrentAction = AllIcons.Actions.Forward;
-  protected static final Icon ourNotCurrentAction = EmptyIcon.create(ourCurrentAction.getIconWidth(), ourCurrentAction.getIconHeight());
+  protected static final Icon ourNotCurrentAction = new IconLoader.LazyIcon() {
+    @Override
+    protected Icon compute() {
+      return EmptyIcon.create(ourCurrentAction.getIconWidth(), ourCurrentAction.getIconHeight());
+    }
+  };;
 
   protected String myActionPlace = ActionPlaces.UNKNOWN;
 

@@ -151,6 +151,7 @@ class RepositoryContentHandler extends DefaultHandler {
     currentValue.append(ch, start, length);
   }
 
+  @NotNull
   private String buildCategoryName() {
     if (categoryName == null) {
       StringBuilder builder = new StringBuilder();

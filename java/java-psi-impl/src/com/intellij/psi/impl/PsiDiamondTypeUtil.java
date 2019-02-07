@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -86,7 +87,18 @@ public class PsiDiamondTypeUtil {
     return false;
   }
 
+  /**
+   * Please use {@link com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil#replaceExplicitWithDiamond(com.intellij.psi.PsiElement)}
+   * To be deleted in 2019.3
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static PsiElement replaceExplicitWithDiamond(PsiElement psiElement) {
+    PsiElement replacement = createExplicitReplacement(psiElement);
+    return replacement == null ? psiElement : psiElement.replace(replacement);
+  }
+
+  public static PsiElement createExplicitReplacement(PsiElement psiElement) {
     if (psiElement instanceof PsiReferenceParameterList) {
       final PsiNewExpression expression =
         (PsiNewExpression)JavaPsiFacade.getElementFactory(psiElement.getProject()).createExpressionFromText("new a<>()", psiElement);
@@ -94,9 +106,9 @@ public class PsiDiamondTypeUtil {
       LOG.assertTrue(classReference != null);
       final PsiReferenceParameterList parameterList = classReference.getParameterList();
       LOG.assertTrue(parameterList != null);
-      return psiElement.replace(parameterList);
+      return parameterList;
     }
-    return psiElement;
+    return null;
   }
 
   public static PsiElement replaceDiamondWithExplicitTypes(PsiElement element) {
@@ -339,35 +351,5 @@ public class PsiDiamondTypeUtil {
       exprCopy = PsiTreeUtil.getParentOfType(exprCopy, PsiCallExpression.class, true);
     }
     return true;
-  }
-
-  /**
-   * Removes redundant type arguments which appear in any descendants of the supplied element.
-   *
-   * @param element element to start the replacement from
-   */
-  public static void removeRedundantTypeArguments(PsiElement element) {
-    for(PsiNewExpression newExpression : PsiTreeUtil.collectElementsOfType(element, PsiNewExpression.class)) {
-      PsiJavaCodeReferenceElement classReference = newExpression.getClassOrAnonymousClassReference();
-      if(classReference != null && canCollapseToDiamond(newExpression, newExpression, null)) {
-        replaceExplicitWithDiamond(classReference.getParameterList());
-      }
-    }
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
-    for(PsiMethodCallExpression call : PsiTreeUtil.collectElementsOfType(element, PsiMethodCallExpression.class)) {
-      PsiType[] arguments = call.getTypeArguments();
-      if (arguments.length == 0) continue;
-      PsiMethod method = call.resolveMethod();
-      if(method != null) {
-        PsiTypeParameter[] parameters = method.getTypeParameters();
-        if(arguments.length == parameters.length &&
-           areTypeArgumentsRedundant(arguments, call, false, method, parameters)) {
-          PsiMethodCallExpression expr =
-            (PsiMethodCallExpression)factory
-              .createExpressionFromText("foo()", null);
-          call.getTypeArgumentList().replace(expr.getTypeArgumentList());
-        }
-      }
-    }
   }
 }

@@ -2,7 +2,6 @@
 
 package com.intellij.psi.impl;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.AppTopics;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
@@ -125,11 +124,6 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
         }
       }
     }
-  }
-
-  @VisibleForTesting
-  public void doCommitWithoutReparse(@NotNull Document document) {
-    finishCommitInWriteAction(document, Collections.emptyList(), Collections.emptyList(), true, true);
   }
 
   @Override

@@ -33,7 +33,6 @@ import com.intellij.util.text.CharArrayUtil;
  * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 4/19/11 1:58 PM
  */
 public class KillToWordEndAction extends TextComponentEditorAction {
 

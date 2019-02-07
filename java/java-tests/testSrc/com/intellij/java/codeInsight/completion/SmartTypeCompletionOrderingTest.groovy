@@ -373,6 +373,10 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems 0, 'method', 'PsiUtil.NULL_PSI_ELEMENT'
   }
 
+  void testPreferStaticsOfExpectedTypeToNonStaticGetterOfGenericOne() {
+    checkPreferredItems 0, 'getE', 'myE', 'getGeneric'
+  }
+
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + BASE_PATH

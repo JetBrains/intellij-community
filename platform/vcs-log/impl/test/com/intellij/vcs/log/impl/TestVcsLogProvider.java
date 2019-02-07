@@ -73,7 +73,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
                                          SAMPLE_SUBJECT, DEFAULT_USER, commit.getTimestamp());
       }
     };
-  private Function<VcsLogFilterCollection, List<TimedVcsCommit>> myFilteredCommitsProvider;
+  private Function<? super VcsLogFilterCollection, ? extends List<TimedVcsCommit>> myFilteredCommitsProvider;
 
   public TestVcsLogProvider(@NotNull VirtualFile root) {
     myRoot = root;
@@ -106,7 +106,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public LogData readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<TimedVcsCommit> commitConsumer) {
+  public LogData readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<? super TimedVcsCommit> commitConsumer) {
     LOG.debug("readAllHashes");
     try {
       myFullLogSemaphore.acquire();
@@ -123,14 +123,14 @@ public class TestVcsLogProvider implements VcsLogProvider {
   }
 
   @Override
-  public void readAllFullDetails(@NotNull VirtualFile root, @NotNull Consumer<VcsFullCommitDetails> commitConsumer) {
+  public void readAllFullDetails(@NotNull VirtualFile root, @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer) {
     throw new UnsupportedOperationException();
   }
 
   @Override
   public void readFullDetails(@NotNull VirtualFile root,
                               @NotNull List<String> hashes,
-                              @NotNull Consumer<VcsFullCommitDetails> commitConsumer,
+                              @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer,
                               boolean isForIndexing) {
     throw new UnsupportedOperationException();
   }
@@ -159,11 +159,11 @@ public class TestVcsLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public Disposable subscribeToRootRefreshEvents(@NotNull Collection<VirtualFile> roots, @NotNull VcsLogRefresher refresher) {
+  public Disposable subscribeToRootRefreshEvents(@NotNull Collection<? extends VirtualFile> roots, @NotNull VcsLogRefresher refresher) {
     throw new UnsupportedOperationException();
   }
 
-  public void setFilteredCommitsProvider(@NotNull Function<VcsLogFilterCollection, List<TimedVcsCommit>> provider) {
+  public void setFilteredCommitsProvider(@NotNull Function<? super VcsLogFilterCollection, ? extends List<TimedVcsCommit>> provider) {
     myFilteredCommitsProvider = provider;
   }
 
@@ -188,7 +188,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
     throw new UnsupportedOperationException();
   }
 
-  public void appendHistory(@NotNull List<TimedVcsCommit> commits) {
+  public void appendHistory(@NotNull List<? extends TimedVcsCommit> commits) {
     myCommits.addAll(0, commits);
   }
 
@@ -250,13 +250,13 @@ public class TestVcsLogProvider implements VcsLogProvider {
 
     @NotNull
     @Override
-    public List<RefGroup> groupForBranchFilter(@NotNull Collection<VcsRef> refs) {
+    public List<RefGroup> groupForBranchFilter(@NotNull Collection<? extends VcsRef> refs) {
       return ContainerUtil.map(refs, SingletonRefGroup::new);
     }
 
     @NotNull
     @Override
-    public List<RefGroup> groupForTable(@NotNull Collection<VcsRef> refs, boolean compact, boolean showTagNames) {
+    public List<RefGroup> groupForTable(@NotNull Collection<? extends VcsRef> refs, boolean compact, boolean showTagNames) {
       return groupForBranchFilter(refs);
     }
 

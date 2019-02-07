@@ -4,6 +4,6 @@ class XY {
     private void f(int... is) {}
 
     public static void main(String[] args) {
-            <ref>f();
+            <caret>f();
     }
 }

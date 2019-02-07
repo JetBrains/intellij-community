@@ -30,7 +30,6 @@ import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/13/2015
  */
 public abstract class ExternalProjectStructureCustomizer {
   public static final ExtensionPointName<ExternalProjectStructureCustomizer> EP_NAME =

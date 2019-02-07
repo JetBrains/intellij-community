@@ -17,6 +17,7 @@ package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +27,6 @@ import java.awt.*;
  * Defines contract for a component which knows how to manage particular settings.
  * 
  * @author Denis Zhdanov
- * @since 4/28/13 12:15 AM
  * @param <S>  settings type
  */
 public interface ExternalSystemSettingsControl<S> {
@@ -47,6 +47,13 @@ public interface ExternalSystemSettingsControl<S> {
    * Asks current control to reset its state to the initial one.
    */
   void reset();
+
+  /**
+   * Asks current control to reset its state to the initial one.
+   */
+  default void reset(@Nullable Project project) {
+    reset();
+  }
 
   /**
    * Asks current control to reset its state to the initial one.

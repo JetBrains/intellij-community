@@ -54,7 +54,7 @@ public class Tag extends CompositeGenerator {
         }
         out.print((String)option.getFirst());
         out.print("=\"");
-        out.print(StringUtil.escapeXml((String)option.getSecond()));
+        out.print(StringUtil.escapeXmlEntities((String)option.getSecond()));
         out.print("\"");
         generated += 1;
       }

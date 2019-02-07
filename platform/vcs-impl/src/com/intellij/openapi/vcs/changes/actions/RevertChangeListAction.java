@@ -25,6 +25,10 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class RevertChangeListAction extends RevertCommittedStuffAbstractAction {
+  public RevertChangeListAction() {
+    super(true);
+  }
+
   @Nullable
   @Override
   protected Change[] getChanges(@NotNull AnActionEvent e, boolean isFromUpdate) {

@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.tasks.core" exported="" />
     <orderEntry type="module" module-name="intellij.tasks" exported="" />
+    <orderEntry type="module" module-name="intellij.tasks.compatibility" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="library" name="gson" level="project" />

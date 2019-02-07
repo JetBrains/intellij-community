@@ -1156,7 +1156,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       public void testing() throws Exception {
         waitForPause();
         List<String> referrersNames = getNumberOfReferringObjects("l");
-        assertNotNull(getRefWithWordInName(referrersNames, "frame"));
         assertNotNull(getRefWithWordInName(referrersNames, "module"));
         assertNotNull(getRefWithWordInName(referrersNames, "dict"));
       }
@@ -1471,6 +1470,26 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @Override
       public Set<String> getTags() {
         return ImmutableSet.of("python3.7");
+      }
+    });
+  }
+
+  @Test
+  public void testTypeHandler() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_type_handler.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 5);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("s1").hasValue("'\\\\'");
+        eval("s2").hasValue("'\\''");
+        eval("s3").hasValue("'\"'");
+        eval("s4").hasValue("'\n'");
+        eval("s5").hasValue("'\\'foo\\'bar\nbaz\\\\'");
       }
     });
   }

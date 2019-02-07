@@ -61,7 +61,7 @@ public class BranchContextTracker implements BranchChangeListener {
     myContextManager.loadContext(contextName);
 
     Notification notification =
-      NOTIFICATION.createNotification("Workspace associated with branch ‘" + branchName + "' has been restored", NotificationType.INFORMATION);
+      NOTIFICATION.createNotification("Workspace associated with branch '" + branchName + "' has been restored", NotificationType.INFORMATION);
     if (myLastBranch != null && myContextManager.hasContext(getContextName(myLastBranch))) {
       notification.addAction(new NotificationAction("Rollback") {
         @Override

@@ -20,7 +20,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/20/2014
  */
 public class ExternalSystemRunConfigurationMenu extends DefaultActionGroup implements DumbAware {
   @Override

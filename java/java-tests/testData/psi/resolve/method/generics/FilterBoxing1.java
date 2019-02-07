@@ -8,7 +8,7 @@ class Test1 {
     }
 
     public static void main(String[] args) {
-        <ref>method("Hello, World", false);
+        <caret>method("Hello, World", false);
     }
 
 }

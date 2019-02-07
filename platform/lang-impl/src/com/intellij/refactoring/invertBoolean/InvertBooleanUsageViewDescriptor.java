@@ -29,6 +29,7 @@ public class InvertBooleanUsageViewDescriptor implements UsageViewDescriptor {
     return RefactoringBundle.message("invert.boolean.elements.header", UsageViewUtil.getType(myElement));
   }
 
+  @NotNull
   @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("invert.boolean.refs.to.invert", UsageViewBundle.getReferencesString(usagesCount, filesCount));

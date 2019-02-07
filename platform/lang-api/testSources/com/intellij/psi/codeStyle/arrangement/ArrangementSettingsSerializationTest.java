@@ -49,7 +49,6 @@ import static org.junit.Assert.*;
 
 /**
  * @author Denis Zhdanov
- * @since 9/18/12 9:24 AM
  */
 public class ArrangementSettingsSerializationTest {
   private static final String VISIBILITY = "visibility";

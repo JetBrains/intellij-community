@@ -2,6 +2,7 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.BeforeRunTask;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.options.SettingsEditor;
@@ -167,5 +168,28 @@ public interface RunConfiguration extends RunProfile, Cloneable {
   }
 
   default void setAllowRunningInParallel(boolean value) {
+  }
+
+  /**
+   * Allows to customize handling when restart the run configuration not allowing running in parallel.
+   *
+   * @return the further actions.
+   */
+  default RestartSingletonResult restartSingleton(@NotNull ExecutionEnvironment environment) {
+    return RestartSingletonResult.ASK_AND_RESTART;
+  }
+
+  /**
+   * Further actions to restart the run configuration not allowing running in parallel.
+   *
+   * @see RunConfiguration#restartSingleton
+   */
+  enum RestartSingletonResult {
+    /** Ask user to stop and restart the run configuration. */
+    ASK_AND_RESTART,
+    /** Stop and restart the run configuration without additional interaction with user. */
+    RESTART,
+    /** No further action is needed. */
+    NO_FURTHER_ACTION
   }
 }

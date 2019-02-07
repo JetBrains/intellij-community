@@ -27,7 +27,6 @@ import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.project.isDirectoryBased
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
-import com.intellij.util.attribute
 import com.maddyhome.idea.copyright.CopyrightProfile
 import com.maddyhome.idea.copyright.actions.UpdateCopyrightProcessor
 import com.maddyhome.idea.copyright.options.LanguageOptions
@@ -127,8 +126,8 @@ class CopyrightManager @JvmOverloads constructor(private val project: Project, s
         for ((scopeName, profileName) in scopeToCopyright) {
           val e = Element(ELEMENT)
           e
-            .attribute(MODULE, scopeName)
-            .attribute(COPYRIGHT, profileName)
+            .setAttribute(MODULE, scopeName)
+            .setAttribute(COPYRIGHT, profileName)
           map.addContent(e)
         }
         result.addContent(map)
@@ -248,7 +247,7 @@ private class CopyrightManagerPostStartupActivity : StartupActivity {
 
 private fun wrapScheme(element: Element): Element {
   val wrapper = Element("component")
-      .attribute("name", "CopyrightManager")
+      .setAttribute("name", "CopyrightManager")
   wrapper.addContent(element)
   return wrapper
 }

@@ -129,7 +129,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                @NotNull final List<? extends LocalInspectionToolWrapper> toolWrappers) {
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     inspect(new ArrayList<>(toolWrappers), iManager, false, progress);
-    addDescriptorsFromInjectedResults(iManager, context);
+    addDescriptorsFromInjectedResults(context);
     List<InspectionResult> resultList = result.get(getFile());
     if (resultList == null) return;
     for (InspectionResult inspectionResult : resultList) {
@@ -159,7 +159,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                                    toolWrapper.getTool());
   }
 
-  private void addDescriptorsFromInjectedResults(@NotNull InspectionManager iManager, @NotNull GlobalInspectionContextImpl context) {
+  private void addDescriptorsFromInjectedResults(@NotNull GlobalInspectionContextImpl context) {
     for (Map.Entry<PsiFile, List<InspectionResult>> entry : result.entrySet()) {
       PsiFile file = entry.getKey();
       if (file == getFile()) continue; // not injected
@@ -195,9 +195,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     List<InspectionContext> init = visitPriorityElementsAndInit(toolToSpecifiedLanguageIds, iManager, isOnTheFly, progress, inside, session,
                                                                 elementDialectIds);
-    inspectInjectedPsi(inside, isOnTheFly, progress, iManager, true, toolWrappers);
+    Set<PsiFile> alreadyVisitedInjected = inspectInjectedPsi(inside, isOnTheFly, progress, iManager, true, toolWrappers, Collections.emptySet());
     visitRestElementsAndCleanup(progress, outside, session, init, elementDialectIds);
-    inspectInjectedPsi(outside, isOnTheFly, progress, iManager, false, toolWrappers);
+    inspectInjectedPsi(outside, isOnTheFly, progress, iManager, false, toolWrappers, alreadyVisitedInjected);
     ProgressManager.checkCanceled();
 
     myInfos = new ArrayList<>();
@@ -253,13 +253,14 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     final List<InspectionContext> init = new ArrayList<>();
     List<Map.Entry<LocalInspectionToolWrapper, Set<String>>> entries = new ArrayList<>(toolToSpecifiedLanguageIds.entrySet());
 
+    PsiFile file = session.getFile();
     Processor<Map.Entry<LocalInspectionToolWrapper, Set<String>>> processor = pair ->
-      AstLoadingFilter.disallowTreeLoading(() -> {
+      AstLoadingFilter.disallowTreeLoading(() -> AstLoadingFilter.<Boolean, RuntimeException>forceAllowTreeLoading(file, () -> {
         LocalInspectionToolWrapper toolWrapper = pair.getKey();
         Set<String> dialectIdsSpecifiedForTool = pair.getValue();
         runToolOnElements(toolWrapper, dialectIdsSpecifiedForTool, iManager, isOnTheFly, indicator, elements, session, init, elementDialectIds);
         return true;
-      });
+      }));
     boolean result = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(entries, indicator, processor);
     if (!result) throw new ProcessCanceledException();
     return init;
@@ -331,26 +332,31 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   }
 
-  void inspectInjectedPsi(@NotNull final List<? extends PsiElement> elements,
-                          final boolean onTheFly,
-                          @NotNull final ProgressIndicator indicator,
-                          @NotNull final InspectionManager iManager,
-                          final boolean inVisibleRange,
-                          @NotNull final List<? extends LocalInspectionToolWrapper> wrappers) {
-    final Set<PsiFile> injected = new THashSet<>();
+  @NotNull
+  Set<PsiFile> inspectInjectedPsi(@NotNull final List<? extends PsiElement> elements,
+                                  final boolean onTheFly,
+                                  @NotNull final ProgressIndicator indicator,
+                                  @NotNull final InspectionManager iManager,
+                                  final boolean inVisibleRange,
+                                  @NotNull final List<? extends LocalInspectionToolWrapper> wrappers,
+                                  @NotNull Set<? extends PsiFile> alreadyVisitedInjected) {
+    Set<PsiFile> injected = new THashSet<>();
     for (PsiElement element : elements) {
       PsiFile containingFile = getFile();
       InjectedLanguageManager.getInstance(containingFile.getProject()).enumerateEx(element, containingFile, false,
                                                                                    (injectedPsi, places) -> injected.add(injectedPsi));
     }
-    if (injected.isEmpty()) return;
-    Processor<PsiFile> processor = injectedPsi -> {
-      doInspectInjectedPsi(injectedPsi, onTheFly, indicator, iManager, inVisibleRange, wrappers);
-      return true;
-    };
-    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(injected), indicator, processor)) {
-      throw new ProcessCanceledException();
+    injected.removeAll(alreadyVisitedInjected);
+    if (!injected.isEmpty()) {
+      Processor<PsiFile> processor = injectedPsi -> {
+        doInspectInjectedPsi(injectedPsi, onTheFly, indicator, iManager, inVisibleRange, wrappers);
+        return true;
+      };
+      if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(injected), indicator, processor)) {
+        throw new ProcessCanceledException();
+      }
     }
+    return injected;
   }
 
   private static final TextAttributes NONEMPTY_TEXT_ATTRIBUTES = new TextAttributes() {
@@ -505,7 +511,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     if (!inspectionProfile.isToolEnabled(key, getFile())) return;
 
     HighlightInfoType type = new InspectionHighlightInfoType(level, element);
-    final String plainMessage = message.startsWith("<html>") ? StringUtil.unescapeXml(XmlStringUtil.stripHtml(message).replaceAll("<[^>]*>", "")) : message;
+    final String plainMessage = message.startsWith("<html>") ? StringUtil.unescapeXmlEntities(XmlStringUtil.stripHtml(message).replaceAll("<[^>]*>", "")) : message;
     @NonNls String link = "";
     if (showToolDescription(toolWrapper)) {
       link = " <a "

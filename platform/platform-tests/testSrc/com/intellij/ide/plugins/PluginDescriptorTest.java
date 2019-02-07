@@ -48,7 +48,7 @@ public class PluginDescriptorTest {
   }
 
   @Test
-  public void testFilteringDuplicates() throws MalformedURLException {
+  public void testFilteringDuplicates() throws Exception {
     URL[] urls = {
       new File(getTestDataPath(), "duplicate1.jar").toURI().toURL(),
       new File(getTestDataPath(), "duplicate2.jar").toURI().toURL()};
@@ -70,7 +70,7 @@ public class PluginDescriptorTest {
   }
 
   @Test
-  public void testUrlTolerance() throws MalformedURLException {
+  public void testUrlTolerance() throws Exception {
     class SingleUrlEnumeration implements Enumeration<URL> {
       private final URL myUrl;
       private boolean hasMoreElements = true;

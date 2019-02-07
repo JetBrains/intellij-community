@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
  * Defines common contract for clients interested in folding processing.
  *
  * @author Denis Zhdanov
- * @since Sep 8, 2010 11:20:28 AM
  */
 public interface FoldingListener {
 

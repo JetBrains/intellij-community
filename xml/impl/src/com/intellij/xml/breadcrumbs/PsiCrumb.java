@@ -8,6 +8,7 @@ import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.ui.components.breadcrumbs.Crumb;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -44,7 +45,7 @@ final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb {
   }
 
   @Override
-  public void navigate(Editor editor, boolean withSelection) {
+  public void navigate(@NotNull Editor editor, boolean withSelection) {
     PsiElement element = anchor.retrieve();
     if (element == null) return;
 

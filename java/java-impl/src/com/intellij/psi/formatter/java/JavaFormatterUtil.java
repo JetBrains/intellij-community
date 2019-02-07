@@ -30,7 +30,6 @@ import static java.util.Arrays.asList;
 
 /**
  * @author Denis Zhdanov
- * @since 4/12/11 3:26 PM
  */
 public class JavaFormatterUtil {
   /**

@@ -94,7 +94,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   @NotNull
-  private MultiMap<AbstractVcs, FilePath> groupByVcs(@Nullable final Collection<FilePath> from) {
+  private MultiMap<AbstractVcs, FilePath> groupByVcs(@Nullable final Collection<? extends FilePath> from) {
     if (from == null) return MultiMap.empty();
     MultiMap<AbstractVcs, FilePath> map = MultiMap.createSet();
     for (FilePath path : from) {
@@ -107,7 +107,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   @NotNull
-  private MultiMap<AbstractVcs, FilePath> groupFilesByVcs(@Nullable final Collection<VirtualFile> from) {
+  private MultiMap<AbstractVcs, FilePath> groupFilesByVcs(@Nullable final Collection<? extends VirtualFile> from) {
     if (from == null) return MultiMap.empty();
     MultiMap<AbstractVcs, FilePath> map = MultiMap.createSet();
     for (VirtualFile file : from) {
@@ -157,7 +157,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   @Override
-  public void filePathsDirty(@Nullable final Collection<FilePath> filesDirty, @Nullable final Collection<FilePath> dirsRecursivelyDirty) {
+  public void filePathsDirty(@Nullable final Collection<? extends FilePath> filesDirty, @Nullable final Collection<? extends FilePath> dirsRecursivelyDirty) {
     try {
       fileVcsPathsDirty(groupByVcs(filesDirty), groupByVcs(dirsRecursivelyDirty));
     }
@@ -166,7 +166,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   @Override
-  public void filesDirty(@Nullable final Collection<VirtualFile> filesDirty, @Nullable final Collection<VirtualFile> dirsRecursivelyDirty) {
+  public void filesDirty(@Nullable final Collection<? extends VirtualFile> filesDirty, @Nullable final Collection<? extends VirtualFile> dirsRecursivelyDirty) {
     try {
       fileVcsPathsDirty(groupFilesByVcs(filesDirty), groupFilesByVcs(dirsRecursivelyDirty));
     }
@@ -175,7 +175,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   @NotNull
-  private static Collection<FilePath> toFilePaths(@Nullable Collection<VirtualFile> files) {
+  private static Collection<FilePath> toFilePaths(@Nullable Collection<? extends VirtualFile> files) {
     if (files == null) return Collections.emptyList();
     return ContainerUtil.map(files, virtualFile -> VcsUtil.getFilePath(virtualFile));
   }
@@ -259,7 +259,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
   @NotNull
   @Override
-  public Collection<FilePath> whatFilesDirty(@NotNull final Collection<FilePath> files) {
+  public Collection<FilePath> whatFilesDirty(@NotNull final Collection<? extends FilePath> files) {
     DirtBuilder dirtBuilder;
     DirtBuilder dirtBuilderInProgress;
     synchronized (LOCK) {

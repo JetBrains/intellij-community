@@ -155,17 +155,26 @@
           <horizontalAlignment value="10"/>
           <horizontalTextPosition value="11"/>
           <labelFor value="79cd1"/>
-          <text value="&lt;html&gt;Threads &lt;small&gt;&lt;i&gt;(-T option):&lt;i&gt;&lt;/small&gt;&lt;/html&gt;"/>
+          <text value="Thread count:"/>
           <toolTipText value="Thread count, for instance 2.0C where C is core multiplied (option -T)"/>
         </properties>
       </component>
       <component id="79cd1" class="javax.swing.JTextField" binding="threadsEditor">
         <constraints>
-          <grid row="9" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false">
+          <grid row="9" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="0" fill="1" indent="0" use-parent-layout="false">
             <preferred-size width="150" height="-1"/>
           </grid>
         </constraints>
         <properties/>
+      </component>
+      <component id="5bf84" class="com.intellij.ui.components.JBLabel">
+        <constraints>
+          <grid row="9" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <componentStyle value="SMALL"/>
+          <text value="-T option"/>
+        </properties>
       </component>
     </children>
   </grid>

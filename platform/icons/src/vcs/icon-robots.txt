@@ -1,1 +1,8 @@
+deprecated: checkSpelling.png; to be removed in IDEA 2020
+deprecated: mapBase.png -> /vcs/folders.svg; to be removed in IDEA 2020 - use AllIcons.Vcs.Folders
 deprecated: mergeSourcesTree.png -> /actions/showAsTree.svg; to be removed in IDEA 2020 - use AllIcons.Actions.ShowAsTree
+deprecated: resetStrip.png; to be removed in IDEA 2020
+deprecated: restoreDefaultSize.png; to be removed in IDEA 2020
+deprecated: stripDown.png; to be removed in IDEA 2020
+deprecated: stripNull.png; to be removed in IDEA 2020
+deprecated: stripUp.png; to be removed in IDEA 2020

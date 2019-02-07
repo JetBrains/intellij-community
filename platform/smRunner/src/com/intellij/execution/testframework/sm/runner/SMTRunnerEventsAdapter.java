@@ -30,6 +30,9 @@ public class SMTRunnerEventsAdapter implements SMTRunnerEventsListener {
   public void onTestsCountInSuite(final int count) {}
 
   @Override
+  public void onBeforeTestingFinished(@NotNull SMTestProxy.SMRootTestProxy testsRoot) { }
+
+  @Override
   public void onTestStarted(@NotNull final SMTestProxy test) {}
   @Override
   public void onTestFinished(@NotNull final SMTestProxy test) {}

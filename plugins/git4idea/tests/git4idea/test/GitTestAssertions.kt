@@ -22,6 +22,7 @@ import org.assertj.core.api.Assertions
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import java.io.File
+import java.util.*
 
 fun GitRepository.assertStatus(file: VirtualFile, status: Char) {
   assertStatus(getFilePath(file), status)
@@ -123,6 +124,29 @@ fun ChangeListManager.assertChangeListExists(comment: String): LocalChangeList {
 
 private fun ChangeListManager.dumpChangeLists() = changeLists.joinToString { "'${it.name}' - '${it.comment}'" }
 
+fun ChangeListManager.assertChanges(changes: ChangesBuilder.() -> Unit): List<Change> {
+  this as ChangeListManagerImpl
+
+  val cb = ChangesBuilder()
+  cb.changes()
+
+  VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
+  ensureUpToDate()
+
+  val vcsChanges = allChanges
+  val allChanges = mutableListOf<Change>()
+  val actualChanges = HashSet(vcsChanges)
+
+  for (change in cb.changes) {
+    val found = actualChanges.find(change.matcher)
+    PlatformTestCase.assertNotNull("The change [$change] not found\n$vcsChanges", found)
+    actualChanges.remove(found)
+    allChanges.add(found!!)
+  }
+  PlatformTestCase.assertTrue(actualChanges.isEmpty())
+  return allChanges
+}
+
 class ChangesBuilder {
   data class AChange(val type: FileStatus, val nameBefore: String?, val nameAfter: String, val matcher: (Change) -> Boolean) {
     constructor(type: FileStatus, nameAfter: String, matcher: (Change) -> Boolean) : this(type, null, nameAfter, matcher)
@@ -159,7 +183,7 @@ class ChangesBuilder {
 
   fun rename(from: String, to: String) {
     PlatformTestCase.assertTrue(changes.add(AChange(FileStatus.MODIFIED, from, to) {
-      it.isRenamed && from == it.beforeRevision.relativePath && to == it.afterRevision.relativePath
+      (it.isRenamed || it.isMoved) && from == it.beforeRevision.relativePath && to == it.afterRevision.relativePath
     }))
   }
 }

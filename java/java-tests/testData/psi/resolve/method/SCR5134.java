@@ -6,6 +6,6 @@ interface I {
 
 abstract class C implements I {
   public boolean foo(Object obj) {
-    return <ref>foo((Integer)obj);
+    return <caret>foo((Integer)obj);
   }
 }

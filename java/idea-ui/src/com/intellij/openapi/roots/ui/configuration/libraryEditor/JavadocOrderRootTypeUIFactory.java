@@ -17,7 +17,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.ui.AnActionButton;
-import com.intellij.ui.AnActionButtonUpdater;
 import com.intellij.ui.DumbAwareActionButton;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.util.IconUtil;
@@ -28,7 +27,6 @@ import java.awt.*;
 
 /**
  * @author anna
- * @since 26-Dec-2007
  */
 public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
   @Override
@@ -63,17 +61,12 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
         }
       };
       specifyUrlButton.setShortcut(CustomShortcutSet.fromString("alt S"));
-      specifyUrlButton.addCustomUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(@NotNull AnActionEvent e) {
-          return myEnabled;
-        }
-      });
+      specifyUrlButton.addCustomUpdater(e -> myEnabled);
       toolbarDecorator.addExtraAction(specifyUrlButton);
     }
 
     private void onSpecifyUrlButtonClicked() {
-      String defaultDocsUrl = mySdk == null ? "" : StringUtil.notNullize(((SdkType)mySdk.getSdkType()).getDefaultDocumentationUrl(mySdk), "");
+      String defaultDocsUrl = mySdk == null ? "" : StringUtil.notNullize(((SdkType)mySdk.getSdkType()).getDefaultDocumentationUrl(mySdk));
       VirtualFile virtualFile = Util.showSpecifyJavadocUrlDialog(myPanel, defaultDocsUrl);
       if (virtualFile != null) {
         addElement(virtualFile);

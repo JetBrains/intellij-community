@@ -28,7 +28,6 @@ import java.util.List;
  */
 public class LightReferenceListBuilder extends LightElement implements PsiReferenceList {
   private final List<PsiJavaCodeReferenceElement> myRefs = new ArrayList<>();
-  private volatile PsiJavaCodeReferenceElement[] myCachedRefs;
   private volatile PsiClassType[] myCachedTypes;
   private final Role myRole;
   private final PsiElementFactory myFactory;
@@ -53,26 +52,17 @@ public class LightReferenceListBuilder extends LightElement implements PsiRefere
   }
 
   public void addReference(String qualifiedName) {
-    final PsiJavaCodeReferenceElement ref = myFactory.createReferenceElementByFQClassName(qualifiedName, getResolveScope());
-    myRefs.add(ref);
+    myRefs.add(myFactory.createReferenceElementByFQClassName(qualifiedName, getResolveScope()));
   }
 
   public void addReference(PsiClassType type) {
-    final PsiClass resolved = type.resolve();
-    if (resolved == null) return;
-
-    final PsiJavaCodeReferenceElement ref = myFactory.createReferenceElementByType(type);
-    myRefs.add(ref);
+    myRefs.add(myFactory.createReferenceElementByType(type));
   }
 
   @NotNull
   @Override
   public PsiJavaCodeReferenceElement[] getReferenceElements() {
-    PsiJavaCodeReferenceElement[] refs = myCachedRefs;
-    if (refs == null) {
-      myCachedRefs = refs = myRefs.toArray(PsiJavaCodeReferenceElement.EMPTY_ARRAY);
-    }
-    return refs;
+    return myRefs.toArray(PsiJavaCodeReferenceElement.EMPTY_ARRAY);
   }
 
   @NotNull

@@ -21,6 +21,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" />
+    <orderEntry type="module" module-name="intellij.java.debugger.memory.agent" />
     <orderEntry type="library" name="sa-jdwp" level="project" />
   </component>
   <component name="copyright">

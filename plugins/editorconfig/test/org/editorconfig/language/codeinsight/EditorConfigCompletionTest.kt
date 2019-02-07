@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.codeinsight
 
 import com.intellij.codeInsight.lookup.LookupElement
@@ -10,19 +10,20 @@ import org.editorconfig.language.assertIterableEquals
 
 class EditorConfigCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
   override fun getTestDataPath() =
-    "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testSrc/org/editorconfig/language/codeinsight/completion/"
+    "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testData/org/editorconfig/language/codeinsight/completion/"
 
-  private var csharpSupport: Boolean
   init {
     // calling this from setUp() turns out to be too late
-    val registryValue = Registry.get(EditorConfigRegistry.EDITORCONFIG_CSHARP_SUPPORT_KEY)
-    csharpSupport = registryValue.asBoolean()
-    registryValue.setValue(true)
+    Registry.get(EditorConfigRegistry.EDITORCONFIG_CSHARP_SUPPORT_KEY).setValue(true)
   }
 
   override fun tearDown() {
-    Registry.get(EditorConfigRegistry.EDITORCONFIG_CSHARP_SUPPORT_KEY).setValue(csharpSupport)
-    super.tearDown()
+    try {
+      Registry.get(EditorConfigRegistry.EDITORCONFIG_CSHARP_SUPPORT_KEY).resetToDefault()
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   private val basicValues = arrayOf(

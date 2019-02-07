@@ -36,7 +36,6 @@ import java.util.List;
 
 /**
  * @author stathik
- * @since Dec 26, 2003
  */
 public class InstalledPluginsTableModel extends PluginTableModel {
   private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();

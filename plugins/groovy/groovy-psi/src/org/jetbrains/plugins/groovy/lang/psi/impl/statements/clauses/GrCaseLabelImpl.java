@@ -25,6 +25,7 @@ public class GrCaseLabelImpl extends GroovyPsiElementImpl implements GrCaseLabel
     visitor.visitCaseLabel(this);
   }
 
+  @Override
   public String toString() {
     return "Case label";
   }

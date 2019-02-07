@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.unwrap;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -21,17 +7,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public abstract class UnwrapTestCase extends LightPlatformCodeInsightTestCase {
-  protected void assertUnwrapped(String codeBefore, String expectedCodeAfter) throws Exception {
+  protected void assertUnwrapped(String codeBefore, String expectedCodeAfter) {
     assertUnwrapped(codeBefore, expectedCodeAfter, 0);
   }
 
-  protected void assertUnwrapped(String codeBefore, String expectedCodeAfter, final int option) throws Exception {
+  protected void assertUnwrapped(String codeBefore, String expectedCodeAfter, final int option) {
     configureCode(codeBefore);
 
     UnwrapHandler h = new UnwrapHandler() {
@@ -47,7 +32,7 @@ public abstract class UnwrapTestCase extends LightPlatformCodeInsightTestCase {
     checkResultByText(createCode(expectedCodeAfter));
   }
 
-  protected void assertOptions(String code, String... expectedOptions) throws IOException {
+  protected void assertOptions(String code, String... expectedOptions) {
     configureCode(code);
 
     final List<String> actualOptions = new ArrayList<>();
@@ -67,7 +52,7 @@ public abstract class UnwrapTestCase extends LightPlatformCodeInsightTestCase {
     assertEquals(Arrays.asList(expectedOptions), actualOptions);
   }
 
-  protected void configureCode(final String codeBefore) throws IOException {
+  protected void configureCode(final String codeBefore) {
     configureFromFileText(getFileNameToCreate(), createCode(codeBefore));
   }
 
@@ -83,15 +68,20 @@ public abstract class UnwrapTestCase extends LightPlatformCodeInsightTestCase {
            "}";
   }
 
-  protected String indentTwice(String code) {
-    return indent(indent(code));
+  protected static String indentTwice(String code) {
+    return indent(code, 2);
   }
 
-  protected String indent(String code) {
-    String result = "";
+  protected static String indent(String code) {
+    return indent(code, 1);
+  }
+
+  protected static String indent(String code, int times) {
+    StringBuilder result = new StringBuilder();
     for (String line : StringUtil.tokenize(code, "\n")) {
-      result += "    " + line + "\n";
+      for (int i = 0; i < times; i++) result.append("    ");
+      result.append(line).append('\n');
     }
-    return result;
+    return result.toString();
   }
 }

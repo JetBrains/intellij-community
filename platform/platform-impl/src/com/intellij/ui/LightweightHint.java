@@ -223,7 +223,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
         .setTitle(myTitle)
         .setModalContext(false)
         .setShowShadow(isRealPopup() && !isForceHideShadow())
-        .setCancelKeyEnabled(false)
+        .setCancelKeyEnabled(true)
         .setCancelOnClickOutside(myCancelOnClickOutside)
         .setCancelCallback(() -> {
           onPopupCancel();

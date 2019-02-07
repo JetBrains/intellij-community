@@ -22,9 +22,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implements TargetElementUtilExtender{
-  public static final int NEW_AS_CONSTRUCTOR = 0x04;
-  public static final int THIS_ACCEPTED = 0x10;
-  public static final int SUPER_ACCEPTED = 0x20;
+  private static final int NEW_AS_CONSTRUCTOR = 0x04;
+  private static final int THIS_ACCEPTED = 0x10;
+  private static final int SUPER_ACCEPTED = 0x20;
 
   @Override
   public int getAllAdditionalFlags() {
@@ -76,7 +76,6 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
   @Override
   @NotNull
   public ThreeState isAcceptableReferencedElement(@NotNull final PsiElement element, final PsiElement referenceOrReferencedElement) {
-    if (referenceOrReferencedElement instanceof SyntheticElement) return ThreeState.NO;
     if (isEnumConstantReference(element, referenceOrReferencedElement)) return ThreeState.NO;
     return super.isAcceptableReferencedElement(element, referenceOrReferencedElement);
   }
@@ -84,8 +83,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
   private static boolean isEnumConstantReference(final PsiElement element, final PsiElement referenceOrReferencedElement) {
     return element != null &&
            element.getParent() instanceof PsiEnumConstant &&
-           (referenceOrReferencedElement instanceof PsiMethod && ((PsiMethod)referenceOrReferencedElement).isConstructor() || 
-            referenceOrReferencedElement instanceof PsiClass);
+           referenceOrReferencedElement instanceof PsiMethod && ((PsiMethod)referenceOrReferencedElement).isConstructor();
   }
 
   @Nullable

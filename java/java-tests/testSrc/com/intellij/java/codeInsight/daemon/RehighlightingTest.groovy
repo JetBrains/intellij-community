@@ -17,9 +17,12 @@ package com.intellij.java.codeInsight.daemon
 
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
+
 /**
  * @author peter
  */
+@CompileStatic
 class RehighlightingTest extends JavaCodeInsightFixtureTestCase {
 
   void testDeleteClassCaptionUndo() {

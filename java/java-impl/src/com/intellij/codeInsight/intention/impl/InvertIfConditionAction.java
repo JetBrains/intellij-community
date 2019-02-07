@@ -92,13 +92,13 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
     LOG.assertTrue(block != null);
     ControlFlow controlFlow = buildControlFlow(block);
     ifStatement = setupBranches(ifStatement, controlFlow);
+    
+    if (!ifStatement.isValid()) return;
 
     PsiExpression condition = Objects.requireNonNull(ifStatement.getCondition());
-    if (condition != null) {
-      final CommentTracker tracker = new CommentTracker();
-      final String negatedCondition = BoolUtils.getNegatedExpressionText(condition, tracker);
-      tracker.replaceAndRestoreComments(condition, negatedCondition);
-    }
+    final CommentTracker tracker = new CommentTracker();
+    final String negatedCondition = BoolUtils.getNegatedExpressionText(condition, tracker);
+    tracker.replaceAndRestoreComments(condition, negatedCondition);
 
     formatIf(ifStatement);
   }
@@ -142,7 +142,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
         elseBranch = Objects.requireNonNull(ifStatement.getElseBranch()).replace(elseBranch);
 
         if (emptyBlock(((PsiBlockStatement)elseBranch).getCodeBlock())) {
-          ifStatement.getElseBranch().delete();
+          new CommentTracker().deleteAndRestoreComments(ifStatement.getElseBranch());
         }
       }
     }
@@ -248,8 +248,8 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
 
     if (element instanceof PsiReturnStatement) {
       PsiReturnStatement returnStatement = (PsiReturnStatement) element;
-      ifStatement = addAfterWithinCodeBlock(ifStatement, ct.markUnchanged(thenBranch));
-      ct.replaceAndRestoreComments(Objects.requireNonNull(ifStatement.getThenBranch()), returnStatement.copy());
+      ifStatement = addAfterWithinCodeBlock(ifStatement, thenBranch);
+      ct.replaceAndRestoreComments(Objects.requireNonNull(ifStatement.getThenBranch()), ct.markUnchanged(returnStatement).copy());
 
       ControlFlow flow2 = buildControlFlow(findCodeBlock(ifStatement));
       if (!ControlFlowUtil.isInstructionReachable(flow2, flow2.getStartOffset(returnStatement), 0)) returnStatement.delete();
@@ -287,9 +287,14 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
 
 
         PsiBlockStatement codeBlock = (PsiBlockStatement) factory.createStatementFromText("{}", ifStatement);
-        codeBlock.getCodeBlock().addRange(first, last);
-        ct.replaceAndRestoreComments(ifStatement.getThenBranch(), codeBlock);
-        first.getParent().deleteChildRange(first, last);
+        if (first == last && PsiUtil.isJavaToken(last, JavaTokenType.RBRACE)) {
+          ct.replaceAndRestoreComments(ifStatement.getThenBranch(), codeBlock);
+        }
+        else {
+          codeBlock.getCodeBlock().addRange(first, last);
+          ct.replaceAndRestoreComments(ifStatement.getThenBranch(), codeBlock);
+          first.getParent().deleteChildRange(first, last);
+        }
       }
       codeStyle.reformat(ifStatement);
       return ifStatement;

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source;
 
 import com.intellij.application.options.CodeStyle;
@@ -21,7 +7,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -39,6 +24,7 @@ import com.intellij.pom.tree.TreeAspect;
 import com.intellij.pom.tree.events.ChangeInfo;
 import com.intellij.pom.tree.events.TreeChange;
 import com.intellij.pom.tree.events.TreeChangeEvent;
+import com.intellij.pom.tree.events.impl.ChangeInfoImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -73,19 +59,19 @@ public class PostprocessReformattingAspect implements PomModelAspect {
 
   private final ThreadLocal<Context> myContext = ThreadLocal.withInitial(Context::new);
 
-  public PostprocessReformattingAspect(Project project, PsiManager psiManager, TreeAspect treeAspect,final CommandProcessor processor) {
+  public PostprocessReformattingAspect(Project project, PsiManager psiManager, TreeAspect treeAspect, CommandProcessor processor) {
     myProject = project;
     myPsiManager = psiManager;
     myTreeAspect = treeAspect;
     PomManager.getModel(psiManager.getProject())
       .registerAspect(PostprocessReformattingAspect.class, this, Collections.singleton(treeAspect));
 
-    ApplicationListener applicationListener = new ApplicationAdapter() {
+    ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
       @Override
       public void writeActionStarted(@NotNull final Object action) {
         if (processor != null) {
-          final Project project = processor.getCurrentCommandProject();
-          if (project == myProject) {
+          final Project project1 = processor.getCurrentCommandProject();
+          if (project1 == myProject) {
             incrementPostponedCounter();
           }
         }
@@ -94,14 +80,13 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       @Override
       public void writeActionFinished(@NotNull final Object action) {
         if (processor != null) {
-          final Project project = processor.getCurrentCommandProject();
-          if (project == myProject) {
+          final Project project1 = processor.getCurrentCommandProject();
+          if (project1 == myProject) {
             decrementPostponedCounter();
           }
         }
       }
-    };
-    ApplicationManager.getApplication().addApplicationListener(applicationListener, project);
+    }, project);
   }
 
   public void disablePostprocessFormattingInside(@NotNull final Runnable runnable) {
@@ -180,7 +165,9 @@ public class PostprocessReformattingAspect implements PomModelAspect {
         for (final ASTNode node : changeSet.getChangedElements()) {
           final TreeChange treeChange = changeSet.getChangesByElement(node);
           for (final ASTNode affectedChild : treeChange.getAffectedChildren()) {
-            scheduleReparseIfNeeded(containingFile, affectedChild);
+            if (changeMightBreakPsiTextConsistency(treeChange, affectedChild)) {
+              containingFile.putUserData(REPARSE_PENDING, true);
+            }
 
             final ChangeInfo childChange = treeChange.getChangeByChild(affectedChild);
             switch (childChange.getChangeType()) {
@@ -207,14 +194,22 @@ public class PostprocessReformattingAspect implements PomModelAspect {
         }
       }
 
-      private void scheduleReparseIfNeeded(PsiFile containingFile, ASTNode affectedChild) {
-        if (changeMightBreakPsiTextConsistency(affectedChild)) {
-          containingFile.putUserData(REPARSE_PENDING, true);
-        }
+      private boolean changeMightBreakPsiTextConsistency(TreeChange treeChange, ASTNode child) {
+        return TreeUtil.containsOuterLanguageElements(child) ||
+               isRightAfterErrorElement(child) ||
+               isBetweenWhitespaceAndEdge(child) && leavesEmptyRange(treeChange, child);
       }
 
-      private boolean changeMightBreakPsiTextConsistency(ASTNode node) {
-        return TreeUtil.containsOuterLanguageElements(node) || isRightAfterErrorElement(node);
+      private boolean leavesEmptyRange(TreeChange treeChange, ASTNode child) {
+        TreeElement newChild = ((ChangeInfoImpl)treeChange.getChangeByChild(child)).getNewChild();
+        return newChild == null || newChild.getTextLength() == 0;
+      }
+
+      private boolean isBetweenWhitespaceAndEdge(ASTNode deleted) {
+        ASTNode prev = deleted.getTreePrev();
+        ASTNode next = deleted.getTreeNext();
+        return next == null && prev instanceof PsiWhiteSpace ||
+               prev == null && next instanceof PsiWhiteSpace;
       }
 
       private boolean isRightAfterErrorElement(ASTNode _node) {

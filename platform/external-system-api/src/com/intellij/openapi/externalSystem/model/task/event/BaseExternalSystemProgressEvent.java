@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/27/2015
  */
 public class BaseExternalSystemProgressEvent<T extends OperationDescriptor> implements ExternalSystemProgressEvent<T> {
   private static final long serialVersionUID = 1L;

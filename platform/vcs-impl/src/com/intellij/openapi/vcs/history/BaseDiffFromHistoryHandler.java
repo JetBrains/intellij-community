@@ -125,7 +125,7 @@ public abstract class BaseDiffFromHistoryHandler<T extends VcsFileRevision> impl
   @NotNull
   protected abstract String getPresentableName(@NotNull T revision);
 
-  protected void showChangesDialog(@NotNull String title, @NotNull List<Change> changes) {
+  protected void showChangesDialog(@NotNull String title, @NotNull List<? extends Change> changes) {
     VcsDiffUtil.showChangesDialog(myProject, title, changes);
   }
 

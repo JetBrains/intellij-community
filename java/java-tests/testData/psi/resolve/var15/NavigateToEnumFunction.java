@@ -7,6 +7,6 @@ enum E {
 
 class Bar {
     {
-        E.A.f<ref>oo();
+        E.A.f<caret>oo();
     }
 }

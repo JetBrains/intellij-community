@@ -114,7 +114,7 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
   @NotNull
   @Override
   protected ModuleEx createModule(@NotNull String filePath) {
-    return new ModuleImpl(ModulePathKt.getModuleNameByFilePath(filePath), myProject);
+    return new ModuleImpl(ModulePathKt.getModuleNameByFilePath(filePath), myProject, filePath);
   }
 
   @NotNull

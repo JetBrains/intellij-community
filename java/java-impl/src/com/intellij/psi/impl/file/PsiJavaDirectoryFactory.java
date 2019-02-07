@@ -54,7 +54,7 @@ public class PsiJavaDirectoryFactory extends PsiDirectoryFactory {
       }
       return "";
     }
-    return presentable ? StringUtil.notNullize(FileUtil.getLocationRelativeToUserHome(directory.getVirtualFile().getPresentableUrl()), "") : "";
+    return presentable ? StringUtil.notNullize(FileUtil.getLocationRelativeToUserHome(directory.getVirtualFile().getPresentableUrl())) : "";
   }
 
   @Nullable

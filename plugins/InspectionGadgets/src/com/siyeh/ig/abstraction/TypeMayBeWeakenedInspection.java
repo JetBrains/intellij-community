@@ -46,6 +46,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OrderedSet;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.ClassUtils;
@@ -62,7 +63,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspectionTool {
   @SuppressWarnings({"PublicField", "WeakerAccess"})
@@ -516,9 +516,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
         weakestClasses.removeIf(weakestClass -> !weakestClass.isInterface());
       }
 
-      weakestClasses = weakestClasses.stream()
-                                     .map(psiClass -> tryReplaceWithParentStopper(originClass, psiClass, myStopClassSet))
-                                     .collect(Collectors.toList());
+      weakestClasses = ContainerUtil.map(weakestClasses, psiClass -> tryReplaceWithParentStopper(originClass, psiClass, myStopClassSet));
       return weakestClasses;
     }
 

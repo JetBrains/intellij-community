@@ -21,8 +21,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.xdebugger.XNamedTreeNode;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
+import com.intellij.xdebugger.evaluation.InlineDebuggerHelper;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
@@ -77,5 +79,20 @@ public class PyDebuggerEditorsProvider extends XDebuggerEditorsProvider {
       }
     }
     return null;
+  }
+
+  private static class PyInlineDebuggerHelper extends InlineDebuggerHelper {
+    private static final PyInlineDebuggerHelper INSTANCE = new PyInlineDebuggerHelper();
+
+    @Override
+    public boolean shouldEvaluateChildrenByDefault(XNamedTreeNode node) {
+      return false;
+    }
+  }
+
+  @NotNull
+  @Override
+  public InlineDebuggerHelper getInlineDebuggerHelper() {
+    return PyInlineDebuggerHelper.INSTANCE;
   }
 }

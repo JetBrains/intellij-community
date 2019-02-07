@@ -37,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 9/11/2015
  */
 public interface IdeModifiableModelsProvider extends IdeModelsProvider, UserDataHolder {
   @NotNull

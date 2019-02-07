@@ -32,7 +32,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/23/13
  */
 public class AddGradleDslDependencyAction extends CodeInsightAction {
   static final ThreadLocal<List<MavenId>> TEST_THREAD_LOCAL = new ThreadLocal<>();

@@ -40,7 +40,6 @@ import java.util.List;
 
 /**
  * @author MYakovlev
- * @since Aug 15, 2002
  */
 public class SdkEditor implements Configurable, Place.Navigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.ui.SdkEditor");

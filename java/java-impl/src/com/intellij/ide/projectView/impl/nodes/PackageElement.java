@@ -67,6 +67,7 @@ public final class PackageElement implements Queryable, RootsProvider {
     return roots;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof PackageElement)) return false;
@@ -80,10 +81,10 @@ public final class PackageElement implements Queryable, RootsProvider {
     return true;
   }
 
+  @Override
   public int hashCode() {
-    int result;
-    result = (myModule != null ? myModule.hashCode() : 0);
-    result = 29 * result + (myElement.hashCode());
+    int result = myModule != null ? myModule.hashCode() : 0;
+    result = 29 * result + myElement.hashCode();
     result = 29 * result + (myIsLibraryElement ? 1 : 0);
     return result;
   }

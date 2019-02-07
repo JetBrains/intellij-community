@@ -31,7 +31,6 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Denis Zhdanov
- * @since 11/10/11 11:56 AM
  */
 public class ExternalSystemProgressNotificationManagerImpl extends RemoteObject
   implements ExternalSystemProgressNotificationManager, RemoteExternalSystemProgressNotificationManager

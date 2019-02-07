@@ -1,21 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
+import org.jetbrains.intellij.build.impl.ClassVersionChecker
 import org.jetbrains.intellij.build.impl.LayoutBuilder
+
 /**
  * Builds artifacts which are used in Kotlin Compiler and UpSource
  *
@@ -59,6 +47,14 @@ class IntelliJCoreArtifactsBuilder {
     "intellij.xml.structureView.impl",
     "intellij.jvm.analysis.impl",
   ]
+  private static final List<String> VERSIONED_LIBRARIES = [
+    "ASM", "Guava", "picocontainer", "Trove4j", "cli-parser", "lz4-java", "imgscalr", "batik", "xmlgraphics-commons",
+    "OroMatcher", "jna", "Log4J", "StreamEx", "Java Compatibility"
+  ]
+  private static final List<String> UNVERSIONED_LIBRARIES = [
+    "jetbrains-annotations-java5", "JDOM"
+  ]
+
   private final BuildContext buildContext
 
   IntelliJCoreArtifactsBuilder(BuildContext buildContext) {
@@ -74,8 +70,10 @@ class IntelliJCoreArtifactsBuilder {
       String coreArtifactDir = "$buildContext.paths.artifacts/core"
       AntBuilder ant = buildContext.ant
       ant.mkdir(dir: coreArtifactDir)
-      String home = buildContext.paths.communityHome
+
       List<String> analysisModules = ANALYSIS_API_MODULES + ANALYSIS_IMPL_MODULES
+      List<String> versionedLibs = VERSIONED_LIBRARIES
+      List<String> unversionedLibs = UNVERSIONED_LIBRARIES
       new LayoutBuilder(buildContext, false).layout(coreArtifactDir) {
         jar("intellij-core.jar") {
           module("intellij.platform.util.rt")
@@ -86,22 +84,16 @@ class IntelliJCoreArtifactsBuilder {
           module("intellij.java.psi")
           module("intellij.java.psi.impl")
         }
-
         jar("intellij-core-analysis.jar") {
           analysisModules.each { module it }
         }
-
-        [
-          "ASM", "Guava", "picocontainer", "Trove4j", "cli-parser", "lz4-java", "imgscalr", "batik", "xmlgraphics-commons",
-          "OroMatcher", "jna", "Log4J", "StreamEx", "Java Compatibility"
-        ].each {
-          projectLibrary(it)
-        }
-        projectLibrary("jetbrains-annotations-java5", true)
-        projectLibrary("JDOM", true)
+        versionedLibs.each { projectLibrary(it) }
+        unversionedLibs.each { projectLibrary(it, true) }
       }
       ant.move(file: "$coreArtifactDir/annotations-java5.jar", tofile: "$coreArtifactDir/annotations.jar")
       buildContext.notifyArtifactBuilt(coreArtifactDir)
+
+      new ClassVersionChecker(["": "1.8"]).checkVersions(buildContext, new File(coreArtifactDir))
 
       def intellijCoreZip = "${buildContext.paths.artifacts}/intellij-core-${buildContext.buildNumber}.zip"
       ant.zip(destfile: intellijCoreZip) {

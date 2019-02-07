@@ -34,8 +34,13 @@ import java.util.Collection;
 public class PythonParsingTest extends ParsingTestCase {
   private LanguageLevel myLanguageLevel = LanguageLevel.getDefault();
 
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public PythonParsingTest() {
-    super("psi", "py", new PythonParserDefinition());
+    this(new PythonParserDefinition());
+  }
+
+  protected PythonParsingTest(PythonParserDefinition parserDefinition) {
+    super("psi", "py", parserDefinition);
   }
 
   @Override

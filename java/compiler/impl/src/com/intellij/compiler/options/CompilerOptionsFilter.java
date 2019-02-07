@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
  * This interface defines api which allows extensions to control compiler options availability.
  * 
  * @author Denis Zhdanov
- * @since 7/18/13 12:40 PM
  */
 public interface CompilerOptionsFilter {
 

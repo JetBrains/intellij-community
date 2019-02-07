@@ -240,14 +240,16 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
     }
 
     private boolean isBoxingNecessary(PsiExpression boxingExpression, PsiExpression boxedExpression) {
+      if (ExpressionUtils.isVoidContext(boxingExpression)) {
+        // removing the boxing in this case will make the code uncompilable
+        return true;
+      }
       PsiElement parent = boxingExpression.getParent();
       while (parent instanceof PsiParenthesizedExpression) {
         boxingExpression = (PsiExpression)parent;
         parent = parent.getParent();
       }
-      if (parent instanceof PsiExpressionStatement ||
-          parent instanceof PsiReferenceExpression ||
-          parent instanceof PsiSynchronizedStatement) {
+      if (parent instanceof PsiReferenceExpression || parent instanceof PsiSynchronizedStatement) {
         return true;
       }
       else if (parent instanceof PsiVariable) {

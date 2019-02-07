@@ -29,15 +29,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-abstract class RefEntityImpl implements RefEntity {
-  private volatile RefEntityImpl myOwner;
+public abstract class RefEntityImpl implements RefEntity, WritableRefEntity {
+  private volatile WritableRefEntity myOwner;
   protected List<RefEntity> myChildren;  // guarded by this
   private final String myName;
   private Map<Key, Object> myUserMap;    // guarded by this
   protected long myFlags; // guarded by this
   protected final RefManagerImpl myManager;
 
-  RefEntityImpl(@NotNull String name, @NotNull RefManager manager) {
+  protected RefEntityImpl(@NotNull String name, @NotNull RefManager manager) {
     myManager = (RefManagerImpl)manager;
     myName = myManager.internName(name);
   }
@@ -61,14 +61,16 @@ abstract class RefEntityImpl implements RefEntity {
   }
 
   @Override
-  public RefEntity getOwner() {
+  public WritableRefEntity getOwner() {
     return myOwner;
   }
 
-  protected void setOwner(@Nullable final RefEntityImpl owner) {
+  @Override
+  public void setOwner(@Nullable final WritableRefEntity owner) {
     myOwner = owner;
   }
 
+  @Override
   public synchronized void add(@NotNull final RefEntity child) {
     List<RefEntity> children = myChildren;
     if (children == null) {
@@ -78,10 +80,11 @@ abstract class RefEntityImpl implements RefEntity {
     ((RefEntityImpl)child).setOwner(this);
   }
 
-  protected synchronized void removeChild(@NotNull final RefEntity child) {
+  @Override
+  public synchronized void removeChild(@NotNull final RefEntity child) {
     if (myChildren != null) {
       myChildren.remove(child);
-      ((RefEntityImpl)child).setOwner(null);
+      ((WritableRefEntity)child).setOwner(null);
     }
   }
 

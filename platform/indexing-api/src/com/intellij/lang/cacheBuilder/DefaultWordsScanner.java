@@ -84,31 +84,43 @@ public class DefaultWordsScanner extends VersionedWordsScanner {
     myProcessAsWordTokenSet = processAsWordTokenSet;
   }
 
+  private volatile boolean myBusy;
+
   @Override
   public void processWords(CharSequence fileText, Processor<WordOccurrence> processor) {
-    myLexer.start(fileText);
-    WordOccurrence occurrence = new WordOccurrence(fileText, 0, 0, null); // shared occurrence
+    if (myBusy) {
+      throw new IllegalStateException("Different word scanner instances should be used for different threads, " +
+                                      "make sure that " + this + " with " + myLexer + " is instantiated on every request and not shared");
+    }
+    myBusy = true;
+    try {
+      myLexer.start(fileText);
+      WordOccurrence occurrence = new WordOccurrence(fileText, 0, 0, null); // shared occurrence
 
-    IElementType type;
-    while ((type = myLexer.getTokenType()) != null) {
-      if (myProcessAsWordTokenSet.contains(type)) {
-        occurrence.init(fileText, myLexer.getTokenStart(),myLexer.getTokenEnd(), WordOccurrence.Kind.CODE);
-        processor.process(occurrence);
+      IElementType type;
+      while ((type = myLexer.getTokenType()) != null) {
+        if (myProcessAsWordTokenSet.contains(type)) {
+          occurrence.init(fileText, myLexer.getTokenStart(),myLexer.getTokenEnd(), WordOccurrence.Kind.CODE);
+          processor.process(occurrence);
+        }
+        else if (myIdentifierTokenSet.contains(type)) {
+          //occurrence.init(fileText, myLexer.getTokenStart(), myLexer.getTokenEnd(), WordOccurrence.Kind.CODE);
+          //if (!processor.process(occurrence)) return;
+          if (!stripWords(processor, fileText, myLexer.getTokenStart(), myLexer.getTokenEnd(), WordOccurrence.Kind.CODE, occurrence, false)) return;      }
+        else if (myCommentTokenSet.contains(type)) {
+          if (!stripWords(processor, fileText,myLexer.getTokenStart(),myLexer.getTokenEnd(), WordOccurrence.Kind.COMMENTS,occurrence, false)) return;
+        }
+        else if (myLiteralTokenSet.contains(type)) {
+          if (!stripWords(processor, fileText, myLexer.getTokenStart(),myLexer.getTokenEnd(),WordOccurrence.Kind.LITERALS,occurrence, myMayHaveFileRefsInLiterals)) return;
+        }
+        else if (!mySkipCodeContextTokenSet.contains(type)) {
+          if (!stripWords(processor, fileText, myLexer.getTokenStart(), myLexer.getTokenEnd(), WordOccurrence.Kind.CODE, occurrence, false)) return;
+        }
+        myLexer.advance();
       }
-      else if (myIdentifierTokenSet.contains(type)) {
-        //occurrence.init(fileText, myLexer.getTokenStart(), myLexer.getTokenEnd(), WordOccurrence.Kind.CODE);
-        //if (!processor.process(occurrence)) return;
-        if (!stripWords(processor, fileText, myLexer.getTokenStart(), myLexer.getTokenEnd(), WordOccurrence.Kind.CODE, occurrence, false)) return;      }
-      else if (myCommentTokenSet.contains(type)) {
-        if (!stripWords(processor, fileText,myLexer.getTokenStart(),myLexer.getTokenEnd(), WordOccurrence.Kind.COMMENTS,occurrence, false)) return;
-      }
-      else if (myLiteralTokenSet.contains(type)) {
-        if (!stripWords(processor, fileText, myLexer.getTokenStart(),myLexer.getTokenEnd(),WordOccurrence.Kind.LITERALS,occurrence, myMayHaveFileRefsInLiterals)) return;
-      }
-      else if (!mySkipCodeContextTokenSet.contains(type)) {
-        if (!stripWords(processor, fileText, myLexer.getTokenStart(), myLexer.getTokenEnd(), WordOccurrence.Kind.CODE, occurrence, false)) return;
-      }
-      myLexer.advance();
+    }
+    finally {
+      myBusy = false;
     }
   }
 

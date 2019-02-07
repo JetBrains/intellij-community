@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.Disposable
@@ -197,7 +197,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
         tracker.put(newPath, storage)
       }
     }
-    storage.setFile(null, Paths.get(newPath))
+    storage.setFile(null, resolvePath(newPath))
   }
 
   fun getCachedFileStorages(fileSpecs: Collection<String>, pathNormalizer: ((String) -> String)? = null): Collection<FileBasedStorage> {
@@ -253,7 +253,8 @@ open class StateStorageManagerImpl(private val rootTagName: String,
       return storage
     }
 
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment && PathUtilRt.getFileName(filePath).lastIndexOf('.') < 0) {
+    val app = ApplicationManager.getApplication()
+    if (app != null && !app.isHeadlessEnvironment && PathUtilRt.getFileName(filePath).lastIndexOf('.') < 0) {
       throw IllegalArgumentException("Extension is missing for storage file: $filePath")
     }
 
@@ -274,14 +275,13 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     else {
       compoundStreamProvider
     }
-    return MyFileStorage(this, Paths.get(path), collapsedPath, rootTagName, roamingType, getMacroSubstitutor(collapsedPath), provider)
+    return MyFileStorage(this, resolvePath(path), collapsedPath, rootTagName, roamingType, getMacroSubstitutor(collapsedPath), provider)
   }
 
   // open for upsource
-  protected open fun createDirectoryBasedStorage(path: String, collapsedPath: String, @Suppress("DEPRECATION") splitter: StateSplitter): StateStorage = MyDirectoryStorage(this,
-                                                                                                                                                                           Paths.get(
-                                                                                                                                                                             path),
-                                                                                                                                                                           splitter)
+  protected open fun createDirectoryBasedStorage(path: String, collapsedPath: String, @Suppress("DEPRECATION") splitter: StateSplitter): StateStorage {
+    return MyDirectoryStorage(this, resolvePath(path), splitter)
+  }
 
   private class MyDirectoryStorage(override val storageManager: StateStorageManagerImpl, file: Path, @Suppress("DEPRECATION") splitter: StateSplitter) :
     DirectoryBasedStorage(file, splitter, storageManager.macroSubstitutor), StorageVirtualFileTracker.TrackedStorage
@@ -328,6 +328,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   open val isExternalSystemStorageEnabled: Boolean
     get() = false
 
+  // function must be pure and do not use anything outside of passed arguments
   protected open fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) {
   }
 
@@ -350,7 +351,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
           // old file didn't exist or renaming failed
           val expandedPath = expandMacros(path)
           val parentPath = PathUtilRt.getParentPath(expandedPath)
-          storage.setFile(null, Paths.get(parentPath, newName))
+          storage.setFile(null, resolvePath(parentPath).resolve(newName))
           pathRenamed(expandedPath, "$parentPath/$newName", null)
         }
       }
@@ -389,7 +390,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
           continue@matcherLoop
         }
       }
-      throw IllegalArgumentException("Unknown macro: $m in storage file spec: $path")
+      throw UnknownMacroException("Unknown macro: $m in storage file spec: $path")
     }
 
     var expanded = path
@@ -406,7 +407,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
       }
     }
 
-    throw IllegalArgumentException("Unknown macro $macro")
+    throw UnknownMacroException("Unknown macro $macro")
   }
 
   fun collapseMacros(path: String): String {
@@ -423,6 +424,8 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   }
 
   protected open fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? = null
+
+  protected open fun resolvePath(path: String): Path = Paths.get(path)
 }
 
 private fun String.startsWithMacro(macro: String): Boolean {
@@ -444,3 +447,5 @@ internal fun getEffectiveRoamingType(roamingType: RoamingType, collapsedPath: St
     return roamingType
   }
 }
+
+class UnknownMacroException(message: String) : RuntimeException(message)

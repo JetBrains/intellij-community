@@ -17,7 +17,7 @@ package com.intellij.util.containers;
 
 
 /**
- * see also {@link com.intellij.openapi.util.Condition} and {@link java.util.function.Predicate}
+ * Please use {@link java.util.function.Predicate} instead
  */
 public interface Predicate<T> {
   boolean apply(T input);

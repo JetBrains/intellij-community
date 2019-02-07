@@ -26,6 +26,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public enum ShortNameType {
+  INITIALS("initials", "Initials"),
   LASTNAME("lastname", "Last Name"),
   FIRSTNAME("firstname", "First Name"),
   NONE("full", "Full name");
@@ -69,6 +70,11 @@ public enum ShortNameType {
     name = name.replace('.', ' ').replace('_', ' ').replace('-', ' ');
 
     final List<String> strings = StringUtil.split(name, " ");
+
+    if (type == INITIALS) {
+      return StringUtil.join(strings, it -> String.valueOf(StringUtil.toUpperCase(it.charAt(0))), "");
+    }
+
     if (strings.size() < 2) return name;
 
     String shortName;

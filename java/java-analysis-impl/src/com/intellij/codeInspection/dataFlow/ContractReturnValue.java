@@ -409,8 +409,7 @@ public abstract class ContractReturnValue {
     @Override
     public DfaValue getDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallState callState) {
       if (defaultValue instanceof DfaVariableValue) {
-        callState.myMemoryState.forceVariableFact((DfaVariableValue)defaultValue, DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
-        return defaultValue;
+        defaultValue = factory.getFactFactory().createValue(callState.myMemoryState.getFacts((DfaVariableValue)defaultValue));
       }
       DfaValue value = factory.withFact(defaultValue, DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
       if (callState.myCallArguments.myPure) {

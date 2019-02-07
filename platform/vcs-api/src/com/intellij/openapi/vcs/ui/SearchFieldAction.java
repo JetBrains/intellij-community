@@ -59,8 +59,6 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
     else {
       myField.setBorder(emptyBorder);
     }
-
-    myField.setSearchIcon(AllIcons.General.Filter);
     myComponent = new JPanel();
     final BoxLayout layout = new BoxLayout(myComponent, BoxLayout.X_AXIS);
     myComponent.setLayout(layout);

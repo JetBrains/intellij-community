@@ -4,6 +4,7 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -52,7 +53,7 @@ public class InstrumentationTracker {
         @Override
         public boolean processLocatableEvent(SuspendContextCommandImpl action, LocatableEvent event) {
           try {
-            Value value = event.thread().frame(0).getArgumentValues().get(0);
+            Value value = ContainerUtil.getFirstItem(DebuggerUtilsEx.getArgumentValues(event.thread().frame(0)));
             if (value instanceof ArrayReference) {
               ((ArrayReference)value).getValues().forEach(v -> {
                 Value aClass = ((ObjectReference)v).getValue(((ReferenceType)v.type()).fieldByName("mClass"));
@@ -71,7 +72,7 @@ public class InstrumentationTracker {
         @Override
         public boolean processLocatableEvent(SuspendContextCommandImpl action, LocatableEvent event) {
           try {
-            Value value = event.thread().frame(0).getArgumentValues().get(0);
+            Value value = ContainerUtil.getFirstItem(DebuggerUtilsEx.getArgumentValues(event.thread().frame(0)));
             if (value instanceof ArrayReference) {
               ((ArrayReference)value).getValues().forEach(v -> noticeRedefineClass(((ClassObjectReference)v).reflectedType()));
             }

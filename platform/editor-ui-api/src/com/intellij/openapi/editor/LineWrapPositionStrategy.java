@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
  * such virtual wrap.
  *
  * @author Denis Zhdanov
- * @since Aug 25, 2010 11:14:29 AM
  */
 public interface LineWrapPositionStrategy {
 

@@ -231,7 +231,9 @@ public class JarsBuilder {
           if (manifestFile.exists()) {
             final String fullManifestPath = FileUtil.toSystemIndependentName(manifestFile.getAbsolutePath());
             packedFilePaths.add(fullManifestPath);
-            return createManifest(new FileInputStream(manifestFile), manifestFile);
+            try (FileInputStream stream = new FileInputStream(manifestFile)) {
+              return createManifest(stream, manifestFile);
+            }
           }
         }
         else {
@@ -240,7 +242,9 @@ public class JarsBuilder {
             @Override
             public void process(@Nullable InputStream inputStream, @NotNull String relativePath, ZipEntry entry) throws IOException {
               if (manifestRef.isNull() && relativePath.equals(manifestPath) && inputStream != null) {
-                manifestRef.set(createManifest(inputStream, descriptor.getRootFile()));
+                try (InputStream stream = inputStream) {
+                  manifestRef.set(createManifest(stream, descriptor.getRootFile()));
+                }
               }
             }
           });
@@ -256,12 +260,7 @@ public class JarsBuilder {
   @Nullable
   private Manifest createManifest(InputStream manifestStream, File manifestFile) {
     try {
-      try {
-        return new Manifest(manifestStream);
-      }
-      finally {
-        manifestStream.close();
-      }
+      return new Manifest(manifestStream);
     }
     catch (IOException e) {
       myContext.processMessage(new CompilerMessage(IncArtifactBuilder.BUILDER_NAME, BuildMessage.Kind.ERROR,

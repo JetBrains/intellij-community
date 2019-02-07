@@ -1,6 +1,6 @@
 class TestClassT {
     static {
-        new B().<ref>foo(TestClassT.class);
+        new B().<caret>foo(TestClassT.class);
     }
 
     public static class A {

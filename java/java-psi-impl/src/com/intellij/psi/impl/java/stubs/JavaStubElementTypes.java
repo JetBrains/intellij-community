@@ -16,9 +16,9 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiKeyword;
-import com.intellij.psi.impl.source.JavaFileElementType;
 import com.intellij.psi.impl.source.tree.java.*;
 import com.intellij.psi.tree.IStubFileElementType;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +33,7 @@ public interface JavaStubElementTypes {
   JavaNameValuePairType NAME_VALUE_PAIR = new JavaNameValuePairType();
   JavaLiteralExpressionElementType LITERAL_EXPRESSION = new JavaLiteralExpressionElementType();
   LambdaExpressionElementType LAMBDA_EXPRESSION = new LambdaExpressionElementType();
-  MethodReferenceElementType METHOD_REFERENCE = new MethodReferenceElementType();
+  MethodReferenceElementType METHOD_REF_EXPRESSION = new MethodReferenceElementType();
   JavaParameterListElementType PARAMETER_LIST = new JavaParameterListElementType();
   JavaParameterElementType PARAMETER = new JavaParameterElementType();
   JavaTypeParameterElementType TYPE_PARAMETER = new JavaTypeParameterElementType();
@@ -151,5 +151,6 @@ public interface JavaStubElementTypes {
     }
   };
 
-  IStubFileElementType JAVA_FILE = new JavaFileElementType();
+  @Deprecated
+  IStubFileElementType JAVA_FILE = JavaParserDefinition.JAVA_FILE;
 }

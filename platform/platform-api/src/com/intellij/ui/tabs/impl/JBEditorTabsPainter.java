@@ -31,9 +31,9 @@ public abstract class JBEditorTabsPainter {
   protected final JBEditorTabs myTabs;
 
   protected static final Color BORDER_COLOR = JBColor.namedColor("EditorTabs.borderColor", UIUtil.CONTRAST_BORDER_COLOR);
-  protected static final Color UNDERLINE_COLOR = JBColor.namedColor("EditorTabs.active.underlineColor", 0x439EB8);
-  protected static final Color DEFAULT_TAB_COLOR = JBColor.namedColor("EditorTabs.active.background", new JBColor(0xFFFFFF, 0x515658));
-  protected static final Color INACTIVE_MASK_COLOR = JBColor.namedColor("EditorTabs.inactive.maskColor",
+  protected static final Color UNDERLINE_COLOR = JBColor.namedColor("EditorTabs.underlineColor", 0x439EB8);
+  protected static final Color DEFAULT_TAB_COLOR = JBColor.namedColor("EditorTabs.selectedBackground", new JBColor(0xFFFFFF, 0x515658));
+  protected static final Color INACTIVE_MASK_COLOR = JBColor.namedColor("EditorTabs.inactiveMaskColor",
                                                                         new JBColor(ColorUtil.withAlpha(Gray.x26, .2),
                                                                                     ColorUtil.withAlpha(Gray.x26, .5)));
 

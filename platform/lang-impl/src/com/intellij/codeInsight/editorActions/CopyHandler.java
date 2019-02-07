@@ -57,19 +57,9 @@ public class CopyHandler extends EditorActionHandler {
       if (Registry.is(CopyAction.SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY)) {
         return;
       }
-      editor.getCaretModel().runForEachCaret(new CaretAction() {
-        @Override
-        public void perform(Caret caret) {
-          selectionModel.selectLineAtCaret();
-        }
-      });
+      editor.getCaretModel().runForEachCaret(__ -> selectionModel.selectLineAtCaret());
       if (!selectionModel.hasSelection(true)) return;
-      editor.getCaretModel().runForEachCaret(new CaretAction() {
-        @Override
-        public void perform(Caret caret) {
-          EditorActionUtil.moveCaretToLineStartIgnoringSoftWraps(editor);
-        }
-      });
+      editor.getCaretModel().runForEachCaret(__ -> EditorActionUtil.moveCaretToLineStartIgnoringSoftWraps(editor));
     }
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();

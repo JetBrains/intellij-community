@@ -19,6 +19,7 @@ public class GrDocMethodParameterImpl extends GroovyDocPsiElementImpl implements
     super(node);
   }
 
+  @Override
   public String toString() {
     return "GrDocMethodParameter";
   }

@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 5/18/13 8:01 PM
  */
 public interface ExternalConfigPathAware {
 

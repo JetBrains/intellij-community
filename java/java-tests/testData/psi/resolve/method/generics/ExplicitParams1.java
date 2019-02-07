@@ -3,6 +3,6 @@ class Foo {
     }
 
     {
-      this.<String><ref>f();
+      this.<String><caret>f();
     }
 }

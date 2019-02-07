@@ -32,8 +32,9 @@ public interface Promise<T> {
   }
 
   /**
-   * Create a promise that is resolved with the given value.
+   * @deprecated Use Promises.resolvedPromise
    */
+  @Deprecated
   @NotNull
   static <T> Promise<T> resolve(@Nullable T result) {
     if (result == null) {

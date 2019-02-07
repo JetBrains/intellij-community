@@ -16,7 +16,6 @@ import javax.swing.*;
 
 /**
  * @author Denis Zhdanov
- * @since 01/17/2012
  */
 @RunWith(JMock.class)
 @SkipInHeadlessEnvironment

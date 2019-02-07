@@ -24,7 +24,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/22/13
  */
 public class GradleSettingsScriptContributor extends NonCodeMembersContributor {
 

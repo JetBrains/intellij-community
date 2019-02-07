@@ -6,6 +6,6 @@ interface PublicCloneable {
 interface Extension extends Serializable, PublicCloneable {}
 class Test {
 	void foo(Extension bar) {
-		bar.<ref>clone();
+		bar.<caret>clone();
 	}
 }

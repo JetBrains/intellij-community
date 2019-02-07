@@ -133,7 +133,7 @@ class BundledJreManager {
   }
 
   private enum JreVendor {
-    Oracle("jre8", "jdk8", "jre9"), JetBrains("jbre8", "jbrex8", "jbre9")
+    Oracle("jre8", "jdk8", "jre"), JetBrains("jbre8", "jbrex8", "jbre")
 
     final String jreNamePrefix
     final String jreWithToolsJarNamePrefix
@@ -142,12 +142,13 @@ class BundledJreManager {
     JreVendor(String jreNamePrefix, String jreWithToolsJarNamePrefix, String modularJreNamePrefix) {
       this.jreNamePrefix = jreNamePrefix
       this.jreWithToolsJarNamePrefix = jreWithToolsJarNamePrefix
-      this.modularJreNamePrefix = modularJreNamePrefix
+      def modularJreVersion = System.getProperty("intellij.build.bundled.jre.version", "8").toInteger()
+      this.modularJreNamePrefix = modularJreNamePrefix + modularJreVersion
     }
   }
 
   def jreSuffix() {
-    buildContext.options.bundledJreVersion > 8 ? "-bundled-jre${buildContext.options.bundledJreVersion}" : ""
+    ""
   }
 
   def is32bitArchSupported() {

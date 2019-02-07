@@ -35,7 +35,7 @@ class GithubPullRequestCreateBranchAction : DumbAwareAction("Create New Local Br
                                                          "Checkout New Branch From Pull Request #${pullRequest.number}",
                                                          "pull/${pullRequest.number}") ?: return
 
-    if (options.checkout) {
+    if (!options.checkout) {
       object : Task.Backgroundable(project, "Creating Branch From Pull Request", true) {
         private val git = Git.getInstance()
         private val vcsNotifier = project.service<VcsNotifier>()
@@ -45,7 +45,7 @@ class GithubPullRequestCreateBranchAction : DumbAwareAction("Create New Local Br
 
           indicator.text = "Creating branch"
           GitBranchWorker(project, git, GitBranchUiHandlerImpl(project, git, indicator))
-            .checkoutNewBranchStartingFrom(options.name, sha, repositoryList)
+            .createBranch(options.name, mapOf(repository to sha))
         }
 
         override fun onSuccess() {
@@ -67,7 +67,7 @@ class GithubPullRequestCreateBranchAction : DumbAwareAction("Create New Local Br
 
           indicator.text = "Checking out branch"
           GitBranchWorker(project, git, GitBranchUiHandlerImpl(project, git, indicator))
-            .createBranch(options.name, mapOf(repository to sha))
+            .checkoutNewBranchStartingFrom(options.name, sha, repositoryList)
         }
 
         override fun onSuccess() {

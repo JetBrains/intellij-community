@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.ui.tree;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.ui.*;
+import com.intellij.util.text.UniqueNameGenerator;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import one.util.streamex.StreamEx;
@@ -55,6 +56,7 @@ public abstract class ValueMarkerPresentationDialogBase extends DialogWrapper {
     });
     myColor = DEFAULT_COLOR;
     if (defaultText != null) {
+      defaultText = UniqueNameGenerator.generateUniqueName(defaultText, myExistingMarkups);
       myLabelField.setText(defaultText.trim());
       updateLabelSample();
     }

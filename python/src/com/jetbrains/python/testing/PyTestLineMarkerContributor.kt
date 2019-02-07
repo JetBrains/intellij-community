@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing
 
-import com.intellij.execution.lineMarker.ExecutorAction
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.icons.AllIcons
 import com.intellij.psi.PsiElement
@@ -15,7 +14,6 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 
 object PyTestLineMarkerContributor : RunLineMarkerContributor() {
   override fun getInfo(element: PsiElement): Info? {
-
     if ((element !is LeafPsiElement) || element.elementType != PyTokenTypes.IDENTIFIER) {
       return null
     }
@@ -25,11 +23,7 @@ object PyTestLineMarkerContributor : RunLineMarkerContributor() {
     if ((testElement is PyClass || testElement is PyFunction)
         && (testElement is PsiNamedElement)
         && isTestElement(testElement, ThreeState.UNSURE, typeEvalContext)) {
-
-      return RunLineMarkerContributor.Info(
-        AllIcons.RunConfigurations.TestState.Run,
-        ExecutorAction.getActions(1),
-        RunLineMarkerContributor.RUN_TEST_TOOLTIP_PROVIDER)
+      return RunLineMarkerContributor.withExecutorActions(AllIcons.RunConfigurations.TestState.Run)
     }
     return null
   }

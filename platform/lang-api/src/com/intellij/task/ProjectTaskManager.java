@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
  * <p>
  *
  * @author Vladislav.Soroka
- * @since 4/29/2016
  */
 public abstract class ProjectTaskManager {
   protected final @NotNull Project myProject;

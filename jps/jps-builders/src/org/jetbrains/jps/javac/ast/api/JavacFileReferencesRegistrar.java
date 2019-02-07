@@ -2,6 +2,7 @@
 package org.jetbrains.jps.javac.ast.api;
 
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.jps.incremental.CompileContext;
 
 import java.util.Collection;
 
@@ -12,7 +13,8 @@ public interface JavacFileReferencesRegistrar {
 
   boolean onlyImports();
 
-  void registerFile(String filePath,
+  void registerFile(CompileContext context,
+                    String filePath,
                     TObjectIntHashMap<JavacRef> refs,
                     Collection<JavacDef> defs,
                     Collection<JavacTypeCast> casts,

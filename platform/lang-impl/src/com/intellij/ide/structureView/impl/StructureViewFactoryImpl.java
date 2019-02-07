@@ -5,6 +5,7 @@ package com.intellij.ide.structureView.impl;
 import com.intellij.ide.impl.StructureViewWrapperImpl;
 import com.intellij.ide.structureView.*;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -19,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -120,7 +122,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     return StringUtil.join(activeActions, ",");
   }
 
-  private Collection<String> collectActiveActions() {
+  public Collection<String> collectActiveActions() {
     return ContainerUtil.newLinkedHashSet(myState.ACTIVE_ACTIONS.split(","));
   }
 
@@ -154,5 +156,11 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
                                            @NotNull Project project,
                                            final boolean showRootNode) {
     return new StructureViewComponent(fileEditor, treeModel, project, showRootNode);
+  }
+
+  @TestOnly
+  public void cleanupForNextTest() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    myState = new State();
   }
 }

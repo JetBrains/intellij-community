@@ -21,13 +21,19 @@ import com.intellij.vcs.log.VcsLogDetailsFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Date;
+import java.util.Set;
 
 public class VcsLogDateFilterImpl implements VcsLogDateFilter, VcsLogDetailsFilter {
 
   @Nullable private final Date myAfter;
   @Nullable private final Date myBefore;
 
+  /**
+     * @deprecated use {@link com.intellij.vcs.log.visible.filters.VcsLogFilterObject#fromDates(Date, Date)}
+     */
+  @Deprecated
   public VcsLogDateFilterImpl(@Nullable Date after, @Nullable Date before) {
     myAfter = after;
     myBefore = before;

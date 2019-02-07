@@ -1,0 +1,1 @@
+!mvim myfile.txt

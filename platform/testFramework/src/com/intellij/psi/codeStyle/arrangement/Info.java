@@ -23,7 +23,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 19.12.2012
  */
 public class Info {
   public String text;

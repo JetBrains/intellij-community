@@ -1,14 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework
 
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.idea.IdeaTestApplication
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.async.coroutineDispatchingContext
 import com.intellij.openapi.application.runUndoTransparentWriteAction
-import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.command.impl.UndoManagerImpl
+import com.intellij.openapi.command.undo.DocumentReferenceManager
 import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -21,9 +23,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.project.stateStore
-import com.intellij.util.SmartList
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.io.systemIndependentPath
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
 import org.junit.runner.Description
@@ -222,16 +225,22 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
   }
 }
 
-fun createHeavyProject(path: String, useDefaultProjectSettings: Boolean = false): Project = ProjectManagerEx.getInstanceEx().newProject(null, path, useDefaultProjectSettings, false)!!
+fun createHeavyProject(path: String, isUseDefaultProjectSettings: Boolean = false): Project {
+  return ProjectManagerEx.getInstanceEx().newProject(null, path, isUseDefaultProjectSettings, false)!!
+}
 
-fun Project.use(task: (Project) -> Unit) {
+suspend fun Project.use(task: suspend (Project) -> Unit) {
   val projectManager = ProjectManagerEx.getInstanceEx()
   try {
-    runInEdtAndWait { projectManager.openTestProject(this) }
+    withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+      projectManager.openTestProject(this@use)
+    }
     task(this)
   }
   finally {
-    runInEdtAndWait { projectManager.forceCloseProject(this, true) }
+    withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+      projectManager.forceCloseProject(this@use, true)
+    }
   }
 }
 
@@ -277,24 +286,40 @@ class WrapRule(private val before: () -> () -> Unit) : TestRule {
   }
 }
 
-fun createProjectAndUseInLoadComponentStateMode(tempDirManager: TemporaryDirectory, directoryBased: Boolean = false, task: (Project) -> Unit) {
+suspend fun createProjectAndUseInLoadComponentStateMode(tempDirManager: TemporaryDirectory, directoryBased: Boolean = false, task: suspend (Project) -> Unit) {
   createOrLoadProject(tempDirManager, task = task, directoryBased = directoryBased, loadComponentState = true)
 }
 
-fun loadAndUseProjectInLoadComponentStateMode(tempDirManager: TemporaryDirectory, projectCreator: ((VirtualFile) -> String)? = null, task: (Project) -> Unit) {
+suspend fun loadAndUseProjectInLoadComponentStateMode(tempDirManager: TemporaryDirectory, projectCreator: (suspend (VirtualFile) -> String)? = null, task: suspend (Project) -> Unit) {
   createOrLoadProject(tempDirManager, projectCreator, task = task, directoryBased = false, loadComponentState = true)
 }
 
-fun createOrLoadProject(tempDirManager: TemporaryDirectory, projectCreator: ((VirtualFile) -> String)? = null, directoryBased: Boolean = true, loadComponentState: Boolean = false, task: (Project) -> Unit) {
-  runInEdtAndWait {
+suspend fun <T> runNonUndoableWriteAction(file: VirtualFile, runnable: suspend () -> T): T {
+  return runUndoTransparentWriteAction {
+    val result = runBlocking { runnable() }
+    val documentReference = DocumentReferenceManager.getInstance().create(file)
+    val undoManager = com.intellij.openapi.command.undo.UndoManager.getGlobalInstance() as UndoManagerImpl
+    undoManager.nonundoableActionPerformed(documentReference, false)
+    result
+  }
+}
+
+suspend fun createOrLoadProject(tempDirManager: TemporaryDirectory, projectCreator: (suspend (VirtualFile) -> String)? = null, directoryBased: Boolean = true, loadComponentState: Boolean = false, task: suspend (Project) -> Unit) {
+  withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
     val filePath = if (projectCreator == null) {
       tempDirManager.newPath("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}", refreshVfs = true).systemIndependentPath
     }
     else {
-      runUndoTransparentWriteAction { projectCreator(tempDirManager.newVirtualDirectory()) }
+      val dir = tempDirManager.newVirtualDirectory()
+      runNonUndoableWriteAction(dir) {
+        projectCreator(dir)
+      }
     }
 
-    val project = if (projectCreator == null) createHeavyProject(filePath, true) else ProjectManagerEx.getInstanceEx().loadProject(filePath)!!
+    val project = when (projectCreator) {
+      null -> createHeavyProject(filePath, isUseDefaultProjectSettings = true)
+      else -> ProjectManagerEx.getInstanceEx().loadProject(filePath)!!
+    }
     if (loadComponentState) {
       project.runInLoadComponentStateMode {
         project.use(task)
@@ -304,10 +329,6 @@ fun createOrLoadProject(tempDirManager: TemporaryDirectory, projectCreator: ((Vi
       project.use(task)
     }
   }
-}
-
-fun ComponentManager.saveStore() {
-  stateStore.save(SmartList(), true)
 }
 
 class DisposableRule : ExternalResource() {

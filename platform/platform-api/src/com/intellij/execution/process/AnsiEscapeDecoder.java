@@ -18,7 +18,6 @@ package com.intellij.execution.process;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.LineSeparator;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +51,8 @@ public class AnsiEscapeDecoder {
    */
   public void escapeText(@NotNull String text, @NotNull Key outputType, @NotNull ColoredTextAcceptor textAcceptor) {
     text = prependUnhandledText(text, outputType);
-    int pos = 0, findEscSeqFromIndex = 0;
+    int pos = 0;
+    int findEscSeqFromIndex = 0;
     List<Pair<String, Key>> chunks = null;
     int unhandledSuffixLength = 0;
     while (true) {
@@ -138,7 +138,7 @@ public class AnsiEscapeDecoder {
     if (ind == -1) {
       return -1;
     }
-    else if (ind == text.length() - 1) {
+    if (ind == text.length() - 1) {
       return encodeUnhandledSuffixLength(text, ind);
     }
     return text.charAt(ind + 1) == CSI.charAt(1) ? ind : -1;
@@ -189,8 +189,8 @@ public class AnsiEscapeDecoder {
 
   /**
    * @implSpec {@code The ESC [ is followed by any number (including none) of "parameter bytes" in the
-   * range 0x30–0x3F (ASCII 0–9:;<=>?), then by any number of "intermediate bytes" in the range 0x20–0x2F (ASCII space and
-   * !"#$%&'()*+,-./), then finally by a single "final byte" in the range 0x40–0x7E (ASCII @A–Z[\]^_`a–z{|}~).}
+   * range 0x30-0x3F (ASCII 0-9:;<=>?), then by any number of "intermediate bytes" in the range 0x20-0x2F (ASCII space and
+   * !"#$%&'()*+,-./), then finally by a single "final byte" in the range 0x40-0x7E (ASCII @A-Z[\]^_`a-z{|}~).}
    * @implNote Also, there are different sequences, <a href="http://en.wikipedia.org/wiki/ANSI_escape_code#Escape_sequences">aside CSI</a>
    */
   private static int findEscSeqEndIndex(@NotNull String text, int escSeqBeginInd) {

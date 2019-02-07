@@ -103,7 +103,7 @@ class DaemonTooltipRenderer extends LineTooltipRenderer {
   
   @NotNull
   protected Color getDescriptionTitleColor() {
-    return JBColor.namedColor("tooltips.description.title.text.color", new JBColor(0x919191, 0x919191));
+    return JBColor.namedColor("ToolTip.infoForeground", new JBColor(0x919191, 0x919191));
   }
 
   @NotNull

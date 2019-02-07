@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.mock.MockDocument;
 import com.intellij.mock.MockPsiFile;
 import com.intellij.openapi.application.ApplicationManager;
@@ -67,6 +66,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -89,6 +89,9 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
   protected void tearDown() throws Exception {
     try {
       LaterInvocator.leaveAllModals();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();
@@ -240,7 +243,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
       });
     }
     finally {
-      ProjectUtil.closeAndDispose(alienProject);
+      ProjectManagerEx.getInstanceEx().forceCloseProject(alienProject, true);
     }
   }
 
@@ -386,7 +389,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
       assertTrue("Still not committed: " + alienDocument, alienDocManager.isCommitted(alienDocument));
     }
     finally {
-      ProjectUtil.closeAndDispose(alienProject);
+      ProjectManagerEx.getInstanceEx().forceCloseProject(alienProject, true);
     }
   }
 
@@ -623,7 +626,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
   private static void waitForCommits() {
     try {
-      DocumentCommitThread.getInstance().waitForAllCommits();
+      DocumentCommitThread.getInstance().waitForAllCommits(100, TimeUnit.SECONDS);
     }
     catch (ExecutionException | InterruptedException | TimeoutException e) {
       throw new RuntimeException(e);
@@ -692,7 +695,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
       String insert = "ddfdkjh";
       WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, insert));
 
-      TimeoutUtil.sleep(50);
+      UIUtil.dispatchAllInvocationEvents();
 
       WriteCommandAction.runWriteCommandAction(getProject(), () -> document.replaceString(0, insert.length(), ""));
 
@@ -739,7 +742,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
     document.setText("class A{}");
     PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> assertEquals(document.getText(), copy.getText()));
-    DocumentCommitThread.getInstance().waitForAllCommits();
+    DocumentCommitThread.getInstance().waitForAllCommits(100, TimeUnit.SECONDS);
     assertTrue(PsiDocumentManager.getInstance(myProject).isCommitted(document));
   }
 
@@ -770,7 +773,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertTrue(pdm.hasUncommitedDocuments());
     assertEquals("a", document.getText());
 
-    DocumentCommitThread.getInstance().waitForAllCommits();
+    DocumentCommitThread.getInstance().waitForAllCommits(100, TimeUnit.SECONDS);
     assertEquals("ab", document.getText());
   }
 
@@ -794,7 +797,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
       }
     });
 
-    DocumentCommitThread.getInstance().waitForAllCommits();
+    DocumentCommitThread.getInstance().waitForAllCommits(100, TimeUnit.SECONDS);
 
     assertTrue(pdm.isCommitted(document));
     assertFalse(file.isValid());

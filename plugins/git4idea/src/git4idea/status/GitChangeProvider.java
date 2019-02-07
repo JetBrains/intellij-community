@@ -25,6 +25,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static com.intellij.util.ObjectUtils.assertNotNull;
+
 /**
  * Git repository change provider
  */
@@ -63,6 +65,8 @@ public class GitChangeProvider implements ChangeProvider {
     final Collection<VirtualFile> affected = dirtyScope.getAffectedContentRoots();
     Collection<VirtualFile> roots = GitUtil.gitRootsForPaths(affected);
 
+    List<FilePath> newDirtyPaths = new ArrayList<>();
+
     try {
       final MyNonChangedHolder holder = new MyNonChangedHolder(myProject, addGate,
                                                                myFileDocumentManager, myVcsManager);
@@ -78,13 +82,25 @@ public class GitChangeProvider implements ChangeProvider {
         for (Change file : changes) {
           LOG.debug("process change: " + ChangesUtil.getFilePath(file).getPath());
           builder.processChange(file, GitVcs.getKey());
+
+          if (file.isMoved() || file.isRenamed()) {
+            FilePath beforePath = assertNotNull(ChangesUtil.getBeforePath(file));
+            FilePath afterPath = assertNotNull(ChangesUtil.getAfterPath(file));
+
+            if (dirtyScope.belongsTo(beforePath) != dirtyScope.belongsTo(afterPath)) {
+              newDirtyPaths.add(beforePath);
+              newDirtyPaths.add(afterPath);
+            }
+          }
         }
         for (VirtualFile f : collector.getUnversionedFiles()) {
           builder.processUnversionedFile(f);
           holder.unversioned(f);
         }
-        holder.feedBuilder(builder);
       }
+      holder.feedBuilder(builder);
+
+      VcsDirtyScopeManager.getInstance(myProject).filePathsDirty(newDirtyPaths, null);
     }
     catch (ProcessCanceledException pce) {
       if(pce.getCause() != null) throw new VcsException(pce.getCause().getMessage(), pce.getCause());
@@ -191,8 +207,11 @@ public class GitChangeProvider implements ChangeProvider {
           baseRevisions.put(root, beforeRevisionNumber);
         }
 
-        builder.processChange(new Change(GitContentRevision.createRevision(vf, beforeRevisionNumber, myProject),
-                                         GitContentRevision.createRevision(vf, null, myProject), FileStatus.MODIFIED), gitKey);
+        Change change = new Change(GitContentRevision.createRevision(vf, beforeRevisionNumber, myProject),
+                                   GitContentRevision.createRevision(vf, null, myProject), FileStatus.MODIFIED);
+
+        LOG.debug("process in-memory change " + change);
+        builder.processChange(change, gitKey);
       }
     }
   }

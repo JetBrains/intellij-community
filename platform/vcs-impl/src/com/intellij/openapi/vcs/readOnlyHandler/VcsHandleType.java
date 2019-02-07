@@ -39,7 +39,7 @@ public class VcsHandleType extends HandleType {
   }
 
   @Override
-  public void processFiles(final Collection<VirtualFile> files, @Nullable final String changelist) {
+  public void processFiles(final Collection<? extends VirtualFile> files, @Nullable final String changelist) {
     try {
       EditFileProvider provider = myVcs.getEditFileProvider();
       assert provider != null;

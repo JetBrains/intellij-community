@@ -52,7 +52,6 @@ import java.util.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/28/2014
  */
 public class ExternalSystemTaskActivator {
   private static final Logger LOG = Logger.getInstance(ExternalSystemTaskActivator.class);

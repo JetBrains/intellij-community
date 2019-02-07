@@ -17,6 +17,7 @@ package com.intellij.util.containers;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.RunFirst;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.UsefulTestCase;
@@ -139,6 +140,36 @@ public class ContainerUtilCollectionsTest extends Assert {
   public void testConcurrentWeakMapTossed() {
     ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentWeakMap();
     checkKeyTossedEventually(map);
+  }
+
+  @Test(timeout = TIMEOUT)
+  public void testConcurrentWeakMapDoesntRetainOldValueKeyAfterPutWithTheSameKeyButDifferentValue() {
+    checkMapDoesntLeakOldValueAfterPutWithTheSameKeyButDifferentValue(ContainerUtil.createConcurrentWeakMap());
+  }
+  @Test(timeout = TIMEOUT)
+  public void testConcurrentSoftMapDoesntRetainOldValueKeyAfterPutWithTheSameKeyButDifferentValue() {
+    checkMapDoesntLeakOldValueAfterPutWithTheSameKeyButDifferentValue(ContainerUtil.createConcurrentSoftMap());
+  }
+  @Test(timeout = TIMEOUT)
+  public void testConcurrentWKWVMapDoesntRetainOldValueKeyAfterPutWithTheSameKeyButDifferentValue() {
+    checkMapDoesntLeakOldValueAfterPutWithTheSameKeyButDifferentValue(ContainerUtil.createConcurrentWeakKeyWeakValueMap());
+  }
+  @Test(timeout = TIMEOUT)
+  public void testConcurrentWKSVMapDoesntRetainOldValueKeyAfterPutWithTheSameKeyButDifferentValue() {
+    checkMapDoesntLeakOldValueAfterPutWithTheSameKeyButDifferentValue(ContainerUtil.createConcurrentWeakKeySoftValueMap());
+  }
+  @Test(timeout = TIMEOUT)
+  public void testConcurrentSKSVMapDoesntRetainOldValueKeyAfterPutWithTheSameKeyButDifferentValue() {
+    checkMapDoesntLeakOldValueAfterPutWithTheSameKeyButDifferentValue(ContainerUtil.createConcurrentSoftKeySoftValueMap(1,1,1,ContainerUtil.canonicalStrategy()));
+  }
+
+  private void checkMapDoesntLeakOldValueAfterPutWithTheSameKeyButDifferentValue(Map<Object, Object> map) {
+    Object key = new Object();
+    class MyValue {}
+    map.put(key, strong = new MyValue());
+    map.put(key, this);
+    strong = null;
+    LeakHunter.checkLeak(map, MyValue.class);
   }
 
   @Test(timeout = TIMEOUT)

@@ -23,7 +23,6 @@ import java.io.IOException;
 
 /**
  * @author Eugene Zhuravlev
- * @since Dec 18, 2007
  */
 public class EnumeratorStringDescriptor implements KeyDescriptor<String> {
   public static final EnumeratorStringDescriptor INSTANCE = new EnumeratorStringDescriptor();

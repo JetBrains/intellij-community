@@ -613,9 +613,12 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @NotNull
   @Override
-  public BalloonBuilder createHtmlTextBalloonBuilder(@NotNull final String htmlContent, @Nullable final Icon icon, final Color fillColor,
+  public BalloonBuilder createHtmlTextBalloonBuilder(@NotNull final String htmlContent,
+                                                     @Nullable final Icon icon,
+                                                     Color textColor,
+                                                     final Color fillColor,
                                                      @Nullable final HyperlinkListener listener) {
-    JEditorPane text = IdeTooltipManager.initPane(htmlContent, new HintHint().setAwtTooltip(true), null);
+    JEditorPane text = IdeTooltipManager.initPane(htmlContent, new HintHint().setTextFg(textColor).setAwtTooltip(true), null);
 
     if (listener != null) {
       text.addHyperlinkListener(listener);

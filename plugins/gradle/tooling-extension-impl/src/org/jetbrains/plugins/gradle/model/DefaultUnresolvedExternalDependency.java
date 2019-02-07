@@ -19,7 +19,6 @@ import org.gradle.internal.impldep.com.google.common.base.Objects;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/24/2014
  */
 public class DefaultUnresolvedExternalDependency extends AbstractExternalDependency implements UnresolvedExternalDependency {
 

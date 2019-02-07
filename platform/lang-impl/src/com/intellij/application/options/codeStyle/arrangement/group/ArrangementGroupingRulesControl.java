@@ -42,7 +42,6 @@ import java.util.Set;
 
 /**
  * @author Denis Zhdanov
- * @since 11/13/12 7:27 PM
  */
 public class ArrangementGroupingRulesControl extends JBTable {
 

@@ -28,7 +28,6 @@ import java.util.Set;
 
 /**
  * @author Denis Zhdanov
- * @since 3/14/13 5:55 PM
  */
 public abstract class AbstractRemoteExternalSystemServiceWrapper<S extends ExternalSystemExecutionSettings, T extends RemoteExternalSystemService<S>>
   implements RemoteExternalSystemService<S>

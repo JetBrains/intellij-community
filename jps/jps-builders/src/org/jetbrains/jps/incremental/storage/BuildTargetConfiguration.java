@@ -102,13 +102,9 @@ public class BuildTargetConfiguration {
     try {
       File configFile = getConfigFile();
       FileUtil.createParentDirs(configFile);
-      Writer out = new BufferedWriter(new FileWriter(configFile));
-      try {
+      try (Writer out = new BufferedWriter(new FileWriter(configFile))) {
         out.write(data);
         myConfiguration = data;
-      }
-      finally {
-        out.close();
       }
     }
     catch (IOException e) {

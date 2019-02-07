@@ -88,7 +88,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
     //noinspection deprecation
     if (renderer == null && useNewAsyncModel()) {
       renderer = new FileRenderer().forTree();
-      myFileTreeModel = new FileTreeModel(descriptor, new FileRefresher(false, 3, () -> ModalityState.stateForComponent(tree)));
+      myFileTreeModel = new FileTreeModel(descriptor, new FileRefresher(true, 3, () -> ModalityState.stateForComponent(tree)));
       myAsyncTreeModel = new AsyncTreeModel(myFileTreeModel, false, this);
       myTreeStructure = null;
     }

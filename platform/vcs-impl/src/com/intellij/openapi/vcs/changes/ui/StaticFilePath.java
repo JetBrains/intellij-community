@@ -7,8 +7,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-
 public class StaticFilePath {
   private final String myKey;
   private final String myPath;
@@ -55,9 +53,7 @@ public class StaticFilePath {
   @Nullable
   public VirtualFile resolve() {
     VirtualFile result = getVf();
-    if (result == null) {
-      result = LocalFileSystem.getInstance().findFileByIoFile(new File(getPath()));
-    }
-    return result;
+    if (result != null) return result;
+    return LocalFileSystem.getInstance().findFileByPath(getPath());
   }
 }

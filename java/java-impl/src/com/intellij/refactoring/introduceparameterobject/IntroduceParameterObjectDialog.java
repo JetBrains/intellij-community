@@ -226,6 +226,7 @@ public class IntroduceParameterObjectDialog extends AbstractIntroduceParameterOb
     }
   }
 
+  @NotNull
   private String getInnerClassName() {
     return  myInnerClassNameTextField.getText().trim();
   }

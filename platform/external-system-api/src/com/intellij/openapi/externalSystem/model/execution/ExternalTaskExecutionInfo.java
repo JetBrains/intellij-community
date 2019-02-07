@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
  * Essentially this class is {@link ExternalSystemTaskExecutionSettings} plus auxiliary information like execution type (run/debug etc).
  * 
  * @author Denis Zhdanov
- * @since 6/9/13 4:14 PM
  */
 public class ExternalTaskExecutionInfo {
   

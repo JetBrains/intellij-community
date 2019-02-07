@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn
 
 import com.intellij.openapi.diagnostic.logger
@@ -121,15 +121,11 @@ class IdeaSVNConfigFile(private val myPath: Path) {
   }
 
   companion object {
-    @JvmField
-    val SERVERS_FILE_NAME: String = "servers"
-    @JvmField
-    val CONFIG_FILE_NAME: String = "config"
+    const val SERVERS_FILE_NAME: String = "servers"
+    const val CONFIG_FILE_NAME: String = "config"
 
-    @JvmField
-    val DEFAULT_GROUP_NAME: String = "global"
-    @JvmField
-    val GROUPS_GROUP_NAME: String = "groups"
+    const val DEFAULT_GROUP_NAME: String = "global"
+    const val GROUPS_GROUP_NAME: String = "groups"
 
     @JvmStatic
     fun getNewGroupName(host: String, configFile: IdeaSVNConfigFile): String {

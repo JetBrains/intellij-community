@@ -10,7 +10,6 @@ import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 /**
  * @author Anna.Kozlova
- * @since 12-Aug-2006
  */
 public class SdkVersionUtil {
   private static final JdkVersionDetector.ActionRunner ACTION_RUNNER = (r) -> ApplicationManager.getApplication().executeOnPooledThread(r);

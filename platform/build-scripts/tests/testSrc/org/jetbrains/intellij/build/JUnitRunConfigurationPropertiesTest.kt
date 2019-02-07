@@ -46,6 +46,13 @@ class JUnitRunConfigurationPropertiesTest {
     loadRunConfiguration("test_method_fork_mode.xml")
   }
 
+  @Test
+  fun `load default options`() {
+    val properties = loadRunConfiguration("test_default_options.xml")
+    assertEquals(listOf("com.example.test.MainTest"), properties.testClassPatterns)
+    assertEquals(listOf("-ea"), properties.vmParameters)
+  }
+
   private fun loadRunConfiguration(fileName: String): JUnitRunConfigurationProperties {
     val url = JUnitRunConfigurationPropertiesTest::class.java.getResource("runConfigurations/$fileName")
     return JUnitRunConfigurationProperties.loadRunConfiguration(URLUtil.urlToFile(url), MockBuildMessages())

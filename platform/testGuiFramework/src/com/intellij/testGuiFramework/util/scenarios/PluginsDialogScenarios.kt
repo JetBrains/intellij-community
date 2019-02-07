@@ -10,8 +10,7 @@ import com.intellij.testGuiFramework.remote.transport.RestartIdeAndResumeContain
 import com.intellij.testGuiFramework.remote.transport.RestartIdeCause
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
 import com.intellij.testGuiFramework.util.logInfo
-import com.intellij.testGuiFramework.util.logTestStep
-import com.intellij.testGuiFramework.util.logUIStep
+import com.intellij.testGuiFramework.util.step
 import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
 
@@ -29,8 +28,9 @@ fun PluginsDialogScenarios.uninstallPlugin(pluginName: String) {
     pluginDialog {
       pluginDetails(pluginName) {
         if (isPluginInstalled()) {
-          logTestStep("Uninstall `$pluginName` plugin")
-          uninstall()
+          step("uninstall `$pluginName` plugin") {
+            uninstall()
+          }
         }
       }
       ok()
@@ -48,13 +48,14 @@ fun PluginsDialogScenarios.actionAndRestart(actionFunction: () -> Unit) {
   else {
     //if plugins are not installed yet
     actionFunction()
-    testCase.logTestStep("Restart IDE")
-    //send restart message and resume this test to the server
-    GuiTestThread.client?.send(TransportMessage(MessageType.RESTART_IDE_AND_RESUME, RestartIdeAndResumeContainer(
-      RestartIdeCause.PLUGIN_INSTALLED))) ?: throw Exception(
-      "Unable to get the client instance to send message.")
-    //wait until IDE is going to restart
-    GuiTestUtilKt.waitUntil("IDE will be closed", timeout = Timeouts.defaultTimeout) { false }
+    step("restart IDE") {
+      //send restart message and resume this test to the server
+      GuiTestThread.client?.send(TransportMessage(MessageType.RESTART_IDE_AND_RESUME, RestartIdeAndResumeContainer(
+        RestartIdeCause.PLUGIN_INSTALLED))) ?: throw Exception(
+        "Unable to get the client instance to send message.")
+      //wait until IDE is going to restart
+      GuiTestUtilKt.waitUntil("IDE will be closed", timeout = Timeouts.defaultTimeout) { false }
+    }
   }
 }
 
@@ -86,19 +87,20 @@ fun PluginsDialogScenarios.isPluginRequiredVersionInstalled(pluginName: String, 
       cancel()
     }
     welcomePageDialogModel.openPluginsDialog()
-    testCase.logUIStep("Get version of `$pluginName` plugin")
-    pluginDialog {
-      if (isPluginInstalled(pluginName)) { // it can be shown on trending page and not installed
-        pluginDetails(pluginName) {
-          if (isPluginInstalled(pluginName)) {
-            version = pluginVersion()
-            testCase.logInfo("Found `$version` version of `$pluginName` plugin")
+    step("get version of `$pluginName` plugin") {
+      pluginDialog {
+        if (isPluginInstalled(pluginName)) { // it can be shown on trending page and not installed
+          pluginDetails(pluginName) {
+            if (isPluginInstalled(pluginName)) {
+              version = pluginVersion()
+              logInfo("Found `$version` version of `$pluginName` plugin")
+            }
           }
         }
+        else
+          logInfo("No `$pluginName` plugin")
+        cancel()
       }
-      else
-        testCase.logInfo("No `$pluginName` plugin")
-      cancel()
     }
   }
   return version == pluginVersion

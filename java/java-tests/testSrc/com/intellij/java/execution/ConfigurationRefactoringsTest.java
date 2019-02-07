@@ -229,6 +229,9 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
       mySource.tearDown();
       mySource = null;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

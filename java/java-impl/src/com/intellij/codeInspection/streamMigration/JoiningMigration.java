@@ -1192,7 +1192,7 @@ List<PsiExpression> builderStrInitializers = null;
       private static List<PsiExpression> copyReplacingVar(@NotNull List<PsiExpression> joinParts,
                                                           @NotNull PsiLocalVariable localVariable,
                                                           @NotNull PsiExpression replacement) {
-        List<PsiExpression> copies = joinParts.stream().map(expression -> (PsiExpression)expression.copy()).collect(Collectors.toList());
+        List<PsiExpression> copies = ContainerUtil.map(joinParts, expression -> (PsiExpression)expression.copy());
         for (PsiElement joinPart : copies) {
           ReferencesSearch.search(localVariable, new LocalSearchScope(joinPart)).forEach(reference -> {
             reference.getElement().replace(replacement);

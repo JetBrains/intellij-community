@@ -1,7 +1,6 @@
 <idea-plugin>
   <name>Bytecode Viewer</name>
   <id>ByteCodeViewer</id>
-  <version>0.1</version>
   <description>
     <![CDATA[Provides <i>View | Show Bytecode</i> action for easy inspection of Java bytecode instructions inside IntelliJ IDEA.]]>
   </description>

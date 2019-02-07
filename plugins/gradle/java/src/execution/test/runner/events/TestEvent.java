@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/28/14
  */
 public interface TestEvent {
   void process(@NotNull final TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException;

@@ -26,7 +26,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 4/9/13 1:50 PM
  */
 public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 

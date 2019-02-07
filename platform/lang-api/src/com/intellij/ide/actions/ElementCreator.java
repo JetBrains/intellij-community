@@ -51,7 +51,7 @@ public abstract class ElementCreator implements WriteActionAware {
     myErrorTitle = errorTitle;
   }
 
-  protected abstract PsiElement[] create(String newName) throws Exception;
+  protected abstract PsiElement[] create(@NotNull String newName) throws Exception;
   protected abstract String getActionName(String newName);
 
   public PsiElement[] tryCreate(@NotNull final String inputString) {

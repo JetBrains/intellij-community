@@ -5,6 +5,6 @@ public class TestReturnType1 {
         }
     }
     {
-        new A<String>().foo(new String()).<ref>toCharArray();
+        new A<String>().foo(new String()).<caret>toCharArray();
     }
 }

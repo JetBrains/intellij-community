@@ -4,6 +4,7 @@ package com.intellij.xml.breadcrumbs;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.components.breadcrumbs.Crumb;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -15,5 +16,5 @@ public interface NavigatableCrumb extends Crumb {
   @Nullable
   TextRange getHighlightRange();
 
-  void navigate(Editor editor, boolean withSelection);
+  void navigate(@NotNull Editor editor, boolean withSelection);
 }

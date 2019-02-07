@@ -48,6 +48,10 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
     parameterPropagationTest();
   }
 
+  public void testParamWithLambda() {
+    parameterPropagationTest();
+  }
+
   public void testParamTypeSubst() {
     final PsiMethod method = getPrimaryMethod();
     final HashSet<PsiMethod> methods = new HashSet<>();

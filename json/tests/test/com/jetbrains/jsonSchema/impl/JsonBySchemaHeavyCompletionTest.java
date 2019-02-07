@@ -160,4 +160,8 @@ public class JsonBySchemaHeavyCompletionTest extends JsonBySchemaHeavyCompletion
   public void testDontGuessType() throws Exception {
     baseInsertTest("dontGuessType", "test");
   }
+
+  public void testDontInsertExtraValue() throws Exception {
+    baseInsertTest("dontInsertExtraValue", "testWithValue");
+  }
 }

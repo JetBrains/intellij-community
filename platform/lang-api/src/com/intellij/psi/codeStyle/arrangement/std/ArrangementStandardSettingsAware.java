@@ -30,7 +30,6 @@ import java.util.Set;
  * and managing arrangement settings.
  * 
  * @author Denis Zhdanov
- * @since 8/6/12 2:26 PM
  */
 public interface ArrangementStandardSettingsAware {
 

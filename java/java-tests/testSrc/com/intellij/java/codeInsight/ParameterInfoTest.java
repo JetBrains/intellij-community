@@ -67,6 +67,23 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     assertEquals(1, annotations.length);
   }
 
+  public void testWhenInferenceIsBoundedByEqualsBound() {
+    EditorHintFixture hintFixture = new EditorHintFixture(getTestRootDisposable());
+    myFixture.configureByText("x.java", 
+                                        "import java.util.function.Function;\n" +
+                                        "import java.util.function.Supplier;\n" +
+                                        "class X {\n" +
+                                        "    public <K> void foo(Supplier<K> extractKey, Function<String, K> right) {}\n" +
+                                        "    public void bar(Function<String, Integer> right) {\n" +
+                                        "        foo(<caret>() -> 1, right);\n" +
+                                        "    }\n" +
+                                        "}\n");
+
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO);
+    UIUtil.dispatchAllInvocationEvents();
+    assertEquals("<html><b>Supplier&lt;Integer&gt; extractKey</b>, Function&lt;String, Integer&gt; right</html>", hintFixture.getCurrentHintText());
+  }
+
   public void testSelectionWithGenerics() {
     doTest2CandidatesWithPreselection();
   }
@@ -428,5 +445,26 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     configureJava("class C { void m() { System.ex<caret>it(0); } }");
     showParameterInfo();
     checkHintContents("<html>int i</html>");
+  }
+
+  public void testVarargWithArrayArgument() {
+    configureJava("class C {\n" +
+                  "  void some(int a) {}\n" +
+                  "  void some(String... b) {}\n" +
+                  "  void m(String[] c) {\n" +
+                  "    some(c<caret>);\n" +
+                  "  }\n" +
+                  "}");
+    showParameterInfo();
+    checkHintContents("<html><b>int a</b></html>\n" +
+                      "-\n" +
+                      "[<html><b>String... b</b></html>]");
+  }
+
+  public void testDoNotShowUnrelatedInfoOnTyping() {
+    configureJava("class C { void m(String a, String b) { String s = <caret>a + b).trim(); } }");
+    type('(');
+    waitForAllAsyncStuff();
+    checkHintContents(null);
   }
 }

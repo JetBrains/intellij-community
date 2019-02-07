@@ -38,7 +38,6 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 
 public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeElement {
-  @SuppressWarnings("UnusedDeclaration")
   public PsiTypeElementImpl() {
     this(JavaElementType.TYPE);
   }

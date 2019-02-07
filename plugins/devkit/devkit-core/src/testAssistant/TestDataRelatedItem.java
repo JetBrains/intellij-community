@@ -1,59 +1,36 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.psi.PsiMethod;
-import com.intellij.util.PathUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
-/**
- * @author Denis Zhdanov
- * @since 5/24/11 4:59 PM
- */
-public class TestDataRelatedItem extends GotoRelatedItem{
-  
-  private final List<String> myTestDataFiles = new ArrayList<>();
+public class TestDataRelatedItem extends GotoRelatedItem {
+  private final List<TestDataFile> myTestDataFiles;
   private final Editor myEditor;
-  private final PsiMethod myMethod;
 
-  public TestDataRelatedItem(@NotNull PsiMethod method, @NotNull Editor editor, @NotNull Collection<String> testDataFiles) {
-    super(method, "Test Data");
-    myMethod = method;
+  public TestDataRelatedItem(@NotNull PsiElement location, @NotNull Editor editor, @NotNull List<TestDataFile> testDataFiles) {
+    super(location, "Test Data");
     myEditor = editor;
-    myTestDataFiles.addAll(testDataFiles);
+    myTestDataFiles = testDataFiles;
   }
 
   @Override
   public String getCustomName() {
-    if (myTestDataFiles.size() != 1) {
-      return "test data";
-    }
-    return PathUtil.getFileName(myTestDataFiles.get(0));
+    return myTestDataFiles.size() != 1
+           ? "Test Data"
+           : myTestDataFiles.get(0).getName();
   }
 
   @Override
   public void navigate() {
-    TestDataNavigationHandler.navigate(JBPopupFactory.getInstance().guessBestPopupLocation(myEditor), myTestDataFiles,
-                                       myMethod.getProject());
+    RelativePoint location = JBPopupFactory.getInstance().guessBestPopupLocation(myEditor);
+    TestDataNavigationHandler.navigate(location, myTestDataFiles, Objects.requireNonNull(getElement()).getProject());
   }
 }

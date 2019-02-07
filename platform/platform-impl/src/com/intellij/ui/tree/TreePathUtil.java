@@ -7,8 +7,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.lang.reflect.Array;
-import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -68,7 +69,9 @@ public class TreePathUtil {
    * or a path component is {@code null}
    * or a path component is converted to {@code null}
    */
-  public static <T> T[] convertTreePathToArray(@NotNull TreePath path, @NotNull Function<Object, ? extends T> converter, @NotNull Class<T> type) {
+  private static <T> T[] convertTreePathToArray(@NotNull TreePath path,
+                                                @NotNull Function<Object, ? extends T> converter,
+                                                @NotNull Class<T> type) {
     int count = path.getPathCount();
     if (count <= 0) return null;
     //noinspection unchecked
@@ -110,26 +113,26 @@ public class TreePathUtil {
 
   /**
    * @param collection a collection of path components to convert
-   * @return a tree path with the converted path components or {@code null}
-   * if the specified collection is empty
-   * or a path component is {@code null}
-   * or a path component is converted to {@code null}
-   */
-  public static <T> TreePath convertCollectionToTreePath(@NotNull Iterable<? extends T> collection) {
-    return convertCollectionToTreePath(collection, object -> object);
-  }
-
-  /**
-   * @param collection a collection of path components to convert
    * @param converter  a function to convert path components
    * @return a tree path with the converted path components or {@code null}
    * if the specified collection is empty
    * or a path component is {@code null}
    * or a path component is converted to {@code null}
    */
-  public static <T> TreePath convertCollectionToTreePath(@NotNull Iterable<? extends T> collection, @NotNull Function<? super T, Object> converter) {
+  private static <T> TreePath convertCollectionToTreePath(@NotNull List<? extends T> collection,
+                                                          @NotNull Function<? super T, Object> converter) {
     TreePath path = null;
     for (T object : collection) {
+      Object component = convert(object, converter);
+      if (component == null) return null;
+      path = createTreePath(path, component);
+    }
+    return path;
+  }
+  private static <T> TreePath convertReversedToTreePath(@NotNull List<? extends T> collection, @NotNull Function<? super T, Object> converter) {
+    TreePath path = null;
+    for (int i = collection.size() - 1; i >= 0; i--) {
+      T object = collection.get(i);
       Object component = convert(object, converter);
       if (component == null) return null;
       path = createTreePath(path, component);
@@ -178,12 +181,12 @@ public class TreePathUtil {
    * or a path component is converted to {@code null}
    */
   public static <T> TreePath pathToCustomNode(@NotNull T node, @NotNull Function<? super T, ? extends T> getParent, @NotNull Function<? super T, Object> converter) {
-    ArrayDeque<T> deque = new ArrayDeque<>();
+    List<T> deque = new ArrayList<>();
     while (node != null) {
-      deque.addFirst(node);
+      deque.add(node);
       node = getParent.apply(node);
     }
-    return convertCollectionToTreePath(deque, converter);
+    return convertReversedToTreePath(deque, converter);
   }
 
   private static <I, O> O convert(I object, @NotNull Function<I, O> converter) {

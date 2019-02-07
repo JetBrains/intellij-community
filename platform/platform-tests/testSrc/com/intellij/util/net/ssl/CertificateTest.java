@@ -182,6 +182,9 @@ public class CertificateTest extends LightPlatformTestCase {
       try {
         myClient.close();
       }
+      catch (Throwable e) {
+        addSuppressedException(e);
+      }
       finally {
         super.tearDown();
       }

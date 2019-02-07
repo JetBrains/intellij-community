@@ -21,6 +21,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceOwner;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
@@ -79,24 +80,13 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     int end = range.getEndOffset();
     for (int i = 1; i < myReferences.size(); i++) {
       reference = myReferences.get(i);
-      final TextRange textRange = getRange(reference);
+      TextRange textRange = PsiMultiReference.getReferenceRange(reference, myElement);
       start = Math.min(start, textRange.getStartOffset());
       if (resolved == null) {
         end = Math.max(end, textRange.getEndOffset());
       }
     }
     return new TextRange(start, end);
-  }
-
-  private TextRange getRange(PsiReference reference) {
-    TextRange rangeInElement = reference.getRangeInElement();
-    PsiElement element = reference.getElement();
-    while(element != myElement) {
-      rangeInElement = rangeInElement.shiftRight(element.getStartOffsetInParent());
-      element = element.getParent();
-      if (element instanceof PsiFile) break;
-    }
-    return rangeInElement;
   }
 
   @Override

@@ -82,7 +82,9 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
 
   @Override
   public boolean equalsToText(@NotNull String text) {
-    return Comparing.equal(text, getCanonicalText());
+    PsiJavaCodeReferenceElement reference = getReference();
+    String name = reference.getReferenceName();
+    return (name == null || text.contains(name)) && Comparing.equal(text, getCanonicalText());
   }
 
   @Override

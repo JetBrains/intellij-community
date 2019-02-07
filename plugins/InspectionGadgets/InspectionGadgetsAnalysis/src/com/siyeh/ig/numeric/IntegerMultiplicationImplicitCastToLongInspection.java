@@ -15,10 +15,15 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.DfaFactType;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantEvaluationOverflowException;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -90,28 +95,27 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
     public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
       final IElementType tokenType = expression.getOperationTokenType();
-      if (!tokenType.equals(JavaTokenType.ASTERISK)
-          && !tokenType.equals(JavaTokenType.LTLT)) {
+      if (!tokenType.equals(JavaTokenType.ASTERISK) && !tokenType.equals(JavaTokenType.LTLT)) {
         return;
       }
       final PsiType type = expression.getType();
       if (!isNonLongInteger(type)) {
         return;
       }
-      if (expression.getOperands().length < 2 || expression.getLastChild() instanceof PsiErrorElement) {
+      PsiExpression[] operands = expression.getOperands();
+      if (operands.length < 2 || expression.getLastChild() instanceof PsiErrorElement) {
         return;
       }
       final PsiExpression context = getContainingExpression(expression);
-      if (context == null) {
+      if (context == null) return;
+      if (!PsiType.LONG.equals(context.getType()) && 
+          !PsiType.LONG.equals(ExpectedTypeUtils.findExpectedType(context, true))) {
         return;
       }
-      final PsiType contextType =
-        ExpectedTypeUtils.findExpectedType(context, true);
-      if (contextType == null) {
-        return;
-      }
-      if (!contextType.equals(PsiType.LONG)) {
-        return;
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(context.getParent());
+      if (parent instanceof PsiTypeCastExpression) {
+        PsiType castType = ((PsiTypeCastExpression)parent).getType();
+        if (isNonLongInteger(castType)) return;
       }
       if (ignoreNonOverflowingCompileTimeConstants) {
         try {
@@ -121,15 +125,64 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
         }
         catch (ConstantEvaluationOverflowException ignore) {
         }
+        if (cannotOverflow(expression, operands, tokenType.equals(JavaTokenType.LTLT))) {
+          return;
+        }
       }
       registerError(expression, tokenType);
+    }
+
+    private boolean cannotOverflow(@NotNull PsiPolyadicExpression expression, PsiExpression[] operands, boolean shift) {
+      CommonDataflow.DataflowResult dfr = CommonDataflow.getDataflowResult(expression);
+      if (dfr != null) {
+        long min = 1, max = 1;
+        for (PsiExpression operand : operands) {
+          LongRangeSet set = dfr.getExpressionFact(PsiUtil.skipParenthesizedExprDown(operand), DfaFactType.RANGE);
+          if (set == null) return false;
+          long nextMin = set.min();
+          long nextMax = set.max();
+          if (operand == operands[0]) {
+            min = nextMin;
+            max = nextMax;
+            continue;
+          }
+          long r1, r2, r3, r4;
+          if (shift) {
+            nextMin &= 0x1F;
+            nextMax &= 0x1F;
+            r1 = min << nextMin;
+            r2 = max << nextMin;
+            r3 = min << nextMax;
+            r4 = max << nextMax;
+          } else {
+            if (intOverflow(nextMin) || intOverflow(nextMax)) return false;
+            r1 = min * nextMin;
+            r2 = max * nextMin;
+            r3 = min * nextMax;
+            r4 = max * nextMax;
+          }
+          if (intOverflow(r1) || intOverflow(r2) || intOverflow(r3) || intOverflow(r4)) return false;
+          min = Math.min(Math.min(r1, r2), Math.min(r3, r4));
+          max = Math.max(Math.max(r1, r2), Math.max(r3, r4));
+        }
+      }
+      return true;
+    }
+
+    private boolean intOverflow(long l) {
+      return (int)l != l && l != Integer.MAX_VALUE + 1L;
     }
 
     private PsiExpression getContainingExpression(
       PsiExpression expression) {
       final PsiElement parent = expression.getParent();
-      if (parent instanceof PsiBinaryExpression ||
-          parent instanceof PsiParenthesizedExpression ||
+      if (parent instanceof PsiPolyadicExpression && TypeConversionUtil.isNumericType(((PsiPolyadicExpression)parent).getType())) {
+        IElementType tokenType = ((PsiPolyadicExpression)parent).getOperationTokenType();
+        if (!tokenType.equals(JavaTokenType.LTLT) && !tokenType.equals(JavaTokenType.GTGT) && !tokenType.equals(JavaTokenType.GTGTGT)) {
+          return getContainingExpression((PsiExpression)parent);
+        }
+      }
+      if (parent instanceof PsiParenthesizedExpression ||
           parent instanceof PsiPrefixExpression ||
           parent instanceof PsiConditionalExpression) {
         return getContainingExpression((PsiExpression)parent);
@@ -138,11 +191,9 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
     }
 
     private boolean isNonLongInteger(PsiType type) {
-      if (type == null) {
-        return false;
-      }
+      if (type == null) return false;
       final String text = type.getCanonicalText();
-      return text != null && s_typesToCheck.contains(text);
+      return s_typesToCheck.contains(text);
     }
   }
 }

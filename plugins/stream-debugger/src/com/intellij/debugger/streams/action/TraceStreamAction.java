@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiEditorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import one.util.streamex.StreamEx;
@@ -44,7 +45,7 @@ public class TraceStreamAction extends AnAction {
 
   private final DebuggerPositionResolver myPositionResolver = new DebuggerPositionResolverImpl();
   private final List<SupportedLibrary> mySupportedLibraries =
-    LibrarySupportProvider.getList().stream().map(SupportedLibrary::new).collect(Collectors.toList());
+    ContainerUtil.map(LibrarySupportProvider.getList(), SupportedLibrary::new);
   private final Set<String> mySupportedLanguages = StreamEx.of(mySupportedLibraries).map(x -> x.languageId).toSet();
   private int myLastVisitedPsiElementHash;
 
@@ -100,7 +101,7 @@ public class TraceStreamAction extends AnAction {
           throw new RuntimeException("editor not found");
         }
 
-        new MyStreamChainChooser(editor).show(chains.stream().map(StreamChainOption::new).collect(Collectors.toList()),
+        new MyStreamChainChooser(editor).show(ContainerUtil.map(chains, StreamChainOption::new),
                                               provider -> runTrace(provider.chain, provider.library, session));
       }
     }

@@ -6,7 +6,7 @@ import com.intellij.testFramework.ParsingTestCase
 
 abstract class EditorConfigParsingTestBase(dataPath: String) : ParsingTestCase(dataPath, "editorconfig", true, EditorConfigParserDefinition()) {
   override fun getTestDataPath() =
-    "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testSrc/org/editorconfig/language/parser"
+    "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testData/org/editorconfig/language/parser"
 
   protected fun doTest() = doTest(true)
 }

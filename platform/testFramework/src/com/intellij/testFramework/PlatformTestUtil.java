@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
+import com.intellij.configurationStore.StateStorageManagerKt;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -10,17 +11,17 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl;
-import com.intellij.ide.util.treeView.*;
+import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.components.ServiceKt;
-import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -49,6 +50,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiReference;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
+import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -65,7 +67,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
-import org.junit.Assert;
 
 import javax.swing.*;
 import javax.swing.tree.TreeModel;
@@ -88,9 +89,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.jar.JarFile;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 /**
  * @author yole
@@ -133,8 +136,11 @@ public class PlatformTestUtil {
     registerExtension(Extensions.getRootArea(), name, t, parentDisposable);
   }
 
-  public static <T> void registerExtension(@NotNull ExtensionsArea area, @NotNull ExtensionPointName<T> name, @NotNull final T t, @NotNull Disposable parentDisposable) {
-    final ExtensionPoint<T> extensionPoint = area.getExtensionPoint(name.getName());
+  public static <T> void registerExtension(@NotNull ExtensionsArea area,
+                                           @NotNull ExtensionPointName<T> name,
+                                           @NotNull T t,
+                                           @NotNull Disposable parentDisposable) {
+    ExtensionPoint<T> extensionPoint = area.getExtensionPoint(name.getName());
     extensionPoint.registerExtension(t);
     Disposer.register(parentDisposable, () -> extensionPoint.unregisterExtension(t));
   }
@@ -370,11 +376,12 @@ public class PlatformTestUtil {
         AtomicBoolean laterInvoked = new AtomicBoolean();
         app.invokeLater(() -> laterInvoked.set(true));
         UIUtil.dispatchAllInvocationEvents();
-        Assert.assertTrue(laterInvoked.get());
+        assertTrue(laterInvoked.get());
 
         TimeoutUtil.sleep(sleptAlready ? 10 : delay);
         sleptAlready = true;
         if (getMillisSince(start) > MAX_WAIT_TIME) {
+          String queue = ((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).dumpQueue();
           throw new AssertionError("Couldn't await alarm" +
                                    "; alarm passed=" + alarmInvoked1.get() +
                                    "; modality1=" + initialModality +
@@ -385,7 +392,7 @@ public class PlatformTestUtil {
                                    "; app.disposed=" + app.isDisposed() +
                                    "; alarm.disposed=" + alarm.isDisposed() +
                                    "; alarm.requests=" + alarm.getActiveRequestCount() +
-                                   "\n delayQueue=" + StringUtil.trimLog(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).dumpQueue(), 1000) +
+                                   "\n delayQueue=" + StringUtil.trimLog(queue, 1000) +
                                    "\n invocatorQueue=" + LaterInvocator.getLaterInvocatorQueue()
           );
         }
@@ -398,17 +405,22 @@ public class PlatformTestUtil {
   }
 
   /**
-   * Dispatch all pending invocation events (if any) in the {@link IdeEventQueue}.
+   * Dispatch all pending invocation events (if any) in the {@link IdeEventQueue}, ignores and removes all other events from the queue.
    * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
    */
-  public static void dispatchAllInvocationEventsInIdeEventQueue() throws InterruptedException {
+  public static void dispatchAllInvocationEventsInIdeEventQueue() {
     IdeEventQueue eventQueue = IdeEventQueue.getInstance();
     while (true) {
       AWTEvent event = eventQueue.peekEvent();
       if (event == null) break;
-      AWTEvent event1 = eventQueue.getNextEvent();
-      if (event1 instanceof InvocationEvent) {
-        eventQueue.dispatchEvent(event1);
+      try {
+        event = eventQueue.getNextEvent();
+        if (event instanceof InvocationEvent) {
+          eventQueue.dispatchEvent(event);
+        }
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeException(e);
       }
     }
   }
@@ -511,57 +523,14 @@ public class PlatformTestUtil {
     return print(tree, false);
   }
 
-  public static void assertTreeStructureEquals(@NotNull TreeModel treeModel, @NotNull String expected) {
-    assertEquals(expected.trim(), print(createStructure(treeModel), treeModel.getRoot(), 0, null, -1, ' ', (Queryable.PrintInfo)null).toString().trim());
-  }
-
-  @NotNull
-  protected static AbstractTreeStructure createStructure(@NotNull TreeModel treeModel) {
-    return new AbstractTreeStructure() {
-      @NotNull
-      @Override
-      public Object getRootElement() {
-        return treeModel.getRoot();
-      }
-
-      @NotNull
-      @Override
-      public Object[] getChildElements(@NotNull Object element) {
-        return TreeUtil.nodeChildren(element, treeModel).toList().toArray();
-      }
-
-      @Nullable
-      @Override
-      public Object getParentElement(@NotNull Object element) {
-        return ((AbstractTreeNode)element).getParent();
-      }
-
-      @NotNull
-      @Override
-      public NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public void commit() {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public boolean hasSomethingToCommit() {
-        throw new UnsupportedOperationException();
-      }
-    };
-  }
-
   public static void invokeNamedAction(final String actionId) {
     final AnAction action = ActionManager.getInstance().getAction(actionId);
-    Assert.assertNotNull(action);
+    assertNotNull(action);
     final Presentation presentation = new Presentation();
     @SuppressWarnings("deprecation") final DataContext context = DataManager.getInstance().getDataContext();
     final AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", context);
     action.beforeActionPerformedUpdate(event);
-    Assert.assertTrue(presentation.isEnabled());
+    assertTrue(presentation.isEnabled());
     action.actionPerformed(event);
   }
 
@@ -630,13 +599,19 @@ public class PlatformTestUtil {
     }
   }
 
+  public static void forceCloseProjectWithoutSaving(@NotNull Project project) {
+    ProjectManagerEx.getInstanceEx().forceCloseProject(project, false /* do not dispose */);
+    // explicitly dispose because `dispose` option for forceCloseProject doesn't work todo why?
+    getApplication().runWriteAction(() -> Disposer.dispose(project));
+  }
+
   public static void saveProject(@NotNull Project project) {
     saveProject(project, false);
   }
 
-  public static void saveProject(@NotNull Project project, boolean isForce) {
+  public static void saveProject(@NotNull Project project, boolean isForceSavingAllSettings) {
     ProjectManagerEx.getInstanceEx().flushChangedProjectFileAlarm();
-    StoreUtil.save(ServiceKt.getStateStore(project), project, isForce);
+    StateStorageManagerKt.saveComponentManager(project, isForceSavingAllSettings);
   }
 
   static void waitForAllBackgroundActivityToCalmDown() {
@@ -660,6 +635,7 @@ public class PlatformTestUtil {
     return finish - start;
   }
 
+  @SuppressWarnings("CallToSystemGC")
   public static void assertTiming(String message, long expected, int attempts, @NotNull Runnable actionToMeasure) {
     while (true) {
       attempts--;
@@ -681,8 +657,8 @@ public class PlatformTestUtil {
     }
   }
 
-  private static HashMap<String, VirtualFile> buildNameToFileMap(VirtualFile[] files, @Nullable VirtualFileFilter filter) {
-    HashMap<String, VirtualFile> map = new HashMap<>();
+  private static Map<String, VirtualFile> buildNameToFileMap(VirtualFile[] files, @Nullable VirtualFileFilter filter) {
+    Map<String, VirtualFile> map = new HashMap<>();
     for (VirtualFile file : files) {
       if (filter != null && !filter.accept(file)) continue;
       map.put(file.getName(), file);
@@ -699,20 +675,13 @@ public class PlatformTestUtil {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     VirtualFile[] childrenAfter = dirExpected.getChildren();
-
-    if (dirExpected.isInLocalFileSystem() && dirExpected.getFileSystem() != TempFileSystem.getInstance()) {
-      File[] ioAfter = new File(dirExpected.getPath()).listFiles();
-      shallowCompare(childrenAfter, ioAfter);
-    }
+    shallowCompare(dirExpected, childrenAfter);
 
     VirtualFile[] childrenBefore = dirActual.getChildren();
-    if (dirActual.isInLocalFileSystem() && dirActual.getFileSystem() != TempFileSystem.getInstance()) {
-      File[] ioBefore = new File(dirActual.getPath()).listFiles();
-      shallowCompare(childrenBefore, ioBefore);
-    }
+    shallowCompare(dirActual, childrenBefore);
 
-    HashMap<String, VirtualFile> mapAfter = buildNameToFileMap(childrenAfter, fileFilter);
-    HashMap<String, VirtualFile> mapBefore = buildNameToFileMap(childrenBefore, fileFilter);
+    Map<String, VirtualFile> mapAfter = buildNameToFileMap(childrenAfter, fileFilter);
+    Map<String, VirtualFile> mapBefore = buildNameToFileMap(childrenBefore, fileFilter);
 
     Set<String> keySetAfter = mapAfter.keySet();
     Set<String> keySetBefore = mapBefore.keySet();
@@ -730,30 +699,13 @@ public class PlatformTestUtil {
     }
   }
 
-  private static void shallowCompare(VirtualFile[] vfs, @Nullable File[] io) {
-    List<String> vfsPaths = new ArrayList<>();
-    for (VirtualFile file : vfs) {
-      vfsPaths.add(file.getPath());
+  private static void shallowCompare(VirtualFile dir, VirtualFile[] vfs) {
+    if (dir.isInLocalFileSystem() && dir.getFileSystem() != TempFileSystem.getInstance()) {
+      String vfsPaths = Stream.of(vfs).map(VirtualFile::getPath).sorted().collect(Collectors.joining("\n"));
+      File[] io = notNull(new File(dir.getPath()).listFiles());
+      String ioPaths = Stream.of(io).map(f -> FileUtil.toSystemIndependentName(f.getPath())).sorted().collect(Collectors.joining("\n"));
+      assertEquals(vfsPaths, ioPaths);
     }
-
-    List<String> ioPaths = new ArrayList<>();
-    if (io != null) {
-      for (File file : io) {
-        ioPaths.add(file.getPath().replace(File.separatorChar, '/'));
-      }
-    }
-
-    assertEquals(sortAndJoin(vfsPaths), sortAndJoin(ioPaths));
-  }
-
-  private static String sortAndJoin(List<String> strings) {
-    Collections.sort(strings);
-    StringBuilder buf = new StringBuilder();
-    for (String string : strings) {
-      buf.append(string);
-      buf.append('\n');
-    }
-    return buf.toString();
   }
 
   public static void assertFilesEqual(VirtualFile fileExpected, VirtualFile fileActual) throws IOException {
@@ -761,33 +713,26 @@ public class PlatformTestUtil {
       assertJarFilesEqual(VfsUtilCore.virtualToIoFile(fileExpected), VfsUtilCore.virtualToIoFile(fileActual));
     }
     catch (IOException e) {
-      FileDocumentManager manager = FileDocumentManager.getInstance();
-
-      Document docBefore = manager.getDocument(fileActual);
-      boolean canLoadBeforeText = !fileActual.getFileType().isBinary() || fileActual.getFileType() == FileTypes.UNKNOWN;
-      String textB = docBefore != null
-                     ? docBefore.getText()
-                     : !canLoadBeforeText
-                       ? null
-                       : LoadTextUtil.getTextByBinaryPresentation(fileActual.contentsToByteArray(false), fileActual).toString();
-
-      Document docAfter = manager.getDocument(fileExpected);
-      boolean canLoadAfterText = !fileActual.getFileType().isBinary() || fileActual.getFileType() == FileTypes.UNKNOWN;
-      String textA = docAfter != null
-                     ? docAfter.getText()
-                     : !canLoadAfterText
-                       ? null
-                       : LoadTextUtil.getTextByBinaryPresentation(fileExpected.contentsToByteArray(false), fileExpected).toString();
-
-      if (textA != null && textB != null) {
-        if (!StringUtil.equals(textA, textB)) {
-          throw new FileComparisonFailure("Text mismatch in file " + fileExpected.getName(), textA, textB, fileExpected.getPath());
-        }
+      String actual = fileText(fileActual);
+      String expected = fileText(fileExpected);
+      if (expected == null || actual == null) {
+        assertArrayEquals(fileExpected.getPath(), fileExpected.contentsToByteArray(), fileActual.contentsToByteArray());
       }
-      else {
-        Assert.assertArrayEquals(fileExpected.getPath(), fileExpected.contentsToByteArray(), fileActual.contentsToByteArray());
+      else if (!StringUtil.equals(expected, actual)) {
+        throw new FileComparisonFailure("Text mismatch in file " + fileExpected.getName(), expected, actual, fileExpected.getPath());
       }
     }
+  }
+
+  private static String fileText(VirtualFile file) throws IOException {
+    Document doc = FileDocumentManager.getInstance().getDocument(file);
+    if (doc != null) {
+      return doc.getText();
+    }
+    if (!file.getFileType().isBinary() || file.getFileType() == FileTypes.UNKNOWN) {
+      return LoadTextUtil.getTextByBinaryPresentation(file.contentsToByteArray(false), file).toString();
+    }
+    return null;
   }
 
   private static void assertJarFilesEqual(File file1, File file2) throws IOException {
@@ -806,9 +751,9 @@ public class PlatformTestUtil {
       }
 
       final VirtualFile dirAfter = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory1);
-      Assert.assertNotNull(tempDirectory1.toString(), dirAfter);
+      assertNotNull(tempDirectory1.toString(), dirAfter);
       final VirtualFile dirBefore = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory2);
-      Assert.assertNotNull(tempDirectory2.toString(), dirBefore);
+      assertNotNull(tempDirectory2.toString(), dirBefore);
       getApplication().runWriteAction(() -> {
         dirAfter.refresh(false, true);
         dirBefore.refresh(false, true);
@@ -821,7 +766,7 @@ public class PlatformTestUtil {
   }
 
   public static String getCommunityPath() {
-    final String homePath = PathManager.getHomePath();
+    final String homePath = IdeaTestExecutionPolicy.getHomePathWithPolicy();
     if (new File(homePath, "community/.idea").isDirectory()) {
       return homePath + File.separatorChar + "community";
     }
@@ -842,7 +787,7 @@ public class PlatformTestUtil {
 
   @NotNull
   public static <T> T notNull(@Nullable T t) {
-    Assert.assertNotNull(t);
+    assertNotNull(t);
     return t;
   }
 
@@ -984,7 +929,6 @@ public class PlatformTestUtil {
     }
   }
 
-
   public static <T> void assertComparisonContractNotViolated(@NotNull List<? extends T> values,
                                                              @NotNull Comparator<? super T> comparator,
                                                              @NotNull Equality<? super T> equality) {
@@ -1000,10 +944,10 @@ public class PlatformTestUtil {
           assertEquals(String.format("Equal, but not 0: '%s' - '%s'", value2, value1), 0, result21);
         }
         else {
-          if (result12 == 0) Assert.fail(String.format("Not equal, but 0: '%s' - '%s'", value1, value2));
-          if (result21 == 0) Assert.fail(String.format("Not equal, but 0: '%s' - '%s'", value2, value1));
+          if (result12 == 0) fail(String.format("Not equal, but 0: '%s' - '%s'", value1, value2));
+          if (result21 == 0) fail(String.format("Not equal, but 0: '%s' - '%s'", value2, value1));
           if (Integer.signum(result12) == Integer.signum(result21)) {
-            Assert.fail(String.format("Not symmetrical: '%s' - '%s'", value1, value2));
+            fail(String.format("Not symmetrical: '%s' - '%s'", value1, value2));
           }
         }
 
@@ -1014,7 +958,7 @@ public class PlatformTestUtil {
           int result31 = comparator.compare(value3, value1);
 
           if (!isTransitive(result12, result23, result31)) {
-            Assert.fail(String.format("Not transitive: '%s' - '%s' - '%s'", value1, value2, value3));
+            fail(String.format("Not transitive: '%s' - '%s' - '%s'", value1, value2, value3));
           }
         }
       }

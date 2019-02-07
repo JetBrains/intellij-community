@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.completion;
 
@@ -532,6 +532,21 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
     myPrefixChanges++;
     myFrozenItems.clear();
     super.prefixChanged(lookup);
+  }
+
+  @Override
+  public void prefixTruncated(@NotNull LookupImpl lookup, int hideOffset) {
+    if (hideOffset < lookup.getEditor().getCaretModel().getOffset()) {
+      myProcess.scheduleRestart();
+      return;
+    }
+    myProcess.prefixUpdated();
+    lookup.hideLookup(false);
+  }
+
+  @Override
+  public boolean isCompletion() {
+    return true;
   }
 
   private static class EmptyClassifier extends Classifier<LookupElement> {

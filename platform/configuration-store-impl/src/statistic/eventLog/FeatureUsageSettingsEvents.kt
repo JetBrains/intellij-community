@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.statistic.eventLog
 
+import com.intellij.internal.statistic.eventLog.FeatureUsageGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger
 import com.intellij.internal.statistic.utils.getProjectId
 import com.intellij.openapi.components.State
@@ -12,10 +13,10 @@ import org.jdom.Element
 import java.util.*
 
 private val LOG = Logger.getInstance("com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventPrinter")
-private const val RECORDER_ID = "settings"
+private val GROUP = FeatureUsageGroup("settings", 2)
 
 object FeatureUsageSettingsEvents {
-  val printer = FeatureUsageSettingsEventPrinter()
+  val printer = FeatureUsageSettingsEventPrinter(false)
 
   fun logDefaultConfigurationState(componentName: String, stateSpec: State, clazz: Class<*>, project: Project?) {
     if (stateSpec.reportStatistic && FeatureUsageLogger.isEnabled()) {
@@ -23,20 +24,27 @@ object FeatureUsageSettingsEvents {
     }
   }
 
-  fun logConfigurationState(componentName: String, stateSpec: State, state: Any?, project: Project?) {
+  fun logConfigurationState(componentName: String, stateSpec: State, state: Any, project: Project?) {
     if (stateSpec.reportStatistic && FeatureUsageLogger.isEnabled()) {
       printer.logConfigurationState(componentName, state, project)
     }
   }
 }
 
-open class FeatureUsageSettingsEventPrinter {
+open class FeatureUsageSettingsEventPrinter(private val recordDefault: Boolean) {
   private val defaultFilter = SkipDefaultsSerializationFilter()
 
   fun logDefaultConfigurationState(componentName: String, clazz: Class<*>, project: Project?) {
     try {
-      val default = defaultFilter.getDefaultValue(clazz)
-      logConfigurationState(componentName, default, project)
+      if (recordDefault) {
+        val default = defaultFilter.getDefaultValue(clazz)
+        logConfigurationState(componentName, default, project)
+      }
+      else {
+        val isDefaultProject = project?.isDefault == true
+        val hash = if (!isDefaultProject) toHash(project) else null
+        logSettingCollectorWasInvoked(componentName, isDefaultProject, hash)
+      }
     }
     catch (e: Exception) {
       LOG.warn("Cannot initialize default settings for '$componentName'")
@@ -61,28 +69,47 @@ open class FeatureUsageSettingsEventPrinter {
       if (type === Boolean::class.javaPrimitiveType) {
         val value = accessor.read(state)
         val isNotDefault = defaultFilter.accepts(accessor, state)
-        val content = HashMap<String, Any>()
-        content["name"] = accessor.name
-        content["value"] = value
-        if (isNotDefault) {
-          content["default"] = false
-        }
-
-        if (isDefaultProject) {
-          content["default_project"] = true
-        }
-        else {
-          hash?.let {
-            content["project"] = hash
+        if (recordDefault || isNotDefault) {
+          val content = HashMap<String, Any>()
+          content["name"] = accessor.name
+          content["value"] = value
+          if (isNotDefault) {
+            content["default"] = false
           }
+          addProjectOptions(content, isDefaultProject, hash)
+          logConfig(GROUP, componentName, content)
         }
-        logConfig(RECORDER_ID, componentName, content)
+      }
+    }
+
+    if (!recordDefault) {
+      logSettingCollectorWasInvoked(componentName, isDefaultProject, hash)
+    }
+  }
+
+  private fun addProjectOptions(content: HashMap<String, Any>,
+                                isDefaultProject: Boolean,
+                                projectHash: String?) {
+    if (isDefaultProject) {
+      content["default_project"] = true
+    }
+    else {
+      projectHash?.let {
+        content["project"] = projectHash
       }
     }
   }
 
-  protected open fun logConfig(groupId: String, eventId: String, data: Map<String, Any>) {
-    FeatureUsageLogger.logState(groupId, eventId, data)
+  @Suppress("SameParameterValue")
+  protected open fun logConfig(group: FeatureUsageGroup, eventId: String, data: Map<String, Any>) {
+    FeatureUsageLogger.logState(group, eventId, data)
+  }
+
+  private fun logSettingCollectorWasInvoked(componentName: String, isDefaultProject: Boolean, projectHash: String?) {
+    val content = HashMap<String, Any>()
+    content["invoked"] = true
+    addProjectOptions(content, isDefaultProject, projectHash)
+    logConfig(GROUP, componentName, content)
   }
 
   internal fun toHash(project: Project?): String? {

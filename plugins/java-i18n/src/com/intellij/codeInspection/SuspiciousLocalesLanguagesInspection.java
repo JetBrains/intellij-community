@@ -16,8 +16,8 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
-import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.customizeActions.DissociateResourceBundleAction;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.Project;
@@ -34,19 +34,15 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
-/**
- * @author Dmitry Batkovich
- */
 public class SuspiciousLocalesLanguagesInspection extends BaseLocalInspectionTool {
   private static final String ADDITIONAL_LANGUAGES_ATTR_NAME = "additionalLanguages";
   private final static SoftLazyValue<Set<String>> JAVA_LOCALES = new SoftLazyValue<Set<String>>() {
@@ -62,13 +58,6 @@ public class SuspiciousLocalesLanguagesInspection extends BaseLocalInspectionToo
   };
 
   private final List<String> myAdditionalLanguages = new ArrayList<>();
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Suspicious resource bundle locale languages";
-  }
 
   @TestOnly
   public void setAdditionalLanguages(List<String> additionalLanguages) {

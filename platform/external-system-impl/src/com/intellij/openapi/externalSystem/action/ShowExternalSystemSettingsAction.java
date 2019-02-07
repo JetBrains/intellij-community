@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/20/2014
  */
 public class ShowExternalSystemSettingsAction extends ExternalSystemAction {
 

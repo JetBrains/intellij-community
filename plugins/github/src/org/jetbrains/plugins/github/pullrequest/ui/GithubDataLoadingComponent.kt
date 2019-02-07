@@ -20,13 +20,24 @@ internal abstract class GithubDataLoadingComponent<T> : Wrapper() {
   fun loadAndShow(dataRequest: CompletableFuture<T>?) {
     updateFuture?.cancel(true)
     reset()
+    setBusy(false)
 
     if (dataRequest == null) {
       updateFuture = null
-      setBusy(false)
       return
     }
 
+    doLoadAndShow(dataRequest)
+  }
+
+  @CalledInAwt
+  fun loadAndUpdate(dataRequest: CompletableFuture<T>) {
+    updateFuture?.cancel(true)
+
+    doLoadAndShow(dataRequest)
+  }
+
+  private fun doLoadAndShow(dataRequest: CompletableFuture<T>) {
     setBusy(true)
     updateFuture = dataRequest.handleOnEdt { result, error ->
       when {

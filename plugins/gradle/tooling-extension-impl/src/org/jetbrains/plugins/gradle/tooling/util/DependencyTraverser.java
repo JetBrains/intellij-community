@@ -24,7 +24,6 @@ import java.util.Queue;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/17/2015
  */
 public class DependencyTraverser implements Iterable<ExternalDependency> {
   private final Collection<ExternalDependency> collection;

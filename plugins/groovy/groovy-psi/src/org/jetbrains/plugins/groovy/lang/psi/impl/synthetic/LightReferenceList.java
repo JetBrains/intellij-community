@@ -52,6 +52,7 @@ public class LightReferenceList extends LightElement implements PsiReferenceList
     return Role.THROWS_LIST;
   }
 
+  @Override
   public String toString() {
     return "Light Reference List";
   }

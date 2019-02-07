@@ -18,6 +18,7 @@ package com.intellij.testGuiFramework.remote.client
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testGuiFramework.remote.transport.MessageType
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
+import com.intellij.util.ConcurrencyUtil
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.net.InetAddress
@@ -25,7 +26,10 @@ import java.net.InetSocketAddress
 import java.net.Socket
 import java.net.SocketException
 import java.util.*
-import java.util.concurrent.*
+import java.util.concurrent.BlockingQueue
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 
 /**
  * @author Sergey Karashevich
@@ -44,7 +48,7 @@ class JUnitClientImpl(host: String, val port: Int, initHandlers: Array<ClientHan
 
   private val handlers: ArrayList<ClientHandler> = ArrayList()
 
-  private val keepAliveExecutor: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
+  private val keepAliveExecutor: ScheduledExecutorService = ConcurrencyUtil.newSingleScheduledThreadExecutor("JUnit keep-alive client");
 
   init {
     if (initHandlers != null) handlers.addAll(initHandlers)

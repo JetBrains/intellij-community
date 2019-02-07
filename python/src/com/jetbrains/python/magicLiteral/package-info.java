@@ -16,6 +16,7 @@
 
 /**
  * Magic literals are literals that could be used as reference targets.
+ * Magic literal can't have references (i.e. getReferences().length must me 0)
  * There are some references that resolve to literals.
  * Find Usage and Rename should work for them.
  * This package provides full support for such literals allowing developers to "inject" special knowledge via extension points.

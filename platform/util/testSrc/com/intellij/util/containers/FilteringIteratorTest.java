@@ -55,7 +55,7 @@ public class FilteringIteratorTest extends TestCase {
   }
 
   public void testCallsHashNextOncePerElement() {
-    ArrayList list = new ArrayList(Arrays.asList(new Object[]{null, "a", null, "b"}));
+    ArrayList list = new ArrayList(Arrays.asList(null, "a", null, "b"));
     MockIterator mockIterator = new MockIterator(list.iterator());
     MockCondition mockCondition = new MockCondition(STRINGS_ONLY);
     Iterator iterator = FilteringIterator.create(mockIterator, mockCondition);

@@ -37,3 +37,7 @@ See `CredentialStore`. API has two methods:
 
 * `get`: Pass service name and user name. Or only service name — in this case first matched entry will be returned.
 * `set`: Pass credentials attributes and credentials.
+
+```kotlin
+PasswordSafe.instance.get(CredentialAttributes(generateServiceName("Subsystem", "sub key"), username))
+```

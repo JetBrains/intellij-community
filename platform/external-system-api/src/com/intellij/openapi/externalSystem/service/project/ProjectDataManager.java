@@ -31,7 +31,6 @@ import java.util.Collection;
  * and provides entry points for project data management.
  *
  * @author Vladislav Soroka
- * @since 4/16/13 11:38 AM
  */
 public interface ProjectDataManager {
   static ProjectDataManager getInstance() {

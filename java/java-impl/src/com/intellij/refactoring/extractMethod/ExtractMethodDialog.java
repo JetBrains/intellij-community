@@ -151,6 +151,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     return getHelpId() != null;
   }
 
+  @NotNull
   @Override
   public String getChosenMethodName() {
     return myNameField.getEnteredName().trim();

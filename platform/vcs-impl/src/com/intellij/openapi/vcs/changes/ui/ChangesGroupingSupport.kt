@@ -67,10 +67,19 @@ class ChangesGroupingSupport(val project: Project, source: Any, val showConflict
     const val REPOSITORY_GROUPING: String = "repository"
     const val NONE_GROUPING: String = "none"
 
+    private fun collectFactories(project: Project): KeyedExtensionFactory<ChangesGroupingPolicyFactory, String> {
+      return object : KeyedExtensionFactory<ChangesGroupingPolicyFactory, String>(
+        ChangesGroupingPolicyFactory::class.java,
+        ChangesGroupingPolicyFactory.EP_NAME,
+        project.picoContainer
+      ) {
+        override fun getKey(key: String) = key
+      }
+    }
+
     @JvmStatic
-    fun collectFactories(project: Project): KeyedExtensionFactory<ChangesGroupingPolicyFactory, String> = object : KeyedExtensionFactory<ChangesGroupingPolicyFactory, String>(
-      ChangesGroupingPolicyFactory::class.java, ChangesGroupingPolicyFactory.EP_NAME, project.picoContainer) {
-      override fun getKey(key: String) = key
+    fun getFactory(project: Project, key: String): ChangesGroupingPolicyFactory {
+      return collectFactories(project).getByKey(key) ?: NoneChangesGroupingFactory
     }
   }
 }

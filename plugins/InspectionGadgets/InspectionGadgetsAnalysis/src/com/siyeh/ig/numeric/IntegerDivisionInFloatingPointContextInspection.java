@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,11 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,10 +31,8 @@ import java.util.Set;
 
 public class IntegerDivisionInFloatingPointContextInspection extends BaseInspection {
 
-  /**
-   */
   @NonNls
-  private static final Set<String> s_integralTypes = new HashSet<>(10);
+  static final Set<String> s_integralTypes = new HashSet<>(10);
 
   static {
     s_integralTypes.add("int");
@@ -82,38 +82,57 @@ public class IntegerDivisionInFloatingPointContextInspection extends BaseInspect
       if (context == null) {
         return;
       }
-      final PsiType contextType =
-        ExpectedTypeUtils.findExpectedType(context, true);
-      if (contextType == null) {
-        return;
+      final PsiType contextType;
+      if (context instanceof PsiBinaryExpression) {
+        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)context;
+        final PsiExpression lhs = binaryExpression.getLOperand();
+        final PsiExpression rhs = binaryExpression.getROperand();
+        if (rhs == null) {
+          return;
+        }
+        if (PsiTreeUtil.isAncestor(lhs, expression, false)) {
+          contextType = rhs.getType();
+        }
+        else if (PsiTreeUtil.isAncestor(binaryExpression.getROperand(), expression, false)) {
+          contextType = lhs.getType();
+        }
+        else {
+          return;
+        }
       }
-      if (!(contextType.equals(PsiType.FLOAT)
-            || contextType.equals(PsiType.DOUBLE))) {
+      else {
+        contextType = ExpectedTypeUtils.findExpectedType(context, true);
+      }
+      if (!PsiType.FLOAT.equals(contextType) && !PsiType.DOUBLE.equals(contextType)) {
         return;
       }
       registerError(expression);
     }
 
     private static boolean hasIntegerDivision(@NotNull PsiPolyadicExpression expression) {
-      PsiExpression[] operands = expression.getOperands();
-      if (operands.length < 2) return false;
-      return isIntegral(operands[0].getType()) && isIntegral(operands[1].getType());
+      final PsiExpression[] operands = expression.getOperands();
+      return operands.length >= 2 && isIntegral(operands[0].getType()) && isIntegral(operands[1].getType());
     }
 
     private static boolean isIntegral(PsiType type) {
-      if (type == null) {
-        return false;
-      }
-      final String text = type.getCanonicalText();
-      return s_integralTypes.contains(text);
+      return type != null && s_integralTypes.contains(type.getCanonicalText());
     }
 
     private static PsiExpression getContainingExpression(PsiExpression expression) {
       final PsiElement parent = expression.getParent();
-      if (parent instanceof PsiBinaryExpression ||
-          parent instanceof PsiParenthesizedExpression ||
-          parent instanceof PsiPrefixExpression ||
-          parent instanceof PsiConditionalExpression) {
+      if (parent instanceof PsiBinaryExpression) {
+        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)parent;
+        if (!ComparisonUtils.isComparisonOperation(binaryExpression.getOperationTokenType())) {
+          return getContainingExpression(binaryExpression);
+        }
+        else {
+          return (PsiExpression)parent;
+        }
+      }
+      else if (parent instanceof PsiPolyadicExpression ||
+               parent instanceof PsiParenthesizedExpression ||
+               parent instanceof PsiPrefixExpression ||
+               parent instanceof PsiConditionalExpression) {
         return getContainingExpression((PsiExpression)parent);
       }
       return expression;

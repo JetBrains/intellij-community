@@ -5,11 +5,11 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBComboBoxLabel;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.SmartList;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +31,7 @@ class LinkComboBox extends JBComboBoxLabel {
 
   LinkComboBox(String defaultItem) {
     setDefaultItem(defaultItem);
-    setForeground(JBColor.link());
+    setForeground(JBUI.CurrentTheme.Link.linkColor());
     addMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(MouseEvent e) {

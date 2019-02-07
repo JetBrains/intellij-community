@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -346,9 +347,9 @@ public class HyperlinkLabel extends HighlightableComponent {
 
     @Override public Color getForegroundColor() {
       return !isEnabled() ? UIManager.getColor("Label.disabledForeground") :
-             myMousePressed ? UIManager.getColor("link.pressed.foreground") :
-             myMouseHover ? UIManager.getColor("link.hover.foreground") :
-             UIManager.getColor("link.foreground");
+             myMousePressed ? JBUI.CurrentTheme.Link.linkPressedColor() :
+             myMouseHover ? JBUI.CurrentTheme.Link.linkHoverColor() :
+             JBUI.CurrentTheme.Link.linkColor();
     }
 
     @Override public Color getEffectColor() {

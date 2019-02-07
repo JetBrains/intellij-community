@@ -40,7 +40,7 @@ class GotoTestDataAction extends AnAction implements Comparable {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     RelativePoint point = JBPopupFactory.getInstance().guessBestPopupLocation(e.getDataContext());
-    TestDataNavigationHandler.navigate(point, Collections.singletonList(myFilePath), myProject);
+    TestDataNavigationHandler.navigate(point, Collections.singletonList(new TestDataFile.LazyResolved(myFilePath)), myProject);
   }
 
   @Override

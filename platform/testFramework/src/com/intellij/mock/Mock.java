@@ -145,7 +145,7 @@ public class Mock {
     public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
                                                                           boolean focusEditor,
                                                                           @NotNull EditorWindow window) {
-      throw new RuntimeException("not implemented");
+      throw new UnsupportedOperationException();
     }
 
     @Override
@@ -166,13 +166,13 @@ public class Mock {
     @NotNull
     @Override
     public EditorsSplitters getSplitters() {
-      throw new RuntimeException("not implemented");
+      throw new UnsupportedOperationException();
     }
 
     @NotNull
     @Override
     public Promise<EditorWindow> getActiveWindow() {
-      throw new RuntimeException("not implemented");
+      throw new UnsupportedOperationException();
     }
 
     @Override

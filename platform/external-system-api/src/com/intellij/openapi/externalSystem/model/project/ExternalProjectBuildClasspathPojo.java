@@ -23,7 +23,6 @@ import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
- * @since 1/14/14
  */
 public class ExternalProjectBuildClasspathPojo {
 

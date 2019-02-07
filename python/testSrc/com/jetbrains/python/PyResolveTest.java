@@ -73,20 +73,12 @@ public class PyResolveTest extends PyResolveTestCase {
 
   public void testToConstructorInherited() {
     ResolveResult[] targets = multiResolve();
-    assertEquals(2, targets.length); // to class, to init
+    assertEquals(1, targets.length); // to class, to init
     PsiElement elt;
     // class
     elt = targets[0].getElement();
     assertTrue(elt instanceof PyClass);
     assertEquals("Bar", ((PyClass)elt).getName());
-    // init
-    elt = targets[1].getElement();
-    assertTrue(elt instanceof PyFunction);
-    PyFunction fun = (PyFunction)elt;
-    assertEquals(PyNames.INIT, fun.getName());
-    PyClass cls = fun.getContainingClass();
-    assertNotNull(cls);
-    assertEquals("Foo", cls.getName());
   }
 
   // NOTE: maybe this test does not belong exactly here; still it's the best place currently.

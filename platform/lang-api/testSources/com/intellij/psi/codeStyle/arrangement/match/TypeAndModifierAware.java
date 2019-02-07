@@ -20,7 +20,6 @@ import com.intellij.psi.codeStyle.arrangement.TypeAwareArrangementEntry;
 
 /**
  * @author Denis Zhdanov
- * @since 9/28/12 12:13 PM
  */
 public interface TypeAndModifierAware extends TypeAwareArrangementEntry, ModifierAwareArrangementEntry {
 }

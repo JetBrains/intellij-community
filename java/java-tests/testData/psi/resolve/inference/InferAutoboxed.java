@@ -4,6 +4,6 @@ class C {
   }
 
     void n () {
-       <ref>m(10);
+       <caret>m(10);
     }
 }

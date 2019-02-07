@@ -8,6 +8,7 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.engine.ReferringObjectsProvider;
 import com.intellij.debugger.ui.impl.watch.FieldDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
@@ -27,20 +28,37 @@ import java.util.List;
 
 public class JavaReferringObjectsValue extends JavaValue {
   private static final long MAX_REFERRING = 100;
+  private final ReferringObjectsProvider myReferringObjectsProvider;
   private final boolean myIsField;
 
   private JavaReferringObjectsValue(@Nullable JavaValue parent,
                                     @NotNull ValueDescriptorImpl valueDescriptor,
                                     @NotNull EvaluationContextImpl evaluationContext,
+                                    @NotNull ReferringObjectsProvider referringObjectsProvider,
                                     NodeManagerImpl nodeManager,
                                     boolean isField) {
     super(parent, valueDescriptor, evaluationContext, nodeManager, false);
+    myReferringObjectsProvider = referringObjectsProvider;
     myIsField = isField;
   }
 
-  public JavaReferringObjectsValue(@NotNull JavaValue javaValue, boolean isField) {
+  public JavaReferringObjectsValue(@NotNull JavaValue javaValue,
+                                   @NotNull ReferringObjectsProvider referringObjectsProvider,
+                                   boolean isField) {
     super(null, javaValue.getName(), javaValue.getDescriptor(), javaValue.getEvaluationContext(), javaValue.getNodeManager(), false);
+    myReferringObjectsProvider = referringObjectsProvider;
     myIsField = isField;
+  }
+
+  @Nullable
+  @Override
+  public XReferrersProvider getReferrersProvider() {
+    return new XReferrersProvider() {
+      @Override
+      public XValue getReferringObjectsValue() {
+        return new JavaReferringObjectsValue(JavaReferringObjectsValue.this, myReferringObjectsProvider, false);
+      }
+    };
   }
 
   @Override
@@ -59,7 +77,7 @@ public class JavaReferringObjectsValue extends JavaValue {
 
           List<ObjectReference> references;
           try {
-            references = ((ObjectReference)value).referringObjects(MAX_REFERRING);
+            references = myReferringObjectsProvider.getReferringObjects((ObjectReference)value, MAX_REFERRING);
           } catch (ObjectCollectedException e) {
             node.setErrorMessage(DebuggerBundle.message("evaluation.error.object.collected"));
             return;
@@ -76,7 +94,8 @@ public class JavaReferringObjectsValue extends JavaValue {
                   return reference;
                 }
               };
-              children.add(new JavaReferringObjectsValue(null, descriptor, getEvaluationContext(), getNodeManager(), true));
+              children.add(new JavaReferringObjectsValue(null, descriptor, getEvaluationContext(),
+                                                         myReferringObjectsProvider, getNodeManager(), true));
               i++;
             }
             else {
@@ -96,7 +115,8 @@ public class JavaReferringObjectsValue extends JavaValue {
                   return null;
                 }
               };
-              children.add("Referrer " + i++, new JavaReferringObjectsValue(null, descriptor, getEvaluationContext(), getNodeManager(), false));
+              children.add("Referrer " + i++, new JavaReferringObjectsValue(null, descriptor, getEvaluationContext(),
+                                                                            myReferringObjectsProvider, getNodeManager(), false));
             }
           }
 

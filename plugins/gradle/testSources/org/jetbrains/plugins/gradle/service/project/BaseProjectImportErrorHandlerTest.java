@@ -26,7 +26,6 @@ import static org.junit.Assert.assertTrue;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/16/13
  */
 public class BaseProjectImportErrorHandlerTest {
   private BaseProjectImportErrorHandler myErrorHandler;

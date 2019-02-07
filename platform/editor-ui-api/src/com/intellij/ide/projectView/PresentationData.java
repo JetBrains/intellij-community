@@ -338,6 +338,6 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
 
   @Override
   public String getLocationSuffix() {
-    return StringUtil.notNullize(myLocationSuffix, "");
+    return StringUtil.notNullize(myLocationSuffix);
   }
 }

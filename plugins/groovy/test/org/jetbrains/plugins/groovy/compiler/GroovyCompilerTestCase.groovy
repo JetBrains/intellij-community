@@ -207,7 +207,8 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
     def output = StringUtil.convertLineSeparators(sb.toString().trim()).readLines()
     output = output.findAll { line ->
       !StringUtil.containsIgnoreCase(line, "illegal") &&
-      !line.contains("consider reporting this to the maintainers of org.codehaus.groovy.reflection.CachedClass")
+      !line.contains("consider reporting this to the maintainers of org.codehaus.groovy.reflection.CachedClass") &&
+      !line.startsWith("Picked up ")
     }
     assertEquals(expected.trim(), output.join("\n"))
   }

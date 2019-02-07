@@ -15,8 +15,10 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -25,7 +27,7 @@ import com.intellij.util.ObjectUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.util.*;
 
 public class StatementExtractor {
   private static final Node EMPTY = new Node(null) {
@@ -68,8 +70,27 @@ public class StatementExtractor {
     PsiExpression parent;
     while (expression != root) {
       PsiElement parentElement = expression.getParent();
-      if(parentElement instanceof PsiExpressionList) {
+      if (parentElement instanceof PsiExpressionList) {
         parentElement = parentElement.getParent();
+      }
+      if (parentElement instanceof PsiStatement) {
+        PsiSwitchExpression switchExpression =
+          PsiTreeUtil.getParentOfType(parentElement, PsiSwitchExpression.class, true, PsiMember.class, PsiLambdaExpression.class);
+        if (switchExpression != null && PsiTreeUtil.isAncestor(root, switchExpression, false)) {
+          boolean isBreak =
+            parentElement instanceof PsiBreakStatement && ((PsiBreakStatement)parentElement).findExitedElement() == switchExpression;
+          boolean isRuleExpression =
+            parentElement instanceof PsiExpressionStatement && parentElement.getParent() instanceof PsiSwitchLabeledRuleStatement &&
+            ((PsiSwitchLabeledRuleStatement)parentElement.getParent()).getEnclosingSwitchBlock() == switchExpression;
+          if (isBreak || isRuleExpression) {
+            result = new Switch(switchExpression, Collections.singletonMap((PsiStatement)parentElement, result));
+          }
+          else {
+            result = new Switch(switchExpression, Collections.emptyMap());
+          }
+          expression = switchExpression;
+          continue;
+        }
       }
       parent = ObjectUtils.tryCast(parentElement, PsiExpression.class);
       if (parent == null) {
@@ -156,7 +177,7 @@ public class StatementExtractor {
       PsiPolyadicExpression condition = (PsiPolyadicExpression)myCondition;
       PsiExpression[] operands = condition.getOperands();
       String joiner = (condition.getOperationTokenType() == JavaTokenType.ANDAND) != invert ? "&&" : "||";
-      return StreamEx.of(operands, 0, myLimit).map(invert ? condition1 -> BoolUtils.getNegatedExpressionText(condition1)
+      return StreamEx.of(operands, 0, myLimit).map(invert ? BoolUtils::getNegatedExpressionText
                                                           : PsiExpression::getText)
         .joining(joiner);
     }
@@ -202,6 +223,112 @@ public class StatementExtractor {
 
     public String toString() {
       return myAnchor.getText() + ";";
+    }
+  }
+
+  private static class Switch extends Node {
+    private static final Key<Node> NODE_KEY = Key.create("SwitchNode");
+
+    private final @NotNull Map<PsiStatement, Node> myReturns;
+
+    private Switch(@NotNull PsiSwitchExpression expression, @NotNull Map<PsiStatement, Node> sideEffectReturns) {
+      super(expression);
+      myReturns = sideEffectReturns;
+    }
+
+    @Override
+    public Node prepend(Node node) {
+      if (node.myAnchor == null) return this;
+      if (node instanceof Switch && node.myAnchor == myAnchor) {
+        if (myReturns.isEmpty()) return node;
+        if (((Switch)node).myReturns.isEmpty()) return this;
+        Map<PsiStatement, Node> newMap = new HashMap<>(myReturns);
+        ((Switch)node).myReturns.forEach((statement, n) -> newMap.merge(statement, n, Node::prepend));
+        return new Switch((PsiSwitchExpression)myAnchor, newMap);
+      }
+      return new Cons(node, this);
+    }
+
+    @Override
+    public String toString() {
+      myReturns.forEach((statement, node) -> statement.putCopyableUserData(NODE_KEY, node));
+      PsiSwitchExpression copy = (PsiSwitchExpression)myAnchor.copy();
+      Map<PsiStatement, PsiStatement[]> replacementMap = new HashMap<>();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(myAnchor.getProject());
+      PsiCodeBlock body = Objects.requireNonNull(copy.getBody());
+      body.accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitExpressionStatement(PsiExpressionStatement statement) {
+          if (statement.getParent() instanceof PsiSwitchLabeledRuleStatement &&
+              ((PsiSwitchLabeledRuleStatement)statement.getParent()).getEnclosingSwitchBlock() == copy) {
+            process(statement);
+          }
+        }
+
+        @Override
+        public void visitBreakStatement(PsiBreakStatement statement) {
+          if (statement.getValueExpression() != null && statement.findExitedElement() == copy) {
+            process(statement);
+          }
+        }
+
+        @Override
+        public void visitExpression(PsiExpression expression) {
+          // Do not go into any expressions
+        }
+
+        private void process(PsiStatement statement) {
+          Node data = statement.getCopyableUserData(NODE_KEY);
+          if (data == null) {
+            replacementMap.put(statement, PsiStatement.EMPTY_ARRAY);
+          }
+          else {
+            replacementMap.put(statement, factory.createCodeBlockFromText("{" + data + "}", statement).getStatements());
+          }
+        }
+      });
+      replacementMap.forEach((statement, replacements) -> {
+        boolean keep = statement instanceof PsiBreakStatement && shouldKeepBreak(statement);
+        if (!keep && replacements.length == 1) {
+          statement.replace(replacements[0]);
+        }
+        else {
+          if (!keep || replacements.length > 0) {
+            if (!(statement.getParent() instanceof PsiCodeBlock)) {
+              statement = BlockUtils.expandSingleStatementToBlockStatement(statement);
+            }
+            PsiElement parent = statement.getParent();
+            for (PsiStatement replacement : replacements) {
+              parent.addBefore(replacement, statement);
+            }
+          }
+          if (keep) {
+            Objects.requireNonNull(((PsiBreakStatement)statement).getValueExpression()).delete();
+          }
+          else {
+            statement.delete();
+          }
+        }
+      });
+      return copy.getText();
+    }
+
+    public boolean shouldKeepBreak(PsiStatement statement) {
+      if (PsiTreeUtil.skipWhitespacesAndCommentsForward(statement) instanceof PsiStatement) return true;
+      PsiElement parent = statement.getParent();
+      if (parent instanceof PsiCodeBlock) {
+        PsiElement gParent = parent.getParent();
+        if (gParent instanceof PsiBlockStatement) {
+          return shouldKeepBreak((PsiStatement)gParent);
+        }
+      }
+      else if (parent instanceof PsiLabeledStatement || parent instanceof PsiIfStatement) {
+        return shouldKeepBreak((PsiStatement)parent);
+      }
+      else if (parent instanceof PsiSwitchLabeledRuleStatement) {
+        return false;
+      }
+      return true;
     }
   }
 

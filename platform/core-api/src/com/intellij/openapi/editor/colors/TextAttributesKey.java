@@ -135,7 +135,8 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
    * @return the text attributes.
    */
   public TextAttributes getDefaultAttributes() {
-    if (myDefaultAttributes == null) {
+    TextAttributes defaultAttributes = myDefaultAttributes;
+    if (defaultAttributes == null) {
       final TextAttributeKeyDefaultsProvider provider = ourDefaultsProvider.getValue();
       if (provider != null) {
         Set<String> called = CALLED_RECURSIVELY.get();
@@ -148,7 +149,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
         }
       }
     }
-    return myDefaultAttributes;
+    return defaultAttributes;
   }
 
   /**

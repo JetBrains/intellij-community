@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 10/23/12 4:52 PM
  */
 public class ResetFontSizeAction extends EditorAction {
 

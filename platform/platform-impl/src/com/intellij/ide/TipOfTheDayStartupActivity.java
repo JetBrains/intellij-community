@@ -16,7 +16,6 @@
 package com.intellij.ide;
 
 import com.intellij.ide.util.TipDialog;
-import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -47,7 +46,7 @@ public class TipOfTheDayStartupActivity implements StartupActivity, DumbAware {
       ToolWindowManager.getInstance(project).invokeLater(() -> runImpl(project, delayCount - 1));
     }
     else {
-      FUSApplicationUsageTrigger.getInstance().trigger(TipsOfTheDayUsagesCollector.class, "shown.automatically");
+      TipsOfTheDayUsagesCollector.trigger("shown.automatically");
       TipDialog.showForProject(project);
     }
   }

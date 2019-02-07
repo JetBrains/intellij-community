@@ -52,7 +52,7 @@ public class Main {
       assertTrue(ComparisonUtil.isEquals(codeText.unifyCode(),
                                          editorCode!!.unifyCode(),
                                          ComparisonPolicy.TRIM_WHITESPACES))
-      closeProject()
+      closeProjectAndWaitWelcomeFrame()
     }
   }
 

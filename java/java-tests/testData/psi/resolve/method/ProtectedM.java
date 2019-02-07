@@ -5,6 +5,6 @@ class Xc extends JComponent {
     JComponent component;
 
     protected void paintComponent(final Graphics g) {
-        component.<ref>paintComponent(g);
+        component.<caret>paintComponent(g);
     }
 }

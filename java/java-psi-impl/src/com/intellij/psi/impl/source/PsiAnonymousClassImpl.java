@@ -183,6 +183,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
     }
   }
 
+  @Override
   public String toString() {
     return "PsiAnonymousClass";
   }

@@ -6,10 +6,7 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.changes.committed.MockDelayingChangeProvider;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
@@ -25,7 +22,7 @@ import java.util.Collection;
 public class DuringChangeListManagerUpdateTestScheme {
   private final MockDelayingChangeProvider myChangeProvider;
   private final VcsDirtyScopeManager myDirtyScopeManager;
-  private final ChangeListManager myClManager;
+  private final ChangeListManagerImpl myClManager;
 
   /**
    * call in setUp
@@ -52,7 +49,7 @@ public class DuringChangeListManagerUpdateTestScheme {
     assert roots.length == 1 : Arrays.asList(roots) + "; " + vcs.getName() + "; " + Arrays.toString(AllVcses.getInstance(project).getAll());
 
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
-    myClManager = ChangeListManager.getInstance(project);
+    myClManager = ChangeListManagerImpl.getInstanceImpl(project);
   }
 
   public void doTest(final Runnable runnable) {
@@ -63,7 +60,7 @@ public class DuringChangeListManagerUpdateTestScheme {
     waiter.setControlled(test);
 
     myDirtyScopeManager.markEverythingDirty();
-    myClManager.ensureUpToDate(false);
+    myClManager.ensureUpToDate();
     waiter.startTimeout();
 
     if (test.getException() != null) {

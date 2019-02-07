@@ -1,0 +1,12 @@
+pluginManagement {
+  repositories {
+    maven {
+      url = 'https://cache-redirector.jetbrains.com/plugins.gradle.org'
+    }
+    maven {
+      url = 'https://cache-redirector.jetbrains.com/jcenter.bintray.com'
+    }
+  }
+}
+
+rootProject.name = 'androidSdkUpload'

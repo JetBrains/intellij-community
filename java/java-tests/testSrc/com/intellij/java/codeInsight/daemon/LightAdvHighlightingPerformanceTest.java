@@ -64,6 +64,9 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     try {
       Disposer.dispose(my);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

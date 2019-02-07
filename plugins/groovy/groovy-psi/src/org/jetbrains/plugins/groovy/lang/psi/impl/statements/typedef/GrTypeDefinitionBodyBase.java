@@ -44,6 +44,7 @@ public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptySt
   @Override
   public abstract void accept(@NotNull GroovyElementVisitor visitor);
 
+  @Override
   public String toString() {
     return "Type definition body";
   }
@@ -51,7 +52,7 @@ public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptySt
   @NotNull
   @Override
   public GrField[] getFields() {
-    GrVariableDeclaration[] declarations = getStubOrPsiChildren(GroovyElementTypes.VARIABLE_DEFINITION, GrVariableDeclaration.ARRAY_FACTORY);
+    GrVariableDeclaration[] declarations = getStubOrPsiChildren(GroovyElementTypes.VARIABLE_DECLARATION, GrVariableDeclaration.ARRAY_FACTORY);
     List<GrField> result = ContainerUtil.newArrayList();
     for (GrVariableDeclaration declaration : declarations) {
       GrVariable[] variables = declaration.getVariables();
@@ -203,7 +204,7 @@ public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptySt
     ASTNode next;
     for (ASTNode child = first; child != afterLast; child = next) {
       next = child.getTreeNext();
-      if (child.getElementType() == GroovyElementTypes.CONSTRUCTOR_DEFINITION) {
+      if (child.getElementType() == GroovyElementTypes.CONSTRUCTOR) {
         ASTNode oldIdentifier = child.findChildByType(GroovyTokenTypes.mIDENT);
         ASTNode newIdentifier = ((GrTypeDefinition)getParent()).getNameIdentifierGroovy().getNode().copyElement();
         child.replaceChild(oldIdentifier, newIdentifier);

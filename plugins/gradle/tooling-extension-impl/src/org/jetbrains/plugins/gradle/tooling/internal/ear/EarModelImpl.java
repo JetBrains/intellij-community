@@ -23,7 +23,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/10/2015
  */
 public class EarModelImpl implements EarConfiguration.EarModel {
   @NotNull

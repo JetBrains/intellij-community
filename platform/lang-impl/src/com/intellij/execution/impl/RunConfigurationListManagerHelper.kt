@@ -233,10 +233,10 @@ internal inline fun Collection<RunnerAndConfigurationSettings>.forEachManaged(ha
 }
 
 internal fun compareTypesForUi(type1: ConfigurationType, type2: ConfigurationType): Int {
-  when {
-    type1 === type2 -> return 0
-    type1 === UnknownConfigurationType.getInstance() -> return 1
-    type2 === UnknownConfigurationType.getInstance() -> return -1
-    else -> return NaturalComparator.INSTANCE.compare(type1.displayName, type2.displayName)
+  return when {
+    type1 === type2 -> 0
+    type1 === UnknownConfigurationType.getInstance() -> 1
+    type2 === UnknownConfigurationType.getInstance() -> -1
+    else -> NaturalComparator.INSTANCE.compare(type1.displayName, type2.displayName)
   }
 }

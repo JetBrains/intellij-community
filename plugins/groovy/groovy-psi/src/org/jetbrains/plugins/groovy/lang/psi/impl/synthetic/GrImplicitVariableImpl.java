@@ -41,6 +41,7 @@ public class GrImplicitVariableImpl extends LightVariableBase implements GrImpli
     return new GrLightModifierList(this);
   }
 
+  @Override
   public String toString() {
     return "Specific implicit variable: " + getName();
   }

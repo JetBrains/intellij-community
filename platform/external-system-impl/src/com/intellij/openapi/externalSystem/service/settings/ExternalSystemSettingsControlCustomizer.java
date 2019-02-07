@@ -17,7 +17,6 @@ package com.intellij.openapi.externalSystem.service.settings;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/24/2015
  */
 public class ExternalSystemSettingsControlCustomizer {
 

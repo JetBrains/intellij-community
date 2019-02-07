@@ -30,8 +30,6 @@ public interface PsiClassStub<T extends PsiClass> extends PsiMemberStub<T> {
   @Nullable
   String getBaseClassReferenceText();
 
-  boolean hasDeprecatedAnnotation();
-
   boolean isInterface();
 
   boolean isEnum();

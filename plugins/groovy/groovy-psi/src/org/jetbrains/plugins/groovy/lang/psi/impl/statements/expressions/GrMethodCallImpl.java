@@ -4,6 +4,8 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
+import com.intellij.openapi.util.AtomicNullableLazyValue;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -14,8 +16,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunnerKt;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
+import org.jetbrains.plugins.groovy.lang.resolve.impl.GrImplicitCallReference;
+
+import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.LOG;
 
 /**
  * @author Maxim.Medvedev
@@ -26,14 +32,22 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
     super(node);
   }
 
+  private final NullableLazyValue<GroovyMethodCallReference> myImplicitCallReference = AtomicNullableLazyValue.createValue(
+    () -> PsiImplUtilKt.isImplicitCall(this) ? new GrImplicitCallReference(this) : null
+  );
+
+  @Nullable
+  @Override
+  public GroovyMethodCallReference getImplicitCallReference() {
+    return myImplicitCallReference.getValue();
+  }
+
   @Override
   @NotNull
   public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
     final GrExpression invoked = getInvokedExpression();
     if (!(invoked instanceof GrReferenceExpression)) return GroovyResolveResult.EMPTY_ARRAY;
-    if (((GrReferenceExpression)invoked).hasMemberPointer()) return ((GrReferenceExpression)invoked).multiResolve(true);
-
-    return GrReferenceResolveRunnerKt.getCallVariants(((GrReferenceExpression)invoked), upToArgument);
+    return ((GrReferenceExpression)invoked).multiResolve(true);
   }
 
   @Override
@@ -56,9 +70,18 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
   @NotNull
   @Override
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    GrExpression expression = getInvokedExpression();
-    if (!(expression instanceof GrReferenceExpression)) return GroovyResolveResult.EMPTY_ARRAY;
-    return ((GrReferenceExpression)expression).multiResolve(incompleteCode);
+    final GroovyMethodCallReference implicitCallReference = myImplicitCallReference.getValue();
+    if (implicitCallReference != null) {
+      return implicitCallReference.multiResolve(incompleteCode);
+    }
+    final GrExpression invokedExpression = getInvokedExpression();
+    if (invokedExpression instanceof GrReferenceExpression) {
+      return ((GrReferenceExpression)invokedExpression).multiResolve(incompleteCode);
+    }
+    else {
+      LOG.error("Invoked expression is not a reference expression and there is no implicit call reference: '" + getText() + "'");
+      return GroovyResolveResult.EMPTY_ARRAY;
+    }
   }
 
   @Override

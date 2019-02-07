@@ -17,7 +17,6 @@ package com.intellij.openapi.externalSystem.model.project;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/14/2015
  */
 public interface ProjectCoordinate {
   String getGroupId();

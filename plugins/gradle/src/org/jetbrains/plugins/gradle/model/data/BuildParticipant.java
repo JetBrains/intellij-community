@@ -14,7 +14,6 @@ import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/18/2017
  */
 @Tag("build")
 public class BuildParticipant implements Serializable {

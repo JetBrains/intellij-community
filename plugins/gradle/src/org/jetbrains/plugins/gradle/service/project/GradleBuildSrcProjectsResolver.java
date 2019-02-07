@@ -28,6 +28,7 @@ import java.util.*;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
+import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.BUILD_SRC_NAME;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getDefaultModuleTypeId;
 
 /**
@@ -144,10 +145,9 @@ public class GradleBuildSrcProjectsResolver {
       myResolverContext.copyUserDataTo(buildSrcResolverCtx);
       String buildName = buildNames.get(buildPath);
 
-      ModuleData moduleData = includedModulesPaths.get(buildPath);
-      String buildSrcGroup = getBuildSrcGroup(buildPath, buildName, moduleData);
+      String buildSrcGroup = getBuildSrcGroup(buildPath, buildName);
 
-      buildSrcResolverCtx.setDefaultGroupId(buildSrcGroup);
+      buildSrcResolverCtx.setBuildSrcGroup(buildSrcGroup);
       handleBuildSrcProject(mainBuildProjectDataNode,
                             buildName,
                             buildClasspathNodes,
@@ -175,7 +175,7 @@ public class GradleBuildSrcProjectsResolver {
 
     if (buildSrcResolverCtx.isPreviewMode()) {
       ModuleData buildSrcModuleData =
-        new ModuleData(":buildSrc", GradleConstants.SYSTEM_ID, getDefaultModuleTypeId(), "buildSrc", projectPath, projectPath);
+        new ModuleData(":buildSrc", GradleConstants.SYSTEM_ID, getDefaultModuleTypeId(), BUILD_SRC_NAME, projectPath, projectPath);
       buildSrcModuleData.setProperty(BUILD_SRC_MODULE_PROPERTY, "true");
       resultProjectDataNode.createChild(ProjectKeys.MODULE, buildSrcModuleData);
       return;
@@ -193,7 +193,7 @@ public class GradleBuildSrcProjectsResolver {
     for (DataNode<ModuleData> moduleNode : getChildren(buildSrcProjectDataNode, ProjectKeys.MODULE)) {
       final ModuleData moduleData = moduleNode.getData();
       buildSrcModules.put(moduleData.getId(), moduleNode);
-      boolean isBuildSrcModule = "buildSrc".equals(moduleData.getExternalName());
+      boolean isBuildSrcModule = BUILD_SRC_NAME.equals(moduleData.getExternalName());
 
       if (isBuildSrcModule && !modulePerSourceSet) {
         buildSrcModuleNode = moduleNode;
@@ -286,17 +286,11 @@ public class GradleBuildSrcProjectsResolver {
   }
 
   @NotNull
-  private static String getBuildSrcGroup(String buildPath, String buildName, ModuleData moduleData) {
-    String buildSrcGroup = null;
-    if (moduleData != null) {
-      buildSrcGroup = moduleData.getGroup();
+  private static String getBuildSrcGroup(String buildPath, String buildName) {
+    if (isEmpty(buildName)) {
+      return new File(buildPath).getName();
+    } else {
+      return buildName;
     }
-    if (isEmpty(buildSrcGroup)) {
-      buildSrcGroup = buildName;
-    }
-    if (isEmpty(buildSrcGroup)) {
-      buildSrcGroup = new File(buildPath).getName();
-    }
-    return buildSrcGroup;
   }
 }

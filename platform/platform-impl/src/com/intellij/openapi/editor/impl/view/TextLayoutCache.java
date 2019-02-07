@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.containers.FixedHashMap;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -36,11 +35,22 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   private ArrayList<LineLayout> myLines = new ArrayList<>();
   private int myDocumentChangeOldEndLine;
 
-  private Map<LineLayout.Chunk, Object> myLaidOutChunks;
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+  private LinkedHashMap<LineLayout.Chunk, Object> myLaidOutChunks =
+    new LinkedHashMap<LineLayout.Chunk, Object>(MAX_CHUNKS_IN_ACTIVE_EDITOR, 0.75f, true) {
+      @Override
+      protected boolean removeEldestEntry(Map.Entry<LineLayout.Chunk, Object> eldest) {
+        if (size() > getChunkCacheSizeLimit()) {
+          if (LOG.isDebugEnabled()) LOG.debug("Clearing chunk for " + myView.getEditor().getVirtualFile());
+          eldest.getKey().clearCache();
+          return true;
+        }
+        return false;
+      }
+    };
 
   TextLayoutCache(EditorView view) {
     myView = view;
-    myLaidOutChunks = new FixedHashMap<>(getChunkCacheSizeLimit(), MAX_CHUNKS_IN_ACTIVE_EDITOR, 0.75f, true);
     myDocument = view.getEditor().getDocument();
     myDocument.addDocumentListener(this, this);
     myBidiNotRequiredMarker = LineLayout.create(view, "", Font.PLAIN);

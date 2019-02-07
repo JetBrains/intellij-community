@@ -70,12 +70,14 @@ public class TestIntegrationUtils {
         return null;
       }
     };
+    @NotNull
     private final String myDefaultName;
 
-    MethodKind(String defaultName) {
+    MethodKind(@NotNull String defaultName) {
       myDefaultName = defaultName;
     }
 
+    @NotNull
     public String getDefaultName() {
       return myDefaultName;
     }

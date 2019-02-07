@@ -28,26 +28,22 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.ConcurrentFactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author peter
  */
 public class GradleClassFinder extends NonClasspathClassFinder {
   @NotNull private final GradleBuildClasspathManager myBuildClasspathManager;
-  private final Map<String, PackageDirectoryCache> myCaches;
 
   public GradleClassFinder(@NotNull Project project, @NotNull GradleBuildClasspathManager buildClasspathManager) {
     super(project, JavaFileType.DEFAULT_EXTENSION, GroovyFileType.DEFAULT_EXTENSION);
     myBuildClasspathManager = buildClasspathManager;
-    myCaches = ConcurrentFactoryMap.createMap(path -> createCache(myBuildClasspathManager.getModuleClasspathEntries(path)));
   }
 
   @Override
@@ -59,7 +55,7 @@ public class GradleClassFinder extends NonClasspathClassFinder {
   @Override
   protected PackageDirectoryCache getCache(@Nullable GlobalSearchScope scope) {
     if (scope instanceof ExternalModuleBuildGlobalSearchScope) {
-      return myCaches.get(((ExternalModuleBuildGlobalSearchScope)scope).getExternalModulePath());
+      return myBuildClasspathManager.getClassFinderCache().get(((ExternalModuleBuildGlobalSearchScope)scope).getExternalModulePath());
     }
     return super.getCache(scope);
   }
@@ -67,7 +63,7 @@ public class GradleClassFinder extends NonClasspathClassFinder {
   @Override
   public void clearCache() {
     super.clearCache();
-    myCaches.clear();
+    myBuildClasspathManager.getClassFinderCache().clear();
   }
 
   @Override
@@ -81,8 +77,7 @@ public class GradleClassFinder extends NonClasspathClassFinder {
     VirtualFile file = containingFile != null ? containingFile.getVirtualFile() : null;
     return file != null &&
            !ProjectFileIndex.SERVICE.getInstance(myProject).isInContent(file) &&
-           !ProjectFileIndex.SERVICE.getInstance(myProject).isInLibraryClasses(file) &&
-           !ProjectFileIndex.SERVICE.getInstance(myProject).isInLibrarySource(file) ? aClass : null;
+           !ProjectFileIndex.SERVICE.getInstance(myProject).isInLibrary(file) ? aClass : null;
   }
 
   @NotNull

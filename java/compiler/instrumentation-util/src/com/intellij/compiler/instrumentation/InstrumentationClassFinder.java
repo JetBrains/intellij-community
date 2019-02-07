@@ -666,10 +666,9 @@ public class InstrumentationClassFinder {
       private ZipFile doGetZipFile() throws IOException {
         if (FILE_PROTOCOL.equals(myURL.getProtocol())) {
           String s = unescapePercentSequences(myURL.getFile().replace('/', File.separatorChar));
-          if (!new File(s).exists()) {
-            throw new FileNotFoundException(s);
+          if (new File(s).exists()) {
+            return new ZipFile(s);
           }
-          return new ZipFile(s);
         }
 
         return null;

@@ -150,12 +150,6 @@ class _TreeManager(object):
         parent = self._get_node_id(self.parent_branch) if self.parent_branch else "0"
         return str(current), str(parent)
 
-    def close_all(self):
-        if not self.current_branch:
-            return None
-        return "close", self.current_branch
-
-
 TREE_MANAGER = _TreeManager()
 
 _old_service_messages = messages.TeamcityServiceMessages
@@ -385,12 +379,6 @@ def jb_start_tests():
         pass
     return namespace.path, namespace.target, additional_args
 
-
-def _close_all_tests():
-    NewTeamcityServiceMessages().close_all()
-
-
-atexit.register(_close_all_tests)
 
 
 def jb_doc_args(framework_name, args):

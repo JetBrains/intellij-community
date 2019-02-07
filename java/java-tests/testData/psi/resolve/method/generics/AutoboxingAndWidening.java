@@ -5,7 +5,7 @@ public class Foo {
 
 
     {
-       <ref>foo(1L);
+       <caret>foo(1L);
     }
 
 }

@@ -15,6 +15,8 @@
  */
 package com.intellij.java.psi.codeStyle.arrangement
 
+import groovy.transform.CompileStatic
+
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PACKAGE_PRIVATE
 
@@ -22,6 +24,7 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Mo
  * @author Denis Zhdanov
  * @since 8/30/12 12:14 PM
  */
+@CompileStatic
 class JavaRearrangerBlankLinesTest extends AbstractJavaRearrangerTest {
 
   void testPreserveRelativeBlankLines() {

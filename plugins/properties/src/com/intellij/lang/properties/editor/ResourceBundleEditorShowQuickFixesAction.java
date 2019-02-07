@@ -55,7 +55,7 @@ public class ResourceBundleEditorShowQuickFixesAction extends AnAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     final ResourceBundleEditor editor = getEditor(e);
     LOG.assertTrue(editor != null);
-    final ResourceBundlePropertyStructureViewElement element = (ResourceBundlePropertyStructureViewElement)editor.getSelectedElementIfOnlyOne();
+    final PropertyStructureViewElement element = (PropertyStructureViewElement)editor.getSelectedElementIfOnlyOne();
     LOG.assertTrue(element != null);
 
     final PsiFile file = editor.getResourceBundle().getDefaultPropertiesFile().getContainingFile();
@@ -97,7 +97,7 @@ public class ResourceBundleEditorShowQuickFixesAction extends AnAction {
   public void update(@NotNull AnActionEvent e) {
     final ResourceBundleEditor editor = getEditor(e);
     e.getPresentation().setEnabledAndVisible(editor != null &&
-                                             editor.getSelectedElementIfOnlyOne() instanceof ResourceBundlePropertyStructureViewElement);
+                                             editor.getSelectedElementIfOnlyOne() instanceof PropertyStructureViewElement);
   }
 
   private static ResourceBundleEditor getEditor(@NotNull AnActionEvent e) {

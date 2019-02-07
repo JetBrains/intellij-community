@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.psi.PsiElement;
@@ -414,18 +415,14 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     if ("@@BUILD_NUMBER@@".equals(remoteVersion)) {
       remoteVersion = currentBuild;
     }
-    else if (remoteVersion.startsWith("PY-")) {
-      remoteVersion = remoteVersion.substring(3);
-    }
-    else {
-      remoteVersion = null;
-    }
+    else remoteVersion = StringUtil.trimStart(remoteVersion, "PY-");
     printToConsole("Connected to pydev debugger (build " + remoteVersion + ")\n", ConsoleViewContentType.SYSTEM_OUTPUT);
 
     if (remoteVersion != null) {
       if (!(remoteVersion.equals(currentBuild) || remoteVersion.startsWith(currentBuild))) {
         LOG.warn(String.format("Wrong debugger version. Remote version: %s Current build: %s", remoteVersion, currentBuild));
-        printToConsole("Warning: wrong debugger version. Use pycharm-debugger.egg from PyCharm installation folder.\n",
+        printToConsole(String.format("Warning: wrong debugger version. Use pycharm-debugger.egg from PyCharm installation folder\n" +
+                       "Or execute: 'pip install pydevd-pycharm~=%s'\n", currentBuild),
                        ConsoleViewContentType.ERROR_OUTPUT);
       }
     }

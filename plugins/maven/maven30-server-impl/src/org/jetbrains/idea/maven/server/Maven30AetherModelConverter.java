@@ -32,7 +32,6 @@ import java.util.*;
  * {@link Maven30AetherModelConverter} provides adapted methods of {@link MavenModelConverter} for aether models conversion
  *
  * @author Vladislav.Soroka
- * @since 9/24/2014
  */
 public class Maven30AetherModelConverter extends MavenModelConverter {
 

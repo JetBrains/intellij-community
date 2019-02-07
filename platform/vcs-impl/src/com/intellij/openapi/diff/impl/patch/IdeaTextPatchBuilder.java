@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsOutgoingChangesProvider;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.ex.PartialCommitHelper;
 import com.intellij.openapi.vcs.impl.PartialChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
@@ -29,8 +30,9 @@ public class IdeaTextPatchBuilder {
   private IdeaTextPatchBuilder() {
   }
 
-  public static List<BeforeAfter<AirContentRevision>> revisionsConvertor(@NotNull Project project,
-                                                                         @NotNull List<? extends Change> changes) throws VcsException {
+  private static List<BeforeAfter<AirContentRevision>> revisionsConvertor(@NotNull Project project,
+                                                                          @NotNull List<? extends Change> changes,
+                                                                          boolean honorExcludedFromCommit) throws VcsException {
     final List<BeforeAfter<AirContentRevision>> result = new ArrayList<>(changes.size());
     Map<VcsRoot, List<Change>> byRoots =
       groupByRoots(project, changes, change -> chooseNotNull(getBeforePath(change), getAfterPath(change)));
@@ -39,31 +41,33 @@ public class IdeaTextPatchBuilder {
       final Collection<Change> rootChanges = byRoots.get(root);
 
       if (root.getVcs() == null || root.getVcs().getOutgoingChangesProvider() == null) {
-        addConvertChanges(project, rootChanges, result, null);
+        addConvertChanges(project, rootChanges, result, null, honorExcludedFromCommit);
       }
       else {
         final VcsOutgoingChangesProvider<?> provider = root.getVcs().getOutgoingChangesProvider();
         final Collection<Change> basedOnLocal = provider.filterLocalChangesBasedOnLocalCommits(rootChanges, root.getPath());
         rootChanges.removeAll(basedOnLocal);
 
-        addConvertChanges(project, rootChanges, result, null);
-        addConvertChanges(project, basedOnLocal, result, provider);
+        addConvertChanges(project, rootChanges, result, null, honorExcludedFromCommit);
+        addConvertChanges(project, basedOnLocal, result, provider, honorExcludedFromCommit);
       }
     }
     return result;
   }
 
   private static void addConvertChanges(@NotNull Project project,
-                                        @NotNull Collection<Change> changes,
-                                        @NotNull List<BeforeAfter<AirContentRevision>> result,
-                                        @Nullable VcsOutgoingChangesProvider<?> provider) {
-    List<Change> otherChanges = PartialChangesUtil.processPartialChanges(project, changes, false, (partialChanges, tracker) -> {
+                                        @NotNull Collection<? extends Change> changes,
+                                        @NotNull List<? super BeforeAfter<AirContentRevision>> result,
+                                        @Nullable VcsOutgoingChangesProvider<?> provider,
+                                        boolean honorExcludedFromCommit) {
+    Collection<Change> otherChanges = PartialChangesUtil.processPartialChanges(project, changes, false, (partialChanges, tracker) -> {
       if (!tracker.hasPartialChangesToCommit()) return false;
 
       List<String> changelistIds = ContainerUtil.map(partialChanges, ChangeListChange::getChangeListId);
       Change change = partialChanges.get(0).getChange();
 
-      String actualText = tracker.getPartiallyAppliedContent(Side.LEFT, changelistIds);
+      PartialCommitHelper helper = tracker.handlePartialCommit(Side.LEFT, changelistIds, honorExcludedFromCommit);
+      String actualText = helper.getContent();
 
       result.add(new BeforeAfter<>(convertRevision(change.getBeforeRevision(), null, provider),
                                    convertRevision(change.getAfterRevision(), actualText, provider)));
@@ -77,11 +81,24 @@ public class IdeaTextPatchBuilder {
   }
 
   @NotNull
-  public static List<FilePatch> buildPatch(final Project project, final Collection<? extends Change> changes, final String basePath, final boolean reversePatch) throws VcsException {
+  public static List<FilePatch> buildPatch(Project project,
+                                           Collection<? extends Change> changes,
+                                           String basePath,
+                                           boolean reversePatch) throws VcsException {
+    return buildPatch(project, changes, basePath, reversePatch, false);
+  }
+
+  @NotNull
+  public static List<FilePatch> buildPatch(Project project,
+                                           Collection<? extends Change> changes,
+                                           String basePath,
+                                           boolean reversePatch,
+                                           boolean honorExcludedFromCommit) throws VcsException {
     final Collection<BeforeAfter<AirContentRevision>> revisions;
     if (project != null) {
-      revisions = revisionsConvertor(project, new ArrayList<>(changes));
-    } else {
+      revisions = revisionsConvertor(project, new ArrayList<>(changes), honorExcludedFromCommit);
+    }
+    else {
       revisions = new ArrayList<>(changes.size());
       for (Change change : changes) {
         revisions.add(new BeforeAfter<>(convertRevision(change.getBeforeRevision()),

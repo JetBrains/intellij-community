@@ -18,7 +18,7 @@ import java.io.File;
 /**
  * @author peter
  */
-public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase{
+public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase {
   protected JavaCodeInsightTestFixture myFixture;
   protected Module myModule;
 
@@ -53,9 +53,11 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase{
     try {
       myFixture.tearDown();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myFixture = null;
-
       super.tearDown();
     }
   }

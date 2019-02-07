@@ -8,7 +8,6 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
@@ -54,7 +53,7 @@ fun findStubPackage(dir: PsiDirectory,
 
     // see comment about case sensitivity in com.jetbrains.python.psi.resolve.ResolveImportUtil.resolveInDirectory
     if (stubPackage?.name == stubPackageName && (!checkForPackage || PyUtil.isPackage(stubPackage, dir))) {
-      stubPackage.putUserData(STUB_PACKAGE_KEY, true)
+      doTransferStubPackageMarker(stubPackage)
       return stubPackage
     }
   }
@@ -74,8 +73,13 @@ fun transferStubPackageMarker(dir: PsiDirectory, resolvedSubmodule: PsiFile): Ps
  * Puts special mark to dir resolved in stub package.
  */
 fun transferStubPackageMarker(dir: PsiDirectory, resolvedSubdir: PsiDirectory): PsiDirectory {
-  if (dir.getUserData(STUB_PACKAGE_KEY) == true) resolvedSubdir.putUserData(STUB_PACKAGE_KEY, true)
+  if (dir.getUserData(STUB_PACKAGE_KEY) == true) doTransferStubPackageMarker(resolvedSubdir)
   return resolvedSubdir
+}
+
+private fun doTransferStubPackageMarker(resolvedSubdir: PsiDirectory) {
+  resolvedSubdir.putUserData(STUB_PACKAGE_KEY, true)
+  PyUtil.turnDirIntoInit(resolvedSubdir)?.putUserData(STUB_PACKAGE_KEY, true)
 }
 
 /**
@@ -131,14 +135,7 @@ private fun getClassOrContentOrSourceRoot(project: Project, file: VirtualFile): 
   return null
 }
 
-fun stubPackageIsPartial(stubPackageDirectory: PsiDirectory): Boolean {
-  val pyTyped = stubPackageDirectory.findFile("py.typed") ?: return false
-
-  return pyTyped.textLength < "partial".length + 5 &&
-         pyTyped.text.let { it.startsWith("partial") && it.substring("partial".length).all(StringUtil::isLineBreak) }
-}
-
-private fun pyi(element: PsiElement) = element is PyiFile || PyUtil.turnDirIntoInit(element) is PyiFile
+private fun isPyi(element: PsiElement) = element is PyiFile || PyUtil.turnDirIntoInit(element) is PyiFile
 
 private fun isNamespacePackage(element: PsiElement): Boolean {
   if (element is PsiDirectory) {
@@ -155,9 +152,10 @@ private fun isNamespacePackage(element: PsiElement): Boolean {
  */
 private fun resolvedElementPriority(element: PsiElement, module: Module?) = when {
   isNamespacePackage(element) -> Priority.NAMESPACE_PACKAGE
-  isUserFile(element, module) -> if (pyi(element)) Priority.USER_STUB else Priority.USER_CODE
+  isUserFile(element, module) -> if (isPyi(element)) Priority.USER_STUB else Priority.USER_CODE
   isInStubPackage(element) -> Priority.STUB_PACKAGE
   isInTypeShed(element) -> Priority.TYPESHED
+  isPyi(element) -> Priority.PROVIDED_STUB
   isInInlinePackage(element, module) -> Priority.INLINE_PACKAGE
   else -> Priority.OTHER
 }
@@ -170,10 +168,10 @@ private fun isUserFile(element: PsiElement, module: Module?) =
 /**
  * See [findStubPackage] and [transferStubPackageMarker].
  */
-private fun isInStubPackage(element: PsiElement) = element.getUserData(STUB_PACKAGE_KEY) == true
+fun isInStubPackage(element: PsiElement) = element.getUserData(STUB_PACKAGE_KEY) == true
 
 private fun isInTypeShed(element: PsiElement) =
-  pyi(element) && (element as? PsiFileSystemItem)?.virtualFile.let { it != null && PyTypeShed.isInside(it) }
+  isPyi(element) && (element as? PsiFileSystemItem)?.virtualFile.let { it != null && PyTypeShed.isInside(it) }
 
 /**
  * See [https://www.python.org/dev/peps/pep-0561/#packaging-type-information].
@@ -185,7 +183,7 @@ private fun isInInlinePackage(element: PsiElement, module: Module?): Boolean {
   val cached = element.getUserData(INLINE_PACKAGE_KEY)
   if (cached != null) return cached
 
-  val result = !pyi(element) && (element is PyFile || PyUtil.turnDirIntoInit(element) is PyFile) && getPyTyped(element) != null
+  val result = !isPyi(element) && (element is PyFile || PyUtil.turnDirIntoInit(element) is PyFile) && getPyTyped(element) != null
 
   element.putUserData(INLINE_PACKAGE_KEY, result)
   return result
@@ -217,5 +215,12 @@ private fun getPyTyped(element: PsiElement?): VirtualFile? {
  * Order is important, see [filterTopPriorityResults].
  */
 private enum class Priority {
-  USER_STUB, USER_CODE, STUB_PACKAGE, INLINE_PACKAGE, TYPESHED, OTHER, NAMESPACE_PACKAGE
+  USER_STUB, // pyi file located in user's project
+  USER_CODE, // py file located in user's project
+  PROVIDED_STUB, // pyi file provided with installed lib and located inside it
+  STUB_PACKAGE, // pyi file located in some stub package
+  INLINE_PACKAGE, // py file located in some inline package
+  TYPESHED, // pyi file located in typeshed
+  OTHER, // other cases, e.g. py file located inside installed lib
+  NAMESPACE_PACKAGE // namespace package has the lowest priority
 }

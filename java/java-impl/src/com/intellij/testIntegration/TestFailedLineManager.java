@@ -38,7 +38,7 @@ public class TestFailedLineManager implements FileEditorManagerListener {
     PsiClass psiClass = PsiTreeUtil.getParentOfType(psiMethod, PsiClass.class);
     if (psiClass == null) return null;
     TestFramework framework = TestFrameworks.detectFramework(psiClass);
-    if (framework == null || !framework.isTestMethod(psiMethod)) return null;
+    if (framework == null || !framework.isTestMethod(psiMethod, false)) return null;
 
     String url = "java:test://" + ClassUtil.getJVMClassName(psiClass) + "/" + psiMethod.getName();
     TestStateStorage.Record state = myStorage.getState(url);

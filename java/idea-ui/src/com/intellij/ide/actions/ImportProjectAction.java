@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
- * @since 6.11.2012
  */
 public class ImportProjectAction extends ImportModuleAction {
   @Override

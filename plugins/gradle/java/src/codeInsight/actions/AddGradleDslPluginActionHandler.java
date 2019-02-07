@@ -49,7 +49,6 @@ import java.util.List;
 
 /**
 * @author Vladislav.Soroka
-* @since 10/24/13
 */
 class AddGradleDslPluginActionHandler implements CodeInsightActionHandler {
   private final List<? extends Pair<String, String>> myPlugins;

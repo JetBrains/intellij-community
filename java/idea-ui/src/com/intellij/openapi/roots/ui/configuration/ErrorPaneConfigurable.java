@@ -99,7 +99,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
           final String host = url.getHost();
           String path = url.getPath();
           if (path != null && path.startsWith("/")) {
-            path = StringUtil.unescapeXml(path.substring(1));
+            path = StringUtil.unescapeXmlEntities(path.substring(1));
           }
           if (path != null) {
             if ("fix".equals(host)) {

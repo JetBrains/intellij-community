@@ -137,8 +137,8 @@ public final class LwXmlReader {
   public static Object getRequiredPrimitiveTypeValue(final Element element, final String attributeName, final Class valueClass) {
     final String str = getRequiredString(element, attributeName);
     try {
-      final Method method = valueClass.getMethod("valueOf", new Class[]{String.class});
-      return method.invoke(null, new Object[]{str});
+      final Method method = valueClass.getMethod("valueOf", String.class);
+      return method.invoke(null, str);
     }
     catch (NumberFormatException e) {
       throw new IllegalArgumentException("attribute '" + attributeName + "' is not a proper float: " + str);

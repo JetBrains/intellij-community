@@ -58,7 +58,7 @@ public class CDataToTextIntention implements IntentionAction {
     StringBuilder text = new StringBuilder();
     for (ASTNode astNode : cdatas) {
       ASTNode textNode = astNode.getFirstChildNode().getTreeNext();
-      if (textNode != null && textNode.getElementType() != XmlTokenType.XML_CDATA_END) text.append(StringUtil.escapeXml(textNode.getText()));
+      if (textNode != null && textNode.getElementType() != XmlTokenType.XML_CDATA_END) text.append(StringUtil.escapeXmlEntities(textNode.getText()));
     }
 
     editor.getDocument().replaceString(cdatas.get(0).getStartOffset(),

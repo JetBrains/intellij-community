@@ -17,7 +17,6 @@ package com.intellij.openapi.progress.impl;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
@@ -32,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-// Android Studio: b/79582420 We implement AutoClosable to unregister check-cancelled hook.
 public class ProgressSuspender implements AutoCloseable {
   private static final Key<ProgressSuspender> PROGRESS_SUSPENDER = Key.create("PROGRESS_SUSPENDER");
   public static final Topic<SuspenderListener> TOPIC = Topic.create("ProgressSuspender", SuspenderListener.class);
@@ -45,14 +43,14 @@ public class ProgressSuspender implements AutoCloseable {
   private final SuspenderListener myPublisher;
   private volatile boolean mySuspended;
   private final CoreProgressManager.CheckCanceledHook myHook = this::freezeIfNeeded;
-  @NotNull private final ProgressIndicatorEx myAttachedToProgress;  // Android Studio: b/79582420
-  private boolean myClosed;  // Android Studio: b/79582420
+  @NotNull private final ProgressIndicatorEx myAttachedToProgress;
+  private boolean myClosed;
 
   private ProgressSuspender(@NotNull ProgressIndicatorEx progress, @NotNull String suspendedText) {
     mySuspendedText = suspendedText;
     assert progress.isRunning();
     assert ProgressIndicatorProvider.getGlobalProgressIndicator() == progress;
-    myAttachedToProgress = progress;  // Android Studio: b/79582420
+    myAttachedToProgress = progress;
     myThread = Thread.currentThread();
     myPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC);
 
@@ -68,7 +66,6 @@ public class ProgressSuspender implements AutoCloseable {
     myPublisher.suspendableProgressAppeared(this);
   }
 
-  // Android Studio: b/79582420 Implement AutoClosable to unregister the check-cancelled hook.
   @Override
   public void close() {
     synchronized (myLock) {
@@ -104,7 +101,7 @@ public class ProgressSuspender implements AutoCloseable {
    */
   public void suspendProcess(@Nullable String reason) {
     synchronized (myLock) {
-      if (mySuspended || myClosed) return;  // Android Studio: b/79582420
+      if (mySuspended || myClosed) return;
 
       mySuspended = true;
       myTempReason = reason;
@@ -130,17 +127,8 @@ public class ProgressSuspender implements AutoCloseable {
     myPublisher.suspendedStatusChanged(this);
   }
 
-  private boolean safeIsReadAccessAllowed() {
-    // isReadAccessAllowed throws if running as isInImpatientReader.
-    return ((ApplicationEx)ourApp).isInImpatientReader() || ourApp.isReadAccessAllowed();
-  }
-
   private boolean freezeIfNeeded(@Nullable ProgressIndicator current) {
-    // Note: instead of safeIsReadAccessAllowed it is enough to make isThreadUnderIndicator check first, but it is expected to be slower
-    //       than an additional call to ourApp.isInImpatientReader()
-    if (current == null
-        || safeIsReadAccessAllowed()
-        || !CoreProgressManager.isThreadUnderIndicator(current, myThread)) {
+    if (current == null || ourApp.isReadAccessAllowed() || !CoreProgressManager.isThreadUnderIndicator(current, myThread)) {
       return false;
     }
 

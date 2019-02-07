@@ -17,6 +17,7 @@ import java.util.jar.JarFile;
  */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public class CaptureAgent {
+  public static final String AGENT_STORAGE_JAR = "debugger-agent-storage.jar";
   private static Instrumentation ourInstrumentation;
 
   private static final Map<String, List<InstrumentPoint>> myInstrumentPoints = new HashMap<String, List<InstrumentPoint>>();
@@ -65,7 +66,19 @@ public class CaptureAgent {
 
   @SuppressWarnings("SSBasedInspection")
   private static void appendStorageJar(Instrumentation instrumentation) throws IOException {
-    InputStream inputStream = CaptureAgent.class.getResourceAsStream("/debugger-agent-storage.jar");
+    // do not extract if storage jar is available nearby
+    try {
+      File storageJar = new File(new File(CaptureAgent.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParentFile(),
+                                 AGENT_STORAGE_JAR);
+      if (storageJar.exists()) {
+        instrumentation.appendToBootstrapClassLoaderSearch(new JarFile(storageJar));
+        return;
+      }
+    }
+    catch (Exception ignored) {
+    }
+
+    InputStream inputStream = CaptureAgent.class.getResourceAsStream("/" + AGENT_STORAGE_JAR);
     try {
       File storageJar = File.createTempFile("debugger-agent-storage", "jar");
       storageJar.deleteOnExit();

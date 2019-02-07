@@ -28,6 +28,7 @@ public class GrTryCatchStatementImpl extends GroovyPsiElementImpl implements GrT
     visitor.visitTryStatement(this);
   }
 
+  @Override
   public String toString() {
     return "Try statement";
   }

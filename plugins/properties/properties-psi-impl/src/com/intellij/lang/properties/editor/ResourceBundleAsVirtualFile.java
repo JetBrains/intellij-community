@@ -97,7 +97,7 @@ public class ResourceBundleAsVirtualFile extends VirtualFile implements VirtualF
 
   @Override
   public VirtualFile getParent() {
-    return myResourceBundle.getBaseDirectory();
+    return myResourceBundle.isValid() ? myResourceBundle.getBaseDirectory() : null;
   }
 
   @Override

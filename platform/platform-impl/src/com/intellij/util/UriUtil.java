@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,19 +13,18 @@ import java.util.ArrayList;
 
 public final class UriUtil {
   public static final CharMatcher PARAM_CHAR_MATCHER = CharMatcher.anyOf("?#;");
-  public static final CharMatcher SLASH_MATCHER = CharMatcher.is('/');
 
   private UriUtil() {
   }
 
   @NotNull
   public static String trimTrailingSlashes(@NotNull String url) {
-    return SLASH_MATCHER.trimTrailingFrom(url);
+    return StringUtil.trimTrailing(url, '/');
   }
 
   @NotNull
   public static String trimLeadingSlashes(@NotNull String url) {
-    return SLASH_MATCHER.trimLeadingFrom(url);
+    return StringUtil.trimLeading(url, '/');
   }
 
   public static String trimParameters(@NotNull String url) {

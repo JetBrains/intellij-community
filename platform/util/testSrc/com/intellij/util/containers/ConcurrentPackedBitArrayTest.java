@@ -54,4 +54,14 @@ public class ConcurrentPackedBitArrayTest extends TestCase {
     catch (IllegalArgumentException e) {
     }
   }
+
+  public void testChunkSize32() {
+    ConcurrentPackedBitsArray bitSet = new ConcurrentPackedBitsArray(32);
+    bitSet.set(0, 0xDEAFBEEFL);
+    assertEquals(0xDEAFBEEFL, bitSet.get(0) & 0xFFFFFFFFL);
+    
+    bitSet = new ConcurrentPackedBitsArray(64);
+    bitSet.set(0, 0xDEAFBEEFL);
+    assertEquals(0xDEAFBEEFL, bitSet.get(0));
+  }
 }

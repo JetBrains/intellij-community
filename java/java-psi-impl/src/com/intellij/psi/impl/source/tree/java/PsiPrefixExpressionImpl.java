@@ -105,6 +105,7 @@ public class PsiPrefixExpressionImpl extends ExpressionPsiElement implements Psi
     }
   }
 
+  @Override
   public String toString() {
     return "PsiPrefixExpression:" + getText();
   }

@@ -40,7 +40,7 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
 
     @Override
     public String getValue(@NotNull CommitInfo info) {
-      return String.valueOf(info.getRevision());
+      return String.valueOf(info.getRevisionNumber());
     }
   };
 
@@ -64,8 +64,8 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
       CommitInfo info = myInfos.get(lineNumber);
       if (info == null) return null;
 
-      SvnFileRevision revision = myRevisionMap.get(info.getRevision());
-      return revision != null ? XmlStringUtil.escapeString("Revision " + info.getRevision() + ": " + revision.getCommitMessage()) : "";
+      SvnFileRevision revision = myRevisionMap.get(info.getRevisionNumber());
+      return revision != null ? XmlStringUtil.escapeString("Revision " + info.getRevisionNumber() + ": " + revision.getCommitMessage()) : "";
     }
   };
 
@@ -119,11 +119,11 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
     final CommitInfo info = myInfos.getOrNull(lineNumber);
     if (info == null) return "";
 
-    SvnFileRevision revision = myRevisionMap.get(info.getRevision());
+    SvnFileRevision revision = myRevisionMap.get(info.getRevisionNumber());
     if (revision != null) {
       String prefix = myInfos.getAnnotationSource(lineNumber).showMerged() ? "Merge source revision" : "Revision";
 
-      return prefix + " " + info.getRevision() + ": " + revision.getCommitMessage();
+      return prefix + " " + info.getRevisionNumber() + ": " + revision.getCommitMessage();
     }
     return "";
   }
@@ -149,7 +149,7 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
   public VcsRevisionNumber getLineRevisionNumber(final int lineNumber) {
     CommitInfo info = myInfos.getOrNull(lineNumber);
 
-    return info != null && info.getRevision() >= 0 ? new SvnRevisionNumber(Revision.of(info.getRevision())) : null;
+    return info != null && info.getRevisionNumber() >= 0 ? new SvnRevisionNumber(Revision.of(info.getRevisionNumber())) : null;
   }
 
   @Override
@@ -219,7 +219,7 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
 
     protected long getRevision(final int lineNum) {
       final CommitInfo lineInfo = myInfos.get(lineNum);
-      return (lineInfo == null) ? -1 : lineInfo.getRevision();
+      return (lineInfo == null) ? -1 : lineInfo.getRevisionNumber();
     }
 
     @Override
@@ -301,7 +301,7 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
     public long originalRevision(final int line) {
       CommitInfo info = line < size() ? myMappedLineInfo.get(line) : null;
 
-      return info == null ? -1 : info.getRevision();
+      return info == null ? -1 : info.getRevisionNumber();
     }
 
     public boolean mergeSourceAvailable(int lineNumber) {

@@ -5,5 +5,10 @@
     <line>3</line>
     <description>package-private</description>
   </problem>
+  <problem>
+    <file>Client.java</file>
+    <line>5</line>
+    <description>package-private</description>
+  </problem>
 </problems>
 

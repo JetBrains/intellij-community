@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/27/2015
  */
 public class ExternalSystemStartEventImpl<T extends OperationDescriptor> extends BaseExternalSystemProgressEvent<T>
   implements ExternalSystemStartEvent<T> {

@@ -4,7 +4,6 @@ package com.intellij.structuralsearch.impl.matcher.predicates;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.SSRBundle;
-import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
@@ -55,10 +54,7 @@ public final class RegExpPredicate extends MatchPredicate {
         realRegexp = ".*?\\b(?:" + realRegexp + ")\\b.*?";
       }
 
-      pattern = Pattern.compile(
-        realRegexp,
-        (caseSensitive ? 0: Pattern.CASE_INSENSITIVE) | (multiline ? Pattern.DOTALL:0)
-      );
+      pattern = Pattern.compile(realRegexp, (caseSensitive ? 0: Pattern.CASE_INSENSITIVE) | (multiline ? Pattern.DOTALL:0));
     } catch(PatternSyntaxException ex) {
       throw new MalformedPatternException(SSRBundle.message("error.incorrect.regexp.constraint", regexp, baseHandlerName));
     }
@@ -82,15 +78,14 @@ public final class RegExpPredicate extends MatchPredicate {
   public boolean match(PsiElement matchedNode, int start, int end, MatchContext context) {
     if (matchedNode==null) return false;
 
-    String text = myNodeTextGenerator != null ? myNodeTextGenerator.getText(matchedNode) : getMeaningfulText(matchedNode);
+    String text = myNodeTextGenerator != null
+                  ? myNodeTextGenerator.getText(matchedNode)
+                  : StructuralSearchUtil.getMeaningfulText(matchedNode);
 
     boolean result = doMatch(text, start, end, context, matchedNode);
-
     if (!result) {
-
       matchedNode = StructuralSearchUtil.getParentIfIdentifier(matchedNode);
-
-      String alternativeText = context.getPattern().getAlternativeTextToMatch(matchedNode, text);
+      String alternativeText = StructuralSearchUtil.getAlternativeText(matchedNode, text);
       if (alternativeText != null) {
         result = doMatch(alternativeText, start, end, context, matchedNode);
       }
@@ -99,13 +94,8 @@ public final class RegExpPredicate extends MatchPredicate {
     return result;
   }
 
-  public static String getMeaningfulText(PsiElement matchedNode) {
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(matchedNode);
-    return profile != null ? profile.getMeaningfulText(matchedNode) : matchedNode.getText();
-  }
-
   boolean doMatch(String text, MatchContext context, PsiElement matchedElement) {
-    return doMatch(text,0,-1,context, matchedElement);
+    return doMatch(text, 0, -1 ,context, matchedElement);
   }
 
   boolean doMatch(String text, int from, int end, MatchContext context,PsiElement matchedElement) {
@@ -114,7 +104,7 @@ public final class RegExpPredicate extends MatchPredicate {
     }
 
     if (simpleString) {
-      return (caseSensitive)?text.equals(regexp):text.equalsIgnoreCase(regexp);
+      return caseSensitive ? text.equals(regexp) : text.equalsIgnoreCase(regexp);
     }
 
     if(!multiline && text.contains("\n")) setMultiline(true);

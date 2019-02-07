@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui
 
-import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -16,7 +15,7 @@ class HtmlErrorPanel : Wrapper() {
 
   private val errorPane = JEditorPane().apply {
     editorKit = UIUtil.getHTMLEditorKit()
-    val linkColor = JBColor.link()
+    val linkColor = JBUI.CurrentTheme.Link.linkColor()
     //language=CSS
     (editorKit as HTMLEditorKit).styleSheet.addRule("a {color: rgb(${linkColor.red}, ${linkColor.green}, ${linkColor.blue})}")
     addHyperlinkListener { e ->

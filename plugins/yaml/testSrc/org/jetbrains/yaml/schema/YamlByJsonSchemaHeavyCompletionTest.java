@@ -85,6 +85,11 @@ public class YamlByJsonSchemaHeavyCompletionTest extends JsonBySchemaHeavyComple
     // do nothing
   }
 
+  @Override
+  public void testDontInsertExtraValue() throws Exception {
+    // do nothing, json-specific test
+  }
+
   public void testInsertArrayItemNested() throws Exception {
     baseInsertTest("insertArrayItemNested", "test");
   }

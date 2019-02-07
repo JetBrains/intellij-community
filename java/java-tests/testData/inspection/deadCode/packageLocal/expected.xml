@@ -8,6 +8,12 @@
   </problem>
   <problem>
     <file>A.java</file>
+    <line>1</line>
+    <problem_class>unused declaration</problem_class>
+    <description>Class is not instantiated.</description>
+  </problem>
+  <problem>
+    <file>A.java</file>
     <line>4</line>
     <package>&lt;default&gt;</package>
     <description>&lt;ul&gt;&lt;li&gt;Method owner class is never instantiated OR&lt;/li&gt;&lt;li&gt;An instantiation is not reachable from entry points.&lt;/li&gt;&lt;/ul&gt;</description>

@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.lambdaToExplicit;
 
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
+import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
@@ -20,10 +21,10 @@ class LambdaAndExplicitMethodPair {
   static final LambdaAndExplicitMethodPair[] INFOS = {
     new LambdaAndExplicitMethodPair(CommonClassNames.JAVA_UTIL_MAP, "computeIfAbsent", "putIfAbsent", 1, "V", false, "k"),
     new LambdaAndExplicitMethodPair(CommonClassNames.JAVA_UTIL_OPTIONAL, "orElseGet", "orElse", 0, "T", true),
-    new LambdaAndExplicitMethodPair("java.util.OptionalInt", "orElseGet", "orElse", 0, "int", true),
-    new LambdaAndExplicitMethodPair("java.util.OptionalLong", "orElseGet", "orElse", 0, "long", true),
-    new LambdaAndExplicitMethodPair("java.util.OptionalDouble", "orElseGet", "orElse", 0, "double", true),
-    new LambdaAndExplicitMethodPair("com.google.common.base.Optional", "or", "*", 0, "T", true),
+    new LambdaAndExplicitMethodPair(OptionalUtil.OPTIONAL_INT, "orElseGet", "orElse", 0, "int", true),
+    new LambdaAndExplicitMethodPair(OptionalUtil.OPTIONAL_LONG, "orElseGet", "orElse", 0, "long", true),
+    new LambdaAndExplicitMethodPair(OptionalUtil.OPTIONAL_DOUBLE, "orElseGet", "orElse", 0, "double", true),
+    new LambdaAndExplicitMethodPair(OptionalUtil.GUAVA_OPTIONAL, "or", "*", 0, "T", true),
     new LambdaAndExplicitMethodPair("java.util.Objects", "requireNonNull", "*", 1, JAVA_LANG_STRING, true),
     new LambdaAndExplicitMethodPair("java.util.Objects", "requireNonNullElseGet", "requireNonNullElse", 1, "T", true),
     new LambdaAndExplicitMethodPair("org.junit.jupiter.api.Assertions", "assert(?!Timeout).*|fail", "*", -1, JAVA_LANG_STRING, true),

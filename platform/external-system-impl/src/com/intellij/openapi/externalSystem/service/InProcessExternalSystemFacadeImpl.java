@@ -24,7 +24,6 @@ import java.rmi.RemoteException;
 
 /**
  * @author Denis Zhdanov
- * @since 8/9/13 5:42 PM
  */
 public class InProcessExternalSystemFacadeImpl<S extends ExternalSystemExecutionSettings> extends AbstractExternalSystemFacadeImpl<S> {
 

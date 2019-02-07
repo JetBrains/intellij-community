@@ -88,6 +88,7 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
     return GrClassImplUtil.findCodeMethodsBySignature(this, patternMethod, checkBases);
   }
 
+  @Override
   public String toString() {
     return "Type parameter";
   }
@@ -127,7 +128,7 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
   @Override
   @NotNull
   public PsiReferenceList getExtendsList() {
-    return getRequiredStubOrPsiChild(GroovyElementTypes.TYPE_PARAMETER_EXTENDS_BOUND_LIST);
+    return getRequiredStubOrPsiChild(GroovyElementTypes.TYPE_PARAMETER_BOUNDS_LIST);
   }
 
   @Override

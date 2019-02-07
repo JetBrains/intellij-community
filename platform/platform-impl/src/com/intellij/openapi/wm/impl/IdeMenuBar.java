@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
@@ -295,8 +295,12 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     return false;
   }
 
+  @Nullable
   private Component findActualComponent(MouseEvent mouseEvent) {
     Component component = mouseEvent.getComponent();
+    if (component == null) {
+      return null;
+    }
     Component deepestComponent;
     if (getState() != State.EXPANDED &&
         !getState().isInProgress() &&
@@ -490,6 +494,9 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
           break;
         default:
       }
+      if (!isShowing()) {
+        return;
+      }
       revalidate();
       if (getState() == State.COLLAPSED) {
         //we should repaint parent, to clear 1px on top when menu is collapsed
@@ -532,33 +539,39 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
             // re-target border clicks as a menu item ones
             item.dispatchEvent(MouseEventAdapter.convert(e, item, 1, 1));
             e.consume();
-            return;
           }
         }
       }
-
-      super.mouseClicked(e);
     }
   }
 
   public static void installAppMenuIfNeeded(@NotNull final JFrame frame) {
-    if (!GlobalMenuLinux.isAvailable())
-      return;
-
-    // NOTE: must be called when frame is visible (otherwise frame.getPeer() == null)
-    if (frame.getJMenuBar() instanceof IdeMenuBar) {
-      final IdeMenuBar frameMenuBar = (IdeMenuBar)frame.getJMenuBar();
-      if (frameMenuBar.myGlobalMenuLinux == null) {
-        final GlobalMenuLinux gml = GlobalMenuLinux.create(frame);
-        if (gml == null)
-          return;
-
-        frameMenuBar.myGlobalMenuLinux = gml;
-        Disposer.register(frameMenuBar.myDisposable, gml);
-        frameMenuBar.updateMenuActions(true);
+    try {
+      if (!GlobalMenuLinux.isAvailable()) {
+        return;
       }
-    } else if (frame.getJMenuBar() != null)
-      LOG.info("The menubar '" + frame.getJMenuBar() + "' of frame '" + frame + "' isn't instance of IdeMenuBar");
+
+      // NOTE: must be called when frame is visible (otherwise frame.getPeer() == null)
+      if (frame.getJMenuBar() instanceof IdeMenuBar) {
+        final IdeMenuBar frameMenuBar = (IdeMenuBar)frame.getJMenuBar();
+        if (frameMenuBar.myGlobalMenuLinux == null) {
+          final GlobalMenuLinux gml = GlobalMenuLinux.create(frame);
+          if (gml == null) {
+            return;
+          }
+
+          frameMenuBar.myGlobalMenuLinux = gml;
+          Disposer.register(frameMenuBar.myDisposable, gml);
+          frameMenuBar.updateMenuActions(true);
+        }
+      }
+      else if (frame.getJMenuBar() != null) {
+        LOG.info("The menu bar '" + frame.getJMenuBar() + "' of frame '" + frame + "' isn't instance of IdeMenuBar");
+      }
+    }
+    catch (Throwable t) {
+      LOG.warn("cannot install app menu", t);
+    }
   }
 
   public static void bindAppMenuOfParent(@NotNull final Window frame, IdeFrame parent) {

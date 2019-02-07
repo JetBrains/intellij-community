@@ -51,24 +51,24 @@ public class MockLocalFileSystem extends LocalFileSystem {
   }
 
   @Override
-  public void refreshIoFiles(@NotNull final Iterable<File> files) {
+  public void refreshIoFiles(@NotNull final Iterable<? extends File> files) {
   }
 
   @Override
-  public void refreshFiles(@NotNull final Iterable<VirtualFile> files) {
+  public void refreshFiles(@NotNull final Iterable<? extends VirtualFile> files) {
   }
 
   @Override
-  public void refreshIoFiles(@NotNull Iterable<File> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
+  public void refreshIoFiles(@NotNull Iterable<? extends File> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
   }
 
   @Override
-  public void refreshFiles(@NotNull Iterable<VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
+  public void refreshFiles(@NotNull Iterable<? extends VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
   }
 
   @NotNull
   @Override
-  public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests,
+  public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<? extends WatchRequest> watchRequests,
                                                @Nullable Collection<String> recursiveRoots,
                                                @Nullable Collection<String> flatRoots) {
     throw new UnsupportedOperationException("Not implemented in " + getClass().getName());
@@ -106,15 +106,15 @@ public class MockLocalFileSystem extends LocalFileSystem {
   }
 
   @Override
-  public void deleteFile(final Object requestor, @NotNull final VirtualFile vFile) throws IOException {
+  public void deleteFile(final Object requestor, @NotNull final VirtualFile vFile) {
   }
 
   @Override
-  public void moveFile(final Object requestor, @NotNull final VirtualFile vFile, @NotNull final VirtualFile newParent) throws IOException {
+  public void moveFile(final Object requestor, @NotNull final VirtualFile vFile, @NotNull final VirtualFile newParent) {
   }
 
   @Override
-  public void renameFile(final Object requestor, @NotNull final VirtualFile vFile, @NotNull final String newName) throws IOException {
+  public void renameFile(final Object requestor, @NotNull final VirtualFile vFile, @NotNull final String newName) {
   }
 
   @NotNull
@@ -159,13 +159,13 @@ public class MockLocalFileSystem extends LocalFileSystem {
 
   @Override
   @NotNull
-  public InputStream getInputStream(@NotNull final VirtualFile file) throws IOException {
+  public InputStream getInputStream(@NotNull final VirtualFile file) {
     throw new UnsupportedOperationException();
   }
 
   @Override
   @NotNull
-  public byte[] contentsToByteArray(@NotNull final VirtualFile file) throws IOException {
+  public byte[] contentsToByteArray(@NotNull final VirtualFile file) {
     return ArrayUtil.EMPTY_BYTE_ARRAY;
   }
 
@@ -176,7 +176,7 @@ public class MockLocalFileSystem extends LocalFileSystem {
 
   @Override
   @NotNull
-  public OutputStream getOutputStream(@NotNull final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws IOException {
+  public OutputStream getOutputStream(@NotNull final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) {
     throw new UnsupportedOperationException();
   }
 
@@ -202,11 +202,11 @@ public class MockLocalFileSystem extends LocalFileSystem {
   }
 
   @Override
-  public void setTimeStamp(@NotNull final VirtualFile file, final long timeStamp) throws IOException {
+  public void setTimeStamp(@NotNull final VirtualFile file, final long timeStamp) {
   }
 
   @Override
-  public void setWritable(@NotNull final VirtualFile file, final boolean writableFlag) throws IOException {
+  public void setWritable(@NotNull final VirtualFile file, final boolean writableFlag) {
   }
 
   @Override

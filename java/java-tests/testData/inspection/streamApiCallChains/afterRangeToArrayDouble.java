@@ -1,4 +1,4 @@
-// "Replace with Arrays.stream()" "true"
+// "Replace with 'Arrays.stream()'" "true"
 
 import java.util.*;
 import java.util.stream.Collectors;

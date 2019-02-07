@@ -46,6 +46,7 @@ import java.util.List;
 
 class MultilinePopupBuilder {
   private static final char[] SEPARATORS = {'|', '\n'};
+  private static final String COMPLETION_ADVERTISEMENT = "Select one or more values separated with | or new lines";
 
   @NotNull private final EditorTextField myTextField;
 
@@ -80,7 +81,8 @@ class MultilinePopupBuilder {
     panel.add(myTextField, BorderLayout.CENTER);
     ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, myTextField)
       .setCancelOnClickOutside(true)
-      .setAdText(KeymapUtil.getShortcutsText(CommonShortcuts.CTRL_ENTER.getShortcuts()) + " to finish")
+      .setAdText(
+        COMPLETION_ADVERTISEMENT + ", use " + KeymapUtil.getShortcutsText(CommonShortcuts.CTRL_ENTER.getShortcuts()) + " to finish")
       .setRequestFocus(true)
       .setResizable(true)
       .setMayBeParent(true);
@@ -125,7 +127,7 @@ class MultilinePopupBuilder {
     @Nullable
     @Override
     public String getAdvertisement() {
-      return "Select one or more values separated with | or new lines";
+      return COMPLETION_ADVERTISEMENT;
     }
   }
 }

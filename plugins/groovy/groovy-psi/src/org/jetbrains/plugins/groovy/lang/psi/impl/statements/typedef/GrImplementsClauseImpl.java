@@ -36,6 +36,7 @@ public class GrImplementsClauseImpl extends GrReferenceListImpl implements GrImp
     visitor.visitImplementsClause(this);
   }
 
+  @Override
   public String toString() {
     return "Implements clause";
   }

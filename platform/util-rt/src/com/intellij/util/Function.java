@@ -20,11 +20,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 /**
+ * Please use {@link java.util.function.Function} instead
+ *
  * @author max
- *
  * @see Functions for some common implementations
- *
- * Consider to use {@link java.util.function.Function} instead
  */
 public interface Function<Param, Result> {
   Result fun(Param param);

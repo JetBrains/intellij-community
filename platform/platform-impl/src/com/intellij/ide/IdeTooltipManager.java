@@ -95,7 +95,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
 
     ApplicationManager.getApplication().getMessageBus().connect(ApplicationManager.getApplication()).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
         hideCurrent(null, action, event);
       }
     });
@@ -400,7 +400,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
 
   @SuppressWarnings({"UnusedParameters"})
   public Color getLinkForeground(boolean awtTooltip) {
-    return JBColor.link();
+    return JBUI.CurrentTheme.Link.linkColor();
   }
 
   @SuppressWarnings({"UnusedParameters"})

@@ -23,7 +23,6 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   private final ChangeListUpdater myChangeListUpdater;
   private final FileHolderComposite myComposite;
   private final Getter<Boolean> myDisposedGetter;
-  private final ChangeListManager myChangeListManager;
   private final ProjectLevelVcsManager myVcsManager;
 
   private VcsDirtyScope myScope;
@@ -31,14 +30,12 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
 
   private Factory<JComponent> myAdditionalInfo;
 
-  UpdatingChangeListBuilder(final ChangeListUpdater changeListUpdater,
-                            final FileHolderComposite composite,
-                            final Getter<Boolean> disposedGetter,
-                            final ChangeListManager changeListManager) {
+  UpdatingChangeListBuilder(ChangeListUpdater changeListUpdater,
+                            FileHolderComposite composite,
+                            Getter<Boolean> disposedGetter) {
     myChangeListUpdater = changeListUpdater;
     myComposite = composite;
     myDisposedGetter = disposedGetter;
-    myChangeListManager = changeListManager;
     myVcsManager = ProjectLevelVcsManager.getInstance(changeListUpdater.getProject());
   }
 
@@ -60,7 +57,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   public void processChangeInList(Change change, @Nullable ChangeList changeList, VcsKey vcsKey) {
     checkIfDisposed();
 
-    LOG.debug("[processChangeInList-1] entering, cl name: " + ((changeList == null) ? null: changeList.getName()) +
+    LOG.debug("[processChangeInList-1] entering, cl name: " + ((changeList == null) ? null : changeList.getName()) +
               " change: " + ChangesUtil.getFilePath(change).getPath());
     final String fileName = ChangesUtil.getFilePath(change).getName();
     if (FileTypeManager.getInstance().isFileIgnored(fileName)) {
@@ -104,15 +101,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   @Override
   public void processUnversionedFile(VirtualFile file) {
     if (acceptFile(file, false)) {
-      if (myChangeListManager.isIgnoredFile(file)) {
-        myComposite.getIgnoredFileHolder().addFile(file);
-      }
-      else if (myComposite.getIgnoredFileHolder().containsFile(file)) {
-        // does not need to add: parent dir is already added
-      }
-      else {
-        myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).addFile(file);
-      }
+      myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).addFile(file);
       // if a file was previously marked as switched through recursion, remove it from switched list
       myComposite.getSwitchedFileHolder().removeFile(file);
     }

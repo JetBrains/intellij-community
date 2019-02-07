@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.relaxNG.model.resolve;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -37,6 +23,7 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
 import org.intellij.plugins.relaxNG.ApplicationLoader;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
@@ -104,8 +91,8 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
         if (inputData.getFileType() == XmlFileType.INSTANCE) {
           CharSequence inputDataContentAsText = inputData.getContentAsText();
           if (CharArrayUtil.indexOf(inputDataContentAsText, ApplicationLoader.RNG_NAMESPACE, 0) == -1) return Collections.emptyMap();
-          NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()), new NanoXmlUtil.IXMLBuilderAdapter() {
-            NanoXmlUtil.IXMLBuilderAdapter attributeHandler;
+          NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()), new NanoXmlBuilder() {
+            NanoXmlBuilder attributeHandler;
             int depth;
 
             @Override
@@ -116,13 +103,13 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
             }
 
             @Override
-            public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) throws Exception {
+            public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) {
               attributeHandler = null;
               if (depth == 1 && ApplicationLoader.RNG_NAMESPACE.equals(nsURI)) {
                 if ("define".equals(name)) {
-                  attributeHandler = new NanoXmlUtil.IXMLBuilderAdapter() {
+                  attributeHandler = new NanoXmlBuilder() {
                     @Override
-                    public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) throws Exception {
+                    public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) {
                       if ("name".equals(key) && (nsURI == null || nsURI.length() == 0) && value != null) {
                         map.put(value, null);
                       }
@@ -134,7 +121,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
             }
 
             @Override
-            public void endElement(String name, String nsPrefix, String nsURI) throws Exception {
+            public void endElement(String name, String nsPrefix, String nsURI) {
               attributeHandler = null;
               depth--;
             }
@@ -265,8 +252,8 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
               return metaData.getName();
             }
 
+            @NotNull
             @Override
-            @Nullable
             public String getLocationString() {
               return MyNavigationItem.getLocationString((PsiElement)item);
             }

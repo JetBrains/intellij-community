@@ -22,7 +22,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.codeInsight.lookup.TypedLookupItem;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.MembersGetter;
@@ -30,9 +29,11 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.*;
 import com.intellij.psi.util.proximity.KnownElementWeigher;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -387,30 +388,38 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     
     PsiMethod method = (PsiMethod)object;
     if (!PropertyUtilBase.hasGetterName(method)) return false;
+    if (method.hasTypeParameters()) return false;
     
     return !KnownElementWeigher.isGetClass(method);
   }
 
-  private static boolean isLastStatement(PsiStatement statement) {
+  private boolean isLastStatement(PsiStatement statement) {
     if (statement == null) {
       return false;
     }
     if (!(statement.getParent() instanceof PsiCodeBlock)) {
       return true;
     }
-    PsiStatement[] siblings = ((PsiCodeBlock)statement.getParent()).getStatements();
+    PsiCodeBlock codeBlock = (PsiCodeBlock)statement.getParent();
+    PsiStatement[] siblings = codeBlock.getStatements();
     PsiStatement lastOne = siblings[siblings.length - 1];
     if (statement == lastOne) {
       return true;
     }
 
-    // we might complete 'return' before an expression, then it's still last statement
-    if (siblings.length >= 2 && statement == siblings[siblings.length - 2] && lastOne instanceof PsiExpressionStatement) {
-      int start = statement.getTextRange().getStartOffset();
-      int end = lastOne.getTextRange().getStartOffset();
-      return !StringUtil.contains(statement.getContainingFile().getViewProvider().getContents(), start, end, '\n');
-    }
+    int posEnd = myPosition.getTextRange().getEndOffset();
+    int blockContentEnd = lastOne.getTextRange().getEndOffset();
+    CharSequence fileText = myPosition.getContainingFile().getViewProvider().getContents();
+    String afterPos = fileText.subSequence(posEnd, blockContentEnd).toString();
+    int nonSpace = CharArrayUtil.shiftForward(afterPos, 0, " \t");
+    if (nonSpace < afterPos.length() && afterPos.charAt(nonSpace) == '\n') return false;
 
-    return false;
+    try {
+      PsiStatement asStatement = JavaPsiFacade.getElementFactory(myPosition.getProject()).createStatementFromText(afterPos.trim(), null);
+      return asStatement instanceof PsiExpressionStatement;
+    }
+    catch (IncorrectOperationException e) {
+      return false;
+    }
   }
 }

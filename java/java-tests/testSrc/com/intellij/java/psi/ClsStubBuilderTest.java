@@ -3,6 +3,7 @@ package com.intellij.java.psi;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -10,6 +11,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubBase;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightIdeaTestCase;
 
 import java.io.File;
@@ -25,13 +27,14 @@ public class ClsStubBuilderTest extends LightIdeaTestCase {
   public void testUtilMap() { doClassTest("java.util.Map"); }
   public void testTimeUnit() { doClassTest("java.util.concurrent.TimeUnit"); }
 
+  public void testMethodParameters() { doSourceTest("Parameters", "Parameters", "-parameters"); }
+  public void testLocalVariableTable() { doSourceTest("Parameters", "ParametersDebug", "-g"); }
+  public void testMethodParamsAndLocalVarTable() { doSourceTest("Parameters", "Parameters", "-g", "-parameters"); }
+  public void testNoParameterNames() { doSourceTest("Parameters", "ParametersGenerated"); }
+  public void testGroovyStuff() { doSourceTest("GroovyStuff", "GroovyStuff"); }
+
   public void testTestSuite() { doTest(); }
   public void testDoubleTest() { doTest(); /* IDEA-53195 */ }
-  public void testAnnotatedNonStaticInnerClassConstructor() { doTest(); }
-  public void testAnnotatedEnumConstructor() { doTest(); }
-  public void testInterfaceMethodParameters() { doTest(); }
-  public void testEnumMethodParameters() { doTest(); }
-  public void testGroovyStuff() { doTest(); }
 
   public void testModifiers() { doTest("../repo/pack/" + getTestName(false)); }
   public void testModuleInfo() { doTest("module-info"); }
@@ -43,13 +46,28 @@ public class ClsStubBuilderTest extends LightIdeaTestCase {
     doTest(clsFile, getTestName(false) + ".txt");
   }
 
+  private static void doSourceTest(String srcFileName, String resultFileName, String... options) {
+    File out = IoTestUtil.createTestDir(new File(FileUtil.getTempDirectory()), "out");
+    try {
+      File srcFile = IdeaTestUtil.findSourceFile(JavaTestUtil.getJavaTestDataPath() + "/psi/cls/stubBuilder/" + srcFileName);
+      IdeaTestUtil.compileFile(srcFile, out, options);
+      String clsFilePath = out.getPath() + '/' + srcFileName + ".class";
+      VirtualFile clsFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(clsFilePath);
+      assertNotNull("Can't find: " + clsFilePath, clsFile);
+      doTest(clsFile, resultFileName + ".txt");
+    }
+    finally {
+      FileUtil.delete(out);
+    }
+  }
+
   private void doTest() {
     doTest(getTestName(false));
   }
 
   private void doTest(String clsPath) {
     String clsFilePath = JavaTestUtil.getJavaTestDataPath() + "/psi/cls/stubBuilder/" + clsPath + ".class";
-    VirtualFile clsFile = LocalFileSystem.getInstance().findFileByPath(clsFilePath);
+    VirtualFile clsFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(clsFilePath);
     assertNotNull("Can't find: " + clsFilePath, clsFile);
     doTest(clsFile, getTestName(false) + ".txt");
   }
@@ -62,9 +80,8 @@ public class ClsStubBuilderTest extends LightIdeaTestCase {
 
       File resultFile = new File(JavaTestUtil.getJavaTestDataPath() + "/psi/cls/stubBuilder/" + resultFileName);
       if (!resultFile.exists()) {
-        System.out.println("No expected data found at: " + resultFile + ", creating one.");
         FileUtil.writeToFile(resultFile, actual);
-        fail("No test data found. Created one");
+        fail("No test data found at: " + resultFile + ", creating one");
       }
 
       String expected = StringUtil.convertLineSeparators(FileUtil.loadFile(resultFile)).trim();

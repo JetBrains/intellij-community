@@ -36,12 +36,12 @@ public class ProgramParametersUtil {
     new ProgramParametersConfigurator().checkWorkingDirectoryExist(configuration, project, module);
   }
 
-  protected static String expandPath(String path, Module module, Project project) {
+  public static String expandPath(String path, Module module, Project project) {
     return new ProgramParametersConfigurator().expandPath(path, module, project);
   }
 
   @Nullable
-  protected static Module getModule(CommonProgramRunConfigurationParameters configuration) {
+  public static Module getModule(CommonProgramRunConfigurationParameters configuration) {
     return new ProgramParametersConfigurator().getModule(configuration);
   }
 }

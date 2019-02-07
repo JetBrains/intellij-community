@@ -49,7 +49,6 @@ import static com.intellij.openapi.projectRoots.SimpleJavaSdkType.notSimpleJavaS
 
 /**
  * @author Eugene Zhuravlev
- * @since May 18, 2005
  */
 public class JdkComboBox extends ComboBoxWithWidePopup<JdkComboBox.JdkComboBoxItem> {
 

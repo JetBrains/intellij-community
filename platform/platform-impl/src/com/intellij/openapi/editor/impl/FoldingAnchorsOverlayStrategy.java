@@ -17,11 +17,11 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 class FoldingAnchorsOverlayStrategy {
@@ -32,7 +32,9 @@ class FoldingAnchorsOverlayStrategy {
   }
 
   @NotNull
-  Collection<DisplayedFoldingAnchor> getAnchorsToDisplay(int firstVisibleOffset, int lastVisibleOffset, FoldRegion activeFoldRegion) {
+  Collection<DisplayedFoldingAnchor> getAnchorsToDisplay(int firstVisibleOffset,
+                                                         int lastVisibleOffset,
+                                                         @NotNull List<FoldRegion> activeFoldRegions) {
     Map<Integer, DisplayedFoldingAnchor> result = new HashMap<>();
     FoldRegion[] visibleFoldRegions = myEditor.getFoldingModel().fetchVisible();
     if (visibleFoldRegions != null) {
@@ -40,24 +42,18 @@ class FoldingAnchorsOverlayStrategy {
         if (!region.isValid()) continue;
         final int startOffset = region.getStartOffset();
         if (startOffset > lastVisibleOffset) continue;
-        final int endOffset = getEndOffset(region);
+        final int endOffset = region.getEndOffset();
         if (endOffset < firstVisibleOffset) continue;
         if (!isFoldingPossible(startOffset, endOffset)) continue;
 
-        final FoldingGroup group = region.getGroup();
-        if (group != null && myEditor.getFoldingModel().getFirstRegion(group, region) != region) continue;
-
-        //offset = Math.min(myEditor.getDocument().getTextLength() - 1, offset);
         int foldStart = myEditor.offsetToVisualLine(startOffset);
-
         if (!region.isExpanded()) {
-          tryAdding(result, region, foldStart, 0, DisplayedFoldingAnchor.Type.COLLAPSED, activeFoldRegion);
+          tryAdding(result, region, foldStart, 0, DisplayedFoldingAnchor.Type.COLLAPSED, activeFoldRegions);
         }
         else {
-          //offset = Math.min(myEditor.getDocument().getTextLength() - 1, offset);
           int foldEnd = myEditor.offsetToVisualLine(endOffset);
-          tryAdding(result, region, foldStart, foldEnd - foldStart, DisplayedFoldingAnchor.Type.EXPANDED_TOP, activeFoldRegion);
-          tryAdding(result, region, foldEnd, foldEnd - foldStart, DisplayedFoldingAnchor.Type.EXPANDED_BOTTOM, activeFoldRegion);
+          tryAdding(result, region, foldStart, foldEnd - foldStart, DisplayedFoldingAnchor.Type.EXPANDED_TOP, activeFoldRegions);
+          tryAdding(result, region, foldEnd, foldEnd - foldStart, DisplayedFoldingAnchor.Type.EXPANDED_BOTTOM, activeFoldRegions);
         }
       }
     }
@@ -69,22 +65,23 @@ class FoldingAnchorsOverlayStrategy {
                                 int visualLine,
                                 int visualHeight,
                                 @NotNull DisplayedFoldingAnchor.Type type,
-                                FoldRegion activeRegion) {
+                                @NotNull List<FoldRegion> activeRegions) {
     DisplayedFoldingAnchor prev = resultsMap.get(visualLine);
     if (prev != null) {
-      if (prev.foldRegion == activeRegion) {
+      if (region.getGroup() != null && region.getGroup() == prev.foldRegion.getGroup() &&
+          type != DisplayedFoldingAnchor.Type.COLLAPSED && type != prev.type) {
+        // when top/bottom marks for regions from the same group overlap, don't show them at all
+        resultsMap.remove(visualLine);
         return;
       }
-      if (region != activeRegion && prev.foldRegionVisualLines < visualHeight) {
+      if (activeRegions.contains(prev.foldRegion)) {
+        return;
+      }
+      if (!activeRegions.contains(region) && prev.foldRegionVisualLines < visualHeight) {
         return;
       }
     }
     resultsMap.put(visualLine, new DisplayedFoldingAnchor(region, visualLine, visualHeight, type));
-  }
-
-  private int getEndOffset(@NotNull FoldRegion foldRange) {
-    FoldingGroup group = foldRange.getGroup();
-    return group == null ? foldRange.getEndOffset() : myEditor.getFoldingModel().getEndOffset(group);
   }
 
   /**

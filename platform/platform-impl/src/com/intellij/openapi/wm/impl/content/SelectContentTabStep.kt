@@ -36,7 +36,7 @@ class SelectContentTabStep(val content: TabbedContent) : BaseListPopupStep<Int>(
   override fun onChosen(selectedValue: Int, finalChoice: Boolean): PopupStep<*>? {
     val manager = content.manager ?: return FINAL_CHOICE
     content.selectContent(selectedValue)
-    manager.setSelectedContent(content)
+    manager.setSelectedContent(content, true, true)
     return FINAL_CHOICE
   }
 }

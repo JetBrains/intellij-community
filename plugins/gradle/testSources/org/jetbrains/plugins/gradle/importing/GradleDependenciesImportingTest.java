@@ -26,6 +26,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,6 +38,7 @@ import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
@@ -51,7 +53,6 @@ import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
 
 /**
  * @author Vladislav.Soroka
- * @since 6/30/2014
  */
 public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
@@ -539,15 +540,15 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     );
 
     assertModules("server", "server.modules",
-                  "server.X", "server.X.main", "server.X.test",
-                  "server.Y", "server.Y.main", "server.Y.test",
+                  "server.modules.X", "server.modules.X.main", "server.modules.X.test",
+                  "server.modules.Y", "server.modules.Y.main", "server.modules.Y.test",
                   "server.api", "server.api.main", "server.api.test", "server.api.webapp");
 
-    assertModuleModuleDeps("server.X.main", "server.api.webapp");
-    assertModuleModuleDepScope("server.X.main", "server.api.webapp", DependencyScope.COMPILE);
+    assertModuleModuleDeps("server.modules.X.main", "server.api.webapp");
+    assertModuleModuleDepScope("server.modules.X.main", "server.api.webapp", DependencyScope.COMPILE);
 
-    assertModuleModuleDeps("server.Y.main", "server.api.webapp");
-    assertModuleModuleDepScope("server.Y.main", "server.api.webapp", DependencyScope.COMPILE);
+    assertModuleModuleDeps("server.modules.Y.main", "server.api.webapp");
+    assertModuleModuleDepScope("server.modules.Y.main", "server.api.webapp", DependencyScope.COMPILE);
   }
 
   @Test
@@ -604,6 +605,63 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleLibDepScope("project.projectB.main", depName, DependencyScope.COMPILE);
     assertModuleLibDep("project.projectC.main", depName, classesPath);
     assertModuleLibDepScope("project.projectC.main", depName, DependencyScope.RUNTIME);
+  }
+
+  @Test
+  @TargetVersions("3.4+")
+  public void testSourceSetOutputDirsAsDependenciesOfDependantModules() throws Exception {
+    createSettingsFile("include 'projectA', 'projectB', 'projectC' ");
+    importProject(
+      "subprojects { \n" +
+      "    apply plugin: \"java\" \n" +
+      "}\n" +
+      "project(':projectA') {\n" +
+      "  sourceSets.main.output.dir file('generated/projectA')\n" +
+      "}\n" +
+      "project(':projectB') {\n" +
+      "  sourceSets.main.output.dir file('generated/projectB')\n" +
+      "  dependencies {\n" +
+      "    implementation project(':projectA')\n" +
+      "  }\n" +
+      "}\n" +
+      "project(':projectC') {\n" +
+      "  dependencies {\n" +
+      "    implementation project(':projectB')\n" +
+      "  }\n" +
+      "}"
+    );
+
+    assertModules("project",
+                  "project.projectA", "project.projectA.main", "project.projectA.test",
+                  "project.projectB", "project.projectB.main", "project.projectB.test",
+                  "project.projectC", "project.projectC.main", "project.projectC.test");
+
+    assertModuleModuleDepScope("project.projectB.main", "project.projectA.main", DependencyScope.COMPILE);
+    assertModuleModuleDepScope("project.projectC.main", "project.projectA.main", DependencyScope.RUNTIME);
+    assertModuleModuleDepScope("project.projectC.main", "project.projectB.main", DependencyScope.COMPILE);
+
+    final String pathA =
+      FileUtil.toSystemIndependentName(new File(getProjectPath(), "projectA/generated/projectA").getAbsolutePath());
+    final String classesPathA = "file://" + pathA;
+    final String depNameA = PathUtil.toPresentableUrl(pathA);
+
+    final String pathB =
+      FileUtil.toSystemIndependentName(new File(getProjectPath(), "projectB/generated/projectB").getAbsolutePath());
+    final String classesPathB = "file://" + pathB;
+    final String depNameB = PathUtil.toPresentableUrl(pathB);
+
+    assertModuleLibDep("project.projectA.main", depNameA, classesPathA);
+    assertModuleLibDepScope("project.projectA.main", depNameA, DependencyScope.RUNTIME);
+
+    assertModuleLibDep("project.projectB.main", depNameA, classesPathA);
+    assertModuleLibDepScope("project.projectB.main", depNameA, DependencyScope.COMPILE);
+    assertModuleLibDep("project.projectB.main", depNameB, classesPathB);
+    assertModuleLibDepScope("project.projectB.main", depNameB, DependencyScope.RUNTIME);
+
+    assertModuleLibDep("project.projectC.main", depNameA, classesPathA);
+    assertModuleLibDepScope("project.projectC.main", depNameA, DependencyScope.RUNTIME);
+    assertModuleLibDep("project.projectC.main", depNameB, classesPathB);
+    assertModuleLibDepScope("project.projectC.main", depNameB, DependencyScope.COMPILE);
   }
 
   @Test

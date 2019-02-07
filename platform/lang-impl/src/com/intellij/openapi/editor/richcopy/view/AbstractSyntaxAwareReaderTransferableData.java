@@ -29,7 +29,6 @@ import java.io.StringReader;
 
 /**
  * @author Denis Zhdanov
- * @since 3/28/13 7:09 PM
  */
 public abstract class AbstractSyntaxAwareReaderTransferableData extends Reader implements RawTextWithMarkup
 {

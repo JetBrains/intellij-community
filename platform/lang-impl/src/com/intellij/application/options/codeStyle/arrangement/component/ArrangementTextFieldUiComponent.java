@@ -30,7 +30,6 @@ import javax.swing.event.DocumentListener;
 
 /**
  * @author Denis Zhdanov
- * @since 3/12/13 11:18 AM
  */
 public class ArrangementTextFieldUiComponent extends AbstractArrangementUiComponent {
 

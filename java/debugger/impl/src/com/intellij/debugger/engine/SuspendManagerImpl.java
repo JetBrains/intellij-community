@@ -203,11 +203,6 @@ public class SuspendManagerImpl implements SuspendManager {
     myPausedContexts.addFirst(suspendContext);
   }
 
-  public boolean hasEventContext(SuspendContextImpl suspendContext) {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-    return myEventContexts.contains(suspendContext);
-  }
-
   @Override
   public List<SuspendContextImpl> getEventContexts() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
@@ -319,5 +314,10 @@ public class SuspendManagerImpl implements SuspendManager {
 
   public List<SuspendContextImpl> getPausedContexts() {
     return new ArrayList<>(myPausedContexts);
+  }
+
+  public boolean hasPausedContext(SuspendContextImpl suspendContext) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    return myPausedContexts.contains(suspendContext);
   }
 }

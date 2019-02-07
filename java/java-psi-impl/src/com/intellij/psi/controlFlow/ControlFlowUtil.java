@@ -354,7 +354,7 @@ public class ControlFlowUtil {
   @NotNull
   public static Collection<PsiStatement> findExitPointsAndStatements(@NotNull ControlFlow flow, final int start, final int end,
                                                                      @NotNull IntArrayList exitPoints,
-                                                                     @NotNull Class... classesFilter) {
+                                                                     @NotNull Class<? extends PsiStatement>... classesFilter) {
     if (end == start) {
       exitPoints.add(end);
       return Collections.emptyList();
@@ -461,7 +461,9 @@ public class ControlFlowUtil {
     return offset;
   }
 
-  public static final Class[] DEFAULT_EXIT_STATEMENTS_CLASSES = {PsiReturnStatement.class, PsiBreakStatement.class, PsiContinueStatement.class};
+  @SuppressWarnings("unchecked")
+  public static final Class<? extends PsiStatement>[] DEFAULT_EXIT_STATEMENTS_CLASSES =
+    new Class[]{PsiReturnStatement.class, PsiBreakStatement.class, PsiContinueStatement.class};
 
   private static PsiStatement findStatement(@NotNull ControlFlow flow, int offset) {
     PsiElement element = flow.getElement(offset);
@@ -1155,7 +1157,7 @@ public class ControlFlowUtil {
             return getUnreachableStatementParent(parent);
           }
           if (parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getCondition() == expression ||
-              parent instanceof PsiSwitchStatement && ((PsiSwitchStatement)parent).getExpression() == expression ||
+              parent instanceof PsiSwitchBlock && ((PsiSwitchBlock)parent).getExpression() == expression ||
               parent instanceof PsiWhileStatement && ((PsiWhileStatement)parent).getCondition() == expression ||
               parent instanceof PsiForeachStatement && ((PsiForeachStatement)parent).getIteratedValue() == expression) {
             return parent;
@@ -1257,6 +1259,18 @@ public class ControlFlowUtil {
         // clear return statements after procedure as well
         for (int i = instruction.procBegin; i < instruction.procEnd + 3; i++) {
           maybeUnassigned[i] = false;
+        }
+      }
+
+      @Override
+      public void visitGoToInstruction(GoToInstruction instruction, int offset, int nextOffset) {
+        if (instruction.isReturn && variable instanceof PsiLocalVariable) {
+          if (nextOffset > flow.getSize()) nextOffset = flow.getSize();
+          boolean unassigned = !isLeaf(nextOffset) && maybeUnassigned[nextOffset];
+          maybeUnassigned[offset] |= unassigned;
+        }
+        else {
+          super.visitGoToInstruction(instruction, offset, nextOffset);
         }
       }
 
@@ -2011,6 +2025,78 @@ public class ControlFlowUtil {
       if (writtenTwiceVariable == null) return Collections.emptyList();
       return writtenTwiceVariable.getList();
     }
+  }
+
+  /**
+   * Find locations of writes of variables from writeVars that happened before one of reads of variables from readVars.
+   *
+   * @param stopPoint point until which reads are considered
+   * @return locations of writes
+   */
+  @NotNull
+  public static Map<PsiElement, PsiVariable> getWritesBeforeReads(@NotNull ControlFlow flow,
+                                                                  @NotNull Set<PsiVariable> writeVars,
+                                                                  @NotNull Set<PsiVariable> readVars,
+                                                                  final int stopPoint) {
+    Map<PsiElement, PsiVariable> writes = new HashMap<>();
+    List<Instruction> instructions = flow.getInstructions();
+
+    for (int i = 0; i < instructions.size(); i++) {
+      Instruction instruction = instructions.get(i);
+      if (!(instruction instanceof WriteVariableInstruction)) continue;
+
+      PsiVariable writtenVar = ((WriteVariableInstruction)instruction).variable;
+      if (!writeVars.contains(writtenVar)) continue;
+
+      if (readBeforeStopPoint(flow, readVars, i, stopPoint)) writes.put(flow.getElement(i), writtenVar);
+    }
+
+    return writes;
+  }
+
+  /**
+   * Check if any of given variables was read after start point and before stop point or before next write to this variable.
+   *
+   * @return true if it was read
+   */
+  private static boolean readBeforeStopPoint(@NotNull final ControlFlow flow,
+                                             @NotNull Set<PsiVariable> readVars,
+                                             final int startOffset,
+                                             final int stopPoint) {
+    class MyVisitor extends InstructionClientVisitor<Boolean> {
+
+      private boolean reachable = false;
+
+      @Override
+      public void visitInstruction(Instruction instruction, int offset, int nextOffset) {
+
+        if (offset == stopPoint || isWriteToReadVar(instruction)) {
+          // since it's dfs if we even already found some reads, they happened after stop point or after reassignment
+          reachable = false;
+          return;
+        }
+
+        boolean foundRead = instruction instanceof ReadVariableInstruction &&
+                            readVars.contains(((ReadVariableInstruction)instruction).variable);
+
+        reachable |= foundRead;
+      }
+
+      private boolean isWriteToReadVar(Instruction instruction) {
+        return instruction instanceof WriteVariableInstruction &&
+               readVars.contains(((WriteVariableInstruction)instruction).variable);
+      }
+
+      @Override
+      public Boolean getResult() {
+        return reachable;
+      }
+    }
+
+    MyVisitor visitor = new MyVisitor();
+    depthFirstSearch(flow, visitor, startOffset, flow.getSize());
+
+    return visitor.getResult();
   }
 
   /**

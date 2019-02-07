@@ -3,7 +3,7 @@
   <id>com.intellij.configurationScript</id>
   <vendor>JetBrains</vendor>
   <description><![CDATA[
-  <p>IDE configuration using text files (YAML, JSON). Experimental. Further information is not available prior to 2018.3 release.</p>
+  <p>IDE configuration using text files (YAML, JSON). Experimental.</p>
   ]]>
   </description>
 

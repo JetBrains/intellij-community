@@ -17,7 +17,6 @@ package org.intellij.lang.xpath.xslt.run;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -37,7 +36,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -281,12 +279,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
         public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           if (value instanceof Module) {
             final Module module = (Module)value;
-            setText(ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-              @Override
-              public String compute() {
-                return module.getName();
-              }
-            }));
+            setText(ReadAction.compute(() -> module.getName()));
             setIcon(ModuleType.get(module).getIcon());
           }
           else if (value instanceof String) {
@@ -309,12 +302,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
         @Override
         public void customize(JList list, final Sdk jdk, int index, boolean isSelected, boolean cellHasFocus) {
           if (jdk != null) {
-            setText(ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-              @Override
-              public String compute() {
-                return jdk.getName();
-              }
-            }));
+            setText(ReadAction.compute(() -> jdk.getName()));
             setIcon(((SdkType) jdk.getSdkType()).getIcon());
           }
         }

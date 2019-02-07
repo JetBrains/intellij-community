@@ -62,6 +62,9 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     try {
       Disposer.dispose(myConsole);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
@@ -481,7 +484,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
         }
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         myConsole.waitAllRequests();
-        Assert.assertEquals(printCount * nCopies * "\na\nc".length(), myConsole.getContentSize());
+        Assert.assertEquals((long) printCount * nCopies * "\na\nc".length(), myConsole.getContentSize());
       }
     }).assertTiming();
   }

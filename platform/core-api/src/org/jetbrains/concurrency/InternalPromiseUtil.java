@@ -2,11 +2,12 @@
 package org.jetbrains.concurrency;
 
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -26,10 +27,10 @@ public class InternalPromiseUtil {
     }
   };
 
-  public static final NotNullLazyValue<Promise<Object>> FULFILLED_PROMISE = new NotNullLazyValue<Promise<Object>>() {
+  public static final NotNullLazyValue<CancellablePromise<Object>> FULFILLED_PROMISE = new NotNullLazyValue<CancellablePromise<Object>>() {
     @NotNull
     @Override
-    protected Promise<Object> compute() {
+    protected CancellablePromise<Object> compute() {
       return new DonePromise<>(PromiseValue.createFulfilled(null));
     }
   };
@@ -99,7 +100,7 @@ public class InternalPromiseUtil {
         return null;
       }
 
-      ExceptionUtil.rethrowUnchecked(error);
+      ExceptionUtilRt.rethrowUnchecked(error);
       if (error instanceof ExecutionException) {
         throw ((ExecutionException)error);
       }
@@ -115,11 +116,7 @@ public class InternalPromiseUtil {
       if (o == null || getClass() != o.getClass()) return false;
 
       PromiseValue<?> value = (PromiseValue<?>)o;
-
-      if (result != null ? !result.equals(value.result) : value.result != null) return false;
-      if (error != null ? !error.equals(value.error) : value.error != null) return false;
-
-      return true;
+      return Objects.equals(result, value.result) && Objects.equals(error, value.error);
     }
 
     @Override

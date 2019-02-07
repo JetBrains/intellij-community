@@ -22,7 +22,6 @@ import java.util.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 1/15/2015
  */
 public class ModelFactory {
 

@@ -551,7 +551,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   @Override
   public String getUnresolvedMessagePattern() {
     return LangBundle.message("error.cannot.resolve")
-           + " " + (LangBundle.message(isLast() ? "terms.file" : "terms.directory"))
+           + " " + LangBundle.message(isLast() ? "terms.file" : "terms.directory")
            + " '" + StringUtil.escapePattern(decode(getCanonicalText())) + "'";
   }
 
@@ -578,7 +578,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
     return myFileReferenceSet.getLastReference();
   }
 
-  static class MyResolver implements ResolveCache.PolyVariantContextResolver<FileReference> {
+  private static class MyResolver implements ResolveCache.PolyVariantContextResolver<FileReference> {
     static final MyResolver INSTANCE = new MyResolver();
 
     @NotNull

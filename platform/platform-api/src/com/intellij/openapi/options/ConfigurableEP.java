@@ -213,6 +213,9 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
   @Attribute("provider")
   public String providerClass;
 
+  @Attribute("treeRenderer")
+  public String treeRendererClass;
+
   private final AtomicNotNullLazyValue<ObjectProducer> myProducer;
   private PicoContainer myPicoContainer;
   private Project myProject;
@@ -259,6 +262,23 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
       @SuppressWarnings("unchecked")
       T configurable = (T)producer.createElement();
       return configurable;
+    }
+    return null;
+  }
+
+  @Nullable
+  public ConfigurableTreeRenderer createTreeRenderer() {
+    if (treeRendererClass == null) {
+      return null;
+    }
+    try {
+      return instantiate(findClass(treeRendererClass), myPicoContainer, true);
+    }
+    catch (ProcessCanceledException exception) {
+      throw exception;
+    }
+    catch (AssertionError | LinkageError | Exception e) {
+      LOG.error(e);
     }
     return null;
   }

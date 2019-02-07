@@ -32,7 +32,6 @@ import java.util.List;
  * Implementations of this interface are expected to be thread-safe.
  *
  * @author Denis Zhdanov
- * @since 8/26/12 11:07 PM
  */
 public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
 

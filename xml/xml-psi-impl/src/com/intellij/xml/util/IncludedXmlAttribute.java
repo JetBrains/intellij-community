@@ -123,7 +123,7 @@ public class IncludedXmlAttribute extends IncludedXmlElement<XmlAttribute> imple
   }
 
   @Override
-  public void setValue(String value) throws IncorrectOperationException {
+  public void setValue(@NotNull String value) throws IncorrectOperationException {
     throw new UnsupportedOperationException("Can't modify included elements");
   }
 }

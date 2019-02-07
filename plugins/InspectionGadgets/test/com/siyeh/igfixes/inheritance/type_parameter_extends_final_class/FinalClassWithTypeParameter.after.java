@@ -1,4 +1,5 @@
-class FinalClassWithTypeParamer {
+class FinalClassWithTypeParamer//c1 
+{
 
   A<String> t;
 }

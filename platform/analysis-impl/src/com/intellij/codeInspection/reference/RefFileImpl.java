@@ -28,23 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class RefFileImpl extends RefElementImpl implements RefFile {
   RefFileImpl(PsiFile elem, RefManager manager) {
-    this(elem, manager, true);
-  }
-
-  protected RefFileImpl(PsiFile elem, RefManager manager, boolean addParent) {
     super(elem, manager);
-    if (!addParent) return;
-    final VirtualFile vFile = elem.getVirtualFile();
-    if (vFile == null) return;
-    final VirtualFile parentDirectory = vFile.getParent();
-    if (parentDirectory == null) return;
-    final PsiDirectory psiDirectory = elem.getManager().findDirectory(parentDirectory);
-    if (psiDirectory != null) {
-      final RefElement element = getRefManager().getReference(psiDirectory);
-      if (element != null) {
-        ((RefElementImpl)element).add(this);
-      }
-    }
   }
 
   @Override
@@ -66,6 +50,17 @@ public class RefFileImpl extends RefElementImpl implements RefFile {
 
   @Override
   protected void initialize() {
+    final VirtualFile vFile = getVirtualFile();
+    if (vFile == null) return;
+    final VirtualFile parentDirectory = vFile.getParent();
+    if (parentDirectory == null) return;
+    final PsiDirectory psiDirectory = getRefManager().getPsiManager().findDirectory(parentDirectory);
+    if (psiDirectory != null) {
+      final RefElement element = getRefManager().getReference(psiDirectory);
+      if (element != null) {
+        ((RefElementImpl)element).add(this);
+      }
+    }
   }
 
   @Nullable

@@ -14,6 +14,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
@@ -51,11 +52,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private Color myCopyrightForeground = JBColor.BLACK;
   private Color myAboutForeground = JBColor.BLACK;
   private Color myAboutLinkColor;
+  private Rectangle myAboutLogoRect;
   private String myProgressTailIconName;
   private Icon myProgressTailIcon;
-
   private int myProgressHeight = 2;
-  private int myProgressX = 1;
   private int myProgressY = 350;
   private int myLicenseOffsetY = 85;
   private String mySplashImageUrl;
@@ -90,17 +90,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private boolean myEAP;
   private boolean myHasHelp = true;
   private boolean myHasContextHelp = true;
-  @Nullable
-  private String myHelpFileName = "ideahelp.jar";
-  @Nullable
-  private String myHelpRootName = "idea";
+  private @Nullable String myHelpFileName = "ideahelp.jar";
+  private @Nullable String myHelpRootName = "idea";
   private String myWebHelpUrl = "https://www.jetbrains.com/idea/webhelp/";
   private List<PluginChooserPage> myPluginChooserPages = new ArrayList<>();
   private String[] myEssentialPluginsIds;
-  private String myStatisticsSettingsUrl;
   private String myFUStatisticsSettingsUrl;
-  private String myStatisticsServiceUrl;
-  private String myStatisticsServiceKey;
   private String myEventLogSettingsUrl;
   private String myJetbrainsTvUrl;
   private String myEvalLicenseUrl = "https://www.jetbrains.com/store/license.html";
@@ -112,8 +107,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String mySubscriptionTipsKey;
   private boolean mySubscriptionTipsAvailable;
   private String mySubscriptionAdditionalFormData;
-
-  private Rectangle myAboutLogoRect;
 
   private static final String IDEA_PATH = "/idea/";
   private static final String ELEMENT_VERSION = "version";
@@ -139,7 +132,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ATTRIBUTE_ABOUT_COPYRIGHT_FOREGROUND_COLOR = "copyrightForeground";
   private static final String ATTRIBUTE_ABOUT_LINK_COLOR = "linkColor";
   private static final String ATTRIBUTE_PROGRESS_HEIGHT = "progressHeight";
-  private static final String ATTRIBUTE_PROGRESS_X = "progressX";
   private static final String ATTRIBUTE_PROGRESS_Y = "progressY";
   private static final String ATTRIBUTE_LICENSE_TEXT_OFFSET_Y = "licenseOffsetY";
   private static final String ATTRIBUTE_PROGRESS_TAIL_ICON = "progressTailIcon";
@@ -179,10 +171,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ATTRIBUTE_WINDOWS_URL = "win";
   private static final String ATTRIBUTE_MAC_URL = "mac";
   private static final String ELEMENT_STATISTICS = "statistics";
-  private static final String ATTRIBUTE_STATISTICS_SETTINGS = "settings";
   private static final String ATTRIBUTE_FU_STATISTICS_SETTINGS = "fus-settings";
-  private static final String ATTRIBUTE_STATISTICS_SERVICE = "service";
-  private static final String ATTRIBUTE_STATISTICS_SERVICE_KEY = "service-key";
   private static final String ATTRIBUTE_EVENT_LOG_STATISTICS_SETTINGS = "event-log-settings";
   private static final String ELEMENT_JB_TV = "jetbrains-tv";
   private static final String CUSTOMIZE_IDE_WIZARD_STEPS = "customize-ide-wizard";
@@ -225,25 +214,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public BuildNumber getBuild() {
-    return BuildNumber.fromStringWithProductCode(myBuildNumber, getProductPrefix());
-  }
-
-  private static String getProductPrefix() {
-    String prefix = null;
-    if (PlatformUtils.isIdeaCommunity()) {
-      prefix = "IC";
-    }
-    else if (PlatformUtils.isIdeaUltimate()) {
-      prefix = "IU";
-    }
-    else if (PlatformUtils.isAndroidStudio()) {
-      // Android Studio: b/117215446: ApplicationComponents may not receive the correct product code in dev mode (i.e. release builds
-      // receive the proper product code without this change, but dev builds don't). This happens because the product code is parsed from
-      // AndroidStudioApplicationInfo.xml, which has __BUILD_NUMBER__ in dev mode, but is patched in during a release build.
-      // Having the prefix here acts as a fallback in dev mode, and allows application components to look at the product code.
-      prefix = "AI";
-    }
-    return prefix;
+    return BuildNumber.fromString(myBuildNumber);
   }
 
   @Override
@@ -379,10 +350,6 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
     return myLicenseOffsetY;
   }
 
-  public int getProgressX() {
-    return myProgressX;
-  }
-
   @Nullable
   public Icon getProgressTailIcon() {
     if (myProgressTailIcon == null && myProgressTailIconName != null) {
@@ -495,8 +462,7 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
 
   @Override
   public boolean usesJetBrainsPluginRepository() {
-    return DEFAULT_PLUGINS_HOST.equalsIgnoreCase(myPluginManagerUrl) ||
-           (DEFAULT_PLUGINS_HOST + "/").equalsIgnoreCase(myPluginManagerUrl);//see ***ApplicationInfo.xml
+    return DEFAULT_PLUGINS_HOST.equalsIgnoreCase(myPluginManagerUrl);
   }
 
   @Override
@@ -573,20 +539,8 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
     return myCopyrightStart;
   }
 
-  public String getStatisticsSettingsUrl() {
-    return myStatisticsSettingsUrl;
-  }
-
   public String getFUStatisticsSettingsUrl() {
     return myFUStatisticsSettingsUrl;
-  }
-
-  public String getStatisticsServiceUrl() {
-    return myStatisticsServiceUrl;
-  }
-
-  public String getStatisticsServiceKey() {
-    return myStatisticsServiceKey;
   }
 
   public String getEventLogSettingsUrl() {
@@ -646,16 +600,6 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
 
   private static ApplicationInfoImpl ourShadowInstance;
 
-  public boolean isBetaOrRC() {
-    String minor = getMinorVersion();
-    if (minor != null) {
-      if (minor.contains("RC") || minor.contains("Beta") || minor.contains("beta")) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   @NotNull
   public static ApplicationInfoEx getShadowInstance() {
     if (ourShadowInstance == null) {
@@ -698,10 +642,10 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
       setBuildNumber(myApiVersion, myBuildNumber);
 
       String dateString = buildElement.getAttributeValue(ATTRIBUTE_DATE);
-      if (dateString.equals("__BUILD_DATE__")) {
+      if ("__BUILD_DATE__".equals(dateString)) {
         myBuildDate = new GregorianCalendar();
-        try (JarFile bootstrapJar = new JarFile(PathManager.getHomePath() + File.separator + "lib" + File.separator + "bootstrap.jar")) {
-          final JarEntry jarEntry = bootstrapJar.entries().nextElement(); // /META-INF is always updated on build
+        try (JarFile bootstrapJar = new JarFile(PathManager.getHomePath() + "/lib/bootstrap.jar")) {
+          JarEntry jarEntry = bootstrapJar.entries().nextElement();  // META-INF is always updated on build
           myBuildDate.setTime(new Date(jarEntry.getTime()));
         }
         catch (Exception ignore) { }
@@ -740,11 +684,6 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
       v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_HEIGHT);
       if (v != null) {
         myProgressHeight = Integer.parseInt(v);
-      }
-
-      v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_X);
-      if (v != null) {
-        myProgressX = Integer.parseInt(v);
       }
 
       v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_Y);
@@ -871,36 +810,40 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
     Element pluginsElement = getChild(parentNode, ELEMENT_PLUGINS);
     if (pluginsElement != null) {
       String url = pluginsElement.getAttributeValue(ATTRIBUTE_URL);
-      myPluginManagerUrl = url != null ? url : DEFAULT_PLUGINS_HOST;
-      boolean closed = StringUtil.endsWith(myPluginManagerUrl, "/");
+      if (url != null) {
+        myPluginManagerUrl = StringUtil.trimEnd(url, "/");
+      }
 
       String listUrl = pluginsElement.getAttributeValue(ATTRIBUTE_LIST_URL);
-      myPluginsListUrl = listUrl != null ? listUrl : myPluginManagerUrl + (closed ? "" : "/") + "plugins/list/";
+      if (listUrl != null) {
+        myPluginsListUrl = listUrl;
+      }
 
       String channelListUrl = pluginsElement.getAttributeValue(ATTRIBUTE_CHANNEL_LIST_URL);
-      myChannelsListUrl = channelListUrl != null ? channelListUrl  : myPluginManagerUrl + (closed ? "" : "/") + "channels/list/";
+      if (channelListUrl != null) {
+        myChannelsListUrl = channelListUrl;
+      }
 
       String downloadUrl = pluginsElement.getAttributeValue(ATTRIBUTE_DOWNLOAD_URL);
-      myPluginsDownloadUrl = downloadUrl != null ? downloadUrl : myPluginManagerUrl + (closed ? "" : "/") + "pluginManager/";
+      if (downloadUrl != null) {
+        myPluginsDownloadUrl = downloadUrl;
+      }
 
       if (!getBuild().isSnapshot()) {
         myBuiltinPluginsUrl = StringUtil.nullize(pluginsElement.getAttributeValue(ATTRIBUTE_BUILTIN_URL));
       }
     }
-    else {
-      myPluginManagerUrl = DEFAULT_PLUGINS_HOST;
-      myPluginsListUrl = DEFAULT_PLUGINS_HOST + "/plugins/list/";
-      myChannelsListUrl = DEFAULT_PLUGINS_HOST + "/channels/list/";
-      myPluginsDownloadUrl = DEFAULT_PLUGINS_HOST + "/pluginManager/";
-    }
 
     final String pluginsHost = System.getProperty("idea.plugins.host");
     if (pluginsHost != null) {
-      myPluginManagerUrl = pluginsHost;
-      myPluginsListUrl = myPluginsListUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
-      myChannelsListUrl = myChannelsListUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
-      myPluginsDownloadUrl = myPluginsDownloadUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
+      myPluginManagerUrl = StringUtil.trimEnd(pluginsHost, "/");
+      myPluginsListUrl = myChannelsListUrl = myPluginsDownloadUrl = null;
     }
+
+    myPluginManagerUrl = ObjectUtils.coalesce(myPluginsListUrl, DEFAULT_PLUGINS_HOST);
+    myPluginsListUrl = ObjectUtils.coalesce(myPluginsListUrl, myPluginManagerUrl + "/plugins/list/");
+    myChannelsListUrl = ObjectUtils.coalesce(myChannelsListUrl, myPluginManagerUrl + "/channels/list/");
+    myPluginsDownloadUrl = ObjectUtils.coalesce(myPluginsDownloadUrl, myPluginManagerUrl + "/pluginManager/");
 
     Element keymapElement = getChild(parentNode, ELEMENT_KEYMAP);
     if (keymapElement != null) {
@@ -922,18 +865,12 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
 
     Element statisticsElement = getChild(parentNode, ELEMENT_STATISTICS);
     if (statisticsElement != null) {
-      myStatisticsSettingsUrl = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SETTINGS);
       myFUStatisticsSettingsUrl = statisticsElement.getAttributeValue(ATTRIBUTE_FU_STATISTICS_SETTINGS);
-      myStatisticsServiceUrl  = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SERVICE);
-      myStatisticsServiceKey  = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SERVICE_KEY);
       myEventLogSettingsUrl = statisticsElement.getAttributeValue(ATTRIBUTE_EVENT_LOG_STATISTICS_SETTINGS);
     }
     else {
-      myStatisticsSettingsUrl = "https://www.jetbrains.com/idea/statistics/stat-assistant.xml";
       myFUStatisticsSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-assistant.xml";
-      myStatisticsServiceUrl  = "https://www.jetbrains.com/idea/statistics/index.jsp";
-      myStatisticsServiceKey  = null;
-      myEventLogSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-lion-v2-01-assistant.xml";
+      myEventLogSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-lion-v3-assistant.xml";
     }
 
     Element tvElement = getChild(parentNode, ELEMENT_JB_TV);
@@ -973,8 +910,8 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
     return parentNode.getChildren(name, parentNode.getNamespace());
   }
 
-  private static Element getChild(Element parentNode, String version) {
-    return parentNode.getChild(version, parentNode.getNamespace());
+  private static Element getChild(Element parentNode, String name) {
+    return parentNode.getChild(name, parentNode.getNamespace());
   }
 
   //copy of ApplicationInfoProperties.shortenCompanyName
@@ -1023,7 +960,7 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
   }
 
   public List<String> getEssentialPluginsIds() {
-    return Collections.unmodifiableList(Arrays.asList(myEssentialPluginsIds));
+    return ContainerUtil.immutableList(myEssentialPluginsIds);
   }
 
   private static class UpdateUrlsImpl implements UpdateUrls {

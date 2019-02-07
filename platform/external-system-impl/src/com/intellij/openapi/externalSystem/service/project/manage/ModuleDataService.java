@@ -46,7 +46,6 @@ import java.util.Set;
  * Encapsulates functionality of importing external system module to the intellij project.
  *
  * @author Denis Zhdanov
- * @since 2/7/12 2:49 PM
  */
 @Order(ExternalSystemConstants.BUILTIN_MODULE_DATA_SERVICE_ORDER)
 public class ModuleDataService extends AbstractModuleDataService<ModuleData> {

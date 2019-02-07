@@ -15,6 +15,7 @@ import java.util.List;
 /**
  * @author Vladislav.Soroka
  */
+@Deprecated
 public class ExecutionNodeProgressAnimator implements Runnable, Disposable {
   private static final int FRAMES_COUNT = 8;
   private static final int MOVIE_TIME = 1200;

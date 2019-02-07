@@ -40,6 +40,8 @@ internal class SvgRenderer(val svgFileDir: Path, private val deviceConfiguration
     xmlTransformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8")
     xmlTransformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes")
 
+    IconLoader.activate()
+
     context.imageHandler = object : ImageHandlerBase64Encoder() {
       override fun handleImage(image: Image, imageElement: Element, generatorContext: SVGGeneratorContext) {
         imageElement.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", findImagePath(image))
@@ -65,6 +67,7 @@ internal class SvgRenderer(val svgFileDir: Path, private val deviceConfiguration
             return getIconRelativePath(iconWrapper.toString())
           }
         }
+
         for (name in arrayOf("checkBox", "radio")) {
           val iconWrapper = LafIconLookup.findIcon(name, selected = true) ?: continue
           if (isImage(iconWrapper)) {

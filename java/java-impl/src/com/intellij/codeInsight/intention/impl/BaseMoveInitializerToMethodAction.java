@@ -18,6 +18,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -36,9 +37,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 /**
- * refactored from {@link com.intellij.codeInsight.intention.impl.MoveInitializerToConstructorAction}
+ * refactored from {@link MoveInitializerToConstructorAction}
  *
  * @author Danila Ponomarenko
  */
@@ -48,6 +50,8 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
     if (element instanceof PsiCompiledElement) return false;
     final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class, false, PsiMember.class, PsiCodeBlock.class, PsiDocComment.class);
     if (field == null || hasUnsuitableModifiers(field)) return false;
+    // Doesn't work for Groovy
+    if (field.getLanguage() != JavaLanguage.INSTANCE) return false;
     PsiExpression initializer = field.getInitializer();
     if (initializer == null || initializer.getNextSibling() instanceof PsiErrorElement) return false;
     PsiClass psiClass = field.getContainingClass();
@@ -80,7 +84,10 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
     if (methodsToAddInitialization.isEmpty()) return;
 
     final List<PsiExpressionStatement> assignments = addFieldAssignments(field, methodsToAddInitialization);
-    field.getInitializer().delete();
+    PsiExpression initializer = field.getInitializer();
+    if (initializer != null) {
+      initializer.delete();
+    }
 
     if (!assignments.isEmpty()) {
       highlightRExpression((PsiAssignmentExpression)assignments.get(0).getExpression(), project, editor);
@@ -128,7 +135,7 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
     initializer = RefactoringUtil.convertInitializerToNormalExpression(initializer, field.getType());
 
     final PsiAssignmentExpression expression = (PsiAssignmentExpression)statement.getExpression();
-    expression.getRExpression().replace(initializer);
+    Objects.requireNonNull(expression.getRExpression()).replace(Objects.requireNonNull(initializer));
 
     final PsiElement newStatement = codeBlock.addBefore(statement, findFirstFieldUsage(codeBlock.getStatements(), field));
     replaceWithQualifiedReferences(newStatement, newStatement, factory);

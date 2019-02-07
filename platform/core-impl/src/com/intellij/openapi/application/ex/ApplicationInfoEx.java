@@ -12,7 +12,6 @@ import java.util.List;
 
 /**
  * @author mike
- * @since Sep 16, 2002
  */
 public abstract class ApplicationInfoEx extends ApplicationInfo {
   public static ApplicationInfoEx getInstanceEx() {
@@ -87,6 +86,9 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getFeedbackUrl();
 
+  /*
+   * Returns url to plugins repository without trailing slash
+   */
   public abstract String getPluginManagerUrl();
 
   public abstract boolean usesJetBrainsPluginRepository();

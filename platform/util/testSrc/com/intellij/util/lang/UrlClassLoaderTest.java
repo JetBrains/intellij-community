@@ -123,7 +123,7 @@ public class UrlClassLoaderTest {
                 assertNotNull(findResource(loader, name, random.nextBoolean()));
               }
               catch (Throwable e) {
-                System.out.println("Failed loading " + name);
+                System.err.println("Failed loading " + name);
                 throw new RuntimeException(e);
               }
             }

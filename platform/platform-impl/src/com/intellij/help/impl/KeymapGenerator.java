@@ -71,7 +71,7 @@ public class KeymapGenerator implements ApplicationStarter {
           if (action != null) {
             String text = action.getTemplatePresentation().getText();
             if (text != null) {
-              xml.append("      <Text>").append(StringUtil.escapeXml(text)).append("</Text>\n");
+              xml.append("      <Text>").append(StringUtil.escapeXmlEntities(text)).append("</Text>\n");
             }
           }
           xml.append("    </Action>\n");

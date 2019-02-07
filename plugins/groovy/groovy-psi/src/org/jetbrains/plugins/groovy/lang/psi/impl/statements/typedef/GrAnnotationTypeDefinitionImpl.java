@@ -22,9 +22,10 @@ public class GrAnnotationTypeDefinitionImpl extends GrTypeDefinitionImpl impleme
   }
 
   public GrAnnotationTypeDefinitionImpl(GrTypeDefinitionStub stub) {
-    super(stub, GroovyElementTypes.ANNOTATION_DEFINITION);
+    super(stub, GroovyElementTypes.ANNOTATION_TYPE_DEFINITION);
   }
 
+  @Override
   public String toString() {
     return "Annotation definition";
   }

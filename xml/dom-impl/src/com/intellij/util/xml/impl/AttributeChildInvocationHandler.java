@@ -17,7 +17,6 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -166,7 +165,8 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
     final XmlTag tag = ensureTagExists();
     final String attributeName = getXmlElementName();
     final String namespace = getXmlApiCompatibleNamespace(getParentHandler());
-    final String oldValue = StringUtil.unescapeXml(tag.getAttributeValue(attributeName, namespace));
+    String tagValue = tag.getAttributeValue(attributeName, namespace);
+    final String oldValue = tagValue == null ? null : StringUtil.unescapeXmlEntities(tagValue);
     final String newValue = XmlStringUtil.escapeString(value);
     if (Comparing.equal(oldValue, newValue, true)) return;
 

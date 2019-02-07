@@ -518,7 +518,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
   private abstract static class BlockLoader {
     @NotNull private final Object LOCK = new Object();
 
-    @NotNull private final List<VcsFileRevision> myRevisions;
+    @NotNull private final List<? extends VcsFileRevision> myRevisions;
     @NotNull private final Charset myCharset;
 
     @NotNull private final List<Block> myBlocks = new ArrayList<>();
@@ -526,7 +526,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     private boolean myIsLoading = true;
     private VcsFileRevision myCurrentLoadingRevision;
 
-    BlockLoader(@NotNull List<VcsFileRevision> revisions,
+    BlockLoader(@NotNull List<? extends VcsFileRevision> revisions,
                        @NotNull VirtualFile file,
                        @NotNull Document document,
                        int selectionStart,
@@ -614,12 +614,12 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
 
   private static class BlockData {
     private final boolean myIsLoading;
-    @NotNull private final List<Block> myBlocks;
+    @NotNull private final List<? extends Block> myBlocks;
     @Nullable private final VcsException myException;
     @Nullable private final VcsFileRevision myCurrentLoadingRevision;
 
     BlockData(boolean isLoading,
-                     @NotNull List<Block> blocks,
+                     @NotNull List<? extends Block> blocks,
                      @Nullable VcsException exception,
                      @Nullable VcsFileRevision currentLoadingRevision) {
       myIsLoading = isLoading;

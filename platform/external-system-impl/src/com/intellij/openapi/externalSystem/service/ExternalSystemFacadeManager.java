@@ -38,7 +38,6 @@ import java.util.concurrent.locks.ReentrantLock;
  * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 8/8/11 1:08 PM
  */
 public class ExternalSystemFacadeManager {
 

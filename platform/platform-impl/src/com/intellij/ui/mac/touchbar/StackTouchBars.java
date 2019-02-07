@@ -122,10 +122,12 @@ public class StackTouchBars {
     final BarContainer top = myContainersStack.peek();
     top.selectBarByKeyMask(myCurrentKeyMask);
     final TouchBar tb = top.get();
-    if (tb != null && tb.isEmpty())
+    if (tb != null && tb.isEmpty()) {
+      myTouchBarHolder.setTouchBar(null);
       return;
+    }
 
-    myTouchBarHolder.setTouchBar(top.get());
+    myTouchBarHolder.setTouchBar(tb);
   }
 
   private static class TouchBarHolder {

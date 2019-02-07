@@ -22,9 +22,9 @@ import com.intellij.lang.PsiStructureViewFactory;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.compiled.ClsFileImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,8 +38,9 @@ public class JavaClsStructureViewBuilderProvider implements StructureViewBuilder
     if (fileType == JavaClassFileType.INSTANCE) {
       PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
 
-      if (psiFile instanceof PsiCompiledFile) {
-        psiFile = ((PsiCompiledFile)psiFile).getDecompiledPsiFile();
+      if (psiFile instanceof ClsFileImpl) {
+        PsiFile mirror = ((ClsFileImpl)psiFile).getCachedMirror();
+        if (mirror != null) psiFile = mirror;
       }
 
       if (psiFile != null) {

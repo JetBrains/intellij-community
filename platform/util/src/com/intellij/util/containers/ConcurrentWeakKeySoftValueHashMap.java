@@ -124,7 +124,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
 
      V v = get();
      Object thatV = ((ValueReference)o).get();
-     return v != null && thatV != null && v.equals(thatV);
+     return v != null && v.equals(thatV);
    }
 
    @NotNull

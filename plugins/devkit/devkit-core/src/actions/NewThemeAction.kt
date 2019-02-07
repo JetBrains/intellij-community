@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.actions
 
 import com.intellij.ide.fileTemplates.FileTemplateManager
@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.DialogWrapper
@@ -24,8 +25,8 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.layout.*
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.quickfix.PluginDescriptorChooser
+import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.idea.devkit.util.DescriptorUtil
-import org.jetbrains.idea.devkit.util.PsiUtil
 import java.util.*
 import javax.swing.JComponent
 
@@ -55,7 +56,7 @@ class NewThemeAction: AnAction() {
 
   override fun update(e: AnActionEvent) {
     val module = e.getData(LangDataKeys.MODULE)
-    e.presentation.isEnabled = module != null && PsiUtil.isPluginModule(module)
+    e.presentation.isEnabled = module != null && ModuleType.get(module) is PluginModuleType //todo[kb] PsiUtil.isPluginModule stopped working
   }
 
   private fun createThemeJson(themeName: String, isDark: Boolean, project: Project, dir: PsiDirectory): PsiFile {

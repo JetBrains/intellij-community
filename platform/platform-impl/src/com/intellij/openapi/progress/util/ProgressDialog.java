@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.Disposable;
@@ -13,7 +13,6 @@ import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.PopupBorder;
 import com.intellij.ui.TitlePanel;
 import com.intellij.ui.WindowMoveListener;
@@ -82,25 +81,12 @@ class ProgressDialog implements Disposable {
   DialogWrapper myPopup;
   private final Window myParentWindow;
 
-  private final SingleAlarm myDisableCancelAlarm = new SingleAlarm(this::setCancelButtonDisabledInEDT, 500, ModalityState.any(),this);
-  private final SingleAlarm myEnableCancelAlarm = new SingleAlarm(this::setCancelButtonEnabledInEDT, 500, ModalityState.any(),this);
+  private final SingleAlarm myDisableCancelAlarm = new SingleAlarm(this::setCancelButtonDisabledInEDT, 500, ModalityState.any(), this);
+  private final SingleAlarm myEnableCancelAlarm = new SingleAlarm(this::setCancelButtonEnabledInEDT, 500, ModalityState.any(), this);
 
-  ProgressDialog(@NotNull ProgressWindow progressWindow,
-                 boolean shouldShowBackground,
-                 @Nullable Component parent,
-                 @Nullable Project project,
-                 String cancelText) {
+  ProgressDialog(@NotNull ProgressWindow progressWindow, boolean shouldShowBackground, String cancelText, @Nullable Window parentWindow) {
     myProgressWindow = progressWindow;
-    if (parent != null) {
-      myParentWindow = UIUtil.getWindow(parent);
-    }
-    else {
-      Window parentWindow = WindowManager.getInstance().suggestParentWindow(project);
-      if (parentWindow == null) {
-        parentWindow = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
-      }
-      myParentWindow = parentWindow;
-    }
+    myParentWindow = parentWindow;
     initDialog(shouldShowBackground, cancelText);
   }
 

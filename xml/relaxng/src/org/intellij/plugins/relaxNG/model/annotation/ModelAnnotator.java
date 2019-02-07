@@ -59,7 +59,7 @@ public final class ModelAnnotator implements Annotator, DomElementsAnnotator {
     }
   }
 
-  private final class MyAnnotator<T> extends CommonElement.Visitor {
+  private static final class MyAnnotator<T> extends CommonElement.Visitor {
     private final CommonAnnotationHolder<T> myHolder;
 
     MyAnnotator(CommonAnnotationHolder<T> holder) {

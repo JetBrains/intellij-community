@@ -75,7 +75,7 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
 
   @Override
   public int getSortWeight() {
-    return 80;
+    return 350;
   }
 
   @Override
@@ -128,7 +128,7 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
 
     pattern = filterString(pattern);
     MinusculeMatcher matcher = NameUtil.buildMatcher(pattern).build();
-    ChooseRunConfigurationPopup.ItemWrapper[] wrappers =
+    List<ChooseRunConfigurationPopup.ItemWrapper> wrappers =
       ChooseRunConfigurationPopup.createSettingsList(myProject, new ExecutorProvider() {
         @Override
         public Executor getExecutor() {
@@ -137,10 +137,8 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
       }, false);
 
     for (ChooseRunConfigurationPopup.ItemWrapper wrapper : wrappers) {
-      if (matcher.matches(wrapper.getText())) {
-        if (!consumer.apply(wrapper)) {
-          return;
-        }
+      if (matcher.matches(wrapper.getText()) && !consumer.apply(wrapper)) {
+        return;
       }
     }
   }

@@ -20,6 +20,7 @@
     <orderEntry type="library" name="XmlBeans" level="project" />
     <orderEntry type="module" module-name="intellij.platform.tests" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="xml-resolver" level="project" />
+    <orderEntry type="library" name="NanoXML" level="project" />
   </component>
   <component name="copyright">
     <Base>

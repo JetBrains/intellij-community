@@ -15,18 +15,24 @@
  */
 package com.intellij.execution.filters;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiElementFilter;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -36,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.ToIntFunction;
 
 public class ExceptionWorker {
   @NonNls private static final String AT = "at";
@@ -49,6 +56,7 @@ public class ExceptionWorker {
   private String myMethod;
   private ParsedLine myInfo;
   private final ExceptionInfoCache myCache;
+  private PsiElementFilter myLocationRefiner;
 
   public ExceptionWorker(@NotNull ExceptionInfoCache cache) {
     myProject = cache.getProject();
@@ -56,6 +64,10 @@ public class ExceptionWorker {
   }
 
   public Filter.Result execute(final String line, final int textEndOffset) {
+    return execute(line, textEndOffset, null);
+  }
+
+  public Filter.Result execute(final String line, final int textEndOffset, PsiElementFilter elementMatcher) {
     myResult = null;
     myInfo = parseExceptionLine(line);
     if (myInfo == null) {
@@ -113,10 +125,21 @@ public class ExceptionWorker {
     else {
       virtualFiles = virtualFilesInContent;
     }
-    HyperlinkInfo linkInfo = HyperlinkInfoFactory.getInstance().createMultipleFilesHyperlinkInfo(virtualFiles, myInfo.lineNumber - 1, myProject);
+    ToIntFunction<PsiFile> columnFinder = elementMatcher == null ? null : new ExceptionColumnFinder(elementMatcher, myInfo.lineNumber - 1);
+    HyperlinkInfo linkInfo =
+      HyperlinkInfoFactory.getInstance().createMultipleFilesHyperlinkInfo(virtualFiles, myInfo.lineNumber - 1, myProject, columnFinder);
     Filter.Result result = new Filter.Result(highlightStartOffset, highlightEndOffset, linkInfo, attributes);
+    if (myMethod.startsWith("access$")) {
+      myLocationRefiner = elementMatcher;
+    } else {
+      myLocationRefiner = new StackFrameMatcher(line, myInfo);
+    }
     myResult = result;
     return result;
+  }
+
+  public PsiElementFilter getLocationRefiner() {
+    return myLocationRefiner;
   }
 
   private static int getLineNumber(String lineString) {
@@ -304,5 +327,91 @@ public class ExceptionWorker {
 
       return new ParsedLine(classFqnRange, methodNameRange, fileLineRange, fileAndLine.substring(0, colonIndex).trim(), lineNumber);
     } 
+  }
+  
+  private static class StackFrameMatcher implements PsiElementFilter {
+    private final String myMethodName;
+    private final String myClassName;
+    private final String mySimpleName;
+    private final boolean myHasDollarInName;
+
+    private StackFrameMatcher(@NotNull String line, @NotNull ParsedLine info) {
+      myMethodName = info.methodNameRange.substring(line);
+      myClassName = info.classFqnRange.substring(line);
+      mySimpleName = StringUtil.getShortName(myClassName);
+      myHasDollarInName = mySimpleName.contains("$");
+    }
+
+    @Override
+    public boolean isAccepted(PsiElement element) {
+      if (!(element instanceof PsiIdentifier)) return false;
+      if (myMethodName.equals("<init>")) {
+        if (myHasDollarInName || element.textMatches(StringUtil.getShortName(myClassName))) {
+          PsiElement parent = element.getParent();
+          while (parent instanceof PsiJavaCodeReferenceElement) {
+            parent = parent.getParent();
+          }
+          if (parent instanceof PsiAnonymousClass) {
+            return isTargetClass(parent) || isTargetClass(((PsiAnonymousClass)parent).getSuperClass());
+          }
+          if (parent instanceof PsiNewExpression) {
+            PsiJavaCodeReferenceElement ref = ((PsiNewExpression)parent).getClassOrAnonymousClassReference();
+            return ref != null && isTargetClass(ref.resolve());
+          }
+        }
+      }
+      else if (element.textMatches(myMethodName)) {
+        PsiElement parent = element.getParent();
+        if (parent instanceof PsiReferenceExpression) {
+          PsiElement target = ((PsiReferenceExpression)parent).resolve();
+          return target instanceof PsiMethod && isTargetClass(((PsiMethod)target).getContainingClass());
+        }
+      }
+      return false;
+    }
+
+    private boolean isTargetClass(PsiElement maybeClass) {
+      if (!(maybeClass instanceof PsiClass)) return false;
+      PsiClass declaredClass = (PsiClass)maybeClass;
+      String declaredName = declaredClass.getQualifiedName();
+      if (myClassName.equals(declaredName)) return true;
+      PsiClass calledClass = ClassUtil.findPsiClass(maybeClass.getManager(), myClassName, declaredClass, true);
+      if (calledClass == null) {
+        calledClass = ClassUtil.findPsiClass(maybeClass.getManager(), myClassName, null, true);
+      }
+      return calledClass == declaredClass || declaredName != null && InheritanceUtil.isInheritor(calledClass, false, declaredName);
+    }
+  }
+
+  private static class ExceptionColumnFinder implements ToIntFunction<PsiFile> {
+    private final PsiElementFilter myElementMatcher;
+    private final int myLineNumber;
+
+    private ExceptionColumnFinder(@NotNull PsiElementFilter elementMatcher, int lineNumber) {
+      myElementMatcher = elementMatcher;
+      myLineNumber = lineNumber;
+    }
+
+    @Override
+    public int applyAsInt(PsiFile file) {
+      Document document = FileDocumentManager.getInstance().getDocument(file.getVirtualFile());
+      if (document == null || document.getLineCount() <= myLineNumber) return 0;
+      if (!PsiDocumentManager.getInstance(file.getProject()).isCommitted(document)) return 0;
+      int startOffset = document.getLineStartOffset(myLineNumber);
+      int endOffset = document.getLineEndOffset(myLineNumber);
+      PsiElement element = file.findElementAt(startOffset);
+      List<PsiElement> candidates = new ArrayList<>();
+      while (element != null && element.getTextRange().getStartOffset() < endOffset) {
+        if (myElementMatcher.isAccepted(element)) {
+          candidates.add(element);
+          if (candidates.size() > 1) return 0;
+        }
+        element = PsiTreeUtil.nextLeaf(element);
+      }
+      if (candidates.size() == 1) {
+        return candidates.get(0).getTextRange().getStartOffset() - startOffset;
+      }
+      return 0;
+    }
   }
 }

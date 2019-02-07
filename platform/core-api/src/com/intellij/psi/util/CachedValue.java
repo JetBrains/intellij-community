@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.util;
 
+import com.intellij.openapi.util.RecursionGuard;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,7 +35,21 @@ import org.jetbrains.annotations.NotNull;
  * </ol>
  *
  * The implementation is thread-safe but not atomic, i.e. if several threads request the cached value simultaneously, the computation may
- * be run concurrently on more than one thread.
+ * be run concurrently on more than one thread. Due to this and unpredictable garbage collection,
+ * cached value providers shouldn't have side effects.<p></p>
+ *
+ * <b>Important note</b>: if you store the CachedValue in a field or user data of some object {@code X}, then its {@link CachedValueProvider}
+ * may only depend on X and parts of global system state that don't change while {@code X} is alive and valid (e.g. application/project components/services).
+ * Otherwise re-invoking the CachedValueProvider after invalidation would use outdated data and produce incorrect results. In particular,
+ * the provider may not depend on:
+ * <ul>
+ *   <li>Parameters of a method where CachedValue is created, except for {@code X} itself</li>
+ *   <li>"this" object creating the CachedValue, if {@code X} can outlive it,
+ *   or if there can be several non-equivalent instances of "this"-object's class all creating a cached value for the same place</li>
+ *   <li>Thread-locals at the moment of creation. If you use them (either directly or via {@link RecursionGuard#currentStack()}),
+ *   please use {@link RecursionGuard#prohibitResultCaching(Object)} to ensure values depending on unstable data won't be cached.</li>
+ *   <li>PSI elements around {@code X}, when {@code X} is a {@link com.intellij.psi.PsiElement} itself</ul>
+ * </ul>
  *
  * @param <T> The type of the computation result.
  *

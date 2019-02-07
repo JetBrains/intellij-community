@@ -36,7 +36,7 @@ public final class RemoteConfigurationType extends SimpleConfigurationType {
 
   @Override
   public String getHelpTopic() {
-    return "reference.dialogs.rundebug." + getId();
+    return "reference.dialogs.rundebug.Remote";
   }
 
   @NotNull

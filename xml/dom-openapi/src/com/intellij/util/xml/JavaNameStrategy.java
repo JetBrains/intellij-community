@@ -18,6 +18,7 @@ package com.intellij.util.xml;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
@@ -29,8 +30,9 @@ import java.util.Arrays;
 public class JavaNameStrategy extends DomNameStrategy {
   public static final Function<String,String> DECAPITALIZE_FUNCTION = s -> StringUtil.decapitalize(s);
 
+  @NotNull
   @Override
-  public final String convertName(String propertyName) {
+  public final String convertName(@NotNull String propertyName) {
     return StringUtil.decapitalize(propertyName);
   }
 

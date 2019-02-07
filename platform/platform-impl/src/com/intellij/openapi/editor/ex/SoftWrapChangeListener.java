@@ -19,7 +19,6 @@ package com.intellij.openapi.editor.ex;
  * Defines a contract for the callbacks for soft wraps management notifications (addition/removal).
  *
  * @author Denis Zhdanov
- * @since Jul 8, 2010 6:50:17 PM
  */
 public interface SoftWrapChangeListener {
 

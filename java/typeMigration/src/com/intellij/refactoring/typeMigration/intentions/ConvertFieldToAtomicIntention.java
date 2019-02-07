@@ -31,7 +31,6 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 
 /**
  * @author anna
- * @since 26-Aug-2009
  */
 public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction implements PriorityAction {
   private static final Logger LOG = Logger.getInstance(ConvertFieldToAtomicIntention.class);

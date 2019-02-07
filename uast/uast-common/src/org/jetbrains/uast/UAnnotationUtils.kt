@@ -73,19 +73,18 @@ fun getUParentForAnnotationIdentifier(identifier: PsiElement): UElement? {
  * @param uElement an element that occurs in annotation
  * @return the annotation in which this element occurs and a corresponding parameter name if available
  */
-fun getContainingAnnotationEntry(uElement: UElement?): Pair<PsiAnnotation, String?>? {
+fun getContainingUAnnotationEntry(uElement: UElement?): Pair<UAnnotation, String?>? {
 
-  fun tryConvertToEntry(uElement: UElement, parent: UElement, name: String?): Pair<PsiAnnotation, String?>? {
+  fun tryConvertToEntry(uElement: UElement, parent: UElement, name: String?): Pair<UAnnotation, String?>? {
     val uAnnotation = parent.sourcePsi.toUElementOfType<UAnnotation>() ?: return null
-    val javaPsi = uAnnotation.javaPsi ?: return null
-    return javaPsi to (name ?: uAnnotation.attributeValues.find { it.expression.sourcePsi === uElement.sourcePsi }?.name)
+    return uAnnotation to (name ?: uAnnotation.attributeValues.find { it.expression.sourcePsi === uElement.sourcePsi }?.name)
   }
 
-  tailrec fun retrievePsiAnnotationEntry(uElement: UElement?, name: String?): Pair<PsiAnnotation, String?>? {
+  tailrec fun retrievePsiAnnotationEntry(uElement: UElement?, name: String?): Pair<UAnnotation, String?>? {
     if (uElement == null) return null
     val parent = uElement.uastParent ?: return null
     return when (parent) {
-      is UAnnotation -> parent.javaPsi?.let { it to name }
+      is UAnnotation -> parent to name
       is UReferenceExpression -> tryConvertToEntry(uElement, parent, name)
       is UCallExpression ->
         if (parent.kind == UastCallKind.NESTED_ARRAY_INITIALIZER)
@@ -101,6 +100,11 @@ fun getContainingAnnotationEntry(uElement: UElement?): Pair<PsiAnnotation, Strin
   return retrievePsiAnnotationEntry(uElement, null)
 }
 
+fun getContainingAnnotationEntry(uElement: UElement?): Pair<PsiAnnotation, String?>? {
+  val (uAnnotation, name) = getContainingUAnnotationEntry(uElement) ?: return null
+  val psiAnnotation = uAnnotation.javaPsi ?: return null
+  return psiAnnotation to name
+}
 
 private fun isResolvedToAnnotation(reference: UReferenceExpression?) = (reference?.resolve() as? PsiClass)?.isAnnotationType == true
 

@@ -17,7 +17,10 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Supplier;
 
 /**
  * The main (and single) purpose of this class is provide lazy initialization
@@ -30,26 +33,32 @@ public class ActionStub extends AnAction{
 
   private final String myClassName;
   private final String myProjectType;
+  private final Supplier<Presentation> myTemplatePresentation;
   private final String myId;
-  private final String myText;
   private final ClassLoader myLoader;
   private final PluginId myPluginId;
   private final String myIconPath;
 
   public ActionStub(@NotNull String actionClass,
                     @NotNull String id,
-                    @NotNull String text,
                     ClassLoader loader,
                     PluginId pluginId,
-                    String iconPath, String projectType) {
+                    String iconPath, String projectType,
+                    @NotNull Supplier<Presentation> templatePresentation) {
     myLoader = loader;
     myClassName=actionClass;
     myProjectType = projectType;
+    myTemplatePresentation = templatePresentation;
     LOG.assertTrue(!id.isEmpty());
     myId=id;
-    myText=text;
     myPluginId = pluginId;
     myIconPath = iconPath;
+  }
+
+  @NotNull
+  @Override
+  Presentation createTemplatePresentation() {
+    return myTemplatePresentation.get();
   }
 
   @NotNull
@@ -60,11 +69,6 @@ public class ActionStub extends AnAction{
   @NotNull
   public String getId(){
     return myId;
-  }
-
-  @NotNull
-  public String getText(){
-    return myText;
   }
 
   public ClassLoader getLoader() {
@@ -95,8 +99,8 @@ public class ActionStub extends AnAction{
     if (targetPresentation.getIcon() == null && sourcePresentation.getIcon() != null) {
       targetPresentation.setIcon(sourcePresentation.getIcon());
     }
-    if (targetPresentation.getText() == null && sourcePresentation.getText() != null) {
-      targetPresentation.setText(sourcePresentation.getText());
+    if (StringUtil.isEmpty(targetPresentation.getText()) && sourcePresentation.getText() != null) {
+      targetPresentation.setText(sourcePresentation.getTextWithMnemonic(), true);
     }
     if (targetPresentation.getDescription() == null && sourcePresentation.getDescription() != null) {
       targetPresentation.setDescription(sourcePresentation.getDescription());

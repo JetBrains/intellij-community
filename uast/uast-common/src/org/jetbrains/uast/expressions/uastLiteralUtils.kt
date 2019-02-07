@@ -20,6 +20,8 @@ package org.jetbrains.uast
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.uast.expressions.UInjectionHost
 
 /**
  * Checks if the [UElement] is a null literal.
@@ -54,13 +56,22 @@ fun UElement.isFalseLiteral(): Boolean = this is ULiteralExpression && this.isBo
  *
  * @return true if the receiver is a [String] literal, false otherwise.
  */
+@Deprecated("doesn't support UInjectionHost, most probably it is not what you want", ReplaceWith("isInjectionHost()"))
 fun UElement.isStringLiteral(): Boolean = this is ULiteralExpression && this.isString
+
+/**
+ * Checks if the [UElement] is a [PsiLanguageInjectionHost] holder.
+ *
+ * NOTE: It is a transitional function until everything will migrate to [UInjectionHost]
+ */
+fun UElement?.isInjectionHost(): Boolean = this is UInjectionHost || (this is UExpression && this.sourceInjectionHost != null)
 
 /**
  * Returns the [String] literal value.
  *
  * @return literal text if the receiver is a valid [String] literal, null otherwise.
  */
+@Deprecated("doesn't support UInjectionHost, most probably it is not what you want", ReplaceWith("UExpression.evaluateString()"))
 fun UElement.getValueIfStringLiteral(): String? =
   if (isStringLiteral()) (this as ULiteralExpression).value as String else null
 
@@ -125,6 +136,17 @@ val UExpression.sourceInjectionHost: PsiLanguageInjectionHost?
  */
 val ULiteralExpression.psiLanguageInjectionHost: PsiLanguageInjectionHost?
   get() = this.psi?.let { PsiTreeUtil.getParentOfType(it, PsiLanguageInjectionHost::class.java, false) }
+
+// Workaround until everything will migrate to `UInjectionHost` from `ULiteralExpression`, see KT-27283
+@ApiStatus.Experimental
+fun unwrapPolyadic(uElement: UExpression): UExpression {
+  if (uElement is ULiteralExpression) {
+    val parent = uElement.uastParent
+    if (parent is UPolyadicExpression)
+      return parent
+  }
+  return uElement
+}
 
 /**
  * @return all references injected into this [ULiteralExpression]

@@ -23,8 +23,8 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
-* @author Eugene Zhuravlev
-*/
+ * @deprecated not used after file traversal rewrite to NIO
+ */
 public class FSCache {
 
   public static final FSCache NO_CACHE = new FSCache() {

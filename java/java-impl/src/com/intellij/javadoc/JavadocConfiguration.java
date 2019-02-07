@@ -7,7 +7,6 @@ import com.intellij.psi.PsiKeyword;
 
 /**
  * @author Eugene Zhuravlev
- * @since Apr 24, 2004
  */
 public class JavadocConfiguration {
   public String OUTPUT_DIRECTORY;

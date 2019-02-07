@@ -14,7 +14,6 @@ import java.util.List;
 
 /**
  * @author stathik
- * @since Mar 27, 2003
  */
 public class PluginNode implements IdeaPluginDescriptor {
   public static final int STATUS_UNKNOWN = 0;
@@ -57,17 +56,17 @@ public class PluginNode implements IdeaPluginDescriptor {
 
   public PluginNode() { }
 
-  public PluginNode(PluginId id) {
+  public PluginNode(@NotNull PluginId id) {
     this.id = id;
   }
 
-  public PluginNode(PluginId id, String name, String size) {
+  public PluginNode(@NotNull PluginId id, String name, String size) {
     this.id = id;
     this.name = name;
     this.size = size;
   }
 
-  public void setCategory(String category) {
+  public void setCategory(@NotNull String category) {
     this.category = category;
   }
 
@@ -76,14 +75,14 @@ public class PluginNode implements IdeaPluginDescriptor {
     return name;
   }
 
-  public void setName(String name) {
+  public void setName(@NotNull String name) {
     if (id == null) {
       id = PluginId.getId(name);
     }
     this.name = name;
   }
 
-  public void setId(String id) {
+  public void setId(@NotNull String id) {
     this.id = PluginId.getId(id);
   }
 
@@ -141,7 +140,7 @@ public class PluginNode implements IdeaPluginDescriptor {
     return vendor;
   }
 
-  public void setVendor(String vendor) {
+  public void setVendor(@NotNull String vendor) {
     this.vendor = vendor;
   }
 
@@ -159,7 +158,7 @@ public class PluginNode implements IdeaPluginDescriptor {
     return changeNotes;
   }
 
-  public void setChangeNotes(String changeNotes) {
+  public void setChangeNotes(@NotNull String changeNotes) {
     this.changeNotes = changeNotes;
   }
 
@@ -264,12 +263,12 @@ public class PluginNode implements IdeaPluginDescriptor {
     return myDependencies;
   }
 
-  public void setDepends(List<PluginId> depends, @Nullable PluginId[] optionalDependencies) {
+  public void setDepends(@NotNull List<? extends PluginId> depends, @Nullable PluginId[] optionalDependencies) {
     myDependencies = new ArrayList<>(depends);
     myOptionalDependencies = optionalDependencies;
   }
 
-  public void addDepends(String id) {
+  public void addDepends(@NotNull String id) {
     (myDependencies != null ? myDependencies : (myDependencies = new ArrayList<>())).add(PluginId.getId(id));
   }
 
@@ -277,11 +276,11 @@ public class PluginNode implements IdeaPluginDescriptor {
     return myTags;
   }
 
-  public void setTags(List<String> tags) {
+  public void setTags(@NotNull List<String> tags) {
     myTags = new ArrayList<>(tags);
   }
 
-  void addTags(String tag) {
+  void addTags(@NotNull String tag) {
     (myTags != null ? myTags : (myTags = new ArrayList<>())).add(tag);
   }
 
@@ -331,19 +330,19 @@ public class PluginNode implements IdeaPluginDescriptor {
 
   @Override
   @NotNull
-  public ComponentConfig[] getAppComponents() {
+  public List<ComponentConfig> getAppComponents() {
     throw new IllegalStateException();
   }
 
   @Override
   @NotNull
-  public ComponentConfig[] getProjectComponents() {
+  public List<ComponentConfig> getProjectComponents() {
     throw new IllegalStateException();
   }
 
   @Override
   @NotNull
-  public ComponentConfig[] getModuleComponents() {
+  public List<ComponentConfig> getModuleComponents() {
     throw new IllegalStateException();
   }
 

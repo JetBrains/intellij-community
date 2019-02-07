@@ -33,19 +33,18 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   @NotNull
   InspectionToolWrapper getToolWrapper();
 
-  void createToolNode(@NotNull GlobalInspectionContextImpl globalInspectionContext,
-                      @NotNull InspectionNode node,
-                      @NotNull InspectionRVContentProvider provider,
-                      @NotNull InspectionTreeNode parentNode,
-                      boolean showStructure,
-                      boolean groupBySeverity);
+  default void patchToolNode(@NotNull InspectionTreeNode node,
+                             @NotNull InspectionRVContentProvider provider,
+                             boolean showStructure,
+                             boolean groupBySeverity) {
 
-  @Nullable
-  InspectionNode getToolNode();
+  }
 
   @NotNull
-  default RefElementNode createRefNode(@Nullable RefEntity entity) {
-    return new RefElementNode(entity, this);
+  default RefElementNode createRefNode(@Nullable RefEntity entity,
+                                       @NotNull InspectionTreeModel model,
+                                       @NotNull InspectionTreeNode parent) {
+    return new RefElementNode(entity, this, parent);
   }
 
   void updateContent();
@@ -127,8 +126,8 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
     return false;
   }
 
-  default int getProblemsCount(@NotNull InspectionTree tree) {
-    return tree.getSelectedDescriptors().length;
+  default boolean showProblemCount() {
+    return true;
   }
 
   @Nullable

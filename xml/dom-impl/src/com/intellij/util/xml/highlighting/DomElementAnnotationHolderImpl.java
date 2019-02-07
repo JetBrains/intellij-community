@@ -39,14 +39,22 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.highlighting.DomElementAnnotationHolderImpl");
   private final SmartList<Annotation> myAnnotations = new SmartList<>();
   private final boolean myOnTheFly;
+  private final DomFileElement myFileElement;
 
-  public DomElementAnnotationHolderImpl(boolean onTheFly) {
+  public DomElementAnnotationHolderImpl(boolean onTheFly, @NotNull DomFileElement fileElement) {
     myOnTheFly = onTheFly;
+    myFileElement = fileElement;
   }
 
   @Override
   public boolean isOnTheFly() {
     return myOnTheFly;
+  }
+
+  @NotNull
+  @Override
+  public DomFileElement<?> getFileElement() {
+    return myFileElement;
   }
 
   @Override

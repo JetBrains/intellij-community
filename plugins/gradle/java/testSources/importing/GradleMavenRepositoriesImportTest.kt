@@ -34,4 +34,5 @@ class GradleMavenRepositoriesImportTest: GradleImportingTestCase() {
       currentExternalProjectSettings.isResolveExternalAnnotations = false
     }
   }
+
 }

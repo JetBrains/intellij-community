@@ -18,7 +18,7 @@ import static com.intellij.vcs.log.ui.filter.BranchFilterPopupComponent.BRANCH_F
 import static com.intellij.vcs.log.ui.filter.UserFilterPopupComponent.USER_FILER_NAME;
 import static java.util.Comparator.comparingInt;
 
-@State(name = "Vcs.Log.Tabs.Properties", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
+@State(name = "Vcs.Log.Tabs.Properties", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class VcsLogProjectTabsProperties implements PersistentStateComponent<VcsLogProjectTabsProperties.State>, VcsLogTabsProperties {
   public static final String MAIN_LOG_ID = "MAIN";
   private static final int RECENTLY_FILTERED_VALUES_LIMIT = 10;

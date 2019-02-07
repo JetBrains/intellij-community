@@ -35,7 +35,6 @@ import java.util.zip.ZipFile;
 
 /**
  * @author stathik
- * @since Nov 29, 2003
  */
 public class PluginInstaller {
   private static final Logger LOG = Logger.getInstance(PluginInstaller.class);
@@ -133,7 +132,7 @@ public class PluginInstaller {
     installedDependant.add(pluginNode);
 
     // check for dependent plugins at first.
-    if (pluginNode.getDepends() != null && pluginNode.getDepends().size() > 0) {
+    if (pluginNode.getDepends() != null && !pluginNode.getDepends().isEmpty()) {
       // prepare plugins list for install
       final PluginId[] optionalDependentPluginIds = pluginNode.getOptionalDependentPluginIds();
       final List<PluginNode> depends = new ArrayList<>();
@@ -142,7 +141,7 @@ public class PluginInstaller {
         PluginId depPluginId = pluginNode.getDepends().get(i);
         if (PluginManager.isPluginInstalled(depPluginId) || PluginManagerCore.isModuleDependency(depPluginId) ||
             InstalledPluginsState.getInstance().wasInstalled(depPluginId) ||
-            (pluginIds != null && pluginIds.contains(depPluginId))) {
+            pluginIds != null && pluginIds.contains(depPluginId)) {
           // ignore installed or installing plugins
           continue;
         }
@@ -151,7 +150,8 @@ public class PluginInstaller {
         PluginNode depPlugin;
         if (depPluginDescriptor instanceof PluginNode) {
           depPlugin = (PluginNode) depPluginDescriptor;
-        } else {
+        }
+        else {
           depPlugin = new PluginNode(depPluginId, depPluginId.getIdString(), "-1");
         }
 
@@ -165,7 +165,7 @@ public class PluginInstaller {
         }
       }
 
-      if (depends.size() > 0) { // has something to install prior installing the plugin
+      if (!depends.isEmpty()) { // has something to install prior installing the plugin
         final boolean[] proceed = new boolean[1];
         try {
           ApplicationManager.getApplication().invokeAndWait(() -> {
@@ -183,7 +183,7 @@ public class PluginInstaller {
         }
       }
 
-      if (optionalDeps.size() > 0) {
+      if (!optionalDeps.isEmpty()) {
         final boolean[] proceed = new boolean[1];
         try {
           ApplicationManager.getApplication().invokeAndWait(() -> {
@@ -309,30 +309,26 @@ public class PluginInstaller {
     throw new IOException("Corrupted archive (no file entries): " + zip);
   }
 
-  private static List<PluginStateListener> myStateListeners;
+  private static final List<PluginStateListener> myStateListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public static void addStateListener(@NotNull PluginStateListener listener) {
-    (myStateListeners != null ? myStateListeners : (myStateListeners = new ArrayList<>())).add(listener);
+    myStateListeners.add(listener);
   }
 
   public static void removeStateListener(@NotNull PluginStateListener listener) {
-    if (myStateListeners != null) {
-      myStateListeners.remove(listener);
-    }
+    myStateListeners.remove(listener);
   }
 
   private static void fireState(@NotNull IdeaPluginDescriptor descriptor, boolean install) {
-    if (myStateListeners != null) {
-      UIUtil.invokeLaterIfNeeded(() -> {
-        for (PluginStateListener listener : myStateListeners) {
-          if (install) {
-            listener.install(descriptor);
-          }
-          else {
-            listener.uninstall(descriptor);
-          }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      for (PluginStateListener listener : myStateListeners) {
+        if (install) {
+          listener.install(descriptor);
         }
-      });
-    }
+        else {
+          listener.uninstall(descriptor);
+        }
+      }
+    });
   }
 }

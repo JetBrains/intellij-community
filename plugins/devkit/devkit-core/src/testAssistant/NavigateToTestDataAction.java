@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -27,7 +13,9 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,6 +25,7 @@ import com.intellij.testFramework.Parameterized;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.uast.*;
 
 import java.util.Collections;
@@ -50,72 +39,88 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
   public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = e.getProject();
+    if (project == null) return;
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
 
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
     final RelativePoint point = editor != null ? popupFactory.guessBestPopupLocation(editor) :
                                 popupFactory.guessBestPopupLocation(dataContext);
 
-    List<String> fileNames = findTestDataFiles(dataContext);
-    if (fileNames == null || fileNames.isEmpty()) {
-      String testData = guessTestData(dataContext);
-      if (testData == null) {
-        String message = "Cannot find testdata files for class";
-        final Notification notification = new Notification("testdata", "Found no testdata files", message, NotificationType.INFORMATION);
-        Notifications.Bus.notify(notification, project);
-        return;
-      }
-      fileNames = Collections.singletonList(testData);
+    List<TestDataFile> fileNames = findTestDataFiles(dataContext, project, true);
+    if (fileNames.isEmpty()) {
+      Notification notification = new Notification(
+        "testdata",
+        "Found no test data files",
+        "Cannot find test data files for class",
+        NotificationType.INFORMATION);
+      Notifications.Bus.notify(notification, project);
+    } else {
+      TestDataNavigationHandler.navigate(point, fileNames, project);
     }
-
-    TestDataNavigationHandler.navigate(point, fileNames, project);
   }
 
-  @Nullable
-  static List<String> findTestDataFiles(@NotNull DataContext context) {
-    final PsiMethod method = findTargetMethod(context);
+  @NotNull
+  static List<TestDataFile> findTestDataFiles(@NotNull DataContext dataContext, @NotNull Project project, boolean shouldGuess) {
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      List<TestDataFile> fileNames = tryFindTestDataFiles(dataContext);
+      if (fileNames.isEmpty() && shouldGuess) {
+        //noinspection RedundantTypeArguments
+        return ReadAction.<List<TestDataFile>, RuntimeException>compute(() -> {
+          PsiMethod method = findTargetMethod(dataContext);
+          return method == null ? Collections.emptyList() : TestDataGuessByExistingFilesUtil.guessTestDataName(method);
+        });
+      }
+      return Collections.emptyList();
+    }, DevKitBundle.message("testdata.searching"), true, project);
+  }
+
+  @NotNull
+  private static List<TestDataFile> tryFindTestDataFiles(@NotNull DataContext context) {
+    final PsiMethod method = ReadAction.compute(() -> findTargetMethod(context));
     if (method == null) {
-      return null;
+      PsiClass parametrizedTestClass = ReadAction.compute(() -> findParametrizedClass(context));
+      return parametrizedTestClass == null ? Collections.emptyList() : TestDataGuessByTestDiscoveryUtil.collectTestDataByExistingFiles(parametrizedTestClass);
     }
-    final String name = method.getName();
+    final String name = ReadAction.compute(() -> method.getName());
 
     if (name.startsWith("test")) {
-      String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(method.getContainingClass());
+      String testDataPath = ReadAction.compute(() -> TestDataLineMarkerProvider.getTestDataBasePath(method.getContainingClass()));
       final TestDataReferenceCollector collector = new TestDataReferenceCollector(testDataPath, name.substring(4));
       return collector.collectTestDataReferences(method);
     }
 
-    final Location<?> location = Location.DATA_KEY.getData(context);
-    if (location instanceof PsiMemberParameterizedLocation) {
-      PsiClass containingClass = ((PsiMemberParameterizedLocation)location).getContainingClass();
-      if (containingClass == null) {
-        containingClass = UastContextKt.getUastParentOfType(location.getPsiElement(), UClass.class, false);
-      }
-      if (containingClass != null) {
-        final UAnnotation annotation =
-          UastContextKt.toUElement(AnnotationUtil.findAnnotationInHierarchy(containingClass, Collections.singleton(JUnitUtil.RUN_WITH)), UAnnotation.class);
-        if (annotation != null) {
-          UExpression value = annotation.findAttributeValue("value");
-          if (value instanceof UClassLiteralExpression) {
-            UClassLiteralExpression classLiteralExpression = (UClassLiteralExpression)value;
-            PsiType type = classLiteralExpression.getType();
-            if (type != null && type.equalsToText(Parameterized.class.getName())) {
-              final String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(containingClass);
-              final String paramSetName = ((PsiMemberParameterizedLocation)location).getParamSetName();
-              final String baseFileName = StringUtil.trimEnd(StringUtil.trimStart(paramSetName, "["), "]");
-              return TestDataGuessByExistingFilesUtil.suggestTestDataFiles(baseFileName, testDataPath, containingClass);
-            }
-          }
+    return ReadAction.compute(() -> {
+      final Location<?> location = Location.DATA_KEY.getData(context);
+      if (location instanceof PsiMemberParameterizedLocation) {
+        PsiClass parametrizedTestClass = findParametrizedClass(context);
+        if (parametrizedTestClass != null) {
+          String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(parametrizedTestClass);
+          String paramSetName = ((PsiMemberParameterizedLocation)location).getParamSetName();
+          String baseFileName = StringUtil.trimEnd(StringUtil.trimStart(paramSetName, "["), "]");
+          return TestDataGuessByExistingFilesUtil.suggestTestDataFiles(baseFileName, testDataPath, parametrizedTestClass);
         }
       }
-    }
-
-    return null;
+      return Collections.emptyList();
+    });
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(findTargetMethod(e.getDataContext()) != null);
+    e.getPresentation().setEnabled(findTargetMethod(e.getDataContext()) != null || findParametrizedClass(e.getDataContext()) != null);
+  }
+
+  @Nullable
+  static PsiClass findParametrizedClass(@NotNull DataContext context) {
+    PsiElement element = context.getData(CommonDataKeys.PSI_ELEMENT);
+    UClass uClass = UastContextKt.getUastParentOfType(element, UClass.class);
+    if (uClass == null) return null;
+    final UAnnotation annotation = UastContextKt.toUElement(AnnotationUtil.findAnnotationInHierarchy(uClass.getJavaPsi(), Collections.singleton(JUnitUtil.RUN_WITH)), UAnnotation.class);
+    if (annotation == null) return null;
+    UExpression value = annotation.findAttributeValue("value");
+    if (!(value instanceof UClassLiteralExpression)) return null;
+    UClassLiteralExpression classLiteralExpression = (UClassLiteralExpression)value;
+    PsiType type = classLiteralExpression.getType();
+    return type != null && type.equalsToText(Parameterized.class.getName()) ? uClass.getJavaPsi() : null;
   }
 
   @Nullable
@@ -135,10 +140,5 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
     }
 
     return null;
-  }
-
-  private static String guessTestData(DataContext context) {
-    PsiMethod method = findTargetMethod(context);
-    return method == null ? null : TestDataGuessByExistingFilesUtil.guessTestDataName(method);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -13,7 +13,8 @@ abstract class ProductProperties {
   String baseFileName
 
   /**
-   * Two-letter product code (e.g. 'IC' for IntelliJ IDEA Community Edition), will be used to produce the full build number
+   * @deprecated specify product code in 'number' attribute in 'build' tag in *ApplicationInfo.xml file instead (see its schema for details);
+   * if you need to get the product code in the build scripts, use {@link ApplicationInfoProperties#productCode} instead
    */
   String productCode
 
@@ -103,9 +104,10 @@ abstract class ProductProperties {
   boolean buildCrossPlatformDistribution = false
 
   /**
-   * @deprecated for 183-branch only
+   * A {@link org.jetbrains.intellij.build.impl.ClassVersionChecker class version checker} config map
+   * when .class file version verification inside {@link #buildCrossPlatformDistribution cross-platform distribution} is needed.
    */
-  String crossPlatformDistributionSuffix_183only = null
+  Map<String, String> versionCheckerConfig = null
 
   /**
    * Paths to properties files the content of which should be appended to idea.properties file

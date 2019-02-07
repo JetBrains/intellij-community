@@ -159,7 +159,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     AnAction collapseAction = actionsManager.createCollapseAllAction(expander, myTree);
     collapseAction.getTemplatePresentation().setIcon(AllIcons.General.CollapseAll);
 
-    toolWindow.setTitleActions(new AnAction[]{new ScrollFromSourceAction(), collapseAction});
+    toolWindow.setTitleActions(new ScrollFromSourceAction(), collapseAction);
   }
 
   @NotNull

@@ -41,11 +41,11 @@ public class ArraysAsListWithZeroOrOneArgumentFixTest extends IGQuickFixesTestCa
     doTest(InspectionGadgetsBundle.message("arrays.as.list.with.zero.arguments.quickfix"),
            "import java.util.*;\n" +
            "class X {{\n" +
-           "    Iterator<String> it = Arrays.<String>/**/asList().iterator();\n" +
+           "    Spliterator<String> it = Arrays.<String>/**/asList().spliterator();\n" +
            "}}",
            "import java.util.*;\n" +
            "class X {{\n" +
-           "    Iterator<String> it = Collections.<String>emptyList().iterator();\n" +
+           "    Spliterator<String> it = Collections.<String>emptyList().spliterator();\n" +
            "}}");
   }
 

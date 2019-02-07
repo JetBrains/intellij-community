@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.update
 
 import com.intellij.dvcs.DvcsUtil.getPushSupport
+import com.intellij.dvcs.branch.DvcsSyncSettings
 import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
@@ -67,6 +68,31 @@ class GitSubmoduleTest : GitSubmoduleTestBase() {
     assertEquals("Last commit in submodule is incorrect", submoduleHash, sub.last())
     assertEquals("Last commit in main repository is incorrect", mainHash, main.last())
     assertEquals("Submodule should be in detached HEAD", Repository.State.DETACHED, sub.state)
+  }
+
+  fun `test submodule in detached HEAD state doesn't fail in case of sync control`() {
+    settings.syncSetting = DvcsSyncSettings.Value.SYNC
+    try {
+      // push from second clone
+      cd(sub2)
+      echo("a", "content\n")
+      val submoduleHash = addCommit("in submodule")
+      git("push")
+      cd(main2.local)
+      val mainHash = addCommit("Advance the submodule")
+      git("push")
+
+      insertLogMarker("update process")
+      val result = GitUpdateProcess(project, EmptyProgressIndicator(), listOf(main, sub), UpdatedFiles.create(), false, true).update(MERGE)
+
+      assertEquals("Update result is incorrect", GitUpdateResult.SUCCESS, result)
+      assertEquals("Last commit in submodule is incorrect", submoduleHash, sub.last())
+      assertEquals("Last commit in main repository is incorrect", mainHash, main.last())
+      assertEquals("Submodule should be in detached HEAD", Repository.State.DETACHED, sub.state)
+    }
+    finally {
+      settings.syncSetting = DvcsSyncSettings.Value.NOT_DECIDED
+    }
   }
 
   fun `test submodule on branch is updated as a normal repository`() {

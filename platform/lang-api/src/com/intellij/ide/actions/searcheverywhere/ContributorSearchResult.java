@@ -36,7 +36,6 @@ public class ContributorSearchResult<T> {
     return items.isEmpty();
   }
 
-  //todo is multithreading possible? #UX-1
   public static class Builder<T> {
     private final Set<T> items = new LinkedHashSet<>();
     private boolean hasMore;

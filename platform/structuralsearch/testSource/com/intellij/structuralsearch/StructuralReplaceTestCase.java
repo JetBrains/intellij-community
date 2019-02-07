@@ -2,7 +2,6 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.pom.java.LanguageLevel;
@@ -20,7 +19,7 @@ public abstract class StructuralReplaceTestCase extends LightQuickFixTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_4);
+    setLanguageLevel(LanguageLevel.JDK_1_4);
 
     options = new ReplaceOptions();
   }

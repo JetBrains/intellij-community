@@ -28,6 +28,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,7 +73,7 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
       if (parent instanceof PsiTypeParameter) {
         final PsiTypeParameter typeParameter = (PsiTypeParameter)parent;
         replaceTypeParameterUsagesWithType(typeParameter);
-        typeParameter.delete();
+        new CommentTracker().deleteAndRestoreComments(typeParameter);
       }
       else if (parent instanceof PsiTypeElement) {
         final PsiTypeElement typeElement = (PsiTypeElement)parent;
@@ -80,7 +81,7 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
         if (lastChild == null) {
           return;
         }
-        typeElement.replace(lastChild);
+        new CommentTracker().replaceAndRestoreComments(typeElement, lastChild);
       }
     }
 

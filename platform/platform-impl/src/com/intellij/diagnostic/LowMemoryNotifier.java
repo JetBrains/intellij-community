@@ -1,11 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
-import com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector;
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.IdeBundle;
+import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
-import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
-import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -22,30 +21,31 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.intellij.openapi.util.LowMemoryWatcher.LowMemoryWatcherType.ONLY_AFTER_GC;
 
 public class LowMemoryNotifier implements Disposable {
+  private static final FeatureUsageGroup PERFORMANCE = new FeatureUsageGroup("performance", 1);
+  private static final int UI_RESPONSE_LOGGING_INTERVAL_MS = 100_000;
+  private static final int TOLERABLE_UI_LATENCY = 100;
+
   private final LowMemoryWatcher myWatcher = LowMemoryWatcher.register(this::onLowMemorySignalReceived, ONLY_AFTER_GC);
   private final AtomicBoolean myNotificationShown = new AtomicBoolean();
+  private volatile long myPreviousLoggedUIResponse = 0;
 
   public LowMemoryNotifier() {
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(IdePerformanceListener.TOPIC, new IdePerformanceListener() {
       @Override
       public void uiFreezeFinished(int lengthInSeconds) {
-        String lengthGrouped = groupLength(lengthInSeconds);
-        FUSApplicationUsageTrigger.getInstance().trigger(AppLifecycleUsageTriggerCollector.class, "ide.freeze",
-                                                         FUSUsageContext.create("timeSecondsGrouped", lengthGrouped));
-
-        FeatureUsageLogger.INSTANCE.log("lifecycle",
-                                        "ide.freeze", Collections.singletonMap("durationSeconds", lengthInSeconds));
+        LifecycleUsageTriggerCollector.onFreeze(lengthInSeconds);
       }
 
-      private String groupLength(int seconds) {
-        if (seconds >= 60) {
-          return "60+";
+      @Override
+      public void uiResponded(long latencyMs) {
+        final long currentTime = System.currentTimeMillis();
+        if (currentTime - myPreviousLoggedUIResponse >= UI_RESPONSE_LOGGING_INTERVAL_MS) {
+          myPreviousLoggedUIResponse = currentTime;
+          FeatureUsageLogger.INSTANCE.log(PERFORMANCE, "ui.latency", Collections.singletonMap("duration_ms", latencyMs));
         }
-        if (seconds > 10) {
-          seconds -= (seconds % 10);
-          return seconds + "+";
+        if (latencyMs >= TOLERABLE_UI_LATENCY) {
+          FeatureUsageLogger.INSTANCE.log(PERFORMANCE, "ui.lagging", Collections.singletonMap("duration_ms", latencyMs));
         }
-        return String.valueOf(seconds);
       }
     });
   }

@@ -34,7 +34,7 @@ class FooEnum {
     <error descr="Cannot cast 'Closure<Integer>' to 'E'">(E) { int a, int b -> a + b }</error>
     (E) s
     <error descr="Cannot cast 'Matcher' to 'E'">(E) ("aaa" =~ /aaa/)</error>
-    <error descr="Cannot cast 'List' to 'E'">(E) []</error>
+    <error descr="Cannot cast 'List<Object>' to 'E'">(E) []</error>
     <error descr="Cannot cast 'String' to 'E'">(E) "F"</error>
   }
 
@@ -83,7 +83,7 @@ class FooEnum {
     E <error descr="Cannot assign 'Closure<Void>' to 'E'">e16</error> = { int a, int t -> println(a + t) }
     E <error descr="Cannot assign 'Object' to 'E'">e17</error> = s
     E <error descr="Cannot assign 'Matcher' to 'E'">e18</error> = "aaa" =~ /aaa/
-    E <error descr="Cannot assign 'List' to 'E'">e20</error> = [] as List
+    E <error descr="Cannot assign 'List<Object>' to 'E'">e20</error> = [] as List
     E e26 = "F"
     E e27 = E.F
   }
@@ -108,7 +108,7 @@ class FooEnum {
       case 16: <error descr="Cannot return 'Closure<Void>' from method returning 'E'">return</error> { int a, int t -> println(a + t) }
       case 17: <error descr="Cannot return 'Object' from method returning 'E'">return</error> s
       case 18: <error descr="Cannot return 'Matcher' from method returning 'E'">return</error> "aaa" =~ /aaa/
-      case 20: <error descr="Cannot return 'List' from method returning 'E'">return</error> [] as List
+      case 20: <error descr="Cannot return 'List<Object>' from method returning 'E'">return</error> [] as List
       case 26: return <warning descr="Cannot find enum constant 'f' in enum 'E'">"f"</warning>
       case 27: return "F"
       case 28: return E.F

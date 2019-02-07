@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleGrouperKt;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -125,16 +124,6 @@ public class ProjectPatternProvider extends PatternDialectProvider {
   @Override
   public Icon getIcon() {
     return AllIcons.General.ProjectTab;
-  }
-
-  @NotNull
-  static String getGroupModulePattern(ModuleGroupNode node) {
-    if (ModuleGrouperKt.isQualifiedModuleNamesEnabled(node.getProject())) {
-      return node.getModuleGroup().getQualifiedName() + "*";
-    }
-    else {
-      return "group:" + node.getModuleGroup().toString();
-    }
   }
 
   private static final class CompactEmptyMiddlePackagesAction extends ToggleAction {

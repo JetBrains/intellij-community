@@ -39,3 +39,4 @@ androidStudio
 .idea/usage.statistics.xml
 edu/dependencies/build
 edu/dependencies/.gradle
+/python/helpers/.idea

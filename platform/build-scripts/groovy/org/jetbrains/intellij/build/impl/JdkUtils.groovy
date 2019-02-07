@@ -29,24 +29,35 @@ class JdkUtils {
       return jdkDir
     }
 
-    jdkDir = SystemInfo.isMac ? "$defaultDir/Contents/Home" : defaultDir
-    if (new File(jdkDir).exists()) {
-      messages.info("$propertyName set to $jdkDir")
+    if (defaultDir != null) {
+      jdkDir = SystemInfo.isMac ? "$defaultDir/Contents/Home" : defaultDir
+      if (new File(jdkDir).exists()) {
+        messages.info("$propertyName set to $jdkDir")
+        return jdkDir
+      }
     }
-    else {
-      jdkDir = System.getenv(envVarName)
-      if (jdkDir != null) {
+    jdkDir = System.getenv(envVarName)
+    if (jdkDir != null) {
+      if (defaultDir != null) {
         messages.info("'$defaultDir' doesn't exist, $propertyName set to '$envVarName' environment variable: $jdkDir")
       }
       else {
-        jdkDir = getCurrentJdk()
-        def jdkInfo = JdkVersionDetector.instance.detectJdkVersionInfo(jdkDir)
-        if (propertyName.contains("8") && !jdkInfo.version.contains("1.8.")) {
-          messages.error("JDK 1.8 is required to compile the project, but '$propertyName' property and '$envVarName' environment variable" +
-                         " aren't defined and default JDK $jdkDir ($jdkInfo) cannot be used as JDK 1.8")
-          return null
-        }
+        messages.info("$propertyName set to '$envVarName' environment variable: $jdkDir")
+      }
+    }
+    else {
+      jdkDir = getCurrentJdk()
+      def jdkInfo = JdkVersionDetector.instance.detectJdkVersionInfo(jdkDir)
+      if (propertyName.contains("8") && !jdkInfo.version.contains("1.8.")) {
+        messages.error("JDK 1.8 is required to compile the project, but '$propertyName' property and '$envVarName' environment variable" +
+                       " aren't defined and default JDK $jdkDir ($jdkInfo) cannot be used as JDK 1.8")
+        return null
+      }
+      if (defaultDir != null) {
         messages.info("'$envVarName' isn't defined and '$defaultDir' doesn't exist, $propertyName set to $jdkDir")
+      }
+      else {
+        messages.info("'$envVarName' isn't defined, $propertyName set to $jdkDir")
       }
     }
     return jdkDir

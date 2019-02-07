@@ -4,9 +4,9 @@ package com.intellij.credentialStore.kdbx
 import com.intellij.credentialStore.OneTimeString
 import com.intellij.credentialStore.createSecureRandom
 import com.intellij.credentialStore.generateBytes
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.getOrCreate
 import com.intellij.util.io.toByteArray
-import com.intellij.util.loadElement
 import org.bouncycastle.crypto.SkippingStreamCipher
 import org.bouncycastle.crypto.engines.ChaCha7539Engine
 import org.bouncycastle.crypto.params.KeyParameter
@@ -179,42 +179,42 @@ private fun base64FromUuid(uuid: UUID): String {
 private fun createEmptyDatabase(): Element {
   val creationDate = formattedNow()
   @Suppress("SpellCheckingInspection")
-  return loadElement("""<KeePassFile>
-    <Meta>
-      <Generator>IJ</Generator>
-      <HeaderHash></HeaderHash>
-      <DatabaseName>New Database</DatabaseName>
-      <DatabaseNameChanged>${creationDate}</DatabaseNameChanged>
-      <DatabaseDescription>Empty Database</DatabaseDescription>
-      <DatabaseDescriptionChanged>${creationDate}</DatabaseDescriptionChanged>
-      <DefaultUserName/>
-      <DefaultUserNameChanged>${creationDate}</DefaultUserNameChanged>
-      <MaintenanceHistoryDays>365</MaintenanceHistoryDays>
-      <Color/>
-      <MasterKeyChanged>${creationDate}</MasterKeyChanged>
-      <MasterKeyChangeRec>-1</MasterKeyChangeRec>
-      <MasterKeyChangeForce>-1</MasterKeyChangeForce>
-      <MemoryProtection>
-          <ProtectTitle>False</ProtectTitle>
-          <ProtectUserName>False</ProtectUserName>
-          <ProtectPassword>True</ProtectPassword>
-          <ProtectURL>False</ProtectURL>
-          <ProtectNotes>False</ProtectNotes>
-      </MemoryProtection>
-      <CustomIcons/>
-      <RecycleBinEnabled>True</RecycleBinEnabled>
-      <RecycleBinUUID>AAAAAAAAAAAAAAAAAAAAAA==</RecycleBinUUID>
-      <RecycleBinChanged>${creationDate}</RecycleBinChanged>
-      <EntryTemplatesGroup>AAAAAAAAAAAAAAAAAAAAAA==</EntryTemplatesGroup>
-      <EntryTemplatesGroupChanged>${creationDate}</EntryTemplatesGroupChanged>
-      <LastSelectedGroup>AAAAAAAAAAAAAAAAAAAAAA==</LastSelectedGroup>
-      <LastTopVisibleGroup>AAAAAAAAAAAAAAAAAAAAAA==</LastTopVisibleGroup>
-      <HistoryMaxItems>10</HistoryMaxItems>
-      <HistoryMaxSize>6291456</HistoryMaxSize>
-      <Binaries/>
-      <CustomData/>
-    </Meta>
-  </KeePassFile>""")
+  return JDOMUtil.load("""<KeePassFile>
+      <Meta>
+        <Generator>IJ</Generator>
+        <HeaderHash></HeaderHash>
+        <DatabaseName>New Database</DatabaseName>
+        <DatabaseNameChanged>${creationDate}</DatabaseNameChanged>
+        <DatabaseDescription>Empty Database</DatabaseDescription>
+        <DatabaseDescriptionChanged>${creationDate}</DatabaseDescriptionChanged>
+        <DefaultUserName/>
+        <DefaultUserNameChanged>${creationDate}</DefaultUserNameChanged>
+        <MaintenanceHistoryDays>365</MaintenanceHistoryDays>
+        <Color/>
+        <MasterKeyChanged>${creationDate}</MasterKeyChanged>
+        <MasterKeyChangeRec>-1</MasterKeyChangeRec>
+        <MasterKeyChangeForce>-1</MasterKeyChangeForce>
+        <MemoryProtection>
+            <ProtectTitle>False</ProtectTitle>
+            <ProtectUserName>False</ProtectUserName>
+            <ProtectPassword>True</ProtectPassword>
+            <ProtectURL>False</ProtectURL>
+            <ProtectNotes>False</ProtectNotes>
+        </MemoryProtection>
+        <CustomIcons/>
+        <RecycleBinEnabled>True</RecycleBinEnabled>
+        <RecycleBinUUID>AAAAAAAAAAAAAAAAAAAAAA==</RecycleBinUUID>
+        <RecycleBinChanged>${creationDate}</RecycleBinChanged>
+        <EntryTemplatesGroup>AAAAAAAAAAAAAAAAAAAAAA==</EntryTemplatesGroup>
+        <EntryTemplatesGroupChanged>${creationDate}</EntryTemplatesGroupChanged>
+        <LastSelectedGroup>AAAAAAAAAAAAAAAAAAAAAA==</LastSelectedGroup>
+        <LastTopVisibleGroup>AAAAAAAAAAAAAAAAAAAAAA==</LastTopVisibleGroup>
+        <HistoryMaxItems>10</HistoryMaxItems>
+        <HistoryMaxSize>6291456</HistoryMaxSize>
+        <Binaries/>
+        <CustomData/>
+      </Meta>
+    </KeePassFile>""")
 }
 
 internal class StringProtectedByStreamCipher(value: ByteArray, private val cipher: SkippingStreamCipher) : SecureString {

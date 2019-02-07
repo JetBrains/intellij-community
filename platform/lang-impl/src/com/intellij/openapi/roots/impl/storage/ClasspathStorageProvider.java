@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl.storage;
 
-import com.intellij.openapi.components.StateStorage;
+import com.intellij.configurationStore.SaveSessionProducer;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
@@ -49,7 +49,7 @@ public interface ClasspathStorageProvider {
     List<String> getFilePaths();
 
     @Nullable
-    default StateStorage.SaveSessionProducer startExternalization() {
+    default SaveSessionProducer startExternalization() {
       return null;
     }
 

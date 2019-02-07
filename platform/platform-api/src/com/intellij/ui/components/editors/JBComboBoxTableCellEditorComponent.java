@@ -234,4 +234,8 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
   public void addActionListener(ActionListener listener) {
     myListeners.add(listener);
   }
+
+  public Function<Object, String> getToString() {
+    return myToString;
+  }
 }

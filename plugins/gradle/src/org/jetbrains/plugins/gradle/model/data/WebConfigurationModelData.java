@@ -11,7 +11,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/6/13
  */
 public class WebConfigurationModelData extends AbstractExternalEntityData implements ArtifactConfiguration {
   private static final long serialVersionUID = 1L;

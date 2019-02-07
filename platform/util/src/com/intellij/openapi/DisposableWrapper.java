@@ -3,23 +3,25 @@ package com.intellij.openapi;
 
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class DisposableWrapper<T extends Disposable> implements Disposable {
   private volatile T myObject;
 
-  public DisposableWrapper(T object, Disposable parent) {
+  public DisposableWrapper(@Nullable T object, @NotNull Disposable parent) {
     myObject = object;
     Disposer.register(parent, this);
   }
 
+  @NotNull
   public DisposableWrapper<T> moveTo(@NotNull Disposable parent) {
-    DisposableWrapper<T> newWrapper = createNewWrapper(parent, myObject);
+    DisposableWrapper<T> newWrapper = createNewWrapper(myObject, parent);
     myObject = null;
     return newWrapper;
   }
 
   @NotNull
-  protected DisposableWrapper<T> createNewWrapper(@NotNull Disposable parent, T object) {
+  protected DisposableWrapper<T> createNewWrapper(@Nullable T object, @NotNull Disposable parent) {
     return new DisposableWrapper<T>(object, parent);
   }
 

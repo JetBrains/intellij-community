@@ -69,6 +69,11 @@ public class JpsLibraryCollectionImpl implements JpsLibraryCollection {
   }
 
   @Override
+  public void removeLibrary(@NotNull JpsLibrary library) {
+    myCollection.removeChild(library);
+  }
+
+  @Override
   public JpsLibrary findLibrary(@NotNull String name) {
     for (JpsLibrary library : getLibraries()) {
       if (name.equals(library.getName())) {

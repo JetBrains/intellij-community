@@ -1,5 +1,6 @@
 package com.intellij.json;
 
+import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -17,7 +18,6 @@ import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonOriginalPsiWalker;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaResolver;
-import com.jetbrains.jsonSchema.impl.JsonSchemaVariantsTreeBuilder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -61,10 +61,10 @@ public class JsonSpellcheckerStrategy extends SpellcheckingStrategy {
     if (StringUtil.isEmpty(value)) return false;
 
     JsonOriginalPsiWalker walker = JsonLikePsiWalker.JSON_ORIGINAL_PSI_WALKER;
-    final PsiElement checkable = walker.goUpToCheckable(element);
+    final PsiElement checkable = walker.findElementToCheck(element);
     if (checkable == null) return false;
     final ThreeState isName = walker.isName(checkable);
-    final List<JsonSchemaVariantsTreeBuilder.Step> position = walker.findPosition(checkable, isName == ThreeState.NO);
+    final JsonPointerPosition position = walker.findPosition(checkable, isName == ThreeState.NO);
     if (position == null || position.isEmpty() && isName == ThreeState.NO) return false;
 
     final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(rootSchema, false, position).resolve();

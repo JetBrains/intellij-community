@@ -30,7 +30,6 @@ import javax.swing.event.HyperlinkEvent;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/1/14
  */
 public class ApplyGradlePluginCallback extends NotificationListener.Adapter {
 

@@ -224,6 +224,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
     }
   }
 
+  @Override
   public String toString() {
     return "PsiCodeFragment:" + getName();
   }

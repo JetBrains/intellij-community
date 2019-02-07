@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
  * with negative argument.
  * 
  * @author Denis Zhdanov
- * @since 4/18/11 1:22 PM
  */
 public class CutLineBackwardAction extends TextComponentEditorAction {
 

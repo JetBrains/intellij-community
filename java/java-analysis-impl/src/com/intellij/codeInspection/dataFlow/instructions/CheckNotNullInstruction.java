@@ -16,14 +16,25 @@
 package com.intellij.codeInspection.dataFlow.instructions;
 
 import com.intellij.codeInspection.dataFlow.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class CheckNotNullInstruction extends Instruction {
-  private final NullabilityProblemKind.NullabilityProblem<?> myProblem;
+  private final @NotNull NullabilityProblemKind.NullabilityProblem<?> myProblem;
+  private final @Nullable DfaControlTransferValue myTransferValue;
 
-  public CheckNotNullInstruction(NullabilityProblemKind.NullabilityProblem<?> problem) {
+  public CheckNotNullInstruction(@NotNull NullabilityProblemKind.NullabilityProblem<?> problem,
+                                 @Nullable DfaControlTransferValue transferValue) {
     myProblem = problem;
+    myTransferValue = transferValue;
   }
 
+  @Nullable
+  public DfaControlTransferValue getOnNullTransfer() {
+    return myTransferValue;
+  }
+
+  @NotNull
   public NullabilityProblemKind.NullabilityProblem<?> getProblem() {
     return myProblem;
   }

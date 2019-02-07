@@ -20,6 +20,6 @@ public class Bazz {
   }
 
   public static void failure(final Collection<FooImpl> foos) {
-    <ref>getElements(foos);
+    <caret>getElements(foos);
  }
 }

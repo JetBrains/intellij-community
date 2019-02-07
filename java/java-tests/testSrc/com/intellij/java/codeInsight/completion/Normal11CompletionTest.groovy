@@ -2,8 +2,10 @@
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.testFramework.LightProjectDescriptor 
+import com.intellij.testFramework.LightProjectDescriptor
+import groovy.transform.CompileStatic
 
+@CompileStatic
 class Normal11CompletionTest extends NormalCompletionTestCase {
   final LightProjectDescriptor projectDescriptor = JAVA_11
 

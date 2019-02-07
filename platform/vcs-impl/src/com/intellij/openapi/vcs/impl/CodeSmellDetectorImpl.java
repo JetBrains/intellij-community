@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.codeInsight.CodeSmellInfo;
@@ -101,7 +87,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
 
   @NotNull
   @Override
-  public List<CodeSmellInfo> findCodeSmells(@NotNull final List<VirtualFile> filesToCheck) throws ProcessCanceledException {
+  public List<CodeSmellInfo> findCodeSmells(@NotNull final List<? extends VirtualFile> filesToCheck) throws ProcessCanceledException {
     List<CodeSmellInfo> result = new ArrayList<>();
     if (ApplicationManager.getApplication().isDispatchThread()) {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -114,6 +100,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
             result.addAll(findCodeSmells(filesToCheck, progress));
           }
           catch (ProcessCanceledException e) {
+            LOG.info("Code analysis canceled", e);
             exception.set(e);
           }
           catch (Exception e) {
@@ -137,7 +124,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
   }
 
   @NotNull
-  private List<CodeSmellInfo> findCodeSmells(@NotNull List<VirtualFile> files,
+  private List<CodeSmellInfo> findCodeSmells(@NotNull List<? extends VirtualFile> files,
                                              @NotNull ProgressIndicator progress) {
     final List<CodeSmellInfo> result = new ArrayList<>();
     for (int i = 0; i < files.size(); i++) {
@@ -187,9 +174,9 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
     // repeat several times when accidental background activity cancels highlighting
     int retries = 100;
     for (int i = 0; i < retries; i++) {
-      int oldDelay = settings.AUTOREPARSE_DELAY;
+      int oldDelay = settings.getAutoReparseDelay();
       try {
-        settings.AUTOREPARSE_DELAY = 0;
+        settings.setAutoReparseDelay(0);
         return dumbService.runReadActionInSmartMode(() -> codeAnalyzer.runMainPasses(psiFile, document, daemonIndicator));
       }
       catch (ProcessCanceledException e) {
@@ -202,14 +189,14 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
         exception = e;
       }
       finally {
-        settings.AUTOREPARSE_DELAY = oldDelay;
+        settings.setAutoReparseDelay(oldDelay);
       }
     }
     throw exception;
   }
 
-  private void convertErrorsAndWarnings(@NotNull Collection<HighlightInfo> highlights,
-                                        @NotNull List<CodeSmellInfo> result,
+  private void convertErrorsAndWarnings(@NotNull Collection<? extends HighlightInfo> highlights,
+                                        @NotNull List<? super CodeSmellInfo> result,
                                         @NotNull Document document) {
     for (HighlightInfo highlightInfo : highlights) {
       final HighlightSeverity severity = highlightInfo.getSeverity();

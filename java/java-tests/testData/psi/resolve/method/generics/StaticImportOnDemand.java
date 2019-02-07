@@ -3,6 +3,6 @@ import java.util.*;
 
 class C {
   {
-    List<String> s = <ref>asList(new String[0]);
+    List<String> s = <caret>asList(new String[0]);
   }
 }

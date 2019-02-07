@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Roman.Shein
- * @since 15.09.2015.
  */
 public class CodeStyleBoundedIntegerSettingPresentation extends CodeStyleSettingPresentation {
 

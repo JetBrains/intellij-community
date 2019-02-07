@@ -130,8 +130,8 @@ public class TouchBarsManager {
     if (!isTouchBarAvailable())
       return;
 
-    // NOTE: skip wheel-events, because scrolling by touchpad produces mouse-wheel events with pressed modifier, expamle:
-    // MouseWheelEvent[MOUSE_WHEEL,(890,571),absolute(0,0),button=0,modifiers=⇧,extModifiers=⇧,clickCount=0,scrollType=WHEEL_UNIT_SCROLL,scrollAmount=1,wheelRotation=0,preciseWheelRotation=0.1] on frame0
+    // NOTE: skip wheel-events, because scrolling by touchpad produces mouse-wheel events with pressed modifier, example:
+    // MouseWheelEvent[MOUSE_WHEEL,(890,571),absolute(0,0),button=0,modifiers=SHIFT,extModifiers=SHIFT,clickCount=0,scrollType=WHEEL_UNIT_SCROLL,scrollAmount=1,wheelRotation=0,preciseWheelRotation=0.1] on frame0
     if (e instanceof MouseWheelEvent)
       return;
 

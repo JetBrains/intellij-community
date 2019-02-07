@@ -276,6 +276,8 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
   }
 
   private void updateSdkLanguageLevels(@NotNull Project project, @NotNull Set<Sdk> sdks) {
+    if (sdks.isEmpty()) return;
+
     final DumbService dumbService = DumbService.getInstance(project);
     final DumbModeTask task = new DumbModeTask() {
       @Override

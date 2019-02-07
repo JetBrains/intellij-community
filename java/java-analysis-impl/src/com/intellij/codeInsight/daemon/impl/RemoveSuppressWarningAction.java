@@ -140,14 +140,33 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
   private void removeFromJavaDoc(PsiDocComment docComment) throws IncorrectOperationException {
     PsiDocTag tag = docComment.findTagByName(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME);
     if (tag == null) return;
-    String newText = removeFromElementText(tag.getDataElements());
-    if (newText != null && newText.isEmpty()) {
-      tag.delete();
+    String text = tag.getText();
+    int i = text.indexOf(myID);
+    if (i < 0) return;
+    String noInspectionText = StringUtil.trimEnd(text.substring(0, i), " ");
+    String nextText = StringUtil.trimStart(text.substring(i + myID.length()), " ");
+    String nextTagText;
+
+    if (noInspectionText.endsWith(",")) {
+      nextTagText = noInspectionText.substring(0, noInspectionText.length() - 1) + nextText;
     }
-    else if (newText != null) {
-      newText = "@" + SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME + " " + newText;
-      PsiDocTag newTag = JavaPsiFacade.getElementFactory(tag.getProject()).createDocTagFromText(newText);
-      tag.replace(newTag);
+    else if (nextText.startsWith(",")) {
+      nextTagText = noInspectionText + nextText.substring(1);
+    }
+    else {
+      nextTagText = null;
+    }
+
+    if (nextTagText != null) {
+      tag.replace(JavaPsiFacade.getElementFactory(tag.getProject()).createDocTagFromText(nextTagText));
+    }
+    else {
+      PsiElement[] descriptionElements =
+        JavaPsiFacade.getElementFactory(tag.getProject()).createDocCommentFromText("/**" + nextText + "*/", tag).getDescriptionElements();
+      if (descriptionElements.length > 0) {
+        docComment.addRangeAfter(descriptionElements[0], descriptionElements[descriptionElements.length - 1], tag);
+      }
+      tag.delete();
     }
   }
 

@@ -5,13 +5,10 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.uast.UastVisitorAdapter;
+import com.intellij.uast.UastHintedVisitorAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UClass;
-import org.jetbrains.uast.UField;
-import org.jetbrains.uast.UFile;
-import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.*;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectionTool {
@@ -19,6 +16,16 @@ public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectio
   private static final Condition<PsiElement> PROBLEM_ELEMENT_CONDITION =
     Conditions.and(Conditions.instanceOf(PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class),
                    Conditions.notInstanceOf(PsiTypeParameter.class));
+
+  private final Class<? extends UElement>[] myUElementsTypesHint;
+
+  protected AbstractBaseUastLocalInspectionTool() {
+    this(UFile.class, UClass.class, UMethod.class, UField.class);
+  }
+
+  protected AbstractBaseUastLocalInspectionTool(Class<? extends UElement>... uElementsTypesHint) {
+    myUElementsTypesHint = uElementsTypesHint;
+  }
 
   /**
    * Override this to report problems at method level.
@@ -62,7 +69,7 @@ public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectio
   @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    return new UastVisitorAdapter(new AbstractUastNonRecursiveVisitor() {
+    return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
       @Override
       public boolean visitClass(@NotNull UClass node) {
         addDescriptors(checkClass(node, holder.getManager(), isOnTheFly));
@@ -94,7 +101,7 @@ public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectio
           }
         }
       }
-    }, true);
+    }, myUElementsTypesHint);
   }
 
   @Override

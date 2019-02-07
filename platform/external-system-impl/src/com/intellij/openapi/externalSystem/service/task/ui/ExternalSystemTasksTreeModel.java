@@ -36,7 +36,6 @@ import java.util.*;
 
 /**
  * @author Denis Zhdanov
- * @since 5/12/13 10:28 PM
  */
 public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
 

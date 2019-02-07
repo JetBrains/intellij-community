@@ -46,7 +46,7 @@ public class JavaWithWhileSurrounder extends JavaStatementsSurrounder{
     PsiWhileStatement whileStatement = (PsiWhileStatement)factory.createStatementFromText(text, null);
     whileStatement = (PsiWhileStatement)codeStyleManager.reformat(whileStatement);
 
-    whileStatement = (PsiWhileStatement)container.addAfter(whileStatement, statements[statements.length - 1]);
+    whileStatement = (PsiWhileStatement)addAfter(whileStatement, container, statements);
 
     PsiStatement body = whileStatement.getBody();
     if (!(body instanceof PsiBlockStatement)) {
@@ -54,7 +54,7 @@ public class JavaWithWhileSurrounder extends JavaStatementsSurrounder{
     }
     PsiCodeBlock bodyBlock = ((PsiBlockStatement)body).getCodeBlock();
     SurroundWithUtil.indentCommentIfNecessary(bodyBlock, statements);
-    bodyBlock.addRange(statements[0], statements[statements.length - 1]);
+    addRangeWithinContainer(bodyBlock, container, statements, false);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
     PsiExpression condition = whileStatement.getCondition();

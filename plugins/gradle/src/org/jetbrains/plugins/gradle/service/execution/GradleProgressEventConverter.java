@@ -36,7 +36,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/17/2015
  */
 public class GradleProgressEventConverter {
 

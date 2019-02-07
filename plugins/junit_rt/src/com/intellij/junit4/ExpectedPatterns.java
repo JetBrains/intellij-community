@@ -79,7 +79,11 @@ public class ExpectedPatterns extends AbstractExpectedPatterns {
   private static boolean isComparisonFailure(Class aClass) {
     if (aClass == null) return false;
     final String throwableClassName = aClass.getName();
-    if (throwableClassName.equals(JUNIT_FRAMEWORK_COMPARISON_NAME) || throwableClassName.equals(ORG_JUNIT_COMPARISON_NAME)) return true;
+    if (throwableClassName.equals(JUNIT_FRAMEWORK_COMPARISON_NAME) || 
+        throwableClassName.equals(ORG_JUNIT_COMPARISON_NAME) || 
+        throwableClassName.equals(ComparisonFailureData.OPENTEST4J_ASSERTION)) {
+      return true;
+    }
     return isComparisonFailure(aClass.getSuperclass());
   }
 

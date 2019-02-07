@@ -17,9 +17,20 @@ public class ProductsIconsImpl implements ProductIcons {
   );
   private final NotNullLazyValue<Icon> myProjectIcon = NotNullLazyValue.createValue(
     () -> PlatformUtils.isJetBrainsProduct()
+          ? AllIcons.Actions.ProjectDirectory
+          : myProductIcon.getValue()
+  );
+  private final NotNullLazyValue<Icon> myProjectNodeIcon = NotNullLazyValue.createValue(
+    () -> PlatformUtils.isJetBrainsProduct()
           ? AllIcons.Nodes.IdeaProject
           : myProductIcon.getValue()
   );
+
+  @NotNull
+  @Override
+  public Icon getProjectNodeIcon() {
+    return myProjectNodeIcon.getValue();
+  }
 
   @NotNull
   @Override

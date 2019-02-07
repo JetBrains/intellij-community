@@ -26,7 +26,6 @@ import java.util.Collection;
 
 /**
  * @author Denis Zhdanov
- * @since 4/15/13 12:09 PM
  */
 public class JavaProjectDataService extends AbstractProjectDataService<JavaProjectData, Project> {
   @NotNull

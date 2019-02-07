@@ -17,6 +17,6 @@ enum TestEnum {
 class Testx {
     public void doTest(){
         TestImpl impl = new TestImpl();
-        impl.<ref>doStuff(TestEnum.THING);
+        impl.<caret>doStuff(TestEnum.THING);
     }
 }

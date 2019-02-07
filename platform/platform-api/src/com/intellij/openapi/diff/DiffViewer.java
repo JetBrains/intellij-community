@@ -24,17 +24,8 @@ import javax.swing.*;
  */
 @Deprecated
 public interface DiffViewer {
-  /**
-   * Needed here, and not only in factory, since dif viewers are reused in composite viewer
-   */
-  boolean canShowRequest(DiffRequest request);
-
-  void setDiffRequest(DiffRequest request);
-
   JComponent getComponent();
 
   @Nullable
   JComponent getPreferredFocusedComponent();
-
-  boolean acceptsType(DiffViewerType type);
 }

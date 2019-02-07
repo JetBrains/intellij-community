@@ -50,17 +50,17 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
       public boolean skipChildProcessingWhenBuildingStubs(@NotNull ASTNode parent, @NotNull ASTNode node) {
         IElementType childType = node.getElementType();
         IElementType parentType = parent.getElementType();
-        if (childType == GroovyElementTypes.PARAMETER && parentType != GroovyElementTypes.PARAMETERS_LIST) {
+        if (childType == GroovyElementTypes.PARAMETER && parentType != GroovyElementTypes.PARAMETER_LIST) {
           return true;
         }
-        if (childType == GroovyElementTypes.PARAMETERS_LIST && !(parent.getPsi() instanceof GrMethod)) {
+        if (childType == GroovyElementTypes.PARAMETER_LIST && !(parent.getPsi() instanceof GrMethod)) {
           return true;
         }
-        if (childType == GroovyElementTypes.MODIFIERS) {
+        if (childType == GroovyElementTypes.MODIFIER_LIST) {
           if (parentType == GroovyElementTypes.CLASS_INITIALIZER) {
             return true;
           }
-          if (parentType == GroovyElementTypes.VARIABLE_DEFINITION && !GroovyElementTypes.VARIABLE_DEFINITION.shouldCreateStub(parent)) {
+          if (parentType == GroovyElementTypes.VARIABLE_DECLARATION && !GroovyElementTypes.VARIABLE_DECLARATION.shouldCreateStub(parent)) {
             return true;
           }
         }

@@ -25,17 +25,17 @@ for (def a : array) {
 0(1) element: null
 1(2) element: Labeled statement
 2(3) READ array
-3(4,30) element: For statement
+3(4,31) element: For statement
 4(5) WRITE a
 5(6) element: Block statement
 6(7) element: Labeled statement
 7(8) READ a
-8(9,10,25,30) element: Switch statement
-9(30) READ b
+8(9,10,25,31) element: Switch statement
+9(31) READ b
 10(11) READ c
 11(12) element: Labeled statement
 12(13) READ array
-13(14,27) element: For statement
+13(14,28) element: For statement
 14(15) WRITE aaa
 15(16) element: Block statement
 16(17) element: IF statement
@@ -43,13 +43,14 @@ for (def a : array) {
 18(19) element: IF statement
 19(11,20) READ e
 20(21) element: IF statement
-21(22,27) READ f
+21(22,28) READ f
 22(23) End element: IF statement
 23(24) End element: IF statement
 24(13) End element: IF statement
 25(26) READ g
 26(27) READ println
-27(28) element: IF statement
-28(11,29) READ h
-29(3) End element: IF statement
-30() element: null
+27(28) ARGUMENTS element: Method call
+28(29) element: IF statement
+29(11,30) READ h
+30(3) End element: IF statement
+31() element: null

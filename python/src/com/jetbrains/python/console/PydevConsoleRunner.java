@@ -52,8 +52,7 @@ import static com.jetbrains.python.sdk.PythonEnvUtil.setPythonIOEncoding;
 import static com.jetbrains.python.sdk.PythonEnvUtil.setPythonUnbuffered;
 
 public interface PydevConsoleRunner {
-
-  Key<ConsoleCommunication> CONSOLE_KEY = new Key<>("PYDEV_CONSOLE_KEY");
+  Key<ConsoleCommunication> CONSOLE_COMMUNICATION_KEY = new Key<>("PYDEV_CONSOLE_COMMUNICATION_KEY");
   Key<Sdk> CONSOLE_SDK = new Key<>("PYDEV_CONSOLE_SDK_KEY");
 
   interface ConsoleListener {
@@ -188,7 +187,16 @@ public interface PydevConsoleRunner {
   }
 
   static boolean isInPydevConsole(PsiElement element) {
-    return element instanceof PydevConsoleElement || getConsoleCommunication(element) != null;
+    return element instanceof PydevConsoleElement || getConsoleCommunication(element) != null || hasConsoleKey(element);
+  }
+
+  static boolean hasConsoleKey(PsiElement element) {
+    PsiFile psiFile = element.getContainingFile();
+    if (psiFile == null) return false;
+    VirtualFile virtualFile = psiFile.getVirtualFile();
+    if (virtualFile == null) return false;
+    Boolean inConsole = element.getContainingFile().getVirtualFile().getUserData(PythonConsoleView.CONSOLE_KEY);
+    return inConsole != null && inConsole;
   }
 
   static boolean isPythonConsole(@Nullable ASTNode element) {
@@ -212,7 +220,7 @@ public interface PydevConsoleRunner {
   @Nullable
   static ConsoleCommunication getConsoleCommunication(PsiElement element) {
     final PsiFile containingFile = element.getContainingFile();
-    return containingFile != null ? containingFile.getCopyableUserData(CONSOLE_KEY) : null;
+    return containingFile != null ? containingFile.getCopyableUserData(CONSOLE_COMMUNICATION_KEY) : null;
   }
 
   @Nullable

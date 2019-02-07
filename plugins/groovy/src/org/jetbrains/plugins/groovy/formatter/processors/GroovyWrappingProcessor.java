@@ -117,11 +117,11 @@ public class GroovyWrappingProcessor {
       }
     }
 
-    if (myParentType == GroovyElementTypes.THROW_CLAUSE && childType == GroovyTokenTypes.kTHROWS) {
+    if (myParentType == GroovyElementTypes.THROWS_CLAUSE && childType == GroovyTokenTypes.kTHROWS) {
       return Wrap.createWrap(mySettings.THROWS_KEYWORD_WRAP, true);
     }
 
-    if (myParentType == GroovyElementTypes.MODIFIERS) {
+    if (myParentType == GroovyElementTypes.MODIFIER_LIST) {
       if (getLeftSiblingType(childNode) == GroovyElementTypes.ANNOTATION) {
         return getCommonWrap();
       }
@@ -138,7 +138,7 @@ public class GroovyWrappingProcessor {
 
     if (ANNOTATION_CONTAINERS.contains(myParentType)) {
       final ASTNode leftSibling = getLeftSibling(childNode);
-      if (leftSibling != null && leftSibling.getElementType() == GroovyElementTypes.MODIFIERS && endsWithAnnotation(leftSibling)) {
+      if (leftSibling != null && leftSibling.getElementType() == GroovyElementTypes.MODIFIER_LIST && endsWithAnnotation(leftSibling)) {
         final int wrapType = getAnnotationsWrapType(childNode);
         if (wrapType != -1) {
           return Wrap.createWrap(wrapType, true);
@@ -200,13 +200,13 @@ public class GroovyWrappingProcessor {
     }
 
 
-    if (myParentType == GroovyElementTypes.THROW_CLAUSE) {
+    if (myParentType == GroovyElementTypes.THROWS_CLAUSE) {
       myUsedDefaultWrap = true;
       return Wrap.createWrap(mySettings.THROWS_LIST_WRAP, true);
     }
 
 
-    if (myParentType == GroovyElementTypes.PARAMETERS_LIST) {
+    if (myParentType == GroovyElementTypes.PARAMETER_LIST) {
       myUsedDefaultWrap = true;
       return Wrap.createWrap(mySettings.METHOD_PARAMETERS_WRAP, false);
     }
@@ -253,7 +253,7 @@ public class GroovyWrappingProcessor {
       return createNormalWrap();
     }
 
-    if (myParentType == GroovyElementTypes.MODIFIERS) {
+    if (myParentType == GroovyElementTypes.MODIFIER_LIST) {
       final int wrapType = getAnnotationsWrapType(myNode);
       if (wrapType != -1) {
         myUsedDefaultWrap = true;
@@ -270,13 +270,13 @@ public class GroovyWrappingProcessor {
   }
 
   private final TokenSet ANNOTATION_CONTAINERS = TokenSet.create(
-    GroovyElementTypes.CLASS_DEFINITION, GroovyElementTypes.INTERFACE_DEFINITION, GroovyElementTypes.ENUM_DEFINITION, GroovyElementTypes.TRAIT_DEFINITION,
-    GroovyElementTypes.ANNOTATION_DEFINITION,
-    GroovyElementTypes.METHOD_DEFINITION, GroovyElementTypes.CONSTRUCTOR_DEFINITION,
-    GroovyElementTypes.VARIABLE_DEFINITION,
+    GroovyElementTypes.CLASS_TYPE_DEFINITION, GroovyElementTypes.INTERFACE_TYPE_DEFINITION, GroovyElementTypes.ENUM_TYPE_DEFINITION, GroovyElementTypes.TRAIT_TYPE_DEFINITION,
+    GroovyElementTypes.ANNOTATION_TYPE_DEFINITION,
+    GroovyElementTypes.METHOD, GroovyElementTypes.CONSTRUCTOR,
+    GroovyElementTypes.VARIABLE_DECLARATION,
     GroovyElementTypes.PARAMETER,
     GroovyElementTypes.ENUM_CONSTANT,
-    GroovyElementTypes.IMPORT_STATEMENT
+    GroovyElementTypes.IMPORT
   );
 
   private int getAnnotationsWrapType(ASTNode modifierList) {
@@ -289,7 +289,7 @@ public class GroovyWrappingProcessor {
       return mySettings.METHOD_ANNOTATION_WRAP;
     }
 
-    if (GroovyElementTypes.VARIABLE_DEFINITION == containerType) {
+    if (GroovyElementTypes.VARIABLE_DECLARATION == containerType) {
       final IElementType pparentType = modifierList.getTreeParent().getTreeParent().getElementType();
       if (pparentType == GroovyElementTypes.CLASS_BODY || pparentType == GroovyElementTypes.ENUM_BODY) {
         return mySettings.FIELD_ANNOTATION_WRAP;
@@ -307,7 +307,7 @@ public class GroovyWrappingProcessor {
       return mySettings.ENUM_CONSTANTS_WRAP;
     }
 
-    if (GroovyElementTypes.IMPORT_STATEMENT == containerType) {
+    if (GroovyElementTypes.IMPORT == containerType) {
       return myContext.getGroovySettings().IMPORT_ANNOTATION_WRAP;
     }
 

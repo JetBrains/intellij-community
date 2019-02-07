@@ -23,7 +23,6 @@ import java.util.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/10/2014
  */
 public class GradleResourcesBuilder extends TargetBuilder<GradleResourceRootDescriptor, GradleResourcesTarget> {
   public static final String BUILDER_NAME = "Gradle Resources Compiler";

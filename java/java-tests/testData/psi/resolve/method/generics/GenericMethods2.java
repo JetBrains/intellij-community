@@ -8,6 +8,6 @@ public class AAA {
     }
 
     void y(List<String> strings) {
-        <ref>f(strings);
+        <caret>f(strings);
     }
 }

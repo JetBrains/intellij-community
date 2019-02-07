@@ -6,7 +6,7 @@ import string
 import time
 
 # !!! Don't forget to update VERSION and required_gen_version if necessary !!!
-VERSION = "1.146"
+VERSION = "1.147"
 
 OUT_ENCODING = 'utf-8'
 
@@ -224,7 +224,7 @@ SIMPLE_VALUE_RE = re.compile(
 
 ###########################   parsing   ###########################################################
 if version[0] < 3:
-    from pycharm_generator_utils.pyparsing import *
+    from pycharm_generator_utils.pyparsing_py2 import *
 else:
     #noinspection PyUnresolvedReferences
     from pycharm_generator_utils.pyparsing_py3 import *
@@ -798,4 +798,5 @@ TENSORFLOW_CONTRIB_OPS_MODULE_PATTERN = re.compile(r'tensorflow\.contrib\.(?:.+)
 CLASS_ATTR_BLACKLIST = [
     'google.protobuf.pyext._message.Message._extensions_by_name',
     'google.protobuf.pyext._message.Message._extensions_by_number',
+    'panda3d.core.ExecutionEnvironment.environment_variables',
 ]

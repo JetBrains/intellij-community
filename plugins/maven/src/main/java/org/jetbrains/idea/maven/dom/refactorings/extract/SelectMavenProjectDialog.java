@@ -125,7 +125,7 @@ public class SelectMavenProjectDialog extends DialogWrapper {
 
   private void updateControls() {
     MavenDomProjectModel project = getSelectedProject();
-    Integer count = myOccurrencesCountFunction.fun(project).size();
+    int count = myOccurrencesCountFunction.fun(project).size();
     myReplaceAllCheckBox.setText(RefactoringBundle.message("replace.all.occurences", count));
 
     myReplaceAllCheckBox.setEnabled(count != 0);

@@ -217,7 +217,7 @@ public class MavenDomGutterAnnotator implements Annotator {
 
     res.append("</dependency>");
 
-    return StringUtil.escapeXml(res.toString()).replace(" ", "&nbsp;");
+    return StringUtil.escapeXmlEntities(res.toString()).replace(" ", "&nbsp;");
   }
 
   private static class MyListCellRenderer extends PsiElementListCellRenderer<XmlTag> {

@@ -24,6 +24,9 @@ public abstract class MavenIndicesTestCase extends MavenImportingTestCase {
     try {
       MavenServerManager.getInstance().shutdown(true);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

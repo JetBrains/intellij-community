@@ -1,9 +1,12 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.ProjectTopics
 import com.intellij.ide.highlighter.ModuleFileType
+import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.async.coroutineDispatchingContext
+import com.intellij.openapi.application.async.inWriteAction
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
@@ -20,6 +23,8 @@ import com.intellij.util.Function
 import com.intellij.util.SmartList
 import com.intellij.util.io.readText
 import com.intellij.util.io.systemIndependentPath
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -79,12 +84,12 @@ internal class ModuleStoreRenameTest {
         }
       }
     },
-    DisposeModulesRule(projectRule),
-    EdtRule()
+    DisposeModulesRule(projectRule)
   )
 
   // project structure
-  @Test fun `rename module using model`() {
+  @Test
+  fun `rename module using model`() = runBlocking<Unit> {
     saveModules()
 
     val storage = module.storage
@@ -93,17 +98,21 @@ internal class ModuleStoreRenameTest {
 
     val oldName = module.name
     val newName = "foo"
-    runInEdtAndWait { projectRule.project.modifyModules { renameModule(module, newName) } }
+
+    withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+      projectRule.project.modifyModules { renameModule(module, newName) }
+    }
     assertRename(newName, oldFile)
     assertThat(oldModuleNames).containsOnly(oldName)
   }
 
   // project view
-  @Test fun `rename module using rename virtual file`() {
+  @Test
+  fun `rename module using rename virtual file`() = runBlocking {
     testRenameModule()
   }
 
-  private fun testRenameModule() {
+  private suspend fun testRenameModule() {
     saveModules()
     val storage = module.storage
     val oldFile = storage.file
@@ -111,14 +120,16 @@ internal class ModuleStoreRenameTest {
 
     val oldName = module.name
     val newName = "foo.dot"
-    runInEdtAndWait { runWriteAction { LocalFileSystem.getInstance().refreshAndFindFileByPath(oldFile.systemIndependentPath)!!.rename(null, "$newName${ModuleFileType.DOT_DEFAULT_EXTENSION}") } }
+    withContext(AppUIExecutor.onUiThread().inWriteAction().coroutineDispatchingContext()) {
+      LocalFileSystem.getInstance().refreshAndFindFileByPath(oldFile.systemIndependentPath)!!.rename(null, "$newName${ModuleFileType.DOT_DEFAULT_EXTENSION}")
+    }
     assertRename(newName, oldFile)
     assertThat(oldModuleNames).containsOnly(oldName)
   }
 
   // we cannot test external rename yet, because it is not supported - ModuleImpl doesn't support delete and create events (in case of external change we don't get move event, but get "delete old" and "create new")
 
-  private fun assertRename(newName: String, oldFile: Path) {
+  private suspend fun assertRename(newName: String, oldFile: Path) {
     val newFile = module.storage.file
     assertThat(newFile.fileName.toString()).isEqualTo("$newName${ModuleFileType.DOT_DEFAULT_EXTENSION}")
     assertThat(oldFile)
@@ -129,18 +140,19 @@ internal class ModuleStoreRenameTest {
     // ensure that macro value updated
     assertThat(module.stateStore.storageManager.expandMacros(StoragePathMacros.MODULE_FILE)).isEqualTo(newFile.systemIndependentPath)
 
-    runInEdtAndWait {
-      dependentModule.saveStore()
-    }
+    dependentModule.stateStore.save()
     assertThat(dependentModule.storage.file.readText()).contains("""<orderEntry type="module" module-name="$newName" />""")
   }
 
-  @Test fun `rename module parent virtual dir`() {
+  @Test
+  fun `rename module parent virtual dir`() = runBlocking {
     saveModules()
     val storage = module.storage
     val oldFile = storage.file
     val parentVirtualDir = storage.virtualFile!!.parent
-    runInEdtAndWait { runWriteAction { parentVirtualDir.rename(null, UUID.randomUUID().toString()) } }
+    withContext(AppUIExecutor.onUiThread().inWriteAction().coroutineDispatchingContext()) {
+      parentVirtualDir.rename(null, UUID.randomUUID().toString())
+    }
 
     val newFile = Paths.get(parentVirtualDir.path, "${module.name}${ModuleFileType.DOT_DEFAULT_EXTENSION}")
     try {
@@ -151,32 +163,35 @@ internal class ModuleStoreRenameTest {
       testRenameModule()
     }
     finally {
-      runInEdtAndWait { runWriteAction { parentVirtualDir.delete(this) } }
+      withContext(AppUIExecutor.onUiThread().inWriteAction().coroutineDispatchingContext()) {
+        parentVirtualDir.delete(this)
+      }
     }
   }
 
   @Test
-  @RunsInEdt
-  fun `rename module source root`() {
+  fun `rename module source root`() = runBlocking<Unit>(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
     saveModules()
     val storage = module.storage
     val parentVirtualDir = storage.virtualFile!!.parent
     val src = VfsTestUtil.createDir(parentVirtualDir, "foo")
-    runWriteAction { PsiTestUtil.addSourceContentToRoots(module, src, false) }
-    module.saveStore()
+    withContext(AppUIExecutor.onUiThread().inWriteAction().coroutineDispatchingContext()) {
+      PsiTestUtil.addSourceContentToRoots(module, src, false)
+    }
+    module.stateStore.save()
 
     val rootManager = module.rootManager as ModuleRootManagerComponent
     val stateModificationCount = rootManager.stateModificationCount
 
-    runWriteAction { src.rename(null, "bar.dot") }
+    withContext(AppUIExecutor.onUiThread().inWriteAction().coroutineDispatchingContext()) {
+      src.rename(null, "bar.dot")
+    }
 
     assertThat(stateModificationCount).isLessThan(rootManager.stateModificationCount)
   }
 
-  private fun saveModules() {
-    runInEdtAndWait {
-      module.saveStore()
-      dependentModule.saveStore()
-    }
+  private suspend fun saveModules() {
+    module.stateStore.save()
+    dependentModule.stateStore.save()
   }
 }

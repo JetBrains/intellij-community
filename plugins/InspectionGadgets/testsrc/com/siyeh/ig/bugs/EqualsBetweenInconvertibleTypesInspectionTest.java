@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-@SuppressWarnings({"EqualsBetweenInconvertibleTypes", "ResultOfMethodCallIgnored", "StringEqualsCharSequence"})
+@SuppressWarnings("ALL")
 public class EqualsBetweenInconvertibleTypesInspectionTest extends LightInspectionTestCase {
 
   public void testSimple() {
@@ -122,6 +122,19 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightInspecti
            "    return set./*'equals()' between objects of inconvertible types 'Set<String>' and 'List<String>'*/equals/**/(list) || \n" +
            "           list./*'equals()' between objects of inconvertible types 'List<String>' and 'Set<String>'*/equals/**/(set);\n" +
            "  }\n" +
+           "}");
+  }
+
+  public void testSameClassInDeepComparison() {
+    doTest("import java.util.ArrayList;\n" +
+           "class Numbers {\n" +
+           "    private static <K extends Number, T extends Class<K>> void foo(T categoryClass, ArrayList<Number> numbers) {\n" +
+           "        for (Number number : numbers) {\n" +
+           "            if (number.getClass() == categoryClass) {\n" +
+           "                System.out.println(number);\n" +
+           "            }\n" +
+           "        }\n" +
+           "    }\n" +
            "}");
   }
 

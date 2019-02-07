@@ -22,7 +22,6 @@ import java.io.File;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/28/14
  */
 public class ReportLocationEvent extends AbstractTestEvent {
 

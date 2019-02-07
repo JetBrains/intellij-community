@@ -1,10 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -29,39 +27,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author max
- * @author Konstantin Bulenkov
- */
 public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectionTool {
-
-  @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return GroupNames.PROPERTIES_GROUP_NAME;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return CodeInsightBundle.message("inspection.unresolved.property.key.reference.name");
-  }
-
   @Override
   @NotNull
   public String getShortName() {
     return "UnresolvedPropertyKey";
-  }
-
-  @Override
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.ERROR;
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   @Override
@@ -297,7 +267,7 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
 
       final List<PropertiesFile> result = new ArrayList<>(propertiesFiles.size());
       for (final PropertiesFile file : propertiesFiles) {
-        if (!fileIndex.isInLibraryClasses(file.getVirtualFile()) && !fileIndex.isInLibrarySource(file.getVirtualFile())) {
+        if (!fileIndex.isInLibrary(file.getVirtualFile())) {
           result.add(file);
         }
       }

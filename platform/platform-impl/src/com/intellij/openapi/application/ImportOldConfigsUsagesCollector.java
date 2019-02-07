@@ -2,27 +2,18 @@
 package com.intellij.openapi.application;
 
 import com.intellij.ide.ApplicationInitializedListener;
-import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsageTriggerCollector;
-import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
+import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class ImportOldConfigsUsagesCollector extends ApplicationUsageTriggerCollector {
-  @NotNull
-  @Override
-  public String getGroupId() {
-    return "statistics.import.old.config";
-  }
-
+public class ImportOldConfigsUsagesCollector  {
   public static class Trigger implements ApplicationInitializedListener {
     @Override
     public void componentsInitialized() {
       final ImportOldConfigsState state = ImportOldConfigsState.getInstance();
       if (state.isOldConfigPanelWasOpened()) {
-        FUSApplicationUsageTrigger.getInstance().trigger(
-          ImportOldConfigsUsagesCollector.class, state.getType().name()
-        );
+        FeatureUsageLogger.INSTANCE.log("statistics.import.old.config", state.getType().name());
       }
     }
   }

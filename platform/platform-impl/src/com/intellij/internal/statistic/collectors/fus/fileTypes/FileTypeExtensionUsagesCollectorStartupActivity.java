@@ -1,8 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -14,23 +12,16 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.TimeUnit;
-
 public class FileTypeExtensionUsagesCollectorStartupActivity implements StartupActivity {
-  private static final Cache<Pair<String, String>, Boolean> EDIT_USAGE_ONE_MINUTE_THROTTLING_CACHE = CacheBuilder.newBuilder()
-    .maximumSize(1000)
-    .expireAfterWrite(1, TimeUnit.MINUTES)
-    .build();
+  private static final Key<Long> LAST_EDIT_USAGE = Key.create("LAST_EDIT_USAGE");
 
   @Override
   public void runActivity(@NotNull Project project) {
@@ -40,22 +31,10 @@ public class FileTypeExtensionUsagesCollectorStartupActivity implements StartupA
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         FileTypeOpenUsageTriggerCollector.trigger(project, file.getFileType());
       }
-
-      @Override
-      public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-        String extension = file.getExtension() != null ? file.getExtension() : file.getName();
-        String fileType = file.getFileType().getName();
-        EDIT_USAGE_ONE_MINUTE_THROTTLING_CACHE.invalidate(Pair.create(file.getPath(), extension));
-        EDIT_USAGE_ONE_MINUTE_THROTTLING_CACHE.invalidate(Pair.create(file.getPath(), fileType));
-      }
-
-      @Override
-      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-      }
     });
     ApplicationManager.getApplication().getMessageBus().connect(project).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
         if (action instanceof EditorAction && ((EditorAction)action).getHandler() instanceof EditorWriteActionHandler) {
           onChange(dataContext);
         }
@@ -66,9 +45,11 @@ public class FileTypeExtensionUsagesCollectorStartupActivity implements StartupA
         if (editor == null || editor.getProject() != project) return;
         VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
         if (file != null) {
-          final FileType fileType = file.getFileType();
-          if (EDIT_USAGE_ONE_MINUTE_THROTTLING_CACHE.asMap().putIfAbsent(Pair.create(file.getPath(), fileType.getName()), Boolean.TRUE) == null)
-            FileTypeEditUsageTriggerCollector.trigger(project, fileType);
+          Long lastEdit = editor.getUserData(LAST_EDIT_USAGE);
+          if (lastEdit == null || System.currentTimeMillis() - lastEdit > 60 * 1000) {
+            editor.putUserData(LAST_EDIT_USAGE, System.currentTimeMillis());
+            FileTypeEditUsageTriggerCollector.trigger(project, file.getFileType());
+          }
         }
       }
 

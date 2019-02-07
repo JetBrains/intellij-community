@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
@@ -20,7 +21,7 @@ import java.util.List;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 
-public abstract class EditorAction extends AnAction implements DumbAware {
+public abstract class EditorAction extends AnAction implements DumbAware, UpdateInBackground {
   private static final Logger LOG = Logger.getInstance(EditorAction.class);
 
   private EditorActionHandler myHandler;
@@ -118,6 +119,21 @@ public abstract class EditorAction extends AnAction implements DumbAware {
 
   public void updateForKeyboardAccess(Editor editor, Presentation presentation, DataContext dataContext) {
     update(editor, presentation, dataContext);
+  }
+
+  @Override
+  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
+    if (isInInjectedContext()) {
+      Editor editor = CommonDataKeys.HOST_EDITOR.getData(e.getDataContext());
+      if (editor != null) {
+        for (Caret caret : editor.getCaretModel().getAllCarets()) {
+          if (EditorActionHandler.ensureInjectionUpToDate(caret)) {
+            break;
+          }
+        }
+      }
+    }
+    super.beforeActionPerformedUpdate(e);
   }
 
   @Override

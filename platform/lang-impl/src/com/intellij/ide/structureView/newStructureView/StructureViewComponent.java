@@ -205,8 +205,10 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     myTree.setShowsRootHandles(true);
     registerPsiListener(myProject, this, this::queueUpdate);
 
-    myAutoScrollToSourceHandler.install(myTree);
-    myAutoScrollFromSourceHandler.install();
+    if (showScrollToFromSourceActions()) {
+      myAutoScrollToSourceHandler.install(myTree);
+      myAutoScrollFromSourceHandler.install();
+    }
 
     TreeUtil.installActions(getTree());
 
@@ -504,26 +506,34 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     StructureViewFactoryEx.getInstanceEx(myProject).setActiveAction(name, state);
     ourSettingsModificationCount.incrementAndGet();
 
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      rebuild();
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      waitForRebuildAndExpand();
     }
     else {
-      AtomicBoolean complete = new AtomicBoolean(false);
-      //noinspection TestOnlyProblems
-      Promise<Void> promise = rebuildAndUpdate().onProcessed(ignore -> complete.set(true));
-      while (!complete.get()) {
-        //noinspection TestOnlyProblems
-        UIUtil.dispatchAllInvocationEvents();
-        try {
-          promise.blockingGet(20, TimeUnit.MILLISECONDS);
-        }
-        catch (Exception ignore) {
-        }
-      }
+      rebuild();
+      TreeUtil.expand(getTree(), 2);
+    }
+  }
+
+  @SuppressWarnings("TestOnlyProblems")
+  private void waitForRebuildAndExpand() {
+    wait(rebuildAndUpdate());
+    UIUtil.dispatchAllInvocationEvents();
+    wait(TreeUtil.promiseExpand(getTree(), 2));
+  }
+
+  private static void wait(Promise<?> originPromise) {
+    AtomicBoolean complete = new AtomicBoolean(false);
+    Promise<?> promise = originPromise.onProcessed(ignore -> complete.set(true));
+    while (!complete.get()) {
       //noinspection TestOnlyProblems
       UIUtil.dispatchAllInvocationEvents();
+      try {
+        promise.blockingGet(10, TimeUnit.MILLISECONDS);
+      }
+      catch (Exception ignore) {
+      }
     }
-    TreeUtil.expand(getTree(), 2);
   }
 
   @Override
@@ -580,7 +590,9 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     @Override
     public void dispose() {
       super.dispose();
-      myTreeModel.removeEditorPositionListener(myFileEditorPositionListener);
+      if (myFileEditorPositionListener != null) {
+        myTreeModel.removeEditorPositionListener(myFileEditorPositionListener);
+      }
     }
 
     private void addEditorCaretListener() {

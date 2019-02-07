@@ -50,7 +50,6 @@ public interface PsiModificationTracker extends ModificationTracker {
     }
 
     /**
-     * @param project
      * @return The instance of {@link PsiModificationTracker} corresponding to the given project.
      */
     public static PsiModificationTracker getInstance(Project project) {
@@ -127,6 +126,7 @@ public interface PsiModificationTracker extends ModificationTracker {
    * A listener to be notified on any PSI modification count change (which happens on any physical PSI change).
    * @see #TOPIC
    */
+  @FunctionalInterface
   interface Listener {
 
     /**

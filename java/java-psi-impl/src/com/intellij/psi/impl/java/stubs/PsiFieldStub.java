@@ -29,6 +29,4 @@ public interface PsiFieldStub extends PsiMemberStub<PsiField> {
   @NotNull TypeInfo getType(boolean doResolve);
   String getInitializerText();
   boolean isEnumConstant();
-  boolean hasDeprecatedAnnotation();
-  boolean hasDocComment();
 }

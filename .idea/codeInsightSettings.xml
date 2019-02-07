@@ -9,6 +9,7 @@
       <name>com.google.api.client.util</name>
       <name>com.sun</name>
       <name>io.netty.util.concurrent.Promise</name>
+      <name>io.netty.util.internal</name>
       <name>java.awt.List</name>
       <name>javax.annotation.Nullable</name>
       <name>javax.annotation.RegEx</name>

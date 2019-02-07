@@ -17,6 +17,7 @@ import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,9 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.Optional;
 import java.util.function.Function;
+
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
+import static com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText;
 
 public class ActionSearchEverywhereContributor implements SearchEverywhereContributor<Void> {
   private static final Logger LOG = Logger.getInstance(ActionSearchEverywhereContributor.class);
@@ -47,6 +51,14 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
   @Override
   public String getGroupName() {
     return "Actions";
+  }
+
+  @NotNull
+  @Override
+  public String getAdvertisement() {
+    ShortcutSet altEnterShortcutSet = getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
+    String altEnter = getFirstKeyboardShortcutText(altEnterShortcutSet);
+    return "Press " + altEnter + " to assign a shortcut";
   }
 
   @Override
@@ -113,7 +125,14 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
 
     if (SearchEverywhereDataKeys.ITEM_STRING_DESCRIPTION.is(dataId)) {
       AnAction action = getAction((GotoActionModel.MatchedValue)element);
-      return action == null ? null : action.getTemplatePresentation().getDescription();
+      if (action != null) {
+        String description = action.getTemplatePresentation().getDescription();
+        if (Registry.is("show.configurables.ids.in.settings.always")) {
+          String presentableId = StringUtil.notNullize(ActionManager.getInstance().getId(action), "class: " + action.getClass().getName());
+          return String.format("[%s] %s", presentableId, StringUtil.notNullize(description));
+        }
+        return description;
+      }
     }
 
     return null;
@@ -171,7 +190,6 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
   }
 
   public static class Factory implements SearchEverywhereContributorFactory<Void> {
-
     @NotNull
     @Override
     public SearchEverywhereContributor<Void> createContributor(AnActionEvent initEvent) {

@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.LayeredIcon;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,7 +109,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
     return new AnAction(
       "Run all",
       "Run all configurations available in this context",
-      LayeredIcon.create(AllIcons.Nodes.Folder, AllIcons.Nodes.RunnableMark)
+      AllIcons.RunConfigurations.Compound
     ) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {

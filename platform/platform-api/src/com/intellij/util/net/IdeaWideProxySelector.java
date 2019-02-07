@@ -20,7 +20,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
 * @author Irina.Chernushina
-* @since 1/30/13
 */
 public class IdeaWideProxySelector extends ProxySelector {
   private final static Logger LOG = Logger.getInstance("#com.intellij.util.net.IdeaWideProxySelector");

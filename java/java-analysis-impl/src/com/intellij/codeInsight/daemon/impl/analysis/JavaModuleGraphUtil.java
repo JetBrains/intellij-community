@@ -160,7 +160,7 @@ public class JavaModuleGraphUtil {
         DFSTBuilder<PsiJavaModule> builder = new DFSTBuilder<>(graph);
         Collection<Collection<PsiJavaModule>> components = builder.getComponents();
         if (!components.isEmpty()) {
-          return components.stream().map(ContainerUtil::newLinkedHashSet).collect(Collectors.toList());
+          return ContainerUtil.map(components, ContainerUtil::newLinkedHashSet);
         }
       }
     }

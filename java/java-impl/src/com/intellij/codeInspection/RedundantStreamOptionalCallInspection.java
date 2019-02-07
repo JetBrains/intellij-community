@@ -106,7 +106,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
         if (aClass == null) return;
         String className = aClass.getQualifiedName();
         if (className == null) return;
-        boolean optional = OptionalUtil.isOptionalClassName(className);
+        boolean optional = OptionalUtil.isJdkOptionalClassName(className);
         boolean stream = InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM);
         if (!optional && !stream) return;
         if (!EquivalenceChecker.getCanonicalPsiEquivalence().typesAreEquivalent(qualifier.getType(), call.getType())) return;

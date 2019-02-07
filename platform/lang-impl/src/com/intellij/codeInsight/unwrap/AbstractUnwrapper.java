@@ -141,5 +141,9 @@ public abstract class AbstractUnwrapper<C extends AbstractUnwrapper.AbstractCont
         e.getParent().deleteChildRange(e, e);
       }
     }
+
+    public final boolean isEffective() {
+      return myIsEffective;
+    }
   }
 }

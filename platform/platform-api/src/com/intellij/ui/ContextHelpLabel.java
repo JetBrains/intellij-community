@@ -42,6 +42,12 @@ public class ContextHelpLabel extends JBLabel {
       installOn(this);
   }
 
+  @Override
+  public void removeNotify() {
+    HelpTooltip.dispose(this);
+    super.removeNotify();
+  }
+
   @NotNull
   public static ContextHelpLabel create(@NotNull String description) {
     return new ContextHelpLabel(new HelpTooltip().setDescription(description));

@@ -103,9 +103,11 @@ public class PyInterpreterInspection extends PyInspection {
         else {
           final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
           if (!LanguageLevel.SUPPORTED_LEVELS.contains(languageLevel)) {
-            registerProblem(node,
-                            "Python " + languageLevel + " has reached its end-of-life and is no longer supported by " + product,
-                            fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+            registerProblem(
+              node,
+              "Python " + languageLevel + " has reached its end-of-life date and it is no longer supported in " + product + ".",
+              fixes.toArray(LocalQuickFix.EMPTY_ARRAY)
+            );
           }
         }
       }

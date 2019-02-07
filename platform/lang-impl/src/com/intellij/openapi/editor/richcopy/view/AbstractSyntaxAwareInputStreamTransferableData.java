@@ -30,7 +30,6 @@ import java.io.UnsupportedEncodingException;
 
 /**
  * @author Denis Zhdanov
- * @since 3/28/13 1:20 PM
  */
 abstract class AbstractSyntaxAwareInputStreamTransferableData extends InputStream implements RawTextWithMarkup {
   private static final Logger LOG = Logger.getInstance(AbstractSyntaxAwareInputStreamTransferableData.class);

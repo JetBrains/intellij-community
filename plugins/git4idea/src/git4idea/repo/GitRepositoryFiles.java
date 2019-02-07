@@ -38,6 +38,8 @@ import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 public class GitRepositoryFiles {
   private static final Logger LOG = Logger.getInstance("#git4idea.repo.GitRepositoryFiles");
 
+  public static final String GITIGNORE = ".gitignore";
+
   private static final String CHERRY_PICK_HEAD = "CHERRY_PICK_HEAD";
   private static final String COMMIT_EDITMSG = "COMMIT_EDITMSG";
   private static final String CONFIG = "config";
@@ -61,7 +63,6 @@ public class GitRepositoryFiles {
   private static final String PRE_PUSH_HOOK = "pre-push";
   private static final String COMMIT_MSG_HOOK = "commit-msg";
   private static final String SHALLOW = "shallow";
-  private static final String GITIGNORE = ".gitignore";
 
   private final VirtualFile myMainDir;
   private final VirtualFile myWorktreeDir;
@@ -85,7 +86,6 @@ public class GitRepositoryFiles {
   private final String myExcludePath;
   private final String myHooksDirPath;
   private final String myShallow;
-  private final String myGitIgnorePath;
 
   private GitRepositoryFiles(@NotNull VirtualFile mainDir, @NotNull VirtualFile worktreeDir) {
     myMainDir = mainDir;
@@ -102,8 +102,6 @@ public class GitRepositoryFiles {
     myExcludePath = mainPath + slash(INFO_EXCLUDE);
     myHooksDirPath = mainPath + slash(HOOKS);
     myShallow = mainPath + slash(SHALLOW);
-    VirtualFile repoDir = mainDir.getParent();
-    myGitIgnorePath = repoDir.getPath() + slash(GITIGNORE);
 
     String worktreePath = myWorktreeDir.getPath();
     myHeadFilePath = worktreePath + slash(HEAD);
@@ -356,9 +354,5 @@ public class GitRepositoryFiles {
   @NotNull
   Collection<VirtualFile> getRootDirs() {
     return ContainerUtil.newHashSet(myMainDir, myWorktreeDir);
-  }
-
-  public boolean isGitIgnore(@NotNull String filePath) {
-    return filePath.equals(myGitIgnorePath);
   }
 }

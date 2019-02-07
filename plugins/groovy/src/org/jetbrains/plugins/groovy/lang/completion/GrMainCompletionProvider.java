@@ -109,7 +109,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
       return (GrReferenceElement)parent;
     }
     if (couldContainReference(position)) {
-      return GroovyPsiElementFactory.getInstance(position.getProject()).createReferenceElementFromText("Foo", position);
+      return GroovyPsiElementFactory.getInstance(position.getProject()).createCodeReference("Foo", position);
     }
     return null;
   }

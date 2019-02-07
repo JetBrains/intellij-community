@@ -225,7 +225,7 @@ public class PySkeletonGenerator {
     if (homePath == null) throw new InvalidSdkException("Broken home path for " + sdk.getName());
     final String parentDir = new File(homePath).getParent();
 
-    List<String> cmd = new ArrayList<>(Arrays.asList(homePath, PythonHelpersLocator.getHelperPath(GENERATOR3), "-v", "-L"));
+    List<String> cmd = new ArrayList<>(Arrays.asList(homePath, PythonHelpersLocator.getHelperPath(GENERATOR3), "-L"));
     if (!StringUtil.isEmpty(extraSysPath)) {
       cmd.add("-s");
       cmd.add(extraSysPath);

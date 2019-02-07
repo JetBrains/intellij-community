@@ -76,7 +76,7 @@ import java.util.*;
 @TestDataPath("$CONTENT_ROOT/../testData/")
 public abstract class PyTestCase extends UsefulTestCase {
   public static final String PYTHON_2_MOCK_SDK = "2.7";
-  public static final String PYTHON_3_MOCK_SDK = "3.4";
+  public static final String PYTHON_3_MOCK_SDK = "3.7";
 
   protected static final PyLightProjectDescriptor ourPyDescriptor = new PyLightProjectDescriptor(PYTHON_2_MOCK_SDK);
   protected static final PyLightProjectDescriptor ourPy3Descriptor = new PyLightProjectDescriptor(PYTHON_3_MOCK_SDK);
@@ -185,6 +185,9 @@ public abstract class PyTestCase extends UsefulTestCase {
       myFixture.tearDown();
       myFixture = null;
       FilePropertyPusher.EP_NAME.findExtensionOrFail(PythonLanguageLevelPusher.class).flushLanguageLevelCache();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();
@@ -394,7 +397,7 @@ public abstract class PyTestCase extends UsefulTestCase {
     @NotNull final CodeInsightTestFixture fixture,
     @NotNull final Class<C> expectedClass) {
     final DataContext context = DataManager.getInstance().getDataContext(fixture.getEditor().getComponent());
-    for (final RunConfigurationProducer<?> producer : RunConfigurationProducer.EP_NAME.getExtensions()) {
+    for (final RunConfigurationProducer<?> producer : RunConfigurationProducer.EP_NAME.getExtensionList()) {
       final ConfigurationFromContext fromContext = producer.createConfigurationFromContext(ConfigurationContext.getFromContext(context));
       if (fromContext == null) {
         continue;

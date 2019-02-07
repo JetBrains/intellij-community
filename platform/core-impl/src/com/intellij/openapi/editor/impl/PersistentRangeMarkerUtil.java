@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 12/27/10 4:26 PM
  */
 class PersistentRangeMarkerUtil {
   /**

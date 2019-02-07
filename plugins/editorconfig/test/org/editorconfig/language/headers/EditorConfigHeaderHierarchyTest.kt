@@ -12,7 +12,7 @@ import org.editorconfig.language.util.headers.EditorConfigOverridingHeaderSearch
 
 class EditorConfigHeaderHierarchyTest : LightPlatformCodeInsightFixtureTestCase() {
   override fun getTestDataPath() =
-    "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testSrc/org/editorconfig/language/headers/"
+    "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testData/org/editorconfig/language/headers/"
 
   fun testSimple() {
     testOverriding(0 to listOf(), 1 to listOf(0))

@@ -1,0 +1,10 @@
+PyFile:magic3.py
+  PyEmptyExpression
+    PsiElement(Py:PERC)('%')
+    PsiElement(Py:IDENTIFIER)('config')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IDENTIFIER)('Class')
+    PsiElement(Py:DOT)('.')
+    PsiElement(Py:IDENTIFIER)('trait')
+    PsiElement(Py:EQ)('=')
+    PsiElement(Py:IDENTIFIER)('value')

@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
 * @author Denis Zhdanov
-* @since 5/2/13 10:37 PM
 */
 public interface ExternalProjectRefreshCallback {
 

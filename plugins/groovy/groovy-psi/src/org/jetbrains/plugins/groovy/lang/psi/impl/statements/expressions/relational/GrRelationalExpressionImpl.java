@@ -29,6 +29,7 @@ public class GrRelationalExpressionImpl extends GrBinaryExpressionImpl {
     super(node);
   }
 
+  @Override
   public String toString() {
     return "Relational expression";
   }

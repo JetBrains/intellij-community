@@ -113,7 +113,6 @@ public abstract class PromiseManager<HOST, VALUE> {
     Promise<VALUE> effectivePromise = load(host);
     if (effectivePromise != promise) {
       fieldUpdater.compareAndSet(host, promise, effectivePromise);
-      promise.onError(e -> {});
       effectivePromise.processed(promise);
     }
     return effectivePromise;

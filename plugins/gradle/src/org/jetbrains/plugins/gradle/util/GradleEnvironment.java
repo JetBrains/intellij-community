@@ -5,7 +5,6 @@ import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Denis Zhdanov
- * @since 4/10/12 3:01 PM
  */
 public class GradleEnvironment {
 

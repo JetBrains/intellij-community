@@ -51,7 +51,10 @@ class AdjustFormatRangesState(var currentRoot: Block, val formatRanges: FormatTe
     }
   }
 
-  private fun isInsideExtendedFormattingRanges(currentBlock: Block) = extendedRanges.find { it.intersects(currentBlock.textRange) } != null
+  private fun isInsideExtendedFormattingRanges(currentBlock: Block): Boolean {
+    val textRange = currentBlock.textRange
+    return extendedRanges.find { it.intersects(textRange) } != null
+  }
 
   private fun extractRanges(block: Block) {
     if (block is ExtraRangesProvider) {

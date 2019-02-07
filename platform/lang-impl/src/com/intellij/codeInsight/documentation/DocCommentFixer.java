@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 9/20/12 8:37 PM
  */
 public interface DocCommentFixer {
 

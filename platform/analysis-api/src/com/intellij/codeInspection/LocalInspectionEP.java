@@ -20,7 +20,6 @@ import com.intellij.util.xmlb.annotations.Attribute;
 
 /**
  * @author Dmitry Avdeev
- * @since 28.09.2011
  */
 public class LocalInspectionEP extends InspectionEP implements LocalInspectionTool.LocalDefaultNameProvider {
 

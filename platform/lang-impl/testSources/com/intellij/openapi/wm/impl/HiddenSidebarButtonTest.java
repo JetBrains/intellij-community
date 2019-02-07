@@ -3,7 +3,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.usageView.impl.UsageViewManagerImpl;
+import com.intellij.usageView.impl.UsageViewContentManagerImpl;
 import com.intellij.util.JdomKt;
 
 import java.util.Arrays;
@@ -34,7 +34,7 @@ public class HiddenSidebarButtonTest extends ToolWindowManagerTestCase {
         myManager.initToolWindow(extension);
       }
     }
-    new UsageViewManagerImpl(myManager.getProject(), myManager);
+    new UsageViewContentManagerImpl(myManager.getProject(), myManager);
 
     for (int i = 0; i < IDS.length; i++) {
       assertTrue(layout.isToolWindowRegistered(IDS[i]));

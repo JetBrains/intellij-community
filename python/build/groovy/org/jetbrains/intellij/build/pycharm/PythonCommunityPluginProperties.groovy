@@ -24,7 +24,6 @@ import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 class PythonCommunityPluginProperties extends PythonPluginPropertiesBase {
   PythonCommunityPluginProperties() {
     super()
-    productCode = "PC"
     platformPrefix = "PyCharmCore"
     applicationInfoModule = "intellij.pycharm.community.resources"
     productLayout.pluginModulesToPublish = [PythonCommunityPluginModules.PYTHON_COMMUNITY_PLUGIN_MODULE]

@@ -3,15 +3,21 @@
  */
 package org.jetbrains.uast.test.java
 
-import org.jetbrains.uast.evaluation.UEvaluatorExtension
-import org.jetbrains.uast.test.common.IdentifiersTestBase
+import org.jetbrains.uast.UFile
+import org.jetbrains.uast.test.common.asIdentifiers
+import org.jetbrains.uast.test.common.asRefNames
+import org.jetbrains.uast.test.env.assertEqualsToFile
 import java.io.File
 
-abstract class AbstractJavaIdentifiersTest : AbstractJavaUastTest(), IdentifiersTestBase {
-  protected var _evaluatorExtension: UEvaluatorExtension? = null
+abstract class AbstractJavaIdentifiersTest : AbstractJavaUastTest() {
 
   private fun getTestFile(testName: String, ext: String) =
     File(File(TEST_JAVA_MODEL_DIR, testName).canonicalPath.substringBeforeLast('.') + '.' + ext)
 
-  override fun getIdentifiersFile(testName: String): File = getTestFile(testName, "identifiers.txt")
+  override fun check(testName: String, file: UFile) {
+    assertEqualsToFile("Identifiers", getTestFile(testName, "identifiers.txt"), file.asIdentifiers())
+    assertEqualsToFile("refNames", getTestFile(testName, "refNames.txt"), file.asRefNames())
+  }
+
+
 }

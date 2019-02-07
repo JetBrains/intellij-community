@@ -50,7 +50,6 @@ import java.util.*;
  * GoF builder for external system backed projects.
  * 
  * @author Denis Zhdanov
- * @since 8/1/11 1:29 PM
  */
 public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImportFromExternalSystemControl>
   extends ProjectImportBuilder<DataNode<ProjectData>>
@@ -125,7 +124,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     }
     C control = getControl();
     control.setShowProjectFormatPanel(context.isCreatingNewProject());
-    control.reset(context);
+    control.reset(context, null);
     String pathToUse = getFileToImport();
     control.setLinkedProjectPath(pathToUse);
     doPrepare(context);

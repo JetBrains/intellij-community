@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("GroovyParserUtils")
 @file:Suppress("UNUSED_PARAMETER", "LiftReturnOrAssignment")
 
@@ -16,6 +16,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer
+import org.jetbrains.plugins.groovy.lang.parser.GroovyGeneratedParser.*
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
 import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.*
 import org.jetbrains.plugins.groovy.util.get
@@ -261,34 +262,11 @@ fun parseApplication(builder: PsiBuilder, level: Int,
   }
 }
 
-fun parseExpressionOrMapArgument(builder: PsiBuilder, level: Int, expression: Parser): Boolean {
-  val argumentMarker = builder.mark()
-  val labelMarker = builder.mark()
-  if (expression.parse(builder, level + 1)) {
-    if (T_COLON === builder.tokenType) {
-      labelMarker.done(ARGUMENT_LABEL)
-      builder.advanceLexer()
-      report_error_(builder, expression.parse(builder, level + 1))
-      argumentMarker.done(NAMED_ARGUMENT)
-    }
-    else {
-      labelMarker.drop()
-      argumentMarker.drop()
-    }
-    return true
-  }
-  else {
-    labelMarker.drop()
-    argumentMarker.rollbackTo()
-    return false
-  }
-}
-
 fun parseKeyword(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(KEYWORDS)
 
 fun parsePrimitiveType(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(primitiveTypes)
 
-fun assignmentOperator(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(ASSIGNMENT_OPERATORS)
+fun assignmentOperator(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(ASSIGNMENTS)
 
 fun equalityOperator(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(EQUALITY_OPERATORS)
 
@@ -435,6 +413,24 @@ private fun castOperandCheckInner(builder: PsiBuilder): Boolean {
     }
   }
   return false
+}
+
+fun isParameterizedClosure(builder: PsiBuilder, level: Int): Boolean {
+  return builder.lookahead {
+    isParameterizedClosureInner(this, level)
+  }
+}
+
+private fun isParameterizedClosureInner(builder: PsiBuilder, level: Int): Boolean {
+  if (!consumeTokenFast(builder, T_LBRACE)) return false
+  GroovyGeneratedParser.mb_nl(builder, level)
+  return closure_header_with_arrow(builder, level)
+}
+
+fun isParameterizedLambda(builder: PsiBuilder, level: Int): Boolean {
+  return builder.lookahead {
+    parenthesized_lambda_expression_head(builder, level)
+  }
 }
 
 private val explicitLeftMarker = Key.create<Marker>("groovy.parse.left.marker")

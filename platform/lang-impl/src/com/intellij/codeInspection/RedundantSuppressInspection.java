@@ -267,7 +267,7 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
 
   private static QuickFix<ProblemDescriptor> createQuickFix(String key) {
     String[] toolAndLang = key.split(";");
-    Language language = Language.findLanguageByID(toolAndLang[1]);
+    Language language = toolAndLang.length < 2 ? null : Language.findLanguageByID(toolAndLang[1]);
     if (language == null) return null;
     InspectionSuppressor suppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(language);
     return suppressor instanceof RedundantSuppressionDetector

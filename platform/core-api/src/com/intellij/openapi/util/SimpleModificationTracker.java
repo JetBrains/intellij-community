@@ -21,7 +21,6 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 /**
  * @author Max Medvedev
- * @since 28.03.2014
  */
 @Transient
 public class SimpleModificationTracker implements ModificationTracker {

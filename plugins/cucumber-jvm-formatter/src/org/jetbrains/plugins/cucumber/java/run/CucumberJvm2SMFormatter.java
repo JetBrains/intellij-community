@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.cucumber.java.run;
 
+import com.intellij.junit4.ExpectedPatterns;
+import com.intellij.rt.execution.junit.ComparisonFailureData;
 import cucumber.api.TestCase;
 import cucumber.api.TestStep;
 import cucumber.api.event.*;
@@ -148,8 +150,19 @@ public class CucumberJvm2SMFormatter implements Formatter {
     } else if (event.result.getStatus() == SKIPPED || event.result.getStatus() == PENDING) {
       outCommand(String.format(TEMPLATE_TEST_PENDING, escape(getStepName(event)), getCurrentTime()));
     } else {
-      outCommand(String.format(TEMPLATE_TEST_FAILED, getCurrentTime(), "",
-                               escape(event.result.getErrorMessage()), escape(getStepName(event)), ""));
+      String[] messageAndDetails = getMessageAndDetails(event.result.getErrorMessage());
+
+      ComparisonFailureData comparisonFailureData = ExpectedPatterns.createExceptionNotification(messageAndDetails[0]);
+      if (comparisonFailureData != null) {
+        outCommand(String.format(TEMPLATE_COMPARISON_TEST_FAILED, getCurrentTime(), escape(messageAndDetails[1]),
+                                 escape(messageAndDetails[0]), escape(comparisonFailureData.getExpected()),
+                                 escape(comparisonFailureData.getActual()), escape(getStepName(event)), ""));
+      }
+      else {
+        outCommand(String.format(TEMPLATE_TEST_FAILED, getCurrentTime(), "", escape(event.result.getErrorMessage()),
+                                 escape(getStepName(event)), ""));
+      }
+
     }
     Long duration = event.result.getDuration() != null ? event.result.getDuration() / 1000000: 0;
     outCommand(String.format(TEMPLATE_TEST_FINISHED, getCurrentTime(), duration, escape(getStepName(event))));
@@ -174,6 +187,31 @@ public class CucumberJvm2SMFormatter implements Formatter {
       currentScenarioOutlineLine = 0;
       currentScenarioOutlineName = null;
     }
+  }
+
+  private static String[] getMessageAndDetails(String errorReport) {
+    if (errorReport == null) {
+      errorReport = "";
+    }
+    String[] messageAndDetails = errorReport.split("\n", 2);
+
+    String message = null;
+    if (messageAndDetails.length > 0) {
+      message = messageAndDetails[0];
+    }
+    if (message == null) {
+      message = "";
+    }
+
+    String details = null;
+    if (messageAndDetails.length > 1) {
+      details = messageAndDetails[1];
+    }
+    if (details == null) {
+      details = "";
+    }
+
+    return new String[] {message, details};
   }
 
   private static String getStepLocation(TestStep step) {

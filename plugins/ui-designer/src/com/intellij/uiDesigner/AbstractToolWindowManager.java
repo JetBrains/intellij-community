@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.designer.DesignerEditorPanelFacade;
 import com.intellij.designer.LightToolWindowManager;
 import com.intellij.designer.ToggleEditorModeAction;
 import com.intellij.ide.palette.impl.PaletteToolWindowManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -32,15 +31,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Alexander Lobas
  */
 public abstract class AbstractToolWindowManager extends LightToolWindowManager {
-  public AbstractToolWindowManager(Project project, FileEditorManager fileEditorManager) {
+  protected AbstractToolWindowManager(Project project, FileEditorManager fileEditorManager) {
     super(project, fileEditorManager);
-  }
-
-  @Override
-  protected void projectOpened() {
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      super.projectOpened();
-    }
   }
 
   @Nullable

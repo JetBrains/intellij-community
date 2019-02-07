@@ -1,18 +1,21 @@
 package com.intellij.xml.arrangement;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.XmlElementVisitor;
+import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.DefaultArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.*;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.XML_ATTRIBUTE;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.XML_TAG;
@@ -34,24 +37,25 @@ public class XmlArrangementVisitor extends XmlElementVisitor {
 
   @Override
   public void visitXmlFile(XmlFile file) {
-    final XmlTag tag = file.getRootTag();
+    XmlDocument document = file.getDocument();
+    List<XmlTag> tags = PsiTreeUtil.getChildrenOfTypeAsList(document, XmlTag.class);
 
-    if (tag != null) {
-      tag.accept(this);
+    for (XmlTag tag : tags) {
+      if (tag != null) {
+        tag.accept(this);
+      }
     }
   }
 
   @Override
   public void visitXmlTag(XmlTag tag) {
-    final XmlElementArrangementEntry entry = createNewEntry(
-      tag.getTextRange(), XML_TAG, null, null, true);
+    final XmlElementArrangementEntry entry = createNewEntry(tag, XML_TAG, tag.getName(), tag.getNamespace());
     processEntry(entry, tag);
   }
 
   @Override
   public void visitXmlAttribute(XmlAttribute attribute) {
-    final XmlElementArrangementEntry entry = createNewEntry(
-      attribute.getTextRange(), XML_ATTRIBUTE, attribute.getName(), attribute.getNamespace(), true);
+    final XmlElementArrangementEntry entry = createNewEntry(attribute, XML_ATTRIBUTE, attribute.getName(), attribute.getNamespace());
     processEntry(entry, null);
   }
 
@@ -69,23 +73,36 @@ public class XmlArrangementVisitor extends XmlElementVisitor {
   }
 
   @Nullable
-  private XmlElementArrangementEntry createNewEntry(@NotNull TextRange range,
+  private XmlElementArrangementEntry createNewEntry(@NotNull PsiElement element,
                                                     @NotNull ArrangementSettingsToken type,
                                                     @Nullable String name,
-                                                    @Nullable String namespace,
-                                                    boolean canBeMatched) {
+                                                    @Nullable String namespace) {
+    TextRange range = element.getTextRange();
     if (range.getStartOffset() == 0 && range.getEndOffset() == 0 || !isWithinBounds(range)) {
       return null;
     }
-    final DefaultArrangementEntry current = getCurrent();
-    final XmlElementArrangementEntry entry = new XmlElementArrangementEntry(
-      current, range, type, name, namespace, canBeMatched);
+    ArrangementEntry current = getCurrent();
+    if (current != null && type == XML_ATTRIBUTE) {
+      current = current.getChildren().get(0);
+    }
+    final XmlElementArrangementEntry entry = new XmlElementArrangementEntry(current, range, type, name, namespace, true);
+    if (type == XML_TAG) {
+      ASTNode startName = XmlChildRole.START_TAG_NAME_FINDER.findChild(element.getNode());
+      assert startName != null;
+      ASTNode end = XmlChildRole.START_TAG_END_FINDER.findChild(element.getNode());
+      end = end == null ? XmlChildRole.EMPTY_TAG_END_FINDER.findChild(element.getNode()) : end;
+      TextRange attributesRange = new UnfairTextRange(startName.getTextRange().getEndOffset(),
+                                                end != null ? end.getStartOffset() : range.getEndOffset());
+      if (attributesRange.getLength() > 0) {
+        entry.addChild(new XmlElementArrangementEntry(entry, attributesRange, XML_ATTRIBUTE, null, null, false));
+      }
+    }
 
     if (current == null) {
       myInfo.addEntry(entry);
     }
     else {
-      current.addChild(entry);
+      ((DefaultArrangementEntry)current).addChild(entry);
     }
     return entry;
   }

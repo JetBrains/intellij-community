@@ -27,7 +27,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 11/13/12 7:17 PM
  */
 public abstract class AbstractMoveArrangementRuleAction extends AbstractArrangementRuleAction implements DumbAware {
 

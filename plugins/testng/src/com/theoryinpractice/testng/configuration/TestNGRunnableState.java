@@ -170,7 +170,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
       }
 
       try {
-        writeClassesPerModule(getConfiguration().getPackage(), getJavaParameters(), perModule);
+        writeClassesPerModule(getConfiguration().getPackage(), getJavaParameters(), perModule, "");
       }
       catch (Exception e) {
         LOG.error(e);

@@ -61,7 +61,7 @@ public class PyFunctionTypeAnnotationFile extends PyFileImpl implements PyExpres
   @Override
   public LanguageLevel getLanguageLevel() {
     // The same as for .pyi files
-    return LanguageLevel.PYTHON35;
+    return LanguageLevel.getLatest();
   }
 
   @Override

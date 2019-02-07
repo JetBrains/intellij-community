@@ -10,21 +10,22 @@
     </not>
   </condition>
 
+  <!-- Android Studio: modified by Change I1dba4249 / commit 8f836c4 -->
   <target name="init" unless="intellij.build.scripts.deps">
-    <condition property="gradle.executable" value="${project.home}/build/dependencies/gradlew.bat"
-               else="${project.home}/build/dependencies/gradlew">
-      <os family="windows"/>
-    </condition>
+    <property name="gradle.home" value="${project.home}/build/dependencies"/>
     <condition property="gradle.daemon" value="--daemon" else="--no-daemon">
       <and>
         <isset property="intellij.build.use.gradle.daemon"/>
         <equals arg1="${intellij.build.use.gradle.daemon}" arg2="true"/>
       </and>
     </condition>
+    <condition property="gradlew" value="gradlew.bat" else="gradlew">
+      <os family="windows"/>
+    </condition>
     <condition property="java.path" value="${env.JDK_18_x64}" else="${java.home}">
       <isset property="env.JDK_18_x64"/>
     </condition>
-    <exec executable="${gradle.executable}" dir="${project.home}/build/dependencies" failonerror="true">
+    <exec executable="${gradle.home}/${gradlew}" dir="${gradle.home}" failonerror="true">
       <env key="JAVA_HOME" value="${java.path}"/>
       <arg value="${gradle.daemon}"/>
       <arg value="-Djava.io.tmpdir=${java.io.tmpdir}"/>
@@ -33,6 +34,7 @@
   </target>
 
   <target name="doGant" depends="init">
+    <!-- Android Studio: added by Change I1dba4249 / commit 8f836c4 -->
     <condition property="script.deps" value="${intellij.build.scripts.deps}" else="build/dependencies/build/build-scripts-deps">
       <isset property="intellij.build.scripts.deps"/>
     </condition>
@@ -43,7 +45,7 @@
       </fileset>
       <pathelement path="${project.home}/platform/build-scripts/groovy"/>
       <pathelement path="${project.home}/build/groovy"/>
-      <fileset file="${project.home}/jps/lib/optimizedFileManager.jar"/>
+      <!-- Android Studio: modified by Change I1dba4249 / commit 8f836c4 -->
       <fileset dir="${project.home}/${script.deps}">
         <include name="*.jar"/>
       </fileset>

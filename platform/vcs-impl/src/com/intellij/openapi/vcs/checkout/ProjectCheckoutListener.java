@@ -33,7 +33,7 @@ public class ProjectCheckoutListener implements CheckoutListener {
   @Override
   public void processOpenedProject(Project lastOpenedProject) { }
 
-  static String getProductNameWithArticle() {
+  public static String getProductNameWithArticle() {
     // examples: "to create an IntelliJ IDEA project" (full product name is ok), "to create a PyCharm project"
     String productName = ApplicationNamesInfo.getInstance().getFullProductName();
     String article = StringUtil.isVowel(Character.toLowerCase(productName.charAt(0))) ? "an " : "a ";

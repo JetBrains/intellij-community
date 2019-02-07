@@ -78,7 +78,7 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
         return;
       }
       try {
-        final ShelvedChangeList list = ShelveChangesManager.getInstance(myProject).shelveChanges(changes, commitMessage, true);
+        final ShelvedChangeList list = ShelveChangesManager.getInstance(myProject).shelveChanges(changes, commitMessage, true, false, true);
         ShelvedChangesViewManager.getInstance(myProject).activateView(list);
 
         Change[] changesArray = changes.toArray(new Change[0]);

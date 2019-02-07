@@ -3,11 +3,10 @@
  */
 package com.intellij.codeInspection.i18n.inconsistentResourceBundle;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.ui.OptionAccessor;
-import com.intellij.lang.properties.*;
+import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.util.*;
@@ -23,11 +22,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * @author max
- */
 public class InconsistentResourceBundleInspection extends GlobalSimpleInspectionTool {
   private static final Key<Set<ResourceBundle>> VISITED_BUNDLES_KEY = Key.create("VISITED_BUNDLES_KEY");
 
@@ -49,12 +48,6 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
 
   @Override
   @NotNull
-  public String getGroupDisplayName() {
-    return PropertiesBundle.message("properties.files.inspection.group.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inconsistent.resource.bundle.display.name");
   }
@@ -63,12 +56,6 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
   @NotNull
   public String getShortName() {
     return "InconsistentResourceBundle";
-  }
-
-  @Override
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.ERROR;
   }
 
   @Override

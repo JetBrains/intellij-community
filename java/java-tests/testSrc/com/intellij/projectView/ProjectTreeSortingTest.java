@@ -55,6 +55,9 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
       myProjectView = null;
       myPane = null;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

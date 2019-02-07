@@ -381,7 +381,7 @@ public class BackgroundImageDialog extends DialogWrapper {
     List<String> items = getComboModel().getItems();
     PropertiesComponent.getInstance().setValue(
       getRecentItemsKey(),
-      StringUtil.join(items.subList(0, Math.min(items.size(), 5)), "\n"));
+      StringUtil.join(ContainerUtil.getFirstItems(items, 5), "\n"));
   }
 
   private CollectionComboBoxModel<String> getComboModel() {

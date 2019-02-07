@@ -4,12 +4,15 @@ package git4idea.history;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.vcs.log.impl.VcsFileStatusInfo;
 import git4idea.GitFormatException;
+import git4idea.GitUtil;
 import git4idea.config.GitVersionSpecialty;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -363,16 +366,36 @@ public class GitLogParser {
       else {
         if (myNameStatusOption != NameStatus.STATUS) throwGFE("Status list not expected", line);
 
-        if (match.size() == 2) {
-          myStatuses.add(new VcsFileStatusInfo(GitChangesParser.getChangeType(GitChangeType.fromString(match.get(0))), match.get(1), null));
-        }
-        else if (match.size() >= 3) {
-          myStatuses
-            .add(new VcsFileStatusInfo(GitChangesParser.getChangeType(GitChangeType.fromString(match.get(0))), match.get(1), match.get(2)));
-        }
-        else {
+        if (match.size() < 2) {
           LOG.error("Could not parse status line [" + line + "] for record " + myOptionsParser.myResult.getResult());
         }
+        else {
+          if (match.size() == 2) {
+            myStatuses.add(createStatusInfo(match.get(0), match.get(1), null));
+          }
+          else {
+            myStatuses.add(createStatusInfo(match.get(0), match.get(1), match.get(2)));
+          }
+        }
+      }
+    }
+
+    @NotNull
+    private VcsFileStatusInfo createStatusInfo(@NotNull String type, @NotNull String firstPath, @Nullable String secondPath) {
+      return new VcsFileStatusInfo(GitChangesParser.getChangeType(GitChangeType.fromString(type)), tryUnescapePath(firstPath),
+                                   tryUnescapePath(secondPath));
+    }
+
+    @Nullable
+    @Contract("!null -> !null")
+    private String tryUnescapePath(@Nullable String path) {
+      if (path == null) return null;
+      try {
+        return GitUtil.unescapePath(path);
+      }
+      catch (VcsException e) {
+        LOG.error(e);
+        return path;
       }
     }
 

@@ -200,15 +200,14 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   @NotNull
   protected List<T> buildExtensions(@NotNull Set<String> keys) {
     synchronized (lock) {
-      List<T> result = null;
-      result = buildExtensionsFromExplicitRegistration(result, key -> keys.contains(key));
-
+      List<T> result = buildExtensionsFromExplicitRegistration(null, key -> keys.contains(key));
       result = buildExtensionsFromExtensionPoint(result, bean -> keys.contains(bean.getKey()));
-      return result == null ? Collections.emptyList() : result;
+      return ContainerUtil.notNullize(result);
     }
   }
 
-  protected List<T> buildExtensionsFromExplicitRegistration(List<T> result, Condition<String> isMyBean) {
+  @Nullable
+  protected List<T> buildExtensionsFromExplicitRegistration(@Nullable List<T> result, Condition<String> isMyBean) {
     for (Map.Entry<String, List<T>> entry : myExplicitExtensions.entrySet()) {
       String key = entry.getKey();
       if (isMyBean.value(key)) {

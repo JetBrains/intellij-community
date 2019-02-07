@@ -16,7 +16,7 @@
 
 #pragma once
 
-#define VERSION "20160218.1348"
+#define VERSION "20181217.1910"
 
 #include <stdbool.h>
 #include <stdio.h>

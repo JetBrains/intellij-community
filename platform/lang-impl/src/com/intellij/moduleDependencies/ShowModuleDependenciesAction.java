@@ -24,7 +24,6 @@ import java.awt.*;
 
 /**
  * @author anna
- * @since Feb 9, 2005
  */
 public class ShowModuleDependenciesAction extends AnAction {
   @Override

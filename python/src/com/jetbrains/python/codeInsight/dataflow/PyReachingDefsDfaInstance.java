@@ -13,6 +13,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeVariableImpl;
 import com.jetbrains.python.psi.PyExceptPart;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyTypeDeclarationStatement;
 import com.jetbrains.python.psi.impl.PyExceptPartNavigator;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,9 +52,13 @@ public class PyReachingDefsDfaInstance implements DfaMapInstance<ScopeVariable> 
     return processReducedMap(reducedMap, instruction, element);
   }
 
-  private DFAMap<ScopeVariable> processReducedMap(DFAMap<ScopeVariable> map,
-                                                  final Instruction instruction,
-                                                  final PsiElement element) {
+  private static DFAMap<ScopeVariable> processReducedMap(DFAMap<ScopeVariable> map,
+                                                         final Instruction instruction,
+                                                         final PsiElement element) {
+    if (element != null && element.getParent() instanceof PyTypeDeclarationStatement) {
+      return map;
+    }
+
     String name = null;
     // Process readwrite instruction
     if (instruction instanceof ReadWriteInstruction && ((ReadWriteInstruction)instruction).getAccess().isWriteAccess()) {

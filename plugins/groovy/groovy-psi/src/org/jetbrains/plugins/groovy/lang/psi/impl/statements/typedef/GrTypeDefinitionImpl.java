@@ -500,7 +500,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   @Nullable
   @Override
   public GrModifierList getModifierList() {
-    return getStubOrPsiChild(GroovyElementTypes.MODIFIERS);
+    return getStubOrPsiChild(GroovyElementTypes.MODIFIER_LIST);
   }
 
   @Override

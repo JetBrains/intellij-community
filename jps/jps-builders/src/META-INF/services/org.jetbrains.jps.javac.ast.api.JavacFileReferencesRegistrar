@@ -14,3 +14,4 @@
 # limitations under the License.
 #
 org.jetbrains.jps.backwardRefs.JavaBackwardReferenceRegistrar
+org.jetbrains.jps.incremental.java.ImportReferencesRegistrar

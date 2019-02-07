@@ -15,8 +15,8 @@ class FeatureUsageEventLoggerTest {
   @Test
   fun testSingleEvent() {
     testLogger(
-      { logger -> logger.log("recorder-id", "test-action", false) },
-      newEvent("recorder-id", "test-action")
+      { logger -> logger.log(FeatureUsageGroup("group.id", 2), "test-action", false) },
+      newEvent("group.id", "test-action", groupVersion = "2")
     )
   }
 
@@ -24,11 +24,11 @@ class FeatureUsageEventLoggerTest {
   fun testTwoEvents() {
     testLogger(
       { logger ->
-        logger.log("recorder-id", "test-action", false)
-        logger.log("recorder-id", "second-action", false)
+        logger.log(FeatureUsageGroup("group.id", 2), "test-action", false)
+        logger.log(FeatureUsageGroup("group.id", 2), "second-action", false)
       },
-      newEvent("recorder-id", "test-action"),
-      newEvent("recorder-id", "second-action")
+      newEvent("group.id", "test-action", groupVersion = "2"),
+      newEvent("group.id", "second-action", groupVersion = "2")
     )
   }
 
@@ -36,10 +36,10 @@ class FeatureUsageEventLoggerTest {
   fun testMergedEvents() {
     testLogger(
       { logger ->
-        logger.log("recorder-id", "test-action", false)
-        logger.log("recorder-id", "test-action", false)
+        logger.log(FeatureUsageGroup("group.id", 2), "test-action", false)
+        logger.log(FeatureUsageGroup("group.id", 2), "test-action", false)
       },
-      newEvent("recorder-id", "test-action", count = 2)
+      newEvent("group.id", "test-action", groupVersion = "2", count = 2)
     )
   }
 
@@ -47,12 +47,12 @@ class FeatureUsageEventLoggerTest {
   fun testTwoMergedEvents() {
     testLogger(
       { logger ->
-        logger.log("recorder-id", "test-action", false)
-        logger.log("recorder-id", "test-action", false)
-        logger.log("recorder-id", "second-action", false)
+        logger.log(FeatureUsageGroup("group.id", 2), "test-action", false)
+        logger.log(FeatureUsageGroup("group.id", 2), "test-action", false)
+        logger.log(FeatureUsageGroup("group.id", 2), "second-action", false)
       },
-      newEvent("recorder-id", "test-action", count = 2),
-      newEvent("recorder-id", "second-action", count = 1)
+      newEvent("group.id", "test-action", groupVersion = "2", count = 2),
+      newEvent("group.id", "second-action", groupVersion = "2", count = 1)
     )
   }
 
@@ -60,21 +60,21 @@ class FeatureUsageEventLoggerTest {
   fun testNotMergedEvents() {
     testLogger(
       { logger ->
-        logger.log("recorder-id", "test-action", false)
-        logger.log("recorder-id", "second-action", false)
-        logger.log("recorder-id", "test-action", false)
+        logger.log(FeatureUsageGroup("group.id", 2), "test-action", false)
+        logger.log(FeatureUsageGroup("group.id", 2), "second-action", false)
+        logger.log(FeatureUsageGroup("group.id", 2), "test-action", false)
       },
-      newEvent("recorder-id", "test-action"),
-      newEvent("recorder-id", "second-action"),
-      newEvent("recorder-id", "test-action")
+      newEvent("group.id", "test-action", groupVersion = "2"),
+      newEvent("group.id", "second-action", groupVersion = "2"),
+      newEvent("group.id", "test-action", groupVersion = "2")
     )
   }
 
   @Test
   fun testStateEvent() {
     testLogger(
-      { logger -> logger.log("recorder-id", "state", true) },
-      newStateEvent("recorder-id", "state")
+      { logger -> logger.log(FeatureUsageGroup("group.id", 2), "state", true) },
+      newStateEvent("group.id", "state", groupVersion = "2")
     )
   }
 
@@ -84,11 +84,11 @@ class FeatureUsageEventLoggerTest {
     data["type"] = "close"
     data["state"] = 1
 
-    val expected = newEvent("recorder-id", "dialog-id")
+    val expected = newEvent("group.id", "dialog-id", groupVersion = "2")
     expected.event.addData("type", "close")
     expected.event.addData("state", 1)
 
-    testLogger({ logger -> logger.log("recorder-id", "dialog-id", data, false) }, expected)
+    testLogger({ logger -> logger.log(FeatureUsageGroup("group.id", 2), "dialog-id", data, false) }, expected)
   }
 
   @Test
@@ -97,15 +97,15 @@ class FeatureUsageEventLoggerTest {
     data["type"] = "close"
     data["state"] = 1
 
-    val expected = newEvent("recorder-id", "dialog-id")
+    val expected = newEvent("group.id", "dialog-id", groupVersion = "2")
     expected.event.increment()
     expected.event.addData("type", "close")
     expected.event.addData("state", 1)
 
     testLogger(
       { logger ->
-        logger.log("recorder-id", "dialog-id", data, false)
-        logger.log("recorder-id", "dialog-id", data, false)
+        logger.log(FeatureUsageGroup("group.id", 2), "dialog-id", data, false)
+        logger.log(FeatureUsageGroup("group.id", 2), "dialog-id", data, false)
       }, expected)
   }
 
@@ -116,12 +116,12 @@ class FeatureUsageEventLoggerTest {
     data["value"] = true
     data["default"] = false
 
-    val expected = newStateEvent("settings", "ui")
+    val expected = newStateEvent("settings", "ui", groupVersion = "3")
     expected.event.addData("name", "myOption")
     expected.event.addData("value", true)
     expected.event.addData("default", false)
 
-    testLogger({ logger -> logger.log("settings", "ui", data, true) }, expected)
+    testLogger({ logger -> logger.log(FeatureUsageGroup("settings", 3), "ui", data, true) }, expected)
   }
 
   @Test
@@ -131,22 +131,140 @@ class FeatureUsageEventLoggerTest {
     data["value"] = true
     data["default"] = false
 
-    val expected = newStateEvent("settings", "ui")
+    val expected = newStateEvent("settings", "ui", groupVersion = "5")
     expected.event.addData("name", "myOption")
     expected.event.addData("value", true)
     expected.event.addData("default", false)
 
     testLogger(
       { logger ->
-        logger.log("settings", "ui", data, true)
-        logger.log("settings", "ui", data, true)
+        logger.log(FeatureUsageGroup("settings", 5), "ui", data, true)
+        logger.log(FeatureUsageGroup("settings", 5), "ui", data, true)
       },
       expected, expected
     )
   }
 
+  @Test
+  fun testDontMergeEventsWithDifferentGroupIds() {
+    testLogger(
+      { logger ->
+        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
+        logger.log(FeatureUsageGroup("group", 2), "test.action", false)
+        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
+      },
+      newEvent("group.id", "test.action", groupVersion = "2"),
+      newEvent("group", "test.action", groupVersion = "2"),
+      newEvent("group.id", "test.action", groupVersion = "2")
+    )
+  }
+
+  @Test
+  fun testDontMergeEventsWithDifferentGroupVersions() {
+    testLogger(
+      { logger ->
+        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
+        logger.log(FeatureUsageGroup("group.id", 3), "test.action", false)
+        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
+      },
+      newEvent("group.id", "test.action", groupVersion = "2"),
+      newEvent("group.id", "test.action", groupVersion = "3"),
+      newEvent("group.id", "test.action", groupVersion = "2")
+    )
+  }
+
+  @Test
+  fun testDontMergeEventsWithDifferentActions() {
+    testLogger(
+      { logger ->
+        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
+        logger.log(FeatureUsageGroup("group.id", 2), "test.action.1", false)
+        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
+      },
+      newEvent("group.id", "test.action", groupVersion = "2"),
+      newEvent("group.id", "test.action.1", groupVersion = "2"),
+      newEvent("group.id", "test.action", groupVersion = "2")
+    )
+  }
+
+  @Test
+  fun testLoggerWithCustomRecorderVersion() {
+    val custom = TestFeatureUsageFileEventLogger("session-id", "999.999", "-1", "99", TestFeatureUsageEventWriter())
+    testLoggerInternal(
+      custom,
+      { logger ->
+        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
+        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
+        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
+      },
+      newEvent("group.id", "test.action", groupVersion = "2", count = 3, recorderVersion = "99")
+    )
+  }
+
+  @Test
+  fun testLoggerWithCustomSessionId() {
+    val custom = TestFeatureUsageFileEventLogger("test.session", "999.999", "-1", "1", TestFeatureUsageEventWriter())
+    testLoggerInternal(
+      custom,
+      { logger ->
+        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
+        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
+        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
+      },
+      newEvent("group.id", "test.action", groupVersion = "2", count = 3, session = "test.session")
+    )
+  }
+
+  @Test
+  fun testLoggerWithCustomBuildNumber() {
+    val custom = TestFeatureUsageFileEventLogger("session-id", "123.456", "-1", "1", TestFeatureUsageEventWriter())
+    testLoggerInternal(
+      custom,
+      { logger ->
+        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
+        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
+        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
+      },
+      newEvent("group.id", "test.action", groupVersion = "2", count = 3, build = "123.456")
+    )
+  }
+
+  @Test
+  fun testLoggerWithCustomBucket() {
+    val custom = TestFeatureUsageFileEventLogger("session-id", "999.999", "215", "1", TestFeatureUsageEventWriter())
+    testLoggerInternal(
+      custom,
+      { logger ->
+        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
+        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
+        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
+      },
+      newEvent("group.id", "test.action", groupVersion = "2", count = 3, bucket = "215")
+    )
+  }
+
+  @Test
+  fun testCustomLogger() {
+    val custom = TestFeatureUsageFileEventLogger("my-test.session", "123.00.1", "128", "29", TestFeatureUsageEventWriter())
+    testLoggerInternal(
+      custom,
+      { logger ->
+        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
+        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
+        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
+      },
+      newEvent("group.id", "test.action", groupVersion = "2", count = 3, session= "my-test.session", build = "123.00.1", bucket = "128", recorderVersion = "29")
+    )
+  }
+
   private fun testLogger(callback: (TestFeatureUsageFileEventLogger) -> Unit, vararg expected: LogEvent) {
-    val logger = TestFeatureUsageFileEventLogger("session-id", "999.999", TestFeatureUsageEventWriter())
+    val logger = TestFeatureUsageFileEventLogger("session-id", "999.999", "-1", "1", TestFeatureUsageEventWriter())
+    testLoggerInternal(logger, callback, *expected)
+  }
+
+  private fun testLoggerInternal(logger: TestFeatureUsageFileEventLogger,
+                                 callback: (TestFeatureUsageFileEventLogger) -> Unit,
+                                 vararg expected: LogEvent) {
     callback(logger)
     logger.dispose()
 
@@ -159,6 +277,7 @@ class FeatureUsageEventLoggerTest {
 
   private fun assertEvent(actual: LogEvent, expected: LogEvent) {
     // Compare events but skip event time
+    assertEquals(actual.recorderVersion, expected.recorderVersion)
     assertEquals(actual.session, expected.session)
     assertEquals(actual.bucket, expected.bucket)
     assertEquals(actual.build, expected.build)
@@ -176,14 +295,17 @@ class FeatureUsageEventLoggerTest {
     else {
       assertEquals(actual.event.data.size - 1, expected.event.data.size)
     }
-    if (actual.event is LogEventAction || expected.event is LogEventAction) {
-      assertEquals((actual.event as LogEventAction).count, (expected.event as LogEventAction).count)
-    }
+    assertEquals(actual.event.state, expected.event.state)
+    assertEquals(actual.event.count, expected.event.count)
   }
 }
 
-class TestFeatureUsageFileEventLogger(session: String, build: String, writer: TestFeatureUsageEventWriter) :
-  FeatureUsageFileEventLogger(session, build, "-1", "1", writer) {
+class TestFeatureUsageFileEventLogger(session: String,
+                                      build: String,
+                                      bucket: String,
+                                      recorderVersion: String,
+                                      writer: TestFeatureUsageEventWriter) :
+  FeatureUsageFileEventLogger(session, build, bucket, recorderVersion, writer) {
   val testWriter = writer
 
   override fun dispose() {

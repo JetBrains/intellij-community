@@ -33,7 +33,6 @@ import java.util.*;
  * Wraps {@link ArrangementStandardSettingsAware} for the common arrangement UI managing code.
  * 
  * @author Denis Zhdanov
- * @since 3/7/13 3:11 PM
  */
 public class ArrangementStandardSettingsManager {
 

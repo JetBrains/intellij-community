@@ -27,7 +27,6 @@ import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/10/2014
  */
 public class JpsGradleDependenciesEnumerationHandler extends JpsJavaDependenciesEnumerationHandler {
   private static final JpsGradleDependenciesEnumerationHandler SOURCE_SET_TYPE_INSTANCE = new JpsGradleDependenciesEnumerationHandler(true);

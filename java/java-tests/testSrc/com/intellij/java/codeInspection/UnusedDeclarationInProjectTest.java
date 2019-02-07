@@ -29,31 +29,16 @@ public class UnusedDeclarationInProjectTest extends AbstractUnusedDeclarationTes
 
   public void testInstantiatedInTestOnly() {
     myTool.setTestEntryPoints(false);
-    try {
-      doTest();
-    }
-    finally {
-      myTool.setTestEntryPoints(true);
-    }
+    doTest();
   }
 
   public void testInstantiatedInTestOnlyStatic() {
     myTool.setTestEntryPoints(false);
-    try {
-      doTest();
-    }
-    finally {
-      myTool.setTestEntryPoints(true);
-    }
+    doTest();
   }
 
   public void testIgnoreUnusedFields() {
     myTool.getSharedLocalInspectionTool().FIELD = false;
-    try {
-      doTest();
-    }
-    finally {
-      myTool.getSharedLocalInspectionTool().FIELD = true;
-    }
+    doTest();
   }
 }

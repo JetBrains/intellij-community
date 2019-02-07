@@ -3,11 +3,11 @@ package com.intellij.execution.testDiscovery.indices;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.io.*;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -18,10 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public final class DiscoveredTestDataHolder {
   private static final Logger LOG = Logger.getInstance(DiscoveredTestDataHolder.class);
@@ -183,7 +180,7 @@ public final class DiscoveredTestDataHolder {
   public void updateTestData(@NotNull String testClassName,
                              @NotNull String testMethodName,
                              @NotNull MultiMap<String, String> usedMethods,
-                             @NotNull String[] usedFiles,
+                             @NotNull List<String> usedFiles,
                              @Nullable String moduleName,
                              byte frameworkId) throws IOException {
 
@@ -199,8 +196,10 @@ public final class DiscoveredTestDataHolder {
 
     Map<Integer, Void> usedVirtualFileIds = new HashMap<>();
     for (String file : usedFiles) {
-      int fileId = myPathEnumerator.enumerate(file);
-      usedVirtualFileIds.put(fileId, null);
+      if (file.contains("testData") || file.contains("test-data") || file.contains("test_data")) {
+        int fileId = myPathEnumerator.enumerate(file);
+        usedVirtualFileIds.put(fileId, null);
+      }
     }
 
     UsedSources usedSources = new UsedSources(result, usedVirtualFileIds);
@@ -258,6 +257,24 @@ public final class DiscoveredTestDataHolder {
     catch (StorageException e) {
       throw new IOException(e);
     }
+  }
+
+  @NotNull
+  public Collection<String> getAffectedFiles(@NotNull Couple<String> testQName, byte frameworkId) throws IOException {
+    int testId = myTestEnumerator.tryEnumerate(createTestId(testQName.getFirst(), testQName.getSecond(), frameworkId));
+    if (testId == 0) return Collections.emptySet();
+    Collection<Integer> affectedFiles = myTestFilesIndex.getTestDataFor(testId);
+    if (affectedFiles == null) return Collections.emptySet();
+    ArrayList<String> result = new ArrayList<>(affectedFiles.size());
+    for (Integer fileId : affectedFiles) {
+      String filePath = myPathEnumerator.valueOf(fileId);
+      if (filePath != null) {
+        result.add(filePath);
+      } else {
+        LOG.error("file path is empty for file id =" + fileId);
+      }
+    }
+    return result;
   }
 
   public boolean isDisposed() {

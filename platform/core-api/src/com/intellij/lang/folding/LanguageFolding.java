@@ -4,7 +4,9 @@ package com.intellij.lang.folding;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -19,6 +21,7 @@ import java.util.List;
  */
 public class LanguageFolding extends LanguageExtension<FoldingBuilder> {
   public static final LanguageFolding INSTANCE = new LanguageFolding();
+  private static final Logger LOG = Logger.getInstance(LanguageFolding.class);
 
   private LanguageFolding() {
     super("com.intellij.lang.foldingBuilder");
@@ -63,18 +66,27 @@ public class LanguageFolding extends LanguageExtension<FoldingBuilder> {
 
   @NotNull
   public static FoldingDescriptor[] buildFoldingDescriptors(@Nullable FoldingBuilder builder, @NotNull PsiElement root, @NotNull Document document, boolean quick) {
-    if (!DumbService.isDumbAware(builder) && DumbService.getInstance(root.getProject()).isDumb()) {
+    try {
+      if (!DumbService.isDumbAware(builder) && DumbService.getInstance(root.getProject()).isDumb()) {
+        return FoldingDescriptor.EMPTY;
+      }
+
+      if (builder instanceof FoldingBuilderEx) {
+        return ((FoldingBuilderEx)builder).buildFoldRegions(root, document, quick);
+      }
+      final ASTNode astNode = root.getNode();
+      if (astNode == null || builder == null) {
+        return FoldingDescriptor.EMPTY;
+      }
+
+      return builder.buildFoldRegions(astNode, document);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      LOG.error(e);
       return FoldingDescriptor.EMPTY;
     }
-
-    if (builder instanceof FoldingBuilderEx) {
-      return ((FoldingBuilderEx)builder).buildFoldRegions(root, document, quick);
-    }
-    final ASTNode astNode = root.getNode();
-    if (astNode == null || builder == null) {
-      return FoldingDescriptor.EMPTY;
-    }
-
-    return builder.buildFoldRegions(astNode, document);
   }
 }

@@ -88,6 +88,10 @@ class JpsCompilationRunner {
     runBuild(names, false, [], false, false)
   }
 
+  void buildModulesWithoutDependencies(Collection<JpsModule> modules, boolean includeTests) {
+    runBuild(modules.collect { it.name }.toSet(), false, [], includeTests, false)
+  }
+
   void resolveProjectDependencies() {
     runBuild([] as Set, false, [], false, true)
   }

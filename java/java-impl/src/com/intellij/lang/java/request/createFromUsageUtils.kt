@@ -16,6 +16,20 @@ internal fun PsiExpression.isInStaticContext(): Boolean {
   return isWithinStaticMember() || isWithinConstructorCall()
 }
 
+internal fun PsiExpression.isWithinStaticMemberOf(clazz: PsiClass): Boolean {
+  var currentPlace: PsiElement = this
+  while (true) {
+    val enclosingMember = currentPlace.parentOfType<PsiMember>() ?: return false
+    val enclosingClass = enclosingMember.containingClass ?: return false
+    if (enclosingClass == clazz) {
+      return enclosingMember.hasModifierProperty(PsiModifier.STATIC)
+    }
+    else {
+      currentPlace = enclosingClass.parent ?: return false
+    }
+  }
+}
+
 internal fun PsiExpression.isWithinStaticMember(): Boolean {
   return parentOfType<PsiMember>()?.hasModifierProperty(PsiModifier.STATIC) ?: false
 }

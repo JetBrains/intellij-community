@@ -13,10 +13,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PsiTestCase;
-import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.Usage;
@@ -27,27 +24,28 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-public class UsagesInAnalyzingDependenciesTest extends PsiTestCase {
+public class UsagesInAnalyzingDependenciesTest extends LightCodeInsightFixtureTestCase {
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/dependencies/search/";
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-
-    String root = JavaTestUtil.getJavaTestDataPath() + "/dependencies/search/" + getTestName(true);
-    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
-    createTestProjectStructure( root);
+    myFixture.copyDirectoryToProject(getTestName(true), "");
   }
 
-  @SuppressWarnings("ConstantConditions")
   public void testForwardPackageScope() {
-    PsiPackage bPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage("com.b");
-    DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, new JavaAnalysisScope(bPackage, null));
+    PsiPackage bPackage = JavaPsiFacade.getInstance(getProject()).findPackage("com.b");
+    DependenciesBuilder builder = new ForwardDependenciesBuilder(getProject(), new JavaAnalysisScope(bPackage, null));
     builder.analyze();
     Set<PsiFile> searchFor = new HashSet<>();
-    searchFor.add(myJavaFacade.findClass("com.a.A", GlobalSearchScope.allScope(myProject)).getContainingFile());
+    searchFor.add(myFixture.findClass("com.a.A").getContainingFile());
     Set<PsiFile> searchIn = new HashSet<>();
-    PsiClass bClass = myJavaFacade.findClass("com.b.B", GlobalSearchScope.allScope(myProject));
+    PsiClass bClass = myFixture.findClass("com.b.B");
     searchIn.add(bClass.getContainingFile());
-    PsiClass cClass = myJavaFacade.findClass("com.b.C", GlobalSearchScope.allScope(myProject));
+    PsiClass cClass = myFixture.findClass("com.b.C");
     searchIn.add(cClass.getContainingFile());
     UsageInfo[] usagesInfos = FindDependencyUtil.findDependencies(builder, searchIn, searchFor);
     UsageInfo2UsageAdapter[] usages = UsageInfo2UsageAdapter.convert(usagesInfos);
@@ -76,17 +74,16 @@ public class UsagesInAnalyzingDependenciesTest extends PsiTestCase {
     return first.toString() + " " + StringUtil.join(rest, Object::toString, "");
   }
 
-  @SuppressWarnings("ConstantConditions")
   public void testBackwardPackageScope() {
-    PsiPackage bPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage("com.a");
-    DependenciesBuilder builder = new BackwardDependenciesBuilder(myProject, new JavaAnalysisScope(bPackage, null));
+    PsiPackage bPackage = JavaPsiFacade.getInstance(getProject()).findPackage("com.a");
+    DependenciesBuilder builder = new BackwardDependenciesBuilder(getProject(), new JavaAnalysisScope(bPackage, null));
     builder.analyze();
     Set<PsiFile> searchFor = new HashSet<>();
-    searchFor.add(myJavaFacade.findClass("com.a.A", GlobalSearchScope.allScope(myProject)).getContainingFile());
+    searchFor.add(myFixture.findClass("com.a.A").getContainingFile());
     Set<PsiFile> searchIn = new HashSet<>();
-    PsiClass bClass = myJavaFacade.findClass("com.b.B", GlobalSearchScope.allScope(myProject));
+    PsiClass bClass = myFixture.findClass("com.b.B");
     searchIn.add(bClass.getContainingFile());
-    PsiClass cClass = myJavaFacade.findClass("com.a.C", GlobalSearchScope.allScope(myProject));
+    PsiClass cClass = myFixture.findClass("com.a.C");
     searchFor.add(cClass.getContainingFile());
     UsageInfo[] usagesInfos = FindDependencyUtil.findBackwardDependencies(builder, searchIn, searchFor);
     UsageInfo2UsageAdapter[] usages = UsageInfo2UsageAdapter.convert(usagesInfos);
@@ -103,16 +100,15 @@ public class UsagesInAnalyzingDependenciesTest extends PsiTestCase {
       "8 myC.cc();"}, psiUsages);
   }
 
-  @SuppressWarnings("ConstantConditions")
   public void testForwardSimple() {
-    DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, new AnalysisScope(myProject));
+    DependenciesBuilder builder = new ForwardDependenciesBuilder(getProject(), new AnalysisScope(getProject()));
     builder.analyze();
 
     Set<PsiFile> searchIn = new HashSet<>();
-    PsiClass aClass = myJavaFacade.findClass("A", GlobalSearchScope.allScope(myProject));
+    PsiClass aClass = myFixture.findClass("A");
     searchIn.add(aClass.getContainingFile());
     Set<PsiFile> searchFor = new HashSet<>();
-    PsiClass bClass = myJavaFacade.findClass("B", GlobalSearchScope.allScope(myProject));
+    PsiClass bClass = myFixture.findClass("B");
     searchFor.add(bClass.getContainingFile());
 
     UsageInfo[] usagesInfos = FindDependencyUtil.findDependencies(builder, searchIn, searchFor);
@@ -127,17 +123,16 @@ public class UsagesInAnalyzingDependenciesTest extends PsiTestCase {
       "4 myB.bb();"}, psiUsages);
   }
 
-  @SuppressWarnings("ConstantConditions")
   public void testForwardJdkClasses() {
-    DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, new AnalysisScope(myProject));
+    DependenciesBuilder builder = new ForwardDependenciesBuilder(getProject(), new AnalysisScope(getProject()));
     builder.analyze();
 
     Set<PsiFile> searchIn = new HashSet<>();
-    PsiClass aClass = myJavaFacade.findClass("A", GlobalSearchScope.allScope(myProject));
+    PsiClass aClass = myFixture.findClass("A");
     searchIn.add(aClass.getContainingFile());
 
     Set<PsiFile> searchFor = new HashSet<>();
-    PsiClass stringClass = myJavaFacade.findClass("java.lang.String", GlobalSearchScope.allScope(myProject));
+    PsiClass stringClass = myFixture.findClass("java.lang.String");
     searchFor.add((PsiFile)stringClass.getContainingFile().getNavigationElement());
 
     UsageInfo[] usagesInfos = FindDependencyUtil.findDependencies(builder, searchIn, searchFor);

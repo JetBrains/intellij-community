@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInspection.util.OptionalUtil;
+import com.intellij.codeInspection.util.OptionalRefactoringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
@@ -48,7 +48,7 @@ public class StreamRefactoringUtil {
     if(outType != null && mapper instanceof PsiArrayInitializerExpression) {
       mapper = RefactoringUtil.convertInitializerToNormalExpression((PsiExpression)mapper, outType);
     }
-    String typeArgument = mapper instanceof PsiExpression ? OptionalUtil.getMapTypeArgument((PsiExpression)mapper, outType) : "";
+    String typeArgument = mapper instanceof PsiExpression ? OptionalRefactoringUtil.getMapTypeArgument((PsiExpression)mapper, outType) : "";
     return "." + typeArgument + operationName +
            "(" + variable.getName() + "->" + mapper.getText() + ")";
   }

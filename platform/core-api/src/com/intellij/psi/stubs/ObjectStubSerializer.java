@@ -21,7 +21,6 @@ import java.io.IOException;
 
 /**
  * @author Dmitry Avdeev
- * @since 02.08.2012
  */
 public interface ObjectStubSerializer<T extends Stub, P extends Stub> {
   @NotNull

@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -148,6 +149,7 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
       }
     }
     PsiReferenceList list = extendsList;
+    Project project = extendsList.getProject();
     if (add && !alreadyExtends) {
       PsiElement anchor;
       if (position == -1) {
@@ -159,8 +161,7 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
       else {
         anchor = referenceElements[position - 1];
       }
-      PsiJavaCodeReferenceElement classReferenceElement =
-        JavaPsiFacade.getElementFactory(extendsList.getProject()).createReferenceElementByType(myTypeToExtendFrom);
+      PsiJavaCodeReferenceElement classReferenceElement = JavaPsiFacade.getElementFactory(project).createReferenceElementByType(myTypeToExtendFrom);
       PsiElement element;
       if (anchor == null) {
         if (referenceElements.length == 0) {
@@ -181,6 +182,6 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
       return;
     }
 
-    JavaCodeStyleManager.getInstance(extendsList.getProject()).shortenClassReferences(list);
+    CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(list));
   }
 }

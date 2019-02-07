@@ -20,7 +20,8 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.psi.PsiDocumentManager;
@@ -41,7 +42,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
 @SuppressWarnings("WeakerAccess")
 public class DirtyScopeHolder extends UserDataHolderBase implements BulkFileListener {
@@ -128,7 +128,7 @@ public class DirtyScopeHolder extends UserDataHolderBase implements BulkFileList
         return null;
       }
       final ModuleManager moduleManager = ModuleManager.getInstance(myService.getProject());
-      return myCompilationAffectedModules.stream().map(moduleManager::findModuleByName).collect(Collectors.toList());
+      return ContainerUtil.map(myCompilationAffectedModules, moduleManager::findModuleByName);
     });
     compilationFinished(() -> {
       if (compiledModules == null) return;

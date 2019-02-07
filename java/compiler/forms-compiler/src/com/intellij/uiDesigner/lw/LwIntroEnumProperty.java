@@ -35,8 +35,8 @@ public class LwIntroEnumProperty extends LwIntrospectedProperty {
   @Override
   public Object read(Element element) throws Exception {
     String value = element.getAttributeValue(UIFormXmlConstants.ATTRIBUTE_VALUE);
-    final Method method = myEnumClass.getMethod("valueOf", new Class[] { String.class} );
-    return method.invoke(null, new Object[] { value } );
+    final Method method = myEnumClass.getMethod("valueOf", String.class);
+    return method.invoke(null, value);
   }
 
   @Override

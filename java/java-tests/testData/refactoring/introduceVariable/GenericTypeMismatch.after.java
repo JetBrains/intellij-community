@@ -8,7 +8,7 @@ class GenericTypeMismatch {
     }
 
     void test() {
-        final String i = getByKey(KEY);
+        final Object i = getByKey(KEY);
         if(i)
         {
 

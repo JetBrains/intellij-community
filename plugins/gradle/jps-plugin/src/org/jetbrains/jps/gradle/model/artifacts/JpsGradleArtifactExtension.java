@@ -20,7 +20,6 @@ import org.jetbrains.jps.model.JpsElement;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/12/2016
  */
 public interface JpsGradleArtifactExtension extends JpsElement {
 

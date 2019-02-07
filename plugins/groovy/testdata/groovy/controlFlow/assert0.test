@@ -7,9 +7,11 @@ return x.isEmpty()
 3(4,6) Condition Instanceof expression
 4(5) instanceof: x instanceof String
 5(7)  Negating goto instruction, condition=3Instanceof expression
-6(9) instanceof: x instanceof String
+6(10) instanceof: x instanceof String
 7(8) READ bar
-8(11) THROW. element: ASSERT statement
-9(10) READ x
-10(11) element: RETURN statement
-11() element: null
+8(9) ARGUMENTS element: Method call
+9(13) THROW. element: ASSERT statement
+10(11) READ x
+11(12) ARGUMENTS element: Method call
+12(13) element: RETURN statement
+13() element: null

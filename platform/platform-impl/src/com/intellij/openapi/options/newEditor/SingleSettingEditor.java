@@ -27,6 +27,7 @@ public class SingleSettingEditor extends ConfigurableEditor {
     add(myBanner, BorderLayout.NORTH);
     myBanner.setVisible(false);
     init(configurable, false);
+    setPreferredSize(JBUI.size(800, 600));
   }
 
   @Override

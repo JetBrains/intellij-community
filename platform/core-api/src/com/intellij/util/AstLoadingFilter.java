@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 import java.util.function.Supplier;
@@ -132,7 +133,7 @@ public class AstLoadingFilter {
   }
 
   public static <E extends Throwable>
-  void forceAllowTreeLoading(@NotNull PsiFile psiFile, @NotNull ThrowableRunnable<E> runnable) throws E {
+  void forceAllowTreeLoading(@Nullable PsiFile psiFile, @NotNull ThrowableRunnable<E> runnable) throws E {
     forceAllowTreeLoading(psiFile, toComputable(runnable));
   }
 
@@ -142,8 +143,8 @@ public class AstLoadingFilter {
   }
 
   public static <T, E extends Throwable>
-  T forceAllowTreeLoading(@NotNull PsiFile psiFile, @NotNull ThrowableComputable<? extends T, E> computable) throws E {
-    VirtualFile virtualFile = psiFile.getVirtualFile();
+  T forceAllowTreeLoading(@Nullable PsiFile psiFile, @NotNull ThrowableComputable<? extends T, E> computable) throws E {
+    VirtualFile virtualFile = psiFile == null ? null : psiFile.getVirtualFile();
     return virtualFile == null ? computable.compute() : forceAllowTreeLoading(virtualFile, computable);
   }
 

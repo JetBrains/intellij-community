@@ -66,7 +66,7 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
 
   private static void addBooleanUsage(@NotNull VcsLogUiProperties properties,
                                       @NotNull VcsLogUiProperties defaultProperties,
-                                      @NotNull Set<UsageDescriptor> usages,
+                                      @NotNull Set<? super UsageDescriptor> usages,
                                       @NotNull String usageName,
                                       @NotNull VcsLogUiProperty<Boolean> property) {
     addUsageIfNotDefault(properties, defaultProperties, usages, property, value -> StatisticsUtilKt.getBooleanUsage(usageName, value));
@@ -74,7 +74,7 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
 
   private static void addEnumUsage(@NotNull VcsLogUiProperties properties,
                                    @NotNull VcsLogUiProperties defaultProperties,
-                                   @NotNull Set<UsageDescriptor> usages,
+                                   @NotNull Set<? super UsageDescriptor> usages,
                                    @NotNull String usageName,
                                    @NotNull VcsLogUiProperty<? extends Enum> property) {
     addUsageIfNotDefault(properties, defaultProperties, usages, property, value -> StatisticsUtilKt.getEnumUsage(usageName, value));
@@ -82,9 +82,9 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
 
   private static <T> void addUsageIfNotDefault(@NotNull VcsLogUiProperties properties,
                                                @NotNull VcsLogUiProperties defaultProperties,
-                                               @NotNull Set<UsageDescriptor> usages,
+                                               @NotNull Set<? super UsageDescriptor> usages,
                                                @NotNull VcsLogUiProperty<T> property,
-                                               @NotNull Function<T, UsageDescriptor> createUsage) {
+                                               @NotNull Function<? super T, ? extends UsageDescriptor> createUsage) {
     if (!properties.exists(property)) return;
 
     T value = properties.get(property);

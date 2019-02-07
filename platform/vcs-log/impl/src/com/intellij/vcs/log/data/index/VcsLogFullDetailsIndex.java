@@ -36,7 +36,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiPredicate;
 import java.util.function.ObjIntConsumer;
 
 public class VcsLogFullDetailsIndex<T, D extends VcsFullCommitDetails> implements Disposable {
@@ -107,15 +106,11 @@ public class VcsLogFullDetailsIndex<T, D extends VcsFullCommitDetails> implement
     });
   }
 
-  protected void iterateCommitIdsAndValues(int key, @NotNull ObjIntConsumer<T> consumer) throws StorageException {
+  protected void iterateCommitIdsAndValues(int key, @NotNull ObjIntConsumer<? super T> consumer) throws StorageException {
     myMapReduceIndex.getData(key).forEach((id, value) -> {
       consumer.accept(value, id);
       return true;
     });
-  }
-
-  protected boolean iterateCommitIdsAndValues(int key, @NotNull BiPredicate<T, Integer> consumer) throws StorageException {
-    return myMapReduceIndex.getData(key).forEach((id, value) -> consumer.test(value, id));
   }
 
   @Nullable

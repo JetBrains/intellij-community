@@ -97,6 +97,7 @@ public class PsiImportStaticStatementImpl extends PsiImportStatementBaseImpl imp
     }
   }
 
+  @Override
   public String toString(){
     return "PsiImportStaticStatement";
   }

@@ -41,6 +41,7 @@ public class PsiErrorElementImpl extends CompositePsiElement implements PsiError
     visitor.visitErrorElement(this);
   }
 
+  @Override
   public String toString(){
     return "PsiErrorElement:" + getErrorDescription();
   }

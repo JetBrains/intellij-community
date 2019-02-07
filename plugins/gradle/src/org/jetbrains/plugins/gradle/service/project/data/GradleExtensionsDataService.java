@@ -34,7 +34,6 @@ import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/16/2016
  */
 @Order(ExternalSystemConstants.UNORDERED)
 public class GradleExtensionsDataService extends AbstractProjectDataService<GradleExtensions, Module> {

@@ -25,7 +25,6 @@ import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/10/14
  */
 public class War extends Jar {
   private static final long serialVersionUID = 1L;

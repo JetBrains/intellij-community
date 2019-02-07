@@ -24,6 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrFieldElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrImplementsClauseElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrImportStatementElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrInterfaceDefinitionElementType;
+import org.jetbrains.plugins.groovy.lang.parser.GrLambdaBlockElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrMethodElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrModifierListElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GrBlockElementType;
@@ -59,6 +60,7 @@ public interface GroovyElementTypes {
   GroovyElementType ASSERT_STATEMENT = new GroovyElementType("ASSERT_STATEMENT");
   GroovyElementType ASSIGNMENT_EXPRESSION = new GroovyElementType("ASSIGNMENT_EXPRESSION");
   GroovyElementType AS_EXPRESSION = new GroovyElementType("AS_EXPRESSION");
+  GroovyElementType ATTRIBUTE_EXPRESSION = new GroovyElementType("ATTRIBUTE_EXPRESSION");
   GroovyElementType BAND_EXPRESSION = new GroovyElementType("BAND_EXPRESSION");
   GroovyElementType BLOCK_STATEMENT = new GroovyElementType("BLOCK_STATEMENT");
   GroovyElementType BOR_EXPRESSION = new GroovyElementType("BOR_EXPRESSION");
@@ -105,6 +107,8 @@ public interface GroovyElementTypes {
   GrInterfaceDefinitionElementType INTERFACE_TYPE_DEFINITION = new GrInterfaceDefinitionElementType("INTERFACE_TYPE_DEFINITION");
   GroovyElementType IN_EXPRESSION = new GroovyElementType("IN_EXPRESSION");
   GroovyElementType LABELED_STATEMENT = new GroovyElementType("LABELED_STATEMENT");
+  GrLambdaBlockElementType LAMBDA_BLOCK = new GrLambdaBlockElementType("LAMBDA_BLOCK");
+  GroovyElementType LAMBDA_EXPRESSION = new GroovyElementType("LAMBDA_EXPRESSION");
   GroovyElementType LAND_EXPRESSION = new GroovyElementType("LAND_EXPRESSION");
   GroovyElementType LEFT_SHIFT_SIGN = new GroovyElementType("LEFT_SHIFT_SIGN");
   GroovyElementType LIST_OR_MAP = new GroovyElementType("LIST_OR_MAP");

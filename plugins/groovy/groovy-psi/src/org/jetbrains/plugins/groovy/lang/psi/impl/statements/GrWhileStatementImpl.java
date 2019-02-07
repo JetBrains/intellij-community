@@ -22,6 +22,7 @@ public class GrWhileStatementImpl extends GrWhileStatementBase implements GrWhil
     visitor.visitWhileStatement(this);
   }
 
+  @Override
   public String toString() {
     return "WHILE statement";
   }

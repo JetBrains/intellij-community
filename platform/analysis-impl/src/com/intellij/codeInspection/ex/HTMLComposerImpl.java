@@ -32,15 +32,15 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
   private final Map<Key, HTMLComposerExtension> myExtensions = new HashMap<>();
   private final Map<Language, HTMLComposerExtension> myLanguageExtensions = new HashMap<>();
   @NonNls protected static final String BR = "<br>";
-  @NonNls protected static final String NBSP = "&nbsp;";
-  @NonNls protected static final String CODE_CLOSING = "</code>";
-  @NonNls protected static final String CODE_OPENING = "<code>";
-  @NonNls protected static final String B_OPENING = "<b>";
-  @NonNls protected static final String B_CLOSING = "</b>";
+  @NonNls public static final String NBSP = "&nbsp;";
+  @NonNls public static final String CODE_CLOSING = "</code>";
+  @NonNls public static final String CODE_OPENING = "<code>";
+  @NonNls public static final String B_OPENING = "<b>";
+  @NonNls public static final String B_CLOSING = "</b>";
 
   @NonNls protected static final String CLOSE_TAG = "\">";
-  @NonNls protected static final String A_HREF_OPENING = "<a HREF=\"";
-  @NonNls protected static final String A_CLOSING = "</a>";
+  @NonNls public static final String A_HREF_OPENING = "<a HREF=\"";
+  @NonNls public static final String A_CLOSING = "</a>";
 
   protected HTMLComposerImpl() {
     myListStack = new int[5];
@@ -109,7 +109,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     }
   }
 
-  protected void appendQualifiedName(StringBuffer buf, RefEntity refEntity) {
+  public void appendQualifiedName(StringBuffer buf, RefEntity refEntity) {
     if (refEntity == null) return;
 
     String qName = "";

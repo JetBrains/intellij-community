@@ -2,7 +2,6 @@
 
 package com.intellij.codeInspection.ui;
 
-import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.reference.RefElement;
@@ -25,6 +24,8 @@ import java.util.Comparator;
 
 public class InspectionResultsViewComparator implements Comparator<InspectionTreeNode> {
   private static final Logger LOG = Logger.getInstance(InspectionResultsViewComparator.class);
+
+  public static final InspectionResultsViewComparator INSTANCE = new InspectionResultsViewComparator();
 
   public boolean areEqual(InspectionTreeNode o1, InspectionTreeNode o2) {
     return o1.getClass().equals(o2.getClass()) && compare(o1, o2) == 0;
@@ -191,13 +192,5 @@ public class InspectionResultsViewComparator implements Comparator<InspectionTre
       return nameComparing;
     }
     return entity1.getQualifiedName().compareToIgnoreCase(entity2.getQualifiedName());
-  }
-
-  private static class InspectionResultsViewComparatorHolder {
-    private static final InspectionResultsViewComparator ourInstance = new InspectionResultsViewComparator();
-  }
-
-  public static InspectionResultsViewComparator getInstance() {
-    return InspectionResultsViewComparatorHolder.ourInstance;
   }
 }

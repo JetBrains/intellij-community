@@ -5,7 +5,6 @@ package com.intellij.openapi.fileTypes.impl;
 import com.intellij.CommonBundle;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.options.Configurable;
@@ -29,12 +28,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.util.Pair.pair;
 
@@ -66,12 +63,7 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
     myRecognizedFileType = myFileTypePanel.myRecognizedFileType;
     myPatterns = myFileTypePanel.myPatterns;
     myRecognizedFileType.attachActions(this);
-    myRecognizedFileType.myFileTypesList.addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(@Nullable ListSelectionEvent e) {
-        updateExtensionList();
-      }
-    });
+    myRecognizedFileType.myFileTypesList.addListSelectionListener(e -> updateExtensionList());
     myPatterns.attachActions(this);
     myFileTypePanel.myIgnoreFilesField.setColumns(30);
     return myFileTypePanel.getComponent();
@@ -351,15 +343,12 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
 
       myFileTypesList = new JBList(new DefaultListModel());
       myFileTypesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      myFileTypesList.setCellRenderer(new FileTypeRenderer(new FileTypeRenderer.FileTypeListProvider() {
-        @Override
-        public Iterable<FileType> getCurrentFileTypeList() {
-          ArrayList<FileType> result = new ArrayList<>();
-          for (int i = 0; i < myFileTypesList.getModel().getSize(); i++) {
-            result.add((FileType)myFileTypesList.getModel().getElementAt(i));
-          }
-          return result;
+      myFileTypesList.setCellRenderer(new FileTypeRenderer(() -> {
+        ArrayList<FileType> result = new ArrayList<>();
+        for (int i = 0; i < myFileTypesList.getModel().getSize(); i++) {
+          result.add((FileType)myFileTypesList.getModel().getElementAt(i));
         }
+        return result;
       }));
 
       new DoubleClickListener() {
@@ -371,37 +360,14 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
       }.installOn(myFileTypesList);
 
       ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myFileTypesList)
-        .setAddAction(new AnActionButtonRunnable() {
-          @Override
-          public void run(AnActionButton button) {
-            myController.addFileType();
-          }
+        .setAddAction(button -> myController.addFileType())
+        .setRemoveAction(button -> myController.removeFileType())
+        .setEditAction(button -> myController.editFileType())
+        .setEditActionUpdater(e -> {
+          final FileType fileType = getSelectedFileType();
+          return canBeModified(fileType);
         })
-        .setRemoveAction(new AnActionButtonRunnable() {
-          @Override
-          public void run(AnActionButton button) {
-            myController.removeFileType();
-          }
-        })
-        .setEditAction(new AnActionButtonRunnable() {
-          @Override
-          public void run(AnActionButton button) {
-            myController.editFileType();
-          }
-        })
-        .setEditActionUpdater(new AnActionButtonUpdater() {
-          @Override
-          public boolean isEnabled(@NotNull AnActionEvent e) {
-            final FileType fileType = getSelectedFileType();
-            return canBeModified(fileType);
-          }
-        })
-        .setRemoveActionUpdater(new AnActionButtonUpdater() {
-          @Override
-          public boolean isEnabled(@NotNull AnActionEvent e) {
-            return canBeModified(getSelectedFileType());
-          }
-        })
+        .setRemoveActionUpdater(e -> canBeModified(getSelectedFileType()))
         .disableUpDownActions();
 
       add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
@@ -530,22 +496,8 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
       myPatternsList.getEmptyText().setText(FileTypesBundle.message("filetype.settings.no.patterns"));
 
       add(ToolbarDecorator.createDecorator(myPatternsList)
-            .setAddAction(new AnActionButtonRunnable() {
-              @Override
-              public void run(AnActionButton button) {
-                myController.addPattern();
-              }
-            }).setEditAction(new AnActionButtonRunnable() {
-              @Override
-              public void run(AnActionButton button) {
-                myController.editPattern();
-              }
-            }).setRemoveAction(new AnActionButtonRunnable() {
-              @Override
-              public void run(AnActionButton button) {
-                myController.removePattern();
-              }
-            }).disableUpDownActions().createPanel(), BorderLayout.CENTER);
+            .setAddAction(button -> myController.addPattern()).setEditAction(button -> myController.editPattern()).setRemoveAction(
+          button -> myController.removePattern()).disableUpDownActions().createPanel(), BorderLayout.CENTER);
 
       setBorder(IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.registered.patterns.group"), false));
     }

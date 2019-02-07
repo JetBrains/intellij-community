@@ -1,8 +1,7 @@
 import java.util.Objects;
 
 /**
- * This source file will cause code analysis to take a long time in Intellij
- * (roughly 5 minutes).
+ * Should not take more than 1-2 seconds to analyze
  */
 public class ManyObjectEquals {
 

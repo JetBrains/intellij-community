@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Vladislav.Soroka
- * @since 9/3/13
  */
 public final class GradleCommonClassNames {
   @NonNls public static final String GRADLE_API_SCRIPT = "org.gradle.api.Script";

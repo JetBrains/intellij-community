@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.update;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -344,7 +344,7 @@ public class GitUpdateProcess {
       }
     }
 
-    if (currentBranches.isEmpty() || (isSyncControl() && (currentBranches.size() < myRepositories.size()))) {
+    if (!detachedHeads.isEmpty() && (currentBranches.isEmpty() || isSyncControl())) {
       notifyDetachedHeadError(detachedHeads.get(0));
       return null;
     }
@@ -370,7 +370,7 @@ public class GitUpdateProcess {
     }
 
     if (myCheckForTrackedBranchExistence &&
-        (trackedBranches.isEmpty() || (isSyncControl() && (trackedBranches.size() < myRepositories.size())))) {
+        !noTrackedBranch.isEmpty() && (trackedBranches.isEmpty() || isSyncControl())) {
       GitRepository repo = noTrackedBranch.get(0);
       notifyNoTrackedBranchError(repo, currentBranches.get(repo));
       return null;

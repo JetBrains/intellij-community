@@ -1,6 +1,6 @@
 public class Array1 {
   void foo(){
     int value[] = {};
-    int val = value.<ref>length;
+    int val = value.<caret>length;
   }
 }

@@ -65,6 +65,7 @@ public class ModuleSourceSet {
     return getDisplayName();
   }
 
+  @NotNull
   public String getDisplayName() {
     return (myType == Type.PRODUCTION ? "" : "Tests of ") + "'" + myModule.getName() + "' module";
   }

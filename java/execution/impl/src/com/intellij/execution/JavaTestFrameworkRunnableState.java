@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.ExtensionPoints;
@@ -198,7 +198,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = new JavaParameters();
     Project project = getConfiguration().getProject();
-    javaParameters.setShortenCommandLine(getConfiguration().getShortenCommandLine(), project);
     final Module module = getConfiguration().getConfigurationModule().getModule();
 
     Sdk jdk = module == null ? ProjectRootManager.getInstance(project).getProjectSdk() : ModuleRootManager.getInstance(module).getSdk();
@@ -232,6 +231,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     if (ConsoleBuffer.useCycleBuffer()) {
       javaParameters.getVMParametersList().addProperty("idea.test.cyclic.buffer.size", String.valueOf(ConsoleBuffer.getCycleBufferSize()));
     }
+
+    javaParameters.setShortenCommandLine(getConfiguration().getShortenCommandLine(), project);
 
     return javaParameters;
   }
@@ -409,7 +410,10 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     }
   }
 
-  protected void writeClassesPerModule(String packageName, JavaParameters javaParameters, Map<Module, List<String>> perModule)
+  protected void writeClassesPerModule(String packageName,
+                                       JavaParameters javaParameters,
+                                       Map<Module, List<String>> perModule,
+                                       @NotNull String filters)
     throws FileNotFoundException, UnsupportedEncodingException, CantRunException {
     if (perModule != null) {
       final String classpath = getScope() == TestSearchScope.WHOLE_PROJECT
@@ -444,6 +448,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
           for (String className : classNames) {
             wWriter.println(className);
           }
+          wWriter.println(filters);
         }
       }
     }

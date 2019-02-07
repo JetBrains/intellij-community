@@ -45,7 +45,6 @@ import org.jetbrains.annotations.NotNull;
  * </pre>
  * 
  * @author Denis Zhdanov
- * @since 5/13/11 4:24 PM
  */
 public class ForStatementFixer implements Fixer {
 

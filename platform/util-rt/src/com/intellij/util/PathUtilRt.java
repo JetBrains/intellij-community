@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,14 +18,29 @@ import java.util.Set;
 public class PathUtilRt {
   @NotNull
   public static String getFileName(@Nullable String path) {
-    if (path == null || path.length() == 0) {
+    if (StringUtilRt.isEmpty(path)) {
       return "";
     }
 
+    int end = getEnd(path);
+    return path.substring(getLastIndexOfPathSeparator(path, end) + 1, end);
+  }
+
+  @Nullable
+  public static String getFileExtension(@Nullable String path) {
+    if (StringUtilRt.isEmpty(path)) {
+      return null;
+    }
+
+    int end = getEnd(path);
+    int start = getLastIndexOfPathSeparator(path, end) + 1;
+    int index = StringUtilRt.lastIndexOf(path, '.', Math.max(start, 0), end);
+    return index < 0 ? null : path.substring(index + 1, end);
+  }
+
+  private static int getEnd(@NotNull String path) {
     char c = path.charAt(path.length() - 1);
-    int end = c == '/' || c == '\\' ? path.length() - 1 : path.length();
-    int start = Math.max(path.lastIndexOf('/', end - 1), path.lastIndexOf('\\', end - 1)) + 1;
-    return path.substring(start, end);
+    return c == '/' || c == '\\' ? path.length() - 1 : path.length();
   }
 
   @NotNull
@@ -32,9 +48,13 @@ public class PathUtilRt {
     if (path.length() == 0) return "";
     int end = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
     if (end == path.length() - 1) {
-      end = Math.max(path.lastIndexOf('/', end - 1), path.lastIndexOf('\\', end - 1));
+      end = getLastIndexOfPathSeparator(path, end);
     }
     return end == -1 ? "" : path.substring(0, end);
+  }
+
+  private static int getLastIndexOfPathSeparator(@NotNull String path, int end) {
+    return Math.max(path.lastIndexOf('/', end - 1), path.lastIndexOf('\\', end - 1));
   }
 
   @NotNull

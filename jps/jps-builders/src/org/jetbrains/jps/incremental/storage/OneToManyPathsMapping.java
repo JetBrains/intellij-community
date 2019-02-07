@@ -16,7 +16,6 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- * @since 11.10.2012
  */
 public class OneToManyPathsMapping extends AbstractStateStorage<String, Collection<String>> {
   public OneToManyPathsMapping(File storePath) throws IOException {

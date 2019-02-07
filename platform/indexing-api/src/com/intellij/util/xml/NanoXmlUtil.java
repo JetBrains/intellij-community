@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util.xml;
 
@@ -75,7 +61,7 @@ public class NanoXmlUtil {
     parse(reader, builder, null);
   }
 
-  public static void parse(final Reader reader, final IXMLBuilder builder, @Nullable final IXMLValidator validator) {
+  public static void parse(@NotNull Reader reader, @NotNull IXMLBuilder builder, @Nullable IXMLValidator validator) {
     try {
       parse(new MyXMLReader(reader), builder, validator);
     }
@@ -167,57 +153,16 @@ public class NanoXmlUtil {
     return result.toString();
   }
 
-  public static class IXMLBuilderAdapter implements IXMLBuilder {
-
-    @Override
-    public void startBuilding(final String systemID, final int lineNr) throws Exception {
-
-    }
-
-    @Override
-    public void newProcessingInstruction(final String target, final Reader reader) throws Exception {
-
-    }
-
-    @Override
-    public void startElement(final String name, final String nsPrefix, final String nsURI, final String systemID, final int lineNr)
-        throws Exception {
-
-    }
-
-    @Override
-    public void addAttribute(final String key, final String nsPrefix, final String nsURI, final String value, final String type)
-        throws Exception {
-
-    }
-
-    @Override
-    public void elementAttributesProcessed(final String name, final String nsPrefix, final String nsURI) throws Exception {
-
-    }
-
-    @Override
-    public void endElement(final String name, final String nsPrefix, final String nsURI) throws Exception {
-
-    }
-
-    @Override
-    public void addPCData(final Reader reader, final String systemID, final int lineNr) throws Exception {
-
-    }
-
-    @Override
-    @Nullable
-    public Object getResult() {
-      return null;
-    }
-
+  @Deprecated
+  public static abstract class IXMLBuilderAdapter implements NanoXmlBuilder {
+    // used externally
+    @Deprecated
     protected static void stop() throws ParserStoppedXmlException {
       throw ParserStoppedXmlException.INSTANCE;
     }
   }
 
-  public static class BaseXmlBuilder extends IXMLBuilderAdapter {
+  public static class BaseXmlBuilder implements NanoXmlBuilder {
     private final Stack<String> myLocation = new Stack<>();
 
     @Override
@@ -325,7 +270,7 @@ public class NanoXmlUtil {
     private String publicId;
     private String systemId;
 
-    MyXMLReader(final Reader documentReader) {
+    MyXMLReader(@NotNull Reader documentReader) {
       super(documentReader);
     }
 
@@ -350,7 +295,7 @@ public class NanoXmlUtil {
     }
 
     @Override
-    public Throwable fillInStackTrace() {
+    public synchronized Throwable fillInStackTrace() {
       return this;
     }
   }

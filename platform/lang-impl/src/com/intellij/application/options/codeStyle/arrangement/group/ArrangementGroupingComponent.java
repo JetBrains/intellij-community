@@ -36,7 +36,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 11/13/12 8:10 PM
  */
 public class ArrangementGroupingComponent extends JPanel implements ArrangementRepresentationAware, ArrangementEditorAware {
 

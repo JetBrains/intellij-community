@@ -21,7 +21,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 /**
  * @author Denis Zhdanov
- * @since 5/14/13 2:42 PM
  */
 @SuppressWarnings("unchecked")
 public class ExternalSystemNode<T> extends DefaultMutableTreeNode {

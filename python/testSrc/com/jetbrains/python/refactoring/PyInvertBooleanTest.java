@@ -46,7 +46,7 @@ public class PyInvertBooleanTest extends PyTestCase {
 
   private void doTest(List<String> files) {
     files.add(0, "refactoring/invertBoolean/" + getTestName(true) + ".before.py");
-    myFixture.configureByFiles(files.toArray(ArrayUtil.EMPTY_STRING_ARRAY));
+    myFixture.configureByFiles(ArrayUtil.toStringArray(files));
     final PsiElement element = myFixture.getElementAtCaret();
     assertTrue(element instanceof PsiNamedElement);
 

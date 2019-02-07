@@ -48,6 +48,9 @@ public abstract class YAMLPasteTest extends LightPlatformCodeInsightFixtureTestC
     try {
       CodeInsightSettings.getInstance().REFORMAT_ON_PASTE = myDefaultReformatOnPaste;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

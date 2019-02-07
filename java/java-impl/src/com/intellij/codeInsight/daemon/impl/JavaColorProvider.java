@@ -74,7 +74,9 @@ public class JavaColorProvider implements ElementColorProvider {
     if (isIntLiteralInsideNewJBColorExpression(element)) {
       final String text = element.getText();
       boolean hasAlpha = text != null && StringUtil.startsWithIgnoreCase(text, "0x") && text.length() > 8;
-      return new Color(getInt(UastContextKt.toUElement(element, ULiteralExpression.class)), hasAlpha);
+      ULiteralExpression literal = UastContextKt.toUElement(element, ULiteralExpression.class);
+      Object object = getObject(literal);
+      if (object instanceof Integer) return new Color(((Integer)object).intValue(), hasAlpha);
     }
     return null;
   }
@@ -95,9 +97,7 @@ public class JavaColorProvider implements ElementColorProvider {
       UCallExpression callExpression = (UCallExpression)element;
       if (callExpression.getKind() == UastCallKind.CONSTRUCTOR_CALL) {
         final PsiClass psiClass = PsiTypesUtil.getPsiClass(callExpression.getReturnType());
-        if (psiClass != null && JBColor.class.getName().equals(psiClass.getQualifiedName())) {
-          return true;
-        }
+        return psiClass != null && JBColor.class.getName().equals(psiClass.getQualifiedName());
       }
     }
     return false;

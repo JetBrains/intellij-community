@@ -24,7 +24,6 @@ import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.PyFile;
-import junit.framework.Assert;
 
 import java.util.List;
 
@@ -40,56 +39,56 @@ public class PyToJavaResolveTest extends ResolveTestCase {
 
   public void testSimple() throws Exception {
     PsiElement target = resolve();
-    Assert.assertTrue(target instanceof PsiClass);
-    Assert.assertEquals("java.util.ArrayList", ((PsiClass) target).getQualifiedName());
+    assertTrue(target instanceof PsiClass);
+    assertEquals("java.util.ArrayList", ((PsiClass) target).getQualifiedName());
   }
 
   public void testMethod() throws Exception {
     PsiElement target = resolve();
-    Assert.assertTrue(target instanceof PsiMethod);
-    Assert.assertEquals("java.util.ArrayList", ((PsiMethod) target).getContainingClass().getQualifiedName());
+    assertTrue(target instanceof PsiMethod);
+    assertEquals("java.util.ArrayList", ((PsiMethod) target).getContainingClass().getQualifiedName());
   }
 
   public void testField() throws Exception {
     PsiElement target = resolve();
-    Assert.assertTrue(target instanceof PsiField);
-    Assert.assertEquals("java.lang.System", ((PsiField) target).getContainingClass().getQualifiedName());
+    assertTrue(target instanceof PsiField);
+    assertEquals("java.lang.System", ((PsiField) target).getContainingClass().getQualifiedName());
   }
 
   public void testReturnValue() throws Exception {
     PsiElement target = resolve();
-    Assert.assertTrue(target instanceof PsiMethod);
-    Assert.assertEquals(CommonClassNames.JAVA_UTIL_LIST, ((PsiMethod) target).getContainingClass().getQualifiedName());
+    assertTrue(target instanceof PsiMethod);
+    assertEquals(CommonClassNames.JAVA_UTIL_LIST, ((PsiMethod) target).getContainingClass().getQualifiedName());
   }
 
   public void testPackageType() throws Exception {
     PsiElement target = resolve();
-    Assert.assertTrue(target instanceof PsiClass);
-    Assert.assertEquals("java.util.ArrayList", ((PsiClass) target).getQualifiedName());
+    assertTrue(target instanceof PsiClass);
+    assertEquals("java.util.ArrayList", ((PsiClass) target).getQualifiedName());
   }
 
   public void testJavaPackage() throws Exception {
     PsiElement target = resolve();
-    Assert.assertTrue(target instanceof PsiPackage);
-    Assert.assertEquals("java", ((PsiPackage) target).getQualifiedName());
+    assertTrue(target instanceof PsiPackage);
+    assertEquals("java", ((PsiPackage) target).getQualifiedName());
   }
 
   public void testJavaLangPackage() throws Exception {
     PsiElement target = resolve();
-    Assert.assertTrue(target instanceof PsiPackage);
-    Assert.assertEquals("java.lang", ((PsiPackage) target).getQualifiedName());
+    assertTrue(target instanceof PsiPackage);
+    assertEquals("java.lang", ((PsiPackage) target).getQualifiedName());
   }
 
   public void testSuperMethod() throws Exception {
     PsiElement target = resolve();
-    Assert.assertTrue(target instanceof PsiMethod);
-    Assert.assertEquals("size", ((PsiMethod) target).getName());
+    assertTrue(target instanceof PsiMethod);
+    assertEquals("size", ((PsiMethod) target).getName());
   }
 
   public void testFieldType() throws Exception {
     PsiElement target = resolve();
-    Assert.assertTrue(target instanceof PsiMethod);
-    Assert.assertEquals("println", ((PsiMethod) target).getName());
+    assertTrue(target instanceof PsiMethod);
+    assertEquals("println", ((PsiMethod) target).getName());
   }
 
   // PY-23265, PY-23857

@@ -3,6 +3,6 @@ class A{
  <T> void foo(T a, B<T> b){}
 
  {
-  <ref>foo("", new B());
+  <caret>foo("", new B());
  }
 }

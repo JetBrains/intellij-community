@@ -1,0 +1,13 @@
+<!--
+  ~ Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+  -->
+
+<html>
+<body>
+Reports empty branches in a RegExp alternation. For example:<br> <code>a<b>||</b>b</code>
+<p>An empty branch will only match the empty string, and in most cases that is not what is desired.
+This inspection will not report a single empty branch at the start or the end of an alternation.
+<!-- tooltip end -->
+<p><small>New in 2017.2</small>
+</body>
+</html>

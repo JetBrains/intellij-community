@@ -173,7 +173,7 @@ internal class GithubPullRequestsListComponent(project: Project,
 
   private fun loadingErrorOccurred(error: Throwable) {
     loadOnScrollThreshold = false
-    val prefix = if (list.isEmpty) "Cannot load pull requests." else "Cannot load full pull requests list."
+    val prefix = if (list.isEmpty) "Can't load pull requests." else "Can't load full pull requests list."
     list.emptyText.clear().appendText(prefix, SimpleTextAttributes.ERROR_ATTRIBUTES)
       .appendSecondaryText(getLoadingErrorText(error), SimpleTextAttributes.ERROR_ATTRIBUTES, null)
       .appendSecondaryText("  ", SimpleTextAttributes.ERROR_ATTRIBUTES, null)

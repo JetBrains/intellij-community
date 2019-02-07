@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
  * Not thread-safe..
  * 
  * @author Denis Zhdanov
- * @since 8/8/12 1:17 PM
  */
 public class ArrangementAtomMatchCondition implements ArrangementMatchCondition {
 

@@ -202,10 +202,11 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   @Override
-  public String getLastActiveToolWindowId(Condition<JComponent> condition) {
+  public String getLastActiveToolWindowId(Condition<? super JComponent> condition) {
     return null;
   }
 
+  @NotNull
   @Override
   public DesktopLayout getLayout() {
     return new DesktopLayout();
@@ -521,6 +522,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
       return null;
     }
 
+    @NotNull
     @Override
     public List<AnAction> getAdditionalPopupActions(@NotNull final Content content) {
       return Collections.emptyList();
@@ -557,7 +559,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public Content getContent(final JComponent component) {
+    public Content getContent(@NotNull final JComponent component) {
       Content[] contents = getContents();
       for (Content content : contents) {
         if (Comparing.equal(component, content.getComponent())) {
@@ -585,7 +587,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public int getIndexOfContent(final Content content) {
+    public int getIndexOfContent(@NotNull final Content content) {
       return myContents.indexOf(content);
     }
 
@@ -625,13 +627,18 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
       ContentManagerEvent e = new ContentManagerEvent(this, content, oldIndex, ContentManagerEvent.ContentOperation.remove);
       myDispatcher.getMulticaster().contentRemoved(e);
       Content item = ContainerUtil.getFirstItem(myContents);
-      if (item != null) setSelectedContent(item);
+      if (item != null) {
+        setSelectedContent(item);
+      }
+      else {
+        mySelected = null;
+      }
       return result;
     }
 
     @NotNull
     @Override
-    public ActionCallback removeContent(@NotNull Content content, boolean dispose, boolean trackFocus, boolean implicitFocus) {
+    public ActionCallback removeContent(@NotNull Content content, boolean dispose, boolean requestFocus, boolean implicitFocus) {
       removeContent(content, dispose);
       return ActionCallback.DONE;
     }

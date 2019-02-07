@@ -15,6 +15,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.psi.search.scope.packageSet.PackageSetBase;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.FileColorName;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -59,12 +60,11 @@ public class FileColorsModel implements Cloneable {
   private void initPredefinedAndGlobalScopes() {
     for (NamedScope scope : DefaultScopesProvider.getInstance(myProject).getAllCustomScopes()) {
       String scopeName = scope.getName();
-      
-      final Color color = ColorUtil.getColor(scope.getClass());
-      if (color == null) continue;
-      String colorName = FileColorManagerImpl.getColorName(color);
-      
-      myPredefinedScopeNameToColor.put(scopeName, colorName == null ? ColorUtil.toHex(color) : colorName);
+      String colorName = scope instanceof FileColorName ? ((FileColorName)scope).colorName() : null;
+
+      if (StringUtil.isEmpty(colorName)) continue;
+
+      myPredefinedScopeNameToColor.put(scopeName, colorName);
 
       String propertyKey;
       if (NonProjectFilesScope.NAME.equals(scopeName)) {
@@ -83,22 +83,27 @@ public class FileColorsModel implements Cloneable {
     PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
     for (String scopeName : myPredefinedScopeNameToPropertyKey.keySet()) {
       if (findConfiguration(scopeName, false) == null) {
-        String color = propertyComponent.getValue(myPredefinedScopeNameToPropertyKey.get(scopeName));
-        if (color == null) {
-          // backward compatibility, previously it was saved incorrectly as scope name instead of specified property key
-          color = propertyComponent.getValue(scopeName);
-          if (color == null) {
-            color = myPredefinedScopeNameToColor.get(scopeName);
-          }
-        }
+        String colorName = getColorNameForScope(propertyComponent, scopeName, myPredefinedScopeNameToPropertyKey);
 
-        if (!color.isEmpty()) {
-          final Color col = ColorUtil.fromHex(color, null);
-          final String name = col == null ? null : FileColorManagerImpl.getColorName(col);
-          myApplicationLevelConfigurations.add(new FileColorConfiguration(scopeName, name == null ? color : name));
+        if (!colorName.isEmpty()) {
+          Color color = ColorUtil.fromHex(colorName, null);
+          String name = color == null ? null : FileColorManagerImpl.getColorName(color);
+          myApplicationLevelConfigurations.add(new FileColorConfiguration(scopeName, name == null ? colorName : name));
         }
       }
     }
+  }
+
+  private String getColorNameForScope(PropertiesComponent propertyComponent, String scopeName, Map<String, String> scopeNameMap) {
+    String colorName = propertyComponent.getValue(scopeNameMap.get(scopeName));
+    if (colorName == null) {
+      // backward compatibility, previously it was saved incorrectly as scope name instead of specified property key
+      colorName = propertyComponent.getValue(scopeName);
+      if (colorName == null) {
+        colorName = myPredefinedScopeNameToColor.get(scopeName);
+      }
+    }
+    return colorName;
   }
 
   public void save(@NotNull Element e, boolean isProjectLevel) {
@@ -137,16 +142,8 @@ public class FileColorsModel implements Cloneable {
     if (!isProjectLevel) {
       PropertiesComponent properties = PropertiesComponent.getInstance();
       for (String scopeName : predefinedScopeNameToPropertyKey.keySet()) {
-        String colorName = properties.getValue(predefinedScopeNameToPropertyKey.get(scopeName));
-        if (colorName == null) {
-          // backward compatibility, previously it was saved incorrectly as scope name instead of specified property key
-          colorName = properties.getValue(scopeName);
+        String colorName = getColorNameForScope(properties, scopeName, predefinedScopeNameToPropertyKey);
 
-          // so, default value
-          if (colorName == null) {
-            colorName = myPredefinedScopeNameToColor.get(scopeName);
-          }
-        }
         // empty means that value deleted
         if (!StringUtil.isEmpty(colorName)) {
           configurations.add(new FileColorConfiguration(scopeName, colorName));

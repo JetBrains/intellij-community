@@ -53,7 +53,7 @@ public class ProjectStructureSelectInTarget implements SelectInTarget, DumbAware
       final Object o = ((WrappingVirtualFile)file).getWrappedObject(context.getProject());
       return o instanceof Facet;
     }
-    return fileIndex.isInContent(file) || fileIndex.isInLibraryClasses(file) || fileIndex.isInLibrarySource(file)
+    return fileIndex.isInContent(file) || fileIndex.isInLibrary(file)
            || StdFileTypes.IDEA_MODULE.equals(file.getFileType()) && findModuleByModuleFile(context.getProject(), file) != null;
   }
 

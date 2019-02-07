@@ -1,25 +1,22 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.externalDependencies.DependencyOnPlugin
 import com.intellij.externalDependencies.ExternalDependenciesManager
 import com.intellij.externalDependencies.ProjectExternalDependency
-import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.refreshVfs
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
-import com.intellij.util.SmartList
 import com.intellij.util.io.delete
 import com.intellij.util.io.getDirectoryTree
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.isEmpty
 import com.intellij.util.loadElement
+import kotlinx.coroutines.runBlocking
 import org.jdom.Element
 import org.junit.ClassRule
 import org.junit.Rule
@@ -51,35 +48,22 @@ internal class DefaultProjectStoreTest {
   val fsRule = InMemoryFsRule()
 
   private val tempDirManager = TemporaryDirectory()
-
   private val requiredPlugins = listOf<ProjectExternalDependency>(DependencyOnPlugin("fake", "0", "1"))
 
-  private val ruleChain = RuleChain(
+  @JvmField
+  @Rule
+  val ruleChain = RuleChain(
     tempDirManager,
     WrapRule {
-      val app = ApplicationManagerEx.getApplicationEx()
-      val path = Paths.get(app.stateStore.storageManager.expandMacros(APP_CONFIG))
-      // dream about using in memory fs per test as ICS partially does and avoid such hacks
-      path.refreshVfs()
-
-      val isSaveAllowed = app.isSaveAllowed
-      app.isSaveAllowed = true
-      {
-        try {
-          app.isSaveAllowed = isSaveAllowed
-        }
-        finally {
-          path.delete()
-          val virtualFile = LocalFileSystem.getInstance().findFileByPathIfCached(path.systemIndependentPath)
-          runInEdtAndWait { runWriteAction { virtualFile?.delete(null) } }
-        }
+      val path = Paths.get(ApplicationManager.getApplication().stateStore.storageManager.expandMacros(APP_CONFIG))
+      return@WrapRule {
+        path.delete()
       }
     }
   )
 
-  @Rule fun getChain() = ruleChain
-
-  @Test fun `new project from default - file-based storage`() {
+  @Test
+  fun `new project from default - file-based storage`() = runBlocking {
     val externalDependenciesManager = ProjectManager.getInstance().defaultProject.service<ExternalDependenciesManager>()
     externalDependenciesManager.allDependencies = requiredPlugins
     try {
@@ -92,10 +76,14 @@ internal class DefaultProjectStoreTest {
     }
   }
 
-  @Test fun `new project from default - directory-based storage`() {
+  @Test
+  fun `new project from default - directory-based storage`() = runBlocking {
     val defaultProject = ProjectManager.getInstance().defaultProject
     val defaultTestComponent = TestComponent()
-    defaultTestComponent.loadState(loadElement("""<component><main name="$TEST_COMPONENT_NAME"/><sub name="foo" /><sub name="bar" /></component>"""))
+    defaultTestComponent.loadState(JDOMUtil.load("""
+      <component>
+        <main name="$TEST_COMPONENT_NAME"/><sub name="foo" /><sub name="bar" />
+      </component>""".trimIndent()))
     val stateStore = defaultProject.stateStore as ComponentStoreImpl
     stateStore.initComponent(defaultTestComponent, true)
     try {
@@ -109,14 +97,13 @@ internal class DefaultProjectStoreTest {
     finally {
       // clear state
       defaultTestComponent.loadState(Element("empty"))
-      runInEdtAndWait {
-        stateStore.save(SmartList())
-      }
+      defaultProject.stateStore.save()
       stateStore.removeComponent(TEST_COMPONENT_NAME)
     }
   }
 
-  @Test fun `new project from default - remove workspace component configuration`() {
+  @Test
+  fun `new project from default - remove workspace component configuration`() {
     val testData = Paths.get(PathManagerEx.getCommunityHomePath(), "platform/configuration-store-impl/testData")
     val element = loadElement(testData.resolve("testData1.xml"))
 
@@ -128,7 +115,8 @@ internal class DefaultProjectStoreTest {
     assertThat(directoryTree.trim()).isEqualTo(testData.resolve("testData1.txt"))
   }
 
-  @Test fun `new IPR project from default - remove workspace component configuration`() {
+  @Test
+  fun `new IPR project from default - remove workspace component configuration`() {
     val testData = Paths.get(PathManagerEx.getCommunityHomePath(), "platform/configuration-store-impl/testData")
     val element = loadElement(testData.resolve("testData1.xml"))
 

@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
  * by {@link #PsiAwareDefaultLineWrapPositionStrategy(boolean, IElementType...) target tokens/elements}.
  * 
  * @author Denis Zhdanov
- * @since 5/12/11 12:50 PM
  */
 public class PsiAwareDefaultLineWrapPositionStrategy extends PsiAwareLineWrapPositionStrategy {
 

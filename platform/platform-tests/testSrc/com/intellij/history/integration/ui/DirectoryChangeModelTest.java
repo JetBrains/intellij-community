@@ -27,7 +27,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.io.IOException;
 import java.util.List;
 
-
 public class DirectoryChangeModelTest extends IntegrationTestCase {
   public void testNames() {
     VirtualFile f = createDirectory("foo");

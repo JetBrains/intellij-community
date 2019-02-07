@@ -57,7 +57,7 @@ public class KindSorter implements Sorter {
         final PsiMethodTreeElement methodTreeElement = (PsiMethodTreeElement)value;
         final PsiMethod method = methodTreeElement.getMethod();
 
-        return method.isConstructor() ? 30 : 35;
+        return method != null && method.isConstructor() ? 30 : 35;
       }
       if (value instanceof PropertyGroup) {
         return 40;

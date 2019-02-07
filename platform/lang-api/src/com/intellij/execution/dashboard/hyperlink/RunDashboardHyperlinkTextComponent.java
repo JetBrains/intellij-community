@@ -1,9 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.dashboard.hyperlink;
 
-import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,8 +42,8 @@ public class RunDashboardHyperlinkTextComponent extends RunDashboardHyperlinkCom
 
     boolean isActive = mySelected || isAimed();
     SimpleTextAttributes linkTextAttributes = isActive
-                                              ? new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, JBColor.linkHover())
-                                              : new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.link());
+                                              ? new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, JBUI.CurrentTheme.Link.linkHoverColor())
+                                              : new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBUI.CurrentTheme.Link.linkColor());
 
     if (myBold) {
       linkTextAttributes = SimpleTextAttributes.merge(linkTextAttributes, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);

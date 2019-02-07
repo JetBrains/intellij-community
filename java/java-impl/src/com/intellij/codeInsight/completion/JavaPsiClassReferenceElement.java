@@ -26,7 +26,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,7 +97,9 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
   @NotNull
   @Override
   public PsiClass getObject() {
-    return ObjectUtils.assertNotNull(myClass.getElement());
+    PsiClass element = myClass.getElement();
+    if (element == null) throw new IllegalStateException("Cannot restore from " + myClass);
+    return element;
   }
 
   @Override

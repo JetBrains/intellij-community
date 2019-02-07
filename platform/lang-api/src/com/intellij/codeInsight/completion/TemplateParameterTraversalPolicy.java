@@ -21,7 +21,6 @@ import com.intellij.psi.PsiFile;
 
 /**
  * @author Evgeny Gerashchenko
- * @since 2/1/12
  */
 public interface TemplateParameterTraversalPolicy {
   ExtensionPointName<TemplateParameterTraversalPolicy> EP_NAME = new ExtensionPointName<>("com.intellij.templateParameterTraversalPolicy");

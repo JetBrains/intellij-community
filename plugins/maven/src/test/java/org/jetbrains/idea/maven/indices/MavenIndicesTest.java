@@ -57,6 +57,9 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     try {
       shutdownIndices();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

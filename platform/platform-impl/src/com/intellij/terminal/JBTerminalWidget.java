@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.RegionPainter;
 import com.jediterm.terminal.SubstringFinder;
@@ -52,7 +53,6 @@ import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class JBTerminalWidget extends JediTermWidget implements Disposable {
   private final Project myProject;
@@ -157,6 +157,10 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
       myListener.onNextTabSelected();
       return true;
     }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
+    actions.add(new TerminalAction("Show Tabs", mySettingsProvider.getShowTabsKeyStrokes(), input -> {
+      myListener.showTabs();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
     if (!mySettingsProvider.overrideIdeShortcuts()) {
       actions
         .add(new TerminalAction("EditorEscape", new KeyStroke[]{KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)}, input -> {
@@ -237,9 +241,10 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
       public LinkResult apply(String line) {
         Filter.Result r = filter.applyFilter(line, line.length());
         if (r != null) {
-          return new LinkResult(r.getResultItems().stream().map(
-            (item -> new LinkResultItem(item.getHighlightStartOffset(), item.getHighlightEndOffset(), new LinkInfo(
-              () -> item.getHyperlinkInfo().navigate(project))))).collect(Collectors.toList()));
+          return new LinkResult(ContainerUtil.map(r.getResultItems(),
+                                                  (item -> new LinkResultItem(item.getHighlightStartOffset(), item.getHighlightEndOffset(),
+                                                                              new LinkInfo(
+                                                                                () -> item.getHyperlinkInfo().navigate(project))))));
         }
         else {
           return null;
@@ -291,7 +296,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
   private static final class JBTerminalWidgetDisposableWrapper extends DisposableWrapper<JBTerminalWidget> {
     private final JBTerminalWidget myObject;
 
-    public JBTerminalWidgetDisposableWrapper(JBTerminalWidget object, Disposable parent) {
+    private JBTerminalWidgetDisposableWrapper(JBTerminalWidget object, Disposable parent) {
       super(object, parent);
       myObject = object;
     }
@@ -307,7 +312,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
 
     @NotNull
     @Override
-    protected JBTerminalWidgetDisposableWrapper createNewWrapper(@NotNull Disposable parent, JBTerminalWidget object) {
+    protected JBTerminalWidgetDisposableWrapper createNewWrapper(JBTerminalWidget object, @NotNull Disposable parent) {
       return new JBTerminalWidgetDisposableWrapper(object, parent);
     }
   }

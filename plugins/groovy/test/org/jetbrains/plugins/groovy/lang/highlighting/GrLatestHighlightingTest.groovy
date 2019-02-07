@@ -168,7 +168,7 @@ def method(Box<A> box) {
     testHighlighting '''
 def <T> void foo(T t, Closure cl) {}
 
-foo(1) { println it }
+foo(1) { println <warning descr="Method call is ambiguous">it</warning> }
 '''
   }
 
@@ -181,7 +181,7 @@ def <T> void foo(T t, Closure<T> cl) {}
 @CompileStatic
 def m() {
   foo(1) { 
-    println it 
+    println <warning descr="Method call is ambiguous">it</warning> 
     1
   }
 }
@@ -560,24 +560,16 @@ void foo() {
 '''
   }
 
-//TODO: IDEA-194192
-  void '_test call without reference with generics'() {
-    testHighlighting '''
-import groovy.transform.CompileStatic
-
+  void 'test call without reference with generics'() {
+    testHighlighting '''\
 class E {
-    def <K,V> Map<K, V> call(Map<K, V> m) {
-        m
-    }
-    E bar() {null}
+    def <K,V> Map<K, V> call(Map<K, V> m) { m }
 }
 
-static <K,V> Map<K, V> getMap() {
-  return new HashMap<K,V>()
-}
+static <K,V> Map<K, V> getMap() { null }
 
-@CompileStatic
-def com() {
+@groovy.transform.CompileStatic
+def usage() {
     Map<String, Integer> correct = new E()(getMap().withDefault({ 0 }))
 }
 '''

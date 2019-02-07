@@ -80,7 +80,7 @@ public class InvokeIntention extends ActionOnFile {
     return result;
   }
 
-  private void doInvokeIntention(int offset, Environment env) {
+  protected void doInvokeIntention(int offset, Environment env) {
     Project project = getProject();
     Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, getVirtualFile(), offset), true);
     assert editor != null;
@@ -251,8 +251,8 @@ public class InvokeIntention extends ActionOnFile {
 
   private static String describeIntentions(Map<String, IntentionAction> intentionMap) {
     return EntryStream.of(intentionMap)
-      .mapKeyValue(MadTestingUtil::getIntentionDescription)
-      .map("\t"::concat).joining("\n");
+                   .mapKeyValue(MadTestingUtil::getIntentionDescription)
+                   .map("\t"::concat).joining("\n");
   }
 
   private void restoreAfterPotentialPsiTextInconsistency() {
@@ -261,11 +261,11 @@ public class InvokeIntention extends ActionOnFile {
 
   protected List<String> extractCommentsReformattedToSingleWhitespace(PsiFile file) {
     return PsiTreeUtil.findChildrenOfType(file, PsiComment.class)
-      .stream()
-      .filter(myPolicy::trackComment)
-      .map(PsiElement::getText)
-      .map(text -> text.replaceAll("[\\s*]+", " "))
-      .collect(Collectors.toList());
+                      .stream()
+                      .filter(myPolicy::trackComment)
+                      .map(PsiElement::getText)
+                      .map(text -> text.replaceAll("[\\s*]+", " "))
+                      .collect(Collectors.toList());
   }
 
   private static void checkNoNewErrors(Project project, Editor editor, String intentionString, IntentionPolicy policy) {
@@ -283,7 +283,7 @@ public class InvokeIntention extends ActionOnFile {
   }
 
   @NotNull
-  private static List<HighlightInfo> highlightErrors(Project project, Editor editor) {
+  static List<HighlightInfo> highlightErrors(Project project, Editor editor) {
     List<HighlightInfo> infos = RehighlightAllEditors.highlightEditor(editor, project);
     return ContainerUtil.filter(infos, i -> i.getSeverity() == HighlightSeverity.ERROR);
   }

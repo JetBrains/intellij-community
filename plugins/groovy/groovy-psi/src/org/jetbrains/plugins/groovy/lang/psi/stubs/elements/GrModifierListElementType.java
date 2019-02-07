@@ -42,7 +42,7 @@ public class GrModifierListElementType extends GrStubElementType<GrModifierListS
   @NotNull
   @Override
   public GrModifierListStub createStub(@NotNull GrModifierList psi, StubElement parentStub) {
-    return new GrModifierListStub(parentStub, GroovyElementTypes.MODIFIERS, psi.getModifierFlags());
+    return new GrModifierListStub(parentStub, GroovyElementTypes.MODIFIER_LIST, psi.getModifierFlags());
   }
 
   @Override
@@ -53,7 +53,7 @@ public class GrModifierListElementType extends GrStubElementType<GrModifierListS
   @Override
   @NotNull
   public GrModifierListStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
-    return new GrModifierListStub(parentStub, GroovyElementTypes.MODIFIERS, dataStream.readVarInt());
+    return new GrModifierListStub(parentStub, GroovyElementTypes.MODIFIER_LIST, dataStream.readVarInt());
   }
 
 }

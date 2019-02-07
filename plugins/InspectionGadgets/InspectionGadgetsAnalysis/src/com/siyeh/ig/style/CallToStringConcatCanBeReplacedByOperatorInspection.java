@@ -24,6 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -124,10 +125,7 @@ public class CallToStringConcatCanBeReplacedByOperatorInspection
       if (arguments.length != 1) {
         return;
       }
-      final PsiElement parent = expression.getParent();
-      if (parent instanceof PsiExpressionStatement) {
-        return;
-      }
+      if (ExpressionUtils.isVoidContext(expression)) return;
       registerMethodCallError(expression);
     }
   }

@@ -34,7 +34,7 @@ public class MoveChanges implements ChangeListCommand {
   }
 
   @Override
-  public void doNotify(final EventDispatcher<ChangeListListener> dispatcher) {
+  public void doNotify(final EventDispatcher<? extends ChangeListListener> dispatcher) {
     if (myMovedFrom != null && myListCopy != null) {
       for (LocalChangeList fromList : myMovedFrom.keySet()) {
         Collection<Change> changesInList = myMovedFrom.get(fromList);

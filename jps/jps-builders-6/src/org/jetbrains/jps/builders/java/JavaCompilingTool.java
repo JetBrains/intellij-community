@@ -36,6 +36,10 @@ public abstract class JavaCompilingTool {
     return null;
   }
 
+  public boolean isCompilerTreeAPISupported() {
+    return false;
+  }
+
   @NotNull
   public abstract String getDescription();
 

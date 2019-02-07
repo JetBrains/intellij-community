@@ -1,12 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl.storage;
 
 import com.intellij.ProjectTopics;
 import com.intellij.application.options.PathMacrosCollector;
-import com.intellij.configurationStore.StateStorageBase;
-import com.intellij.configurationStore.StateStorageManager;
-import com.intellij.configurationStore.StateStorageManagerKt;
-import com.intellij.configurationStore.StorageUtilKt;
+import com.intellij.configurationStore.*;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
@@ -79,14 +76,18 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
     busConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
-        if (paths.isEmpty()) return;
+        if (paths.isEmpty()) {
+          return;
+        }
+
         for (VFileEvent event : events) {
-          if (!event.isFromRefresh() || !(event instanceof VFileContentChangeEvent)) {
+          if (!event.isFromRefresh() ||
+              !(event instanceof VFileContentChangeEvent) ||
+              !StateStorageManagerKt.isFireStorageFileChangedEvent(event)) {
             continue;
           }
 
           String eventPath = event.getPath();
-
           for (String path : paths) {
             if (path.equals(eventPath)) {
               module.getMessageBus().syncPublisher(StateStorageManagerKt.getSTORAGE_TOPIC()).storageFileChanged(event, ClasspathStorage.this, module);
@@ -194,6 +195,11 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
     // if some file changed, so, changed
     componentNames.add("NewModuleRootManager");
     getStorageDataRef().set(false);
+  }
+
+  @Override
+  public boolean isUseVfsForWrite() {
+    return true;
   }
 
   @Nullable

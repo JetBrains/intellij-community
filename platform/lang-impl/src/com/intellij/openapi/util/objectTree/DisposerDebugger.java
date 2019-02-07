@@ -361,7 +361,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
 
     @Nullable
     public Throwable getAllocation() {
-      return getValue() != null ? getValue().getAllocation() : null;
+      return getValue() != null ? getValue().getTrace() : null;
     }
 
     @Override

@@ -28,7 +28,6 @@ import static org.junit.Assert.assertTrue;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/3/14
  */
 public class ExtraModelBuilderTest {
 

@@ -31,7 +31,7 @@ abstract class LibraryTraceExecutionTestCase(jarName: String) : TraceExecutionTe
   override fun setUpModule() {
     super.setUpModule()
     ApplicationManager.getApplication().runWriteAction {
-      VfsRootAccess.allowRootAccess(libraryDirectory)
+      VfsRootAccess.allowRootAccess(testRootDisposable, libraryDirectory)
       PsiTestUtil.addLibrary(myModule, jarPath)
     }
   }

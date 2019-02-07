@@ -110,7 +110,6 @@ public class JBHiDPIScaledImage extends BufferedImage {
    * @param height the height in user coordinate space
    * @param rm the rounding mode to apply when converting width/height to the device space
    * @param type the type
-   * @param rm the rounding mode
    */
   public JBHiDPIScaledImage(@Nullable GraphicsConfiguration gc, double width, double height, int type, @NotNull RoundingMode rm) {
     this(JBUI.sysScale(gc), width, height, type, rm);

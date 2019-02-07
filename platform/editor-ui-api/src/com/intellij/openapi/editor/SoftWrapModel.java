@@ -67,7 +67,6 @@ import java.util.List;
  * Implementations of this interface are not obliged to be thread-safe.
  *
  * @author Denis Zhdanov
- * @since Jun 8, 2010 3:15:18 PM
  */
 public interface SoftWrapModel {
 

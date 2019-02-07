@@ -132,7 +132,7 @@ internal class GitFetchSupportImpl(git: Git,
         lateinit var result: SingleRemoteResult
         ProgressManager.getInstance().executeProcessUnderProgress({
           commonIndicator.checkCanceled()
-                                                                    result = doFetch(repository, remote, authenticationGate)
+          result = doFetch(repository, remote, authenticationGate)
         }, commonIndicator)
         result
       }

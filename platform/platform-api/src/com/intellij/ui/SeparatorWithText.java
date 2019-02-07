@@ -135,7 +135,7 @@ public class SeparatorWithText extends JComponent implements Accessible {
     FILL.paint((Graphics2D)g, x, y, width, 1, null);
   }
 
-  protected String getCaption() {
+  public String getCaption() {
     return myCaption == null || myCaption.trim().isEmpty() ? null : myCaption;
   }
 

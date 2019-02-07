@@ -43,6 +43,7 @@ public class PropertyKeyImpl extends LeafPsiElement {
     return references.length == 0 ? null : references[0];
   }
 
+  @Override
   @NonNls
   public String toString() {
     return "Property key: " + getText();

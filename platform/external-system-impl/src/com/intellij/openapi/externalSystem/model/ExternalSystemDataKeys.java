@@ -29,7 +29,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 2/7/12 11:19 AM
  */
 public class ExternalSystemDataKeys {
 

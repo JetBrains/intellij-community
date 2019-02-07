@@ -573,4 +573,14 @@ public class EditorImplTest extends AbstractEditorTest {
     mouse().tripleClickAt(0, 2);
     checkResultByText("<selection>some text</selection>");
   }
+
+  public void testSelectionAfterSelectingWholeLine() {
+    initText("line 1\nline 2");
+    mouse().tripleClickAt(0, 2);
+    checkResultByText("<selection>li<caret>ne 1\n</selection>line 2");
+    delete();
+    checkResultByText("<caret>line 2");
+    rightWithSelection();
+    checkResultByText("<selection>l<caret></selection>ine 2");
+  }
 }

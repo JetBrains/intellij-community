@@ -33,7 +33,8 @@ public class JavaAnchorProvider extends SmartPointerAnchorProvider {
     if (element instanceof PsiAnonymousClass) {
       return ((PsiAnonymousClass)element).getBaseClassReference().getReferenceNameElement();
     }
-    if (element instanceof PsiClass || element instanceof PsiMethod || element instanceof PsiVariable) {
+    if (element instanceof PsiClass || element instanceof PsiMethod || 
+        (element instanceof PsiVariable && !(element instanceof PsiLocalVariable))) {
       return ((PsiNameIdentifierOwner)element).getNameIdentifier();
     }
     if (element instanceof PsiImportList) {

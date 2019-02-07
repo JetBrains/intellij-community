@@ -245,7 +245,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
     final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     final List<ChooseRunConfigurationPopup.ItemWrapper> wrappers = new ArrayList<>();
     wrappers.add(createNewWrapper(button));
-    final ChooseRunConfigurationPopup.ItemWrapper[] allSettings =
+    final List<ChooseRunConfigurationPopup.ItemWrapper> allSettings =
       ChooseRunConfigurationPopup.createSettingsList(myProject, new ExecutorProvider() {
         @Override
         public Executor getExecutor() {

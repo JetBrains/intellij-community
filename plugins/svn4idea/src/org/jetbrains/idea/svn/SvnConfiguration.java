@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.components.*;
@@ -278,7 +276,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   }
 
   public String getConfigurationDirectory() {
-    if (myState.directory.path == null || isUseDefaultConfiguation()) {
+    if (myState.directory.path == null || isUseDefaultConfiguration()) {
       myState.directory.path = USER_CONFIGURATION_PATH.getValue().toString();
     }
     return myState.directory.path;
@@ -289,22 +287,22 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     return Paths.get(getConfigurationDirectory());
   }
 
-  public boolean isUseDefaultConfiguation() {
+  public boolean isUseDefaultConfiguration() {
     return myState.directory.useDefault;
   }
 
   public void setConfigurationDirParameters(final boolean newUseDefault, final String newConfigurationDirectory) {
     final String defaultPath = USER_CONFIGURATION_PATH.getValue().toString();
-    final String oldEffectivePath = isUseDefaultConfiguation() ? defaultPath : getConfigurationDirectory();
+    final String oldEffectivePath = isUseDefaultConfiguration() ? defaultPath : getConfigurationDirectory();
     final String newEffectivePath = newUseDefault ? defaultPath : newConfigurationDirectory;
 
     boolean directoryChanged = !Comparing.equal(getConfigurationDirectory(), newConfigurationDirectory);
     if (directoryChanged) {
       myState.directory.path = newConfigurationDirectory;
     }
-    boolean usageChanged = isUseDefaultConfiguation() != newUseDefault;
+    boolean usageChanged = isUseDefaultConfiguration() != newUseDefault;
     if (usageChanged) {
-      setUseDefaultConfiguation(newUseDefault);
+      setUseDefaultConfiguration(newUseDefault);
     }
 
     if (directoryChanged || usageChanged) {
@@ -322,7 +320,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     RUNTIME_AUTH_CACHE.clear();
   }
 
-  private void setUseDefaultConfiguation(boolean useDefault) {
+  private void setUseDefaultConfiguration(boolean useDefault) {
     myState.directory.useDefault = useDefault;
   }
 
@@ -386,11 +384,11 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     myState.keepLocks = keepLocks;
   }
 
-  public boolean isIsUseDefaultProxy() {
+  public boolean isUseDefaultProxy() {
     return myState.useDefaultProxy;
   }
 
-  public void setIsUseDefaultProxy(final boolean isUseDefaultProxy) {
+  public void setUseDefaultProxy(final boolean isUseDefaultProxy) {
     myState.useDefaultProxy = isUseDefaultProxy;
   }
 

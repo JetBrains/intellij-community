@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes.actions.diff;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.chains.DiffRequestChain;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.*;
@@ -186,6 +187,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
                                int selected) {
     if (producers.isEmpty()) return;
     DiffRequestChain chain = new ChangeDiffRequestChain(producers, selected);
+    chain.putUserData(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, true);
     DiffManager.getInstance().showDiff(project, chain, DiffDialogHints.DEFAULT);
   }
 }

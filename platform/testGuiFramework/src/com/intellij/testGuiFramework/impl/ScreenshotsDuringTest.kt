@@ -4,6 +4,7 @@ import com.intellij.openapi.util.io.FileUtil.ensureExists
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.testGuiFramework.framework.GuiTestPaths
 import com.intellij.testGuiFramework.util.ScreenshotTaker
+import com.intellij.testGuiFramework.util.logError
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import java.io.File
@@ -16,7 +17,7 @@ import java.util.concurrent.TimeUnit
 /**
  * Rule that takes a screenshot every second.
  */
-class ScreenshotsDuringTest @JvmOverloads constructor(private val myPeriod: Int = 100) : TestWatcher() {
+class ScreenshotsDuringTest @JvmOverloads constructor(private val myPeriod: Int = 100, private val keepScreenshots: Boolean = false) : TestWatcher() {
   private val myScreenshotTaker = ScreenshotTaker()
   private val myExecutorService: ScheduledExecutorService = Executors.newScheduledThreadPool(1)
   private var myFolder: File? = null
@@ -32,7 +33,7 @@ class ScreenshotsDuringTest @JvmOverloads constructor(private val myPeriod: Int 
       ensureExists(myFolder!!)
     }
     catch (e: IOException) {
-      println("Could not create folder $folderName")
+      logError("Could not create folder $folderName")
     }
 
     myExecutorService.scheduleAtFixedRate({ myScreenshotTaker.safeTakeScreenshotAndSave(File(myFolder, screenshotName)) },
@@ -47,7 +48,7 @@ class ScreenshotsDuringTest @JvmOverloads constructor(private val myPeriod: Int 
     catch (e: InterruptedException) {
       // Do not report the timeout
     }
-    if(isTestSuccessful && myFolder != null) FileUtilRt.delete(myFolder!!)
+    if(keepScreenshots.not() && isTestSuccessful && myFolder != null) FileUtilRt.delete(myFolder!!)
   }
 
   override fun succeeded(description: Description?) {

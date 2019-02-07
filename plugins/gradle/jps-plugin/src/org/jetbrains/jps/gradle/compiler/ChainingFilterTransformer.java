@@ -20,7 +20,6 @@ import java.util.regex.Matcher;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/24/2014
  */
 public class ChainingFilterTransformer implements Transformer<Reader, Reader> {
   private final Collection<ResourceRootFilter> myFilters = new ArrayList<>();

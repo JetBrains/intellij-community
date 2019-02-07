@@ -16,7 +16,6 @@ import java.util.stream.Stream;
  * @author Bas Leijdekkers
  */
 public class JavaPredefinedConfigurationsTest extends StructuralSearchTestCase {
-
   public void testAll() {
     final Configuration[] templates = JavaPredefinedConfigurations.createPredefinedTemplates();
     final Map<String, Configuration> configurationMap = Stream.of(templates).collect(Collectors.toMap(Configuration::getName, x -> x));

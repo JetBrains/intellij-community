@@ -26,7 +26,6 @@ import static com.intellij.openapi.externalSystem.service.project.manage.Externa
 
 /**
  * @author Vladislav.Soroka
- * @since 11/14/2014
  */
 class ExternalSystemRunManagerListener implements RunManagerListener {
   private Disposable eventDisposable;

@@ -24,7 +24,7 @@ public class DirectoryPresentationProvider implements ItemPresentationProvider<P
     final String locationString = vFile.getPath();
 
     if (ProjectRootsUtil.isProjectHome(directory)) {
-      final Icon projectIcon = ProductIcons.getInstance().getProjectIcon();
+      final Icon projectIcon = ProductIcons.getInstance().getProjectNodeIcon();
       return new PresentationData(project.getName(), locationString, projectIcon, null);
     }
 

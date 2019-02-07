@@ -18,7 +18,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/10/2014
  */
 public class GradleResourceFileFilter implements FileFilter {
   private final FilePattern myFilePattern;

@@ -60,7 +60,7 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
           }
 
           var noMultiArgsProvider = true
-          var source : PsiAnnotation? = null
+          var source: PsiAnnotation? = null
           MetaAnnotationUtil.findMetaAnnotations(method, JUnitCommonClassNames.SOURCE_ANNOTATIONS).forEach {
             when (it.qualifiedName) {
               JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE -> {
@@ -113,11 +113,13 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
       }
 
       private fun checkEnumSource(method: PsiMethod, enumSource: PsiAnnotation) {
-        processArrayInAnnotationParameter(enumSource.findAttributeValue("value"), { value ->
-          if (value is PsiClassObjectAccessExpression) {
-            checkSourceTypeAndParameterTypeAgree(method, value, value.operand.type)
-          }
-        })
+        // @EnumSource#value type is Class<?>, not a array
+        val value = enumSource.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)
+        if (value is PsiClassObjectAccessExpression) {
+          val enumType = value.operand.type
+          checkSourceTypeAndParameterTypeAgree(method, value, enumType)
+          checkEnumConstants(enumSource, enumType)
+        }
       }
 
       private fun checkValuesSource(method: PsiMethod, valuesSource: PsiAnnotation) {
@@ -197,7 +199,7 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
                                                 sourceProviderName: String) {
         var createFix: CreateMethodQuickFix? = null
         if (holder.isOnTheFly) {
-          val staticModifier = if (!TestUtils.testInstancePerClass(containingClass)) " static" else "";
+          val staticModifier = if (!TestUtils.testInstancePerClass(containingClass)) " static" else ""
           createFix = CreateMethodQuickFix.createFix(containingClass,
                                                      "private$staticModifier Object[][] $sourceProviderName()",
                                                      "return new Object[][] {};")
@@ -244,6 +246,30 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
         else if (attributeValue is PsiArrayInitializerMemberValue) {
           for (memberValue in attributeValue.initializers) {
             processArrayInAnnotationParameter(memberValue, checker)
+          }
+        }
+      }
+
+      private fun checkEnumConstants(enumSource: PsiAnnotation, enumType: PsiType) {
+        val mode = enumSource.findAttributeValue("mode")
+        if (mode is PsiReferenceExpression && ("INCLUDE" == mode.referenceName || "EXCLUDE" == mode.referenceName)) {
+          val allEnumConstants = (PsiUtil.resolveClassInClassTypeOnly(enumType) ?: return).fields
+            .filterIsInstance<PsiEnumConstant>()
+            .map { it.name }
+            .toSet()
+          val definedConstants = mutableSetOf<String>()
+          processArrayInAnnotationParameter(enumSource.findAttributeValue("names")) { name ->
+            if (name is PsiLiteralExpression) {
+              val value = name.value
+              if (value is String) {
+                if (!allEnumConstants.contains(value)) {
+                  holder.registerProblem(name, "Can't resolve enum constant reference.")
+                }
+                else if (!definedConstants.add(value)) {
+                  holder.registerProblem(name, "Duplicate enum constant name")
+                }
+              }
+            }
           }
         }
       }

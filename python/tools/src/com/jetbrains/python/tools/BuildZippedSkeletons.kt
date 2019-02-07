@@ -62,9 +62,9 @@ fun main(args: Array<String>) {
 
 
       val dirPacked = File(skeletonsDir.parent, DefaultPregeneratedSkeletonsProvider.getPregeneratedSkeletonsName(sdk, refresher.generatorVersion, true, true))
-      val zip = ZipOutputStream(FileOutputStream(dirPacked))
-      ZipUtil.addDirToZipRecursively(zip, dirPacked, skeletonsDir, "", null, null)
-      zip.close()
+      ZipOutputStream(FileOutputStream(dirPacked)).use {
+        ZipUtil.addDirToZipRecursively(it, dirPacked, skeletonsDir, "", null, null)
+      }
     }
   }
   catch (e: Exception) {

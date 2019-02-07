@@ -4,7 +4,6 @@ package com.intellij.ide.util;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TipsOfTheDayUsagesCollector;
-import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
@@ -97,7 +96,9 @@ public class TipDialog extends DialogWrapper {
     ourInstance.show();
   }
 
-  /** @deprecated Use {@link #showForProject(Project)} instead */
+  /**
+   * @deprecated Use {@link #showForProject(Project)} instead
+   */
   @Deprecated
   public static TipDialog createForProject(@Nullable Project project) {
     Window w = WindowManagerEx.getInstanceEx().suggestParentWindow(project);
@@ -152,7 +153,7 @@ public class TipDialog extends DialogWrapper {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      FUSApplicationUsageTrigger.getInstance().trigger(TipsOfTheDayUsagesCollector.class, "previous.tip");
+      TipsOfTheDayUsagesCollector.trigger("previous.tip");
       myTipPanel.prevTip();
     }
   }
@@ -166,7 +167,7 @@ public class TipDialog extends DialogWrapper {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      FUSApplicationUsageTrigger.getInstance().trigger(TipsOfTheDayUsagesCollector.class, "next.tip");
+      TipsOfTheDayUsagesCollector.trigger("next.tip");
       myTipPanel.nextTip();
     }
   }

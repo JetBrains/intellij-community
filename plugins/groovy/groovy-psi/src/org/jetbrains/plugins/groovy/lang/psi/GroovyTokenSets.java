@@ -50,9 +50,7 @@ public interface GroovyTokenSets {
     OTHER_OPERATORS
   );
 
-  TokenSet ASSIGNMENT_OPERATORS = create(
-    T_ASSIGN,
-    T_ELVIS_ASSIGN,
+  TokenSet OPERATOR_ASSIGNMENTS = create(
     T_POW_ASSIGN,
     T_STAR_ASSIGN,
     T_DIV_ASSIGN,
@@ -65,6 +63,11 @@ public interface GroovyTokenSets {
     T_BAND_ASSIGN,
     T_XOR_ASSIGN,
     T_BOR_ASSIGN
+  );
+
+  TokenSet ASSIGNMENTS = orSet(
+    create(T_ASSIGN, T_ELVIS_ASSIGN),
+    OPERATOR_ASSIGNMENTS
   );
 
   TokenSet REFERENCE_DOTS = create(T_DOT, T_SAFE_DOT, T_SPREAD_DOT);

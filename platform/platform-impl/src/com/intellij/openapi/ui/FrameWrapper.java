@@ -171,6 +171,8 @@ public class FrameWrapper implements Disposable, DataProvider {
       loadFrameState();
     }
 
+    IdeMenuBar.bindAppMenuOfParent(frame, WindowManager.getInstance().getIdeFrame(myProject));
+
     myFocusWatcher = new FocusWatcher();
     myFocusWatcher.install(myComponent);
     myShown = true;

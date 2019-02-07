@@ -3,7 +3,7 @@ package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
+import com.jetbrains.jsonSchema.extension.JsonLikeSyntaxAdapter;
 import com.jetbrains.jsonSchema.impl.fixes.AddMissingPropertyFix;
 import com.jetbrains.jsonSchema.impl.fixes.RemoveProhibitedPropertyFix;
 import com.jetbrains.jsonSchema.impl.fixes.SuggestEnumValuesFix;
@@ -144,7 +144,7 @@ public class JsonValidationError {
   }
 
   @NotNull
-  public LocalQuickFix[] createFixes(@Nullable JsonLikePsiWalker.QuickFixAdapter quickFixAdapter) {
+  public LocalQuickFix[] createFixes(@Nullable JsonLikeSyntaxAdapter quickFixAdapter) {
     if (quickFixAdapter == null) return LocalQuickFix.EMPTY_ARRAY;
     switch (myFixableIssueKind) {
       case MissingProperty:

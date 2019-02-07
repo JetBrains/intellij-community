@@ -28,7 +28,6 @@ import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
- * @since 6/30/2014
  */
 public class GradleClassFinderTest extends GradleImportingTestCase {
 

@@ -38,7 +38,6 @@ import java.util.List;
 
 /**
  * @author anna
- * @since 15-Mar-2006
  */
 public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private String myTitle = "";

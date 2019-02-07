@@ -19,7 +19,7 @@ class Test {
         if (<warning descr="Condition 'u != null' is always 'true'">u != null</warning>) {
           System.out.println("y");
         }
-        obj = null;
+        obj = <warning descr="Assigning 'null' value to non-annotated field">null</warning>;
     }
 
     private volatile Object obj;

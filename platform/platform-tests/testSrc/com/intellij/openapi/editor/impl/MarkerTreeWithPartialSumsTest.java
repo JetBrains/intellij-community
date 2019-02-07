@@ -39,6 +39,9 @@ public class MarkerTreeWithPartialSumsTest extends AbstractEditorTest {
     try {
       if (myTree != null) myTree.dispose(myDocument);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

@@ -32,7 +32,6 @@ import java.util.Locale;
 
 /**
  * @author Eugene Zhuravlev
- * @since Oct 14, 2003
  */
 public class ToggleSourcesStateAction<P extends JpsElement> extends ContentEntryEditingAction {
   private final ContentEntryTreeEditor myEntryTreeEditor;

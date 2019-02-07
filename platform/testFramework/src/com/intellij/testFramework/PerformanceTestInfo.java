@@ -91,6 +91,7 @@ public class PerformanceTestInfo {
     Timings.getStatistics(); // warm-up, measure
 
     if (attempts == 1) {
+      //noinspection CallToSystemGC
       System.gc();
     }
 
@@ -126,7 +127,9 @@ public class PerformanceTestInfo {
       }
       else {
         TeamCityLogger.warning(logMessage, null);
-        System.out.println("\nWARNING: " + logMessage);
+        if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+          System.out.println("\nWARNING: " + logMessage);
+        }
       }
 
       if (attempts == 0 || iterationResult == IterationResult.acceptable) {
@@ -137,7 +140,10 @@ public class PerformanceTestInfo {
       // try again
       String s = "  " + attempts + " attempts remain";
       TeamCityLogger.warning(s, null);
-      System.out.println(s);
+      if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+        System.out.println(s);
+      }
+      //noinspection CallToSystemGC
       System.gc();
     }
   }

@@ -31,7 +31,6 @@ import java.util.ServiceLoader;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/5/13
  */
 @SuppressWarnings("UnusedDeclaration")
 public class ExtraModelBuilder implements ToolingModelBuilder {

@@ -27,12 +27,19 @@ import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
 public interface HolderFactory {
+  @NotNull
   DummyHolder createHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context);
+  @NotNull
   DummyHolder createHolder(@NotNull PsiManager manager, CharTable table, boolean validity);
+  @NotNull
   DummyHolder createHolder(@NotNull PsiManager manager, PsiElement context);
+  @NotNull
   DummyHolder createHolder(@NotNull PsiManager manager, Language language, PsiElement context);
+  @NotNull
   DummyHolder createHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context, CharTable table);
+  @NotNull
   DummyHolder createHolder(@NotNull PsiManager manager, PsiElement context, CharTable table);
+  @NotNull
   DummyHolder createHolder(@NotNull PsiManager manager, final CharTable table, final Language language);
   
 }

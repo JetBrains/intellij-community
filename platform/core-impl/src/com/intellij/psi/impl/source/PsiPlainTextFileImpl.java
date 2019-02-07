@@ -36,6 +36,7 @@ public class PsiPlainTextFileImpl extends PsiFileImpl implements PsiPlainTextFil
     visitor.visitPlainTextFile(this);
   }
 
+  @Override
   public String toString(){
     return "PsiFile(plain text):" + getName();
   }

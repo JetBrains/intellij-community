@@ -49,14 +49,12 @@ import java.util.List;
 
 public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText {
   private static final String IS_ACTIVE = "Is Active";
-  private static final String INCLUDE_EXCLUDE = "Include/Exclude";
   protected JBTable myTable = null;
   protected FilterTableModel myTableModel = null;
   protected final Project myProject;
   private final ClassFilter myChooserFilter;
   @Nullable
   private final String myPatternsHelpId;
-  private final boolean myExcludeAllowed;
   private String classDelimiter = "$";
 
   public ClassFilterEditor(Project project) {
@@ -68,13 +66,8 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
   }
 
   public ClassFilterEditor(Project project, ClassFilter classFilter, @Nullable String patternsHelpId) {
-    this(project, classFilter, patternsHelpId, false);
-  }
-
-  public ClassFilterEditor(Project project, ClassFilter classFilter, @Nullable String patternsHelpId, boolean excludeAllowed) {
     super(new BorderLayout());
     myPatternsHelpId = patternsHelpId;
-    myExcludeAllowed = excludeAllowed;
     myTable = new JBTable();
 
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTable)
@@ -126,19 +119,8 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     TableColumnModel columnModel = myTable.getColumnModel();
     TableColumn column = columnModel.getColumn(FilterTableModel.CHECK_MARK);
     int preferredWidth;
-    if (!excludeAllowed) {
-      myTable.setTableHeader(null);
-      preferredWidth = 0;
-    }
-    else {
-      JTableHeader tableHeader = myTable.getTableHeader();
-      final FontMetrics fontMetrics = tableHeader.getFontMetrics(tableHeader.getFont());
-      preferredWidth = fontMetrics.stringWidth(IS_ACTIVE) + 20;
-
-      TableColumn includeColumn = columnModel.getColumn(FilterTableModel.INCLUDE_MARK);
-      includeColumn.setCellRenderer(new EnabledCellRenderer(myTable.getDefaultRenderer(Boolean.class)));
-      TableUtil.setupCheckboxColumn(includeColumn, fontMetrics.stringWidth(INCLUDE_EXCLUDE) + 20);
-    }
+    myTable.setTableHeader(null);
+    preferredWidth = 0;
     TableUtil.setupCheckboxColumn(column, preferredWidth);
     column.setCellRenderer(new EnabledCellRenderer(myTable.getDefaultRenderer(Boolean.class)));
     columnModel.getColumn(FilterTableModel.FILTER).setCellRenderer(new FilterCellRenderer());
@@ -241,9 +223,6 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
 
     @Override
     public int getColumnCount() {
-      if (myExcludeAllowed) {
-        return 3;
-      }
       return 2;
     }
 
@@ -251,9 +230,6 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     public String getColumnName(int column) {
       if (column == FILTER) {
         return "Pattern";
-      }
-      if (column == INCLUDE_MARK) {
-        return INCLUDE_EXCLUDE;
       }
       return IS_ACTIVE;
     }

@@ -21,9 +21,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.Executor.*
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.vcs.ExecutableHelper
 import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.commands.Git
+import git4idea.commands.GitBinaryHandler
 import git4idea.commands.GitLineHandler
 import git4idea.commands.getGitCommandInstance
 import git4idea.repo.GitRepository
@@ -48,6 +50,18 @@ fun git(project: Project, command: String, ignoreNonZeroExitCode: Boolean = fals
     throw IllegalStateException("Command [$command] failed with exit code ${result.exitCode}\n${result.output}\n${result.errorOutput}")
   }
   return result.errorOutputAsJoinedString + result.outputAsJoinedString
+}
+
+fun GitRepository.gitAsBytes(command: String): ByteArray {
+  cd(this)
+  return gitAsBytes(project, command)
+}
+fun gitAsBytes(project: Project, command: String): ByteArray {
+  val workingDir = VfsUtil.findFileByIoFile(ourCurrentDir(), true)!!
+  val split = splitCommandInParameters(command)
+  val handler = GitBinaryHandler(project, workingDir, getGitCommandInstance(split[0]))
+  handler.addParameters(split.subList(1, split.size))
+  return handler.run()
 }
 
 fun cd(repository: GitRepository) = cd(repository.root.path)

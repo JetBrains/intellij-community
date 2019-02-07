@@ -38,7 +38,6 @@ import java.util.*;
 
 /**
  * @author Denis Zhdanov
- * @since 2/15/12 11:32 AM
  */
 @Order(ExternalSystemConstants.BUILTIN_LIBRARY_DATA_SERVICE_ORDER)
 public class LibraryDataService extends AbstractProjectDataService<LibraryData, Library> {

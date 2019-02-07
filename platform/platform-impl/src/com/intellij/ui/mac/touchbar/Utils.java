@@ -48,9 +48,14 @@ public class Utils {
   }
 
   public static String getAppId() {
-    final ApplicationInfoEx appEx = ApplicationInfoImpl.getInstanceEx();
-    if (appEx == null) // unit-test case
+    try {
+      final ApplicationInfoEx appEx = ApplicationInfoImpl.getInstanceEx();
+      if (appEx == null) // unit-test case
+        return null;
+    } catch (Throwable e) {
+      LOG.debug(e); // no application
       return null;
+    }
 
     String appId = null;
     try (NSAutoreleaseLock lock = new NSAutoreleaseLock()) {

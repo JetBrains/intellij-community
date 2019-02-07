@@ -73,6 +73,19 @@ public class XmlInspectionsTest extends LightPlatformCodeInsightFixtureTestCase 
     myFixture.testHighlighting("def.xml", "def.xsd");
   }
 
+  public void testEmptyDefaultAttributeValue() {
+    myFixture.enableInspections(new XmlDefaultAttributeValueInspection());
+    myFixture.addFileToProject("foo.xsd", "<schema xmlns=\"http://www.w3.org/2001/XMLSchema\" targetNamespace=\"def/attr\">\n" +
+                                          "  <element name=\"foo\">\n" +
+                                          "    <complexType>\n" +
+                                          "      <attribute name=\"bar\" default=\"\"/>\n" +
+                                          "    </complexType>\n" +
+                                          "  </element>\n" +
+                                          "</schema>");
+    myFixture.configureByText("foo.xml", "<foo xmlns=\"def/attr\" bar=/>");
+    myFixture.doHighlighting();
+  }
+
   public void testDeprecations() {
     myFixture.enableInspections(new XmlDeprecatedElementInspection());
     myFixture.testHighlighting("deprecated.xml", "deprecated.xsd");

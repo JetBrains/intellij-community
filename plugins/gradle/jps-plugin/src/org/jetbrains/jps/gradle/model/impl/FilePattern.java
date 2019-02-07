@@ -10,7 +10,6 @@ import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/10/2014
  */
 public class FilePattern {
   @XCollection(propertyElementName = "includes", elementName = "pattern")

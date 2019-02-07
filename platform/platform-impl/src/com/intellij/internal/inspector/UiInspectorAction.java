@@ -681,7 +681,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
             if (renderer instanceof JLabel) {
               //noinspection UseOfSystemOutOrSystemErr
               System.out.println((component != null ? getComponentName(component)+ " " : "" )
-                                 + ((JLabel)renderer).getText().replace("\tat", "\n\tat"));
+                                 + ((JLabel)renderer).getText().replace("\r", "").replace("\tat", "\n\tat"));
               return true;
             }
           }
@@ -704,7 +704,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       myDimensionComponent.repaint();
     }
 
-    private class PropertyNameRenderer extends DefaultTableCellRenderer {
+    private static class PropertyNameRenderer extends DefaultTableCellRenderer {
       @Override
       public Component getTableCellRendererComponent(JTable table,
                                                      Object value,
@@ -719,7 +719,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           changed = ((InspectorTableModel)model).myProperties.get(row).changed;
         }
 
-        final Color fg = isSelected ? table.getSelectionForeground() : changed ? JBColor.link() : table.getForeground();
+        final Color fg = isSelected ? table.getSelectionForeground() : changed ? JBUI.CurrentTheme.Link.linkColor() : table.getForeground();
         final JBFont font = JBUI.Fonts.label();
         setFont(changed ? font.asBold() : font);
         setForeground(fg);

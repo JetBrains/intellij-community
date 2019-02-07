@@ -59,10 +59,9 @@ public class RemoveUnusedVariableUtil {
                                                         PsiElement element) throws IncorrectOperationException {
     PsiElement elementToReplace = element;
     PsiElement expressionToReplaceWith = expression;
-    if (element.getParent() instanceof PsiExpressionStatement) {
+    if (element.getParent() instanceof PsiExpressionStatement || element.getParent() instanceof PsiExpressionListStatement) {
       elementToReplace = element.getParent();
-      expressionToReplaceWith =
-      factory.createStatementFromText((expression == null ? "" : expression.getText()) + ";", null);
+      expressionToReplaceWith = factory.createStatementFromText((expression == null ? "" : expression.getText()) + ";", null);
       if (isForLoopUpdate(elementToReplace)) {
         PsiElement lastChild = expressionToReplaceWith.getLastChild();
         if (PsiUtil.isJavaToken(lastChild, JavaTokenType.SEMICOLON)) {
@@ -71,8 +70,7 @@ public class RemoveUnusedVariableUtil {
       }
     }
     else if (element.getParent() instanceof PsiDeclarationStatement) {
-      expressionToReplaceWith =
-      factory.createStatementFromText((expression == null ? "" : expression.getText()) + ";", null);
+      expressionToReplaceWith = factory.createStatementFromText((expression == null ? "" : expression.getText()) + ";", null);
     }
     return elementToReplace.replace(expressionToReplaceWith);
   }
@@ -81,18 +79,26 @@ public class RemoveUnusedVariableUtil {
                                             PsiElementFactory factory,
                                             PsiElement element) throws IncorrectOperationException {
     // if element used in expression, subexpression will do
-    if (!(element.getParent() instanceof PsiExpressionStatement) &&
-        !(element.getParent() instanceof PsiDeclarationStatement)) {
+    PsiElement parent = element.getParent();
+    if (!(parent instanceof PsiExpressionStatement) && !(parent instanceof PsiDeclarationStatement)) {
       return expression;
     }
-    return factory.createStatementFromText((expression == null ? "" : expression.getText()) + ";", null);
+    String replacement;
+    if (expression == null) {
+      boolean needBlock = parent instanceof PsiExpressionStatement && parent.getParent() instanceof PsiSwitchLabeledRuleStatement;
+      replacement = needBlock ? "{}" : ";";
+    }
+    else {
+      replacement = expression.getText() + ";";
+    }
+    return factory.createStatementFromText(replacement, null);
   }
 
   static void deleteWholeStatement(PsiElement element, PsiElementFactory factory)
     throws IncorrectOperationException {
     // just delete it altogether
-    if (element.getParent() instanceof PsiExpressionStatement) {
-      PsiExpressionStatement parent = (PsiExpressionStatement)element.getParent();
+    PsiElement parent = element.getParent();
+    if (parent instanceof PsiExpressionStatement) {
       if (parent.getParent() instanceof PsiCodeBlock || isForLoopUpdate(parent)) {
         parent.delete();
       }
@@ -100,6 +106,20 @@ public class RemoveUnusedVariableUtil {
         // replace with empty statement (to handle with 'if (..) i=0;' )
         parent.replace(createStatementIfNeeded(null, factory, element));
       }
+    }
+    else if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiExpressionListStatement) {
+      PsiExpressionList list = (PsiExpressionList)parent;
+      PsiExpression[] expressions = list.getExpressions();
+      if (expressions.length == 2) {
+        PsiExpression other = expressions[0] == element ? expressions[1] : expressions[0];
+        replaceElementWithExpression(other, factory, parent);
+      }
+      else {
+        element.delete();
+      }
+    }
+    else if (element.getParent() instanceof PsiLambdaExpression) {
+      element.replace(factory.createCodeBlock());
     }
     else {
       element.delete();
@@ -144,9 +164,9 @@ public class RemoveUnusedVariableUtil {
         if (rExpression == null) return true;
         // replace assignment with expression and resimplify
         boolean sideEffectFound = checkSideEffects(rExpression, variable, sideEffects);
-        if (!isStatementExpression(expression) || PsiUtil.isStatement(rExpression)) {
+        if (!ExpressionUtils.isVoidContext(expression) || PsiUtil.isStatement(rExpression)) {
           if (deleteMode == RemoveMode.MAKE_STATEMENT ||
-              deleteMode == RemoveMode.DELETE_ALL && !(element.getParent() instanceof PsiExpressionStatement)) {
+              deleteMode == RemoveMode.DELETE_ALL && !ExpressionUtils.isVoidContext(expression)) {
             element = replaceElementWithExpression(rExpression, factory, element);
             element = eraseUnnecessaryOuterParentheses(element);
             List<PsiElement> references = new ArrayList<>();
@@ -228,11 +248,5 @@ public class RemoveUnusedVariableUtil {
     PsiElement parent = element.getParent();
     return parent instanceof PsiForStatement &&
            ((PsiForStatement)parent).getUpdate() == element;
-  }
-
-  private static boolean isStatementExpression(PsiExpression expression) {
-    PsiElement parent = expression.getParent();
-    return parent instanceof PsiExpressionStatement ||
-           parent instanceof PsiExpressionList && parent.getParent() instanceof PsiExpressionListStatement;
   }
 }

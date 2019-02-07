@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.diagnostic.IdeErrorsDialog
@@ -8,7 +8,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.externalComponents.ExternalComponentManager
 import com.intellij.ide.plugins.*
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger
 import com.intellij.notification.*
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -25,6 +24,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -34,7 +34,6 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
-import com.intellij.util.loadElement
 import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
 import gnu.trove.THashMap
@@ -107,7 +106,7 @@ object UpdateChecker {
    */
   @JvmStatic
   fun getPluginUpdates(): Collection<PluginDownloader>? =
-    checkPluginsUpdate(UpdateSettings.getInstance(), EmptyProgressIndicator(), null, BuildNumber.currentVersion())
+    checkPluginsUpdate(UpdateSettings.getInstance(), EmptyProgressIndicator(), null, ApplicationInfo.getInstance().build)
 
   private fun doUpdateAndShowResult(project: Project?,
                                     fromSettings: Boolean,
@@ -162,7 +161,7 @@ object UpdateChecker {
     try {
       var updateUrl = Urls.newFromEncoded(updateUrl)
       if (updateUrl.scheme != URLUtil.FILE_PROTOCOL) {
-        updateUrl = prepareUpdateCheckArgs(updateUrl, settings.packageManagerName)
+        updateUrl = prepareUpdateCheckArgs(updateUrl)
       }
       LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl)
 
@@ -171,7 +170,7 @@ object UpdateChecker {
           .connect {
             try {
               if (settings.isPlatformUpdateEnabled)
-                UpdatesInfo(loadElement(it.reader))
+                UpdatesInfo(JDOMUtil.load(it.reader))
               else
                 null
             }
@@ -213,7 +212,7 @@ object UpdateChecker {
       .forceHttps(settings.canUseSecureConnection())
       .connect {
         try {
-          UpdatesInfo(loadElement(it.reader))
+          UpdatesInfo(JDOMUtil.load(it.reader))
         }
         catch (e: JDOMException) {
           // corrupted content, don't bother telling user
@@ -404,10 +403,10 @@ object UpdateChecker {
         runnable.invoke()
       }
       else {
-        FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector::class.java, "notification.shown")
+        IdeUpdateUsageTriggerCollector.trigger("notification.shown")
         val message = IdeBundle.message("updates.ready.message", ApplicationNamesInfo.getInstance().fullProductName)
         showNotification(project, message, {
-          FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector::class.java, "notification.clicked")
+          IdeUpdateUsageTriggerCollector.trigger( "notification.clicked")
           runnable()
         }, NotificationUniqueType.PLATFORM)
       }
@@ -474,12 +473,12 @@ object UpdateChecker {
     ourAdditionalRequestOptions[name] = value
   }
 
-  private fun prepareUpdateCheckArgs(url: Url, packageManagerName: String?): Url {
+  private fun prepareUpdateCheckArgs(url: Url): Url {
     addUpdateRequestParameter("build", ApplicationInfo.getInstance().build.asString())
     addUpdateRequestParameter("uid", PermanentInstallationID.get())
     addUpdateRequestParameter("os", SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION)
-    if (packageManagerName != null) {
-      addUpdateRequestParameter("manager", packageManagerName)
+    if (ExternalUpdateManager.ACTUAL != null) {
+      addUpdateRequestParameter("manager", ExternalUpdateManager.ACTUAL.toolName)
     }
     if (ApplicationInfoEx.getInstanceEx().isEAP) {
       addUpdateRequestParameter("eap", "")
@@ -676,13 +675,13 @@ object UpdateChecker {
     val newBuild: BuildInfo?
     val patches: UpdateChain?
     if (forceUpdate) {
-      val node = loadElement(updateInfoText).getChild("product")?.getChild("channel") ?: throw IllegalArgumentException("//channel missing")
+      val node = JDOMUtil.load(updateInfoText).getChild("product")?.getChild("channel") ?: throw IllegalArgumentException("//channel missing")
       channel = UpdateChannel(node)
       newBuild = channel.builds.firstOrNull() ?: throw IllegalArgumentException("//build missing")
       patches = newBuild.patches.firstOrNull()?.let { UpdateChain(listOf(it.fromBuild, newBuild.number), it.size) }
     }
     else {
-      val updateInfo = UpdatesInfo(loadElement(updateInfoText))
+      val updateInfo = UpdatesInfo(JDOMUtil.load(updateInfoText))
       val strategy = UpdateStrategy(ApplicationInfo.getInstance().build, updateInfo)
       val checkForUpdateResult = strategy.checkForUpdates()
       channel = checkForUpdateResult.updatedChannel

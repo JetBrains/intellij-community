@@ -22,7 +22,6 @@ import java.io.Serializable;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/14/2014
  */
 public interface ExternalPlugin extends Serializable {
   @NotNull

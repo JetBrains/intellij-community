@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 /**
  * @author Dmitry Batkovich
  */
-class OfflineDescriptorResolveResult {
+public class OfflineDescriptorResolveResult {
   private static final Logger LOG = Logger.getInstance(OfflineDescriptorResolveResult.class);
   private final RefEntity myResolvedEntity;
   private final CommonProblemDescriptor myResolvedDescriptor;

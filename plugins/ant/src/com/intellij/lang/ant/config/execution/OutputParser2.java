@@ -65,7 +65,7 @@ final class OutputParser2 extends OutputParser implements PacketProcessor, Input
       }
     }
     else {
-      int priority = reader.readInt();
+      int priority = fixPriority(reader.readInt());
       char contentType = reader.readChar();
       String message = reader.readLimitedString();
       if (id == IdeaAntLogger2.BUILD_END) {

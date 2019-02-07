@@ -13,7 +13,6 @@ import java.rmi.RemoteException;
  * Implementations of this interface are expected to be thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 11/10/11 9:03 AM
  */
 public interface RemoteExternalSystemProgressNotificationManager extends Remote {
 

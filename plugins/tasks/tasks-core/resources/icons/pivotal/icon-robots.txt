@@ -1,0 +1,4 @@
+deprecated: bug.png; to be removed in IDEA 2020
+deprecated: chore.png; to be removed in IDEA 2020
+deprecated: feature.png; to be removed in IDEA 2020
+deprecated: release.png; to be removed in IDEA 2020

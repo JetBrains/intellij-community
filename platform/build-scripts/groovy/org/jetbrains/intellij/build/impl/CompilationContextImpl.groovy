@@ -64,7 +64,7 @@ class CompilationContextImpl implements CompilationContext {
 
     def dependenciesProjectDir = new File(communityHome, 'build/dependencies')
     logFreeDiskSpace(messages, projectHome, "before downloading dependencies")
-    def gradleJdk = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", "", "JDK_18_x64"))
+    def gradleJdk = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", null, "JDK_18_x64"))
     GradleRunner gradle = new GradleRunner(dependenciesProjectDir, messages, gradleJdk)
     def kotlinHome
     if (options.kotlinPlugin == null) {
@@ -144,18 +144,13 @@ Android Studio: removed by Change I1dba4249 / commit 8f836c4 */
                                       paths.kotlinHome, messages, oldToNewModuleName, buildOutputRootEvaluator, options)
   }
 
-  private static JpsModel loadProject(String projectHome,
-                                      String jdkHome,
-                                      String kotlinHome,
-                                      BuildMessages messages,
-                                      BuildOptions options,
-                                      AntBuilder ant) {
+  private static JpsModel loadProject(String projectHome, String jdkHome, String kotlinHome, BuildMessages messages, BuildOptions options, AntBuilder ant) {
     //we need to add Kotlin JPS plugin to classpath before loading the project to ensure that Kotlin settings will be properly loaded
     ensureKotlinJpsPluginIsAddedToClassPath(kotlinHome, ant, messages)
 
     def model = JpsElementFactory.instance.createModel()
     def pathVariablesConfiguration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global)
-    pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", "$kotlinHome/kotlinc")
+    // Android Studio: modified by Change Ibf21a74c / commit 4904fa8
     pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", FileUtil.toSystemIndependentName(new File(projectHome, "../../prebuilts/tools/common/m2/repository").absolutePath))
 
     JdkUtils.defineJdk(model.global, "IDEA jdk", JdkUtils.computeJdkHome(messages, "jdkHome", "${jdkDir(projectHome, options)}/1.6", "JDK_16_x64"))
@@ -484,6 +479,7 @@ Android Studio: removed by Change I1dba4249 / commit 8f836c4 */
   }
 }
 
+@CompileStatic
 class BuildPathsImpl extends BuildPaths {
   BuildPathsImpl(String communityHome, String projectHome, String buildOutputRoot, String jdkHome, String kotlinHome) {
     this.communityHome = communityHome

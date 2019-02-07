@@ -47,7 +47,7 @@ class RefModuleImpl extends RefEntityImpl implements RefModule {
   }
 
   @Override
-  protected synchronized void removeChild(@NotNull final RefEntity child) {
+  public synchronized void removeChild(@NotNull final RefEntity child) {
     if (myChildren != null) {
       myChildren.remove(child);
     }

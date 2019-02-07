@@ -44,4 +44,29 @@ PsiJavaFileStub []
       PsiModifierListStub[mask=1]
       PsiTypeParameterListStub
       PsiParameterListStub
+        PsiParameterStub[longConstructorParam:long]
+          PsiModifierListStub[mask=0]
+        PsiParameterStub[stringConstructorParam:java.lang.String]
+          PsiModifierListStub[mask=0]
+            PsiAnnotationStub[@java.lang.Deprecated]
+      PsiRefListStub[THROWS_LIST:]
+    PsiMethodStub[foo:java.lang.Object]
+      PsiModifierListStub[mask=1]
+      PsiTypeParameterListStub
+      PsiParameterListStub
+        PsiParameterStub[longMethodParam:long]
+          PsiModifierListStub[mask=0]
+        PsiParameterStub[intMethodParam:int]
+          PsiModifierListStub[mask=0]
+            PsiAnnotationStub[@java.lang.Deprecated]
+      PsiRefListStub[THROWS_LIST:]
+    PsiMethodStub[bar:java.lang.Object]
+      PsiModifierListStub[mask=9]
+      PsiTypeParameterListStub
+      PsiParameterListStub
+        PsiParameterStub[objectStaticParam:GroovyStuff]
+          PsiModifierListStub[mask=0]
+        PsiParameterStub[intStaticParam:int]
+          PsiModifierListStub[mask=0]
+            PsiAnnotationStub[@java.lang.Deprecated]
       PsiRefListStub[THROWS_LIST:]

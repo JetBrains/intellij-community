@@ -5,6 +5,6 @@ import org.jetbrains.annotations.NotNull;
 class A{
   void test(@NotNull List l) {
     final List list = null;
-    test(list != null ? list : <selection>null</selection>);
+    test(list != null ? list : null<caret>);
   }
 }

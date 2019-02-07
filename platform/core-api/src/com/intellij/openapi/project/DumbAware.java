@@ -19,7 +19,7 @@ package com.intellij.openapi.project;
  * A marker interface for the things that are allowed to run in dumb mode (when indices are in background update).
  * Implementors must take care of handling and/or not calling non-DumbAware parts of system.
  * <p/>
- * Known implementors are:
+ * Some known implementors are:
  * <li> {@link com.intellij.openapi.actionSystem.AnAction}s
  * <li> {@link com.intellij.openapi.fileEditor.FileEditorProvider}s
  * <li> post-startup activities ({@link com.intellij.openapi.startup.StartupManager#registerPostStartupActivity(Runnable)})
@@ -27,10 +27,7 @@ package com.intellij.openapi.project;
  * <li> {@link com.intellij.ide.SelectInTarget}s
  * <li> {@link com.intellij.ide.IconProvider}s
  * <li> {@link com.intellij.codeInsight.completion.CompletionContributor}s
- * <li> {@link com.intellij.lang.annotation.Annotator}s
- * <li> {@link com.intellij.codeInsight.daemon.LineMarkerProvider}s
  * <li> {@link com.intellij.codeHighlighting.TextEditorHighlightingPass}es
- * <li> {@link com.intellij.codeInspection.LocalInspectionTool}s
  * <li> {@link com.intellij.openapi.wm.ToolWindowFactory}s
  * <li> {@link com.intellij.lang.injection.MultiHostInjector}s
  *

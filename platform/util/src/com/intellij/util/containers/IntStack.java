@@ -27,6 +27,7 @@ import java.util.EmptyStackException;
 public class IntStack {
   private int[] data;
   private int size;
+
   public IntStack(int initialCapacity) {
     data = new int[initialCapacity];
     size = 0;
@@ -51,6 +52,13 @@ public class IntStack {
   public int pop() {
     if (size == 0) throw new EmptyStackException();
     return data[--size];
+  }
+
+  public int get(int i) {
+    if (i < 0 || i >= size) {
+      throw new IndexOutOfBoundsException("Invalid stack index " + i + " for stack of size " + size);
+    }
+    return data[i];
   }
 
   public int size() {

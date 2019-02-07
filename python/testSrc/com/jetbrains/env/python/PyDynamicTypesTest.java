@@ -19,6 +19,7 @@ import com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author traff
@@ -43,7 +44,7 @@ public class PyDynamicTypesTest extends PyEnvTestCase {
       @Override
       public void doFinally() {
         try {
-          PySignatureCacheManagerImpl.CALL_SIGNATURES_ATTRIBUTE.writeAttributeBytes(getVirtualFile(), "".getBytes());
+          PySignatureCacheManagerImpl.CALL_SIGNATURES_ATTRIBUTE.writeAttributeBytes(getVirtualFile(), "".getBytes(StandardCharsets.UTF_8));
         }
         catch (IOException e) {
           //pass

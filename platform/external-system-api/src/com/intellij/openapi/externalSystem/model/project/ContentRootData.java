@@ -14,7 +14,6 @@ import java.util.*;
 
 /**
  * @author Denis Zhdanov
- * @since 8/9/11 6:25 PM
  */
 public class ContentRootData extends AbstractExternalEntityData {
 

@@ -16,40 +16,30 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.refactoring.MultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
 /**
  *  @author dsl
  */
 @PlatformTestCase.WrapInCommand
-public class IntroduceVariableMultifileTest extends MultiFileTestCase {
+public class IntroduceVariableMultifileTest extends LightMultiFileTestCase {
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    LanguageLevelProjectExtension.getInstance(myJavaFacade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/introduceVariable/";
   }
 
   @NotNull
   @Override
-  protected String getTestRoot() {
-    return "/refactoring/introduceVariable/";
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_1_5;
   }
 
   public void testSamePackageRef() {
@@ -94,18 +84,14 @@ public class IntroduceVariableMultifileTest extends MultiFileTestCase {
     );
   }
 
-  PerformAction createAction(final String className, final IntroduceVariableBase testMe) {
-    return (vroot, rootAfter) -> {
-      final JavaPsiFacade psiManager = getJavaFacade();
-      final PsiClass aClass = psiManager.findClass(className, GlobalSearchScope.allScope(myProject));
-      assertTrue(className + " class not found", aClass != null);
+  ThrowableRunnable<Exception> createAction(final String className, final IntroduceVariableBase testMe) {
+    return () -> {
+      final PsiClass aClass = myFixture.findClass(className);
       final PsiFile containingFile = aClass.getContainingFile();
       final VirtualFile virtualFile = containingFile.getVirtualFile();
-      assertTrue(virtualFile != null);
-      final Editor editor = createEditor(virtualFile);
-      setupCursorAndSelection(editor);
-      testMe.invoke(myProject, editor, containingFile, null);
-      FileDocumentManager.getInstance().saveAllDocuments();
+      assertNotNull(virtualFile);
+      myFixture.configureFromExistingVirtualFile(virtualFile);
+      testMe.invoke(getProject(), getEditor(), containingFile, null);
     };
   }
 }

@@ -55,6 +55,9 @@ public abstract class PsiTestCase extends ModuleTestCase {
       myTestDataBefore = null;
       myTestDataAfter = null;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

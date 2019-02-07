@@ -46,6 +46,6 @@ public abstract class HighlightHandlerBase {
     if (lineFragmentEndOffset != lineEndOffset) {
       lineText = lineText.trim() + "...";
     }
-    return "  " + (escape ? StringUtil.escapeXml(lineText.trim()) : lineText.trim()) + "  ";
+    return "  " + (escape ? StringUtil.escapeXmlEntities(lineText.trim()) : lineText.trim()) + "  ";
   }
 }

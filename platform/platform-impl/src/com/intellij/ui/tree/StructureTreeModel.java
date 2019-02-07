@@ -390,8 +390,17 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
       }
     }
     Comparator<? super Node> comparator = this.comparator;
-    if (comparator != null) list.sort(comparator); // an exception may be thrown while sorting children
-
+    if (comparator != null) {
+      try {
+        list.sort(comparator); // an exception may be thrown while sorting children
+      }
+      catch (IllegalArgumentException exception) {
+        StringBuilder sb = new StringBuilder("unexpected sorting failed in ");
+        sb.append(this);
+        for (Node next : list) sb.append('\n').append(next);
+        LOG.error(sb.toString(), exception);
+      }
+    }
     HashMap<Object, Node> map = new HashMap<>();
     node.getChildren().forEach(child -> {
       Object element = child.getElement();

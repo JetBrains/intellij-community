@@ -12,7 +12,6 @@ import java.util.TreeSet;
 
 /**
  * @author stathik
- * @since Dec 26, 2003
  */
 public class AvailablePluginsTableModel extends PluginTableModel {
   public static final String ALL = "All";

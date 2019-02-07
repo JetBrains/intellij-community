@@ -31,8 +31,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jetbrains.annotations.NonNls;
@@ -42,8 +41,10 @@ import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 import java.io.*;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ExportHTMLAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(ExportHTMLAction.class);
@@ -85,6 +86,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
     final String outputDirectoryName = exportToHTMLSettings.OUTPUT_DIRECTORY;
     ApplicationManager.getApplication().invokeLater(() -> {
       final Runnable exportRunnable = () -> ApplicationManager.getApplication().runReadAction(() -> {
+        if (myView.isDisposed()) return;
         if (!exportToHTML) {
           dump2xml(outputDirectoryName);
         }
@@ -118,61 +120,65 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       if (!outputDir.exists() && !outputDir.mkdirs()) {
         throw new IOException("Cannot create \'" + outputDir + "\'");
       }
-      final InspectionTreeNode root = myView.getTree().getRoot();
-      final Exception[] ex = new Exception[1];
-
-      final Set<InspectionToolWrapper> visitedWrappers = new THashSet<>();
-
       Format format = JDOMUtil.createFormat("\n");
       XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newInstance();
 
-      TreeUtil.treeNodeTraverser(root).traverse().processEach(node -> {
-        if (node instanceof InspectionNode) {
-          InspectionNode toolNode = (InspectionNode)node;
-          if (toolNode.isExcluded()) return true;
-
-          InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
-          if (!visitedWrappers.add(toolWrapper)) return true;
-
-          String name = toolWrapper.getShortName();
-          try (XmlWriterWrapper reportWriter = new XmlWriterWrapper(myView.getProject(), outputDirectoryName, name,
-                                                                    xmlOutputFactory, format, GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
-               XmlWriterWrapper aggregateWriter = new XmlWriterWrapper(myView.getProject(), outputDirectoryName, name + AGGREGATE,
-                                                                       xmlOutputFactory, format, ROOT)) {
-            reportWriter.checkOpen();
-
-            final Set<InspectionToolWrapper> toolWrappers = getWorkedTools(toolNode);
-            for (InspectionToolWrapper wrapper : toolWrappers) {
-              InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(wrapper);
-              presentation.exportResults(reportWriter::writeElement, presentation::isExcluded, presentation::isExcluded);
-              if (presentation instanceof AggregateResultsExporter) {
-                ((AggregateResultsExporter)presentation).exportAggregateResults(aggregateWriter::writeElement);
-              }
-            }
-          }
-          catch (XmlWriterWrapperException e) {
-            Throwable cause = e.getCause();
-            ex[0] = cause instanceof Exception ? (Exception)cause : e;
-          }
-        }
-        return true;
-      });
-      if (ex[0] != null) {
-        throw ex[0];
+      InspectionProfileImpl profile = myView.getCurrentProfile();
+      String singleTool = profile.getSingleTool();
+      MultiMap<String, InspectionToolWrapper> shortName2Wrapper = new MultiMap<>();
+      if (singleTool != null) {
+        shortName2Wrapper.put(singleTool, getWrappersForAllScopes(singleTool));
+      } else {
+        InspectionTreeModel model = myView.getTree().getInspectionTreeModel();
+        model
+          .traverse(model.getRoot())
+          .filter(InspectionNode.class)
+          .filter(n -> !n.isExcluded())
+          .map(InspectionNode::getToolWrapper)
+          .forEach(w -> shortName2Wrapper.putValue(w.getShortName(), w));
       }
-      final Element element = new Element(InspectionApplication.INSPECTIONS_NODE);
-      final String profileName = myView.getCurrentProfileName();
-      if (profileName != null) {
-        element.setAttribute(InspectionApplication.PROFILE, profileName);
+
+      for (Map.Entry<String, Collection<InspectionToolWrapper>> entry : shortName2Wrapper.entrySet()) {
+        String shortName = entry.getKey();
+        Collection<InspectionToolWrapper> wrappers = entry.getValue();
+        writeInspectionResult(shortName, wrappers, outputDirectoryName, format, xmlOutputFactory);
       }
-      JDOMUtil.write(element,
-                     new File(outputDirectoryName, InspectionApplication.DESCRIPTIONS + InspectionApplication.XML_EXTENSION),
-                     CodeStyle.getDefaultSettings().getLineSeparator());
+
+      writeProfileName(outputDirectoryName);
     }
     catch (Exception e) {
       LOG.error(e);
       ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(myView, e.getMessage()));
     }
+  }
+
+  private void writeInspectionResult(@NotNull String shortName,
+                                     @NotNull Collection<InspectionToolWrapper> wrappers, String outputDirectoryName,
+                                     @NotNull Format format,
+                                     @NotNull XMLOutputFactory xmlOutputFactory) {
+    //dummy entry points tool
+    if (wrappers.isEmpty()) return;
+    try (XmlWriterWrapper reportWriter = new XmlWriterWrapper(myView.getProject(), outputDirectoryName, shortName,
+                                                              xmlOutputFactory, format, GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
+         XmlWriterWrapper aggregateWriter = new XmlWriterWrapper(myView.getProject(), outputDirectoryName, shortName + AGGREGATE,
+                                                                 xmlOutputFactory, format, ROOT)) {
+      reportWriter.checkOpen();
+      for (InspectionToolWrapper wrapper : wrappers) {
+        InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(wrapper);
+        presentation.exportResults(reportWriter::writeElement, presentation::isExcluded, presentation::isExcluded);
+        if (presentation instanceof AggregateResultsExporter) {
+          ((AggregateResultsExporter)presentation).exportAggregateResults(aggregateWriter::writeElement);
+        }
+      }
+    }
+  }
+
+  private void writeProfileName(String outputDirectoryName) throws IOException {
+    final Element element = new Element(InspectionApplication.INSPECTIONS_NODE);
+    element.setAttribute(InspectionApplication.PROFILE, myView.getCurrentProfileName());
+    JDOMUtil.write(element,
+                   new File(outputDirectoryName, InspectionApplication.DESCRIPTIONS + InspectionApplication.XML_EXTENSION),
+                   CodeStyle.getDefaultSettings().getLineSeparator());
   }
 
   @NotNull
@@ -188,23 +194,15 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  private Set<InspectionToolWrapper> getWorkedTools(@NotNull InspectionNode node) {
-    final Set<InspectionToolWrapper> result = new HashSet<>();
-    final InspectionToolWrapper wrapper = node.getToolWrapper();
-    if (myView.getCurrentProfileName() == null){
-      result.add(wrapper);
-      return result;
+  private Collection<InspectionToolWrapper> getWrappersForAllScopes(@NotNull String shortName) {
+    GlobalInspectionContextImpl context = myView.getGlobalInspectionContext();
+    Tools tools = context.getTools().get(shortName);
+    if (tools != null) {
+      return tools.getTools().stream().map(ScopeToolState::getTool).collect(Collectors.toList());
+    } else {
+      //dummy entry points tool
+      return Collections.emptyList();
     }
-    final String shortName = wrapper.getShortName();
-    final GlobalInspectionContextImpl context = myView.getGlobalInspectionContext();
-    final Tools tools = context.getTools().get(shortName);
-    if (tools != null) {   //dummy entry points tool
-      for (ScopeToolState state : tools.getTools()) {
-        InspectionToolWrapper toolWrapper = state.getTool();
-        result.add(toolWrapper);
-      }
-    }
-    return result;
   }
 
   private static class XmlWriterWrapper implements Closeable {

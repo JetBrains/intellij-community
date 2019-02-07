@@ -7,7 +7,7 @@ class Test {
 
   {
     Set<Map.Entry<String, Integer>> sort3 = new TreeSet<>((x, y) -> {
-      return Integer.compare(x.get<ref>Value(), y.getValue());
+      return Integer.compare(x.get<caret>Value(), y.getValue());
     });
   }
 }

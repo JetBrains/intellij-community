@@ -162,7 +162,9 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
 
   @Override
   public void setState(@NotNull final FileEditorState state, boolean exactState) {
-    myAsyncLoader.setEditorState((TextEditorState)state, exactState);
+    if (state instanceof TextEditorState) {
+      myAsyncLoader.setEditorState((TextEditorState)state, exactState);
+    }
   }
 
   @Override

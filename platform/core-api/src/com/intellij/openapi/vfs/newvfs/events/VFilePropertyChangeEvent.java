@@ -23,6 +23,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.charset.Charset;
+
 /**
  * @author max
  */
@@ -53,10 +55,13 @@ public class VFilePropertyChangeEvent extends VFileEvent {
     switch (propertyName) {
       case VirtualFile.PROP_NAME:
         if (oldValue == null) throw new IllegalArgumentException("oldName must not be null");
+        if (!(oldValue instanceof String)) throw new IllegalArgumentException("oldName must be String, got "+oldValue);
         if (newValue == null) throw new IllegalArgumentException("newName must not be null");
+        if (!(newValue instanceof String)) throw new IllegalArgumentException("newName must be String, got "+newValue);
         break;
       case VirtualFile.PROP_ENCODING:
         if (oldValue == null) throw new IllegalArgumentException("oldCharset must not be null");
+        if (!(oldValue instanceof Charset)) throw new IllegalArgumentException("oldValue must be Charset, got "+oldValue);
         break;
       case VirtualFile.PROP_WRITABLE:
         if (!(oldValue instanceof Boolean)) throw new IllegalArgumentException("oldWriteable must be boolean, got " + oldValue);

@@ -20,7 +20,6 @@ import java.util.List;
  * Implementations of this interface are expected to be thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 7/16/12 3:23 PM
  * @param <E>   entry type
  */
 public interface Rearranger<E extends ArrangementEntry> {

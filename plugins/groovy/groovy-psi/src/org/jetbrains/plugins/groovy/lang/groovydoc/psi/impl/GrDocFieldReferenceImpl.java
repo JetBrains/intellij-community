@@ -28,6 +28,7 @@ public class GrDocFieldReferenceImpl extends GrDocMemberReferenceImpl implements
     super(node);
   }
 
+  @Override
   public String toString() {
     return "GrDocFieldReference";
   }

@@ -172,7 +172,7 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
     return file.isInLocalFileSystem() && myVcsManager.getVcsFor(file) != null;
   }
 
-  private class BaseContentImpl implements BaseContent {
+  private static class BaseContentImpl implements BaseContent {
     @NotNull private final ContentRevision myContentRevision;
 
     BaseContentImpl(@NotNull ContentRevision contentRevision) {

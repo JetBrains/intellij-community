@@ -60,6 +60,9 @@ public class IdeMouseEventDispatcherTest extends LightPlatformTestCase {
       KeymapManagerEx.getInstanceEx().setActiveKeymap(mySavedKeymap);
       ActionManager.getInstance().unregisterAction(OUR_TEST_ACTION);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

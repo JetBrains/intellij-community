@@ -117,6 +117,7 @@ public class LightPackageReference extends LightElement implements PsiJavaCodeRe
     }
   }
 
+  @Override
   public String toString(){
     return "PsiJavaCodeReferenceElement:" + getText();
   }

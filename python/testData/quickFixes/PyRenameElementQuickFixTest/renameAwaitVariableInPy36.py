@@ -1,1 +1,1 @@
-<warning descr="'async' and 'await' are keywords in Python 3.7 and newer">await</warning> = 1
+<warning descr="Python version 3.7 does not allow 'async' and 'await' as names">await</warning> = 1

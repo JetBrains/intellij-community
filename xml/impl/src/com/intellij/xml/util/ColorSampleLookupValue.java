@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.lookup.DeferredUserLookupValue;
@@ -22,7 +8,6 @@ import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -142,7 +127,7 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
   @Override
   @Nullable
   public String getTypeHint() {
-    return myName != null && !StringUtil.startsWithChar(myName, '#') 
+    return myName != null && !StringUtil.startsWithChar(myName, '#')
            && myValue != null && StringUtil.startsWithChar(myValue, '#') ? myValue : null;
   }
 
@@ -166,14 +151,6 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     return myName == null || Character.isLowerCase(myName.charAt(0)) ? HIGHER : NORMAL;
   }
 
-  public static void addColorPreviewAndCodeToLookup(final PsiElement currentElement, final StringBuilder buf) {
-    final Color colorFromElement = UserColorLookup.getColorFromElement(currentElement);
-
-    if (colorFromElement != null) {
-      addColorPreviewAndCodeToLookup(colorFromElement, buf);
-    }
-  }
-
   private static String toHex(@NotNull final Color color) {
     final StringBuilder sb = new StringBuilder();
     for (int i = 0; i < 3; i++) {
@@ -186,18 +163,6 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     }
 
     return sb.toString();
-  }
-
-  public static void addColorPreviewAndCodeToLookup(final Color color, final StringBuilder buf) {
-    if (color == null) return;
-    final String code = '#' + toHex(color);
-    final String colorName = ColorMap.getColorNameForHexCode(code);
-    if (colorName != null) {
-      buf.append(XmlBundle.message("color.name", colorName)).append(BR);
-    }
-
-    String colorBox = "<div style=\"border: 1px solid #000000; width: 50px; height: 20px; background-color:" + code + "\"></div>";
-    buf.append(XmlBundle.message("color.preview", colorBox)).append(BR);
   }
 
   @Override

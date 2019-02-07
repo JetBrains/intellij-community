@@ -21,11 +21,6 @@ public abstract class ApplicationUsagesCollector extends FeatureUsagesCollector 
   }
 
   @NotNull
-  public static String getExtensionPointName() {
-    return EP_NAME.getName();
-  }
-
-  @NotNull
   public abstract Set<UsageDescriptor> getUsages();
 
   @Nullable

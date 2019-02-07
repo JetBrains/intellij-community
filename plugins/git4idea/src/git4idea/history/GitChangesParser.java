@@ -69,17 +69,17 @@ public class GitChangesParser {
       case NEW:
         before = null;
         status = FileStatus.ADDED;
-        after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, true);
+        after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, false);
         break;
       case MODIFICATION:
         status = FileStatus.MODIFIED;
-        final FilePath filePath = GitContentRevision.createPath(vcsRoot, path, true);
-        before = GitContentRevision.createRevision(vcsRoot, path, parentRevision, project, true);
+        final FilePath filePath = GitContentRevision.createPath(vcsRoot, path, false);
+        before = GitContentRevision.createRevision(vcsRoot, path, parentRevision, project, false);
         after = GitContentRevision.createRevision(filePath, thisRevision, project, null);
         break;
       case DELETED:
         status = FileStatus.DELETED;
-        final FilePath filePathDeleted = GitContentRevision.createPath(vcsRoot, path, true);
+        final FilePath filePathDeleted = GitContentRevision.createPath(vcsRoot, path, false);
         before = GitContentRevision.createRevision(filePathDeleted, parentRevision, project, null);
         after = null;
         break;
@@ -87,8 +87,8 @@ public class GitChangesParser {
         status = FileStatus.MODIFIED;
         String secondPath = statusInfo.getSecondPath();
         final FilePath filePathAfterRename = GitContentRevision.createPath(vcsRoot, secondPath == null ? path : secondPath,
-                                                                           true);
-        before = GitContentRevision.createRevision(vcsRoot, path, parentRevision, project, true);
+                                                                           false);
+        before = GitContentRevision.createRevision(vcsRoot, path, parentRevision, project, false);
         after = GitContentRevision.createRevision(filePathAfterRename, thisRevision, project, null);
         break;
       default:

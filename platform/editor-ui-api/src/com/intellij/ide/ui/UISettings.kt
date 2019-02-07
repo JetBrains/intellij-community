@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("PropertyName")
 
 package com.intellij.ide.ui
@@ -11,16 +11,13 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.ComponentTreeEventDispatcher
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.UIUtil.isValidFont
 import com.intellij.util.xmlb.annotations.Transient
-import java.awt.Font
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.RenderingHints
@@ -273,15 +270,21 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
     }
 
   var fontFace: String?
-    get() = state.fontFace
+    get() = notRoamableOptions.state.fontFace
     set(value) {
-      state.fontFace = value
+      notRoamableOptions.state.fontFace = value
     }
 
   var fontSize: Int
-    get() = state.fontSize
+    get() = notRoamableOptions.state.fontSize
     set(value) {
-      state.fontSize = value
+      notRoamableOptions.state.fontSize = value
+    }
+
+  var fontScale: Float
+    get() = notRoamableOptions.state.fontScale
+    set(value) {
+      notRoamableOptions.state.fontScale = value
     }
 
   var showDirectoryForNonUniqueFilenames: Boolean
@@ -481,7 +484,7 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
   }
 
   private fun withDefFont(): UISettings {
-    initDefFont()
+    notRoamableOptions.state.initDefFont()
     return this
   }
 
@@ -527,13 +530,6 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
     CONSOLE_CYCLE_BUFFER_SIZE_KB = consoleCycleBufferSizeKb
   }
 
-  private fun initDefFont() {
-    val fontData = systemFontFaceAndSize
-    if (fontFace == null) fontFace = fontData.first
-    if (fontSize <= 0) fontSize = fontData.second
-    if (state.fontScale <= 0) state.fontScale = defFontScale
-  }
-
   override fun getState() = state
 
   override fun loadState(state: UISettingsState) {
@@ -560,32 +556,6 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
       state.alphaModeRatio = 0.5f
     }
 
-    state.fontSize = restoreFontSize(state.fontSize, state.fontScale)
-    state.fontScale = defFontScale
-    initDefFont()
-
-    // 1. Sometimes system font cannot display standard ASCII symbols. If so we have
-    // find any other suitable font withing "preferred" fonts first.
-    var fontIsValid = isValidFont(Font(state.fontFace, Font.PLAIN, state.fontSize))
-    if (!fontIsValid) {
-      for (preferredFont in arrayOf("dialog", "Arial", "Tahoma")) {
-        if (isValidFont(Font(preferredFont, Font.PLAIN, state.fontSize))) {
-          state.fontFace = preferredFont
-          fontIsValid = true
-          break
-        }
-      }
-
-      // 2. If all preferred fonts are not valid in current environment
-      // we have to find first valid font (if any)
-      if (!fontIsValid) {
-        val fontNames = UIUtil.getValidFontNames(false)
-        if (fontNames.isNotEmpty()) {
-          state.fontFace = fontNames[0]
-        }
-      }
-    }
-
     if (state.maxClipboardContents <= 0) {
       state.maxClipboardContents = 5
     }
@@ -602,6 +572,19 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
     if (state.editorAAType != AntialiasingType.SUBPIXEL) {
       editorAAType = state.editorAAType
       state.editorAAType = AntialiasingType.SUBPIXEL
+    }
+
+    if (state.fontSize != UISettingsState.defFontSize) {
+      fontSize = state.fontSize
+      state.fontSize = UISettingsState.defFontSize
+    }
+    if (state.fontScale != 0f) {
+      fontScale = state.fontScale
+      state.fontScale = 0f
+    }
+    if (state.fontFace != null) {
+      fontFace = state.fontFace
+      state.fontFace = null
     }
   }
 
@@ -691,13 +674,3 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
   var CONSOLE_CYCLE_BUFFER_SIZE_KB = consoleCycleBufferSizeKb
   //</editor-fold>
 }
-
-internal val systemFontFaceAndSize: Pair<String, Int>
-  get() {
-    val fontData = UIUtil.getSystemFontData()
-    if (fontData != null) {
-      return fontData
-    }
-
-    return Pair.create("Dialog", 12)
-  }

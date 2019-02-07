@@ -20,7 +20,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -116,9 +115,9 @@ public class GroovyTypeCheckVisitorHelper {
     if (args == null) return LocalQuickFix.EMPTY_ARRAY;
 
     final List<Pair<Integer, PsiType>> allErrors = new ArrayList<>();
-    final List<GrClosureSignature> signatures = GrClosureSignatureUtil.generateSimpleSignatures(signature);
-    for (GrClosureSignature closureSignature : signatures) {
-      final GrClosureSignatureUtil.MapResultWithError<PsiType> map = GrClosureSignatureUtil.mapSimpleSignatureWithErrors(
+    final List<GrSignature> signatures = GrClosureSignatureUtil.generateSimpleSignatures(Collections.singletonList(signature));
+    for (GrSignature closureSignature : signatures) {
+      final GrClosureSignatureUtil.MapResultWithError map = GrClosureSignatureUtil.mapSimpleSignatureWithErrors(
         closureSignature, argumentTypes, id, argumentList, 255
       );
       if (map != null) {

@@ -34,7 +34,7 @@ public class SelectFilePathsDialog extends AbstractSelectFilesDialog {
   private final ChangesTreeImpl<FilePath> myFileList;
 
   public SelectFilePathsDialog(@NotNull Project project,
-                               @NotNull List<FilePath> originalFiles,
+                               @NotNull List<? extends FilePath> originalFiles,
                                @Nullable String prompt,
                                @Nullable VcsShowConfirmationOption confirmationOption,
                                @Nullable String okActionName,

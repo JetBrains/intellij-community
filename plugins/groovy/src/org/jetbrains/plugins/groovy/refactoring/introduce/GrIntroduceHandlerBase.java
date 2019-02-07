@@ -76,7 +76,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
     GrExpression rawExpr = (GrExpression)PsiUtil.skipParentheses(initializer, false);
 
-    if (ltype == null || TypesUtil.isAssignableWithoutConversions(ltype, rtype, initializer) || !TypesUtil.isAssignable(ltype, rtype, initializer)) {
+    if (ltype == null || TypesUtil.isAssignableWithoutConversions(ltype, rtype) || !TypesUtil.isAssignable(ltype, rtype, initializer)) {
       return rawExpr;
     }
     else { // implicit coercion should be replaced with explicit cast

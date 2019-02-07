@@ -1,27 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <info>
-  <entry
-      path="ReduceReturnOrYieldBreakTransformation.cs"
-      revision="91603"
-      kind="file">
-    <url>
-      http://svn.labs.intellij.net/resharper/trunk/ReSharper/src/Decompiler.Core/Src/Transformations/StatementStructure/ReduceReturnOrYieldBreakTransformation.cs
-    </url>
+  <entry kind="file" path="file1.txt" revision="11">
+    <url>http://abc.com/file1.txt</url>
+    <lock>
+      <token>token1</token>
+      <owner>author1</owner>
+      <comment>comment1</comment>
+      <created>2018-01-01T15:00:00.000000Z</created>
+    </lock>
     <repository>
-      <root>http://svn.labs.intellij.net/resharper</root>
-      <uuid>ed0594e5-7722-0410-9c76-949374689613</uuid>
+      <root>http://abc.com</root>
+      <uuid>id1</uuid>
     </repository>
     <wc-info>
-      <wcroot-abspath>C:/TestProjects/sortedProjects/Subversion/Resharper17short</wcroot-abspath>
       <schedule>normal</schedule>
       <depth>infinity</depth>
-      <text-updated>2012-01-20T11:25:32.625000Z</text-updated>
-      <checksum>7af8adacb93afaa48b2cfb76de605824c220983a</checksum>
+      <copy-from-url>http://abc.com/file.txt</copy-from-url>
+      <copy-from-rev>9</copy-from-rev>
+      <moved-to>file1.txt</moved-to>
+      <moved-from>file.txt</moved-from>
     </wc-info>
-    <commit
-        revision="87972">
-      <author>Slava.Trenogin</author>
-      <date>2011-10-06T21:27:41.539022Z</date>
+    <commit revision="9">
+      <author>author1</author>
+      <date>2018-01-01T12:00:00.000000Z</date>
     </commit>
+    <tree-conflict operation="switch" kind="file" reason="delete" victim="file1.txt" action="edit">
+      <version side="source-left" kind="file" path-in-repos="file1.txt" repos-url="http://abc.com" revision="9"/>
+      <version side="source-right" kind="file" path-in-repos="file1.txt" repos-url="http://abc.com" revision="10"/>
+    </tree-conflict>
+    <conflict>
+      <prev-base-file>file1.txt.r10</prev-base-file>
+      <prev-wc-file>file1.txt.mine</prev-wc-file>
+      <cur-base-file>file1.txt.r11</cur-base-file>
+    </conflict>
   </entry>
 </info>

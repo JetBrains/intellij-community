@@ -61,7 +61,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
     final Config configuration = getConfiguration();
     myDisplayName = getSettings().getName();
-    myHelpTopic = "reference.dialogs.rundebug." + configuration.getType().getId();
+    myHelpTopic = configuration.getType().getHelpTopic();
 
     myBrokenConfiguration = !configuration.getType().isManaged();
     setFolderName(getSettings().getFolderName());

@@ -607,11 +607,11 @@ class StateMerger {
 
   static final class EqClassInfo {
     final List<DfaVariableValue> vars;
-    final DfaValue constant;
+    final DfaConstValue constant;
 
     EqClassInfo(EqClass eqClass) {
       vars = eqClass.getVariables(false);
-      constant = eqClass.findConstant(true);
+      constant = eqClass.findConstant();
     }
   }
 }

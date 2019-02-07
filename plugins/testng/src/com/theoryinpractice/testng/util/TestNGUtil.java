@@ -45,7 +45,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author Hani Suleiman
- * @since Jul 20, 2005
  */
 public class TestNGUtil {
   public static final String TESTNG_GROUP_NAME = "TestNG";

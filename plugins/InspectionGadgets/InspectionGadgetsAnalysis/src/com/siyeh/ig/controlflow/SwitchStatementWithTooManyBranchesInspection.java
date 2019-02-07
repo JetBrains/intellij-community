@@ -16,6 +16,8 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.psi.PsiSwitchBlock;
+import com.intellij.psi.PsiSwitchExpression;
 import com.intellij.psi.PsiSwitchStatement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -62,15 +64,23 @@ public class SwitchStatementWithTooManyBranchesInspection extends BaseInspection
   }
 
   private class SwitchStatementWithTooManyBranchesVisitor extends BaseInspectionVisitor {
+    @Override
+    public void visitSwitchExpression(PsiSwitchExpression expression) {
+      processSwitch(expression);
+    }
 
     @Override
     public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
-      final int branchCount = SwitchUtils.calculateBranchCount(statement);
+      processSwitch(statement);
+    }
+
+    public void processSwitch(PsiSwitchBlock expression) {
+      final int branchCount = SwitchUtils.calculateBranchCount(expression);
       final int branchCountExcludingDefault = (branchCount < 0) ? -branchCount - 1 : branchCount;
       if (branchCountExcludingDefault <= m_limit) {
         return;
       }
-      registerStatementError(statement, Integer.valueOf(branchCountExcludingDefault));
+      registerError(expression.getFirstChild(), Integer.valueOf(branchCountExcludingDefault));
     }
   }
 }

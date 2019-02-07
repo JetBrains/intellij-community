@@ -27,6 +27,7 @@ public class GrSynchronizedStatementImpl extends GroovyPsiElementImpl implements
     visitor.visitSynchronizedStatement(this);
   }
 
+  @Override
   public String toString() {
     return "Synchronized statement";
   }

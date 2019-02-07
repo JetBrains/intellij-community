@@ -5,7 +5,7 @@ public class InnerClass {
         void foo(int i) {}
 
         void bar() {
-            <ref>foo();
+            <caret>foo();
         }
     }
 

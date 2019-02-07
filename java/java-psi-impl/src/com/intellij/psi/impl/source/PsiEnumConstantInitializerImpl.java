@@ -161,6 +161,7 @@ public class PsiEnumConstantInitializerImpl extends PsiClassImpl implements PsiE
     }
   }
 
+  @Override
   public String toString() {
     return "PsiAnonymousClass (PsiEnumConstantInitializerImpl)):";
   }

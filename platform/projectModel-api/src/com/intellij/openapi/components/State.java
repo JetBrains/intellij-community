@@ -49,6 +49,9 @@ public @interface State {
    */
   boolean externalStorageOnly() default false;
 
+  /**
+   * If true and statistics is enabled, values of boolean fields will be recorded.
+   */
   boolean reportStatistic() default false;
 
   abstract class NameGetter implements Getter<String> {

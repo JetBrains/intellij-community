@@ -2,8 +2,9 @@ def msg = new StringBuffer()
 msg += "aaa"
 -----
 0(1) element: null
-1(2) WRITE msg
-2(3) READ msg
-3(4) WRITE msg
-4(5) element: Assignment expression MAYBE_RETURN
-5() element: null
+1(2) ARGUMENTS element: NEW expression
+2(3) WRITE msg
+3(4) READ msg
+4(5) WRITE msg
+5(6) element: Assignment expression MAYBE_RETURN
+6() element: null

@@ -16,16 +16,15 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_TS
 /**
  * @author ven
 */
-class GroovyWordsScanner extends VersionedWordsScanner
-{
-  private final Lexer myLexer;
-  GroovyWordsScanner()
-  {
-    myLexer = new GroovyLexer();
-  }
+class GroovyWordsScanner extends VersionedWordsScanner {
+  private Lexer myLexer;
 
   @Override
   public void processWords(CharSequence fileText, Processor<WordOccurrence> processor) {
+    if (myLexer == null) {
+      myLexer = new GroovyLexer();
+    }
+
     myLexer.start(fileText);
     WordOccurrence occurrence = null; // shared occurrence
 

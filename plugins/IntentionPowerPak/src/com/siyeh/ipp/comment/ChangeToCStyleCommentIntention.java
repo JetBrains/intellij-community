@@ -64,7 +64,7 @@ public class ChangeToCStyleCommentIntention extends Intention {
     final String newCommentString;
     if (multiLineComments.isEmpty()) {
       final String text = getCommentContents(firstComment);
-      newCommentString = "/* " + text + " */";
+      newCommentString = "/* " + text.trim() + " */";
     }
     else {
       final StringBuilder text = new StringBuilder();
@@ -113,6 +113,6 @@ public class ChangeToCStyleCommentIntention extends Intention {
 
   private static String getCommentContents(@NotNull PsiComment comment) {
     final String text = comment.getText();
-    return StringUtil.replace(text.substring(2), "*/", "* /").trim();
+    return StringUtil.replace(text.substring(2), "*/", "* /");
   }
 }

@@ -34,6 +34,7 @@ public class ConditionalExpressionFixTest extends IGQuickFixesTestCase {
   public void testInsideExprLambdaWithParams() { doTest(); }
   public void testParentheses() { doTest(); }
   public void testNestedConditional() { doTest(); }
+  public void testInsideSwitchExpression() { doTest(); }
   public void testNestedConditionalChangesSemantics() { doTest(InspectionGadgetsBundle.message("conditional.expression.semantics.quickfix")); }
 
   public void testSimpleOption() {
@@ -45,6 +46,6 @@ public class ConditionalExpressionFixTest extends IGQuickFixesTestCase {
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
-    builder.setLanguageLevel(LanguageLevel.JDK_10);
+    builder.setLanguageLevel(LanguageLevel.JDK_12_PREVIEW);
   }
 }

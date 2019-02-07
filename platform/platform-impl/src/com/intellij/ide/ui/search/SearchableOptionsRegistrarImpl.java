@@ -18,10 +18,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.ByteArrayCharSequence;
 import com.intellij.util.text.CharSequenceHashingStrategy;
 import gnu.trove.THashMap;
@@ -32,18 +35,24 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.DocumentEvent;
+import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.regex.Pattern;
 
+import static com.intellij.util.containers.ContainerUtil.newHashSet;
+
+@SuppressWarnings("Duplicates")
 public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   // option => array of packed OptionDescriptor
-  private final Map<CharSequence, long[]> myStorage = Collections.synchronizedMap(new THashMap<CharSequence, long[]>(20, 0.9f, CharSequenceHashingStrategy.CASE_SENSITIVE));
+  private final Map<CharSequence, long[]> myStorage = Collections.synchronizedMap(new THashMap<>(20, 0.9f, CharSequenceHashingStrategy.CASE_SENSITIVE));
 
-  private final Set<String> myStopWords = Collections.synchronizedSet(new THashSet<String>());
-  private final Map<Couple<String>, Set<String>> myHighlightOption2Synonym = Collections.synchronizedMap(
-    new THashMap<Couple<String>, Set<String>>());
+  private final Set<String> myStopWords = Collections.synchronizedSet(new THashSet<>());
+  private final Map<Couple<String>, Set<String>> myHighlightOption2Synonym = Collections.synchronizedMap(new THashMap<>());
   private volatile boolean allTheseHugeFilesAreLoaded;
 
   private final IndexedCharsInterner myIdentifierTable = new IndexedCharsInterner() {
@@ -69,7 +78,10 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
         ApplicationManager.getApplication().isUnitTestMode()) return;
     try {
       //stop words
-      final String text = ResourceUtil.loadText(ResourceUtil.getResource(SearchableOptionsRegistrarImpl.class, "/search/", "ignore.txt"));
+      URL url = ResourceUtil.getResource(SearchableOptionsRegistrarImpl.class, "/search/", "ignore.txt");
+      if (url == null) return; // IDE does not provide /search/ignore.txt
+
+      String text = ResourceUtil.loadText(url);
       final String[] stopWords = text.split("[\\W]");
       ContainerUtil.addAll(myStopWords, stopWords);
     }
@@ -85,34 +97,38 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     allTheseHugeFilesAreLoaded = true;
     try {
       //index
-      final URL indexResource = ResourceUtil.getResource(SearchableOptionsRegistrar.class, "/search/", "searchableOptions.xml");
-      if (indexResource == null) {
+      final Set<URL> searchableOptions = findSearchableOptions();
+      if (searchableOptions.isEmpty()) {
         LOG.info("No /search/searchableOptions.xml found, settings search won't work!");
         return;
       }
-
-      Element root = JDOMUtil.load(indexResource);
-      List configurables = root.getChildren("configurable");
-      for (final Object o : configurables) {
-        final Element configurable = (Element)o;
-        final String id = configurable.getAttributeValue("id");
-        final String groupName = configurable.getAttributeValue("configurable_name");
-        final List options = configurable.getChildren("option");
-        for (Object o1 : options) {
-          Element optionElement = (Element)o1;
-          final String option = optionElement.getAttributeValue("name");
-          final String path = optionElement.getAttributeValue("path");
-          final String hit = optionElement.getAttributeValue("hit");
-          putOptionWithHelpId(option, id, groupName, hit, path);
+      for (final URL url : searchableOptions) {
+        final Element root = JDOMUtil.load(url);
+        final List configurables = root.getChildren("configurable");
+        for (final Object o : configurables) {
+          final Element configurable = (Element)o;
+          final String id = configurable.getAttributeValue("id");
+          if (id == null) continue;
+          final String groupName = configurable.getAttributeValue("configurable_name");
+          final List options = configurable.getChildren("option");
+          for (Object o1 : options) {
+            Element optionElement = (Element)o1;
+            final String option = optionElement.getAttributeValue("name");
+            if (option == null) continue;
+            final String path = optionElement.getAttributeValue("path");
+            final String hit = optionElement.getAttributeValue("hit");
+            putOptionWithHelpId(option, id, groupName, hit, path);
+          }
         }
       }
 
       //synonyms
-      root = JDOMUtil.load(ResourceUtil.getResource(SearchableOptionsRegistrar.class, "/search/", "synonyms.xml"));
-      configurables = root.getChildren("configurable");
+      final Element root = JDOMUtil.load(ResourceUtil.getResource(SearchableOptionsRegistrar.class, "/search/", "synonyms.xml"));
+      final List configurables = root.getChildren("configurable");
       for (final Object o : configurables) {
         final Element configurable = (Element)o;
         final String id = configurable.getAttributeValue("id");
+        if (id == null) continue;
         final String groupName = configurable.getAttributeValue("configurable_name");
         final List synonyms = configurable.getChildren("synonym");
         for (Object o1 : synonyms) {
@@ -171,6 +187,51 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     }
   }
 
+  @NotNull
+  private static Set<URL> findSearchableOptions() throws IOException, URISyntaxException {
+    final Set<URL> urls = newHashSet();
+    final Set<ClassLoader> visited = newHashSet();
+    for (final IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
+      if (!plugin.isEnabled()) {
+        continue;
+      }
+      final ClassLoader classLoader = plugin.getPluginClassLoader();
+      if (visited.add(classLoader)) {
+        final Enumeration<URL> resources = classLoader.getResources("search");
+        while (resources.hasMoreElements()) {
+          final URL url = resources.nextElement();
+          if (URLUtil.JAR_PROTOCOL.equals(url.getProtocol())) {
+            final Pair<String, String> parts = ObjectUtils.notNull(URLUtil.splitJarUrl(url.getFile()));
+            final File file = new File(parts.first);
+            try (final JarFile jar = new JarFile(file)) {
+              final Enumeration<JarEntry> entries = jar.entries();
+              while (entries.hasMoreElements()) {
+                final String name = entries.nextElement().getName();
+                if (name.startsWith("search/") && name.endsWith(SEARCHABLE_OPTIONS_XML) && StringUtil.countChars(name, '/') == 1) {
+                  urls.add(URLUtil.getJarEntryURL(file, name));
+                }
+              }
+            }
+          }
+          else {
+            final File file = new File(url.toURI());
+            if (file.isDirectory()) {
+              final File[] files = file.listFiles((dir, name) -> name.endsWith(SEARCHABLE_OPTIONS_XML));
+              if (files != null) {
+                for (final File xml : files) {
+                  if (xml.isFile()) {
+                    urls.add(xml.toURI().toURL());
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return urls;
+  }
+
   /**
    * @return XYZT:64 bits where X:16 bits - id of the interned groupName
    *                            Y:16 bits - id of the interned id
@@ -186,7 +247,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     assert _hit >= 0 && _hit <= Short.MAX_VALUE;
     assert _path >= 0 && _path <= Short.MAX_VALUE;
     assert _groupName >= 0 && _groupName <= Short.MAX_VALUE;
-    return _groupName << 48 | _id << 32 | _hit << 16 | _path << 0;
+    return _groupName << 48 | _id << 32 | _hit << 16 | _path/* << 0*/;
   }
 
   private OptionDescription unpack(long data) {
@@ -194,10 +255,10 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     int _id = (int)(data >> 32 & 0xffff);
     int _hit = (int)(data >> 16 & 0xffff);
     int _path = (int)(data & 0xffff);
-    assert _id >= 0 && _id < Short.MAX_VALUE;
-    assert _hit >= 0 && _hit <= Short.MAX_VALUE;
-    assert _path >= 0 && _path <= Short.MAX_VALUE;
-    assert _groupName >= 0 && _groupName <= Short.MAX_VALUE;
+    assert /*_id >= 0 && */_id < Short.MAX_VALUE;
+    assert /*_hit >= 0 && */_hit <= Short.MAX_VALUE;
+    assert /*_path >= 0 && */_path <= Short.MAX_VALUE;
+    assert /*_groupName >= 0 && */_groupName <= Short.MAX_VALUE;
 
     String groupName = _groupName == Short.MAX_VALUE ? null : myIdentifierTable.fromId(_groupName).toString();
     String configurableId = myIdentifierTable.fromId(_id).toString();
@@ -228,6 +289,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     myStorage.put(ByteArrayCharSequence.convertToBytesIfPossible(option), configs);
   }
 
+  @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
   @Override
   @NotNull
   public ConfigurableHit getConfigurables(ConfigurableGroup[] groups,
@@ -380,7 +442,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
         }
         result = description;
       }
-      return result != null ? result.getPath() : null;
+      return result.getPath();
     }
   }
 

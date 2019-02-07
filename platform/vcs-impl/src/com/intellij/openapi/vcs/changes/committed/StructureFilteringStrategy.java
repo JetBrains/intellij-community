@@ -186,10 +186,10 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
     public void reset() {
       myFilePaths.clear();
       myState = TreeState.createOn(myStructureTree, (DefaultMutableTreeNode)myStructureTree.getModel().getRoot());
-      myStructureTree.setModel(TreeModelBuilder.buildEmpty(myProject));
+      myStructureTree.setModel(TreeModelBuilder.buildEmpty());
     }
 
-    public void append(final List<CommittedChangeList> changeLists) {
+    public void append(final List<? extends CommittedChangeList> changeLists) {
       final TreeState localState = myState != null && myFilePaths.isEmpty()
                                    ? myState
                                    : TreeState.createOn(myStructureTree, (DefaultMutableTreeNode)myStructureTree.getModel().getRoot());

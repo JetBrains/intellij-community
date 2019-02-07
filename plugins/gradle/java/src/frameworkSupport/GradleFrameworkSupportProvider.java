@@ -21,7 +21,6 @@ import static org.jetbrains.plugins.gradle.service.project.wizard.GradleModuleBu
 
 /**
  * @author Vladislav.Soroka
- * @since 4/23/2015
  */
 public abstract class GradleFrameworkSupportProvider extends FrameworkSupportInModuleProvider {
 

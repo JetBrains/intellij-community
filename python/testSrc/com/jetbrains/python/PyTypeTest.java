@@ -2588,6 +2588,17 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-32240
+  public void testTypingNTFunctionInheritorField() {
+    doTest("str",
+           "from typing import NamedTuple\n" +
+           "\n" +
+           "class A(NamedTuple(\"NT\", [(\"user\", str)])):\n" +
+           "    pass\n" +
+           "    \n" +
+           "expr = A(undefined).user");
+  }
+
   // PY-4351
   public void testCollectionsNTInheritorField() {
     // Seems that this case won't be supported because
@@ -3292,6 +3303,40 @@ public class PyTypeTest extends PyTestCase {
            "a = 1\n" +
            "if a is a:\n" +
            "   expr = a");
+  }
+
+  // PY-31956
+  public void testInAndNotBoolContains() {
+    doTest("bool",
+                   "class MyClass:\n" +
+                   "    def __contains__(self):\n" +
+                   "        return 42\n" +
+                   "\n" +
+                   "expr = 1 in MyClass()");
+  }
+
+  // PY-32533
+  public void testSuperWithAnotherType() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON34,
+      () -> doTest("A",
+                   "class A:\n" +
+                   "    def f(self):\n" +
+                   "        return 'A'\n" +
+                   "\n" +
+                   "class B:\n" +
+                   "    def f(self):\n" +
+                   "        return 'B'\n" +
+                   "\n" +
+                   "class C(B):\n" +
+                   "    def f(self):\n" +
+                   "        return 'C'\n" +
+                   "\n" +
+                   "class D(C, A):\n" +
+                   "    def f(self):\n" +
+                   "        expr = super(B, self)\n" +
+                   "        return expr.f()")
+    );
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {

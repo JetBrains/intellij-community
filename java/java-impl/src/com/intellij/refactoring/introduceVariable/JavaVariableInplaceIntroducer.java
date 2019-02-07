@@ -97,7 +97,8 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     final List<RangeMarker> rangeMarkers = getOccurrenceMarkers();
     editor.putUserData(ReassignVariableUtil.OCCURRENCES_KEY,
                        rangeMarkers.toArray(new RangeMarker[0]));
-    myReplaceSelf = myExpr.getParent() instanceof PsiExpressionStatement;
+    PsiElement parent = myExpr.getParent();
+    myReplaceSelf = parent instanceof PsiExpressionStatement && !(parent.getParent() instanceof PsiSwitchLabeledRuleStatement);
     mySkipTypeExpressionOnStart = !(myExpr instanceof PsiFunctionalExpression && myReplaceSelf);
   }
 
@@ -422,10 +423,10 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   }
 
   protected PsiVariable introduceVariable() {
-    PsiVariable variable = IntroduceVariableBase
+    PsiVariable variable = VariableExtractor
       .introduce(myProject, myExpr, myEditor, myChosenAnchor.getElement(), getOccurrences(), mySettings);
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
-    if (variable instanceof PsiField) {
+    if (variable instanceof PsiField || variable instanceof PsiResourceVariable) {
       myPointer = smartPointerManager.createSmartPsiElementPointer(variable);
     }
     else {

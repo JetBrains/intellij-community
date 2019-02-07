@@ -8,7 +8,6 @@ import java.util.Comparator;
 
 /**
  * @author Denis Zhdanov
- * @since 8/12/11 12:34 PM
  */
 public interface Named {
 

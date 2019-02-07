@@ -7,7 +7,7 @@ class Test {
     int oldCount1 = getCount1();
     int oldCount2 = getCount2();
     count1++;
-    if (oldCount1 != getCount1() || oldCount2 != getCount2()) {
+    if (oldCount1 != getCount1() || <warning descr="Condition 'oldCount2 != getCount2()' is always 'false' when reached">oldCount2 != getCount2()</warning>) {
       System.out.println("changed");
     }
   }
@@ -16,7 +16,7 @@ class Test {
     int oldCount1 = getCount1();
     int oldCount2 = getCount2();
     count1=count1+1;
-    if (oldCount1 != getCount1() || oldCount2 != getCount2()) {
+    if (oldCount1 != getCount1() || <warning descr="Condition 'oldCount2 != getCount2()' is always 'false' when reached">oldCount2 != getCount2()</warning>) {
       System.out.println("changed");
     }
   }

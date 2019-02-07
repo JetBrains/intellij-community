@@ -21,7 +21,6 @@ package org.jetbrains.plugins.gradle.model;
  * <p/>
  *
  * @author Vladislav.Soroka
- * @since 8/7/2015
  */
 public interface ExternalProjectPreview extends ExternalProject {
 }

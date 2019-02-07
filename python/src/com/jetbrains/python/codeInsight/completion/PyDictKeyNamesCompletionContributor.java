@@ -10,12 +10,12 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -36,32 +36,26 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
       psiElement().inside(PySubscriptionExpression.class),
       new CompletionProvider<CompletionParameters>() {
         @Override
-        protected void addCompletions(
-          @NotNull final CompletionParameters parameters, @NotNull final ProcessingContext context, @NotNull final CompletionResultSet result) {
+        protected void addCompletions(@NotNull CompletionParameters parameters,
+                                      @NotNull ProcessingContext context,
+                                      @NotNull CompletionResultSet result) {
           final PsiElement original = parameters.getOriginalPosition();
           final int offset = parameters.getOffset();
           if (original == null) return;
           final CompletionResultSet dictCompletion = createResult(original, result, offset);
 
-          PySubscriptionExpression subscription = PsiTreeUtil.getParentOfType(original, PySubscriptionExpression.class);
+          final PySubscriptionExpression subscription = PsiTreeUtil.getParentOfType(original, PySubscriptionExpression.class);
           if (subscription == null) return;
-          PsiElement operand = subscription.getOperand();
-          PsiReference reference = operand.getReference();
-          if (reference != null) {
-            PsiElement resolvedElement = reference.resolve();
-            if (resolvedElement instanceof PyTargetExpression) {
-              PyDictLiteralExpression dict = PsiTreeUtil.getNextSiblingOfType(resolvedElement, PyDictLiteralExpression.class);
-              if (dict != null) {
-                addDictLiteralKeys(dict, dictCompletion);
-                PsiFile file = parameters.getOriginalFile();
-                addAdditionalKeys(file, operand, dictCompletion);
-              }
-              PyCallExpression dictConstructor = PsiTreeUtil.getNextSiblingOfType(resolvedElement, PyCallExpression.class);
-              if (dictConstructor != null) {
-                addDictConstructorKeys(dictConstructor, dictCompletion);
-                PsiFile file = parameters.getOriginalFile();
-                addAdditionalKeys(file, operand, dictCompletion);
-              }
+          final PsiElement operand = subscription.getOperand();
+          if (operand instanceof PyReferenceExpression) {
+            final PsiElement resolvedElement = PyResolveUtil.fullResolveLocally((PyReferenceExpression)operand);
+            if (resolvedElement instanceof PyDictLiteralExpression) {
+              addDictLiteralKeys((PyDictLiteralExpression)resolvedElement, dictCompletion);
+              addAdditionalKeys(parameters.getOriginalFile(), operand, dictCompletion);
+            }
+            if (resolvedElement instanceof PyCallExpression) {
+              addDictConstructorKeys((PyCallExpression)resolvedElement, dictCompletion);
+              addAdditionalKeys(parameters.getOriginalFile(), operand, dictCompletion);
             }
           }
         }

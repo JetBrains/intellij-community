@@ -28,7 +28,6 @@ import java.util.jar.Manifest;
 
 /**
  * @author anna
- * @since 12-Aug-2008
  * @noinspection SSBasedInspection
  */
 public class CommandLineWrapper {

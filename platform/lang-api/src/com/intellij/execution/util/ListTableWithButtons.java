@@ -17,7 +17,10 @@ package com.intellij.execution.util;
 
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.CommonActionsPanel;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
@@ -88,44 +91,28 @@ public abstract class ListTableWithButtons<T> extends Observable {
     myTableView.getTableViewModel().setSortable(false);
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTableView);
     myPanel = decorator
-      .setAddAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          myTableView.stopEditing();
-          setModified();
-          SwingUtilities.invokeLater(() -> {
-            if (myElements.isEmpty() || !isEmpty(myElements.get(myElements.size() - 1))) {
-              myElements.add(createElement());
-              myTableView.getTableViewModel().setItems(myElements);
-            }
-            myTableView.scrollRectToVisible(myTableView.getCellRect(myElements.size() - 1, 0, true));
-            myTableView.getComponent().editCellAt(myElements.size() - 1, 0);
-          });
-        }
-      }).setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          removeSelected();
-        }
-      }).disableUpDownActions().addExtraActions(createExtraActions()).createPanel();
+      .setAddAction(button -> {
+        myTableView.stopEditing();
+        setModified();
+        SwingUtilities.invokeLater(() -> {
+          if (myElements.isEmpty() || !isEmpty(myElements.get(myElements.size() - 1))) {
+            myElements.add(createElement());
+            myTableView.getTableViewModel().setItems(myElements);
+          }
+          myTableView.scrollRectToVisible(myTableView.getCellRect(myElements.size() - 1, 0, true));
+          myTableView.getComponent().editCellAt(myElements.size() - 1, 0);
+        });
+      }).setRemoveAction(button -> removeSelected()).disableUpDownActions().addExtraActions(createExtraActions()).createPanel();
 
-    ToolbarDecorator.findRemoveButton(myPanel).addCustomUpdater(new AnActionButtonUpdater() {
-      @Override
-      public boolean isEnabled(@NotNull AnActionEvent e) {
-        List<T> selection = getSelection();
-        if (selection.isEmpty() || !myIsEnabled) return false;
-        for (T t : selection) {
-          if (!canDeleteElement(t)) return false;
-        }
-        return true;
+    ToolbarDecorator.findRemoveButton(myPanel).addCustomUpdater(e -> {
+      List<T> selection = getSelection();
+      if (selection.isEmpty() || !myIsEnabled) return false;
+      for (T t : selection) {
+        if (!canDeleteElement(t)) return false;
       }
+      return true;
     });
-    ToolbarDecorator.findAddButton(myPanel).addCustomUpdater(new AnActionButtonUpdater() {
-      @Override
-      public boolean isEnabled(@NotNull AnActionEvent e) {
-        return myIsEnabled;
-      }
-    });
+    ToolbarDecorator.findAddButton(myPanel).addCustomUpdater(e -> myIsEnabled);
 
     myActionsPanel = decorator.getActionsPanel();
 
@@ -139,7 +126,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
       setModified();
       int selectedIndex = myTableView.getSelectionModel().getLeadSelectionIndex();
       myTableView.scrollRectToVisible(myTableView.getCellRect(selectedIndex, 0, true));
-      selected = ContainerUtil.filter(selected, t -> canDeleteElement(t));
+      selected = ContainerUtil.filter(selected, this::canDeleteElement);
       myElements.removeAll(selected);
       myTableView.getSelectionModel().clearSelection();
       myTableView.getTableViewModel().setItems(myElements);

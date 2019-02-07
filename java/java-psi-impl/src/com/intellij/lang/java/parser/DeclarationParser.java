@@ -901,23 +901,18 @@ public class DeclarationParser {
   private PsiBuilder.Marker doParseAnnotationValue(PsiBuilder builder) {
     PsiBuilder.Marker result;
 
-    final IElementType tokenType = builder.getTokenType();
+    IElementType tokenType = builder.getTokenType();
     if (tokenType == JavaTokenType.AT) {
       result = parseAnnotation(builder);
     }
     else if (tokenType == JavaTokenType.LBRACE) {
-      result = parseAnnotationArrayInitializer(builder);
+      result = myParser.getExpressionParser().parseArrayInitializer(
+        builder, JavaElementType.ANNOTATION_ARRAY_INITIALIZER, this::doParseAnnotationValue, "expected.value");
     }
     else {
       result = myParser.getExpressionParser().parseConditional(builder);
     }
 
     return result;
-  }
-
-  @NotNull
-  private PsiBuilder.Marker parseAnnotationArrayInitializer(PsiBuilder builder) {
-    return myParser.getExpressionParser().parseArrayInitializer(builder, JavaElementType.ANNOTATION_ARRAY_INITIALIZER,
-                                                                builder1 -> doParseAnnotationValue(builder1) != null, "expected.value");
   }
 }

@@ -26,7 +26,7 @@ public interface SliceLanguageSupportProvider {
   SliceUsage createRootUsage(@NotNull PsiElement element, @NotNull SliceAnalysisParams params) ;
 
   @Nullable
-  PsiElement getExpressionAtCaret(PsiElement atCaret, boolean dataFlowToThis);
+  PsiElement getExpressionAtCaret(@NotNull PsiElement atCaret, boolean dataFlowToThis);
 
   @NotNull
   PsiElement getElementForDescription(@NotNull PsiElement element);

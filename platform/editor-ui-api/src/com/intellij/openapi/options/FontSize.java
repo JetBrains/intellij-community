@@ -27,7 +27,6 @@ import javax.swing.text.html.StyleSheet;
  * used by IJ for providing quick doc works only with predefined set of font sizes (see {@link StyleSheet#sizeMapDefault}).
  *
  * @author Denis Zhdanov
- * @since 1/26/11 10:22 AM
  */
 public enum FontSize {
 

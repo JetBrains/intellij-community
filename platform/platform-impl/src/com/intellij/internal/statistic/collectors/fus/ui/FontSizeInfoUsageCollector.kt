@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.ui
 
 import com.intellij.ide.ui.UISettings
@@ -19,9 +19,9 @@ class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
   override fun getUsages(): Set<UsageDescriptor> {
     val scheme = EditorColorsManager.getInstance().globalScheme
     val ui = UISettings.shadowInstance
-    var usages = setOf(
-      UsageDescriptor("UI.font.size[${ui.state.fontSize}]"),
-      UsageDescriptor(ensureProperKey("UI.font.name[${ui.state.fontFace}]")),
+    val usages = mutableSetOf(
+      UsageDescriptor("UI.font.size[${ui.fontSize}]"),
+      UsageDescriptor(ensureProperKey("UI.font.name[${ui.fontFace}]")),
       UsageDescriptor("Presentation.mode.font.size[${ui.presentationModeFontSize}]")
     )
     if (!scheme.isUseAppFontPreferencesInEditor) {

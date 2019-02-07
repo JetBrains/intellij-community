@@ -208,7 +208,7 @@ public class LibraryScopeCache {
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      return myOriginal.contains(file) && (myIndex.isInLibraryClasses(file) || myIndex.isInLibrarySource(file));
+      return myOriginal.contains(file) && myIndex.isInLibrary(file);
     }
 
     @Override

@@ -122,7 +122,7 @@ public class ChangelistConflictTracker {
     };
   }
 
-  private void checkFiles(final Collection<VirtualFile> files) {
+  private void checkFiles(final Collection<? extends VirtualFile> files) {
     myChangeListManager.invokeAfterUpdate(() -> {
       final LocalChangeList list = myChangeListManager.getDefaultChangeList();
       for (VirtualFile file : files) {
@@ -172,7 +172,7 @@ public class ChangelistConflictTracker {
     return !LineStatusTrackerManager.getInstance(myProject).arePartialChangelistsEnabled(file);
   }
 
-  private void clearChanges(Collection<Change> changes) {
+  private void clearChanges(Collection<? extends Change> changes) {
     for (Change change : changes) {
       ContentRevision revision = change.getAfterRevision();
       if (revision != null) {

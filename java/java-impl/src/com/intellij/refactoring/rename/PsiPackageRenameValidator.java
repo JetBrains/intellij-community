@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author anna
- * @since 14.03.2011
  */
 public class PsiPackageRenameValidator implements RenameInputValidatorEx {
   private final ElementPattern<? extends PsiElement> myPattern = PlatformPatterns.psiElement(PsiPackage.class);

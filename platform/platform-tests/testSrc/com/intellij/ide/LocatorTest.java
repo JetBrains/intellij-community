@@ -20,12 +20,12 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.testFramework.PlatformTestCase;
+import junit.framework.TestCase;
 
 import java.io.File;
 import java.io.IOException;
 
-public class LocatorTest extends PlatformTestCase {
+public class LocatorTest extends TestCase {
   public void test() throws IOException {
     File locatorFile = new File(PathManager.getSystemPath() + "/" + ApplicationEx.LOCATOR_FILE_NAME);
     assertTrue("doesn't exist: " + locatorFile.getPath(), locatorFile.exists());

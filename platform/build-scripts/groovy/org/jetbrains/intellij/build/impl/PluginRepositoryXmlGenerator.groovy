@@ -45,7 +45,7 @@ class PluginRepositoryXmlGenerator {
       <idea-version since-build="$p.sinceBuild" until-build="$p.untilBuild"/>
       <vendor>${XmlUtil.escapeXml(p.vendor)}</vendor>
       <download-url>${XmlUtil.escapeXml(p.relativeFilePath)}</download-url>
-      <description><![CDATA[$p.description]]></description>
+      <description><![CDATA[$p.description]]></description>$p.depends
     </idea-plugin>"""
         }
         out.println """  </category>"""
@@ -60,6 +60,13 @@ class PluginRepositoryXmlGenerator {
     def xml = new XmlParser().parse(pluginXml)
     def versionNode = xml."idea-version"[0]
 
+    def depends = new StringBuilder()
+    xml."depends".each {
+      if (it."@optional" == null) {
+        depends.append("<depends>").append(it.text()).append("</depends>")
+      }
+    }
+
     def plugin = new Plugin(
       id: xml.id.text(),
       name: xml.name.text(),
@@ -70,7 +77,8 @@ class PluginRepositoryXmlGenerator {
       version: buildNumber,
       description: xml.description.text(),
       relativeFilePath: FileUtil.getRelativePath(targetDirectory, pluginZip),
-      size: pluginZip.length()
+      size: pluginZip.length(),
+      depends: depends.toString()
     )
     ["id", "name", "vendor", "description"].each {
       if (plugin.getProperty(it) == null) {
@@ -92,6 +100,7 @@ class PluginRepositoryXmlGenerator {
     String description
     long size
     String relativeFilePath
+    String depends
   }
 }
 

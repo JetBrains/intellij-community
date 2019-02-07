@@ -1,7 +1,6 @@
 <idea-plugin>
     <name>TestNG-J</name>
     <description>TestNG Integration</description>
-    <version>8.0</version>
     <vendor>Theory In Practice, JetBrains</vendor>
     <depends>com.intellij.java-i18n</depends>
     <extensions defaultExtensionNs="com.intellij">
@@ -9,8 +8,8 @@
         <cantBeStatic implementation="com.theoryinpractice.testng.inspection.TestNGCanBeStaticExtension" />
         <runConfigurationProducer implementation="com.theoryinpractice.testng.configuration.TestNGPatternConfigurationProducer"/>
         <runConfigurationProducer implementation="com.theoryinpractice.testng.configuration.TestNGInClassConfigurationProducer"/>
-        <runConfigurationProducer implementation="com.theoryinpractice.testng.configuration.TestNGPackageConfigurationProducer"/>
-        <runConfigurationProducer implementation="com.theoryinpractice.testng.configuration.TestNGSuiteConfigurationProducer"/>
+        <runConfigurationProducer implementation="com.theoryinpractice.testng.configuration.AbstractTestNGPackageConfigurationProducer"/>
+        <runConfigurationProducer implementation="com.theoryinpractice.testng.configuration.AbstractTestNGSuiteConfigurationProducer"/>
         <configurationType implementation="com.theoryinpractice.testng.configuration.TestNGConfigurationType"/>
        <psi.referenceContributor language="JAVA" implementation="com.theoryinpractice.testng.TestNGReferenceContributor"/>
        <psi.referenceContributor language="Groovy" implementation="com.theoryinpractice.testng.TestNGReferenceContributor"/>

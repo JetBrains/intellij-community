@@ -1,8 +1,10 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.testFramework.file
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.readBytes
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.settingsRepository.SyncType
 import org.junit.Test
 
@@ -23,15 +25,17 @@ internal class OverwriteRemote : GitTestCase() {
       .file("local.xml", """<file path="local.xml" />""")
   }
 
-  @Test fun `empty local`() {
+  @Test
+  fun `empty local`() {
     doTest(false)
   }
 
-  @Test fun `empty local and empty remote`() {
+  @Test
+  fun `empty local and empty remote`() {
     doTest(true)
   }
 
-  private fun doTest(initialRemoteCommit: Boolean) {
+  private fun doTest(initialRemoteCommit: Boolean) = runBlocking<Unit> {
     createRemoteRepository(initialCommit = initialRemoteCommit)
     configureLocalRepository()
 
@@ -48,7 +52,8 @@ internal class OverwriteRemote : GitTestCase() {
     fs.compare()
   }
 
-  @Test fun `second merge is null`() {
+  @Test
+  fun `second merge is null`() = runBlocking<Unit> {
     createLocalAndRemoteRepositories(initialCommit = true)
 
     sync(SyncType.MERGE)

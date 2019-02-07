@@ -25,7 +25,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 4/17/13 11:32 AM
  */
 public interface ParametersEnhancer {
 

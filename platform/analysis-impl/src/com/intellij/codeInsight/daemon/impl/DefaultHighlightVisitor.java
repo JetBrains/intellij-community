@@ -132,18 +132,20 @@ class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   }
 
   private static HighlightInfo createErrorElementInfo(@NotNull PsiErrorElement element) {
+    HighlightInfo info = createInfoWithoutFixes(element);
+    if (info != null) {
+      for(ErrorQuickFixProvider provider: ErrorQuickFixProvider.EP_NAME.getExtensionList()) {
+        provider.registerErrorQuickFix(element, info);
+      }
+    }
+    return info;
+  }
+
+  private static HighlightInfo createInfoWithoutFixes(@NotNull PsiErrorElement element) {
     TextRange range = element.getTextRange();
     String errorDescription = element.getErrorDescription();
     if (!range.isEmpty()) {
-      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range);
-      builder.descriptionAndTooltip(errorDescription);
-      final HighlightInfo info = builder.create();
-      if (info != null) {
-        for(ErrorQuickFixProvider provider: ErrorQuickFixProvider.EP_NAME.getExtensionList()) {
-          provider.registerErrorQuickFix(element, info);
-        }
-      }
-      return info;
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(errorDescription).create();
     }
     int offset = range.getStartOffset();
     PsiFile containingFile = element.getContainingFile();
@@ -151,28 +153,24 @@ class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     FileViewProvider viewProvider = containingFile.getViewProvider();
     PsiElement elementAtOffset = viewProvider.findElementAt(offset, LanguageUtil.getRootLanguage(element));
     String text = elementAtOffset == null ? null : elementAtOffset.getText();
-    HighlightInfo info;
     if (offset < fileLength && text != null && !StringUtil.startsWithChar(text, '\n') && !StringUtil.startsWithChar(text, '\r')) {
       HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(offset, offset + 1);
       builder.descriptionAndTooltip(errorDescription);
-      info = builder.create();
+      return builder.create();
+    }
+    int start;
+    int end;
+    if (offset > 0) {
+      start = offset/* - 1*/;
+      end = offset;
     }
     else {
-      int start;
-      int end;
-      if (offset > 0) {
-        start = offset/* - 1*/;
-        end = offset;
-      }
-      else {
-        start = offset;
-        end = offset < fileLength ? offset + 1 : offset;
-      }
-      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element, start, end);
-      builder.descriptionAndTooltip(errorDescription);
-      builder.endOfLine();
-      info = builder.create();
+      start = offset;
+      end = offset < fileLength ? offset + 1 : offset;
     }
-    return info;
+    HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element, start, end);
+    builder.descriptionAndTooltip(errorDescription);
+    builder.endOfLine();
+    return builder.create();
   }
 }

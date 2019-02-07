@@ -39,7 +39,6 @@ import java.util.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 9/18/13
  */
 public class ExternalSystemActionUtil {
 

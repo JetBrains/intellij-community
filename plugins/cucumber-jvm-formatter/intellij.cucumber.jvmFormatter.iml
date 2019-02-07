@@ -9,5 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="PROVIDED" name="cucumber-core" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="cucumber-core:2.0.1" level="project" />
+    <orderEntry type="module" module-name="intellij.junit.rt" />
+    <orderEntry type="module" module-name="intellij.java.rt" />
   </component>
 </module>

@@ -19,7 +19,6 @@ import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -63,7 +62,7 @@ public class MethodLocation extends Location<PsiMethod> {
   @Nullable
   @Override
   public Module getModule() {
-    return ModuleUtil.findModuleForPsiElement(myMethod);
+    return myClassLocation.getModule();
   }
 
   public PsiClass getContainingClass() {

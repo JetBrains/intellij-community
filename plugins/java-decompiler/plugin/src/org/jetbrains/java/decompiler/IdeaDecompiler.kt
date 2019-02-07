@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler
 
 import com.intellij.application.options.CodeStyle
@@ -15,7 +15,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -139,8 +138,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
 
     try {
       val mask = "${file.nameWithoutExtension}$"
-      val files = mapOf(file.path to file) +
-          file.parent.children.filter { it.nameWithoutExtension.startsWith(mask) && it.fileType === StdFileTypes.CLASS }.map { it.path to it }
+      val files = listOf(file) + file.parent.children.filter { it.nameWithoutExtension.startsWith(mask) && it.fileType === StdFileTypes.CLASS }
 
       val options = HashMap(myOptions.value)
       if (Registry.`is`("decompiler.use.line.mapping")) {
@@ -153,7 +151,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
       val provider = MyBytecodeProvider(files)
       val saver = MyResultSaver()
       val decompiler = BaseDecompiler(provider, saver, options, myLogger.value)
-      files.keys.forEach { path -> decompiler.addSource(File(path)) }
+      files.forEach { decompiler.addSource(File(it.path)) }
       decompiler.decompileContext()
 
       val mapping = saver.myMapping
@@ -180,12 +178,11 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
     }
   }
 
-  private class MyBytecodeProvider(private val files: Map<String, VirtualFile>) : IBytecodeProvider {
-    override fun getBytecode(externalPath: String, internalPath: String?): ByteArray {
-      val path = FileUtil.toSystemIndependentName(externalPath)
-      val file = files[path] ?: throw AssertionError(path + " not in " + files.keys)
-      return file.contentsToByteArray(false)
-    }
+  private class MyBytecodeProvider(files: List<VirtualFile>) : IBytecodeProvider {
+    private val pathMap = files.map { File(it.path).absolutePath to it }.toMap()
+
+    override fun getBytecode(externalPath: String, internalPath: String?): ByteArray =
+      pathMap[externalPath]?.contentsToByteArray(false) ?: throw AssertionError(externalPath + " not in " + pathMap.keys)
   }
 
   private class MyResultSaver : IResultSaver {

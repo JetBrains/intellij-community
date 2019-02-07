@@ -4,6 +4,7 @@ package com.jetbrains.python.testing.doctest;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationFromContext;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,10 +24,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class PythonDocTestConfigurationProducer extends PythonTestLegacyConfigurationProducer {
-
-  public PythonDocTestConfigurationProducer() {
-    super(PythonTestConfigurationType.getInstance().PY_DOCTEST_FACTORY);
+public final class PythonDocTestConfigurationProducer extends PythonTestLegacyConfigurationProducer {
+  @NotNull
+  @Override
+  public ConfigurationFactory getConfigurationFactory() {
+    return PythonTestConfigurationType.getInstance().PY_DOCTEST_FACTORY;
   }
 
   @Override

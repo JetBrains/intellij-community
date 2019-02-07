@@ -20,26 +20,26 @@ import java.util.List;
 public final class JavaVersion implements Comparable<JavaVersion> {
   /**
    * The major version.
-   * Corresponds to the first number of a Java 9+ version string and to the second number of Java 1.0 to 1.8 strings.
+   * Corresponds to the first number of 9+ format (<b>9</b>.0.1) / the second number of 1.x format (1.<b>8</b>.0_60).
    */
   public final int feature;
 
   /**
    * The minor version.
-   * Corresponds to the second number of a Java 9+ version string and to the third number of Java 1.0 to 1.8 strings.
-   * Used in version strings prior to Java 1.5, in newer strings is always {@code 0}.
+   * Corresponds to the second number of 9+ format (9.<b>0</b>.1) / the third number of 1.x format (1.8.<b>0</b>_60).
+   * Was used in version strings prior to 1.5, in newer strings is always {@code 0}.
    */
   public final int minor;
 
   /**
    * The patch version.
-   * Corresponds to the third number of a Java 9+ version string and to the number of Java 1.0 to 1.8 strings (one after an underscore).
+   * Corresponds to the third number of 9+ format (9.0.<b>1</b>) / the number after an underscore of 1.x format (1.8.0_<b>60</b>).
    */
   public final int update;
 
   /**
    * The build number.
-   * Corresponds to a number prefixed by a plus sign in a Java 9+ version string and by "-b" string in earlier versions.
+   * Corresponds to a number prefixed by the "plus" sign in 9+ format (9.0.1+<b>7</b>) / by "-b" string in 1.x format (1.8.0_60-b<b>12</b>).
    */
   public final int build;
 

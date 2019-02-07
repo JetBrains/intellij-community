@@ -26,7 +26,6 @@ import java.util.Set;
  * {@link MavenRepositoryProvider} defines contract for additional repositories provisioning.
  *
  * @author Vladislav.Soroka
- * @since 10/25/13
  */
 public interface MavenRepositoryProvider {
 

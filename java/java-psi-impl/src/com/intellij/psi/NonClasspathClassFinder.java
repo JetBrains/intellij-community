@@ -20,7 +20,6 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,16 +64,15 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
         roots = ContainerUtil.filter(roots, VirtualFile::isValid);
         LOG.error("Invalid roots returned by " + getClass() + ": " + invalidRoots);
       }
-      myCache = cache = createCache(roots);
+      myCache = cache = PackageDirectoryCache.createCache(roots);
     }
     return cache;
   }
 
   @NotNull
+  @Deprecated
   protected static PackageDirectoryCache createCache(@NotNull final List<? extends VirtualFile> roots) {
-    final MultiMap<String, VirtualFile> map = MultiMap.create();
-    map.putValues("", roots);
-    return new PackageDirectoryCache(map);
+    return PackageDirectoryCache.createCache(roots);
   }
 
   public void clearCache() {

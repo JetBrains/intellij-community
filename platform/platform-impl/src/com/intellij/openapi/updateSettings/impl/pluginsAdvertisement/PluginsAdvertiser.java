@@ -45,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.*;
 
 public class PluginsAdvertiser implements StartupActivity {
@@ -334,6 +335,9 @@ public class PluginsAdvertiser implements StartupActivity {
           }
 
           ApplicationManager.getApplication().invokeLater(this::onSuccess, ModalityState.NON_MODAL);
+        }
+        catch (UnknownHostException e) {
+          LOG.warn("Host name could not be resolved: " + e.getMessage());
         }
         catch (Exception e) {
           LOG.info(e);

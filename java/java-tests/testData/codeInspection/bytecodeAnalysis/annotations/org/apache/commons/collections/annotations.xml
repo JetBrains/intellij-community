@@ -823,7 +823,10 @@
     <item name='org.apache.commons.collections.CollectionUtils java.util.Collection removeAll(java.util.Collection, java.util.Collection) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-  <item name='org.apache.commons.collections.CollectionUtils java.util.Collection retainAll(java.util.Collection, java.util.Collection)'>
+    <item name='org.apache.commons.collections.CollectionUtils java.util.Collection removeAll(java.util.Collection, java.util.Collection) 1'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.collections.CollectionUtils java.util.Collection retainAll(java.util.Collection, java.util.Collection)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;_,_-&gt;new&quot;"/>
         </annotation>

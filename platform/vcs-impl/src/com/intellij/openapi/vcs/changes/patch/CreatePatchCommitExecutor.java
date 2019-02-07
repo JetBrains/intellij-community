@@ -127,7 +127,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
       try {
         if (myPanel.isToClipboard()) {
           String base = myPanel.getBaseDirName();
-          List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, base, myPanel.isReversePatch());
+          List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, base, myPanel.isReversePatch(), true);
           writeAsPatchToClipboard(myProject, patches, base, myCommitContext);
           VcsNotifier.getInstance(myProject).notifySuccess("Patch copied to clipboard");
         }
@@ -143,7 +143,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
       }
     }
 
-    private void validateAndWritePatchToFile(@NotNull Collection<Change> changes) throws VcsException, IOException {
+    private void validateAndWritePatchToFile(@NotNull Collection<? extends Change> changes) throws VcsException, IOException {
       final String fileName = myPanel.getFileName();
       final File file = new File(fileName).getAbsoluteFile();
       if (!checkIsFileValid(file)) return;
@@ -157,7 +157,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
       final boolean reversePatch = myPanel.isReversePatch();
 
       String baseDirName = myPanel.getBaseDirName();
-      List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, baseDirName, reversePatch);
+      List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, baseDirName, reversePatch, true);
       PatchWriter.writePatches(myProject, fileName, baseDirName, patches, myCommitContext, myPanel.getEncoding(), true);
       WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> {
         final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);

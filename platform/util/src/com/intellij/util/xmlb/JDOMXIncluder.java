@@ -25,18 +25,8 @@ public class JDOMXIncluder {
   public static final PathResolver DEFAULT_PATH_RESOLVER = new PathResolver() {
     @NotNull
     @Override
-    public URL resolvePath(@NotNull String relativePath, @Nullable String base) {
-      try {
-        if (base != null) {
-          return new URL(new URL(base), relativePath);
-        }
-        else {
-          return new URL(relativePath);
-        }
-      }
-      catch (MalformedURLException ex) {
-        throw new XIncludeException(ex);
-      }
+    public URL resolvePath(@NotNull String relativePath, @Nullable URL base) throws MalformedURLException {
+      return base == null ? new URL(relativePath) : new URL(base, relativePath);
     }
   };
 
@@ -59,32 +49,35 @@ public class JDOMXIncluder {
   }
 
   @NotNull
-  public static Document resolve(Document original, String base) throws XIncludeException {
+  public static Document resolve(Document original, String base) throws XIncludeException, MalformedURLException {
     return resolve(original, base, false);
   }
 
   @NotNull
-  public static Document resolve(Document original, String base, boolean ignoreMissing) throws XIncludeException {
+  public static Document resolve(Document original, String base, boolean ignoreMissing) throws XIncludeException, MalformedURLException {
     return resolve(original, base, ignoreMissing, DEFAULT_PATH_RESOLVER);
   }
 
   @NotNull
-  public static Document resolve(Document original, String base, boolean ignoreMissing, PathResolver pathResolver) throws XIncludeException {
-    return new JDOMXIncluder(ignoreMissing, pathResolver).doResolve(original, base);
+  public static Document resolve(Document original, String base, boolean ignoreMissing, PathResolver pathResolver)
+    throws XIncludeException, MalformedURLException {
+    return new JDOMXIncluder(ignoreMissing, pathResolver).doResolve(original, new URL(base));
   }
 
   @NotNull
-  public static List<Content> resolve(@NotNull Element original, String base, boolean ignoreMissing, PathResolver pathResolver) throws XIncludeException {
-    return new JDOMXIncluder(ignoreMissing, pathResolver).doResolve(original, base);
+  public static List<Content> resolve(@NotNull Element original, String base, boolean ignoreMissing, PathResolver pathResolver)
+    throws XIncludeException, MalformedURLException {
+    return new JDOMXIncluder(ignoreMissing, pathResolver).doResolve(original, new URL(base));
   }
 
   /**
    * Original element will be mutated in place.
    */
-  public static void resolveNonXIncludeElement(@NotNull Element original, @Nullable String base, boolean ignoreMissing, @NotNull PathResolver pathResolver) throws XIncludeException {
+  public static void resolveNonXIncludeElement(@NotNull Element original, @Nullable URL base, boolean ignoreMissing, @NotNull PathResolver pathResolver)
+    throws XIncludeException, MalformedURLException {
     LOG.assertTrue(!isIncludeElement(original));
 
-    Stack<String> bases = new Stack<String>();
+    Stack<URL> bases = new Stack<URL>();
     if (base != null) {
       bases.push(base);
     }
@@ -92,7 +85,7 @@ public class JDOMXIncluder {
   }
 
   @NotNull
-  public static List<Content> resolve(@NotNull Element original, String base) throws XIncludeException {
+  public static List<Content> resolve(@NotNull Element original, URL base) throws XIncludeException, MalformedURLException {
     return new JDOMXIncluder(false, DEFAULT_PATH_RESOLVER).doResolve(original, base);
   }
 
@@ -103,7 +96,8 @@ public class JDOMXIncluder {
 
     @Override
     @NotNull
-    protected Element resolveNonXIncludeElement(@NotNull Element original, @NotNull Stack<String> bases) throws XIncludeException {
+    protected Element resolveNonXIncludeElement(@NotNull Element original, @NotNull Stack<URL> bases)
+      throws XIncludeException, MalformedURLException {
       List<Content> contentList = original.getContent();
       for (int i = contentList.size() - 1; i >= 0; i--) {
         Content content = contentList.get(i);
@@ -123,7 +117,7 @@ public class JDOMXIncluder {
     }
   }
 
-  private Document doResolve(Document original, String base) {
+  private Document doResolve(Document original, URL base) throws MalformedURLException {
     if (original == null) {
       throw new NullPointerException("Document must not be null");
     }
@@ -206,8 +200,8 @@ public class JDOMXIncluder {
   }
 
   @NotNull
-  private List<Content> doResolve(@NotNull Element original, String base) throws XIncludeException {
-    Stack<String> bases = new Stack<String>();
+  private List<Content> doResolve(@NotNull Element original, URL base) throws XIncludeException, MalformedURLException {
+    Stack<URL> bases = new Stack<URL>();
     if (base != null) {
       bases.push(base);
     }
@@ -220,7 +214,7 @@ public class JDOMXIncluder {
   }
 
   @NotNull
-  private List<Content> resolve(@NotNull Element original, @NotNull Stack<String> bases) throws XIncludeException {
+  private List<Content> resolve(@NotNull Element original, @NotNull Stack<URL> bases) throws XIncludeException, MalformedURLException {
     if (isIncludeElement(original)) {
       return resolveXIncludeElement(original, bases);
     }
@@ -231,8 +225,9 @@ public class JDOMXIncluder {
   }
 
   @NotNull
-  protected List<Content> resolveXIncludeElement(@NotNull Element element, @NotNull Stack<String> bases) throws XIncludeException {
-    String base = "";
+  protected List<Content> resolveXIncludeElement(@NotNull Element element, @NotNull Stack<URL> bases)
+    throws XIncludeException, MalformedURLException {
+    URL base = null;
     if (!bases.isEmpty()) {
       base = bases.peek();
     }
@@ -240,9 +235,9 @@ public class JDOMXIncluder {
     String href = element.getAttributeValue(HREF);
     assert href != null : "Missing href attribute";
 
-    Attribute baseAttribute = element.getAttribute(BASE, Namespace.XML_NAMESPACE);
+    String baseAttribute = element.getAttributeValue(BASE, Namespace.XML_NAMESPACE);
     if (baseAttribute != null) {
-      base = baseAttribute.getValue();
+      base = new URL(baseAttribute);
     }
 
     URL remote = myPathResolver.resolvePath(href, base);
@@ -252,7 +247,7 @@ public class JDOMXIncluder {
       LOG.assertTrue(parseAttribute.equals(XML), parseAttribute + " is not a legal value for the parse attribute");
     }
 
-    assert !bases.contains(remote.toExternalForm()) : "Circular XInclude Reference to " + remote.toExternalForm();
+    assert !bases.contains(remote) : "Circular XInclude Reference to " + remote.toExternalForm();
 
     final Element fallbackElement = element.getChild("fallback", element.getNamespace());
     List<Content> remoteParsed = parseRemote(bases, remote, fallbackElement);
@@ -324,9 +319,9 @@ public class JDOMXIncluder {
   }
 
   @NotNull
-  private List<Content> parseRemote(@NotNull Stack<String> bases, @NotNull URL remote, @Nullable Element fallbackElement) {
+  private List<Content> parseRemote(@NotNull Stack<URL> bases, @NotNull URL remote, @Nullable Element fallbackElement) {
     try {
-      bases.push(remote.toExternalForm());
+      bases.push(remote);
       Element root = JDOMUtil.loadResource(remote);
       List<Content> list = resolve(root, bases);
       bases.pop();
@@ -349,7 +344,8 @@ public class JDOMXIncluder {
   }
 
   @NotNull
-  protected Element resolveNonXIncludeElement(@NotNull Element original, @NotNull Stack<String> bases) throws XIncludeException {
+  protected Element resolveNonXIncludeElement(@NotNull Element original, @NotNull Stack<URL> bases)
+    throws XIncludeException, MalformedURLException {
     Element result = new Element(original.getName(), original.getNamespace());
     if (original.hasAttributes()) {
       for (Attribute a : original.getAttributes()) {
@@ -377,6 +373,6 @@ public class JDOMXIncluder {
 
   public interface PathResolver {
     @NotNull
-    URL resolvePath(@NotNull String relativePath, @Nullable String base);
+    URL resolvePath(@NotNull String relativePath, @Nullable URL base) throws MalformedURLException;
   }
 }

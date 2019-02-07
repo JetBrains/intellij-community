@@ -133,12 +133,6 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.collections.functors.CloneTransformer void readObject(java.io.ObjectInputStream) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.commons.collections.functors.CloneTransformer void writeObject(java.io.ObjectOutputStream) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
     <item name='org.apache.commons.collections.functors.ClosureTransformer ClosureTransformer(org.apache.commons.collections.Closure)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -372,12 +366,6 @@
     <item name='org.apache.commons.collections.functors.ForClosure org.apache.commons.collections.Closure getInstance(int, org.apache.commons.collections.Closure) 1'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
-    <item name='org.apache.commons.collections.functors.ForClosure void readObject(java.io.ObjectInputStream) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.commons.collections.functors.ForClosure void writeObject(java.io.ObjectOutputStream) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
     <item name='org.apache.commons.collections.functors.FunctorUtils FunctorUtils()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -555,12 +543,6 @@
     <item name='org.apache.commons.collections.functors.InstantiateFactory org.apache.commons.collections.Factory getInstance(java.lang.Class, java.lang.Class[], java.lang.Object[]) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='org.apache.commons.collections.functors.InstantiateFactory void readObject(java.io.ObjectInputStream) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.commons.collections.functors.InstantiateFactory void writeObject(java.io.ObjectOutputStream) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
     <item name='org.apache.commons.collections.functors.InstantiateTransformer InstantiateTransformer()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -572,12 +554,6 @@
         </annotation>
     </item>
     <item name='org.apache.commons.collections.functors.InstantiateTransformer java.lang.Object transform(java.lang.Object) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.commons.collections.functors.InstantiateTransformer void readObject(java.io.ObjectInputStream) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.commons.collections.functors.InstantiateTransformer void writeObject(java.io.ObjectOutputStream) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.functors.InvokerTransformer InvokerTransformer(java.lang.String)'>
@@ -616,12 +592,6 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.functors.InvokerTransformer org.apache.commons.collections.Transformer getInstance(java.lang.String, java.lang.Class[], java.lang.Object[]) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.commons.collections.functors.InvokerTransformer void readObject(java.io.ObjectInputStream) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.commons.collections.functors.InvokerTransformer void writeObject(java.io.ObjectOutputStream) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.functors.MapTransformer MapTransformer(java.util.Map)'>
@@ -1148,11 +1118,5 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-    </item>
-    <item name='org.apache.commons.collections.functors.WhileClosure void readObject(java.io.ObjectInputStream) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.commons.collections.functors.WhileClosure void writeObject(java.io.ObjectOutputStream) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
 </root>

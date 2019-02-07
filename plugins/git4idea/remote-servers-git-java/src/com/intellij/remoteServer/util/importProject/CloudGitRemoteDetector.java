@@ -44,15 +44,13 @@ import java.util.Map;
 
 public class CloudGitRemoteDetector implements GitRepositoryChangeListener, ProjectComponent {
   private final Project myProject;
-  private final GitRepositoryManager myRepositoryManager;
 
   private final CloudNotifier myNotifier;
 
   private final List<CloudTypeDelegate> myDelegates;
 
-  public CloudGitRemoteDetector(Project project, GitRepositoryManager repositoryManager) {
+  public CloudGitRemoteDetector(Project project) {
     myProject = project;
-    myRepositoryManager = repositoryManager;
 
     myNotifier = new CloudNotifier("Git remotes detector");
 
@@ -162,7 +160,7 @@ public class CloudGitRemoteDetector implements GitRepositoryChangeListener, Proj
         return;
       }
 
-      GitRepository repository = myRepositoryManager.getRepositoryForRoot(contentRoot);
+      GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(contentRoot);
       if (repository == null) {
         return;
       }

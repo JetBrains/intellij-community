@@ -59,7 +59,7 @@ public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> 
   @NotNull
   @Override
   protected Content prepare(@NotNull EditorTextField field, @NotNull Function<? super String, String> onShow) {
-    EditorTextField popup = new EditorTextField(onShow.fun(field.getText()));
+    EditorTextField popup = new EditorTextField(onShow.fun(field.getText()), field.getProject(), field.getFileType());
     Color background = field.getBackground();
     popup.setBackground(background);
     popup.setOneLineMode(false);

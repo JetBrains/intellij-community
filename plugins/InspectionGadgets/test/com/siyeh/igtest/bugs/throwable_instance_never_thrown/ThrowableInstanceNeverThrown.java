@@ -107,3 +107,26 @@ class L {
         I i2 = () -> exception;
     }
 }
+class Main {
+  Runnable r = () -> <warning descr="Runtime exception instance 'new RuntimeException()' is not thrown">new RuntimeException()</warning>;
+
+  Throwable switchExpression1(int i) {
+    return switch(i) {
+      default -> new Throwable();
+    };
+  }
+
+  Throwable switchExpression2(int i) {
+    for (int j = 0; j < 10; j++, <warning descr="Throwable instance 'new Throwable()' is not thrown">new Throwable()</warning>) {}
+
+    return switch(i) {
+      default -> {
+        break new Throwable();
+      }
+    };
+  }
+
+  void x(I i) {
+    assert i.get() != null;
+  }
+}

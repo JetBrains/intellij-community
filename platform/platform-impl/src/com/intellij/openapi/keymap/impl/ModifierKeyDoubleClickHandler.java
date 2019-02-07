@@ -249,7 +249,7 @@ public class ModifierKeyDoubleClickHandler implements Disposable, BaseComponent 
         myActionManagerEx.fireBeforeActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
         action.actionPerformed(anActionEvent);
         myActionManagerEx.fireAfterActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
-        ActionsCollector.getInstance().record("DoubleShortcut", action.getClass(), anActionEvent);
+        ActionsCollector.getInstance().record("DoubleShortcut", anActionEvent.getInputEvent(), action.getClass());
         return true;
       }
       finally {
@@ -262,7 +262,7 @@ public class ModifierKeyDoubleClickHandler implements Disposable, BaseComponent 
     }
 
     @Override
-    public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
+    public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
       if (!myIsRunningAction) resetState();
     }
 

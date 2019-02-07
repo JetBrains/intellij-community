@@ -19,7 +19,6 @@ import java.io.Serializable;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/16/2015
  */
 public interface OperationDescriptor extends Serializable {
   long getEventTime();

@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.typeCook;
 
+import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
@@ -401,7 +402,7 @@ public class Util {
           }
 
           if (PsiDiamondTypeUtil.canCollapseToDiamond(newx, newx, newx.getType())) {
-            PsiDiamondTypeUtil.replaceExplicitWithDiamond(list);
+            RemoveRedundantTypeArgumentsUtil.replaceExplicitWithDiamond(list);
           }
         }
       }

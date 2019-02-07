@@ -48,7 +48,7 @@ public class XmlDefaultAttributeValueInspection extends XmlSuppressableInspectio
           return;
         }
         String defaultValue = descriptor.getDefaultValue();
-        if (defaultValue != null && defaultValue.equals(value.getValue())) {
+        if (defaultValue != null && defaultValue.equals(value.getValue()) && !value.getTextRange().isEmpty()) {
           holder.registerProblem(value, "Redundant default attribute value assignment", ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                  new RemoveAttributeIntentionFix(((XmlAttribute)parent).getLocalName()));
         }

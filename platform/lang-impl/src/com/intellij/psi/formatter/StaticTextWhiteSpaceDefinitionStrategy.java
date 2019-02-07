@@ -24,7 +24,6 @@ import java.util.Set;
 
 /**
  * @author Denis Zhdanov
- * @since Sep 21, 2010 2:49:43 PM
  */
 public class StaticTextWhiteSpaceDefinitionStrategy extends AbstractWhiteSpaceFormattingStrategy {
 

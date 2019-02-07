@@ -38,7 +38,6 @@ import java.lang.reflect.Field;
 
 /**
  * @author Denis Zhdanov
- * @since 4/8/13 7:29 PM
  */
 public class ExternalSystemUiUtil {
 

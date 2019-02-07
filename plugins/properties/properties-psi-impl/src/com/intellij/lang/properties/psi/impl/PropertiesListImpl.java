@@ -32,6 +32,7 @@ public class PropertiesListImpl extends PropertiesStubElementImpl<PropertiesList
     super(stub, PropertiesElementTypes.PROPERTIES_LIST);
   }
 
+  @Override
   public String toString() {
     return "PropertiesList";
   }

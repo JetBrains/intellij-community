@@ -58,14 +58,10 @@ public class HashSerializeTest {
   @NotNull
   private static File writeToTempFile(@NotNull HashImpl... hashes) throws IOException {
     File file = FileUtil.createTempFile("", "");
-    DataOutputStream out = new DataOutputStream(new FileOutputStream(file));
-    try {
+    try (DataOutputStream out = new DataOutputStream(new FileOutputStream(file))) {
       for (HashImpl hash : hashes) {
         hash.write(out);
       }
-    }
-    finally {
-      out.close();
     }
     return file;
   }

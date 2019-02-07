@@ -21,7 +21,6 @@ import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/20/13
  */
 public interface ClasspathEntryModel {
   @NotNull

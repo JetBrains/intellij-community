@@ -52,4 +52,8 @@ public class LibraryScope extends LibraryScopeBase {
   public int calcHashCode() {
     return 31 * super.calcHashCode() + myLibrary.hashCode();
   }
+
+  public Library getLibrary() {
+    return myLibrary;
+  }
 }

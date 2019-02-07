@@ -20,11 +20,11 @@ import org.jdom.Element;
 
 /**
  * @author Vladislav.Soroka
- * @since 9/26/2014
  */
 @Tag("projects_view")
 public class ExternalProjectsViewState {
   public boolean groupTasks = true;
+  public boolean groupModules = true;
   public boolean showInheritedTasks = true;
   public boolean showIgnored = true;
   @Tag("tree_state")

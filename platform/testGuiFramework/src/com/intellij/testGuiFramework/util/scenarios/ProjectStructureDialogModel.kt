@@ -3,7 +3,6 @@ package com.intellij.testGuiFramework.util.scenarios
 
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.impl.*
-import com.intellij.testGuiFramework.util.logUIStep
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.buttonCancel
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.itemLibrary
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.menuArtifacts
@@ -12,6 +11,7 @@ import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.menuModules
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.menuSDKs
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.projectStructureTitle
+import com.intellij.testGuiFramework.util.step
 import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
 
@@ -51,31 +51,27 @@ fun ProjectStructureDialogModel.checkInProjectStructure(actions: GuiTestCase.()-
       this.actions()
     }
     finally {
-      logUIStep("Close '$projectStructureTitle' dialog with Cancel")
-      dialog.button(buttonCancel).click()
+      step("close '$projectStructureTitle' dialog with Cancel") {
+        dialog.button(buttonCancel).click()
+      }
     }
   }
 }
 
 fun ProjectStructureDialogModel.checkLibraryPresent(vararg library: String){
-  with(guiTestCase){
-    val dialog = connectDialog()
-    with(dialog){
-      val tabs = jList(menuLibraries)
-      logUIStep("Click '$menuLibraries'")
-      tabs.clickItem(menuLibraries)
-      testTreeItemExist(itemLibrary, *library)
-      jTree(*library).clickPath()
-    }
+  checkLibrary {
+    guiTestCase.testTreeItemExist(itemLibrary, *library)
+    jTree(*library).clickPath()
   }
 }
 
 private fun ProjectStructureDialogModel.checkPage(page: String, checks: JDialogFixture.()->Unit){
   with(guiTestCase){
-    logUIStep("Click $page")
-    val dialog = connectDialog()
-    dialog.jList(page).clickItem(page)
-    dialog.checks()
+    step("at '$page' page in Project Structure dialog") {
+      val dialog = connectDialog()
+      dialog.jList(page).clickItem(page)
+      dialog.checks()
+    }
   }
 }
 
@@ -93,4 +89,8 @@ fun ProjectStructureDialogModel.checkSDK(checks: JDialogFixture.()->Unit){
 
 fun ProjectStructureDialogModel.checkFacet(checks: JDialogFixture.()->Unit){
   checkPage(menuFacets, checks)
+}
+
+fun ProjectStructureDialogModel.checkLibrary(checks: JDialogFixture.()->Unit){
+  checkPage(menuLibraries, checks)
 }

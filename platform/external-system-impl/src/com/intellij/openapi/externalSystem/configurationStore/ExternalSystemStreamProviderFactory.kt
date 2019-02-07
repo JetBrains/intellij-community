@@ -1,19 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.configurationStore
 
 import com.intellij.ProjectTopics
 import com.intellij.configurationStore.StateStorageManager
 import com.intellij.configurationStore.StreamProviderFactory
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ProjectModelElement
 import com.intellij.openapi.startup.StartupManager
@@ -26,14 +22,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-private val LOG = logger<ExternalSystemStreamProviderFactory>()
-
 // todo handle module rename
 internal class ExternalSystemStreamProviderFactory(private val project: Project) : StreamProviderFactory {
   val moduleStorage = ModuleFileSystemExternalSystemStorage(project)
   val fileStorage = ProjectFileSystemExternalSystemStorage(project)
-
-  private var isStorageFlushInProgress = false
 
   private val isReimportOnMissedExternalStorageScheduled = AtomicBoolean(false)
 
@@ -41,22 +33,6 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
   private val storages = THashMap<String, Storage>()
 
   init {
-    // flush on save to be sure that data is saved (it is easy to reimport if corrupted (force exit, blue screen), but we need to avoid it if possible)
-    ApplicationManager.getApplication().messageBus
-      .connect(project)
-      .subscribe(ProjectEx.ProjectSaved.TOPIC, ProjectEx.ProjectSaved {
-        if (it === project && !isStorageFlushInProgress && moduleStorage.isDirty) {
-          isStorageFlushInProgress = true
-          ApplicationManager.getApplication().executeOnPooledThread {
-            try {
-              LOG.runAndLogException { moduleStorage.forceSave() }
-            }
-            finally {
-              isStorageFlushInProgress = false
-            }
-          }
-        }
-      })
     project.messageBus.connect().subscribe(ProjectTopics.MODULES, object : ModuleListener {
       override fun moduleRemoved(project: Project, module: Module) {
         moduleStorage.remove(module.name)

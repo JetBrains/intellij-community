@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Listens to file system events and notifies VcsDirtyScopeManagers responsible for changed files to mark these files dirty.
@@ -103,6 +104,11 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
   public void dispose() {
     synchronized (myLock) {
       myQueue.clear();
+    }
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      //noinspection TestOnlyProblems
+      myZipperUpdater.waitForAllExecuted(10, TimeUnit.SECONDS);
     }
   }
 

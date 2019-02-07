@@ -37,6 +37,7 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
     super(schemesPanel);
   }
 
+  @NotNull
   @Override
   protected Collection<String> getSchemeImportersNames() {
     List<String> importersNames = new ArrayList<>();
@@ -194,6 +195,7 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
     super.exportScheme(schemeToExport, exporterName);
   }
 
+  @NotNull
   @Override
   protected Class<EditorColorsScheme> getSchemeType() {
     return EditorColorsScheme.class;
