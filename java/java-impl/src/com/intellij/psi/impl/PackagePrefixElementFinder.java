@@ -27,6 +27,11 @@ public class PackagePrefixElementFinder extends PsiElementFinder implements Dumb
     myPackagePrefixIndex = new PackagePrefixIndex(project);
   }
 
+  @NotNull
+  public static PackagePrefixElementFinder getInstance(@NotNull Project project) {
+    return PsiElementFinder.EP.findExtensionOrFail(PackagePrefixElementFinder.class, project);
+  }
+
   @Override
   public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     return null;
@@ -74,14 +79,5 @@ public class PackagePrefixElementFinder extends PsiElementFinder implements Dumb
     }
 
     return false;
-  }
-
-  public static PackagePrefixElementFinder getInstance(Project project) {
-    for (PsiElementFinder o : PsiElementFinder.EP.getExtensions(project)) {
-      if (o instanceof PackagePrefixElementFinder) {
-        return (PackagePrefixElementFinder) o;
-      }
-    }
-    throw new UnsupportedOperationException("couldn't find self");
   }
 }
