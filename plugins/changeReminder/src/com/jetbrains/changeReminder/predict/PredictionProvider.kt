@@ -8,7 +8,7 @@ import kotlin.math.min
 /**
  * This class provides a prediction about forgotten (to commit or modify) files, based on the VCS history of given files.
  *
- * See <a href="README">README</a> to get more information about decision function used here.
+ * To get more information about decision function used here, see the README file.
  */
 class PredictionProvider(private val minProb: Double = 0.3) {
   private val m: Double = 3.2
