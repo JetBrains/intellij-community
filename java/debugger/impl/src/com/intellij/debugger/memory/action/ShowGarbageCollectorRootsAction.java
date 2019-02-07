@@ -17,7 +17,7 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
 
-public class ShowGarbageCollectorRootsAction extends NativeAgentActionBase {
+public class ShowGarbageCollectorRootsAction extends MemoryAgentActionBase {
   private static final int DEFAULT_OBJECTS_LIMIT = 1000;
   @Override
   protected void perform(@NotNull MemoryAgent memoryAgent,

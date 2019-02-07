@@ -15,7 +15,7 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class NativeAgentActionBase extends DebuggerTreeAction {
+public abstract class MemoryAgentActionBase extends DebuggerTreeAction {
   protected final Logger LOG = Logger.getInstance(this.getClass());
 
   @Override
