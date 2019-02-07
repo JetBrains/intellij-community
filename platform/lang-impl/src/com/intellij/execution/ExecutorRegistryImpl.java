@@ -61,8 +61,9 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
       LOG.error("Executor with context action id: \"" + executor.getContextActionId() + "\" was already registered!");
     }
 
-    registerAction(executor.getId(), new ExecutorAction(executor), RUNNERS_GROUP, myId2Action);
-    registerAction(executor.getContextActionId(), new RunContextAction(executor), RUN_CONTEXT_GROUP, myContextActionId2Action);
+    // Turned OFF temporary
+    //registerAction(executor.getId(), new ExecutorAction(executor), RUNNERS_GROUP, myId2Action);
+    //registerAction(executor.getContextActionId(), new RunContextAction(executor), RUN_CONTEXT_GROUP, myContextActionId2Action);
 
     myExecutors.add(executor);
     myId2Executor.put(executor.getId(), executor);

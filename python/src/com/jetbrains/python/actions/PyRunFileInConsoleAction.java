@@ -23,6 +23,7 @@ import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 public class PyRunFileInConsoleAction extends AnAction implements DumbAware {
   public PyRunFileInConsoleAction() {
     super("Run File in Console");
+    getTemplatePresentation().setIcon(AllIcons.Actions.Execute);
   }
 
   @Override
@@ -46,7 +48,7 @@ public class PyRunFileInConsoleAction extends AnAction implements DumbAware {
     final Project project = e.getProject();
     final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
     final Presentation presentation = e.getPresentation();
-    presentation.setEnabledAndVisible(project != null && psiFile instanceof PyFile);
+    presentation.setEnabled(project != null && psiFile instanceof PyFile);
   }
 
   @Override
