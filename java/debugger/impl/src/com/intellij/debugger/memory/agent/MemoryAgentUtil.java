@@ -15,7 +15,10 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.projectRoots.JdkUtil;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -28,12 +31,18 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
+import java.util.jar.Attributes;
 
 public class MemoryAgentUtil {
   private static final Logger LOG = Logger.getInstance(MemoryAgentUtil.class);
 
-  public static void addMemoryAgent(JavaParameters parameters) {
+  public static void addMemoryAgent(@NotNull JavaParameters parameters) {
     if (!Registry.is("debugger.enable.memory.agent")) {
+      return;
+    }
+
+    if (isIbmJdk(parameters)) {
+      LOG.info("Do not attach memory agent for IBM jdk");
       return;
     }
 
@@ -122,6 +131,12 @@ public class MemoryAgentUtil {
         return agent;
       }
     });
+  }
+
+  private static boolean isIbmJdk(@NotNull JavaParameters parameters) {
+    Sdk jdk = parameters.getJdk();
+    String vendor = jdk == null ? null : JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VENDOR);
+    return vendor != null && StringUtil.containsIgnoreCase(vendor, "ibm");
   }
 
   private static File getAgentFile(boolean isInDebugMode) throws InterruptedException, ExecutionException, TimeoutException {
