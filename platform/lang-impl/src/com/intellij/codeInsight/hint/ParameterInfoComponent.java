@@ -320,6 +320,11 @@ public class ParameterInfoComponent extends JPanel {
         setVisible(i, true);
         //noinspection unchecked
         myHandler.updateUI(o, context);
+
+        // ensure that highlighted element is visible
+        if (context.isHighlighted()) {
+          myMainPanel.scrollRectToVisible(myPanels[i].getBounds());
+        }
       }
     }
 
