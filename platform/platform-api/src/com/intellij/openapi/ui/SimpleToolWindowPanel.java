@@ -62,8 +62,17 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
     });
   }
 
+  public boolean isVertical() {
+    return myVertical;
+  }
+
   public boolean isToolbarVisible() {
     return myToolbar != null && myToolbar.isVisible();
+  }
+
+  @Nullable
+  public JComponent getToolbar() {
+    return myToolbar;
   }
 
   public void setToolbar(@Nullable JComponent c) {
@@ -109,7 +118,12 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
     return this;
   }
 
-  public void setContent(JComponent c) {
+  @Nullable
+  public JComponent getContent() {
+    return myContent;
+  }
+
+  public void setContent(@NotNull JComponent c) {
     if (myContent != null) {
       remove(myContent);
     }
