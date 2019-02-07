@@ -15,6 +15,8 @@
  */
 package com.intellij.lexer;
 
+import com.intellij.psi.tree.IElementType;
+
 public interface RestartableLexer {
   /**
    * Returns the start state of the lexer.
@@ -31,4 +33,13 @@ public interface RestartableLexer {
    */
   int getRestartableState();
 
+  int packData(IElementType tokenType, int state);
+
+  IElementType unpackTokenData(int data);
+
+  int unpackState(long data);
+
+  boolean containsRestartableState(long data);
+
+  boolean isRestartableState(int state);
 }

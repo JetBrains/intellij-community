@@ -114,6 +114,9 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   private int packData(IElementType tokenType, int state) {
+    if (myLexer instanceof RestartableLexer) {
+      return ((RestartableLexer)myLexer).packData(tokenType, state);
+    }
     final short idx = tokenType.getIndex();
     return state == myInitialState ? idx : -idx;
   }
@@ -128,12 +131,21 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return document == null || document.getTextLength() == 0 || mySegments.getSegmentCount() > 0;
   }
 
-  private static boolean isInitialState(int data) {
-    return data >= 0;
+  private boolean isInitialState(long data) {
+    if (myLexer instanceof RestartableLexer) {
+      return ((RestartableLexer)myLexer).containsRestartableState(data);
+    } else {
+      return data >= 0;
+    }
   }
 
-  protected static IElementType unpackToken(int data) {
-    return IElementType.find((short)Math.abs(data));
+  protected IElementType unpackToken(int data) {
+    if (myLexer instanceof RestartableLexer) {
+      return ((RestartableLexer)(myLexer)).unpackTokenData(data);
+    }
+    else {
+      return IElementType.find((short)Math.abs(data));
+    }
   }
 
   @Override
@@ -171,7 +183,19 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       int startOffset = mySegments.getSegmentStart(startIndex);
       int newEndOffset = e.getOffset() + e.getNewLength();
 
-      myLexer.start(text, startOffset, text.length(), startOffset == 0 && myLexer instanceof RestartableLexer ? ((RestartableLexer)myLexer).getStartState() : myInitialState);
+      int initialState;
+      if (startOffset == 0 && myLexer instanceof RestartableLexer) {
+        initialState = ((RestartableLexer)myLexer).getStartState();
+      }
+      else {
+        if (myLexer instanceof RestartableLexer) {
+          initialState = ((RestartableLexer)myLexer).unpackState(mySegments.getSegmentData(startIndex));
+        } else {
+          initialState = myInitialState;
+        }
+      }
+      myLexer.start(text, startOffset, text.length(), initialState);
+      //System.out.println("start offset: "+startOffset +" state: " + initialState);
 
       int lastTokenStart = -1;
       int lastLexerState = -1;
@@ -245,7 +269,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       int oldEndIndex = -1;
       lastTokenType = null;
       SegmentArrayWithData insertSegments = new SegmentArrayWithData();
-
+     // System.out.println(mySegments);
       while(myLexer.getTokenType() != null) {
         int tokenStart = myLexer.getTokenStart();
         int lexerState = myLexer.getState();
@@ -260,7 +284,8 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
         int tokenEnd = myLexer.getTokenEnd();
         data = packData(myLexer.getTokenType(), lexerState);
-        if(tokenStart >= newEndOffset && lexerState == myInitialState) {
+        if(tokenStart >= newEndOffset && canRestart(lexerState)) {
+          //System.out.println("canRestart:"+lexerState);
           int shiftedTokenStart = tokenStart - e.getNewLength() + e.getOldLength();
           int index = mySegments.findSegmentIndex(shiftedTokenStart);
           if (mySegments.getSegmentStart(index) == shiftedTokenStart && mySegments.getSegmentData(index) == data) {
@@ -313,6 +338,13 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     catch (RuntimeException ex) {
       throw new InvalidStateException(this, "Error updating  after " + e, ex);
     }
+  }
+
+  private boolean canRestart(int lexerState) {
+    if (myLexer instanceof RestartableLexer) {
+      return ((RestartableLexer)myLexer).isRestartableState(lexerState);
+    }
+    return lexerState == myInitialState;
   }
 
   protected boolean hasAdditionalData(int segmentIndex) {

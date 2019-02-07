@@ -200,7 +200,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
     @Override
     public void setElementAt(int i, int startOffset, int endOffset, int data) {
-      setElementLight(i, startOffset, endOffset, (short)data);
+      setElementLight(i, startOffset, endOffset, data);
       final MappedRange range = myRanges[i];
       if (range != null) {
         range.mapper.removeMapping(range);
@@ -278,7 +278,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
         TokenProcessor processor = createTokenProcessor(startIndex);
         for (int i = startIndex; i < endIndex; i++) {
-          final short data = getSegmentData(i);
+          final int data = getSegmentData(i);
           final IElementType token = unpackToken(data);
           processor.addToken(i, getSegmentStart(i), getSegmentEnd(i), data, token);
         }
@@ -288,7 +288,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
 
     private void updateMappingForToken(final int i) {
-      final short data = getSegmentData(i);
+      final int data = getSegmentData(i);
       final IElementType token = unpackToken(data);
       final Mapper mapper = getMappingDocument(token);
       final MappedRange oldMapping = myRanges[i];

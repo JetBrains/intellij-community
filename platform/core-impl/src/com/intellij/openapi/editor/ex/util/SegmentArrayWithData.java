@@ -24,24 +24,18 @@ import org.jetbrains.annotations.NotNull;
  * Not thread-safe.
  */
 public class SegmentArrayWithData extends SegmentArray {
-  private short[] myData;
+  private int[] myData;
 
   public SegmentArrayWithData() {
-    myData = new short[INITIAL_SIZE];
+    myData = new int[INITIAL_SIZE];
   }
 
   public void setElementAt(int i, int startOffset, int endOffset, int data) {
-    dataRangeCheck(data);
     setElementAt(i, startOffset, endOffset);
     myData = reallocateArray(myData, i+1);
-    myData[i] = (short)data;
+    myData[i] = data;
   }
 
-  private static void dataRangeCheck(int data) {
-    if (data < Short.MIN_VALUE || data > Short.MAX_VALUE) {
-      throw new IndexOutOfBoundsException("data out of short range: " + data);
-    }
-  }
 
   @Override
   public void remove(int startIndex, int endIndex) {
@@ -80,25 +74,16 @@ public class SegmentArrayWithData extends SegmentArray {
     super.insert(segmentArray, startIndex);
   }
 
-  @NotNull
-  private short[] insert(@NotNull short[] array, @NotNull short[] insertArray, int startIndex, int insertLength) {
-    short[] newArray = reallocateArray(array, mySegmentCount + insertLength);
-    if (startIndex < mySegmentCount) {
-      System.arraycopy(newArray, startIndex, newArray, startIndex + insertLength, mySegmentCount - startIndex);
-    }
-    System.arraycopy(insertArray, 0, newArray, startIndex, insertLength);
-    return newArray;
-  }
 
   @NotNull
-  private short[] remove(@NotNull short[] array, int startIndex, int endIndex) {
+  private long[] remove(@NotNull long[] array, int startIndex, int endIndex) {
     if (endIndex < mySegmentCount) {
       System.arraycopy(array, endIndex, array, startIndex, mySegmentCount - endIndex);
     }
     return array;
   }
 
-  public short getSegmentData(int index) {
+  public int getSegmentData(int index) {
     if(index < 0 || index >= mySegmentCount) {
       throw new IndexOutOfBoundsException("Wrong index: " + index);
     }
@@ -107,15 +92,14 @@ public class SegmentArrayWithData extends SegmentArray {
 
   public void setSegmentData(int index, int data) {
     if(index < 0 || index >= mySegmentCount) throw new IndexOutOfBoundsException("Wrong index: " + index);
-    dataRangeCheck(data);
     myData[index] = (short)data;
   }
 
   @NotNull
-  private static short[] reallocateArray(@NotNull short[] array, int index) {
+  private static int[] reallocateArray(@NotNull int[] array, int index) {
     if (index < array.length) return array;
 
-    short[] newArray = new short[calcCapacity(array.length, index)];
+    int[] newArray = new int[calcCapacity(array.length, index)];
     System.arraycopy(array, 0, newArray, 0, array.length);
     return newArray;
   }
