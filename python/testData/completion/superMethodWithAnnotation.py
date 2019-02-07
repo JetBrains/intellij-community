@@ -1,5 +1,7 @@
+from typing import Dict
+
 class Parent:
-    def overridable_method(param: str) -> Dict[str, str]:
+    def overridable_method(self, param: str) -> Dict[str, str]:
         pass
 
 
