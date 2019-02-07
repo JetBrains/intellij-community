@@ -175,9 +175,6 @@ class ITNProxy {
 
     HttpURLConnection connection = post(new URL(NEW_THREAD_POST_URL), createRequest(login, password, error));
     int responseCode = connection.getResponseCode();
-    if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST && StringUtil.isEmpty(password)) {
-      throw new NoSuchEAPUserException(login);
-    }
     if (responseCode != HttpURLConnection.HTTP_OK) {
       throw new InternalEAPException(DiagnosticBundle.message("error.http.result.code", responseCode));
     }
