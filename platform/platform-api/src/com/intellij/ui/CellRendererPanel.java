@@ -174,11 +174,4 @@ public class CellRendererPanel extends JPanel {
       g.fillRect(0, 0, getWidth(), getHeight());
     }
   }
-
-  public static class SuperValidate extends SuperPreferredSize {
-    @Override
-    public void validate() {
-      super_validate();
-    }
-  }
 }
