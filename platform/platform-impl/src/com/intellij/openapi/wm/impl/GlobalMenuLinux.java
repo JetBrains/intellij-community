@@ -341,9 +341,10 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
 
         if (DO_FILL_ROOTS) {
           final long startMs = System.currentTimeMillis();
-          am.removeAll();
+          am.removeAll(); // just for insurance
           am.fillMenu();
           _syncChildren(mi, am, 1, stats); // NOTE: fill root menus to avoid empty submenu showing
+          am.removeAll();
           final long elapsedMs = System.currentTimeMillis() - startMs;
           if (TRACE_SYNC_STATS) _trace("filled root menu '%s', spent (in EDT) %d ms, stats: %s", String.valueOf(mi.txt), elapsedMs, _stats2str(stats));
         }
@@ -377,8 +378,10 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     if (croots == null || croots.isEmpty())
       return;
 
-    for (MenuItemInternal mi: croots)
+    for (MenuItemInternal mi: croots) {
       mi.nativePeer = ourLib.addRootMenu(myWindowHandle, mi.uid, mi.txt);
+      _processChildren(mi);
+    }
 
     if (!SHOW_SWING_MENU)
       ApplicationManager.getApplication().invokeLater(()->{
