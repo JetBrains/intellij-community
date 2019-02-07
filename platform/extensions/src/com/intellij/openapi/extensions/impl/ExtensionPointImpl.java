@@ -314,6 +314,9 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       return result;
     }
 
+    // check before to avoid any "restore" work if already cancelled
+    CHECK_CANCELED.run();
+
     processingAdaptersNow = true;
     try {
       ExtensionComponentAdapter[] adapters = myAdapters.toArray(new ExtensionComponentAdapter[totalSize]);
@@ -329,8 +332,8 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       int extensionIndex = 0;
       for (int i = 0; i < adapters.length; i++) {
         ExtensionComponentAdapter adapter = adapters[i];
-        CHECK_CANCELED.run();
         try {
+          // do not call CHECK_CANCELED here in loop because it is called by createInstance()
           @SuppressWarnings("unchecked") T extension = (T)adapter.createInstance(myOwner.getPicoContainer());
           if (!duplicates.add(extension)) {
             T duplicate = duplicates.get(extension);
