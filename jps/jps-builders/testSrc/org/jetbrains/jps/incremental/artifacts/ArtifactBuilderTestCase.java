@@ -24,10 +24,12 @@ import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.jps.builders.BuildResult;
 import org.jetbrains.jps.builders.CompileScopeTestBuilder;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
+import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.artifact.DirectoryArtifactType;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.JpsArtifactService;
+import org.jetbrains.jps.model.artifact.JpsArtifactType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaLibraryType;
 import org.jetbrains.jps.model.library.JpsLibrary;
@@ -94,8 +96,14 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
   }
 
   protected JpsArtifact addArtifact(String name, LayoutElementTestUtil.LayoutElementCreator root) {
+    return addArtifact(name, root, DirectoryArtifactType.INSTANCE);
+  }
+
+  protected JpsArtifact addArtifact(String name, LayoutElementTestUtil.LayoutElementCreator root,
+                                    JpsArtifactType<JpsDummyElement> artifactType) {
     assertFalse("JpsArtifact " + name + " already exists", getArtifactNames().contains(name));
-    JpsArtifact artifact = JpsArtifactService.getInstance().addArtifact(myProject, name, root.buildElement(), DirectoryArtifactType.INSTANCE,
+    JpsArtifact artifact = JpsArtifactService.getInstance().addArtifact(myProject, name, root.buildElement(),
+                                                                        artifactType,
                                                                         JpsElementFactory.getInstance().createDummyElement());
     artifact.setOutputPath(getAbsolutePath("out/artifacts/" + name));
     return artifact;

@@ -17,6 +17,15 @@ public class JavaInMemoryCompiler {
   private final JavaMemFileManager myFileManager = new JavaMemFileManager();
   private final JavaCompiler myCompiler = ToolProvider.getSystemJavaCompiler();
 
+  public JavaInMemoryCompiler(File... classpath) {
+    try {
+      myFileManager.setLocation(StandardLocation.CLASS_PATH, Arrays.asList(classpath));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   public Map<String, byte[]> compile(String className, @Language("JAVA") String code) {
     final DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
     final Iterable<? extends JavaFileObject> compilationUnits = Collections.singletonList(new JavaSourceFromString(className, code));
@@ -101,6 +110,10 @@ public class JavaInMemoryCompiler {
       else {
         return super.getJavaFileForOutput(location, className, kind, sibling);
       }
+    }
+
+    public void setLocation(Location location, Iterable<? extends File> path) throws IOException {
+      fileManager.setLocation(location, path);
     }
 
     public List<InMemoryClassFile> getClassFiles() {
