@@ -31,10 +31,24 @@ class SwitchBootJdkAction : AnAction(), DumbAware {
 
   var bundles:MutableList<Runtime> = mutableListOf()
 
+  lateinit var installed:Runtime;
+
   override fun actionPerformed(e: AnActionEvent) {
 
     ProgressManager.getInstance().run(object : Task.Modal(e.project, "Loading Runtime List...", false) {
       override fun run(progressIndicator: ProgressIndicator) {
+        if (BinTrayUtil.getJdkConfigFilePath().exists()) {
+          try {
+            val file = File(BinTrayUtil.getJdkConfigFilePath().readLines()[0])
+            if (file.exists()) {
+              val runtime = Local(project, file)
+              installed = runtime
+              bundles.add(installed)
+            }
+          } catch (exc : Exception) {
+            // todo ask for file ramovale if it is broken
+          }
+        }
         bundles.addAll(RuntimeLocationsFactory().localBundles(e.project!!))
         bundles.addAll(RuntimeLocationsFactory().bintrayBundles(e.project!!))
       }
@@ -88,7 +102,7 @@ class SwitchBootJdkAction : AnAction(), DumbAware {
       }
     })
 
-    combobox.selectedItem = bundles[0];
+    combobox.selectedItem = installed;
 
     val centralPanel = JPanel(GridBagLayout())
     val constraint = GridBagConstraints()
@@ -118,7 +132,6 @@ class SwitchBootJdkAction : AnAction(), DumbAware {
     }
 
     myDialogWrapper.setResizable(false)
-
     myDialogWrapper.show()
   }
 }
