@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.Disposable;
@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.CachingVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
@@ -161,7 +162,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   }
 
   @Override
-  public void addVirtualFileManagerListener(@NotNull final VirtualFileManagerListener listener, @NotNull Disposable parentDisposable) {
+  public void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener, @NotNull Disposable parentDisposable) {
     addVirtualFileManagerListener(listener);
     Disposer.register(parentDisposable, () -> removeVirtualFileManagerListener(listener));
   }
@@ -172,26 +173,18 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   }
 
   @Override
-  public void notifyPropertyChanged(@NotNull final VirtualFile virtualFile, @NotNull final String property, final Object oldValue, final Object newValue) {
-    final Application application = ApplicationManager.getApplication();
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        if (virtualFile.isValid() && !application.isDisposed()) {
-          application.runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              List<VFilePropertyChangeEvent> events = Collections
-                .singletonList(new VFilePropertyChangeEvent(this, virtualFile, property, oldValue, newValue, false));
-              BulkFileListener listener = application.getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
-              listener.before(events);
-              listener.after(events);
-            }
-          });
-        }
+  public void notifyPropertyChanged(@NotNull VirtualFile virtualFile, @VirtualFile.PropName @NotNull String property, Object oldValue, Object newValue) {
+    Application app = ApplicationManager.getApplication();
+    app.invokeLater(() -> {
+      if (virtualFile.isValid() && !app.isDisposed()) {
+        app.runWriteAction(() -> {
+          List<VFileEvent> events = Collections.singletonList(new VFilePropertyChangeEvent(this, virtualFile, property, oldValue, newValue, false));
+          BulkFileListener listener = app.getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
+          listener.before(events);
+          listener.after(events);
+        });
       }
-    };
-    application.invokeLater(runnable, ModalityState.NON_MODAL);
+    }, ModalityState.NON_MODAL);
   }
 
   @Override
