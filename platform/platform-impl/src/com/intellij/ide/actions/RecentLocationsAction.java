@@ -4,14 +4,15 @@ package com.intellij.ide.actions;
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.CheckboxAction;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -44,6 +45,7 @@ import com.intellij.ui.CaptionPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.WindowMoveListener;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.breadcrumbs.Crumb;
@@ -54,7 +56,6 @@ import com.intellij.util.CollectConsumer;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -68,7 +69,6 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.COMPONENT_KEY;
 import static com.intellij.ui.speedSearch.SpeedSearchSupply.ENTERED_PREFIX_PROPERTY_NAME;
 
 public class RecentLocationsAction extends AnAction {
@@ -81,9 +81,9 @@ public class RecentLocationsAction extends AnAction {
   private static final int MINIMUM_HEIGHT = JBUI.scale(100);
   private static final Color SHORTCUT_FOREGROUND_COLOR = UIUtil.getContextHelpForeground();
   public static final String SHORTCUT_HEX_COLOR = String.format("#%02x%02x%02x",
-                                                                 SHORTCUT_FOREGROUND_COLOR.getRed(),
-                                                                 SHORTCUT_FOREGROUND_COLOR.getGreen(),
-                                                                 SHORTCUT_FOREGROUND_COLOR.getBlue());
+                                                                SHORTCUT_FOREGROUND_COLOR.getRed(),
+                                                                SHORTCUT_FOREGROUND_COLOR.getGreen(),
+                                                                SHORTCUT_FOREGROUND_COLOR.getBlue());
 
   static final String EMPTY_FILE_TEXT = IdeBundle.message("recent.locations.popup.empty.file.text");
 
@@ -133,7 +133,11 @@ public class RecentLocationsAction extends AnAction {
     ScrollingUtil.ensureSelectionExists(list);
 
     JLabel title = createTitle(showChanged);
-    JPanel topPanel = createHeaderPanel(title, createCheckbox(project, listWithFilter, e, showChanged));
+
+    ShortcutSet showChangedOnlyShortcutSet = KeymapUtil.getActiveKeymapShortcuts(RECENT_LOCATIONS_ACTION_ID);
+    JBCheckBox checkBox = createCheckbox(project, showChangedOnlyShortcutSet);
+
+    JPanel topPanel = createHeaderPanel(title, checkBox);
     JPanel mainPanel = createMainPanel(listWithFilter, topPanel);
 
     Color borderColor = SystemInfoRt.isMac && LafManager.getInstance().getCurrentLookAndFeel() instanceof DarculaLookAndFeelInfo
@@ -160,9 +164,22 @@ public class RecentLocationsAction extends AnAction {
       .setLocateWithinScreenBounds(false)
       .createPopup();
 
+    DumbAwareAction.create(event -> {
+      checkBox.setSelected(!checkBox.isSelected());
+      updateItems(project, changedPlaces, navigationPlaces, editorsToRelease, breadcrumbsMap, list, listWithFilter, title, checkBox, popup);
+    }).registerCustomShortcutSet(showChangedOnlyShortcutSet, list, popup);
+
+    checkBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        updateItems(project, changedPlaces, navigationPlaces, editorsToRelease, breadcrumbsMap, list, listWithFilter, title, checkBox,
+                    popup);
+      }
+    });
+
     Disposer.register(popup, () -> {
       Dimension scrollPaneSize = calcScrollPaneSize(scrollPane, listWithFilter, topPanel, popup.getContent());
-      //scroll scrollPane
+      //save scrollPane size
       DimensionService.getInstance().setSize(LOCATION_SETTINGS_KEY, scrollPaneSize, project);
     });
 
@@ -181,19 +198,6 @@ public class RecentLocationsAction extends AnAction {
       public void componentResized(ComponentEvent e) {
         scrollPane.setPreferredSize(calcScrollPaneSize(scrollPane, listWithFilter, topPanel, popup.getContent()));
         scrollPane.revalidate();
-      }
-    });
-
-    project.getMessageBus().connect(popup).subscribe(ShowRecentChangedLocationListener.TOPIC, new ShowRecentChangedLocationListener() {
-      @Override
-      public void showChangedLocation(boolean state) {
-        updateModel(project, listWithFilter, editorsToRelease, state, changedPlaces, navigationPlaces, breadcrumbsMap);
-
-        FocusManagerImpl.getInstance().requestFocus(list, false);
-
-        updateTitleText(title, state);
-
-        popup.pack(false, true);
       }
     });
 
@@ -218,6 +222,41 @@ public class RecentLocationsAction extends AnAction {
     });
 
     showPopup(project, popup);
+  }
+
+  private static void updateItems(@NotNull Project project,
+                                  @NotNull Ref<List<RecentLocationItem>> changedPlaces,
+                                  @NotNull Ref<List<RecentLocationItem>> navigationPlaces,
+                                  @NotNull Collection<Editor> editorsToRelease,
+                                  @NotNull Ref<Map<PlaceInfo, String>> breadcrumbsMap,
+                                  @NotNull JBList<RecentLocationItem> list,
+                                  @NotNull ListWithFilter<RecentLocationItem> listWithFilter,
+                                  @NotNull JLabel title,
+                                  @NotNull JBCheckBox checkBox,
+                                  @NotNull JBPopup popup) {
+    boolean state = checkBox.isSelected();
+    PropertiesComponent.getInstance(project).setValue(SHOW_RECENT_CHANGED_LOCATIONS, state);
+    updateModel(project, listWithFilter, editorsToRelease, state, changedPlaces, navigationPlaces, breadcrumbsMap);
+    updateTitleText(title, state);
+
+    FocusManagerImpl.getInstance().requestFocus(list, false);
+
+    popup.pack(false, true);
+  }
+
+  @NotNull
+  public JBCheckBox createCheckbox(@NotNull Project project, @NotNull ShortcutSet checkboxShortcutSet) {
+    String text = "<html>"
+                  + IdeBundle.message("recent.locations.title.text")
+                  + " <font color=\"" + SHORTCUT_HEX_COLOR + "\">"
+                  + KeymapUtil.getShortcutsText(checkboxShortcutSet.getShortcuts()) + "</font>"
+                  + "</html>";
+    JBCheckBox checkBox = new JBCheckBox(text);
+    checkBox.setSelected(showChanged(project));
+    checkBox.setBorder(JBUI.Borders.empty());
+    checkBox.setOpaque(false);
+
+    return checkBox;
   }
 
   @NotNull
@@ -353,29 +392,6 @@ public class RecentLocationsAction extends AnAction {
     topPanel.addMouseMotionListener(moveListener);
 
     return topPanel;
-  }
-
-  @NotNull
-  private static JComponent createCheckbox(@NotNull Project project,
-                                           @NotNull ListWithFilter listWithFilter,
-                                           @NotNull AnActionEvent e,
-                                           boolean changed) {
-    CheckboxAction action = new RecentLocationsCheckboxAction(project);
-    ShortcutSet shortcuts = KeymapUtil.getActiveKeymapShortcuts(RECENT_LOCATIONS_ACTION_ID);
-    action.registerCustomShortcutSet(shortcuts, listWithFilter);
-    action.getTemplatePresentation().setText("<html>"
-                                             + IdeBundle.message("recent.locations.title.text")
-                                             + " <font color=\"" + SHORTCUT_HEX_COLOR + "\">"
-                                             + KeymapUtil.getShortcutsText(shortcuts.getShortcuts()) + "</font>"
-                                             + "</html>");
-
-    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, e.getDataContext());
-    JComponent checkbox = action.createCustomComponent(action.getTemplatePresentation());
-    action.getTemplatePresentation().putClientProperty(COMPONENT_KEY, checkbox);
-    action.setSelected(event, changed);
-    checkbox.setBorder(BorderFactory.createEmptyBorder());
-
-    return checkbox;
   }
 
   @NotNull
@@ -618,31 +634,6 @@ public class RecentLocationsAction extends AnAction {
     settings.setRightMarginShown(false);
   }
 
-  private static class RecentLocationsCheckboxAction extends CheckboxAction {
-    @NotNull private final Project myProject;
-
-    private RecentLocationsCheckboxAction(@NotNull Project project) {
-      myProject = project;
-
-      Presentation presentation = getTemplatePresentation();
-      presentation.setIcon(AllIcons.Actions.Diff);
-    }
-
-    @Override
-    public boolean isSelected(@NotNull AnActionEvent e) {
-      return showChanged(myProject);
-    }
-
-    @Override
-    public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      PropertiesComponent.getInstance(myProject).setValue(SHOW_RECENT_CHANGED_LOCATIONS, state);
-
-      update(AnActionEvent.createFromAnAction(this, e.getInputEvent(), ActionPlaces.UNKNOWN, e.getDataContext()));
-
-      myProject.getMessageBus().syncPublisher(ShowRecentChangedLocationListener.TOPIC).showChangedLocation(state);
-    }
-  }
-
   static class RecentLocationItem {
     @NotNull private final PlaceInfo myInfo;
     @NotNull private final EditorEx myEditor;
@@ -661,11 +652,5 @@ public class RecentLocationsAction extends AnAction {
     EditorEx getEditor() {
       return myEditor;
     }
-  }
-
-  private interface ShowRecentChangedLocationListener {
-    Topic<ShowRecentChangedLocationListener> TOPIC = Topic.create("ShowRecentChangedLocation", ShowRecentChangedLocationListener.class);
-
-    void showChangedLocation(boolean state);
   }
 }
