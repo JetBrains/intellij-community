@@ -155,7 +155,7 @@ public class StartupUtil {
 
     if (newConfigFolder) {
       appStarter.beforeImportConfigs();
-      ConfigImportHelper.importConfigsTo(PathManager.getConfigPath());
+      ConfigImportHelper.importConfigsTo(PathManager.getConfigPath(), log);
     }
     else {
       installPluginUpdates();
