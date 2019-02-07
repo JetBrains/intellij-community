@@ -596,6 +596,11 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   }
   private void _handleEvent(int uid, int eventType, boolean doFiltering) {
     // glib main-loop thread
+    if (myWindowHandle == null || myIsDisposed) {
+      if (TRACE_ENABLED) _trace("window was closed when received event '%s', just skip it", _evtype2str(eventType));
+      return;
+    }
+
     final MenuItemInternal mi = _findMenuItem(uid);
     if (mi == null) {
       LOG.error("can't find menu-item by uid " + uid + ", eventType=" + eventType);
