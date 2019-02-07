@@ -40,7 +40,7 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   }
 
   public static GroovyShortNamesCache getGroovyShortNamesCache(Project project) {
-    return ObjectUtils.assertNotNull(ContainerUtil.findInstance(project.getExtensions(PsiShortNamesCache.EP_NAME), GroovyShortNamesCache.class));
+    return ObjectUtils.assertNotNull(ContainerUtil.findInstance(PsiShortNamesCache.EP_NAME.getExtensionList(project), GroovyShortNamesCache.class));
   }
 
   @Override
