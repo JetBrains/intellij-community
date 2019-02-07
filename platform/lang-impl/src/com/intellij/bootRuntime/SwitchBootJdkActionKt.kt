@@ -57,7 +57,7 @@ class SwitchBootJdkAction : AnAction(), DumbAware {
     // todo change to dsl
     val southPanel = ActionPanel()
 
-    val controller = Controller(e.project!!, southPanel, Model(bundles[0], bundles))
+    val controller = Controller(e.project!!, southPanel, Model(installed, bundles))
 
     val repositoryUrlFieldSpinner = JLabel(AnimatedIcon.Default())
     repositoryUrlFieldSpinner.isVisible = false
