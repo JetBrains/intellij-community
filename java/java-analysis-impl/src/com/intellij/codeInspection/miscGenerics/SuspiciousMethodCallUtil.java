@@ -221,11 +221,11 @@ public class SuspiciousMethodCallUtil {
   }
 
   @Nullable
-  public static String getSuspiciousMethodCallMessage(PsiReferenceExpression methodExpression,
-                                                      PsiType argType,
-                                                      boolean reportConvertibleMethodCalls,
-                                                      @NotNull List<PatternMethod> patternMethods,
-                                                      int argIdx) {
+  static String getSuspiciousMethodCallMessage(PsiReferenceExpression methodExpression,
+                                               PsiType argType,
+                                               boolean reportConvertibleMethodCalls,
+                                               @NotNull List<PatternMethod> patternMethods,
+                                               int argIdx) {
     final PsiExpression qualifier = methodExpression.getQualifierExpression();
     if (qualifier == null || qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) return null;
     if (argType instanceof PsiPrimitiveType) {
@@ -342,19 +342,17 @@ public class SuspiciousMethodCallUtil {
         ExpressionUtils.resolveExpression(ArrayUtil.getFirstElement(call.getArgumentList().getExpressions()));
       PsiMethodCallExpression argCall =
         ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(arg), PsiMethodCallExpression.class);
-      if (SINGLETON_COLLECTION.test(argCall) && ExpressionUtils.isNullLiteral(argCall.getArgumentList().getExpressions()[0])) {
-        return true;
-      }
+      return SINGLETON_COLLECTION.test(argCall) && ExpressionUtils.isNullLiteral(argCall.getArgumentList().getExpressions()[0]);
     }
     return false;
   }
   
-  public static class PatternMethod {
+  static class PatternMethod {
     PsiMethod patternMethod;
     int typeParameterIdx;
     int argIdx;
 
-    public PatternMethod(PsiMethod patternMethod, int typeParameterIdx, int argIdx) {
+    PatternMethod(PsiMethod patternMethod, int typeParameterIdx, int argIdx) {
       this.patternMethod = patternMethod;
       this.typeParameterIdx = typeParameterIdx;
       this.argIdx = argIdx;
