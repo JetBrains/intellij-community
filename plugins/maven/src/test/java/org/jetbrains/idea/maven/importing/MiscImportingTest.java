@@ -25,6 +25,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -380,10 +381,9 @@ public class MiscImportingTest extends MavenImportingTestCase {
   }
 
   public void testUserPropertiesCanBeCustomizedByMavenImporters() {
-    NameSettingMavenImporter extension = new NameSettingMavenImporter("name-from-properties");
     Disposable disposable = Disposer.newDisposable();
-    MavenImporter.EXTENSION_POINT_NAME.getPoint(null).registerExtension(extension, disposable);
     try {
+      PlatformTestUtil.maskExtensions(MavenImporter.EXTENSION_POINT_NAME, Collections.singletonList(new NameSettingMavenImporter("name-from-properties")), disposable);
       importProject("<groupId>test</groupId>" +
                     "<artifactId>project</artifactId>" +
                     "<version>1</version>" +

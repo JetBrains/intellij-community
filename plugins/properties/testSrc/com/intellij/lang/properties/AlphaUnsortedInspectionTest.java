@@ -6,12 +6,12 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.unsorted.AlphaUnsortedPropertiesFileInspection;
 import com.intellij.codeInspection.unsorted.AlphaUnsortedPropertiesFileInspectionSuppressor;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+
+import java.util.Collections;
+import java.util.Locale;
 
 /**
  * @author Dmitry Batkovich
@@ -26,23 +26,14 @@ public class AlphaUnsortedInspectionTest extends LightPlatformCodeInsightFixture
   }
 
   public void testUnsortedSuppressed() {
-    final ExtensionPoint<AlphaUnsortedPropertiesFileInspectionSuppressor> ep =
-      Extensions.getRootArea().getExtensionPoint(AlphaUnsortedPropertiesFileInspectionSuppressor.EP_NAME);
-    final AlphaUnsortedPropertiesFileInspectionSuppressor suppressor = new AlphaUnsortedPropertiesFileInspectionSuppressor() {
-      @Override
-      public boolean suppressInspectionFor(PropertiesFile propertiesFile) {
-        return propertiesFile.getName().toLowerCase().contains("suppress");
-      }
-    };
-
-    Disposable disposer = Disposer.newDisposable();
-    try {
-      ep.registerExtension(suppressor, disposer);
-      doTest();
-    }
-    finally {
-      Disposer.dispose(disposer);
-    }
+    PlatformTestUtil.maskExtensions(AlphaUnsortedPropertiesFileInspectionSuppressor.EP_NAME,
+                                    Collections.singletonList(new AlphaUnsortedPropertiesFileInspectionSuppressor() {
+                                      @Override
+                                      public boolean suppressInspectionFor(PropertiesFile propertiesFile) {
+                                        return propertiesFile.getName().toLowerCase(Locale.ENGLISH).contains("suppress");
+                                      }
+                                    }), myFixture.getTestRootDisposable());
+    doTest();
   }
 
   public void testFix() {
@@ -89,5 +80,4 @@ public class AlphaUnsortedInspectionTest extends LightPlatformCodeInsightFixture
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("properties") + "/testData/alphaUnsorted/";
   }
-
 }

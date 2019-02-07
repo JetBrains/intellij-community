@@ -192,17 +192,14 @@ public abstract class InspectionTestCase extends LightCodeInsightFixtureTestCase
 
       @Override
       public void setSelected(boolean selected) {
-
       }
 
       @Override
       public void readExternal(Element element) {
-
       }
 
       @Override
       public void writeExternal(Element element) {
-
       }
     };
 

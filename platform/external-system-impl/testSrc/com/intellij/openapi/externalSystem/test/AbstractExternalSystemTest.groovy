@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.SkipInHeadlessEnvironment
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
@@ -28,8 +29,6 @@ abstract class AbstractExternalSystemTest extends UsefulTestCase {
   Project project
   File projectDir
 
-  TestExternalSystemManager externalSystemManager
-
   @Override
   protected void setUp() throws Exception {
     super.setUp()
@@ -43,8 +42,7 @@ abstract class AbstractExternalSystemTest extends UsefulTestCase {
     projectDir = new File(tmpDir, getTestName(false))
     projectDir.mkdirs()
 
-    externalSystemManager = new TestExternalSystemManager(project)
-    ExternalSystemManager.EP_NAME.getPoint(null).registerExtension(externalSystemManager, testRootDisposable)
+    PlatformTestUtil.maskExtensions(ExternalSystemManager.EP_NAME, Collections.singletonList(new TestExternalSystemManager(project)), testRootDisposable)
   }
 
   private static void ensureTempDirCreated() {

@@ -102,7 +102,6 @@ public class FacetTypeRegistryImpl extends FacetTypeRegistry {
         unregisterFacetType(extension);
       }
     }, true, null);
-    FacetType.EP_NAME.getExtensionList();
     myExtensionsLoaded = true;
   }
 }

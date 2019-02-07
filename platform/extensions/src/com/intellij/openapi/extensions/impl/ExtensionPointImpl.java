@@ -417,6 +417,10 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   /**
+   * Put extension point in read-only mode and replace existing extensions by supplied.
+   * For tests this method is more preferable than {@link #registerExtension} because makes registration more isolated and strict
+   * (no one can modify extension point until `parentDisposable` is not disposed).
+   *
    * Please use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions(ExtensionPointName, List, Disposable)} instead of direct usage.
    */
   @SuppressWarnings("JavadocReference")
