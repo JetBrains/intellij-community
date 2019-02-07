@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.VirtualFile;
  * This is a temporary interface that is essential to support Scientific Notebooks.
  * It may be removed in the future and shouldn't be used outside of notebooks support.
  */
-@Deprecated
 public interface NotebookSourceVirtualFile {
   /**
    * Returns the origin {@link VirtualFile} with notebook content (e.g. file with JSON for the Jupyter notebook).
