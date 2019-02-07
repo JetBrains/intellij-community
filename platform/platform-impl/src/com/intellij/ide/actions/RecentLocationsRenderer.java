@@ -2,7 +2,6 @@
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.ide.actions.RecentLocationsAction.RecentLocationItem;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.navigation.ItemPresentation;
@@ -20,7 +19,6 @@ import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,21 +37,18 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Map;
 
 import static com.intellij.ide.actions.RecentLocationsAction.EMPTY_FILE_TEXT;
 
 class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem> {
   @NotNull private final Project myProject;
   @NotNull private final SpeedSearch mySpeedSearch;
-  @NotNull private final Ref<Map<IdeDocumentHistoryImpl.PlaceInfo, String>> myBreadcrumbsMap;
+  @NotNull private final RecentLocationsDataModel myData;
 
-  RecentLocationsRenderer(@NotNull Project project,
-                          @NotNull SpeedSearch speedSearch,
-                          @NotNull Ref<Map<IdeDocumentHistoryImpl.PlaceInfo, String>> breadcrumbsMap) {
+  RecentLocationsRenderer(@NotNull Project project, @NotNull SpeedSearch speedSearch, @NotNull RecentLocationsDataModel data) {
     myProject = project;
     mySpeedSearch = speedSearch;
-    myBreadcrumbsMap = breadcrumbsMap;
+    myData = data;
   }
 
   @Override
@@ -68,7 +63,7 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
     }
 
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
-    String breadcrumbs = myBreadcrumbsMap.get().get(value.getInfo());
+    String breadcrumbs = myData.getBreadcrumbsMap(RecentLocationsAction.showChanged(myProject)).get(value.getInfo());
     JPanel panel = new JPanel(new VerticalFlowLayout(0, 0));
     if (index != 0) {
       panel.add(createSeparatorLine(colorsScheme));
@@ -228,7 +223,8 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
   }
 
   @NotNull
-  private static TextAttributes createDefaultTextAttributesWithBackground(@NotNull EditorColorsScheme colorsScheme, @NotNull Color backgroundColor) {
+  private static TextAttributes createDefaultTextAttributesWithBackground(@NotNull EditorColorsScheme colorsScheme,
+                                                                          @NotNull Color backgroundColor) {
     TextAttributes defaultTextAttributes = new TextAttributes();
     TextAttributes textAttributes = colorsScheme.getAttributes(HighlighterColors.TEXT);
     if (textAttributes != null) {
