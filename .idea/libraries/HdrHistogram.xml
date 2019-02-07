@@ -5,6 +5,8 @@
       <root url="jar://$MAVEN_REPOSITORY$/org/hdrhistogram/HdrHistogram/2.1.4/HdrHistogram-2.1.4.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/hdrhistogram/HdrHistogram/2.1.4/HdrHistogram-2.1.4-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>
