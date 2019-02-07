@@ -69,10 +69,13 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
     if (candidates.isEmpty()) return;
     final List<ImplicitUsageProvider> implicitUsageProviders = ImplicitUsageProvider.EP_NAME.getExtensionList();
 
+    PsiClass scope = PsiTreeUtil.getTopmostParentOfType(aClass, PsiClass.class);
+    if (scope == null) scope = aClass;
+
     FieldLoop:
     for (final PsiField field : candidates) {
       if (usedFields.contains(field) && !hasImplicitReadOrWriteUsage(field, implicitUsageProviders)) {
-        final Query<PsiReference> references = ReferencesSearch.search(field, new LocalSearchScope(aClass));
+        final Query<PsiReference> references = ReferencesSearch.search(field, new LocalSearchScope(scope));
         final Map<PsiCodeBlock, Collection<PsiReference>> refs = new HashMap<>();
         for (PsiReference reference : references.findAll()) {
           final PsiElement element = reference.getElement();
@@ -149,6 +152,11 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
       @Override
       public void visitClassInitializer(PsiClassInitializer initializer) {
         //do not go inside class initializer
+      }
+
+      @Override
+      public void visitLambdaExpression(PsiLambdaExpression expression) {
+        // do not go inside lambda
       }
 
       @Override
@@ -295,7 +303,7 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
 
   private static boolean groupReferenceByCodeBlocks(Map<PsiCodeBlock, Collection<PsiReference>> refs, PsiReference psiReference) {
     final PsiElement element = psiReference.getElement();
-    final PsiCodeBlock block = PsiTreeUtil.getTopmostParentOfType(element, PsiCodeBlock.class);
+    final PsiCodeBlock block = getTopmostBlock(element);
     if (block == null) {
       return false;
     }
@@ -308,6 +316,17 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
     }
     references.add(psiReference);
     return true;
+  }
+
+  @Nullable
+  private static PsiCodeBlock getTopmostBlock(@NotNull PsiElement element) {
+    PsiElement parent = element.getParent();
+    PsiCodeBlock block = null;
+    while (parent != null && !(parent instanceof PsiClass)) {
+      if (parent instanceof PsiCodeBlock) block = (PsiCodeBlock)parent;
+      parent = parent.getParent();
+    }
+    return block;
   }
 
   private static boolean findExistentBlock(Map<PsiCodeBlock, Collection<PsiReference>> refs,
@@ -365,8 +384,29 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
     return new JavaElementVisitor() {
       @Override
       public void visitJavaFile(PsiJavaFile file) {
+        final JavaElementVisitor visitor = new JavaElementVisitor() {
+          @Override
+          public void visitClass(PsiClass aClass) {
+            super.visitClass(aClass);
+            Arrays.stream(aClass.getChildren()).forEach(c -> c.accept(this));
+            doCheckClass(aClass, holder, EXCLUDE_ANNOS, IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS);
+          }
+
+          @Override
+          public void visitDeclarationStatement(PsiDeclarationStatement statement) {
+            super.visitDeclarationStatement(statement);
+            Arrays.stream(statement.getDeclaredElements()).forEach(d -> d.accept(this));
+          }
+
+          @Override
+          public void visitMethod(PsiMethod method) {
+            super.visitMethod(method);
+            final PsiCodeBlock body = method.getBody();
+            if (body != null) Arrays.stream(body.getChildren()).forEach(c -> c.accept(this));
+          }
+        };
         for (PsiClass aClass : file.getClasses()) {
-          doCheckClass(aClass, holder, EXCLUDE_ANNOS, IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS);
+          aClass.accept(visitor);
         }
       }
     };
