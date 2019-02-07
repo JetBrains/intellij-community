@@ -9,7 +9,7 @@ import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.Rectangle
 
-open class JBDefaultTabPainter(val theme : TabTheme = TabTheme.TOOLWINDOW_TAB) : JBTabPainter {
+open class JBDefaultTabPainter(val theme : TabTheme = TabTheme.DEFAULT_TAB) : JBTabPainter {
 
   override fun getBackgroundColor(): Color = theme.background ?: theme.borderColor
 

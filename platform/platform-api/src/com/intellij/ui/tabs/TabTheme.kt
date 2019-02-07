@@ -18,7 +18,11 @@ class TabTheme(
   companion object {
     @JvmStatic
     val TOOLWINDOW_TAB = TabTheme(background = null)
+
     @JvmStatic
-    var EDITOR_TAB: TabTheme = TabTheme(underlineThickness = JBUI.scale(3))
+    val EDITOR_TAB = TabTheme(underlineThickness = JBUI.scale(3))
+
+    @JvmStatic
+    val DEFAULT_TAB = TabTheme()
   }
 }

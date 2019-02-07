@@ -15,6 +15,7 @@ public interface JBTabPainter {
   }
 
   JBTabPainter editorPainter = new JBEditorTabPainter();
+  JBTabPainter toolWindowPainter = new JBDefaultTabPainter(TabTheme.Companion.getTOOLWINDOW_TAB());
   JBTabPainter defaultPainter = new JBDefaultTabPainter();
 
   static JBTabPainter getInstance(@Nullable PainterType type) {
@@ -24,6 +25,7 @@ public interface JBTabPainter {
       case EDITOR:
         return editorPainter;
       case TOOL_WINDOW:
+        return toolWindowPainter;
       default:
         return defaultPainter;
     }
