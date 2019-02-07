@@ -45,7 +45,9 @@ public class MigrationMapSet {
   @NonNls private static final String RECURSIVE = "recursive";
 
   @NonNls private static final String[] DEFAULT_MAPS = new  String[] {
+    /* Android Studio: b/37108434
     "/com/intellij/refactoring/migration/res/Swing__1_0_3____1_1_.xml",
+    Android Studio: b/37108434 */
   };
   private final Set<String> myDeletedMaps = new TreeSet<>();
 
