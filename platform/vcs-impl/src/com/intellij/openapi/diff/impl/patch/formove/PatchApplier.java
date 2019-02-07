@@ -226,7 +226,7 @@ public class PatchApplier<Unused> {
 
       final Set<FilePath> directlyAffected = new HashSet<>();
       final Set<VirtualFile> indirectlyAffected = new HashSet<>();
-      for (PatchApplier applier : group) {
+      for (PatchApplier<?> applier : group) {
         directlyAffected.addAll(applier.getDirectlyAffected());
         indirectlyAffected.addAll(applier.getIndirectlyAffected());
       }
