@@ -9,7 +9,7 @@ import org.jetbrains.io.mandatory.RestModel;
 import java.util.Date;
 
 /**
- * @author Mikhail Golubev
+ * This is a stub definition intended to be used with Google GSON. Its fields are initialized reflectively.
  */
 @RestModel
 @SuppressWarnings("UnusedDeclaration")

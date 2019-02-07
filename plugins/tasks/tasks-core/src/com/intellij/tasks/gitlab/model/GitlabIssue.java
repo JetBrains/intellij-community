@@ -6,8 +6,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Date;
 
 /**
- * @author Mikhail Golubev
+ * This is a stub definition intended to be used with Google GSON. Its fields are initialized reflectively.
  */
+@SuppressWarnings("unused")
 public class GitlabIssue {
   private int id;
   @SerializedName("iid")

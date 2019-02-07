@@ -6,11 +6,12 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * This is a stub definition intended to be used with Google GSON. Its fields are initialized reflectively.
+ * 
  * Only required fields are declared.
  * Field {@code name} and {@code webUrl} may be null because only {@code id} is serialized.
- *
- * @author Mikhail Golubev
  */
+@SuppressWarnings("unused")
 @Tag("GitlabProject")
 public class GitlabProject {
   private int id;
