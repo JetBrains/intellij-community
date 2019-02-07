@@ -3,17 +3,19 @@ package com.jetbrains.changeReminder.plugin.config
 
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.options.Configurable
+import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBTextField
-import com.intellij.ui.layout.panel
+import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.UI.PanelFactory.grid
+import com.intellij.util.ui.UI.PanelFactory.panel
+import com.intellij.util.ui.UIUtil
 import com.jetbrains.changeReminder.plugin.UserSettings
+import java.awt.*
 import java.util.*
-import javax.swing.JLabel
-import javax.swing.JSlider
+import javax.swing.*
 import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
-import javax.swing.event.DocumentEvent
-import javax.swing.event.DocumentListener
 import kotlin.math.roundToInt
 
 class ChangeReminderConfigurationPanel : Configurable {
@@ -21,112 +23,96 @@ class ChangeReminderConfigurationPanel : Configurable {
     private const val LOWER_BOUND = 0
     private const val UPPER_BOUND = 100
 
-    private fun isFieldCorrect(field: JBTextField?): Boolean {
-      if (field == null) {
-        return false
-      }
-      val value = field.text.toIntOrNull() ?: return false
-      return value in LOWER_BOUND..UPPER_BOUND
-    }
-
     private fun reverseThreshold(value: Int) = (UPPER_BOUND - value + LOWER_BOUND)
   }
 
   private val userSettings = ServiceManager.getService(UserSettings::class.java)
-  private var reversedValue = reverseThreshold(
-    (userSettings.threshold * UserSettings.THRESHOLD_PRECISION).roundToInt())
 
-  private val thresholdField by lazy {
-    JBTextField(reversedValue.toString()).apply {
-      document.addDocumentListener(ThresholdFieldListener())
-    }
+  private var reversedValue = reverseThreshold((userSettings.threshold * UserSettings.THRESHOLD_PRECISION).roundToInt())
+
+  private val thresholdField = JBIntSpinner(reversedValue, LOWER_BOUND, UPPER_BOUND).apply {
+    addChangeListener(ThresholdFieldListener())
   }
 
-  private val pluginActivateCheckBox by lazy {
-    JBCheckBox("Enable plugin (requires restart)", userSettings.isPluginEnabled)
+  private val pluginActivateCheckBox = JBCheckBox("Enable additional Git repository index used by plugin (requires restart)",
+                                                  userSettings.isPluginEnabled).apply {
+    addChangeListener(ForwardIndexCheckboxListener())
   }
 
-  private val thresholdSlider by lazy {
-    JSlider(LOWER_BOUND, UPPER_BOUND, reversedValue).apply {
-      addChangeListener(ThresholdSliderListener())
-      val table = Hashtable<Int, JLabel>()
-      table[LOWER_BOUND] = JLabel("Never show")
-      table[UPPER_BOUND] = JLabel("Always show")
-      labelTable = table
-      paintLabels = true
-      majorTickSpacing = UPPER_BOUND
-      paintTicks = true
-    }
+  private val thresholdSlider = JSlider(LOWER_BOUND, UPPER_BOUND, reversedValue).apply {
+    addChangeListener(ThresholdSliderListener())
+    val table = Hashtable<Int, JLabel>()
+    table[LOWER_BOUND] = JLabel("Never show")
+    table[UPPER_BOUND] = JLabel("Always show")
+    labelTable = table
+    paintLabels = true
+    majorTickSpacing = UPPER_BOUND
+    paintTicks = true
   }
+
+  private val thresholdPanel = JPanel().apply {
+    layout = BoxLayout(this, BoxLayout.X_AXIS)
+    add(thresholdSlider)
+    add(Box.createRigidArea(JBDimension(UIUtil.DEFAULT_HGAP, 0)))
+    add(panel(thresholdField).resizeY(false).createPanel())
+    border = IdeBorderFactory.createTitledBorder("How often to show reminders", false)
+    alignmentX = Component.LEFT_ALIGNMENT
+  }
+
+  private val centerPanel = grid()
+    .add(panel(pluginActivateCheckBox.apply { alignmentX = Component.LEFT_ALIGNMENT }))
+    .add(panel(thresholdPanel).resizeX(false))
+    .createPanel()
 
   override fun getDisplayName() = "ChangeReminder"
 
-  private fun getThresholdPanel() = panel {
-    row("Adjust triggering level: ") {
-      thresholdSlider(grow, push)
-      thresholdField(push)
-    }
-  }
-
-  private fun createCenterPanel() = panel {
-    row {
-      cell(true) {
-        getThresholdPanel()()
-        pluginActivateCheckBox()
-      }
-    }
-  }
-
-  override fun createComponent() = createCenterPanel()
+  override fun createComponent() = centerPanel
 
   override fun isModified(): Boolean {
-    if (!isFieldCorrect(thresholdField)) {
-      return false
-    }
     return reversedValue != thresholdSlider.value ||
            pluginActivateCheckBox.isSelected != userSettings.isPluginEnabled
   }
 
   override fun apply() {
-    if (isFieldCorrect(thresholdField)) {
-      val newValue = thresholdSlider.value
+    val isPluginEnabled = pluginActivateCheckBox.isSelected
+    userSettings.isPluginEnabled = isPluginEnabled
+    if (isPluginEnabled) {
+      val newValue = thresholdField.value as Int
       userSettings.threshold = reverseThreshold(newValue).toDouble() / UserSettings.THRESHOLD_PRECISION
       reversedValue = newValue
-      userSettings.isPluginEnabled = pluginActivateCheckBox.isSelected
     }
   }
 
   override fun reset() {
     thresholdSlider.value = reversedValue
-    thresholdField.text = reversedValue.toString()
+    thresholdField.value = reversedValue
     pluginActivateCheckBox.isSelected = userSettings.isPluginEnabled
   }
 
   private inner class ThresholdSliderListener : ChangeListener {
     override fun stateChanged(e: ChangeEvent?) {
       val newValue = thresholdSlider.value
-      if (thresholdField.text.toInt() != newValue) {
-        thresholdField.text = newValue.toString()
+      if (thresholdField.value as Int != newValue) {
+        thresholdField.value = newValue
       }
     }
   }
 
-  private inner class ThresholdFieldListener : DocumentListener {
-    private fun sliderUpdate() {
-      if (isFieldCorrect(thresholdField)) {
-        thresholdSlider.value = thresholdField.text.toInt()
-      }
+  private inner class ThresholdFieldListener : ChangeListener {
+    override fun stateChanged(e: ChangeEvent?) {
+      val newValue = thresholdField.value as Int
+      if (thresholdSlider.value != newValue)
+        thresholdSlider.value = newValue
+    }
+  }
+
+  private inner class ForwardIndexCheckboxListener : ChangeListener {
+    override fun stateChanged(e: ChangeEvent?) {
+      val newValue = pluginActivateCheckBox.isSelected
+      thresholdPanel.isEnabled = newValue
+      thresholdField.isEnabled = newValue
+      thresholdSlider.isEnabled = newValue
     }
 
-    override fun changedUpdate(e: DocumentEvent?) {
-    }
-
-    override fun insertUpdate(e: DocumentEvent?) {
-      sliderUpdate()
-    }
-
-    override fun removeUpdate(e: DocumentEvent?) {
-      sliderUpdate()
-    }
   }
 }
