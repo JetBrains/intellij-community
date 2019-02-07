@@ -72,9 +72,11 @@ public class MemoryAgentImpl implements MemoryAgent {
   public long[] evaluateObjectsSizes(@NotNull List<ObjectReference> references) throws EvaluateException {
     if (!canEvaluateObjectsSizes()) throw new UnsupportedOperationException();
     Value result = callMethod(SIZE_OF_OBJECTS_METHOD_NAME, references, (args, context) -> {
+      long start = System.currentTimeMillis();
       ArrayType longArray = (ArrayType)myDebugProcess.findClass(context, "java.lang.Object[]", context.getClassLoader());
       ArrayReference instancesArray = longArray.newInstance(references.size());
       instancesArray.setValues(references);
+      LOG.info("Wrapping values with array took " + (System.currentTimeMillis() - start) + " ms");
       return Collections.singletonList(instancesArray);
     });
     return LongArrayParser.INSTANCE.parse(result).stream().mapToLong(Long::longValue).toArray();
@@ -121,6 +123,7 @@ public class MemoryAgentImpl implements MemoryAgent {
                            @NotNull List<? extends Value> args,
                            @NotNull ArgumentsTransformer transformer) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
+    long start = System.currentTimeMillis();
     List<Method> methods = myProxyClassType.methodsByName(methodName);
     if (methods.isEmpty()) {
       throw EvaluateExceptionUtil.createEvaluateException("Could not find method with such name: " + methodName);
@@ -143,7 +146,9 @@ public class MemoryAgentImpl implements MemoryAgent {
       throw EvaluateExceptionUtil.createEvaluateException(e);
     }
 
-    return myDebugProcess.invokeMethod(evaluationContext, myProxyClassType, method, transformedArgs);
+    Value result = myDebugProcess.invokeMethod(evaluationContext, myProxyClassType, method, transformedArgs);
+    LOG.info("Memory agent's method \"" + methodName + "\" took " + (System.currentTimeMillis() - start) + " ms");
+    return result;
   }
 
   @FunctionalInterface
