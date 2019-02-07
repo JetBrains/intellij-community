@@ -38,7 +38,7 @@ class ChangeReminderConfigurationPanel : Configurable {
 
   private val thresholdField by lazy {
     JBTextField(reversedValue.toString()).apply {
-      document.addDocumentListener(FieldListener())
+      document.addDocumentListener(ThresholdFieldListener())
     }
   }
 
@@ -48,7 +48,7 @@ class ChangeReminderConfigurationPanel : Configurable {
 
   private val thresholdSlider by lazy {
     JSlider(LOWER_BOUND, UPPER_BOUND, reversedValue).apply {
-      addChangeListener(SliderListener())
+      addChangeListener(ThresholdSliderListener())
       val table = Hashtable<Int, JLabel>()
       table[LOWER_BOUND] = JLabel("Never show")
       table[UPPER_BOUND] = JLabel("Always show")
@@ -102,7 +102,7 @@ class ChangeReminderConfigurationPanel : Configurable {
     pluginActivateCheckBox.isSelected = userSettings.isPluginEnabled
   }
 
-  private inner class SliderListener : ChangeListener {
+  private inner class ThresholdSliderListener : ChangeListener {
     override fun stateChanged(e: ChangeEvent?) {
       val newValue = thresholdSlider.value
       if (thresholdField.text.toInt() != newValue) {
@@ -111,7 +111,7 @@ class ChangeReminderConfigurationPanel : Configurable {
     }
   }
 
-  private inner class FieldListener : DocumentListener {
+  private inner class ThresholdFieldListener : DocumentListener {
     private fun sliderUpdate() {
       if (isFieldCorrect(thresholdField)) {
         thresholdSlider.value = thresholdField.text.toInt()
