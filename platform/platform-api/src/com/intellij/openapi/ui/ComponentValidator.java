@@ -220,7 +220,7 @@ public class ComponentValidator {
             tipComponent.addHyperlinkListener(hyperlinkListener);
             tipComponent.addMouseListener(new TipComponentMouseListener());
             popupSize = tipComponent.getPreferredSize();
-          });
+          }).setCancelOnMouseOutCallback(e -> e.getID() == MouseEvent.MOUSE_PRESSED && !withinComponent(info, e));
 
           getFocusable(validationInfo.component).ifPresent(fc -> {
             if (fc.hasFocus()) {
@@ -273,11 +273,10 @@ public class ComponentValidator {
     return JBPopupFactory.getInstance().createComponentPopupBuilder(tipComponent, null).
       setBorderColor(info.warning ? warningBorderColor() : errorBorderColor()).
       setCancelOnClickOutside(false).
-      setShowShadow(false).
-      setCancelOnMouseOutCallback(e -> e.getID() == MouseEvent.MOUSE_PRESSED && !withinComponent(info, e));
+      setShowShadow(false);
   }
 
-  private static boolean withinComponent(@NotNull ValidationInfo info, @NotNull MouseEvent e) {
+  public static boolean withinComponent(@NotNull ValidationInfo info, @NotNull MouseEvent e) {
     if (info.component != null && info.component.isShowing()) {
       Rectangle screenBounds = new Rectangle(info.component.getLocationOnScreen(), info.component.getSize());
       return screenBounds.contains(e.getLocationOnScreen());

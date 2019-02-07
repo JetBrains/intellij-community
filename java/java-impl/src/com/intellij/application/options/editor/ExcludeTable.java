@@ -75,8 +75,12 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
 
     @Override
     public TableCellRenderer getRenderer(Item pair) {
+      JTextField cellEditor = new JTextField();
+      cellEditor.putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, Boolean.TRUE);
+
       return new ValidatingTableCellRendererWrapper(new DefaultTableCellRenderer()).
-        withCellValidator((value, row, column) -> validationInfoProducer.apply(value, null));
+        withCellValidator((value, row, column) -> validationInfoProducer.apply(value, null)).
+        bindToEditorSize(cellEditor::getPreferredSize);
     }
 
     @Override

@@ -24,10 +24,12 @@ public abstract class CellComponentProvider<C extends JComponent> {
   }
 
   @Nullable
-  abstract public JComponent getCellRendererComponent(@NotNull Point p);
+  abstract public JComponent getCellRendererComponent(@NotNull MouseEvent e);
 
   @NotNull
   abstract public Rectangle getCellRect(@NotNull MouseEvent e);
+
+  abstract boolean isEditing(@NotNull MouseEvent e);
 
   public static CellComponentProvider<JTable> forTable(JTable table) {
     return new TableProvider(table);
@@ -45,7 +47,8 @@ public abstract class CellComponentProvider<C extends JComponent> {
 
     @Nullable
     @Override
-    public JComponent getCellRendererComponent(@NotNull Point p) {
+    public JComponent getCellRendererComponent(@NotNull MouseEvent e) {
+      Point p = e.getPoint();
       int column = owner.columnAtPoint(p);
       int row = owner.rowAtPoint(p);
 
@@ -61,7 +64,13 @@ public abstract class CellComponentProvider<C extends JComponent> {
     @Override
     public Rectangle getCellRect(@NotNull MouseEvent e) {
       Point p = e.getPoint();
-      return owner.getCellRect(owner.rowAtPoint(p), owner.columnAtPoint(p), true);
+      return owner.getCellRect(owner.rowAtPoint(p), owner.columnAtPoint(p), false);
+    }
+
+    @Override
+    public boolean isEditing(@NotNull MouseEvent e) {
+      Point p = e.getPoint();
+      return owner.rowAtPoint(p) == owner.getEditingRow() && owner.columnAtPoint(p) == owner.getEditingColumn();
     }
   }
 }

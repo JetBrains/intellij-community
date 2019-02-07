@@ -206,7 +206,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         }).withValidator(() -> {
           String tt = text2.getText();
           return StringUtil.isEmpty(tt) || tt.length() < 5 ?
-            new ValidationInfo("Message is too short.<br/>Should contain at least 5 symbols.<br/>Please <a href=\"#check.rules\">check rules.</a>", text2) : null;
+            new ValidationInfo("Message is too short.<br/>Should contain at least 5 symbols <a href=\"#check.rules\">check rules.</a>", text2) : null;
         }).andStartOnFocusLost().andRegisterOnDocumentListener(text2).installOn(text2);
 
       gc.gridy++;
@@ -277,7 +277,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       };
 
       BiFunction<String, JComponent, ValidationInfo> validationInfoGenerator = (text, component) ->
-        new ValidationInfo("Illegal value: " + text + "<br/>Please <a href=\"#check.cell.rules\">check rules.</a>", component);
+        new ValidationInfo("Illegal value: " + text + " <a href=\"#check.cell.rules\">check rules.</a>", component);
 
       // Install custom tooltip manager for displaying error/warning tooltips
       new CellTooltipManager(getDisposable()).
