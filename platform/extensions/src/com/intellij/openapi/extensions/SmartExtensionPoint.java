@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public abstract class SmartExtensionPoint<Extension, V> implements ExtensionPointAndAreaListener<Extension> {
+public abstract class SmartExtensionPoint<Extension, V> {
   private final Collection<V> myExplicitExtensions;
   private ExtensionPoint<Extension> myExtensionPoint;
   private List<V> myCache;
@@ -48,7 +48,32 @@ public abstract class SmartExtensionPoint<Extension, V> implements ExtensionPoin
       if (result == null) {
         myExtensionPoint = getExtensionPoint();
         // EP will not add duplicated listener, so, it is safe to not care about is already added
-        myExtensionPoint.addExtensionPointListener(this, false, null);
+        myExtensionPoint.addExtensionPointListener(new ExtensionPointAndAreaListener<Extension>() {
+          @Override
+          public void areaReplaced(@NotNull ExtensionsArea oldArea) {
+            dropCache();
+          }
+
+          @Override
+          public final void extensionRemoved(@NotNull final Extension extension, @Nullable final PluginDescriptor pluginDescriptor) {
+            dropCache();
+          }
+
+          @Override
+          public final void extensionAdded(@NotNull final Extension extension, @Nullable final PluginDescriptor pluginDescriptor) {
+            dropCache();
+          }
+
+          private void dropCache() {
+            synchronized (myExplicitExtensions) {
+              if (myCache != null) {
+                myCache = null;
+                myExtensionPoint.removeExtensionPointListener(this);
+                myExtensionPoint = null;
+              }
+            }
+          }
+        }, false, null);
 
         List<V> registeredExtensions = ContainerUtilRt.mapNotNull(myExtensionPoint.getExtensionList(), this::getExtension);
         result = new ArrayList<>(myExplicitExtensions.size() + registeredExtensions.size());
@@ -58,30 +83,5 @@ public abstract class SmartExtensionPoint<Extension, V> implements ExtensionPoin
       }
       return result;
     }
-  }
-
-  @Override
-  public final void extensionAdded(@NotNull final Extension extension, @Nullable final PluginDescriptor pluginDescriptor) {
-    dropCache();
-  }
-
-  public final void dropCache() {
-    synchronized (myExplicitExtensions) {
-      if (myCache != null) {
-        myCache = null;
-        myExtensionPoint.removeExtensionPointListener(this);
-        myExtensionPoint = null;
-      }
-    }
-  }
-
-  @Override
-  public final void extensionRemoved(@NotNull final Extension extension, @Nullable final PluginDescriptor pluginDescriptor) {
-    dropCache();
-  }
-
-  @Override
-  public final void areaReplaced(@NotNull final ExtensionsArea area) {
-    dropCache();
   }
 }

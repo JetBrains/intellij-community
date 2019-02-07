@@ -22,6 +22,7 @@ public interface ExtensionPoint<T> {
 
   AreaInstance getArea();
 
+  @Deprecated
   void registerExtension(@NotNull T extension);
 
   @Deprecated

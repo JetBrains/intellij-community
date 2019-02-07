@@ -22,8 +22,9 @@ public class LightClassCodeInsightTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+
     // MyElementFinder provides "abc.MyInterface"
-    PlatformTestUtil.registerExtension(Extensions.getArea(getProject()), PsiElementFinder.EP_NAME,
+    PlatformTestUtil.registerExtension(Extensions.getArea(getProject()), PsiElementFinder.EP,
                                        new MyElementFinder(), getTestRootDisposable());
   }
 

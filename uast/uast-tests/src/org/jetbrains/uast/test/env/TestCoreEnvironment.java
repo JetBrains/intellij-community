@@ -187,7 +187,7 @@ public class TestCoreEnvironment extends AbstractCoreEnvironment {
       ExtensionsArea area = Extensions.getArea(myProject);
       CoreApplicationEnvironment.registerExtensionPoint(area, PsiTreeChangePreprocessor.EP, PsiTreeChangePreprocessor.class);
       CoreApplicationEnvironment.registerExtensionPoint(
-        area, PsiElementFinder.EP_NAME, PsiElementFinder.class);
+        area, PsiElementFinder.EP, PsiElementFinder.class);
     }
 
     private void registerProjectExtensions() {
@@ -195,7 +195,8 @@ public class TestCoreEnvironment extends AbstractCoreEnvironment {
                                 ((CoreJavaFileManager)ServiceManager.getService(myProject, JavaFileManager.class)));
 
       //noinspection TestOnlyProblems
-      PsiElementFinder.EP_NAME.getPoint(null).registerExtension(new PsiElementFinderImpl(myProject, ServiceManager.getService(myProject, JavaFileManager.class)), mDisposable);
+      PsiElementFinder.EP
+        .getPoint(null).registerExtension(new PsiElementFinderImpl(myProject, ServiceManager.getService(myProject, JavaFileManager.class)), mDisposable);
     }
   }
 }
