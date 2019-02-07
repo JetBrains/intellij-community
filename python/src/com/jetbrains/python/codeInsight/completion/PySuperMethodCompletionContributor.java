@@ -65,12 +65,21 @@ public class PySuperMethodCompletionContributor extends CompletionContributor {
                for (PyClass ancestor : containingClass.getAncestorClasses(null)) {
                  for (PyFunction superMethod : ancestor.getMethods()) {
                    if (!seenNames.contains(superMethod.getName())) {
-                     String text = superMethod.getName() + superMethod.getParameterList().getText();
-                     if (languageLevel.isAtLeast(LanguageLevel.PYTHON35) && superMethod.getAnnotation() != null) {
-                       text += " " + superMethod.getAnnotation().getText();
+                     StringBuilder builder = new StringBuilder();
+                     builder.append(superMethod.getName())
+                            .append(superMethod.getParameterList().getText());
+                     if (superMethod.getAnnotation() != null) {
+                       builder.append(" ")
+                              .append(superMethod.getAnnotation().getText())
+                              .append(":");
+                     } else if (superMethod.getTypeComment() != null) {
+                       builder.append(":  ")
+                              .append(superMethod.getTypeComment().getText());
+                     } else {
+                       builder.append(":");
                      }
-                     LookupElementBuilder element = LookupElementBuilder.create(text);
-                     result.addElement(TailTypeDecorator.withTail(element, TailType.CASE_COLON));
+                     LookupElementBuilder element = LookupElementBuilder.create(builder.toString());
+                     result.addElement(TailTypeDecorator.withTail(element, TailType.NONE));
                      seenNames.add(superMethod.getName());
                    }
                  }
