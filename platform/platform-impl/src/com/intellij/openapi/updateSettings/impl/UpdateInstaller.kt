@@ -194,6 +194,6 @@ object UpdateInstaller {
       releaseFile.readLines().first { it.startsWith("JAVA_VERSION=") }.let { JavaVersion.parse(it) }.feature
     }
     catch (e: Exception) { 0 }
-    return if (version == 11) "-jre11" else ""
+    return if (version == 11) "-jbr11" else ""
   }
 }
