@@ -25,7 +25,7 @@ class ConnectionsComponent : ApplicationComponent, LifetimedComponent by SimpleL
         Connection(
             LoginModel(
                 appLifetime = connectionLifetime,
-                server = url,
+                orgServerUrl = url,
                 circletOAuth = dummyOAuthClientInstance(), // idea plugin does not support new oauth yet
                 credentialsPersistence = IdeaPersistence.substorage("$url-"),
                 offlinePersistence = Persistence.nothing,
@@ -72,7 +72,8 @@ class Connection(val loginModel: LoginModel, connectionLifetime: Lifetime) {
         }
 
         Desktop.getDesktop().browse(URI(
-            Navigator.signIn(loginModel.server, "http://localhost:$port/auth").absoluteHref(loginModel.server)
+            // TODO process org correctly
+            Navigator.signIn(loginModel.orgServerUrl, "http://localhost:$port/auth").absoluteHref(loginModel.orgServerUrl)
         ))
     }
 }
