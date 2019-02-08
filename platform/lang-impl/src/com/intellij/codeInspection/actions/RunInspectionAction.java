@@ -21,6 +21,8 @@ import com.intellij.ide.util.gotoByName.ChooseByNameFilter;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -51,10 +53,17 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class RunInspectionAction extends GotoActionBase {
+public class RunInspectionAction extends GotoActionBase implements DataProvider {
   private static final Logger LOGGER = Logger.getInstance(RunInspectionAction.class);
+  private final String myPredefinedText;
 
+  @SuppressWarnings("unused")
   public RunInspectionAction() {
+    this(null);
+  }
+
+  public RunInspectionAction(String predefinedText) {
+    myPredefinedText = predefinedText;
     getTemplatePresentation().setText(IdeBundle.message("goto.inspection.action.text"));
   }
 
@@ -85,6 +94,12 @@ public class RunInspectionAction extends GotoActionBase {
           () -> runInspection(project, (((InspectionElement)element)).getToolWrapper().getShortName(), virtualFile, psiElement, psiFile));
       }
     }, false);
+  }
+
+  @Nullable
+  @Override
+  public Object getData(@NotNull String dataId) {
+    return PlatformDataKeys.PREDEFINED_TEXT.is(dataId) ? myPredefinedText : null;
   }
 
   public static void runInspection(final @NotNull Project project,

@@ -109,8 +109,7 @@ public class ActionLink extends LinkLabel implements DataProvider {
     if (PlatformDataKeys.CONTEXT_MENU_POINT.is(dataId)) {
       return SwingUtilities.convertPoint(this, 0, getHeight(), UIUtil.getRootPane(this));
     }
-
-    return null;
+    return myAction instanceof DataProvider ? ((DataProvider)myAction).getData(dataId) : null;
   }
 
   @TestOnly
