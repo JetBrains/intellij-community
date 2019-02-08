@@ -10,7 +10,8 @@ public class PresentationTest extends LightPlatformTestCase {
     new Data("No mnemonic", "No mnemonic", "No mnemonic", "No mnemonic", 0, -1),
     new Data("_First char", "&First char", "First char", "_First char", 'F', 0),
     new Data("S_econd char", "S&econd char", "Second char", "S_econd char", 'E', 1),
-    new Data("Pre-last and not unique ch_ar", "Pre-last and not unique ch&ar", "Pre-last and not unique char", "Pre-last and not unique ch_ar", 'A', 26),
+    new Data("Pre-last and not unique ch_ar", "Pre-last and not unique ch&ar", "Pre-last and not unique char",
+             "Pre-last and not unique ch_ar", 'A', 26),
     new Data("Last cha_r", "Last cha&r", "Last char", "Last cha_r", 'R', 8),
     new Data("Too late_", "Too late&", "Too late", "Too late", 0, -1),
     new Data("Do__uble", "Do&_uble", "Do_uble", "Do__uble", 0, -1),
@@ -19,7 +20,8 @@ public class PresentationTest extends LightPlatformTestCase {
     new Data("Complete double_&", "Complete double&&", "Complete double&", "Complete double&&", 0, -1),
     new Data("Repea_te_d", "Repea&te_d", "Repeate_d", "Repea_te_d", 'T', 5),
     new Data("Re_peate&d", "Re&peate&d", "Repeate&d", "Re_peate&d", 'P', 2),
-    new Data("Run 'test__1' with Co_verage", "Run 'test__1' with Co&verage", "Run 'test_1' with Coverage", "Run 'test__1' with Co_verage", 'V', 20),
+    new Data("Run 'test__1' with Co_verage", "Run 'test__1' with Co&verage", "Run 'test_1' with Coverage",
+             "Run 'test__1' with Co_verage", 'V', 20),
     new Data("R_un 'test_1'", "R&un 'test_1'", "Run 'test_1'", "R_un 'test_1'", 'U', 1),
   };
 
@@ -108,6 +110,20 @@ public class PresentationTest extends LightPlatformTestCase {
       assertEquals(p1.getText(), p2.getText());
       assertEquals(p1.getMnemonic(), p2.getMnemonic());
       assertEquals(p1.getDisplayedMnemonicIndex(), p2.getDisplayedMnemonicIndex());
+    }
+  }
+
+  public void testPresentationWithDisabledMnemonics() {
+    UISettingsState uiSettings = UISettings.getInstance().getState();
+    uiSettings.setDisableMnemonics(true);
+    uiSettings.setDisableMnemonicsInControls(true);
+
+    for (Data testCase : data) {
+      Presentation p = new Presentation();
+      p.setText(testCase.inputTextsUnderscore);
+      assertEquals(testCase.menuText, p.getText());
+      assertEquals(0, p.getMnemonic());
+      assertEquals(-1, p.getDisplayedMnemonicIndex());
     }
   }
 

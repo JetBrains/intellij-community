@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartFMap;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,7 +129,7 @@ public final class Presentation implements Cloneable {
    * Sets the presentation text
    * @param text presentation text. If mayContainMnemonic is true, it may contain a mnemonic prefixed with '_' or '&'.
    *             To escape '_' or '&' before the actual mnemonic the character must be duplicated.
-   *             The characters after the actual mnemonic should not be escaped. 
+   *             The characters after the actual mnemonic should not be escaped.
    *             E.g. "A__b_c__d" will be displayed as "A_bc__d" with mnemonic 'c'.
    * @param mayContainMnemonic if true, a mnemonic will be extracted from the presentation text
    */
@@ -142,31 +141,16 @@ public final class Presentation implements Cloneable {
     myDisplayedMnemonicIndex = -1;
 
     if (text != null) {
-      if (text.indexOf(UIUtil.MNEMONIC) >= 0) {
-        text = text.replace(UIUtil.MNEMONIC, '&');
-      }
-
       if (mayContainMnemonic) {
-        StringBuilder plainText = new StringBuilder();
-        int backShift = 0;
-        for (int i = 0; i < text.length(); i++) {
-          char ch = text.charAt(i);
-          if (myMnemonic == 0 && (ch == '_' || ch == '&')) {
-            //noinspection AssignmentToForLoopParameter
-            i++;
-            if (i >= text.length()) break;
-            ch = text.charAt(i);
-            if (ch != '_' && ch != '&') {
-              myMnemonic = Character.toUpperCase(ch);  // mnemonics are case insensitive
-              myDisplayedMnemonicIndex = i - 1 - backShift;
-            }
-            else {
-              backShift++;
-            }
-          }
-          plainText.append(ch);
+        StringUtil.TextWithMnemonics textWithMnemonics = StringUtil.parseMnemonics(text);
+
+        myText = textWithMnemonics.plainText.isEmpty() ? "" : textWithMnemonics.plainText;
+
+        UISettings uiSettings = UISettings.getInstanceOrNull();
+        if (uiSettings == null || !uiSettings.getDisableMnemonicsInControls()) {
+          myMnemonic = textWithMnemonics.mnemonic;
+          myDisplayedMnemonicIndex = textWithMnemonics.mnemonicIndex;
         }
-        myText = plainText.length() == 0 ? "" : plainText.toString();
       }
       else {
         myText = text.isEmpty() ? "" : text;
@@ -174,12 +158,6 @@ public final class Presentation implements Cloneable {
     }
     else {
       myText = null;
-    }
-
-    final UISettings uiSettings = UISettings.getInstanceOrNull();
-    if (uiSettings != null && uiSettings.getDisableMnemonicsInControls()) {
-      myMnemonic = 0;
-      myDisplayedMnemonicIndex = -1;
     }
 
     fireObjectPropertyChange(PROP_TEXT, oldText, myText);
@@ -190,7 +168,7 @@ public final class Presentation implements Cloneable {
   /**
    * Sets the text with mnemonic.
    * @param text
-   * @see #setText(String, boolean) 
+   * @see #setText(String, boolean)
    */
   public void setText(String text) {
     setText(text, true);
