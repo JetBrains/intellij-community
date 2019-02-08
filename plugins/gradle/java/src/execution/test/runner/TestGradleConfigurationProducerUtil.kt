@@ -1,4 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:ApiStatus.Experimental
 package org.jetbrains.plugins.gradle.execution.test.runner
 
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
@@ -8,6 +9,7 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducer.findTestsTaskToRun
 import java.util.*
@@ -89,7 +91,7 @@ fun <E : PsiElement, T> ExternalSystemTaskExecutionSettings.applyTestConfigurati
     module = projectFileIndex.getModuleForFile(sourceFile) ?: return false
     if (!GradleRunnerUtil.isGradleModule(module)) return false
     val (_, arguments) = testRunConfigurations.getOrPut(module.name) { Pair(sourceFile, ArrayList()) }
-    arguments.add(createFilter(sourceElement, test))
+    arguments.add(createFilter(sourceElement, test).trim())
   }
   if (module == null) return false
   externalProjectPath = GradleRunnerUtil.resolveProjectPath(module) ?: return false
@@ -117,10 +119,7 @@ private fun ExternalSystemTaskExecutionSettings.setFrom(taskSettings: List<Pair<
   if (hasTasksAfterTaskWithArguments) {
     val joiner = StringJoiner(" ")
     for ((task, arguments) in taskSettings) {
-      when {
-        task.contains(' ') -> joiner.add("'$task'")
-        else -> joiner.add(task)
-      }
+      joiner.add(task.escapeIfNeeded())
       joiner.addAll(arguments)
     }
     joiner.addAll(unorderedParameters)
@@ -131,9 +130,14 @@ private fun ExternalSystemTaskExecutionSettings.setFrom(taskSettings: List<Pair<
     val joiner = StringJoiner(" ")
     joiner.addAll(taskSettings.lastOrNull()?.second ?: emptyList())
     joiner.addAll(unorderedParameters)
-    taskNames = taskSettings.map { it.first }
+    taskNames = taskSettings.map { it.first.escapeIfNeeded() }
     scriptParameters = joiner.toString()
   }
+}
+
+fun String.escapeIfNeeded() = when {
+  contains(' ') -> "'$this'"
+  else -> this
 }
 
 private fun StringJoiner.addAll(elements: Iterable<String>) = apply {

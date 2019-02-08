@@ -7,7 +7,9 @@ import com.intellij.execution.junit2.PsiMemberParameterizedLocation
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiPackage
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Experimental
 object GradleExecutionSettingsUtil {
 
   private fun createTestFilter(filter: String, hasSuffix: Boolean): String {
