@@ -2,7 +2,6 @@
 package com.intellij.application.options.emmet;
 
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
-import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.util.PlatformUtils;
@@ -13,12 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class EmmetConfigurableProvider extends ConfigurableProvider {
-  public EmmetConfigurableProvider() {
-    if (PlatformUtils.isDataGrip()) {
-      throw ExtensionNotApplicableException.INSTANCE;
-    }
-  }
-
   @Nullable
   @Override
   public Configurable createConfigurable() {
@@ -26,6 +19,11 @@ public class EmmetConfigurableProvider extends ConfigurableProvider {
     return availableConfigurables.size() == 1
            ? new EmmetCompositeConfigurable(ContainerUtil.getFirstItem(availableConfigurables))
            : new EmmetCompositeConfigurable(availableConfigurables);
+  }
+
+  @Override
+  public boolean canCreateConfigurable() {
+    return !PlatformUtils.isDataGrip();
   }
 
   @NotNull
