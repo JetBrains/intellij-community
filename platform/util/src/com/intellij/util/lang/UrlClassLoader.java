@@ -2,10 +2,8 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Function;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.WeakStringInterner;
 import org.jetbrains.annotations.NotNull;
@@ -29,8 +27,12 @@ public class UrlClassLoader extends ClassLoader {
 
   private static final Set<Class<?>> ourParallelCapableLoaders;
   static {
+    //this class is compiled for Java 6 so it's enough to check that it isn't running under Java 6
+    boolean isAtLeastJava7 = !System.getProperty("java.runtime.version", "unknown").startsWith("1.6.");
+
+    boolean ibmJvm = System.getProperty("java.vm.vendor", "unknown").toLowerCase(Locale.US).contains("ibm");
     boolean capable =
-      SystemInfo.isJavaVersionAtLeast(7, 0, 0) && !SystemInfo.isIbmJvm && SystemProperties.getBooleanProperty("use.parallel.class.loading", true);
+      isAtLeastJava7 && !ibmJvm && Boolean.parseBoolean(System.getProperty("use.parallel.class.loading", "true"));
     if (capable) {
       ourParallelCapableLoaders = Collections.synchronizedSet(new HashSet<Class<?>>());
       try {
@@ -191,7 +193,7 @@ public class UrlClassLoader extends ClassLoader {
   public UrlClassLoader(@NotNull ClassLoader parent) {
     this(build().urls(((URLClassLoader)parent).getURLs()).parent(parent.getParent()).allowLock().useCache()
            .usePersistentClasspathIndexForLocalClassDirectories()
-           .useLazyClassloadingCaches(SystemProperties.getBooleanProperty("idea.lazy.classloading.caches", false)));
+           .useLazyClassloadingCaches(Boolean.parseBoolean(System.getProperty("idea.lazy.classloading.caches", "false"))));
   }
 
   protected UrlClassLoader(@NotNull Builder builder) {

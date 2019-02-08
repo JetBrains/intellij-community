@@ -18,7 +18,7 @@ package com.intellij.util.lang;
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.BloomFilterBase;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TLongHashSet;
@@ -188,14 +188,17 @@ public class ClasspathCache {
       map.put(hash, new Loader [] {(Loader)o, loader});
     } else {
       Loader[] loadersArray = (Loader[])o;
-      if (ClassPath.ourLogTiming)  assert !ArrayUtil.contains(loader, loadersArray);
-      map.put(hash, ArrayUtil.append(loadersArray, loader));
+      if (ClassPath.ourLogTiming)  assert ArrayUtilRt.find(loadersArray, loader) == -1;
+      Loader[] newArray = new Loader[loadersArray.length + 1];
+      System.arraycopy(loadersArray, 0, newArray, 0, loadersArray.length);
+      newArray[loadersArray.length] = loader;
+      map.put(hash, newArray);
     }
   }
 
   static String transformName(String name) {
-    name = StringUtil.trimEnd(name, "/");
-    name = name.substring(name.lastIndexOf('/') + 1);
+    int nameEnd = !name.isEmpty() && name.charAt(name.length() - 1) == '/' ? name.length() - 1 : name.length();
+    name = name.substring(name.lastIndexOf('/', nameEnd-1) + 1, nameEnd);
 
     if (name.endsWith(UrlClassLoader.CLASS_EXTENSION)) {
       String name1 = name;
