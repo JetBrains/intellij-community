@@ -4,7 +4,6 @@ package com.intellij.xdebugger.breakpoints;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -118,13 +117,6 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   @Nullable
   public TextRange getHighlightRange(XLineBreakpoint<P> breakpoint) {
     return null;
-  }
-
-  /**
-   * @return select document specific for this breakpoint type
-   */
-  public Document getDocumentForHighlighting(Project project, Document document) {
-    return document;
   }
 
   /**
