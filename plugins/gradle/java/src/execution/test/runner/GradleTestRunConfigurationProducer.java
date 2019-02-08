@@ -113,7 +113,7 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
 
   public static boolean hasTasksInConfiguration(VirtualFile source, Project project, ExternalSystemTaskExecutionSettings settings) {
     List<TasksToRun> tasksToRun = findAllTestsTaskToRun(source, project);
-    List<String> taskNames = settings.getTaskNames();
+    List<String> taskNames = ContainerUtil.map(settings.getTaskNames(), StringUtil::stripQuotesAroundValue);
     return tasksToRun.stream().anyMatch(taskNames::containsAll);
   }
 
