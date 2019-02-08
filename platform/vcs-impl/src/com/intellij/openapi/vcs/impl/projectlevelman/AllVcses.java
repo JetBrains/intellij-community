@@ -190,7 +190,7 @@ public class AllVcses implements AllVcsesI, Disposable {
       installPlugin(vcs);
     }));
     notification.addAction(NotificationAction.createSimple("Read more", () -> {
-      BrowserUtil.browse("https://blog.jetbrains.com/idea/2019/01/unbundling-tfs-and-cvs-integration-plugins/");
+      BrowserUtil.browse("https://blog.jetbrains.com/idea/2019/02/unbundling-tfs-and-cvs-integration-plugins/");
     }));
     VcsNotifier.getInstance(myProject).notify(notification);
   }
