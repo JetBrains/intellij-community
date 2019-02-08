@@ -131,16 +131,18 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     private Component myComponent;
     private List<PropertyBean> myInfo;
     private final Component myInitialComponent;
+    private final Component myInitialFocusComponent;
     private HighlightComponent myHighlightComponent;
     private final HierarchyTree myHierarchyTree;
     private final JPanel myWrapperPanel;
 
-    private InspectorWindow(@NotNull Component component) throws HeadlessException {
+    private InspectorWindow(@NotNull Component component, @Nullable Component initialFocusComponent) throws HeadlessException {
       super(findWindow(component));
       Window window = findWindow(component);
       setModal(window instanceof JDialog && ((JDialog)window).isModal());
       myComponent = component;
       myInitialComponent = component;
+      myInitialFocusComponent = initialFocusComponent;
       getRootPane().setBorder(JBUI.Borders.empty(5));
 
       setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -187,7 +189,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       myWrapperPanel = new JPanel(new BorderLayout());
 
       myInspectorTable = new InspectorTable(component);
-      myHierarchyTree = new HierarchyTree(component) {
+      myHierarchyTree = new HierarchyTree(component, myInitialFocusComponent) {
         @Override
         public void onComponentChanged(Component c) {
           boolean wasHighlighted = myHighlightComponent != null;
@@ -349,9 +351,11 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
   private static class ComponentTreeCellRenderer extends ColoredTreeCellRenderer {
     private final Component myInitialSelection;
+    private final Component myInitialFocusComponent;
 
-    ComponentTreeCellRenderer(Component initialSelection) {
+    ComponentTreeCellRenderer(Component initialSelection, Component initialFocusComponent) {
       myInitialSelection = initialSelection;
+      myInitialFocusComponent = initialFocusComponent;
       setFont(JBUI.Fonts.label(11));
       setBorder(JBUI.Borders.empty(0, 3));
     }
@@ -394,6 +398,10 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         }
 
         append(": " + RectangleRenderer.toString(component.getBounds()), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        if (component == myInitialFocusComponent) {
+          append(", ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          append("original focus", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        }
         if (component.isOpaque()) {
           append(", opaque", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
@@ -467,10 +475,10 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   private abstract static class HierarchyTree extends JTree implements TreeSelectionListener {
     final Component myComponent;
 
-    private HierarchyTree(Component c) {
+    private HierarchyTree(Component c, Component initialFocusComponent) {
       myComponent = c;
       setModel(buildModel(c));
-      setCellRenderer(new ComponentTreeCellRenderer(c));
+      setCellRenderer(new ComponentTreeCellRenderer(c, initialFocusComponent));
       getSelectionModel().addTreeSelectionListener(this);
       new TreeSpeedSearch(this);
       if (c instanceof JComponent && ((JComponent)c).getClientProperty(CLICK_INFO) != null) {
@@ -1478,7 +1486,11 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
 
     public void showInspector(@NotNull Component c) {
-      Window window = new InspectorWindow(c);
+      showInspector(c);
+    }
+
+    public void showInspector(@NotNull Component c, @Nullable Component initialFocusComponent) {
+      Window window = new InspectorWindow(c, initialFocusComponent);
       if (DimensionService.getInstance().getSize(InspectorWindow.getDimensionServiceKey()) == null) {
         window.pack();
       }
@@ -1502,19 +1514,20 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       me.consume();
       if (me.getID() != MouseEvent.MOUSE_RELEASED) return;
       Component component = me.getComponent();
+      Component focusedComponent = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
 
       if (component instanceof Container) {
         component = ((Container)component).findComponentAt(me.getPoint());
       }
       else if (component == null) {
-        component = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        component = focusedComponent;
       }
       if (component != null) {
         if (component instanceof JComponent) {
           ((JComponent)component).putClientProperty(CLICK_INFO, getClickInfo(me, component));
           ((JComponent)component).putClientProperty(CLICK_INFO_POINT, me.getPoint());
         }
-        showInspector(component);
+        showInspector(component, focusedComponent);
       }
     }
 
