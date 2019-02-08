@@ -89,8 +89,38 @@ class SwitchBootJdkAction : AnAction(), DumbAware {
                                                                  "")
 
     combobox.isEditable = true
-    combobox.editor = ComboBoxCompositeEditor.
-      withComponents<Any,TextFieldWithAutoCompletion<Runtime>>(myRuntimeUrlField, repositoryUrlFieldSpinner)
+    /*combobox.editor = ComboBoxCompositeEditor.
+      withComponents<Any,TextFieldWithAutoCompletion<Runtime>>(myRuntimeUrlField, repositoryUrlFieldSpinner)*/
+
+    combobox.editor = object : ComboBoxCompositeEditor<JLabel, TextFieldWithAutoCompletion<Runtime>>(myRuntimeUrlField, repositoryUrlFieldSpinner) {
+      override fun setItem(anObject: Any?) {
+        super.setItem(anObject)
+        if (installed.equals(anObject)) {
+          myRuntimeUrlField.font = combobox.font.deriveFont(Font.BOLD)
+        } else {
+          myRuntimeUrlField.font = combobox.font.deriveFont(Font.PLAIN)
+        }
+      }
+    }
+
+    combobox.renderer = object : EditorComboBoxRenderer(combobox.editor) {
+      override fun getListCellRendererComponent(list: JList<*>?,
+                                                value: Any?,
+                                                index: Int,
+                                                isSelected: Boolean,
+                                                cellHasFocus: Boolean): Component {
+
+        var listCellRendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+
+        if (installed.equals(value)) {
+          list?.let {
+            listCellRendererComponent.setFont(list.font.deriveFont(Font.BOLD));
+          }
+        }
+
+        return  listCellRendererComponent
+      }
+    }
 
     bundles.let{ bundle -> myRuntimeUrlComboboxModel.add(bundle) }
 

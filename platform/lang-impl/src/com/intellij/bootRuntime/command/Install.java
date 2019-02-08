@@ -4,6 +4,7 @@ package com.intellij.bootRuntime.command;
 import com.intellij.bootRuntime.BinTrayUtil;
 import com.intellij.bootRuntime.Controller;
 import com.intellij.bootRuntime.bundles.Runtime;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 
@@ -20,6 +21,7 @@ public class Install extends RuntimeCommand {
     runWithProgress("Installing...", indicator -> {
       try {
         FileUtil.writeToFile(BinTrayUtil.getJdkConfigFilePath(), getRuntime().getInstallationPath().getAbsolutePath());
+        myController.restart();
       }
       catch (IOException ioe) {
         ioe.printStackTrace();
