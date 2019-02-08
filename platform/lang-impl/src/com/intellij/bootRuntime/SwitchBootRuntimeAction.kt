@@ -25,7 +25,7 @@ import javax.swing.*
 /**
  * @author denis
  */
-class SwitchBootJdkAction : AnAction(), DumbAware {
+class SwitchBootRuntimeAction : AnAction(), DumbAware {
 
   var actions:List<Action> = emptyList()
 
