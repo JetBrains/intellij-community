@@ -12,10 +12,14 @@ import com.intellij.openapi.vcs.readOnlyHandler.FileListRenderer;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadOnlyStatusDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.List;
 
 /**
@@ -23,6 +27,7 @@ import java.util.List;
  */
 public class ChangelistConflictDialog extends DialogWrapper {
 
+  private static final int SECONDS_TO_LOCK_OK = 2;
   private JPanel myPanel;
 
   private JRadioButton myShelveChangesRadioButton;
@@ -33,6 +38,7 @@ public class ChangelistConflictDialog extends DialogWrapper {
   private JList<VirtualFile> myFileList;
 
   private final Project myProject;
+  private final int mySecondsUntilOkEnabled;
 
   public ChangelistConflictDialog(Project project, List<ChangeList> changeLists, List<VirtualFile> conflicts) {
     super(project);
@@ -58,6 +64,7 @@ public class ChangelistConflictDialog extends DialogWrapper {
     }
     mySwitchToChangelistRadioButton.setText(VcsBundle.message("switch.to.changelist", changeLists.iterator().next().getName()));
     myMoveChangesToActiveRadioButton.setText(VcsBundle.message("move.to.changelist", manager.getDefaultChangeList().getName()));
+    mySecondsUntilOkEnabled = SECONDS_TO_LOCK_OK;
 
     switch (resolution) {
 
@@ -75,6 +82,85 @@ public class ChangelistConflictDialog extends DialogWrapper {
         break;
     }
     init();
+    //getRootPane().setDefaultButton(null);
+
+  }
+
+  @Override
+  public void show() {
+    // Prevent accidental confirmation of dialog when user presses Enter multiple times in quick succession
+    startButtonCountdown(mySecondsUntilOkEnabled, myOKAction);
+    super.show();
+  }
+
+  private void startButtonCountdown(int secondsDelay, final Action action) {
+    if (secondsDelay == 0) {
+      return;
+    }
+    final JRootPane rootPane = getRootPane();
+
+    action.setEnabled(false);
+
+    final JButton defaultButton;
+    final JBLabel focusPlaceholder;
+    if (rootPane.getDefaultButton() != null && rootPane.getDefaultButton().getAction() == action) {
+      defaultButton = rootPane.getDefaultButton();
+      Container parent = defaultButton.getParent();
+      rootPane.setDefaultButton(null);
+
+
+      // because we disabled the default button, it won't receive focus nor would any other component in the dialog
+      // let's create an "invisible" component instead to transfer focus to while the button is disabled
+      // and restore focus once the button is re-enabled and the focus is still on our placeholder
+      focusPlaceholder = new JBLabel("");
+      // It doesn't matter where we add the placeholder the order in which we add components matters, not the order within the container
+      // To have the placeholder behave consistently with the button, DialogWrapper should support this feature
+      parent.add(focusPlaceholder);
+      // without pack, requestFocusInWindow doesn't work
+      // would not be needed if DialogWrapper itself supported this feature, could be done with another custom property like DEFAULT_ACTION
+      pack();
+      focusPlaceholder.setFocusable(true);
+      focusPlaceholder.requestFocusInWindow();
+    }
+    else {
+      defaultButton = null;
+      focusPlaceholder = null;
+    }
+
+    String originalText = defaultButton != null ? defaultButton.getText() : (String) action.getValue(Action.NAME);
+
+    Timer timer = UIUtil.createNamedTimer(String.format("%s-button countdown: %ds", originalText, secondsDelay), 1000);
+    timer.setInitialDelay(0);
+    ActionListener actionListener = new ActionListener() {
+      private int secondsRemaining = secondsDelay;
+
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (secondsRemaining == 0) {
+          myOKAction.putValue(Action.NAME, originalText);
+          myOKAction.setEnabled(true);
+          if (defaultButton != null) {
+            rootPane.setDefaultButton(defaultButton);
+          }
+          if (focusPlaceholder != null) {
+            // Transfer focus back to the actual button
+            if (focusPlaceholder.hasFocus()) {
+              defaultButton.requestFocusInWindow();
+              // don't need the placeholder anymore
+              focusPlaceholder.setFocusable(false);
+            }
+          }
+          timer.stop();
+        }
+        else {
+          myOKAction.putValue(Action.NAME, originalText + "(" + secondsRemaining + ")");
+        }
+
+        secondsRemaining--;
+      }
+    };
+    timer.addActionListener(actionListener);
+    timer.start();
   }
 
   @Override
