@@ -5,9 +5,11 @@ import com.intellij.execution.Location
 import com.intellij.execution.PsiLocation
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContextImpl
+import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
@@ -35,7 +37,6 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     return object : ConfigurationContext(elements[0]) {
       override fun getDataContext() = dataContext
       override fun containsMultipleSelection() = elements.size > 1
-
     }
   }
 
@@ -46,8 +47,24 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     return fromContext as ConfigurationFromContextImpl
   }
 
-  protected fun assertEqualsConfigurationSettings(configuration: ExternalSystemRunConfiguration, settings: String) {
-    assertEquals(settings, configuration.settings.toString().trim())
+  protected inline fun <reified P : GradleTestRunConfigurationProducer> getConfigurationProducer(): P {
+    return RunConfigurationProducer.getInstance(P::class.java)
+  }
+
+  protected inline fun <reified P : GradleTestRunConfigurationProducer> assertConfigurationFromContext(
+    expectedSettings: String,
+    vararg elements: PsiElement
+  ) = runReadActionAndWait {
+    val context = getContextByLocation(*elements)
+    val configurationFromContext = getConfigurationFromContext(context)
+    val producer = configurationFromContext.configurationProducer as P
+    val configuration = configurationFromContext.configuration as ExternalSystemRunConfiguration
+    assertTrue(producer.setupConfigurationFromContext(configuration, context, Ref(context.psiLocation)))
+    if (producer !is PatternGradleConfigurationProducer) {
+      assertTrue(producer.isConfigurationFromContext(configuration, context))
+    }
+    producer.onFirstRun(configurationFromContext, context, Runnable {})
+    assertEquals(expectedSettings, configuration.settings.toString().trim())
   }
 
   protected fun generateAndImportTemplateProject(): ProjectData {
