@@ -30,7 +30,6 @@ import org.jetbrains.plugins.gradle.util.TasksToRun;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.getMethodLocation;
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.applyTestConfiguration;
@@ -164,9 +163,8 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
                                                    @NotNull ConfigurationContext context,
                                                    @NotNull Runnable performRunnable,
                                                    @NotNull PsiClass... classes) {
-    TasksChooser tasksChooser = new TasksChooser() {
-      @Override
-      protected void choosesTasks(@NotNull List<? extends Map<String, ? extends List<String>>> tasks) {
+    TasksChooser tasksChooser = new TasksChooser();
+    tasksChooser.runTaskChoosing(context, classes, tasks -> {
         ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
         ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
         Function1<PsiClass, String> createFilter = (psiClass) -> createTestFilterFrom(psiClass, /*hasSuffix=*/true);
@@ -177,9 +175,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
         }
         configuration.setName(StringUtil.join(classes, aClass -> aClass.getName(), "|"));
         performRunnable.run();
-      }
-    };
-    tasksChooser.runTaskChoosing(context, classes);
+    });
   }
 
   @Deprecated

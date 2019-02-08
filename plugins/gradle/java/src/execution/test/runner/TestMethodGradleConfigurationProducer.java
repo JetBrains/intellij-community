@@ -27,7 +27,6 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.getMethodLocation;
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.applyTestConfiguration;
@@ -132,9 +131,8 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
                                                    @NotNull Runnable performRunnable,
                                                    @NotNull PsiMethod psiMethod,
                                                    @NotNull PsiClass... classes) {
-    TasksChooser tasksChooser = new TasksChooser() {
-      @Override
-      protected void choosesTasks(@NotNull List<? extends Map<String, ? extends List<String>>> tasks) {
+    TasksChooser tasksChooser = new TasksChooser();
+    tasksChooser.runTaskChoosing(context, classes, tasks -> {
         ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
         ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
         Function1<PsiClass, String> createFilter = (psiClass) -> createTestFilter(context.getLocation(), psiClass, psiMethod);
@@ -145,9 +143,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
         }
         configuration.setName((classes.length == 1 ? classes[0].getName() + "." : "") + psiMethod.getName());
         performRunnable.run();
-      }
-    };
-    tasksChooser.runTaskChoosing(context, classes);
+    });
   }
 
   private static boolean applyTestMethodConfiguration(@NotNull ExternalSystemRunConfiguration configuration,

@@ -16,15 +16,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.TasksToRun;
-
-import java.util.List;
-import java.util.Map;
 
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.applyTestConfiguration;
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.getSourceFile;
@@ -89,9 +87,8 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
       performRunnable.run();
       return;
     }
-    TasksChooser tasksChooser = new TasksChooser() {
-      @Override
-      protected void choosesTasks(@NotNull List<? extends Map<String, ? extends List<String>>> tasks) {
+    TasksChooser tasksChooser = new TasksChooser();
+    tasksChooser.runTaskChoosing(context, ContainerUtil.newArrayList(configurationData.sourceElement), tasks -> {
         ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
         ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
         Function1<PsiElement, String> createFilter = (e) -> createTestFilterFrom(configurationData.psiPackage, /*hasSuffix=*/false);
@@ -103,9 +100,7 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
         }
         configuration.setName(suggestName(configurationData.psiPackage, configurationData.module));
         performRunnable.run();
-      }
-    };
-    tasksChooser.runTaskChoosing(context, configurationData.sourceElement);
+    });
   }
 
   @Nullable
