@@ -10,12 +10,15 @@ import com.intellij.bootRuntime.command.CommandFactory
 import com.intellij.bootRuntime.command.CommandFactory.Type.*
 import com.intellij.bootRuntime.command.CommandFactory.produce
 import com.intellij.bootRuntime.command.UseDefault
+import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBOptionButton
 import java.awt.GridBagConstraints
 import java.awt.Insets
 import javax.swing.Action
 import javax.swing.JButton
+import javax.swing.SwingUtilities
 
 class Controller(val project: Project, val actionPanel:ActionPanel, val model: Model) {
 
@@ -76,5 +79,12 @@ class Controller(val project: Project, val actionPanel:ActionPanel, val model: M
   fun add(local: Local) {
     model.bundles.add(local)
     model.selectedBundle = local
+  }
+
+  public fun restart() {
+    SwingUtilities.invokeLater({
+                                 SwingUtilities.getWindowAncestor(actionPanel).dispose()
+                                 ApplicationManagerEx.getApplicationEx().restart()
+                               })
   }
 }
