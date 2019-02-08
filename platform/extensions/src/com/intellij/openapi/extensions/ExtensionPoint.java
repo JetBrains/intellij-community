@@ -22,9 +22,15 @@ public interface ExtensionPoint<T> {
 
   AreaInstance getArea();
 
+  /**
+   * @deprecated Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions} or {@link #registerExtension(Object, Disposable)}.
+   */
   @Deprecated
   void registerExtension(@NotNull T extension);
 
+  /**
+   * @deprecated Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions} or {@link #registerExtension(Object, LoadingOrder, Disposable)}.
+   */
   @Deprecated
   void registerExtension(@NotNull T extension, @NotNull LoadingOrder order);
 
