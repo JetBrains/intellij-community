@@ -213,7 +213,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
       Disposer.register(parentDisposable, new Disposable() {
         @Override
         public void dispose() {
-
+          removeAvailabilityListener(extensionPointName, listener);
         }
       });
     }
