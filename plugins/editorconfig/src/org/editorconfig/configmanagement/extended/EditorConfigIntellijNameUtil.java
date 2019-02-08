@@ -3,17 +3,15 @@ package org.editorconfig.configmanagement.extended;
 
 import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Locale;
 
 public class EditorConfigIntellijNameUtil {
-  private final static String IDE_PREFIX = PlatformUtils.IDEA_PREFIX.toLowerCase(Locale.ENGLISH) + "_";
-  private final static String GENERIC_PROPERTY_PREFIX = "generic_";
+  private final static String IDE_PREFIX = "ij_";
+  private final static String GENERIC_PROPERTY_PREFIX = "any_";
 
   private EditorConfigIntellijNameUtil() {
   }
