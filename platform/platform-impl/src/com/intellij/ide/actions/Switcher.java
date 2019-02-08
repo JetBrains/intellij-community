@@ -227,6 +227,7 @@ public class Switcher extends AnAction implements DumbAware {
     final ToolWindowManager twManager;
     final JBCheckBox myShowOnlyEditedFilesCheckBox;
     final JLabel pathLabel = new JLabel(" ");
+    final JPanel myTopPanel;
     final JPanel descriptions;
     final Project project;
     private final boolean myPinned;
@@ -553,8 +554,8 @@ public class Switcher extends AnAction implements DumbAware {
 
       myShowOnlyEditedFilesCheckBox = new MyCheckBox(actionId, onlyEdited);
 
-      JPanel topPanel = createTopPanel(myShowOnlyEditedFilesCheckBox, isCheckboxMode() ? IdeBundle.message("title.popup.recent.files") : title);
-      this.add(topPanel, BorderLayout.NORTH);
+      myTopPanel = createTopPanel(myShowOnlyEditedFilesCheckBox, isCheckboxMode() ? IdeBundle.message("title.popup.recent.files") : title);
+      this.add(myTopPanel, BorderLayout.NORTH);
       
       if (isCheckboxMode()) {
         myShowOnlyEditedFilesCheckBox.addActionListener(new ActionListener() {
@@ -1257,6 +1258,7 @@ public class Switcher extends AnAction implements DumbAware {
       private Rectangle tBounds;
       private Rectangle fBounds;
       private Rectangle dBounds;
+      private Rectangle headerBounds;
 
       @Override
       public void layoutContainer(@NotNull Container target) {
@@ -1268,13 +1270,14 @@ public class Switcher extends AnAction implements DumbAware {
           tBounds = toolWindows.getBounds();
           fBounds = filesPane.getBounds();
           dBounds = descriptions.getBounds();
+          headerBounds = myTopPanel.getBounds();
         }
         else {
           final int h = target.getHeight();
           final int w = target.getWidth();
-          sBounds.height = h - dBounds.height;
-          tBounds.height = h - dBounds.height;
-          fBounds.height = h - dBounds.height;
+          sBounds.height = h - dBounds.height - headerBounds.height;
+          tBounds.height = h - dBounds.height - headerBounds.height;
+          fBounds.height = h - dBounds.height - headerBounds.height;
           fBounds.width = w - sBounds.width - tBounds.width;
           dBounds.width = w;
           dBounds.y = h - dBounds.height;
