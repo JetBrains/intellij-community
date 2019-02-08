@@ -44,6 +44,10 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * to be removed when build tools will be active
+ */
+@Deprecated
 public class MavenConsoleImpl extends MavenConsole {
   private static final Key<MavenConsoleImpl> CONSOLE_KEY = Key.create("MAVEN_CONSOLE_KEY");
 

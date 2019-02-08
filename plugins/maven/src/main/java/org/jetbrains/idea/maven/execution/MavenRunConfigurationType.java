@@ -185,10 +185,10 @@ public final class MavenRunConfigurationType extends AbstractExternalSystemTaskC
                                       @Nullable  MavenRunnerSettings runnerSettings,
                                       @Nullable ProgramRunner.Callback callback) {
 
-    if (MavenUtil.isExternalBuildSystem()){
+    /*if (MavenUtil.isExternalBuildSystem()){
       new MavenExternalSystemTaskRunner(project).runMavenTask(params, settings, runnerSettings);
       return;
-    }
+    }*/
     RunnerAndConfigurationSettings configSettings = createRunnerAndConfigurationSettings(settings,
                                                                                          runnerSettings,
                                                                                          params,

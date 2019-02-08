@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Semaphore;
+import org.jetbrains.idea.maven.buildtool.BuildToolWindowMavenConsole;
 import org.jetbrains.idea.maven.execution.SoutMavenConsole;
 import org.jetbrains.idea.maven.utils.*;
 
@@ -132,7 +133,7 @@ public class MavenProjectsProcessor {
         try {
           final MavenGeneralSettings mavenGeneralSettings = MavenProjectsManager.getInstance(myProject).getGeneralSettings();
           task.perform(myProject, myEmbeddersManager,
-                       new SoutMavenConsole(mavenGeneralSettings.getOutputLevel(), mavenGeneralSettings.isPrintErrorStackTraces()),
+                       MavenConsole.createGuiMavenConsole(myProject, "Maven", myProject.getBasePath()),
                        indicator);
         }
         catch (MavenProcessCanceledException e) {
