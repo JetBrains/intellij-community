@@ -93,4 +93,11 @@ public class PointlessBitwiseExpression {
         int r8 = <warning descr="'x | ~x' can be replaced with '-1'">x | ~x</warning>;
         long r9 = <warning descr="'y ^ ~y' can be replaced with '-1L'">y ^ ~y</warning>;
     }
+    
+    void testDoubleTilde(int x, long y) {
+        int r1 = <warning descr="'~~x' can be replaced with 'x'">~~x</warning>;
+        long r2 = ~<warning descr="'~~y' can be replaced with 'y'">~~y</warning>;
+        int r3 = <warning descr="'~(~(x))' can be replaced with '(x)'">~(~(x))</warning>;
+        long r4 = ~(~(<warning descr="'~(~y)' can be replaced with 'y'">~(~y)</warning>));
+    }
 }

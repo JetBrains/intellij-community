@@ -78,13 +78,15 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
     if (expression instanceof PsiPolyadicExpression) {
       return calculateReplacementExpression((PsiPolyadicExpression)expression, ct);
     }
-    if (expression instanceof PsiPrefixExpression) {
-      PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
-      if (prefixExpression.getOperationTokenType().equals(TILDE)) {
-        PsiExpression decremented = extractDecrementedValue(prefixExpression.getOperand());
-        if (decremented != null) {
-          return "-" + ct.text(decremented, ParenthesesUtils.PREFIX_PRECEDENCE);
-        }
+    PsiExpression complemented = unwrapComplement(expression);
+    if (complemented != null) {
+      PsiExpression decremented = extractDecrementedValue(complemented);
+      if (decremented != null) {
+        return "-" + ct.text(decremented, ParenthesesUtils.PREFIX_PRECEDENCE);
+      }
+      PsiExpression twiceComplemented = unwrapComplement(complemented);
+      if (twiceComplemented != null) {
+        return ct.text(twiceComplemented);
       }
     }
     return "";
@@ -133,8 +135,8 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
         }
       }
       else {
-        PsiExpression left = unwrapNegation(previousOperand);
-        PsiExpression right = unwrapNegation(operand);
+        PsiExpression left = optionallyUnwrapComplement(previousOperand);
+        PsiExpression right = optionallyUnwrapComplement(operand);
         if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(left, right)) {
           if (tokenType.equals(AND)) {
             return getText(expression, previousOperand, operand, PsiType.LONG.equals(expression.getType()) ? "0L" : "0", ct);
@@ -231,8 +233,16 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
     @Override
     public void visitPrefixExpression(PsiPrefixExpression expression) {
       super.visitPrefixExpression(expression);
-      if (expression.getOperationTokenType().equals(TILDE) && extractDecrementedValue(expression.getOperand()) != null) {
+      PsiExpression complemented = unwrapComplement(expression);
+      if (complemented == null) return;
+      if (extractDecrementedValue(complemented) != null) {
         registerError(expression, expression);
+      } else {
+        PsiExpression twiceComplemented = unwrapComplement(complemented);
+        if (twiceComplemented != null && unwrapComplement(twiceComplemented) == null) {
+          // In case of triple or more complements report innermost only to avoid overlapping reports
+          registerError(expression, expression);
+        }
       }
     }
 
@@ -277,7 +287,7 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
       PsiExpression previousExpression = null;
       for (PsiExpression operand : operands) {
         if (isZero(operand) || isAllOnes(operand) ||
-            (areEquivalentModuloNegation(previousExpression, operand) && !SideEffectChecker.mayHaveSideEffects(operand))) {
+            (areEquivalentModuloComplement(previousExpression, operand) && !SideEffectChecker.mayHaveSideEffects(operand))) {
           return true;
         }
         previousExpression = operand;
@@ -285,8 +295,9 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
       return false;
     }
 
-    private boolean areEquivalentModuloNegation(PsiExpression op1, PsiExpression op2) {
-      return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(unwrapNegation(op1), unwrapNegation(op2));
+    private boolean areEquivalentModuloComplement(PsiExpression op1, PsiExpression op2) {
+      return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(
+        optionallyUnwrapComplement(op1), optionallyUnwrapComplement(op2));
     }
 
     private boolean shiftExpressionIsPointless(PsiExpression[] operands) {
@@ -299,12 +310,17 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
     }
   }
 
-  private static PsiExpression unwrapNegation(PsiExpression op) {
-    PsiExpression deparenthesized = PsiUtil.skipParenthesizedExprDown(op);
-    if (deparenthesized instanceof PsiPrefixExpression && ((PsiPrefixExpression)deparenthesized).getOperationTokenType().equals(TILDE)) {
-      return ((PsiPrefixExpression)deparenthesized).getOperand();
+  private static PsiExpression optionallyUnwrapComplement(PsiExpression op) {
+    PsiExpression unwrapped = unwrapComplement(op);
+    return unwrapped == null ? op : unwrapped;
+  }
+
+  private static PsiExpression unwrapComplement(PsiExpression op) {
+    op = PsiUtil.skipParenthesizedExprDown(op);
+    if (op instanceof PsiPrefixExpression && ((PsiPrefixExpression)op).getOperationTokenType().equals(TILDE)) {
+      return ((PsiPrefixExpression)op).getOperand();
     }
-    return op;
+    return null;
   }
 
   private boolean isZero(PsiExpression expression) {
