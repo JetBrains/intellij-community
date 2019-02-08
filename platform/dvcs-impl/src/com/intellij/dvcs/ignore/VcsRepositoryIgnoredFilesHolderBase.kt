@@ -204,6 +204,6 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
         }
       }
 
-    private fun VFileEvent.isRename() = this is VFilePropertyChangeEvent && propertyName == VirtualFile.PROP_NAME
+    private fun VFileEvent.isRename() = this is VFilePropertyChangeEvent && isRename
   }
 }

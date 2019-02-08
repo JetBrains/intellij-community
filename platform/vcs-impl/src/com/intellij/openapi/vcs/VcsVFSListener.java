@@ -425,18 +425,13 @@ public abstract class VcsVFSListener implements Disposable {
 
     @Override
     public void beforePropertyChange(@NotNull final VirtualFilePropertyEvent event) {
-      if (!isEventIgnored(event) && event.getPropertyName().equalsIgnoreCase(VirtualFile.PROP_NAME)) {
+      if (!isEventIgnored(event) && event.isRename()) {
         LOG.debug("before file rename ", event);
-        String oldName = (String)event.getOldValue();
         String newName = (String)event.getNewValue();
-        // in order to force a reparse of a file, the rename event can be fired with old name equal to new name -
-        // such events needn't be handled by the VCS
-        if (!Comparing.equal(oldName, newName)) {
-          final VirtualFile file = event.getFile();
-          final VirtualFile parent = file.getParent();
-          if (parent != null) {
-            addFileToMove(file, parent.getPath(), newName);
-          }
+        VirtualFile file = event.getFile();
+        VirtualFile parent = file.getParent();
+        if (parent != null) {
+          addFileToMove(file, parent.getPath(), newName);
         }
       }
     }
