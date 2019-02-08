@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.gradle.execution.test.runner
 
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
-import com.intellij.openapi.util.Ref
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiMethod
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait
 import org.junit.Test
 
@@ -11,97 +13,44 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
   @Test
   fun `test simple configuration`() {
     val projectData = generateAndImportTemplateProject()
-    runReadActionAndWait {
-      val context = getContextByLocation(projectData["project"]["TestCase"]["test1"].element)
-      val configurationFromContext = getConfigurationFromContext(context)
-      val producer = configurationFromContext.configurationProducer as TestMethodGradleConfigurationProducer
-      val configuration = configurationFromContext.configuration as ExternalSystemRunConfiguration
-      assertTrue(producer.setupConfigurationFromContext(configuration, context, Ref(context.psiLocation)))
-      assertTrue(producer.isConfigurationFromContext(configuration, context))
-      producer.onFirstRun(configurationFromContext, context, Runnable {})
-      assertEqualsConfigurationSettings(configuration, """:cleanTest :test --tests "TestCase.test1"""")
-    }
-    runReadActionAndWait {
-      val context = getContextByLocation(projectData["project"]["TestCase"].element)
-      val configurationFromContext = getConfigurationFromContext(context)
-      val producer = configurationFromContext.configurationProducer as TestClassGradleConfigurationProducer
-      val configuration = configurationFromContext.configuration as ExternalSystemRunConfiguration
-      assertTrue(producer.setupConfigurationFromContext(configuration, context, Ref(context.psiLocation)))
-      assertTrue(producer.isConfigurationFromContext(configuration, context))
-      producer.onFirstRun(configurationFromContext, context, Runnable {})
-      assertEqualsConfigurationSettings(configuration, """:cleanTest :test --tests "TestCase"""")
-    }
-  }
-
-  @Test
-  fun `test package configuration`() {
-    val projectData = generateAndImportTemplateProject()
-    runReadActionAndWait {
-      val context = getContextByLocation(projectData["project"]["pkg.TestCase"].element.containingFile.containingDirectory)
-      val configurationFromContext = getConfigurationFromContext(context)
-      val producer = configurationFromContext.configurationProducer as AllInPackageGradleConfigurationProducer
-      val configuration = configurationFromContext.configuration as ExternalSystemRunConfiguration
-      assertTrue(producer.setupConfigurationFromContext(configuration, context, Ref(context.psiLocation)))
-      assertTrue(producer.isConfigurationFromContext(configuration, context))
-      producer.onFirstRun(configurationFromContext, context, Runnable {})
-      assertEqualsConfigurationSettings(configuration, """:cleanTest :test --tests "pkg.*"""")
-    }
+    assertConfigurationFromContext<TestMethodGradleConfigurationProducer>(
+      """:cleanTest :test --tests "TestCase.test1"""",
+      projectData["project"]["TestCase"]["test1"].element
+    )
+    assertConfigurationFromContext<TestClassGradleConfigurationProducer>(
+      """:cleanTest :test --tests "TestCase"""",
+      projectData["project"]["TestCase"].element
+    )
+    assertConfigurationFromContext<AllInPackageGradleConfigurationProducer>(
+      """:cleanTest :test --tests "pkg.*"""",
+      runReadActionAndWait { projectData["project"]["pkg.TestCase"].element.containingFile.containingDirectory }
+    )
   }
 
   @Test
   fun `test pattern configuration`() {
     val projectData = generateAndImportTemplateProject()
-    runReadActionAndWait {
-      val context = getContextByLocation(
-        projectData["project"]["TestCase"]["test1"].element,
-        projectData["project"]["pkg.TestCase"]["test1"].element,
-        projectData["module"]["ModuleTestCase"]["test1"].element
-      )
-      val configurationFromContext = getConfigurationFromContext(context)
-      val producer = configurationFromContext.configurationProducer as PatternGradleConfigurationProducer
-      val configuration = configurationFromContext.configuration as ExternalSystemRunConfiguration
-      assertTrue(producer.setupConfigurationFromContext(configuration, context, Ref(context.psiLocation)))
-      producer.onFirstRun(configurationFromContext, context, Runnable {})
-      assertEqualsConfigurationSettings(
-        configuration,
-        """:cleanTest :test --tests "TestCase.test1" --tests "pkg.TestCase.test1" """ +
-        """:module:cleanTest :module:test --tests "ModuleTestCase.test1" --continue"""
-      )
-    }
-    runReadActionAndWait {
-      val context = getContextByLocation(
-        projectData["project"]["TestCase"].element,
-        projectData["project"]["pkg.TestCase"].element,
-        projectData["module"]["ModuleTestCase"].element
-      )
-      val configurationFromContext = getConfigurationFromContext(context)
-      val producer = configurationFromContext.configurationProducer as PatternGradleConfigurationProducer
-      val configuration = configurationFromContext.configuration as ExternalSystemRunConfiguration
-      assertTrue(producer.setupConfigurationFromContext(configuration, context, Ref(context.psiLocation)))
-      producer.onFirstRun(configurationFromContext, context, Runnable {})
-      assertEqualsConfigurationSettings(
-        configuration,
-        """:cleanTest :test --tests "TestCase" --tests "pkg.TestCase" """ +
-        """:module:cleanTest :module:test --tests "ModuleTestCase" --continue"""
-      )
-    }
-    runReadActionAndWait {
-      val context = getContextByLocation(
-        projectData["project"]["TestCase"]["test1"].element,
-        projectData["project"]["pkg.TestCase"]["test1"].element,
-        projectData["module"]["ModuleTestCase"].element
-      )
-      val configurationFromContext = getConfigurationFromContext(context)
-      val producer = configurationFromContext.configurationProducer as PatternGradleConfigurationProducer
-      val configuration = configurationFromContext.configuration as ExternalSystemRunConfiguration
-      assertTrue(producer.setupConfigurationFromContext(configuration, context, Ref(context.psiLocation)))
-      producer.onFirstRun(configurationFromContext, context, Runnable {})
-      assertEqualsConfigurationSettings(
-        configuration,
-        """:cleanTest :test --tests "TestCase.test1" --tests "pkg.TestCase.test1" """ +
-        """:module:cleanTest :module:test --tests "ModuleTestCase" --continue"""
-      )
-    }
+    assertConfigurationFromContext<PatternGradleConfigurationProducer>(
+      """:cleanTest :test --tests "TestCase.test1" --tests "pkg.TestCase.test1" """ +
+      """:module:cleanTest :module:test --tests "ModuleTestCase.test1" --continue""",
+      projectData["project"]["TestCase"]["test1"].element,
+      projectData["project"]["pkg.TestCase"]["test1"].element,
+      projectData["module"]["ModuleTestCase"]["test1"].element
+    )
+    assertConfigurationFromContext<PatternGradleConfigurationProducer>(
+      """:cleanTest :test --tests "TestCase" --tests "pkg.TestCase" """ +
+      """:module:cleanTest :module:test --tests "ModuleTestCase" --continue""",
+      projectData["project"]["TestCase"].element,
+      projectData["project"]["pkg.TestCase"].element,
+      projectData["module"]["ModuleTestCase"].element
+    )
+    assertConfigurationFromContext<PatternGradleConfigurationProducer>(
+      """:cleanTest :test --tests "TestCase.test1" --tests "pkg.TestCase.test1" """ +
+      """:module:cleanTest :module:test --tests "ModuleTestCase" --continue""",
+      projectData["project"]["TestCase"]["test1"].element,
+      projectData["project"]["pkg.TestCase"]["test1"].element,
+      projectData["module"]["ModuleTestCase"].element
+    )
   }
 
   @Test
@@ -179,61 +128,27 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
   @Test
   fun `test configuration escaping`() {
     val projectData = generateAndImportTemplateProject()
-    runReadActionAndWait {
-      val context = getContextByLocation(projectData["my module"]["MyModuleTestCase"]["test1"].element)
-      val configurationFromContext = getConfigurationFromContext(context)
-      val producer = configurationFromContext.configurationProducer as TestMethodGradleConfigurationProducer
-      val configuration = configurationFromContext.configuration as ExternalSystemRunConfiguration
-      assertTrue(producer.setupConfigurationFromContext(configuration, context, Ref(context.psiLocation)))
-      assertTrue(producer.isConfigurationFromContext(configuration, context))
-      producer.onFirstRun(configurationFromContext, context, Runnable {})
-      assertEqualsConfigurationSettings(configuration, """':my module:cleanTest' ':my module:test' --tests "MyModuleTestCase.test1"""")
-    }
-    runReadActionAndWait {
-      val context = getContextByLocation(projectData["my module"]["MyModuleTestCase"].element)
-      val configurationFromContext = getConfigurationFromContext(context)
-      val producer = configurationFromContext.configurationProducer as TestClassGradleConfigurationProducer
-      val configuration = configurationFromContext.configuration as ExternalSystemRunConfiguration
-      assertTrue(producer.setupConfigurationFromContext(configuration, context, Ref(context.psiLocation)))
-      assertTrue(producer.isConfigurationFromContext(configuration, context))
-      producer.onFirstRun(configurationFromContext, context, Runnable {})
-      assertEqualsConfigurationSettings(configuration, """':my module:cleanTest' ':my module:test' --tests "MyModuleTestCase"""")
-    }
-    runReadActionAndWait {
-      val context = getContextByLocation(
-        projectData["my module"]["MyModuleTestCase"]["test1"].element,
-        projectData["my module"]["MyModuleTestCase"]["test2"].element
-      )
-      val configurationFromContext = getConfigurationFromContext(context)
-      val producer = configurationFromContext.configurationProducer as PatternGradleConfigurationProducer
-      val configuration = configurationFromContext.configuration as ExternalSystemRunConfiguration
-      assertTrue(producer.setupConfigurationFromContext(configuration, context, Ref(context.psiLocation)))
-      producer.onFirstRun(configurationFromContext, context, Runnable {})
-      assertEqualsConfigurationSettings(
-        configuration, """':my module:cleanTest' ':my module:test' --tests "MyModuleTestCase.test1" --tests "MyModuleTestCase.test2"""")
-    }
-    runReadActionAndWait {
-      val context = getContextByLocation(projectData["project"]["GroovyTestCase"]["""Don\'t use single . quo\"tes"""].element)
-      val configurationFromContext = getConfigurationFromContext(context)
-      val producer = configurationFromContext.configurationProducer as TestMethodGradleConfigurationProducer
-      val configuration = configurationFromContext.configuration as ExternalSystemRunConfiguration
-      assertTrue(producer.setupConfigurationFromContext(configuration, context, Ref(context.psiLocation)))
-      assertTrue(producer.isConfigurationFromContext(configuration, context))
-      producer.onFirstRun(configurationFromContext, context, Runnable {})
-      assertEqualsConfigurationSettings(configuration, """:cleanTest :test --tests "GroovyTestCase.Don\'t use single * quo\*tes"""")
-    }
-    runReadActionAndWait {
-      val context = getContextByLocation(
-        projectData["project"]["GroovyTestCase"]["""Don\'t use single . quo\"tes"""].element,
-        projectData["project"]["GroovyTestCase"]["test2"].element
-      )
-      val configurationFromContext = getConfigurationFromContext(context)
-      val producer = configurationFromContext.configurationProducer as PatternGradleConfigurationProducer
-      val configuration = configurationFromContext.configuration as ExternalSystemRunConfiguration
-      assertTrue(producer.setupConfigurationFromContext(configuration, context, Ref(context.psiLocation)))
-      producer.onFirstRun(configurationFromContext, context, Runnable {})
-      assertEqualsConfigurationSettings(
-        configuration, """:cleanTest :test --tests "GroovyTestCase.Don\'t use single * quo\*tes" --tests "GroovyTestCase.test2"""")
-    }
+    assertConfigurationFromContext<TestMethodGradleConfigurationProducer>(
+      """':my module:cleanTest' ':my module:test' --tests "MyModuleTestCase.test1"""",
+      projectData["my module"]["MyModuleTestCase"]["test1"].element
+    )
+    assertConfigurationFromContext<TestClassGradleConfigurationProducer>(
+      """':my module:cleanTest' ':my module:test' --tests "MyModuleTestCase"""",
+      projectData["my module"]["MyModuleTestCase"].element
+    )
+    assertConfigurationFromContext<PatternGradleConfigurationProducer>(
+      """':my module:cleanTest' ':my module:test' --tests "MyModuleTestCase.test1" --tests "MyModuleTestCase.test2"""",
+      projectData["my module"]["MyModuleTestCase"]["test1"].element,
+      projectData["my module"]["MyModuleTestCase"]["test2"].element
+    )
+    assertConfigurationFromContext<TestMethodGradleConfigurationProducer>(
+      """:cleanTest :test --tests "GroovyTestCase.Don\'t use single * quo\*tes"""",
+      projectData["project"]["GroovyTestCase"]["""Don\'t use single . quo\"tes"""].element
+    )
+    assertConfigurationFromContext<PatternGradleConfigurationProducer>(
+      """:cleanTest :test --tests "GroovyTestCase.Don\'t use single * quo\*tes" --tests "GroovyTestCase.test2"""",
+      projectData["project"]["GroovyTestCase"]["""Don\'t use single . quo\"tes"""].element,
+      projectData["project"]["GroovyTestCase"]["test2"].element
+    )
   }
 }
