@@ -246,6 +246,11 @@ public class ParameterInfoComponent extends JPanel {
 
     @Override
     public void setupRawUIComponentPresentation(String htmlText) {
+      ParameterInfoController.RawSignatureItem item = new ParameterInfoController.RawSignatureItem(htmlText);
+
+      result.current = getCurrentParameterIndex();
+      result.signatures.add(item);
+
       myPanels[i].setup(htmlText, getDefaultParameterColor());
       myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
     }
