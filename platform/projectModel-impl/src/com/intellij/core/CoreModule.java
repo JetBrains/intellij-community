@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.core;
 
 import com.intellij.ide.highlighter.ModuleFileType;
@@ -10,7 +8,6 @@ import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.ExtensionAreas;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.impl.ModulePathMacroManager;
-import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.impl.ModuleEx;
@@ -29,6 +26,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -73,15 +71,9 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
   protected void initModuleExtensions() {
   }
 
-  protected <T> void addModuleExtension(final ExtensionPointName<T> name, final T extension) {
-    final ExtensionPoint<T> extensionPoint = Extensions.getArea(this).getExtensionPoint(name);
-    extensionPoint.registerExtension(extension);
-    Disposer.register(myLifetime, new Disposable() {
-      @Override
-      public void dispose() {
-        extensionPoint.unregisterExtension(extension);
-      }
-    });
+  protected <T> void addModuleExtension(@NotNull ExtensionPointName<T> name, @NotNull T extension) {
+    //noinspection TestOnlyProblems
+    name.getPoint(this).registerExtension(extension, myLifetime);
   }
 
   protected ModuleScopeProvider createModuleScopeProvider() {
@@ -131,7 +123,7 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
   }
 
   @Override
-  public void setOption(@NotNull String optionName, @NotNull String optionValue) {
+  public void setOption(@NotNull String optionName, @Nullable String optionValue) {
     throw new UnsupportedOperationException();
   }
 

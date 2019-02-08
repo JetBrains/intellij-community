@@ -20,7 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.lang.UrlClassLoader;
+import com.intellij.util.loader.NativeLibraryLoader;
 import com.intellij.util.ui.UIUtil;
 import com.sun.javafx.application.PlatformImpl;
 import com.sun.jna.Callback;
@@ -723,7 +723,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     }
 
     try {
-      UrlClassLoader.loadPlatformLibrary("dbm");
+      NativeLibraryLoader.loadPlatformLibrary("dbm");
 
       // Set JNA to convert java.lang.String to char* using UTF-8, and match that with
       // the way we tell CF to interpret our char*

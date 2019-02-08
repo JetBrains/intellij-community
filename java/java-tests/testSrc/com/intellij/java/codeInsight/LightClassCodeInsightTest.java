@@ -4,7 +4,6 @@ package com.intellij.java.codeInsight;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -16,15 +15,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class LightClassCodeInsightTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+
     // MyElementFinder provides "abc.MyInterface"
-    PlatformTestUtil.registerExtension(Extensions.getArea(getProject()), PsiElementFinder.EP_NAME,
-                                       new MyElementFinder(), getTestRootDisposable());
+    PlatformTestUtil.maskExtensions(PsiElementFinder.EP, getProject(), Collections.singletonList(new MyElementFinder()), getTestRootDisposable());
   }
 
   public void testCustomInstanceMethodHighlighting() {

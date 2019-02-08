@@ -5,7 +5,7 @@ package com.intellij.util.containers;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
-import org.jetbrains.annotations.Debugger;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +19,7 @@ import java.util.HashMap;
  * @see ConcurrentMultiMap
  * @author Dmitry Avdeev
  */
-@Debugger.Renderer(text = "\"size = \" + size()", hasChildren = "!isEmpty()", childrenArray = "entrySet().toArray()")
+@Debug.Renderer(text = "\"size = \" + size()", hasChildren = "!isEmpty()", childrenArray = "entrySet().toArray()")
 public class MultiMap<K, V> implements Serializable {
   public static final MultiMap EMPTY = new EmptyMap();
   private static final long serialVersionUID = -2632269270151455493L;

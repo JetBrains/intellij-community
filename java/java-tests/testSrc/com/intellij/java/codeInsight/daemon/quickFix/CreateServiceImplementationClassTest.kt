@@ -176,9 +176,8 @@ class CreateServiceImplementationClassTest : LightJava9ModulesCodeInsightFixture
 
     val action = myFixture.findSingleIntention("Create class '$implementationFQN'")
     myFixture.launchAction(action)
-    val serviceImpl = myFixture.findClass(implementationFQN)
-    myFixture.allowTreeAccessForFile(serviceImpl.containingFile.virtualFile)
     myFixture.checkHighlighting(false, false, false) // no error
+    val serviceImpl = myFixture.findClass(implementationFQN)
     val javaModule = JavaModuleGraphUtil.findDescriptorByElement(serviceImpl)!!
     assertEquals(moduleInfo.moduleDeclaration, javaModule)
   }

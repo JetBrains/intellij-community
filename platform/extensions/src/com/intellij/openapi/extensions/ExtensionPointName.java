@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,15 +74,12 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
 
   @Nullable
   public <V extends T> V findExtension(@NotNull Class<V> instanceOf) {
-    return ContainerUtil.findInstance(getExtensionList(), instanceOf);
+    return findExtension(this, instanceOf, null, false);
   }
 
   @NotNull
   public <V extends T> V findExtensionOrFail(@NotNull Class<V> instanceOf) {
-    V result = findExtension(instanceOf);
-    if (result == null) {
-      throw new IllegalArgumentException("could not find extension implementation " + instanceOf);
-    }
-    return result;
+    //noinspection ConstantConditions
+    return findExtension(this, instanceOf, null, true);
   }
 }

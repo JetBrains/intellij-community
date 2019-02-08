@@ -4,6 +4,7 @@ package com.intellij.codeInsight.unwrap;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -42,13 +43,24 @@ public class JavaSwitchStatementUnwrapper extends JavaUnwrapper {
   @Override
   public List<PsiElement> unwrap(@NotNull Editor editor, @NotNull PsiElement element) {
     final List<PsiElement> result = super.unwrap(editor, element);
-    for (PsiElement e : result) {
-      for (PsiBreakStatement breakStatement : PsiTreeUtil.findChildrenOfType(e, PsiBreakStatement.class)) {
-        if (breakStatement.getExpression() == null) {
-          breakStatement.delete();
-        }
+    final List<PsiBreakStatement> breakStatements = new SmartList<>();
+    final JavaRecursiveElementWalkingVisitor breakCollector = new JavaRecursiveElementWalkingVisitor() {
+
+      @Override
+      public void visitSwitchStatement(PsiSwitchStatement statement) {
+        // don't remove breaks from nested switch statements
       }
-    }
+
+      @Override
+      public void visitBreakStatement(PsiBreakStatement statement) {
+        if (statement.getExpression() == null) {
+          breakStatements.add(statement);
+        }
+        super.visitBreakStatement(statement);
+      }
+    };
+    for (PsiElement e : result) e.accept(breakCollector);
+    for (PsiBreakStatement statement : breakStatements) statement.delete();
     return result;
   }
 

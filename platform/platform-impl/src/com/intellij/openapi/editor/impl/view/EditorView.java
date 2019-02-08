@@ -373,6 +373,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     if (myDocument.getTextLength() == 0) return false;
     LogicalPosition logicalPosition = visualToLogicalPosition(visualPosition);
     int offset = logicalPositionToOffset(logicalPosition);
+    if (!logicalPosition.equals(offsetToLogicalPosition(offset))) return false; // virtual space
     if (myEditor.getSoftWrapModel().getSoftWrap(offset) != null) {
       VisualPosition beforeWrapPosition = offsetToVisualPosition(offset, true, true);
       if (visualPosition.line == beforeWrapPosition.line && 

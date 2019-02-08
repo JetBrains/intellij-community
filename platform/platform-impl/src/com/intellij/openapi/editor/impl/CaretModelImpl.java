@@ -611,10 +611,8 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     if (myEditor.getDocument().isInBulkUpdate()) return;
     Inlay.Placement placement = inlay.getPlacement();
     if (myEditor.getDocument().isInEventsHandling()) {
-      if (placement == Inlay.Placement.AFTER_LINE_END) {
-        myVisualPositionUpdateScheduled = true;
-        return;
-      }
+      if (placement == Inlay.Placement.AFTER_LINE_END) myVisualPositionUpdateScheduled = true;
+      return;
     }
     if (placement == Inlay.Placement.INLINE) {
       doWithCaretMerging(() -> {

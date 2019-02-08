@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.openapi.roots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -36,7 +36,6 @@ import java.util.*;
 
 @PlatformTestCase.WrapInCommand
 public class DirectoryIndexTest extends DirectoryIndexTestCase {
-
   private Module myModule2, myModule3;
   private VirtualFile myRootVFile;
   private VirtualFile myModule1Dir, myModule2Dir, myModule3Dir;
@@ -169,19 +168,20 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
                                                     Arrays.asList(myExcludedLibClsDir.getUrl(), myExcludedLibSrcDir.getUrl()), DependencyScope.COMPILE, true);
       }
 
-      PlatformTestUtil.unregisterAllExtensions(AdditionalLibraryRootsProvider.EP_NAME, getTestRootDisposable());
-      PlatformTestUtil.registerExtension(AdditionalLibraryRootsProvider.EP_NAME, new AdditionalLibraryRootsProvider() {
-        @NotNull
-        @Override
-        public Collection<SyntheticLibrary> getAdditionalProjectLibraries(@NotNull Project project) {
-          return myProject == project ? Collections.singletonList(
-            new JavaSyntheticLibrary(ContainerUtil.newArrayList(myLibAdditionalSrcDir, myLibAdditionalOutsideSrcDir),
-                                     ContainerUtil.newArrayList(myLibAdditionalClsDir, myLibAdditionalOutsideClsDir),
-                                     ContainerUtil.newHashSet(myLibAdditionalExcludedDir, myLibAdditionalOutsideExcludedDir),
-                                     null)
-          ) : Collections.emptyList();
-        }
-      }, getTestRootDisposable());
+      PlatformTestUtil.maskExtensions(AdditionalLibraryRootsProvider.EP_NAME,
+                                      Collections.singletonList(new AdditionalLibraryRootsProvider() {
+                                        @NotNull
+                                        @Override
+                                        public Collection<SyntheticLibrary> getAdditionalProjectLibraries(@NotNull Project project) {
+                                          return myProject == project ? Collections.singletonList(
+                                            new JavaSyntheticLibrary(
+                                              ContainerUtil.newArrayList(myLibAdditionalSrcDir, myLibAdditionalOutsideSrcDir),
+                                              ContainerUtil.newArrayList(myLibAdditionalClsDir, myLibAdditionalOutsideClsDir),
+                                              ContainerUtil.newHashSet(myLibAdditionalExcludedDir, myLibAdditionalOutsideExcludedDir),
+                                              null)
+                                          ) : Collections.emptyList();
+                                        }
+                                      }), getTestRootDisposable());
 
       // fill roots of module3
       {
@@ -844,7 +844,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     assertTrue(myFileIndex.isInContent(fileSourceRoot));
     assertTrue(myFileIndex.isInSource(fileSourceRoot));
 
-    // delete and move from another dir 
+    // delete and move from another dir
     VfsTestUtil.deleteFile(fileSourceRoot);
     assertNotInProject(fileSourceRoot);
     assertFalse(myFileIndex.isInContent(fileSourceRoot));
@@ -856,7 +856,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     assertTrue(myFileIndex.isInContent(fileSourceRoot));
     assertTrue(myFileIndex.isInSource(fileSourceRoot));
 
-    // delete and copy from another dir 
+    // delete and copy from another dir
     VfsTestUtil.deleteFile(fileSourceRoot);
     assertNotInProject(fileSourceRoot);
     assertFalse(myFileIndex.isInContent(fileSourceRoot));

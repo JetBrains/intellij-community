@@ -9,6 +9,7 @@ import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
 
 @ApiStatus.Experimental
 public abstract class CellComponentProvider<C extends JComponent> {
@@ -30,6 +31,8 @@ public abstract class CellComponentProvider<C extends JComponent> {
   abstract public Rectangle getCellRect(@NotNull MouseEvent e);
 
   abstract boolean isEditing(@NotNull MouseEvent e);
+
+  abstract boolean isEditingStarted(@NotNull PropertyChangeEvent e);
 
   public static CellComponentProvider<JTable> forTable(JTable table) {
     return new TableProvider(table);
@@ -72,5 +75,11 @@ public abstract class CellComponentProvider<C extends JComponent> {
       Point p = e.getPoint();
       return owner.rowAtPoint(p) == owner.getEditingRow() && owner.columnAtPoint(p) == owner.getEditingColumn();
     }
+
+    @Override
+    public boolean isEditingStarted(@NotNull PropertyChangeEvent e) {
+      return "tableCellEditor".equals(e.getPropertyName()) && e.getNewValue() != null;
+    }
+
   }
 }

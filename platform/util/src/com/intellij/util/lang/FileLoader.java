@@ -15,19 +15,15 @@
  */
 package com.intellij.util.lang;
 
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.DataInputOutputUtilRt;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.SmartList;
-import com.intellij.util.io.DataInputOutputUtil;
-import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -38,7 +34,7 @@ class FileLoader extends Loader {
 
   FileLoader(URL url, int index, ClassPath configuration) {
     super(url, index);
-    myRootDir = new File(FileUtil.unquote(url.getFile()));
+    myRootDir = new File(URLUtil.unescapePercentSequences(url.getFile()));
     myRootDirAbsolutePath = myRootDir.getAbsolutePath();
     myConfiguration = configuration;
   }
@@ -76,7 +72,7 @@ class FileLoader extends Loader {
   private String getRelativeResourcePath(final String absFilePath) {
     String relativePath = absFilePath.substring(myRootDirAbsolutePath.length());
     relativePath = relativePath.replace(File.separatorChar, '/');
-    relativePath = StringUtil.trimStart(relativePath, "/");
+    relativePath = relativePath.startsWith("/") ? relativePath.substring(1) : relativePath;
     return relativePath;
   }
 
@@ -84,7 +80,7 @@ class FileLoader extends Loader {
     static final int[] empty = new int[0];
     volatile int[] childrenNameHashes;
     
-    volatile List<DirEntry> childrenDirectories;
+    volatile DirEntry[] childrenDirectories;
     final int nameHash;
     final String name;
     
@@ -137,12 +133,12 @@ class FileLoader extends Loader {
                                             int nameEnd,
                                             int nameHash) {
     DirEntry nextEntry = null;
-    List<DirEntry> directories = lastEntry.childrenDirectories; // volatile read
+    DirEntry[] directories = lastEntry.childrenDirectories; // volatile read
 
     if (directories != null) {
       //noinspection ForLoopReplaceableByForEach
-      for (int index = 0, len = directories.size(); index < len; ++index) {
-        DirEntry previouslyScannedDir = directories.get(index);
+      for (int index = 0, len = directories.length; index < len; ++index) {
+        DirEntry previouslyScannedDir = directories[index];
         if (previouslyScannedDir.nameHash == nameHash &&
             previouslyScannedDir.name.regionMatches(0, name, prevIndex, nameEnd - prevIndex)) {
           nextEntry = previouslyScannedDir;
@@ -153,8 +149,15 @@ class FileLoader extends Loader {
 
     if (nextEntry == null) {
       nextEntry = new DirEntry(nameHash, name.substring(prevIndex, nameEnd));
-      List<DirEntry> newChildrenDirectories = directories != null ? new ArrayList<DirEntry>(directories) : new SmartList<DirEntry>();
-      newChildrenDirectories.add(nextEntry);
+      DirEntry[] newChildrenDirectories;
+      if (directories != null) {
+        newChildrenDirectories = new DirEntry[directories.length + 1];
+        System.arraycopy(directories, 0, newChildrenDirectories, 0, directories.length);
+        newChildrenDirectories[directories.length] = nextEntry;
+      }
+      else {
+        newChildrenDirectories = new DirEntry[] {nextEntry};
+      }
       lastEntry.childrenDirectories = newChildrenDirectories; // volatile write with new copy of data
     }
 
@@ -180,7 +183,12 @@ class FileLoader extends Loader {
       lastEntry.childrenNameHashes = childrenNameHashes; // volatile write
     }
 
-    return ArrayUtil.indexOf(childrenNameHashes, nameHash) >= 0;
+    for (int childNameHash : childrenNameHashes) {
+      if (childNameHash == nameHash) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static final AtomicInteger totalLoaders = new AtomicInteger();
@@ -202,7 +210,7 @@ class FileLoader extends Loader {
     
     try {
       reader = new DataInputStream(new BufferedInputStream(new FileInputStream(index)));
-      if (DataInputOutputUtil.readINT(reader) == ourVersion) {
+      if (DataInputOutputUtilRt.readINT(reader) == ourVersion) {
         ClasspathCache.LoaderData loaderData = new ClasspathCache.LoaderData(reader);
         isOk = true;
         return loaderData;
@@ -231,8 +239,8 @@ class FileLoader extends Loader {
     boolean isOk = false;
 
     try {
-      writer = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(index)));
-      DataInputOutputUtil.writeINT(writer, ourVersion);
+      writer = new UnsyncDataOutputStream(new BufferedOutputStream(new FileOutputStream(index)));
+      DataInputOutputUtilRt.writeINT(writer, ourVersion);
       data.save(writer);
       isOk = true;
     } catch (IOException ignore) {}
@@ -350,12 +358,34 @@ class FileLoader extends Loader {
 
     @Override
     public byte[] getBytes() throws IOException {
-      return FileUtil.loadFileBytes(myFile);
+      InputStream stream = getInputStream();
+      try {
+        return FileUtilRt.loadBytes(stream, (int)myFile.length());
+      }
+      finally {
+        stream.close();
+      }
     }
   }
 
   @Override
   public String toString() {
     return "FileLoader [" + myRootDir + "]";
+  }
+
+  private static class UnsyncDataOutputStream extends java.io.DataOutputStream {
+    UnsyncDataOutputStream(OutputStream out) {
+      super(out);
+    }
+
+    @Override
+    public void write(int b) throws IOException {
+      out.write(b);
+    }
+
+    @Override
+    public void write(byte[] b, int off, int len) throws IOException {
+      out.write(b, off, len);
+    }
   }
 }

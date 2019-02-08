@@ -1,8 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
@@ -64,7 +66,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
           //if listeners are "detached" for any EP we have to transfer them to the new area (otherwise it will affect area searching)
           for (ExtensionPointAvailabilityListener listener : entry.getValue()) {
             if (!newArea.hasAvailabilityListener(key, listener)) {
-              newArea.addAvailabilityListener(key, listener);
+              newArea.addAvailabilityListener(key, listener, null);
               wasAdded = true;
             }
           }
@@ -185,9 +187,9 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
           throw new RuntimeException(e);
         }
 
-        addAvailabilityListener(epName, listener);
+        addAvailabilityListener(epName, listener, null);
       }
-    });
+    }, false, null);
   }
 
   @NotNull
@@ -198,13 +200,22 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @Override
-  public void addAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener) {
+  public void addAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener, @Nullable Disposable parentDisposable) {
     synchronized (myAvailabilityListeners) {
       myAvailabilityListeners.putValue(extensionPointName, listener);
     }
     ExtensionPointImpl<?> ep = myExtensionPoints.get(extensionPointName);
     if (ep != null) {
       listener.extensionPointRegistered(ep);
+    }
+
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable, new Disposable() {
+        @Override
+        public void dispose() {
+          removeAvailabilityListener(extensionPointName, listener);
+        }
+      });
     }
   }
 
@@ -221,7 +232,28 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @Override
-  public void registerExtensionPoint(@NotNull @NonNls String extensionPointName, @NotNull String extensionPointBeanClass, @NotNull ExtensionPoint.Kind kind) {
+  public void registerExtensionPoint(@NotNull @NonNls String extensionPointName,
+                                     @NotNull String extensionPointBeanClass,
+                                     @NotNull ExtensionPoint.Kind kind) {
+    doRegisterExtensionPoint(extensionPointName, extensionPointBeanClass, kind);
+  }
+
+  @Override
+  public void registerExtensionPoint(@NotNull BaseExtensionPointName extensionPoint,
+                                     @NotNull String extensionPointBeanClass,
+                                     @NotNull ExtensionPoint.Kind kind,
+                                     @NotNull Disposable parentDisposable) {
+    String extensionPointName = extensionPoint.getName();
+    doRegisterExtensionPoint(extensionPointName, extensionPointBeanClass, kind);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        unregisterExtensionPoint(extensionPointName);
+      }
+    });
+  }
+
+  void doRegisterExtensionPoint(@NotNull String extensionPointName, @NotNull String extensionPointBeanClass, @NotNull ExtensionPoint.Kind kind) {
     PluginDescriptor pluginDescriptor = new UndefinedPluginDescriptor();
     ExtensionPointImpl<Object> point;
     if (kind == ExtensionPoint.Kind.INTERFACE) {

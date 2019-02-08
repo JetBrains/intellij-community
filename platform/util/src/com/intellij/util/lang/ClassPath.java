@@ -15,20 +15,12 @@
  */
 package com.intellij.util.lang;
 
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -37,11 +29,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.jar.Attributes;
 
-import static com.intellij.execution.CommandLineWrapperUtil.CLASSPATH_JAR_FILE_NAME_PREFIX;
-
 public class ClassPath {
   private static final ResourceStringLoaderIterator ourResourceIterator = new ResourceStringLoaderIterator();
   private static final LoaderCollector ourLoaderCollector = new LoaderCollector();
+  public static final String CLASSPATH_JAR_FILE_NAME_PREFIX = "classpath";
 
   private final Stack<URL> myUrls = new Stack<URL>();
   private final List<Loader> myLoaders = new ArrayList<Loader>();
@@ -173,7 +164,7 @@ public class ClassPath {
         initLoaders(url, myLoaders.size());
       }
       catch (IOException e) {
-        Logger.getInstance(ClassPath.class).info("url: " + url, e);
+        LoggerRt.getInstance(ClassPath.class).info("url: " + url, e);
       }
     }
 
@@ -199,12 +190,12 @@ public class ClassPath {
         path = url.toURI().getSchemeSpecificPart();
       }
       catch (URISyntaxException e) {
-        Logger.getInstance(ClassPath.class).error("url: " + url, e);
+        LoggerRt.getInstance(ClassPath.class).error("url: " + url, e);
         path = url.getFile();
       }
     }
 
-    if (path != null && URLUtil.FILE_PROTOCOL.equals(url.getProtocol())) {
+    if (path != null && "file".equals(url.getProtocol())) {
       File file = new File(path);
       Loader loader = createLoader(url, index, file, file.getName().startsWith(CLASSPATH_JAR_FILE_NAME_PREFIX));
       if (loader != null) {
@@ -229,7 +220,7 @@ public class ClassPath {
               urls.add(UrlClassLoader.internProtocol(new URI(referencedJar).toURL()));
             }
             catch (Exception e) {
-              Logger.getInstance(ClassPath.class).warn("url: " + url + " / " + referencedJar, e);
+              LoggerRt.getInstance(ClassPath.class).warn("url: " + url + " / " + referencedJar, e);
             }
           }
           push(urls);
@@ -361,7 +352,16 @@ public class ClassPath {
     Resource process(Loader loader, String s, ClassPath classPath, String shortName) {
       if (!loader.containsName(s, shortName)) return null;
       Resource resource = loader.getResource(s);
-      if (resource != null && ourDumpOrder) printOrder(loader, s, resource);
+      if (resource != null && ourResourceLoadingLogger != null) {
+        long resourceSize;
+        try {
+          resourceSize = resource instanceof MemoryResource ? resource.getBytes().length : -1;
+        }
+        catch (IOException e) {
+          resourceSize = -1;
+        }
+        ourResourceLoadingLogger.logResource(s, loader.getBaseURL(), resourceSize);
+      }
       return resource;
     }
   }
@@ -374,58 +374,23 @@ public class ClassPath {
     }
   }
 
-  private static final boolean ourDumpOrder = "true".equals(System.getProperty("idea.dump.order"));
-  private static PrintStream ourOrder;
-  private static long ourOrderSize;
-  private static final Set<String> ourOrderedUrls = new HashSet<String>();
-
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  private static synchronized void printOrder(Loader loader, String url, Resource resource) {
-    if (!ourDumpOrder) return;
-    if (!ourOrderedUrls.add(url)) return;
-
-    String home = FileUtil.toSystemIndependentName(PathManager.getHomePath());
-    try {
-      if (resource instanceof MemoryResource) {
-        ourOrderSize += resource.getBytes().length;
-      }
-    }
-    catch (IOException e) {
-      e.printStackTrace(System.out);
-    }
-
-    if (ourOrder == null) {
-      final File orderFile = new File(PathManager.getBinPath(), "order.txt");
-      try {
-        if (!FileUtil.ensureCanCreateFile(orderFile)) return;
-        ourOrder = new PrintStream(new FileOutputStream(orderFile, true));
-        ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
-          @Override
-          public void run() {
-            closeOrderStream();
-          }
-        });
-      }
-      catch (IOException e) {
-        return;
-      }
-    }
-
-    if (ourOrder != null) {
-      Pair<String, String> pair = URLUtil.splitJarUrl(loader.getBaseURL().toExternalForm());
-      String jarURL = pair != null ? pair.first : null;
-      if (jarURL != null && jarURL.startsWith(home)) {
-        jarURL = jarURL.replaceFirst(home, "");
-        jarURL = StringUtil.trimEnd(jarURL, "!/");
-        ourOrder.println(url + ":" + jarURL);
-      }
-    }
+  public interface ResourceLoadingLogger {
+    void logResource(String url, URL baseLoaderURL, long resourceSize);
   }
+  private static final ResourceLoadingLogger ourResourceLoadingLogger;
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  private static synchronized void closeOrderStream() {
-    ourOrder.close();
-    System.out.println(ourOrderSize);
+  static {
+    String className = System.getProperty("intellij.class.resources.loading.logger");
+    ResourceLoadingLogger resourceLoadingLogger = null;
+    if (className != null) {
+      try {
+        resourceLoadingLogger = (ResourceLoadingLogger)Class.forName(className).newInstance();
+      }
+      catch (Throwable e) {
+        LoggerRt.getInstance(ClassPath.class).error("Failed to instantiate resource loading logger " + className, e);
+      }
+    }
+    ourResourceLoadingLogger = resourceLoadingLogger;
   }
 
   static final boolean ourLogTiming = Boolean.getBoolean("idea.print.classpath.timing");

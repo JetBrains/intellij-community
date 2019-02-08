@@ -1,14 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.util.Function;
-import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.WeakStringInterner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,8 +27,12 @@ public class UrlClassLoader extends ClassLoader {
 
   private static final Set<Class<?>> ourParallelCapableLoaders;
   static {
+    //this class is compiled for Java 6 so it's enough to check that it isn't running under Java 6
+    boolean isAtLeastJava7 = !System.getProperty("java.runtime.version", "unknown").startsWith("1.6.");
+
+    boolean ibmJvm = System.getProperty("java.vm.vendor", "unknown").toLowerCase(Locale.US).contains("ibm");
     boolean capable =
-      SystemInfo.isJavaVersionAtLeast(7, 0, 0) && !SystemInfo.isIbmJvm && SystemProperties.getBooleanProperty("use.parallel.class.loading", true);
+      isAtLeastJava7 && !ibmJvm && Boolean.parseBoolean(System.getProperty("use.parallel.class.loading", "true"));
     if (capable) {
       ourParallelCapableLoaders = Collections.synchronizedSet(new HashSet<Class<?>>());
       try {
@@ -84,7 +84,7 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   public static final class Builder {
-    private List<URL> myURLs = ContainerUtil.emptyList();
+    private List<URL> myURLs = ContainerUtilRt.emptyList();
     private ClassLoader myParent;
     private boolean myLockJars;
     private boolean myUseCache;
@@ -193,12 +193,12 @@ public class UrlClassLoader extends ClassLoader {
   public UrlClassLoader(@NotNull ClassLoader parent) {
     this(build().urls(((URLClassLoader)parent).getURLs()).parent(parent.getParent()).allowLock().useCache()
            .usePersistentClasspathIndexForLocalClassDirectories()
-           .useLazyClassloadingCaches(SystemProperties.getBooleanProperty("idea.lazy.classloading.caches", false)));
+           .useLazyClassloadingCaches(Boolean.parseBoolean(System.getProperty("idea.lazy.classloading.caches", "false"))));
   }
 
   protected UrlClassLoader(@NotNull Builder builder) {
     super(builder.myParent);
-    myURLs = ContainerUtil.map(builder.myURLs, new Function<URL, URL>() {
+    myURLs = ContainerUtilRt.map2List(builder.myURLs, new Function<URL, URL>() {
       @Override
       public URL fun(URL url) {
         return internProtocol(url);
@@ -225,7 +225,7 @@ public class UrlClassLoader extends ClassLoader {
       return url;
     }
     catch (MalformedURLException e) {
-      Logger.getInstance(UrlClassLoader.class).error(e);
+      LoggerRt.getInstance(UrlClassLoader.class).error(e);
       return null;
     }
   }
@@ -341,38 +341,6 @@ public class UrlClassLoader extends ClassLoader {
   @Override
   protected Enumeration<URL> findResources(String name) throws IOException {
     return getClassPath().getResources(name);
-  }
-
-  public static void loadPlatformLibrary(@NotNull String libName) {
-    String libFileName = mapLibraryName(libName);
-
-    final String libPath;
-    final File libFile = PathManager.findBinFile(libFileName);
-
-    if (libFile != null) {
-      libPath = libFile.getAbsolutePath();
-    }
-    else {
-      if (!new File(libPath = PathManager.getHomePathFor(IdeaWin32.class) + "/bin/" + libFileName).exists()) {
-        File libDir = new File(PathManager.getBinPath());
-        throw new UnsatisfiedLinkError("'" + libFileName + "' not found in '" + libDir + "' among " + Arrays.toString(libDir.list()));
-      }
-    }
-
-    System.load(libPath);
-  }
-
-  @NotNull
-  private static String mapLibraryName(@NotNull String libName) {
-    String baseName = libName;
-    if (SystemInfo.is64Bit) {
-      baseName = baseName.replace("32", "") + "64";
-    }
-    String fileName = System.mapLibraryName(baseName);
-    if (SystemInfo.isMac) {
-      fileName = fileName.replace(".jnilib", ".dylib");
-    }
-    return fileName;
   }
 
   // called by a parent class on Java 7+

@@ -62,7 +62,7 @@ public class CustomRegionStructureUtil {
    */
   private static TextRange getTextRange(@NotNull PsiElement element) {
     PsiElement first = element.getFirstChild();
-    if (first instanceof PsiComment && !first.textContains('\n')) {
+    if (!(element instanceof PsiFile) && first instanceof PsiComment && !first.textContains('\n')) {
       PsiElement next = first.getNextSibling();
       if (next instanceof PsiWhiteSpace) next = next.getNextSibling();
       if (next != null) {

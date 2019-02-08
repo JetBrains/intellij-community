@@ -15,8 +15,8 @@
  */
 package com.intellij.util.lang;
 
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,11 +67,11 @@ class MemoryResource extends Resource {
     String name = entry.getName();
     URL url = new URL(baseUrl, name);
 
-    byte[] content = ArrayUtil.EMPTY_BYTE_ARRAY;
+    byte[] content = ArrayUtilRt.EMPTY_BYTE_ARRAY;
     InputStream stream = zipFile.getInputStream(entry);
     if (stream != null) {
       try {
-        content = FileUtil.loadBytes(stream, (int)entry.getSize());
+        content = FileUtilRt.loadBytes(stream, (int)entry.getSize());
       }
       finally {
         stream.close();

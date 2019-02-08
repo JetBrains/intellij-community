@@ -4,6 +4,7 @@ package com.intellij.psi.impl.meta;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.util.NullUtils;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.meta.MetaDataContributor;
@@ -47,15 +48,13 @@ public class MetaRegistry extends MetaDataRegistrar {
     ProgressIndicatorProvider.checkCanceled();
     return CachedValuesManager.getCachedValue(element, () -> {
       ensureContributorsLoaded();
-      for (final MyBinding binding : ourBindings) {
+      for (MyBinding binding : ourBindings) {
         if (binding.myFilter.isClassAcceptable(element.getClass()) && binding.myFilter.isAcceptable(element, element.getParent())) {
           PsiMetaData data = binding.myDataClass.get();
           data.init(element);
           Object[] dependencies = data.getDependencies();
-          for (Object dependence : dependencies) {
-            if (dependence == null) {
-              LOG.error(data + "(" + binding.myDataClass + ") provided null dependency");
-            }
+          if (NullUtils.hasNull(dependencies)) {
+            LOG.error(data + "(" + binding.myDataClass + ") provided null dependency");
           }
           return new CachedValueProvider.Result<>(data, ArrayUtil.append(dependencies, element));
         }

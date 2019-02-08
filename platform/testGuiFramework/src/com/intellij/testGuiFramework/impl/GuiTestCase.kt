@@ -28,7 +28,6 @@ import org.fest.swing.timing.Timeout
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
-import org.junit.rules.TemporaryFolder
 import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import java.awt.Component

@@ -13,9 +13,9 @@
 // limitations under the License.
 package com.intellij.util.lang;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.reference.SoftReference;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -276,7 +276,7 @@ class JarLoader extends Loader {
       InputStream stream = null;
       try {
         stream = file.getInputStream(myEntry);
-        return FileUtil.loadBytes(stream, (int)myEntry.getSize());
+        return FileUtilRt.loadBytes(stream, (int)myEntry.getSize());
       } finally {
         if (stream != null) stream.close();
         releaseZipFile(file);
@@ -292,10 +292,10 @@ class JarLoader extends Loader {
 
   protected void error(String message, Throwable t) {
     if (myConfiguration.myLogErrorOnMissingJar) {
-      Logger.getInstance(JarLoader.class).error(message, t);
+      LoggerRt.getInstance(JarLoader.class).error(message, t);
     }
     else {
-      Logger.getInstance(JarLoader.class).warn(message, t);
+      LoggerRt.getInstance(JarLoader.class).warn(message, t);
     }
   }
 

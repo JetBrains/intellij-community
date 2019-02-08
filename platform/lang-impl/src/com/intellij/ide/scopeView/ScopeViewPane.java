@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.scopeView;
 
@@ -15,6 +15,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -37,6 +38,7 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -99,8 +101,16 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   private LinkedHashMap<String, NamedScopeFilter> myFilters;
   private JScrollPane myScrollPane;
 
+  private static Project checkApplicability(@NotNull Project project) {
+    if (PlatformUtils.isPyCharmEducational()) {
+      throw ExtensionNotApplicableException.INSTANCE;
+    }
+    return project;
+  }
+
   public ScopeViewPane(@NotNull Project project, @NotNull DependencyValidationManager dvm, @NotNull NamedScopeManager nsm) {
-    super(project);
+    super(checkApplicability(project));
+
     myDependencyValidationManager = dvm;
     myNamedScopeManager = nsm;
     myFilters = map(myDependencyValidationManager, myNamedScopeManager);

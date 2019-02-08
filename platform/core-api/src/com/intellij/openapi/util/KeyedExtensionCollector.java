@@ -65,17 +65,21 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
       myTracker.incModificationCount();
     }
   };
-  private final ExtensionPointAvailabilityListener myExtensionPointAvailabilityListener;
 
   public KeyedExtensionCollector(@NonNls @NotNull String epName) {
+    this(epName, null);
+  }
+
+  public KeyedExtensionCollector(@NonNls @NotNull String epName, @Nullable Disposable parentDisposable) {
     myEpName = epName;
     lock = "lock for KeyedExtensionCollector " + epName;
-    myExtensionPointAvailabilityListener = new ExtensionPointAvailabilityListener() {
+
+    Extensions.getRootArea().addAvailabilityListener(epName, new ExtensionPointAvailabilityListener() {
       @Override
       public void extensionPointRegistered(@NotNull ExtensionPoint extensionPoint) {
         if (extensionPoint.getName().equals(epName)) {
           //noinspection unchecked
-          extensionPoint.addExtensionPointListener(myListener, false, null);
+          extensionPoint.addExtensionPointListener(myListener, false, parentDisposable);
           myCache.clear();
           myTracker.incModificationCount();
         }
@@ -85,25 +89,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
       public void extensionPointRemoved(@NotNull ExtensionPoint extensionPoint) {
         // no need to remove myListener - it should deregister automatically
       }
-    };
-    Extensions.getRootArea().addAvailabilityListener(epName, myExtensionPointAvailabilityListener);
-  }
-
-  public KeyedExtensionCollector(@NonNls @NotNull String epName, @Nullable Disposable parentDisposable) {
-    this(epName);
-    if (parentDisposable == null) return;
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        ExtensionsArea area = Extensions.getRootArea();
-        area.removeAvailabilityListener(epName, myExtensionPointAvailabilityListener);
-        if (area.hasExtensionPoint(epName)) {
-          ExtensionPoint point = area.getExtensionPoint(epName);
-          //noinspection unchecked
-          point.removeExtensionPointListener(myListener);
-        }
-      }
-    });
+    }, parentDisposable);
   }
 
   public void addExplicitExtension(@NotNull KeyT key, @NotNull T t) {

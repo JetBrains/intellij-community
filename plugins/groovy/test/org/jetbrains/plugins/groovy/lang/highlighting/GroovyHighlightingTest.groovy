@@ -2185,4 +2185,20 @@ import static java.util.Map<error descr="Type argument list is not allowed here"
 import java.util.List<error descr="Type argument list is not allowed here"><String></error> as Foo
 ''', false
   }
+
+  void 'test assign collection to an array in @CS'() {
+    testHighlighting '''\
+Collection<? extends Runnable> foo() {}
+
+@groovy.transform.CompileStatic
+def usage() {
+  Runnable[] ar = foo()
+}
+
+@groovy.transform.CompileStatic
+def usage(Collection<? extends Runnable> cr) {
+  Runnable[] ar = cr //https://issues.apache.org/jira/browse/GROOVY-8983
+}
+'''
+  }
 }

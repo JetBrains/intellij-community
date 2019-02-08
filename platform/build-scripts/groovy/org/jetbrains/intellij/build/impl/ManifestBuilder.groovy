@@ -2,6 +2,8 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.text.StringUtil
+import groovy.transform.CompileStatic
+import org.jetbrains.intellij.build.BuildContext
 
 import java.nio.channels.FileChannel
 import java.nio.file.FileVisitOption
@@ -15,31 +17,32 @@ import java.security.MessageDigest
 /**
  * Recursively computes hashes of files under given paths and writs them in sha*sum utility format.
  */
+@CompileStatic
 class ManifestBuilder {
-  private MessageDigest digest
+  private final MessageDigest digest
 
-  ManifestBuilder(String algorithm = "SHA-384") {
-    digest = MessageDigest.getInstance(algorithm)
+  ManifestBuilder(BuildContext context) {
+    digest = MessageDigest.getInstance(context.options.hashAlgorithm)
   }
 
   String buildManifest(List<String> paths, String basePath) {
-    def hashes = collectHashes(paths)
-    def ext = digest.algorithm.toLowerCase(Locale.ENGLISH).replace("-", "")
-    def path = "${basePath}.${ext}"
+    Map<String, byte[]> hashes = collectHashes(paths)
+    String ext = digest.algorithm.toLowerCase(Locale.ENGLISH).replace("-", "")
+    String path = "${basePath}.${ext}"
     writeHashes(hashes, path)
     return path
   }
 
   private SortedMap<String, byte[]> collectHashes(List<String> paths) {
-    def hashes = new TreeMap<String, byte[]>()
+    Map<String, byte[]> hashes = new TreeMap<String, byte[]>()
 
     paths.each {
-      def root = new File(it).toPath()
+      Path root = new File(it).toPath()
       Files.walkFileTree(root, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
         @Override
         FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-          def relPath = (file == root ? file.fileName : root.relativize(file)).toString()
-          def hash = new RandomAccessFile(file.toFile(), "r").withCloseable {
+          String relPath = (file == root ? file.fileName : root.relativize(file)).toString()
+          byte[] hash = new RandomAccessFile(file.toFile(), "r").withCloseable {
             digest.update(it.channel.map(FileChannel.MapMode.READ_ONLY, 0, attrs.size()))
             digest.digest()
           }

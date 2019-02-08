@@ -891,8 +891,7 @@
 
     <extensionPoint name="predefinedCodeStyle" interface="com.intellij.psi.codeStyle.PredefinedCodeStyle"/>
 
-    <extensionPoint name="semContributor"
-                    beanClass="com.intellij.semantic.SemContributorEP" area="IDEA_PROJECT">
+    <extensionPoint name="semContributor" beanClass="com.intellij.semantic.SemContributorEP">
       <with attribute="implementation" implements="com.intellij.semantic.SemContributor"/>
     </extensionPoint>
 

@@ -75,6 +75,14 @@ import org.jetbrains.annotations.NotNull;
  *   </ul>
  * </ul>
  *
+ * <b>Recursion prevention</b>: The same cached value provider can be re-entered recursively on the same thread,
+ * if the computation is inherently cyclic. Note that this is likely to result in {@link StackOverflowError},
+ * so avoid such situations at all cost. If there's no other way, use
+ * {@link com.intellij.openapi.util.RecursionManager#doPreventingRecursion} instead of custom thread-locals to help get out of the endless loop. Please ensure this call happens inside
+ * the {@link CachedValueProvider}, not outside {@link CachedValue#getValue()} call. Otherwise you might get no caching at all, because
+ * CachedValue uses {@link RecursionGuard.StackStamp#mayCacheNow()} to prevent caching incomplete values, and even the top-level
+ * call would be considered incomplete if it happens inside {@code doPreventingRecursion}.
+ *
  * @param <T> The type of the computation result.
  *
  * @see CachedValueProvider

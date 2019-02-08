@@ -276,7 +276,7 @@
     <spellchecker.support language="JSON"
                           order="first"
                           implementationClass="org.jetbrains.idea.devkit.themes.ThemeSpellcheckingStrategy"/>
-    <editorNotificationProvider implementation="org.jetbrains.idea.devkit.themes.ThemeEditorToolbar"/>
+    <editorNotificationProviderApp implementation="org.jetbrains.idea.devkit.themes.ThemeEditorToolbar"/>
     <applicationService serviceImplementation="org.jetbrains.idea.devkit.themes.metadata.UIThemeMetadataService"/>
   </extensions>
   <extensions defaultExtensionNs="JavaScript.JsonSchema">

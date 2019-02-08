@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -41,14 +41,9 @@ import java.util.ArrayList;
 /**
  * @author egor
  */
-public class AlternativeSourceNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> {
+public final class AlternativeSourceNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> {
   private static final Key<EditorNotificationPanel> KEY = Key.create("AlternativeSource");
   private static final Key<Boolean> FILE_PROCESSED_KEY = Key.create("AlternativeSourceCheckDone");
-  private final Project myProject;
-
-  public AlternativeSourceNotificationProvider(Project project) {
-    myProject = project;
-  }
 
   @NotNull
   @Override
@@ -58,11 +53,11 @@ public class AlternativeSourceNotificationProvider extends EditorNotifications.P
 
   @Nullable
   @Override
-  public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor) {
+  public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
     if (!DebuggerSettings.getInstance().SHOW_ALTERNATIVE_SOURCE) {
       return null;
     }
-    XDebugSession session = XDebuggerManager.getInstance(myProject).getCurrentSession();
+    XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
     if (session == null) {
       setFileProcessed(file, false);
       return null;
@@ -74,7 +69,7 @@ public class AlternativeSourceNotificationProvider extends EditorNotifications.P
       return null;
     }
 
-    final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
+    final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (psiFile == null) return null;
 
     if (!(psiFile instanceof PsiJavaFile)) return null;
@@ -87,10 +82,10 @@ public class AlternativeSourceNotificationProvider extends EditorNotifications.P
 
     if (name == null) return null;
 
-    if (DumbService.getInstance(myProject).isDumb()) return null;
+    if (DumbService.getInstance(project).isDumb()) return null;
 
     ArrayList<PsiClass> alts = ContainerUtil.newArrayList(
-      JavaPsiFacade.getInstance(myProject).findClasses(name, GlobalSearchScope.allScope(myProject)));
+      JavaPsiFacade.getInstance(project).findClasses(name, GlobalSearchScope.allScope(project)));
     ContainerUtil.removeDuplicates(alts);
 
     setFileProcessed(file, true);
@@ -117,7 +112,7 @@ public class AlternativeSourceNotificationProvider extends EditorNotifications.P
         }
       }
 
-      return new AlternativeSourceNotificationPanel(elems, baseClass, myProject, file, locationDeclName);
+      return new AlternativeSourceNotificationPanel(elems, baseClass, project, file, locationDeclName);
     }
     return null;
   }
