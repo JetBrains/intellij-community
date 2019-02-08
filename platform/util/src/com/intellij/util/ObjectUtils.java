@@ -23,6 +23,30 @@ public class ObjectUtils {
 
   public static final Object NULL = sentinel("ObjectUtils.NULL");
 
+  @Contract(pure = true)
+  @NotNull
+  private static <T> T fakeNull() {
+    //noinspection unchecked
+    return (T)NULL;
+  }
+
+  @Contract(value = "!null -> param1", pure = true)
+  @NotNull
+  public static <T> T notNullize(@Nullable T value) {
+    if (value == null) {
+      return fakeNull();
+    }
+    else {
+      return value;
+    }
+  }
+
+  @Contract(pure = true)
+  @Nullable
+  public static <T> T nullize(@NotNull T value) {
+    return value == NULL ? null : value;
+  }
+
   /**
    * Creates a new object which could be used as sentinel value (special value to distinguish from any other object). It does not equal
    * to any other object. Usually should be assigned to the static final field.

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.util
 
 import java.util.function.Consumer
@@ -25,6 +25,6 @@ fun <T> Array<T>.init(): List<T> {
   return dropLast(1)
 }
 
-fun <T : Any> recursionPreventingLazy(initializer: () -> T): Lazy<T?> = RecursionPreventingSafePublicationLazy(initializer)
+fun <T> recursionPreventingLazy(initializer: () -> T): Lazy<T?> = RecursionPreventingSafePublicationLazy(initializer)
 
 fun <T> recursionAwareLazy(initializer: () -> T): Lazy<T> = RecursionAwareSafePublicationLazy(initializer)

@@ -1,29 +1,31 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.util
 
 import com.intellij.openapi.util.RecursionManager
+import com.intellij.util.ObjectUtils.notNullize
+import com.intellij.util.ObjectUtils.nullize
 import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Same as [SafePublicationLazyImpl], but returns `null` in case of computation recursion occurred.
  */
-class RecursionPreventingSafePublicationLazy<T : Any>(initializer: () -> T) : Lazy<T?> {
+class RecursionPreventingSafePublicationLazy<T>(initializer: () -> T) : Lazy<T?> {
 
   @Volatile
-  private var initializer: (() -> T)? = initializer
+  private var initializer: (() -> T)? = { notNullize(initializer()) }
   private val valueRef: AtomicReference<T> = AtomicReference()
 
   override val value: T?
     get() {
       val computedValue = valueRef.get()
       if (computedValue !== null) {
-        return computedValue
+        return nullize(computedValue)
       }
 
       val initializerValue = initializer
       if (initializerValue === null) {
         // Some thread managed to clear the initializer => it managed to set the value.
-        return valueRef.get()
+        return nullize(valueRef.get())
       }
 
       val stamp = ourRecursionGuard.markStack()
@@ -35,11 +37,11 @@ class RecursionPreventingSafePublicationLazy<T : Any>(initializer: () -> T) : La
 
       if (!valueRef.compareAndSet(null, newValue)) {
         // Some thread managed to set the value.
-        return valueRef.get()
+        return nullize(valueRef.get())
       }
 
       initializer = null
-      return newValue
+      return nullize(newValue)
     }
 
   override fun isInitialized(): Boolean = valueRef.get() !== null
