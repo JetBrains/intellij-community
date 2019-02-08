@@ -160,14 +160,7 @@ public class CellRendererPanel extends JPanel {
 
   // END no validation methods --------------
 
-  public static class SuperPreferredSize extends CellRendererPanel {
-    @Override
-    public Dimension getPreferredSize() {
-      return super_getPreferredSize();
-    }
-  }
-
-  public static class SuperPreferredSizeWithBackground extends SuperPreferredSize {
+  public static class SuperPreferredSizeWithBackground extends CellRendererPanel {
     @Override
     protected void paintComponent(Graphics g) {
       g.setColor(getBackground());
