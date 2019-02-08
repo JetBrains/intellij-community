@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.Timeouts
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.typeMatcher
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
 import org.fest.assertions.Assertions.assertThat
@@ -31,6 +32,7 @@ import org.fest.swing.timing.Timeout
 import org.fest.util.Lists.newArrayList
 import org.junit.Assert.assertNotNull
 import java.awt.Container
+import java.io.File
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.swing.JMenuItem
@@ -138,6 +140,11 @@ class MenuFixture internal constructor(private val myRobot: Robot, private val m
 
     init {
       replaceDriverWith(MenuItemFixtureDriver(robot))
+    }
+
+    fun isMenuItemChecked(): Boolean {
+      val iconString = GuiTestUtilKt.computeOnEdt { target().icon?.toString() } ?: "null"
+      return iconString.endsWith("checkmark.svg")
     }
 
     //wait for component showing on screen, as a workaround for IDEA-195830
