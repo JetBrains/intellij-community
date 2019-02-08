@@ -15,17 +15,22 @@
  */
 package com.intellij.openapi.vfs.impl.local;
 
+import com.google.common.util.concurrent.MoreExecutors;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
 import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +42,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -84,23 +93,34 @@ public class FileWatcher {
 
   private volatile CanonicalPathMap myPathMap = new CanonicalPathMap();
   private volatile List<Collection<String>> myManualWatchRoots = Collections.emptyList();
+  
+  private final ExecutorService myFileWatcherExecutor = Registry.is("vfs.filewatcher.works.in.async.way") ?
+                                                        AppExecutorUtil.createBoundedApplicationPoolExecutor("File Watcher", 1) :
+                                                        MoreExecutors.newDirectExecutorService();
+  private final Future<?> myWatcherInitialization;
 
   FileWatcher(@NotNull ManagingFS managingFS) {
     myManagingFS = managingFS;
     myNotificationSink = new MyFileWatcherNotificationSink();
     myWatchers = PluggableFileWatcher.EP_NAME.getExtensions();
-    for (PluggableFileWatcher watcher : myWatchers) {
-      watcher.initialize(myManagingFS, myNotificationSink);
-    }
+
+    myWatcherInitialization = myFileWatcherExecutor.submit(() -> {
+      for (PluggableFileWatcher watcher : myWatchers) {
+        watcher.initialize(myManagingFS, myNotificationSink);
+      }
+    });
   }
 
   public void dispose() {
-    for (PluggableFileWatcher watcher : myWatchers) {
-      watcher.dispose();
-    }
+    waitForFuture(myFileWatcherExecutor.submit(() -> {
+      for (PluggableFileWatcher watcher : myWatchers) {
+        watcher.dispose();
+      }
+    }));
   }
 
   public boolean isOperational() {
+    waitForFuture(myWatcherInitialization);
     for (PluggableFileWatcher watcher : myWatchers) {
       if (watcher.isOperational()) return true;
     }
@@ -108,10 +128,24 @@ public class FileWatcher {
   }
 
   public boolean isSettingRoots() {
+    flushCommandQueue();
+    
     for (PluggableFileWatcher watcher : myWatchers) {
       if (watcher.isSettingRoots()) return true;
     }
     return false;
+  }
+
+  private void flushCommandQueue() {
+    waitForFuture(myFileWatcherExecutor.submit(EmptyRunnable.getInstance()));
+  }
+
+  private void waitForFuture(Future<?> future) {
+    try {
+      future.get();
+    }
+    catch (InterruptedException | ExecutionException ignore) {
+    }
   }
 
   @NotNull
@@ -145,9 +179,11 @@ public class FileWatcher {
     myPathMap = pathMap;
     myManualWatchRoots = ContainerUtil.createLockFreeCopyOnWriteList();
 
-    for (PluggableFileWatcher watcher : myWatchers) {
-      watcher.setWatchRoots(pathMap.getCanonicalRecursiveWatchRoots(), pathMap.getCanonicalFlatWatchRoots());
-    }
+    myFileWatcherExecutor.submit(() -> {
+      for (PluggableFileWatcher watcher : myWatchers) {
+        watcher.setWatchRoots(pathMap.getCanonicalRecursiveWatchRoots(), pathMap.getCanonicalFlatWatchRoots());
+      }
+    });
   }
 
   public void notifyOnFailure(@NotNull String cause, @Nullable NotificationListener listener) {
@@ -166,6 +202,8 @@ public class FileWatcher {
     private DirtyPaths getDirtyPaths() {
       DirtyPaths dirtyPaths = DirtyPaths.EMPTY;
 
+      flushCommandQueue();
+      
       synchronized (myLock) {
         if (!myDirtyPaths.isEmpty()) {
           dirtyPaths = myDirtyPaths;
@@ -173,9 +211,11 @@ public class FileWatcher {
         }
       }
 
-      for (PluggableFileWatcher watcher : myWatchers) {
-        watcher.resetChangedPaths();
-      }
+      waitForFuture(myFileWatcherExecutor.submit(() -> {
+        for (PluggableFileWatcher watcher : myWatchers) {
+          watcher.resetChangedPaths();
+        }
+      }));
 
       return dirtyPaths;
     }
@@ -286,16 +326,40 @@ public class FileWatcher {
   @TestOnly
   public void startup(@Nullable Consumer<String> notifier) throws IOException {
     myTestNotifier = notifier;
-    for (PluggableFileWatcher watcher : myWatchers) {
-      watcher.startup();
+
+    try {
+      myFileWatcherExecutor.submit(wrapInCallable(() -> {
+        for (PluggableFileWatcher watcher : myWatchers) {
+          watcher.startup();
+        }
+      })).get();
     }
+    catch (InterruptedException | ExecutionException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof IOException) throw (IOException)cause;
+    }
+  }
+
+  @NotNull
+  private <T extends Exception> Callable<Object> wrapInCallable(ThrowableRunnable<T> action) {
+    return ()-> {action.run(); return null;};
   }
 
   @TestOnly
   public void shutdown() throws InterruptedException {
-    for (PluggableFileWatcher watcher : myWatchers) {
-      watcher.shutdown();
+
+    try {
+      myFileWatcherExecutor.submit(wrapInCallable(() -> {
+        for (PluggableFileWatcher watcher : myWatchers) {
+          watcher.shutdown();
+        }
+      })).get();
     }
+    catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof InterruptedException) throw (InterruptedException)cause;
+    }
+
     myTestNotifier = null;
   }
   //</editor-fold>
