@@ -164,9 +164,7 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     createProjectSubFile("module/build.gradle", moduleBuildScript.generate())
     createProjectSubFile("my module/build.gradle", moduleBuildScript.generate())
     importProject(buildScript.generate())
-    assertModules("project", "project.main", "project.test", "project.automation",
-                  "project.module", "project.module.main", "project.module.test",
-                  "project.my_module", "project.my_module.main", "project.my_module.test")
+    assertModulesContains("project", "project.module", "project.my_module")
     val automationTestCase = extractJavaClassData(automationTestCaseFile)
     val testCase = extractJavaClassData(testCaseFile)
     val abstractTestCase = extractJavaClassData(abstractTestCaseFile)
