@@ -20,6 +20,7 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeListener;
 import java.util.regex.Pattern;
 
 public final class CellTooltipManager {
@@ -62,15 +63,22 @@ public final class CellTooltipManager {
   @ApiStatus.Experimental
   public void installOn(@NotNull JComponent component) {
     MouseAdapter mouseListener = new ValidationMouseListener();
+    PropertyChangeListener propertyChangeListener = e -> {
+      if (cellComponentProvider != null && cellComponentProvider.isEditingStarted(e)) {
+        hidePopup(true, null);
+      }
+    };
 
     component.addMouseListener(mouseListener);
     component.addMouseMotionListener(mouseListener);
+    component.addPropertyChangeListener(propertyChangeListener);
 
     Disposer.register(parentDisposable, () -> {
       hidePopup(true, null);
 
       component.removeMouseListener(mouseListener);
       component.removeMouseMotionListener(mouseListener);
+      component.removePropertyChangeListener(propertyChangeListener);
 
       cellComponentProvider = null;
       validationInfo = null;
