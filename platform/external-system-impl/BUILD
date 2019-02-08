@@ -49,5 +49,6 @@ iml_module(
         "//tools/idea/.idea/libraries:de.ruedigermoeller_fst",
         "//tools/idea/.idea/libraries:Objenesis",
         "//tools/idea/.idea/libraries:jackson",
+        "//tools/idea/.idea/libraries:kotlin-reflect",
     ],
 )

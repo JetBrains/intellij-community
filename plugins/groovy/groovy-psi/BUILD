@@ -49,5 +49,6 @@ iml_module(
         "//tools/idea/java/java-structure-view:intellij.java.structureView[module]",
         "//tools/idea/plugins/properties/properties-psi-impl:intellij.properties.psi.impl[module]",
         "//tools/idea/plugins/properties/properties-psi-api:intellij.properties.psi[module]",
+        "//tools/idea/.idea/libraries:kotlin-reflect",
     ],
 )

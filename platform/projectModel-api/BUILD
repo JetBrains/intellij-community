@@ -16,6 +16,7 @@ iml_module(
         "//tools/idea/platform/core-api:intellij.platform.core[module]",
         "//tools/idea/jps/model-api:intellij.platform.jps.model[module]",
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:kotlin-reflect",
         "//tools/idea/.idea/libraries:Xerces",
         "//tools/idea/.idea/libraries:JDOM",
     ],

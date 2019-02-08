@@ -32,6 +32,7 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:kotlin-reflect",
         "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/json:intellij.json[module]",
         "//tools/idea/platform/lang-api:intellij.platform.lang[module]",

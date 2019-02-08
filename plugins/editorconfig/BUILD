@@ -41,6 +41,7 @@ iml_module(
         "//tools/idea/platform/lang-api:intellij.platform.lang[module]",
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
+        "//tools/idea/.idea/libraries:kotlin-reflect",
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/spellchecker:intellij.spellchecker[module]",
         "//tools/idea:intellij.platform.jps.build_and_others[module, test]",
