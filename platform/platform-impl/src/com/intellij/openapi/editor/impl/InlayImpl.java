@@ -10,11 +10,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 
 abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayImpl> extends RangeMarkerWithGetterImpl implements Inlay<R> {
   static final Key<Integer> OFFSET_BEFORE_DISPOSAL = Key.create("inlay.offset.before.disposal");
-  private static final Key<Integer> ORDER_BEFORE_DISPOSAL = Key.create("inlay.order.before.disposal");
 
   @NotNull
   final EditorImpl myEditor;
@@ -78,13 +76,10 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
   public void dispose() {
     if (isValid()) {
       int offset = getOffset(); // We want listeners notified after disposal, but want inlay offset to be available at that time
-      InlayModelImpl inlayModel = myEditor.getInlayModel();
-      List<Inlay> inlays = inlayModel.getInlineElementsInRange(offset, offset);
-      putUserData(ORDER_BEFORE_DISPOSAL, inlays.indexOf(this));
       putUserData(OFFSET_BEFORE_DISPOSAL, offset);
       //noinspection unchecked
       getTree().removeInterval((T)this);
-      inlayModel.notifyRemoved(this);
+      myEditor.getInlayModel().notifyRemoved(this);
     }
   }
 
@@ -118,10 +113,5 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
   @Override
   public int getWidthInPixels() {
     return myWidthInPixels;
-  }
-
-  int getOrder() {
-    Integer value = getUserData(ORDER_BEFORE_DISPOSAL);
-    return value == null ? -1 : value;
   }
 }
