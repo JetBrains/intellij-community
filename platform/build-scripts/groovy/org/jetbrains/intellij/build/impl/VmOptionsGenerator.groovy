@@ -40,6 +40,7 @@ class VmOptionsGenerator {
   static String computeCommonVmOptions(boolean isEAP) {
     String options = COMMON_VM_OPTIONS
     if (isEAP) {
+      //must be consistent with com.intellij.openapi.application.ConfigImportHelper.updateVMOptions
       options += " -XX:MaxJavaStackTraceDepth=10000"
     }
     return options

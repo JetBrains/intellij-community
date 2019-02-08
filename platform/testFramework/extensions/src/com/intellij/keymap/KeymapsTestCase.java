@@ -75,6 +75,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift F6",                 "RenameElement", "Git.Reword.Commit", "ShelvedChanges.Rename", "ChangesView.Rename"},
     { "shift F7",                 "PreviousDiff", "SmartStepInto"},
     { "shift TAB",                "PreviousTemplateVariable", "PrevParameter", "EditorUnindentSelection", "PrevTemplateParameter", "SearchEverywhere.PrevTab"},
+    { "shift alt LEFT",           "Diff.ApplyLeftSide", "PreviousEditorTab"},
+    { "shift alt RIGHT",          "Diff.ApplyRightSide", "NextEditorTab"},
     { "shift alt L",              "org.jetbrains.plugins.ruby.console.LoadInIrbConsoleAction", "context.load"},
     { "shift alt M",              "ChangesView.Move", "Vcs.MoveChangedLinesToChangelist"},
     { "shift control D",          "TagDocumentationNavigation", "Diff.ShowSettingsPopup", "Uml.ShowDiff", "Console.TableResult.CompareCells"},
@@ -123,6 +125,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "meta M",                   "MinimizeCurrentWindow", "TodoViewGroupByShowModules"},
     { "meta N",                   "FileChooser.NewFolder", "Generate", "NewElement"},
     { "meta O",                   "GotoClass", "GotoChangedFile"},
+    { "shift ctrl LEFT",          "Diff.ApplyLeftSide", "PreviousEditorTab"},
+    { "shift ctrl RIGHT",         "Diff.ApplyRightSide", "NextEditorTab"},
     { "shift meta G",             "ClassTemplateNavigation", "GoToClass", "FindPrevious"},
     { "shift meta M",             "ChangesView.Move", "Vcs.MoveChangedLinesToChangelist"},
     { "shift meta LEFT",          "EditorLineStartWithSelection", "ResizeToolWindowLeft", },
@@ -151,6 +155,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "meta 1",                   "ActivateProjectToolWindow", "FileChooser.GotoHome", "DuplicatesForm.SendToLeft"},
     { "meta 2",                   "ActivateFavoritesToolWindow", "FileChooser.GotoProject", "DuplicatesForm.SendToRight"},
     { "meta 3",                   "ActivateFindToolWindow", "FileChooser.GotoModule"},
+    { "shift ctrl LEFT",          "Diff.ApplyLeftSide", "PreviousEditorTab"},
+    { "shift ctrl RIGHT",         "Diff.ApplyRightSide", "NextEditorTab"},
     { "shift meta LEFT",          "EditorLineStartWithSelection", "ResizeToolWindowLeft", },
     { "shift meta RIGHT",         "EditorLineEndWithSelection", "ResizeToolWindowRight", },
     { "alt R",                    "Django.RunManageTaskAction", "org.jetbrains.plugins.ruby.tasks.rake.actions.RakeTasksPopupAction"},
@@ -211,8 +217,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     put("Default for GNOME", new String[][] {
     { "shift alt 1",              "SelectIn", "ProjectViewChangeView"},
     { "shift alt 7",              "IDEtalk.SearchUserHistory", "FindUsages"},
-    { "shift alt LEFT",           "PreviousEditorTab", "Back"},
-    { "shift alt RIGHT",          "NextEditorTab", "Forward"},
+    { "shift alt LEFT",           "PreviousEditorTab", "Back", "Diff.ApplyLeftSide"},
+    { "shift alt RIGHT",          "NextEditorTab", "Forward", "Diff.ApplyRightSide"},
     });
     put("Default for KDE", new String[][] {
     { "control 1",                "FileChooser.GotoHome", "ShowErrorDescription", "DuplicatesForm.SendToLeft"},

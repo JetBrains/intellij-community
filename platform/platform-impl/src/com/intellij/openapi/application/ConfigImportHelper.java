@@ -1,12 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
+import com.intellij.diagnostic.VMOptions;
 import com.intellij.ide.actions.ImportSettingsFilenameFilter;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.idea.Main;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -15,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +57,7 @@ public class ConfigImportHelper {
 
   private ConfigImportHelper() { }
 
-  public static void importConfigsTo(@NotNull String newConfigPath) {
+  public static void importConfigsTo(@NotNull String newConfigPath, Logger log) {
     System.setProperty(FIRST_SESSION_KEY, Boolean.TRUE.toString());
 
     ConfigImportSettings settings = getConfigImportSettings();
@@ -68,7 +71,7 @@ public class ConfigImportHelper {
 
     Pair<File, File> result = dialog.getSelectedFile();
     if (result != null) {
-      doImport(result.first, newConfigDir, result.second);
+      doImport(result.first, newConfigDir, result.second, log);
       settings.importFinished(newConfigPath);
       System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
     }
@@ -314,7 +317,7 @@ public class ConfigImportHelper {
     return FileUtil.expandUserHome(StringUtil.unquoteString(dir, '"'));
   }
 
-  private static void doImport(File oldConfigDir, File newConfigDir, @Nullable File oldIdeHome) {
+  private static void doImport(File oldConfigDir, File newConfigDir, @Nullable File oldIdeHome, Logger log) {
     if (FileUtil.filesEqual(oldConfigDir, newConfigDir)) {
       return;
     }
@@ -361,10 +364,34 @@ public class ConfigImportHelper {
           StartupActionScriptManager.executeActionScript(script, oldPluginsDir, newPluginsDir);
         }
       }
+
+      updateVMOptions(newConfigDir, log);
     }
     catch (IOException e) {
+      log.warn(e);
       String message = ApplicationBundle.message("error.unable.to.import.settings", e.getMessage());
       Main.showMessage(ApplicationBundle.message("title.settings.import.failed"), message, false);
+    }
+  }
+
+  /**
+   * Fix VM options in the custom *.vmoptions file which don't work with the current IDE version.
+   */
+  private static void updateVMOptions(@NotNull File newConfigDir, Logger log) {
+    File vmOptionsFile = new File(newConfigDir, VMOptions.getCustomVMOptionsFileName());
+    if (vmOptionsFile.exists()) {
+      try {
+        List<String> lines = FileUtil.loadLines(vmOptionsFile);
+        List<String> updatedLines =
+          ContainerUtil.map(lines, line -> line.trim().equals("-XX:MaxJavaStackTraceDepth=-1") ? "-XX:MaxJavaStackTraceDepth=10000" : line);
+
+        if (!updatedLines.equals(lines)) {
+          FileUtil.writeToFile(vmOptionsFile, StringUtil.join(updatedLines, "\n"));
+        }
+      }
+      catch (IOException e) {
+        log.warn("Failed to update custom VM options file " + vmOptionsFile, e);
+      }
     }
   }
 

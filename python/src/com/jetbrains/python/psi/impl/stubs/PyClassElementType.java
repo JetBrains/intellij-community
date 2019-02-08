@@ -24,8 +24,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * @author max
  */
-public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
-  implements PyCustomizableStubElementType<PyClass, PyCustomClassStub, PyCustomClassStubType<? extends PyCustomClassStub>> {
+public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> {
 
   public PyClassElementType() {
     this("CLASS_DECLARATION");
@@ -57,8 +56,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
                                PyPsiUtils.asQualifiedName(psi.getMetaClassExpression()),
                                psi.getOwnSlots(),
                                PyPsiUtils.strValue(psi.getDocStringExpression()),
-                               getStubElementType(),
-                               createCustomStub(psi));
+                               getStubElementType());
   }
 
   @NotNull
@@ -150,8 +148,6 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
 
     final String docString = pyClassStub.getDocString();
     dataStream.writeUTFFast(docString != null ? docString : "");
-
-    serializeCustomStub(pyClassStub.getCustomStub(PyCustomClassStub.class), dataStream);
   }
 
   @Override
@@ -185,10 +181,8 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
     final String docStringInStub = dataStream.readUTFFast();
     final String docString = docStringInStub.length() > 0 ? docStringInStub : null;
 
-    final PyCustomClassStub customStub = deserializeCustomStub(dataStream);
-
     return new PyClassStubImpl(name, parentStub, superClasses, parametrizedBaseClasses, baseClassesText, metaClass, slots, docString,
-                               getStubElementType(), customStub);
+                               getStubElementType());
   }
 
   @Override
@@ -214,11 +208,5 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
   @NotNull
   protected IStubElementType getStubElementType() {
     return PyElementTypes.CLASS_DECLARATION;
-  }
-
-  @NotNull
-  @Override
-  public List<PyCustomClassStubType<? extends PyCustomClassStub>> getExtensions() {
-    return PyCustomClassStubType.EP_NAME.getExtensionList();
   }
 }

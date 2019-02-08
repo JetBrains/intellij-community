@@ -395,7 +395,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return DarculaUIUtil.isTableCellEditor(c) ? JBUI.insets(2) : getDefaultComboBoxInsets();
+    return DarculaUIUtil.isTableCellEditor(c) || isCompact(c)? JBUI.insets(2, 3) : getDefaultComboBoxInsets();
   }
 
   @Override

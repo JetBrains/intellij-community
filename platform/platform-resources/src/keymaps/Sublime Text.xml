@@ -114,6 +114,8 @@
     <keyboard-shortcut first-keystroke="alt LEFT"/>
   </action>
   <action id="Diff.PrevChange"/>
+  <action id="Diff.ApplyLeftSide"/>
+  <action id="Diff.ApplyRightSide"/>
   <action id="EditorNextWordInDifferentHumpsModeWithSelection">
     <keyboard-shortcut first-keystroke="alt shift RIGHT"/>
   </action>

@@ -1457,7 +1457,7 @@ public abstract class DialogWrapper {
   /**
    * Sets margin for command buttons ("OK", "Cancel", "Help").
    *
-   * @Deprecated Button margins aren't used anymore. Button style is standardized.
+   * @deprecated Button margins aren't used anymore. Button style is standardized.
    * @param insets buttons margin
    */
   @Deprecated

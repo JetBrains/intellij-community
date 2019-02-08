@@ -114,7 +114,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     if (customizer.buildZipArchive) {
       buildWinZip(jreDirectoryPaths.findAll { it != null }, "${jreSuffix}.win", winDistPath)
       if (secondJreDirectoryPath != null) {
-        buildWinZip([secondJreDirectoryPath], "-jre${buildContext.bundledJreManager.getSecondJreVersion()}.win", winDistPath)
+        buildWinZip([secondJreDirectoryPath], "-jbr${buildContext.bundledJreManager.getSecondJreVersion()}.win", winDistPath)
       }
     }
 
@@ -137,7 +137,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       if (secondJreDirectoryPath != null) {
         generateProductJson(productJsonDir, secondJreDirectoryPath != null)
         new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, secondJreDirectoryPath], [])
-        new WinExeInstallerBuilder(buildContext, customizer, secondJreDirectoryPath).buildInstaller(winDistPath, productJsonDir, "-jre${buildContext.bundledJreManager.getSecondJreVersion()}")
+        new WinExeInstallerBuilder(buildContext, customizer, secondJreDirectoryPath).buildInstaller(winDistPath, productJsonDir, "-jbr${buildContext.bundledJreManager.getSecondJreVersion()}")
       }
     }
   }

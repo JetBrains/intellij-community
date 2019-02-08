@@ -526,7 +526,8 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         // A single-type-import declaration D in a compilation unit C of package P
         // that imports a type named N shadows, throughout C, the declarations of
         // ... any top level type named N declared in another compilation unit of P.
-        if (PsiTreeUtil.getParentOfType(this, PsiImportStatement.class) != null) {
+        PsiImportStatement importStatement = PsiTreeUtil.getParentOfType(this, PsiImportStatement.class);
+        if (importStatement != null && (!importStatement.isOnDemand() || !isQualified())) {
           result = resolve(Kind.PACKAGE_NAME_KIND, containingFile);
           if (result.length == 0) {
             result = resolve(classKind, containingFile);

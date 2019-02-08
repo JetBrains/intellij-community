@@ -116,6 +116,7 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
                                      intentionText.matches("Simplify '.*' to .*") ||
                                      intentionText.matches("Move '.*' to Javadoc ''@throws'' tag") ||
                                      intentionText.matches("Remove '.*' from '.*' throws list") ||
+                                     intentionText.matches("Remove type arguments") ||
                                      intentionText.matches("Remove .+ suppression");
     return !isCommentChangingAction;
   }

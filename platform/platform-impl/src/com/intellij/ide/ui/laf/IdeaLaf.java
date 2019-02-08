@@ -47,8 +47,6 @@ public final class IdeaLaf extends MetalLookAndFeel {
     defaults.put("ScrollBar.background", col);
     defaults.put("ScrollBar.track", col);
 
-    //Border scrollPaneBorder = new BorderUIResource(new BegBorders.ScrollPaneBorder());
-    //defaults.put("ScrollPane.border", scrollPaneBorder);
     defaults.put("TextField.border", BegBorders.getTextFieldBorder());
     defaults.put("PasswordField.border", BegBorders.getTextFieldBorder());
     Border popupMenuBorder = new BegPopupMenuBorder();
@@ -63,7 +61,6 @@ public final class IdeaLaf extends MetalLookAndFeel {
     defaults.put("TabbedPaneUI", BegTabbedPaneUI.class.getName());
     defaults.put("TableUI", BegTableUI.class.getName());
     defaults.put("TreeUI", BegTreeUI.class.getName());
-    //defaults.put("ScrollPaneUI", BegScrollPaneUI.class.getName());
 
     defaults.put("TabbedPane.tabInsets", new Insets(0, 4, 0, 4));
     defaults.put("ToolTip.background", TOOLTIP_BACKGROUND_COLOR);

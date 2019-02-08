@@ -122,10 +122,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   private static final boolean KDE_DISABLE_ROOT_MNEMONIC_PROCESSING = Boolean.getBoolean("linux.native.menu.kde.disable.root.mnemonic");
 
   private static final boolean SKIP_OPEN_MENU_COMMAND     = Boolean.getBoolean("linux.native.menu.skip.open");
-  private static final boolean DONT_FILL_ROOTS            =
-    SystemInfo.isKDE
-    || (ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isUnitTestMode()) // NOTE: expanding root menu causes failures of tests: PhpStorm -> Performance Tests (3rd Party Plugins)
-    || Boolean.getBoolean("linux.native.dont.fill.roots");
+  private static final boolean DO_FILL_ROOTS              = Boolean.getBoolean("linux.native.do.fill.roots");
   private static final boolean DONT_FILL_SUBMENU          = Boolean.getBoolean("linux.native.menu.dont.fill.submenu");
   private static final boolean DONT_CLOSE_POPUPS          = Boolean.getBoolean("linux.native.menu.dont.close.popups");
   private static final boolean DISABLE_EVENTS_FILTERING   = Boolean.getBoolean("linux.native.menu.disable.events.filtering");
@@ -342,11 +339,12 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
         mi.setLabelFromSwingPeer(am);
         newRoots.add(mi);
 
-        if (!DONT_FILL_ROOTS) {
+        if (DO_FILL_ROOTS) {
           final long startMs = System.currentTimeMillis();
-          am.removeAll();
+          am.removeAll(); // just for insurance
           am.fillMenu();
           _syncChildren(mi, am, 1, stats); // NOTE: fill root menus to avoid empty submenu showing
+          am.removeAll();
           final long elapsedMs = System.currentTimeMillis() - startMs;
           if (TRACE_SYNC_STATS) _trace("filled root menu '%s', spent (in EDT) %d ms, stats: %s", String.valueOf(mi.txt), elapsedMs, _stats2str(stats));
         }
@@ -380,8 +378,10 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     if (croots == null || croots.isEmpty())
       return;
 
-    for (MenuItemInternal mi: croots)
+    for (MenuItemInternal mi: croots) {
       mi.nativePeer = ourLib.addRootMenu(myWindowHandle, mi.uid, mi.txt);
+      _processChildren(mi);
+    }
 
     if (!SHOW_SWING_MENU)
       ApplicationManager.getApplication().invokeLater(()->{
@@ -599,6 +599,11 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   }
   private void _handleEvent(int uid, int eventType, boolean doFiltering) {
     // glib main-loop thread
+    if (myWindowHandle == null || myIsDisposed) {
+      if (TRACE_ENABLED) _trace("window was closed when received event '%s', just skip it", _evtype2str(eventType));
+      return;
+    }
+
     final MenuItemInternal mi = _findMenuItem(uid);
     if (mi == null) {
       LOG.error("can't find menu-item by uid " + uid + ", eventType=" + eventType);

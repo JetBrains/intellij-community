@@ -33,7 +33,7 @@ public class DarculaTableSelectedCellHighlightBorder extends CompoundBorder impl
   }
 
   protected Border createInsideBorder() {
-    return JBUI.Borders.empty(2);
+    return JBUI.Borders.empty(1, 2);
   }
 
   protected Color createFocusBorderColor() {

@@ -24,11 +24,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.xml.impl.dtd.XmlNSDescriptorImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -41,8 +39,6 @@ import java.util.List;
 public class DomPerformanceTest extends DomHardCoreTestCase {
   public void testVisitorPerformance() {
     final MyElement element = createElement("<root xmlns=\"adsf\" targetNamespace=\"adsf\"/>", MyElement.class);
-
-    MetaRegistry.bindDataToElement(DomUtil.getFile(element).getDocument(), new XmlNSDescriptorImpl());
 
     final MyElement child = element.addChildElement();
     child.getAttr().setValue("239");

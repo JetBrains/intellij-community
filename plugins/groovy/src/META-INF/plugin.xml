@@ -155,6 +155,7 @@
     <callTypeCalculator implementation="org.jetbrains.plugins.groovy.lang.typing.PredefinedReturnType"/>
     <callTypeCalculator implementation="org.jetbrains.plugins.groovy.lang.typing.WithTraitsTypeCalculator"/>
     <callTypeCalculator implementation="org.jetbrains.plugins.groovy.lang.typing.DgmCallTypeCalculator"/>
+    <callTypeCalculator implementation="org.jetbrains.plugins.groovy.lang.typing.DgmIteratorCallTypeCalculator"/>
     <callTypeCalculator implementation="org.jetbrains.plugins.groovy.lang.typing.ClosureMethodsCallTypeCalculator"/>
     <callTypeCalculator implementation="org.jetbrains.plugins.groovy.lang.typing.ObjectClassTypeCalculator"/>
 

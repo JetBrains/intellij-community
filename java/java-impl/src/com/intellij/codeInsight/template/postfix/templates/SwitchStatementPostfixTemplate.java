@@ -140,7 +140,10 @@ public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase 
           if (parent instanceof PsiExpressionStatement) {
             result.add(element);
           }
-          else if (isEnhancedSwitchAvailable && (isVariableInitializer(element, parent) || isRightSideOfAssignment(element, parent))) {
+          else if (isEnhancedSwitchAvailable && (isVariableInitializer(element, parent) ||
+                                                 isRightSideOfAssignment(element, parent) ||
+                                                 isReturnValue(element, parent) ||
+                                                 isArgumentList(parent))) {
             result.add(element);
           }
         }
@@ -164,6 +167,14 @@ public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase 
 
       private boolean isRightSideOfAssignment(PsiElement element, PsiElement parent) {
         return parent instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)parent).getRExpression() == element;
+      }
+
+      private boolean isReturnValue(PsiElement element, PsiElement parent) {
+        return parent instanceof PsiReturnStatement && ((PsiReturnStatement)parent).getReturnValue() == element;
+      }
+
+      private boolean isArgumentList(PsiElement parent) {
+        return parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCall;
       }
     };
   }

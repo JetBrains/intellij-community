@@ -18,6 +18,7 @@ package com.jetbrains.python.psi.stubs;
 import com.intellij.psi.stubs.NamedStub;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStub;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -57,13 +58,8 @@ public interface PyTargetExpressionStub extends NamedStub<PyTargetExpression>, P
 
   boolean isQualified();
 
-  /**
-   * @deprecated It is our internal API, try to avoid using it.
-   * It is planned to be removed sooner or later, so please don't rely on this method.
-   */
-  @Deprecated
   @Nullable
-  <T> T getCustomStub(Class<T> stubClass);
+  <T extends CustomTargetExpressionStub> T getCustomStub(Class<T> stubClass);
 
   @Nullable
   String getDocString();

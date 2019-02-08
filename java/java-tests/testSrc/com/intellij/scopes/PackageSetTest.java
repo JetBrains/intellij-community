@@ -2,6 +2,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.scopes;
 
+import com.intellij.ide.scopeView.NamedScopeFilter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.ModuleManager;
@@ -11,6 +12,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiPlainTextFile;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
 import com.intellij.testFramework.TestSourceBasedTestCase;
@@ -89,6 +91,31 @@ public class PackageSetTest extends TestSourceBasedTestCase {
     final PsiDirectory withSpaceDirectory = getPackageDirectory("with-dash");
     final PsiFile [] psiFiles = assertAllFilesIncluded(withSpaceDirectory, packageSet, myHolder);
     assertEquals(1, psiFiles.length);
+  }
+
+  public void testIncludeDirectoryItself() throws Exception {
+    NamedScopeFilter filter = createFilter("file:src/pack//*");
+    VirtualFile dir = getPackageDirectory("pack").getVirtualFile();
+    for (VirtualFile file : dir.getChildren()) {
+      assertTrue(filter.accept(file));
+    }
+    assertTrue(filter.accept(dir));
+  }
+
+  public void testExcludeDirectoryItself() throws Exception {
+    NamedScopeFilter filter = createFilter("!file:src/pack//*");
+    VirtualFile dir = getPackageDirectory("pack").getVirtualFile();
+    for (VirtualFile file : dir.getChildren()) {
+      assertFalse(filter.accept(file));
+    }
+    assertFalse(filter.accept(dir));
+  }
+
+  @NotNull
+  private NamedScopeFilter createFilter(@NotNull String pattern) throws Exception {
+    PackageSet set = myPackageSetFactory.compile(pattern);
+    NamedScope scope = new NamedScope(pattern, set);
+    return new NamedScopeFilter(myHolder, scope);
   }
 
   public void testModuleFilePattern() throws Exception {
