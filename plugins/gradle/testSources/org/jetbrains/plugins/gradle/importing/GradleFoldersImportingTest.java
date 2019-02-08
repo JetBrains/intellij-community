@@ -487,7 +487,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
       .addPrefix("    generatedSourceDirs += file('../outer4/generated')")
       .addPrefix("  }")
       .addPrefix("}");
-    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(true);
+    importPerSourceSet(true);
     importProject(buildScript.generate());
     assertModules("project", "project.main", "project.test", "project.generated");
     assertContentEntryExists("project", "");
@@ -536,7 +536,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
       .addPrefix("    generatedSourceDirs += file('../outer4/generated')")
       .addPrefix("  }")
       .addPrefix("}");
-    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
+    importPerSourceSet(false);
     importProject(buildScript.generate());
     assertModules("project");
     assertContentEntryExists("project",
@@ -619,4 +619,9 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
       assertNotNull("Source folder " + sourcePath + " not found in module " + moduleName, sourceFolder);
     }
   }
+
+  protected void importPerSourceSet(boolean b) {
+    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(b);
+  }
+
 }
