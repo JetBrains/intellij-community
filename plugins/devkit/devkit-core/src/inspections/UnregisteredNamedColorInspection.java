@@ -4,36 +4,32 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ide.ui.UIThemeMetadata;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiMethod;
 import com.intellij.uast.UastVisitorAdapter;
 import com.intellij.ui.JBColor;
+import com.intellij.util.PairProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.completion.UiDefaultsHardcodedKeys;
+import org.jetbrains.idea.devkit.themes.metadata.UIThemeMetadataService;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 import java.util.List;
 
-/**
- * @see UiDefaultsHardcodedKeys
- */
 public class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
+
   private static final String JB_COLOR_FQN = JBColor.class.getCanonicalName();
   private static final String NAMED_COLOR_METHOD_NAME = "namedColor";
 
-  private static final String UI_DEFAULTS_HARDCODED_KEYS_FQN = UiDefaultsHardcodedKeys.class.getCanonicalName();
-  private static final String FIELD_UI_DEFAULTS_KEYS = "UI_DEFAULTS_KEYS";
-  private static final String FIELD_NAMED_COLORS = "NAMED_COLORS";
-
   @Override
   protected PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isIdeaProject(holder.getProject())) return PsiElementVisitor.EMPTY_VISITOR;
+    if (!PsiUtil.isPluginProject(holder.getProject())) return PsiElementVisitor.EMPTY_VISITOR;
 
     return new UastVisitorAdapter(new AbstractUastNonRecursiveVisitor() {
       @Override
@@ -59,12 +55,7 @@ public class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
     String key = getKey(expression);
     if (key == null) return;
 
-    Project project = holder.getProject();
-    PsiClass hardcodedKeysClass = JavaPsiFacade.getInstance(project)
-      .findClass(UI_DEFAULTS_HARDCODED_KEYS_FQN, GlobalSearchScope.allScope(project));
-    if (hardcodedKeysClass == null) return;
-
-    if (!isIncludedInHardcodedNamedColors(hardcodedKeysClass, key)) {
+    if (!isRegisteredNamedColor(key)) {
       registerProblem(key, holder, expression, null);
     }
   }
@@ -87,24 +78,14 @@ public class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
     return (String)evaluated;
   }
 
-  //TODO consider caching here
-  private static boolean isIncludedInHardcodedNamedColors(@NotNull PsiClass hardcodedKeysClass, @NotNull String key) {
-    PsiField[] fields = hardcodedKeysClass.getFields();
-    for (PsiField field : fields) {
-      String fieldName = field.getName();
-      if (!FIELD_UI_DEFAULTS_KEYS.equals(fieldName) && !FIELD_NAMED_COLORS.equals(fieldName)) continue;
-
-      PsiExpression initializer = field.getInitializer();
-      if (!(initializer instanceof PsiMethodCallExpression)) continue;
-
-      PsiExpressionList argumentList = ((PsiMethodCallExpression)initializer).getArgumentList();
-      for (PsiExpression expression : argumentList.getExpressions()) {
-        if (!(expression instanceof PsiLiteralExpression)) continue;
-        String registeredKey = StringUtil.trimStart(StringUtil.trimEnd(expression.getText(), "\""), "\"");
-        if (key.equals(registeredKey)) return true;
+  private static boolean isRegisteredNamedColor(@NotNull String key) {
+    PairProcessor<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> processor = (themeMetadata, uiKeyMetadata) -> {
+      if (key.equals(uiKeyMetadata.getKey())) {
+        return false;
       }
-    }
-    return false;
+      return true;
+    };
+    return !UIThemeMetadataService.getInstance().processAllKeys(processor);
   }
 
   private static void registerProblem(@NotNull String key,
