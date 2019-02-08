@@ -12,10 +12,9 @@ class JBEditorTabPainter(theme: TabTheme = TabTheme.EDITOR_TAB) : JBDefaultTabPa
     when (position) {
       JBTabsPosition.top -> rect.height -= borderThickness
       JBTabsPosition.bottom -> rect.y += borderThickness
-      JBTabsPosition.left -> rect.width += borderThickness
+      JBTabsPosition.left -> rect.width -= borderThickness
       JBTabsPosition.right -> {
-        rect.x += borderThickness
-        rect.width -= borderThickness
+        rect.x += 2*borderThickness
       }
     }
     super.paintTab(position, g, rect, borderThickness, tabColor, hovered)

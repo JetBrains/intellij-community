@@ -3,7 +3,6 @@ package com.intellij.ui.tabs;
 
 import com.intellij.ui.tabs.impl.JBDefaultTabPainter;
 import com.intellij.ui.tabs.impl.JBEditorTabPainter;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -18,13 +17,11 @@ public interface JBTabPainter {
   JBTabPainter toolWindowPainter = new JBDefaultTabPainter(TabTheme.Companion.getTOOLWINDOW_TAB());
   JBTabPainter defaultPainter = new JBDefaultTabPainter();
 
-  // @Deprecated("You should move the painting logic to an implementation of this interface")
-  @Deprecated
   Color getBackgroundColor();
 
   int getBorderThickness();
 
- void paintBorderLine(Graphics2D g, double thickness, Point from, Point to);
+ void paintBorderLine(Graphics2D g, int thickness, Point from, Point to);
 
   void fillBackground(Graphics2D g, Rectangle rect);
 

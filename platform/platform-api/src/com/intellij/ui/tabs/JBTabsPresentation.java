@@ -28,12 +28,12 @@ public interface JBTabsPresentation {
   void setHideTabs(boolean hideTabs);
 
   /**
-   * @deprecated unused. You should implement {@link JBTabsBorder} interface
+   * @deprecated unused. You should implement {@link JBTabsBackgroundAndBorder} interface
    */
   @Deprecated
   JBTabsPresentation setPaintBorder(int top, int left, int right, int bottom);
   /**
-   * @deprecated unused. You should implement {@link JBTabsBorder} interface
+   * @deprecated unused. You should implement {@link JBTabsBackgroundAndBorder} interface
    */
   @Deprecated
   JBTabsPresentation setTabSidePaintBorder(int size);

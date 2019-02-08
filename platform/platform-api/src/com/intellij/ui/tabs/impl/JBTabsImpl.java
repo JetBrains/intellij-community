@@ -15,7 +15,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
-import com.intellij.ui.CaptionPanel;
 import com.intellij.ui.Gray;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.ScreenUtil;
@@ -155,7 +154,7 @@ public class JBTabsImpl extends JComponent
 
   private JBTabsPosition myPosition = JBTabsPosition.top;
 
-  private final JBTabsBorder myBorder = createTabBorder();
+  private final JBTabsBackgroundAndBorder myBorder = createTabBorder();
   private final BaseNavigationAction myNextAction;
   private final BaseNavigationAction myPrevAction;
 
@@ -181,8 +180,8 @@ public class JBTabsImpl extends JComponent
     return JBTabPainter.defaultPainter;
   }
 
-  protected JBTabsBorder createTabBorder() {
-    return new DefaultJBTabsBorder(this);
+  protected JBTabsBackgroundAndBorder createTabBorder() {
+    return new JBDefaultTabsBackgroundAndBorder(this);
   }
 
   public JBTabPainter getTabPainter() {
@@ -210,6 +209,8 @@ public class JBTabsImpl extends JComponent
     myFocusManager = focusManager != null ? focusManager : IdeFocusManager.getGlobalInstance();
 
     setOpaque(true);
+    setBackground(tabPainter.getBackgroundColor());
+
     setBorder(myBorder);
 
     Disposer.register(parent, this);
@@ -1650,6 +1651,10 @@ public class JBTabsImpl extends JComponent
     return myPosition;
   }
 
+  /**
+   * @deprecated unused. You should implement {@link JBTabsBackgroundAndBorder} interface
+   */
+  @Deprecated
   protected void doPaintBackground(Graphics2D g2d, Rectangle clip) {
   }
 
@@ -1659,40 +1664,9 @@ public class JBTabsImpl extends JComponent
 
     if (myVisibleInfos.isEmpty()) return;
 
-    Graphics2D g2d = (Graphics2D)g;
-
-    final GraphicsConfig config = new GraphicsConfig(g2d);
-    config.setAntialiasing(true);
-
-    final Rectangle clip = g2d.getClipBounds();
-
-    doPaintBackground(g2d, clip);
-
-    final TabInfo selected = getSelectedInfo();
-
-    if (selected != null) {
-      Rectangle compBounds = selected.getComponent().getBounds();
-      if (compBounds.contains(clip) && !compBounds.intersects(clip)) return;
-    }
-
     if (!isStealthModeEffective() && !isHideTabs()) {
       myLastPaintedSelection = getSelectedInfo();
     }
-
-    config.setAntialiasing(false);
-
-    Toolbar toolbarComp = myInfo2Toolbar.get(mySelectedInfo);
-    if (toolbarComp != null && !toolbarComp.isEmpty()) {
-      Rectangle toolBounds = toolbarComp.getBounds();
-      g2d.setColor(CaptionPanel.CNT_ACTIVE_BORDER_COLOR);
-      if (isSideComponentVertical()) {
-        g2d.drawLine((int)toolBounds.getMaxX(), toolBounds.y, (int)toolBounds.getMaxX(), (int)toolBounds.getMaxY() - 1);
-      } else if (!isSideComponentOnTabs()) {
-        g2d.drawLine(toolBounds.x, (int)toolBounds.getMaxY(), (int)toolBounds.getMaxX() - 1, (int)toolBounds.getMaxY());
-      }
-    }
-
-    config.restore();
   }
 
   protected TabLabel getSelectedLabel() {

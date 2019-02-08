@@ -4,12 +4,13 @@ package com.intellij.ui.tabs;
 import javax.swing.border.Border;
 import java.awt.*;
 
-public interface JBTabsBorder extends Border {
+public interface JBTabsBackgroundAndBorder extends Border {
   void setThickness(int value);
   int getThickness();
   Insets getEffectiveBorder();
 
+  @Override
   default boolean isBorderOpaque() {
-    return false;
+    return true;
   }
 }

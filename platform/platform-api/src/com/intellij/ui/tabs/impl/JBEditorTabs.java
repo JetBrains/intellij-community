@@ -109,13 +109,8 @@ public class JBEditorTabs extends JBTabsImpl {
     Registry.get(TABS_ALPHABETICAL_KEY).setValue(on);
   }
 
-  @Override
-  protected void doPaintBackground(Graphics2D g2d, Rectangle backgroundRect) {
-    tabPainter.fillBackground(g2d, backgroundRect);
-  }
-
   /**
-   * @deprecated You should move the painting logic to an implementation of {@link JBTabPainter} interface }
+   * @deprecated You should move the painting logic to an implementation of {@link JBTabPainter} interface
    */
   @Deprecated
   protected Color getEmptySpaceColor() {

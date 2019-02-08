@@ -59,14 +59,23 @@ open class JBDefaultTabPainter(val theme : TabTheme = TabTheme.DEFAULT_TAB) : JB
 
     val underline = underlineRectangle(position, rect, thickness)
 
+    // TODO use LinePainter2D.paint
     g.color = if(active) theme.underline else theme.inactiveUnderline
     g.fillRect(underline)
   }
 
-  override fun paintBorderLine(g: Graphics2D, thickness: Double, from: Point, to: Point) {
+  override fun paintBorderLine(g: Graphics2D, thickness: Int, from: Point, to: Point) {
     g.color = theme.borderColor
+
+    /**
+     * unexpected behaviour of {@link #LinePainter2D.paint(java.awt.Graphics2D, double, double, double, double, com.intellij.ui.paint.LinePainter2D.StrokeType, double)}
+     */
+    if (thickness == 1) {
+      LinePainter2D.paint(g, from.getX(), from.getY(), to.getX(), to.getY())
+      return
+    }
     LinePainter2D.paint(g, from.getX(), from.getY(), to.getX(), to.getY(), LinePainter2D.StrokeType.INSIDE,
-                        thickness)
+                        thickness.toDouble())
   }
 
   protected open fun underlineRectangle(position: JBTabsPosition,
