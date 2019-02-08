@@ -43,6 +43,13 @@ public class CellRendererPanel extends JPanel {
     mySelected = isSelected;
   }
 
+  public void setForcedBackground(Color bg) {
+    super.setBackground(bg);
+    if (bg != null && !mySelected) {
+      setSelected(true);
+    }
+  }
+
   // property change support ----------------
   @Override
   protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
@@ -159,12 +166,4 @@ public class CellRendererPanel extends JPanel {
   }
 
   // END no validation methods --------------
-
-  public static class SuperPreferredSizeWithBackground extends CellRendererPanel {
-    @Override
-    protected void paintComponent(Graphics g) {
-      g.setColor(getBackground());
-      g.fillRect(0, 0, getWidth(), getHeight());
-    }
-  }
 }
