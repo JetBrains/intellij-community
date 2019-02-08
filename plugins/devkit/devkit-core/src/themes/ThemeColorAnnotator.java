@@ -53,7 +53,7 @@ public class ThemeColorAnnotator implements Annotator {
 
   static boolean isTargetElement(@NotNull PsiElement element) {
     if (!(element instanceof JsonStringLiteral)) return false;
-    if (!ThemeJsonSchemaProviderFactory.isAllowedFileName(element.getContainingFile().getName())) return false;
+    if (!ThemeJsonUtil.isThemeFilename(element.getContainingFile().getName())) return false;
 
     String text = ((JsonStringLiteral)element).getValue();
     return isColorCode(text);
