@@ -594,7 +594,7 @@
       <description>Intergation with global menu in Linux</description>
     </experimentalFeature>
 
-    <experimentalFeature id="recent.and.edited.files.together" percentOfUsers="0">
+    <experimentalFeature id="recent.and.edited.files.together" percentOfUsers="100">
       <description>Second Cmd/Ctrl+E switches to Recently Edited Files</description>
     </experimentalFeature>
 
