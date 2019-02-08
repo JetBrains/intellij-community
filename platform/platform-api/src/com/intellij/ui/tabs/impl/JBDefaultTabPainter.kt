@@ -1,12 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl
 
+import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.tabs.JBTabPainter
 import com.intellij.ui.tabs.JBTabsPosition
 import com.intellij.ui.tabs.TabTheme
 import com.jetbrains.rd.swing.fillRect
 import java.awt.Color
 import java.awt.Graphics2D
+import java.awt.Point
 import java.awt.Rectangle
 
 open class JBDefaultTabPainter(val theme : TabTheme = TabTheme.DEFAULT_TAB) : JBTabPainter {
@@ -20,7 +22,7 @@ open class JBDefaultTabPainter(val theme : TabTheme = TabTheme.DEFAULT_TAB) : JB
     g.fillRect(rect)
   }
 
-  override fun paintTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, tabColor: Color?, hovered: Boolean) {
+  override fun paintTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, borderThickness: Int, tabColor: Color?, hovered: Boolean) {
     tabColor?.let {
       g.color = tabColor
       g.fillRect(rect)
@@ -61,9 +63,15 @@ open class JBDefaultTabPainter(val theme : TabTheme = TabTheme.DEFAULT_TAB) : JB
     g.fillRect(underline)
   }
 
+  override fun paintBorderLine(g: Graphics2D, thickness: Double, from: Point, to: Point) {
+    g.color = theme.borderColor
+    LinePainter2D.paint(g, from.getX(), from.getY(), to.getX(), to.getY(), LinePainter2D.StrokeType.INSIDE,
+                        thickness)
+  }
+
   protected open fun underlineRectangle(position: JBTabsPosition,
-                                 rect: Rectangle,
-                                 thickness: Int): Rectangle {
+                                        rect: Rectangle,
+                                        thickness: Int): Rectangle {
     return Rectangle(rect.x, rect.y + rect.height - thickness, rect.width, thickness)
   }
 }

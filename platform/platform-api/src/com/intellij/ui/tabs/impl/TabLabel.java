@@ -501,7 +501,7 @@ public class TabLabel extends JPanel implements Accessible {
         .paintSelectedTab(myTabs.getPosition(), g2d, rect, myInfo.getTabColor(), myTabs.isActiveTabs(myInfo), myTabs.isHoveredTab(this));
     }
     else {
-      painter.paintTab(myTabs.getPosition(), g2d, rect, myInfo.getTabColor(), myTabs.isHoveredTab(this));
+      painter.paintTab(myTabs.getPosition(), g2d, rect, myTabs.getBorderThickness(), myInfo.getTabColor(), myTabs.isHoveredTab(this));
     }
   }
 

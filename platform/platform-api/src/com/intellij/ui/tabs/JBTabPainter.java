@@ -14,23 +14,9 @@ public interface JBTabPainter {
     TOOL_WINDOW
   }
 
-  JBTabPainter editorPainter = new JBEditorTabPainter();
+  JBEditorTabPainter editorPainter = new JBEditorTabPainter();
   JBTabPainter toolWindowPainter = new JBDefaultTabPainter(TabTheme.Companion.getTOOLWINDOW_TAB());
   JBTabPainter defaultPainter = new JBDefaultTabPainter();
-
-  static JBTabPainter getInstance(@Nullable PainterType type) {
-    if(type == null) return defaultPainter;
-
-    switch (type) {
-      case EDITOR:
-        return editorPainter;
-      case TOOL_WINDOW:
-        return toolWindowPainter;
-      default:
-        return defaultPainter;
-    }
-  }
-
 
   // @Deprecated("You should move the painting logic to an implementation of this interface")
   @Deprecated
@@ -38,11 +24,11 @@ public interface JBTabPainter {
 
   int getBorderThickness();
 
-  default void paintBorders(JBTabsPosition position, Graphics2D g, Rectangle bounds, int headerFitHeight, int rows, int yOffset) {};
+ void paintBorderLine(Graphics2D g, double thickness, Point from, Point to);
 
   void fillBackground(Graphics2D g, Rectangle rect);
 
-  void paintTab(JBTabsPosition position, Graphics2D g, Rectangle bounds, Color tabColor, Boolean hovered);
+  void paintTab(JBTabsPosition position, Graphics2D g, Rectangle bounds, int borderThickness, Color tabColor, Boolean hovered);
 
   void paintSelectedTab(JBTabsPosition position, Graphics2D g, Rectangle rect, Color tabColor, Boolean active, Boolean hovered);
 }

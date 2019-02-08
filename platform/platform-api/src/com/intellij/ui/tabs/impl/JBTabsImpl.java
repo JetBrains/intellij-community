@@ -20,10 +20,8 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.tabs.*;
-import com.intellij.ui.tabs.JBTabPainter;
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowPassInfo;
@@ -49,8 +47,8 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 import static com.intellij.ui.tabs.impl.UtilsKt.getTabLabelUnderMouse;
@@ -157,7 +155,7 @@ public class JBTabsImpl extends JComponent
 
   private JBTabsPosition myPosition = JBTabsPosition.top;
 
-  private final TabsBorder myBorder = new TabsBorder(this);
+  private final JBTabsBorder myBorder = createTabBorder();
   private final BaseNavigationAction myNextAction;
   private final BaseNavigationAction myPrevAction;
 
@@ -180,7 +178,11 @@ public class JBTabsImpl extends JComponent
   protected final JBTabPainter tabPainter = createTabPainter();
 
   protected JBTabPainter createTabPainter() {
-    return JBTabPainter.getInstance(null);
+    return JBTabPainter.defaultPainter;
+  }
+
+  protected JBTabsBorder createTabBorder() {
+    return new DefaultJBTabsBorder(this);
   }
 
   public JBTabPainter getTabPainter() {
@@ -207,8 +209,8 @@ public class JBTabsImpl extends JComponent
     myActionManager = actionManager;
     myFocusManager = focusManager != null ? focusManager : IdeFocusManager.getGlobalInstance();
 
-    setOpaque(false);
-    setPaintBorder(-1, -1, -1, -1);
+    setOpaque(true);
+    setBorder(myBorder);
 
     Disposer.register(parent, this);
 
@@ -1591,18 +1593,8 @@ public class JBTabsImpl extends JComponent
     return myInnerInsets;
   }
 
-  public void paintLayoutDelimiters(Graphics2D g, Rectangle bounds) {
-    final TabLabel firstLabel = myInfo2Label.get(myLastLayoutPass.getTabAt(0, 0));
-    if(firstLabel == null) return;
-
-    tabPainter.paintBorders(getPosition(), g, bounds, myHeaderFitSize.height, myLastLayoutPass.getRowCount(), firstLabel.getY());
-  }
-
   public Insets getLayoutInsets() {
-    if (getPosition() == JBTabsPosition.top) {
-      return new Insets(tabPainter.getBorderThickness(), 0, 0, 0);
-    }
-    return JBUI.emptyInsets();
+    return myBorder.getEffectiveBorder();
   }
 
   public int getToolbarInset() {
@@ -1900,10 +1892,10 @@ public class JBTabsImpl extends JComponent
     }
 
     if (horizontal) {
-      size.height += myBorder.getTabBorderSize();
+      size.height += myBorder.getThickness();
     }
     else {
-      size.width += myBorder.getTabBorderSize();
+      size.width += myBorder.getThickness();
     }
 
     return size;
@@ -2121,8 +2113,8 @@ public class JBTabsImpl extends JComponent
     revalidateAndRepaint(layoutNow);
   }
 
-  public TabsBorder getTabsBorder() {
-    return myBorder;
+  public int getBorderThickness() {
+    return myBorder.getThickness();
   }
 
   @Override
@@ -2222,12 +2214,12 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public JBTabsPresentation setPaintBorder(int top, int left, int right, int bottom) {
-    return myBorder.setPaintBorder(top, left, right, bottom);
+    return this;
   }
 
   @Override
   public JBTabsPresentation setTabSidePaintBorder(int size) {
-    return myBorder.setTabSidePaintBorder(size);
+    return this;
   }
 
   static int getBorder(int size) {

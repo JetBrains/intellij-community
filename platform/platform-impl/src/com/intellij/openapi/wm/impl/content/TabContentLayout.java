@@ -265,7 +265,7 @@ class TabContentLayout extends ContentLayout {
     }
   }
 
-  private JBTabPainter tabPainter = JBTabPainter.getInstance(JBTabPainter.PainterType.TOOL_WINDOW);
+  private JBTabPainter tabPainter = JBTabPainter.toolWindowPainter;
 
   @Override
   public void paintComponent(Graphics g) {
@@ -281,7 +281,8 @@ class TabContentLayout extends ContentLayout {
         tabPainter.paintSelectedTab(JBTabsPosition.top, g2d, r, null, myUi.myWindow.isActive(), each.isHovered());
       }
       else {
-        tabPainter.paintTab(JBTabsPosition.top, g2d, r, null, each.isHovered());
+        //TODO set borderThickness
+        tabPainter.paintTab(JBTabsPosition.top, g2d, r, 1, null, each.isHovered());
       }
     }
     g2d.dispose();
