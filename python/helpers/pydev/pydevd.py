@@ -164,7 +164,6 @@ class CheckOutputThread(PyDBDaemonThread):
                 try:
                     pydev_log.debug("No threads alive, finishing debug session")
                     self.py_db.finish_debugging_session()
-                    kill_all_pydev_threads()
                 except:
                     traceback.print_exc()
 
