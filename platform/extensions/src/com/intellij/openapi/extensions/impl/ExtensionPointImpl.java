@@ -733,9 +733,13 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         extensionInstance = (T)((ObjectComponentAdapter)adapter).myComponentInstance;
       }
       else {
-        // cache must be already initialized - don't check for null
-        //noinspection ConstantConditions
-        extensionInstance = myExtensionsCacheAsArray[index];
+        T[] array = myExtensionsCacheAsArray;
+        if (array == null) {
+          return;
+        }
+        else {
+          extensionInstance = array[index];
+        }
       }
       notifyListenersOnRemove(extensionInstance, adapter.getPluginDescriptor(), myListeners);
     }
