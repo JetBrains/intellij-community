@@ -186,7 +186,7 @@ class GuiTestRule : TestRule {
       LOG.info("tearDown: waiting for welcome frame (return if necessary)...")
       errors.addAll(thrownFromRunning(Runnable { this.returnToTheFirstStepOfWelcomeFrame() }))
       LOG.info("tearDown: collecting fatal errors from IDE...")
-      errors.addAll(GuiTestUtilKt.fatalErrorsFromIde(currentTestDateStart)) //do not add fatal errors from previous tests
+//      errors.addAll(GuiTestUtilKt.fatalErrorsFromIde(currentTestDateStart)) //do not add fatal errors from previous tests
       LOG.info("tearDown: double checking return to the first step on a welcome frame")
       if (!isWelcomeFrameFirstStep() || anyIdeFrame(Timeouts.seconds01) != null) {
         LOG.warn("tearDown: IDE cannot return to welcome frame, need to restart IDE")
