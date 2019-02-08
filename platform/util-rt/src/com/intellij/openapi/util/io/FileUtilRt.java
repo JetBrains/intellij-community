@@ -54,6 +54,13 @@ public class FileUtilRt {
 
   private static String ourCanonicalTempPathCache;
 
+  protected interface SymlinkResolver {
+    @NotNull
+    String resolveSymlinksAndCanonicalize(@NotNull String path, char separatorChar, boolean removeLastSlash);
+
+    boolean isSymlink(@NotNull CharSequence path);
+  }
+
   static final class NIOReflect {
     // NIO-reflection initialization placed in a separate class for lazy loading
     static final boolean IS_AVAILABLE;
@@ -169,6 +176,177 @@ public class FileUtilRt {
       }
       IS_AVAILABLE = initSuccess;
     }
+  }
+
+  /**
+   * Converts given path to canonical representation by eliminating '.'s, traversing '..'s, and omitting duplicate separators.
+   * Please note that this method is symlink-unfriendly (i.e. result of "/path/to/link/../next" most probably will differ from
+   * what {@link File#getCanonicalPath()} will return), so if the path may contain symlinks, consider using {@link com.intellij.openapi.util.io.FileUtil#toCanonicalPath(String, boolean)} instead.
+   */
+  @SuppressWarnings("JavadocReference")
+  @Contract("null, _, _ -> null")
+  public static String toCanonicalPath(@Nullable String path, char separatorChar, boolean removeLastSlash) {
+    return toCanonicalPath(path, separatorChar, removeLastSlash, null);
+  }
+
+  @Contract("null, _, _, _ -> null")
+  protected static String toCanonicalPath(@Nullable String path,
+                                          final char separatorChar,
+                                          final boolean removeLastSlash,
+                                          final @Nullable SymlinkResolver resolver) {
+    if (path == null || path.length() == 0) {
+      return path;
+    }
+    if (path.charAt(0) == '.') {
+      if (path.length() == 1) {
+        return "";
+      }
+      char c = path.charAt(1);
+      if (c == '/' || c == separatorChar) {
+        path = path.substring(2);
+      }
+    }
+
+    path = path.replace(separatorChar, '/');
+    // trying to speedup the common case when there are no "//" or "/."
+    int index = -1;
+    do {
+      index = path.indexOf('/', index+1);
+      char next = index == path.length() - 1 ? 0 : path.charAt(index + 1);
+      if (next == '.' || next == '/') {
+        break;
+      }
+    }
+    while (index != -1);
+    if (index == -1) {
+      if (removeLastSlash) {
+        int start = processRoot(path, NullAppendable.INSTANCE);
+        int slashIndex = path.lastIndexOf('/');
+        return slashIndex != -1 && slashIndex > start && slashIndex == path.length() - 1 ? path.substring(0, path.length() - 1) : path;
+      }
+      return path;
+    }
+
+    StringBuilder result = new StringBuilder(path.length());
+    int start = processRoot(path, result);
+    int dots = 0;
+    boolean separator = true;
+
+    for (int i = start; i < path.length(); ++i) {
+      char c = path.charAt(i);
+      if (c == '/') {
+        if (!separator) {
+          if (!processDots(result, dots, start, resolver)) {
+            return resolver.resolveSymlinksAndCanonicalize(path, separatorChar, removeLastSlash);
+          }
+          dots = 0;
+        }
+        separator = true;
+      }
+      else if (c == '.') {
+        if (separator || dots > 0) {
+          ++dots;
+        }
+        else {
+          result.append('.');
+        }
+        separator = false;
+      }
+      else {
+        while (dots > 0) {
+          result.append('.');
+          dots--;
+        }
+        result.append(c);
+        separator = false;
+      }
+    }
+
+    if (dots > 0) {
+      if (!processDots(result, dots, start, resolver)) {
+        return resolver.resolveSymlinksAndCanonicalize(path, separatorChar, removeLastSlash);
+      }
+    }
+
+    int lastChar = result.length() - 1;
+    if (removeLastSlash && lastChar >= 0 && result.charAt(lastChar) == '/' && lastChar > start) {
+      result.deleteCharAt(lastChar);
+    }
+
+    return result.toString();
+  }
+
+  private static int processRoot(@NotNull String path, @NotNull Appendable result) {
+    try {
+      if (SystemInfoRt.isWindows && path.length() > 1 && path.charAt(0) == '/' && path.charAt(1) == '/') {
+        result.append("//");
+
+        int hostStart = 2;
+        while (hostStart < path.length() && path.charAt(hostStart) == '/') hostStart++;
+        if (hostStart == path.length()) return hostStart;
+        int hostEnd = path.indexOf('/', hostStart);
+        if (hostEnd < 0) hostEnd = path.length();
+        result.append(path, hostStart, hostEnd);
+        result.append('/');
+
+        int shareStart = hostEnd;
+        while (shareStart < path.length() && path.charAt(shareStart) == '/') shareStart++;
+        if (shareStart == path.length()) return shareStart;
+        int shareEnd = path.indexOf('/', shareStart);
+        if (shareEnd < 0) shareEnd = path.length();
+        result.append(path, shareStart, shareEnd);
+        result.append('/');
+
+        return shareEnd;
+      }
+      if (path.length() > 0 && path.charAt(0) == '/') {
+        result.append('/');
+        return 1;
+      }
+      if (path.length() > 2 && path.charAt(1) == ':' && path.charAt(2) == '/') {
+        result.append(path, 0, 3);
+        return 3;
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    return 0;
+  }
+
+  @Contract("_, _, _, null -> true")
+  private static boolean processDots(@NotNull StringBuilder result, int dots, int start, SymlinkResolver symlinkResolver) {
+    if (dots == 2) {
+      int pos = -1;
+      if (!StringUtilRt.endsWith(result, "/../") && !"../".contentEquals(result)) {
+        pos = StringUtilRt.lastIndexOf(result, '/', start, result.length() - 1);
+        if (pos >= 0) {
+          ++pos;  // separator found, trim to next char
+        }
+        else if (start > 0) {
+          pos = start;  // path is absolute, trim to root ('/..' -> '/')
+        }
+        else if (result.length() > 0) {
+          pos = 0;  // path is relative, trim to default ('a/..' -> '')
+        }
+      }
+      if (pos >= 0) {
+        if (symlinkResolver != null && symlinkResolver.isSymlink(result)) {
+          return false;
+        }
+        result.delete(pos, result.length());
+      }
+      else {
+        result.append("../");  // impossible to traverse, keep as-is
+      }
+    }
+    else if (dots != 1) {
+      for (int i = 0; i < dots; i++) {
+        result.append('.');
+      }
+      result.append('/');
+    }
+    return true;
   }
 
   @NotNull
