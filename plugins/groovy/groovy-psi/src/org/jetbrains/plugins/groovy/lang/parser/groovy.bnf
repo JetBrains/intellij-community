@@ -961,8 +961,8 @@ single_argument_lambda_parameter ::= modifier_list IDENTIFIER {
   elementType = parameter
 }
 private single_argument_lambda_body ::= single_argument_lambda_expression_form_body | lazy_lambda_block
-private single_argument_lambda_expression_form_body ::= <<isParameterizedClosure>> expression_or_application
-                                                      | expression_or_application !<<isParsedAsClosure>>
+single_argument_lambda_expression_form_body ::= <<isParameterizedClosure>> expression_or_application
+                                              | expression_or_application !<<isParsedAsClosure>>
 {
   elementType = lambda_expression_form_body
 }

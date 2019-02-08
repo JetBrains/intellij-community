@@ -1,4 +1,4 @@
-def l = a -> (b) -> b
+def l = a -> "a"
 -----
 Groovy script
   Variable definitions
@@ -20,17 +20,5 @@ Groovy script
         PsiElement(->)('->')
         PsiWhiteSpace(' ')
         Lambda body
-          Lambda expression
-            Parameter list
-              PsiElement(()('(')
-              Parameter
-                Modifiers
-                  <empty list>
-                PsiElement(identifier)('b')
-              PsiElement())(')')
-            PsiWhiteSpace(' ')
-            PsiElement(->)('->')
-            PsiWhiteSpace(' ')
-            Lambda body
-              Reference expression
-                PsiElement(identifier)('b')
+          Literal
+            PsiElement(double quoted string)('"a"')
