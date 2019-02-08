@@ -86,6 +86,6 @@ iml_module(
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl[module, test]",
         "//tools/idea/platform/vcs-tests:intellij.platform.vcs.tests[module, test]",
         "//tools/idea/.idea/libraries:hamcrest[test]",
-        "//tools/idea/.idea/libraries:KotlinTest[test]",
+        "//tools/idea/.idea/libraries:kotlin-test[test]",
     ],
 )

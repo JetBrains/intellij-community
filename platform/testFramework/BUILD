@@ -55,6 +55,6 @@ iml_module(
         "//tools/idea/platform/boot:intellij.platform.boot[module]",
         "//tools/idea/.idea/libraries:jetCheck",
         "//tools/idea/platform/testFramework/core:intellij.platform.testFramework.core[module]",
-        "//tools/idea/.idea/libraries:KotlinTest",
+        "//tools/idea/.idea/libraries:kotlin-test",
     ],
 )

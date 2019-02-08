@@ -78,7 +78,7 @@ iml_module(
         "//tools/idea/platform/vcs-api/vcs-api-core:intellij.platform.vcs.core[module]",
         "//tools/idea/platform/diff-impl:intellij.platform.diff.impl[module, test]",
         "//tools/idea/.idea/libraries:mockito[test]",
-        "//tools/idea/.idea/libraries:KotlinTest[test]",
+        "//tools/idea/.idea/libraries:kotlin-test[test]",
         "//tools/idea/platform/vcs-impl:intellij.platform.vcs.impl[module, test]",
     ],
 )

@@ -45,7 +45,7 @@ iml_module(
         "//tools/idea/.idea/libraries:KotlinJavaRuntime[test]",
         "//tools/idea/platform/util:intellij.platform.util.tests[module, test]",
         "//tools/idea/.idea/libraries:assertJ[test]",
-        "//tools/idea/.idea/libraries:KotlinTest[test]",
+        "//tools/idea/.idea/libraries:kotlin-test[test]",
         "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl[module, test]",
         "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions[module, test]",
         "//tools/idea/platform/bootstrap:intellij.platform.bootstrap[module]",

@@ -63,7 +63,7 @@ iml_module(
         "//tools/idea/platform/built-in-server-api:intellij.platform.builtInServer[module]",
         "//tools/idea/.idea/libraries:mockito[test]",
         "//tools/idea/.idea/libraries:cucumber-java[test]",
-        "//tools/idea/.idea/libraries:KotlinTest[test]",
+        "//tools/idea/.idea/libraries:kotlin-test[test]",
         "//tools/idea/platform/vcs-tests:intellij.platform.vcs.tests[module, test]",
         "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/.idea/libraries:cucumber-testing[test]",

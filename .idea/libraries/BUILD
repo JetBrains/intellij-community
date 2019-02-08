@@ -712,7 +712,7 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "KotlinTest",
+    name = "kotlin-test",
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
