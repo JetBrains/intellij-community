@@ -20,7 +20,7 @@ public class Debugger {
     @Language(value = "JAVA", prefix = "class Renderer{String text(){return ", suffix = ";}}")
     String text() default "";
 
-    @Language(value = "JAVA", prefix = "class Renderer{String[] childrenArray(){return ", suffix = ";}}")
+    @Language(value = "JAVA", prefix = "class Renderer{Object[] childrenArray(){return ", suffix = ";}}")
     String childrenArray() default "";
 
     @Language(value = "JAVA", prefix = "class Renderer{boolean hasChildren(){return ", suffix = ";}}")
