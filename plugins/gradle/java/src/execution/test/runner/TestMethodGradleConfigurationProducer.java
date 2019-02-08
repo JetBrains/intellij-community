@@ -136,7 +136,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
         ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
         ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
         Function1<PsiClass, String> createFilter = (psiClass) -> createTestFilter(context.getLocation(), psiClass, psiMethod);
-        if (!applyTestConfiguration(settings, context.getProject(), tasks, classes, createFilter)) {
+        if (!applyTestConfiguration(settings, context.getModule(), tasks, classes, createFilter)) {
           LOG.warn("Cannot apply method test configuration, uses raw run configuration");
           performRunnable.run();
           return;
@@ -153,7 +153,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
     final Project project = context.getProject();
     final ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
     final Function1<PsiClass, String> createFilter = (psiClass) -> createTestFilter(context.getLocation(), psiClass, psiMethod);
-    if (!applyTestConfiguration(settings, project, containingClasses, createFilter)) return false;
+    if (!applyTestConfiguration(settings, context.getModule(), containingClasses, createFilter)) return false;
     configuration.setName((containingClasses.length == 1 ? containingClasses[0].getName() + "." : "") + psiMethod.getName());
     return true;
   }

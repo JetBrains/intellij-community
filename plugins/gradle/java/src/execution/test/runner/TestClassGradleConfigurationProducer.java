@@ -168,7 +168,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
         ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
         ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
         Function1<PsiClass, String> createFilter = (psiClass) -> createTestFilterFrom(psiClass, /*hasSuffix=*/true);
-        if (!applyTestConfiguration(settings, context.getProject(), tasks, classes, createFilter)) {
+        if (!applyTestConfiguration(settings, context.getModule(), tasks, classes, createFilter)) {
           LOG.warn("Cannot apply class test configuration, uses raw run configuration");
           performRunnable.run();
           return;
