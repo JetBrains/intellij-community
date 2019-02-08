@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.util
 
-import com.intellij.util.RecursionPreventingSafePublicationLazy
 import java.util.function.Consumer
 import com.intellij.util.Consumer as JBConsumer
 
@@ -25,7 +24,5 @@ fun <T> Array<T>.init(): List<T> {
   require(isNotEmpty())
   return dropLast(1)
 }
-
-fun <T> recursionPreventingLazy(initializer: () -> T): Lazy<T?> = RecursionPreventingSafePublicationLazy(initializer)
 
 fun <T> recursionAwareLazy(initializer: () -> T): Lazy<T> = RecursionAwareSafePublicationLazy(initializer)
