@@ -5,7 +5,6 @@ package com.intellij.psi.impl.meta;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.NullUtils;
-import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.meta.MetaDataContributor;
@@ -49,24 +48,18 @@ public class MetaRegistry extends MetaDataRegistrar {
     ProgressIndicatorProvider.checkCanceled();
     return CachedValuesManager.getCachedValue(element, () -> {
       ensureContributorsLoaded();
-      CachedValueProvider.Result<PsiMetaData> result = RecursionManager.doPreventingRecursion(element, false, () -> {
-        for (MyBinding binding : ourBindings) {
-          if (binding.myFilter.isClassAcceptable(element.getClass()) && binding.myFilter.isAcceptable(element, element.getParent())) {
-            PsiMetaData data = binding.myDataClass.get();
-            data.init(element);
-            Object[] dependencies = data.getDependencies();
-            if (NullUtils.hasNull(dependencies)) {
-              LOG.error(data + "(" + binding.myDataClass + ") provided null dependency");
-            }
-            return new CachedValueProvider.Result<>(data, ArrayUtil.append(dependencies, element));
+      for (MyBinding binding : ourBindings) {
+        if (binding.myFilter.isClassAcceptable(element.getClass()) && binding.myFilter.isAcceptable(element, element.getParent())) {
+          PsiMetaData data = binding.myDataClass.get();
+          data.init(element);
+          Object[] dependencies = data.getDependencies();
+          if (NullUtils.hasNull(dependencies)) {
+            LOG.error(data + "(" + binding.myDataClass + ") provided null dependency");
           }
+          return new CachedValueProvider.Result<>(data, ArrayUtil.append(dependencies, element));
         }
-        return null;
-      });
-      if (result == null) {
-        return new CachedValueProvider.Result<>(null, element);
       }
-      return result;
+      return new CachedValueProvider.Result<>(null, element);
     });
   }
 
