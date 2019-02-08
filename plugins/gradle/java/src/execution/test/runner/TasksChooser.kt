@@ -11,45 +11,53 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducer.findAllTestsTaskToRun
 import org.jetbrains.plugins.gradle.util.TasksToRun
 import java.util.*
+import java.util.function.Consumer
 import javax.swing.DefaultListCellRenderer
 
-abstract class TasksChooser {
+class TasksChooser {
   private val LOG = Logger.getInstance(TasksChooser::class.java)
 
   @Suppress("CAST_NEVER_SUCCEEDS")
   private fun error(message: String): Nothing = LOG.error(message) as Nothing
 
-  protected abstract fun choosesTasks(tasks: List<Map<String, List<String>>>)
-
-  fun runTaskChoosing(context: ConfigurationContext, elements: Iterable<PsiElement>) {
+  fun runTaskChoosing(context: ConfigurationContext, elements: Iterable<PsiElement>, perform: Consumer<List<Map<String, List<String>>>>) {
     val sources = elements.map { getSourceFile(it) ?: error("Can not find source file for $it") }
-    runTaskChoosing(context.dataContext, sources, context.project)
+    runTaskChoosing(context.dataContext, sources, context.project, perform)
   }
 
-  fun runTaskChoosing(context: ConfigurationContext, vararg elements: PsiElement) {
-    runTaskChoosing(context, elements.asIterable())
+  fun runTaskChoosing(context: ConfigurationContext, vararg elements: PsiElement, perform: Consumer<List<Map<String, List<String>>>>) {
+    runTaskChoosing(context, elements.asIterable(), perform)
   }
 
-  private fun runTaskChoosing(context: DataContext, sources: List<VirtualFile>, project: Project) {
+  private fun runTaskChoosing(context: DataContext,
+                              sources: List<VirtualFile>,
+                              project: Project,
+                              perform: Consumer<List<Map<String, List<String>>>>) {
     val tasks = findAllTestsTaskToRun(sources, project)
-    if (tasks.isEmpty()) return
+    if (tasks.isEmpty()) {
+      showWarningTooltip(context)
+      return
+    }
     if (tasks.size == 1) {
-      choosesTasks(tasks)
+      perform.accept(tasks)
       return
     }
     val identifiedTasks = tasks.map { createIdentifier(it) to it }.toMap()
     JBPopupFactory.getInstance()
       .createPopupChooserBuilder(identifiedTasks.keys.toList())
       .setRenderer(DefaultListCellRenderer())
-      .setTitle("Choose tasks to run...")
+      .setTitle("Choose Tasks to Run")
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
       .setItemsChosenCallback { chooses ->
-        chooseAndPerform(chooses.mapNotNull(identifiedTasks::get))
+        chooseAndPerform(chooses.mapNotNull(identifiedTasks::get), perform)
       }
       .createPopup()
       .showInBestPositionFor(context)
+  }
+
+  private fun showWarningTooltip(context: DataContext) {
   }
 
   private fun findAllTestsTaskToRun(sources: List<VirtualFile>, project: Project): List<Map<String, TasksToRun>> {
@@ -58,10 +66,10 @@ abstract class TasksChooser {
     return taskNames.map { name -> tasks.map { it.first to it.second.getValue(name) }.toMap() }
   }
 
-  private fun chooseAndPerform(tasks: List<Map<String, List<String>>>) {
+  private fun chooseAndPerform(tasks: List<Map<String, List<String>>>, perform: Consumer<List<Map<String, List<String>>>>) {
     when {
       tasks.isEmpty() -> return
-      else -> choosesTasks(tasks)
+      else -> perform.accept(tasks)
     }
   }
 

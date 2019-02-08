@@ -78,9 +78,8 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
     Project project = context.getProject();
     List<String> tests = getTestPatterns(context);
     TestMappings testMappings = getTestMappings(project, tests);
-    TasksChooser tasksChooser = new TasksChooser() {
-      @Override
-      protected void choosesTasks(@NotNull List<? extends Map<String, ? extends List<String>>> tasks) {
+    TasksChooser tasksChooser = new TasksChooser();
+    tasksChooser.runTaskChoosing(context, testMappings.getClasses().values(), tasks -> {
         ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
         Function1<String, PsiClass> findPsiClass = test -> testMappings.getClasses().get(test);
         Function2<PsiClass, String, String> createFilter = (psiClass, test) ->
@@ -92,9 +91,7 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
         }
         configuration.setName(tests.size() > 1 ? String.format("%s and %d more", tests.get(0), tests.size() - 1) : tests.get(0));
         performRunnable.run();
-      }
-    };
-    tasksChooser.runTaskChoosing(context, testMappings.getClasses().values());
+    });
   }
 
   @NotNull
