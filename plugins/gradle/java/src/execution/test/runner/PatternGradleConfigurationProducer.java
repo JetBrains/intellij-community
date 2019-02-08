@@ -11,6 +11,8 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.testframework.AbstractPatternBasedConfigurationProducer;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -20,6 +22,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import kotlin.jvm.functions.Function1;
 import kotlin.jvm.functions.Function2;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -55,7 +58,9 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
     Function1<String, PsiClass> findPsiClass = test -> testMappings.getClasses().get(test);
     Function2<PsiClass, String, String> createFilter = (psiClass, test) ->
       createTestFilterFrom(psiClass, testMappings.getMethods().get(test), /*hasSuffix=*/true);
-    if (!applyTestConfiguration(settings, project, tests, findPsiClass, createFilter)) return false;
+    Module module = getModuleFromContext(context);
+    if (module == null) return false;
+    if (!applyTestConfiguration(settings, module, tests, findPsiClass, createFilter)) return false;
     configuration.setName(tests.size() > 1 ? String.format("%s and %d more", tests.get(0), tests.size() - 1) : tests.get(0));
     JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, contextLocation);
     return true;
@@ -74,6 +79,12 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
       super.onFirstRun(fromContext, context, performRunnable);
       return;
     }
+    Module module = getModuleFromContext(context);
+    if (module == null) {
+      LOG.warn("Cannot find module from context, uses raw run configuration");
+      performRunnable.run();
+      return;
+    }
     ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
     Project project = context.getProject();
     List<String> tests = getTestPatterns(context);
@@ -84,7 +95,7 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
         Function1<String, PsiClass> findPsiClass = test -> testMappings.getClasses().get(test);
         Function2<PsiClass, String, String> createFilter = (psiClass, test) ->
           createTestFilterFrom(psiClass, testMappings.getMethods().get(test), /*hasSuffix=*/true);
-        if (!applyTestConfiguration(settings, project, tasks, tests, findPsiClass, createFilter)) {
+        if (!applyTestConfiguration(settings, module, tasks, tests, findPsiClass, createFilter)) {
           LOG.warn("Cannot apply pattern test configuration, uses raw run configuration");
           performRunnable.run();
           return;
@@ -92,6 +103,16 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
         configuration.setName(tests.size() > 1 ? String.format("%s and %d more", tests.get(0), tests.size() - 1) : tests.get(0));
         performRunnable.run();
     });
+  }
+
+  @Nullable
+  private static Module getModuleFromContext(ConfigurationContext context) {
+    Module module = context.getModule();
+    if (module != null) return module;
+    Location contextLocation = context.getLocation();
+    if (contextLocation == null) return null;
+    PsiElement locationElement = contextLocation.getPsiElement();
+    return ModuleUtilCore.findModuleForPsiElement(locationElement);
   }
 
   @NotNull

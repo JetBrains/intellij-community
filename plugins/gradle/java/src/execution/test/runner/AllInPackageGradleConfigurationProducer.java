@@ -93,7 +93,7 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
         ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
         Function1<PsiElement, String> createFilter = (e) -> createTestFilterFrom(configurationData.psiPackage, /*hasSuffix=*/false);
         PsiElement[] sourceElements = ArrayUtil.toObjectArray(PsiElement.class, configurationData.sourceElement);
-        if (!applyTestConfiguration(settings, context.getProject(), tasks, sourceElements, createFilter)) {
+        if (!applyTestConfiguration(settings, context.getModule(), tasks, sourceElements, createFilter)) {
           LOG.warn("Cannot apply package test configuration, uses raw run configuration");
           performRunnable.run();
           return;

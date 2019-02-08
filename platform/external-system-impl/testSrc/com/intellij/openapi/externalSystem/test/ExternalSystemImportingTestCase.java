@@ -88,6 +88,21 @@ import static com.intellij.testFramework.EdtTestUtil.runInEdtAndGet;
  */
 public abstract class ExternalSystemImportingTestCase extends ExternalSystemTestCase {
 
+  protected void assertModulesContains(@NotNull Project project, String... expectedNames) {
+    Module[] actual = ModuleManager.getInstance(project).getModules();
+    List<String> actualNames = new ArrayList<>();
+
+    for (Module m : actual) {
+      actualNames.add(m.getName());
+    }
+
+    assertContain(actualNames, expectedNames);
+  }
+
+  protected void assertModulesContains(String... expectedNames) {
+    assertModulesContains(myProject, expectedNames);
+  }
+
   protected void assertModules(@NotNull Project project, String... expectedNames) {
     Module[] actual = ModuleManager.getInstance(project).getModules();
     List<String> actualNames = new ArrayList<>();
