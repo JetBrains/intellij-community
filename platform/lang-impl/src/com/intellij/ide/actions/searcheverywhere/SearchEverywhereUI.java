@@ -12,7 +12,7 @@ import com.intellij.ide.actions.bigPopup.ShowFilterAction;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
-import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
@@ -448,8 +448,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
           String reportableID = getContributor()
             .map(SearchEverywhereUsageTriggerCollector::getReportableContributorID)
             .orElse(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID);
-          FUSUsageContext context = SearchEverywhereUsageTriggerCollector.createContext(reportableID, "mouseClick");
-          featureTriggered(SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, context);
+          FeatureUsageData data = SearchEverywhereUsageTriggerCollector.createData(reportableID, "mouseClick");
+          featureTriggered(SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, data);
         }
       });
     }
@@ -625,17 +625,17 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     });
     registerAction(SearchEverywhereActions.NAVIGATE_TO_NEXT_GROUP, e -> {
       fetchGroups(true);
-      FUSUsageContext context = getEventShortcut(e)
-        .map(shortcut -> SearchEverywhereUsageTriggerCollector.createContext(null, shortcut))
+      FeatureUsageData data = getEventShortcut(e)
+        .map(shortcut -> SearchEverywhereUsageTriggerCollector.createData(null, shortcut))
         .orElse(null);
-      featureTriggered(SearchEverywhereUsageTriggerCollector.GROUP_NAVIGATE, context);
+      featureTriggered(SearchEverywhereUsageTriggerCollector.GROUP_NAVIGATE, data);
     });
     registerAction(SearchEverywhereActions.NAVIGATE_TO_PREV_GROUP, e -> {
       fetchGroups(false);
-      FUSUsageContext context = getEventShortcut(e)
-        .map(shortcut -> SearchEverywhereUsageTriggerCollector.createContext(null, shortcut))
+      FeatureUsageData data = getEventShortcut(e)
+        .map(shortcut -> SearchEverywhereUsageTriggerCollector.createData(null, shortcut))
         .orElse(null);
-      featureTriggered(SearchEverywhereUsageTriggerCollector.GROUP_NAVIGATE, context);
+      featureTriggered(SearchEverywhereUsageTriggerCollector.GROUP_NAVIGATE, data);
     });
     registerSelectItemAction();
 
@@ -758,8 +758,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       .map(SearchEverywhereUsageTriggerCollector::getReportableContributorID)
       .orElse(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID);
 
-    FUSUsageContext context = SearchEverywhereUsageTriggerCollector.createContext(id, shortcut);
-    featureTriggered(SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, context);
+    FeatureUsageData data = SearchEverywhereUsageTriggerCollector.createData(id, shortcut);
+    featureTriggered(SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, data);
   }
 
   private void fetchGroups(boolean down) {
@@ -846,8 +846,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       Object value = myListModel.getElementAt(i);
       if (isAllTab) {
         String reportableContributorID = SearchEverywhereUsageTriggerCollector.getReportableContributorID(contributor);
-        FUSUsageContext context = SearchEverywhereUsageTriggerCollector.createContext(reportableContributorID, null);
-        featureTriggered(SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ITEM_SELECTED, context);
+        FeatureUsageData data = SearchEverywhereUsageTriggerCollector.createData(reportableContributorID, null);
+        featureTriggered(SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ITEM_SELECTED, data);
       }
       closePopup |= contributor.processSelectedItem(value, modifiers, searchText);
     }
@@ -1441,10 +1441,10 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       if (completeCommand()) {
-        FUSUsageContext context = getEventShortcut(e)
-          .map(shortcut -> SearchEverywhereUsageTriggerCollector.createContext(null, shortcut))
+        FeatureUsageData data = getEventShortcut(e)
+          .map(shortcut -> SearchEverywhereUsageTriggerCollector.createData(null, shortcut))
           .orElse(null);
-        featureTriggered(SearchEverywhereUsageTriggerCollector.COMMAND_COMPLETED, context);
+        featureTriggered(SearchEverywhereUsageTriggerCollector.COMMAND_COMPLETED, data);
       }
     }
 
@@ -1494,8 +1494,13 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
                         .orElse(IdeBundle.message("searcheverywhere.nothing.found.for.all.anywhere"));
   }
 
-  private void featureTriggered(@NotNull String featureID, @Nullable FUSUsageContext context) {
-    SearchEverywhereUsageTriggerCollector.trigger(myProject, featureID, context);
+  private void featureTriggered(@NotNull String featureID, @Nullable FeatureUsageData data) {
+    if (data != null) {
+      SearchEverywhereUsageTriggerCollector.trigger(myProject, featureID, data);
+    }
+    else {
+      SearchEverywhereUsageTriggerCollector.trigger(myProject, featureID);
+    }
   }
 
   private final SESearcher.Listener mySearchListener = new SESearcher.Listener() {
