@@ -23,6 +23,7 @@ public class EventLogExternalSettingsService extends SettingsConnectionService i
   private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService");
   private static final String APPROVED_GROUPS_SERVICE = "white-list-service";
   private static final String DICTIONARY_SERVICE = "dictionary-service";
+  private static final String METRICS_SET_SERVICE = "metrics-set";
   private static final String PERCENT_TRAFFIC = "percent-traffic";
   private static final long ACCEPTED_CACHE_AGE_MS = TimeUnit.MILLISECONDS.convert(7, TimeUnit.DAYS);
   private static final long DONT_REQUIRE_UPDATE_AGE_MS = TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS);
@@ -59,6 +60,12 @@ public class EventLogExternalSettingsService extends SettingsConnectionService i
   @Nullable
   public String getDictionaryServiceUrl() {
     return getSettingValue(DICTIONARY_SERVICE);
+  }
+
+  @Override
+  @Nullable
+  public String getMetricsSetServiceUrl() {
+    return getSettingValue(METRICS_SET_SERVICE);
   }
 
   @NotNull

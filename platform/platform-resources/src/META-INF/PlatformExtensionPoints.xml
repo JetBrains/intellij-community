@@ -204,6 +204,7 @@
     <extensionPoint name="statistics.counterUsagesCollector" beanClass="com.intellij.internal.statistic.service.fus.collectors.CounterUsageCollectorEP"/>
 
     <extensionPoint name="statistics.metricsWhitelist.regexDictionary" beanClass="com.intellij.internal.statistic.utils.metricsWhitelist.dictionaries.FUSRegexDictionaryEP"/>
+    <extensionPoint name="statistics.metricsWhitelist.metricsSet" beanClass="com.intellij.internal.statistic.utils.metricsWhitelist.sets.FUSMetricsSetEP"/>
 
     <extensionPoint name="editorHighlighterProvider" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.EditorHighlighterProvider"/>

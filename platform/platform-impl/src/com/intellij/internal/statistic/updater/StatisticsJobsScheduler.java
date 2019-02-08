@@ -13,6 +13,8 @@ import com.intellij.internal.statistic.service.fus.collectors.LegacyFUSProjectUs
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.internal.statistic.utils.metricsWhitelist.dictionaries.FUSRegexDictionaryEP;
 import com.intellij.internal.statistic.utils.metricsWhitelist.dictionaries.FUSRegexDictionaryService;
+import com.intellij.internal.statistic.utils.metricsWhitelist.sets.FUSMetricsSetEP;
+import com.intellij.internal.statistic.utils.metricsWhitelist.sets.FUSMetricsSetService;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -142,5 +144,8 @@ public class StatisticsJobsScheduler implements BaseComponent {
   private static void preloadMetricsWhitelists() {
     Set<String> dictionaryIds = FUSRegexDictionaryEP.EP_NAME.extensions().map(d -> d.id).collect(Collectors.toSet());
     FUSRegexDictionaryService.getInstance().preloadDictionaries(dictionaryIds);
+
+    Set<String> setIds = FUSMetricsSetEP.EP_NAME.extensions().map(d -> d.id).collect(Collectors.toSet());
+    FUSMetricsSetService.getInstance().preloadSets(setIds);
   }
 }

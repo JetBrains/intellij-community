@@ -12,6 +12,9 @@ public interface EventLogSettingsService {
   @Nullable
   String getDictionaryServiceUrl();
 
+  @Nullable
+  String getMetricsSetServiceUrl();
+
   int getPermittedTraffic();
 
   @NotNull

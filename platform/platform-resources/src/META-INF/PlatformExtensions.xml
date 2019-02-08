@@ -233,6 +233,8 @@
                         serviceImplementation="com.intellij.internal.statistic.eventLog.FeatureUsageUiEventsImpl"/>
     <applicationService serviceInterface="com.intellij.internal.statistic.utils.metricsWhitelist.dictionaries.FUSRegexDictionaryService"
                         serviceImplementation="com.intellij.internal.statistic.utils.metricsWhitelist.dictionaries.FUSRegexDictionaryServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.internal.statistic.utils.metricsWhitelist.sets.FUSMetricsSetService"
+                        serviceImplementation="com.intellij.internal.statistic.utils.metricsWhitelist.sets.FUSMetricsSetServiceImpl"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.util.DimensionService"/>
     <applicationService serviceInterface="com.intellij.openapi.util.WindowStateService"
