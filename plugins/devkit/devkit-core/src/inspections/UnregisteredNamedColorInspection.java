@@ -79,13 +79,7 @@ public class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
   }
 
   private static boolean isRegisteredNamedColor(@NotNull String key) {
-    PairProcessor<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> processor = (themeMetadata, uiKeyMetadata) -> {
-      if (key.equals(uiKeyMetadata.getKey())) {
-        return false;
-      }
-      return true;
-    };
-    return !UIThemeMetadataService.getInstance().processAllKeys(processor);
+    return UIThemeMetadataService.getInstance().findByKey(key) != null;
   }
 
   private static void registerProblem(@NotNull String key,
