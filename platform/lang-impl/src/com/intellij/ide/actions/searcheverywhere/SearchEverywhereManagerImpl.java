@@ -114,7 +114,8 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
                               .setResizable(true)
                               .setMovable(true)
                               .setDimensionServiceKey(project, LOCATION_SETTINGS_KEY, true)
-                              .setLocateWithinScreenBounds(false)
+                              .setStoreLocationRelativeToFrameCenter(true)
+                              .setLocateWithinScreenBounds(true)
                               .createPopup();
     Disposer.register(myBalloon, mySearchEverywhereUI);
     if (project != null) {

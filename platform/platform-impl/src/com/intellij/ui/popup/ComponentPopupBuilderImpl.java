@@ -82,6 +82,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private int myAdAlignment = SwingConstants.LEFT;
   private BooleanFunction<KeyEvent> myKeyEventHandler;
   private Color myBorderColor;
+  private boolean myStoreLocationRelativeToFrame;
 
   public ComponentPopupBuilderImpl(@NotNull JComponent component, JComponent preferredFocusedComponent) {
     myComponent = component;
@@ -162,6 +163,13 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   @Override
   @NotNull
+  public ComponentPopupBuilder setStoreLocationRelativeToFrameCenter(final boolean storeLocationRelativeToFrameCenter) {
+    myStoreLocationRelativeToFrame = storeLocationRelativeToFrameCenter;
+    return this;
+  }
+
+  @Override
+  @NotNull
   public ComponentPopupBuilder setCancelCallback(final Computable<Boolean> shouldProceed) {
     myCallback = shouldProceed;
     return this;
@@ -233,7 +241,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   public JBPopup createPopup() {
     AbstractPopup popup = new AbstractPopup().init(
       myProject, myComponent, myPreferredFocusedComponent, myRequestFocus, myFocusable, myMovable, myDimensionServiceKey,
-      myResizable, myTitle, myCallback, myCancelOnClickOutside, myListeners, myUseDimServiceForXYLocation, myCommandButton,
+      myStoreLocationRelativeToFrame, myResizable, myTitle, myCallback, myCancelOnClickOutside, myListeners, myUseDimServiceForXYLocation, myCommandButton,
       myCancelButton, myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon, myCancelKeyEnabled, myLocateByContent,
       myPlaceWithinScreen, myMinSize, myAlpha, myMaskProvider, myInStack, myModalContext, myFocusOwners, myAd, myAdAlignment,
       false, myKeyboardActions, mySettingsButtons, myPinCallback, myMayBeParent,

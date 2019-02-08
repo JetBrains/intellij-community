@@ -163,4 +163,9 @@ public interface ComponentPopupBuilder {
   default ComponentPopupBuilder setBorderColor(Color color) {
     return this;
   }
+
+  @NotNull
+  default ComponentPopupBuilder setStoreLocationRelativeToFrameCenter(boolean storeLocationRelativeToFrameCenter) {
+    return this;
+  }
 }

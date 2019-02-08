@@ -63,6 +63,11 @@ public class DimensionService extends SimpleModificationTracker implements Persi
 
   @Nullable
   public synchronized Point getLocation(@NotNull String key, Project project) {
+    return getLocation(key, project, false);
+  }
+
+  @Nullable
+  public synchronized Point getLocation(@NotNull String key, Project project, boolean disableScreenBoundaryCheck) {
     Pair<String, Float> pair = keyPair(key, project);
     Point point = myKey2Location.get(pair.first);
     if (point != null) {
@@ -70,6 +75,10 @@ public class DimensionService extends SimpleModificationTracker implements Persi
       float scale = pair.second;
       point.setLocation(point.x / scale, point.y / scale);
     }
+    if (disableScreenBoundaryCheck) {
+      return point;
+    }
+
     if (point != null && !ScreenUtil.getScreenRectangle(point).contains(point)) {
       point = null;
     }
