@@ -132,6 +132,9 @@ class FeatureUsageData {
   }
 
   fun build(): Map<String, Any> {
+    if (data.isEmpty()) {
+      return Collections.emptyMap()
+    }
     return data
   }
 
