@@ -17,7 +17,6 @@ package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.openapi.util.text.StringHash;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.BloomFilterBase;
 import gnu.trove.TIntHashSet;
@@ -177,7 +176,11 @@ public class ClasspathCache {
 
   static int getPackageNameHash(String resourcePath) {
     final int idx = resourcePath.lastIndexOf('/');
-    return StringUtil.stringHashCode(resourcePath, 0, idx);
+    int h = 0;
+    for (int off = 0; off < idx; off++) {
+      h = 31 * h + resourcePath.charAt(off);
+    }
+    return h;
   }
   
   private static void addResourceEntry(int hash, IntObjectHashMap map, Loader loader) {
