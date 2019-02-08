@@ -674,11 +674,46 @@ public class FileUtil extends FileUtilRt {
     return toCanonicalPath(path, separatorChar, removeLastSlash, false);
   }
 
+  private interface SymlinkResolver {
+    @NotNull
+    String resolveSymlinksAndCanonicalize(@NotNull String path, char separatorChar, boolean removeLastSlash);
+
+    boolean isSymlink(@NotNull CharSequence path);
+  }
+
+  private static final SymlinkResolver SYMLINK_RESOLVER = new SymlinkResolver() {
+    @NotNull
+    @Override
+    public String resolveSymlinksAndCanonicalize(@NotNull String path, char separatorChar, boolean removeLastSlash) {
+      try {
+        return new File(path).getCanonicalPath().replace(separatorChar, '/');
+      }
+      catch (IOException ignore) {
+        // fall back to the default behavior
+        return toCanonicalPath(path, separatorChar, removeLastSlash, false);
+      }
+    }
+
+    @Override
+    public boolean isSymlink(@NotNull CharSequence path) {
+      return FileSystemUtil.isSymLink(new File(path.toString()));
+    }
+  };
+
   @Contract("null, _, _, _ -> null")
   private static String toCanonicalPath(@Nullable String path,
                                         final char separatorChar,
                                         final boolean removeLastSlash,
                                         final boolean resolveSymlinks) {
+    SymlinkResolver symlinkResolver = resolveSymlinks ? SYMLINK_RESOLVER : null;
+    return toCanonicalPath(path, separatorChar, removeLastSlash, symlinkResolver);
+  }
+
+  @Contract("null, _, _, _ -> null")
+  private static String toCanonicalPath(@Nullable String path,
+                                        final char separatorChar,
+                                        final boolean removeLastSlash,
+                                        final @Nullable SymlinkResolver resolver) {
     if (path == null || path.isEmpty()) {
       return path;
     }
@@ -712,21 +747,6 @@ public class FileUtil extends FileUtilRt {
       return path;
     }
 
-    final String finalPath = path;
-    NotNullProducer<String> realCanonicalPath = resolveSymlinks ? new NotNullProducer<String>() {
-      @NotNull
-      @Override
-      public String produce() {
-        try {
-          return new File(finalPath).getCanonicalPath().replace(separatorChar, '/');
-        }
-        catch (IOException ignore) {
-          // fall back to the default behavior
-          return toCanonicalPath(finalPath, separatorChar, removeLastSlash, false);
-        }
-      }
-    } : null;
-
     StringBuilder result = new StringBuilder(path.length());
     int start = processRoot(path, result);
     int dots = 0;
@@ -736,8 +756,8 @@ public class FileUtil extends FileUtilRt {
       char c = path.charAt(i);
       if (c == '/') {
         if (!separator) {
-          if (!processDots(result, dots, start, resolveSymlinks)) {
-            return realCanonicalPath.produce();
+          if (!processDots(result, dots, start, resolver)) {
+            return resolver.resolveSymlinksAndCanonicalize(path, separatorChar, removeLastSlash);
           }
           dots = 0;
         }
@@ -763,8 +783,8 @@ public class FileUtil extends FileUtilRt {
     }
 
     if (dots > 0) {
-      if (!processDots(result, dots, start, resolveSymlinks)) {
-        return realCanonicalPath.produce();
+      if (!processDots(result, dots, start, resolver)) {
+        return resolver.resolveSymlinksAndCanonicalize(path, separatorChar, removeLastSlash);
       }
     }
 
@@ -814,8 +834,8 @@ public class FileUtil extends FileUtilRt {
     return 0;
   }
 
-  @Contract("_, _, _, false -> true")
-  private static boolean processDots(@NotNull StringBuilder result, int dots, int start, boolean resolveSymlinks) {
+  @Contract("_, _, _, null -> true")
+  private static boolean processDots(@NotNull StringBuilder result, int dots, int start, SymlinkResolver symlinkResolver) {
     if (dots == 2) {
       int pos = -1;
       if (!StringUtil.endsWith(result, "/../") && !StringUtil.equals(result, "../")) {
@@ -831,7 +851,7 @@ public class FileUtil extends FileUtilRt {
         }
       }
       if (pos >= 0) {
-        if (resolveSymlinks && FileSystemUtil.isSymLink(new File(result.toString()))) {
+        if (symlinkResolver != null && symlinkResolver.isSymlink(result)) {
           return false;
         }
         result.delete(pos, result.length());
