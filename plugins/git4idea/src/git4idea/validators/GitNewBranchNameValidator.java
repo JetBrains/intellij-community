@@ -21,6 +21,7 @@ import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -40,14 +41,26 @@ import java.util.Collection;
 public final class GitNewBranchNameValidator implements InputValidatorEx {
 
   private final Collection<GitRepository> myRepositories;
+  /**
+   * null if we aren't renaming a branch
+   */
+  private final String myBranchToBeRenamed;
   private String myErrorText;
 
-  private GitNewBranchNameValidator(@NotNull Collection<GitRepository> repositories) {
+  private GitNewBranchNameValidator(@NotNull Collection<GitRepository> repositories, @Nullable String branchToBeRenamed) {
     myRepositories = repositories;
+    myBranchToBeRenamed = branchToBeRenamed;
   }
 
   public static GitNewBranchNameValidator newInstance(@NotNull Collection<GitRepository> repositories) {
-    return new GitNewBranchNameValidator(repositories);
+    return new GitNewBranchNameValidator(repositories, null);
+  }
+
+  /**
+   * Identical to {@link #newInstance(Collection)} but allows the "new name" to be identical to the branch to be renamed.
+   */
+  public static GitNewBranchNameValidator newInstanceForRename(@NotNull Collection<GitRepository> repositories, @NotNull String branchToBeRenamed) {
+    return new GitNewBranchNameValidator(repositories, branchToBeRenamed);
   }
 
   @Override
@@ -60,11 +73,19 @@ public final class GitNewBranchNameValidator implements InputValidatorEx {
   }
 
   private boolean checkBranchConflict(@NotNull String inputString) {
+    if (isRenameToSelf(inputString)) {
+      myErrorText = null;
+      return true;
+    }
     if (isNotPermitted(inputString) || conflictsWithLocalBranch(inputString) || conflictsWithRemoteBranch(inputString)) {
       return false;
     }
     myErrorText = null;
     return true;
+  }
+
+  private boolean isRenameToSelf(@NotNull String inputString) {
+    return inputString.equals(myBranchToBeRenamed);
   }
 
   private boolean isNotPermitted(@NotNull String inputString) {
