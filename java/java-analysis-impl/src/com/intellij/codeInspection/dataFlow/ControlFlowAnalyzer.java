@@ -1453,8 +1453,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void acceptBinaryRightOperand(@Nullable IElementType op, PsiType type,
-                                        PsiExpression lExpr, PsiType lType,
-                                        PsiExpression rExpr, PsiType rType) {
+                                        PsiExpression lExpr, @Nullable PsiType lType,
+                                        PsiExpression rExpr, @Nullable PsiType rType) {
     boolean comparing = op == JavaTokenType.EQEQ || op == JavaTokenType.NE;
     boolean comparingRef = comparing
                            && !TypeConversionUtil.isPrimitiveAndNotNull(lType)
@@ -1469,7 +1469,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     boolean shift = op == JavaTokenType.GTGT || op == JavaTokenType.LTLT || op == JavaTokenType.GTGTGT;
 
     PsiType castType = comparingPrimitiveNumeric ? TypeConversionUtil.unboxAndBalanceTypes(lType, rType) :
-                       shift && rType.equals(PsiType.LONG) ? rType : type;
+                       shift && PsiType.LONG.equals(rType) ? rType : type;
 
     if (!comparingRef) {
       generateBoxingUnboxingInstructionFor(lExpr,castType);
