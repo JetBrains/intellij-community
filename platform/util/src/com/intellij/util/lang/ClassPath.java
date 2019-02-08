@@ -15,9 +15,8 @@
  */
 package com.intellij.util.lang;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -30,11 +29,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.jar.Attributes;
 
-import static com.intellij.execution.CommandLineWrapperUtil.CLASSPATH_JAR_FILE_NAME_PREFIX;
-
 public class ClassPath {
   private static final ResourceStringLoaderIterator ourResourceIterator = new ResourceStringLoaderIterator();
   private static final LoaderCollector ourLoaderCollector = new LoaderCollector();
+  public static final String CLASSPATH_JAR_FILE_NAME_PREFIX = "classpath";
 
   private final Stack<URL> myUrls = new Stack<URL>();
   private final List<Loader> myLoaders = new ArrayList<Loader>();
@@ -166,7 +164,7 @@ public class ClassPath {
         initLoaders(url, myLoaders.size());
       }
       catch (IOException e) {
-        Logger.getInstance(ClassPath.class).info("url: " + url, e);
+        LoggerRt.getInstance(ClassPath.class).info("url: " + url, e);
       }
     }
 
@@ -192,12 +190,12 @@ public class ClassPath {
         path = url.toURI().getSchemeSpecificPart();
       }
       catch (URISyntaxException e) {
-        Logger.getInstance(ClassPath.class).error("url: " + url, e);
+        LoggerRt.getInstance(ClassPath.class).error("url: " + url, e);
         path = url.getFile();
       }
     }
 
-    if (path != null && URLUtil.FILE_PROTOCOL.equals(url.getProtocol())) {
+    if (path != null && "file".equals(url.getProtocol())) {
       File file = new File(path);
       Loader loader = createLoader(url, index, file, file.getName().startsWith(CLASSPATH_JAR_FILE_NAME_PREFIX));
       if (loader != null) {
@@ -222,7 +220,7 @@ public class ClassPath {
               urls.add(UrlClassLoader.internProtocol(new URI(referencedJar).toURL()));
             }
             catch (Exception e) {
-              Logger.getInstance(ClassPath.class).warn("url: " + url + " / " + referencedJar, e);
+              LoggerRt.getInstance(ClassPath.class).warn("url: " + url + " / " + referencedJar, e);
             }
           }
           push(urls);
@@ -389,7 +387,7 @@ public class ClassPath {
         resourceLoadingLogger = (ResourceLoadingLogger)Class.forName(className).newInstance();
       }
       catch (Throwable e) {
-        Logger.getInstance(ClassPath.class).error("Failed to instantiate resource loading logger " + className, e);
+        LoggerRt.getInstance(ClassPath.class).error("Failed to instantiate resource loading logger " + className, e);
       }
     }
     ourResourceLoadingLogger = resourceLoadingLogger;

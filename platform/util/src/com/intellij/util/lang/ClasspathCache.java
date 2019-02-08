@@ -15,11 +15,11 @@
  */
 package com.intellij.util.lang;
 
+import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.BloomFilterBase;
-import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TLongHashSet;
 import gnu.trove.TLongProcedure;
@@ -62,9 +62,9 @@ public class ClasspathCache {
     }
 
     private static int[] readIntList(DataInput reader) throws IOException {
-      int numberOfElements = DataInputOutputUtil.readINT(reader);
+      int numberOfElements = DataInputOutputUtilRt.readINT(reader);
       int[] ints = new int[numberOfElements];
-      for(int i = 0; i < numberOfElements; ++i) ints[i] = (DataInputOutputUtil.readINT(reader));
+      for(int i = 0; i < numberOfElements; ++i) ints[i] = (DataInputOutputUtilRt.readINT(reader));
       return ints;
     }
 
@@ -75,8 +75,8 @@ public class ClasspathCache {
     }
 
     private static void writeIntArray(DataOutput writer, int[] hashes) throws IOException {
-      DataInputOutputUtil.writeINT(writer, hashes.length);
-      for(int hash: hashes) DataInputOutputUtil.writeINT(writer, hash);
+      DataInputOutputUtilRt.writeINT(writer, hashes.length);
+      for(int hash: hashes) DataInputOutputUtilRt.writeINT(writer, hash);
     }
 
     NameFilter getNameFilter() {

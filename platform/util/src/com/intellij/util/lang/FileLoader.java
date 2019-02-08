@@ -15,6 +15,7 @@
  */
 package com.intellij.util.lang;
 
+import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -202,7 +203,7 @@ class FileLoader extends Loader {
     
     try {
       reader = new DataInputStream(new BufferedInputStream(new FileInputStream(index)));
-      if (DataInputOutputUtil.readINT(reader) == ourVersion) {
+      if (DataInputOutputUtilRt.readINT(reader) == ourVersion) {
         ClasspathCache.LoaderData loaderData = new ClasspathCache.LoaderData(reader);
         isOk = true;
         return loaderData;
@@ -232,7 +233,7 @@ class FileLoader extends Loader {
 
     try {
       writer = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(index)));
-      DataInputOutputUtil.writeINT(writer, ourVersion);
+      DataInputOutputUtilRt.writeINT(writer, ourVersion);
       data.save(writer);
       isOk = true;
     } catch (IOException ignore) {}

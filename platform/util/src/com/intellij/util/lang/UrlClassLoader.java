@@ -1,12 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.WeakStringInterner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +82,7 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   public static final class Builder {
-    private List<URL> myURLs = ContainerUtil.emptyList();
+    private List<URL> myURLs = ContainerUtilRt.emptyList();
     private ClassLoader myParent;
     private boolean myLockJars;
     private boolean myUseCache;
@@ -196,7 +196,7 @@ public class UrlClassLoader extends ClassLoader {
 
   protected UrlClassLoader(@NotNull Builder builder) {
     super(builder.myParent);
-    myURLs = ContainerUtil.map(builder.myURLs, new Function<URL, URL>() {
+    myURLs = ContainerUtilRt.map2List(builder.myURLs, new Function<URL, URL>() {
       @Override
       public URL fun(URL url) {
         return internProtocol(url);
@@ -223,7 +223,7 @@ public class UrlClassLoader extends ClassLoader {
       return url;
     }
     catch (MalformedURLException e) {
-      Logger.getInstance(UrlClassLoader.class).error(e);
+      LoggerRt.getInstance(UrlClassLoader.class).error(e);
       return null;
     }
   }
