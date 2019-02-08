@@ -37,15 +37,6 @@ class InlayModelWindow implements InlayModel {
     return null;
   }
 
-  @Nullable
-  @Override
-  public <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset,
-                                                                                 boolean relatesToPrecedingText,
-                                                                                 @NotNull T renderer) {
-    logUnsupported();
-    return null;
-  }
-
   @NotNull
   @Override
   public List<Inlay> getInlineElementsInRange(int startOffset, int endOffset) {
@@ -85,20 +76,6 @@ class InlayModelWindow implements InlayModel {
   public Inlay getElementAt(@NotNull Point point) {
     logUnsupported();
     return null;
-  }
-
-  @NotNull
-  @Override
-  public List<Inlay> getAfterLineEndElementsInRange(int startOffset, int endOffset) {
-    logUnsupported();
-    return Collections.emptyList();
-  }
-
-  @NotNull
-  @Override
-  public List<Inlay> getAfterLineEndElementsForLogicalLine(int logicalLine) {
-    logUnsupported();
-    return Collections.emptyList();
   }
 
   @Override

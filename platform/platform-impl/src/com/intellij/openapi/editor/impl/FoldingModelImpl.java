@@ -101,6 +101,24 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
     return region instanceof FoldRegionImpl && ((FoldRegionImpl)region).hasDocumentRegionChanged();
   }
 
+  @NotNull
+  FoldRegion getFirstRegion(@NotNull FoldingGroup group, @NotNull FoldRegion child) {
+    final List<FoldRegion> regions = getGroupedRegions(group);
+    if (regions.isEmpty()) {
+      final boolean inAll = Arrays.asList(getAllFoldRegions()).contains(child);
+      throw new AssertionError("Folding group without children; the known child is in all: " + inAll);
+    }
+
+    FoldRegion main = regions.get(0);
+    for (int i = 1; i < regions.size(); i++) {
+      FoldRegion region = regions.get(i);
+      if (main.getStartOffset() > region.getStartOffset()) {
+        main = region;
+      }
+    }
+    return main;
+  }
+
   public int getEndOffset(@NotNull FoldingGroup group) {
     final List<FoldRegion> regions = getGroupedRegions(group);
     int endOffset = 0;
@@ -548,8 +566,7 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
 
   @Override
   public void onUpdated(@NotNull Inlay inlay) {
-    Inlay.Placement placement = inlay.getPlacement();
-    if (placement == Inlay.Placement.ABOVE_LINE || placement == Inlay.Placement.BELOW_LINE) myFoldTree.clearCachedInlayValues();
+    if (inlay.getVerticalAlignment() != Inlay.VerticalAlignment.INLINE) myFoldTree.clearCachedInlayValues();
   }
 
   @Nullable

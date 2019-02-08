@@ -32,7 +32,7 @@ public interface Inlay<T extends EditorCustomElementRenderer> extends Disposable
    * Defines relative position of inlay element with respect to the containing text.
    */
   @NotNull
-  Placement getPlacement();
+  VerticalAlignment getVerticalAlignment();
 
   /**
    * Tells whether this element is valid. Inlay becomes invalid on explicit disposal,
@@ -103,7 +103,7 @@ public interface Inlay<T extends EditorCustomElementRenderer> extends Disposable
   void repaint();
 
   /**
-   * @see #getPlacement()
+   * @see #getVerticalAlignment()
    */
-  enum Placement { INLINE, ABOVE_LINE, BELOW_LINE, AFTER_LINE_END }
+  enum VerticalAlignment { INLINE, ABOVE_LINE, BELOW_LINE }
 }

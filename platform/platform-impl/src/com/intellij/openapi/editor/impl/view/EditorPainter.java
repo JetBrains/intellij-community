@@ -501,20 +501,7 @@ public class EditorPainter implements TextDrawingCallback {
           int offset = iterationState.getEndOffset();
           SoftWrapModelImpl softWrapModel = myEditor.getSoftWrapModel();
           if (softWrapModel.getSoftWrap(offset) == null) {
-            int logicalLine = myDocument.getLineNumber(offset);
-            List<Inlay> inlays = myEditor.getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
-            if (!inlays.isEmpty()) {
-              x += myView.getPlainSpaceWidth();
-              int lineHeight = myView.getLineHeight();
-              TextAttributes backgroundAttributes = iterationState.getPastLineEndBackgroundAttributes();
-              for (Inlay inlay : inlays) {
-                int width = inlay.getWidthInPixels();
-                inlay.getRenderer().paint(inlay, g, new Rectangle((int) x, y - myView.getAscent(), width, lineHeight),
-                                          backgroundAttributes);
-                x += width;
-              }
-            }
-            paintLineExtensions(g, visualLine, logicalLine, x, y, extensionData);
+            paintLineExtensions(g, visualLine, offset, x, y, extensionData);
           }
           else if (paintSoftWraps) {
             softWrapModel.doPaint(g, SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED, 
@@ -684,7 +671,7 @@ public class EditorPainter implements TextDrawingCallback {
     }
   }
 
-  private void paintLineExtensions(Graphics2D g, int visualLine, int logicalLine, float x, int y,
+  private void paintLineExtensions(Graphics2D g, int visualLine, int offset, float x, int y,
                                    TIntObjectHashMap<List<LineExtensionData>> extensionData) {
     List<LineExtensionData> data = extensionData.get(visualLine);
     if (data == null) return;
@@ -695,7 +682,7 @@ public class EditorPainter implements TextDrawingCallback {
     int currentLineWidth = myCorrector.lineWidth(visualLine, x);
     EditorSizeManager sizeManager = myView.getSizeManager();
     if (currentLineWidth > sizeManager.getMaxLineWithExtensionWidth()) {
-      sizeManager.setMaxLineWithExtensionWidth(logicalLine, currentLineWidth);
+      sizeManager.setMaxLineWithExtensionWidth(myDocument.getLineNumber(offset), currentLineWidth);
       myEditor.getContentComponent().revalidate();
     }
   }

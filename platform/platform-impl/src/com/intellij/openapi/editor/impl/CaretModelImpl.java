@@ -47,7 +47,6 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   private volatile CaretImpl myPrimaryCaret;
   private CaretImpl myCurrentCaret; // active caret in the context of 'runForEachCaret' call
   private boolean myPerformCaretMergingAfterCurrentOperation;
-  private boolean myVisualPositionUpdateScheduled;
 
   int myDocumentUpdateCounter;
 
@@ -80,7 +79,6 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     myDocumentUpdateCounter++;
     if (!myEditor.getDocument().isInBulkUpdate()) {
       doWithCaretMerging(() -> {}); // do caret merging if it's not scheduled for later
-      if (myVisualPositionUpdateScheduled) updateVisualPosition();
     }
   }
 
@@ -92,7 +90,6 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       }
     }
     myIsInUpdate = true;
-    myVisualPositionUpdateScheduled = false;
   }
 
   @Override
@@ -594,34 +591,28 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   @Override
   public void onAdded(@NotNull Inlay inlay) {
     if (myEditor.getDocument().isInBulkUpdate()) return;
-    Inlay.Placement placement = inlay.getPlacement();
-    if (placement == Inlay.Placement.INLINE) {
+    if (inlay.getVerticalAlignment() == Inlay.VerticalAlignment.INLINE) {
       int offset = inlay.getOffset();
       for (CaretImpl caret : myCarets) {
         caret.onInlayAdded(offset);
       }
     }
-    else if (placement != Inlay.Placement.AFTER_LINE_END || hasCaretInVirtualSpace()) {
+    else {
       updateVisualPosition();
     }
   }
 
   @Override
   public void onRemoved(@NotNull Inlay inlay) {
-    if (myEditor.getDocument().isInBulkUpdate()) return;
-    Inlay.Placement placement = inlay.getPlacement();
-    if (myEditor.getDocument().isInEventsHandling()) {
-      if (placement == Inlay.Placement.AFTER_LINE_END) myVisualPositionUpdateScheduled = true;
-      return;
-    }
-    if (placement == Inlay.Placement.INLINE) {
+    if (myEditor.getDocument().isInEventsHandling() || myEditor.getDocument().isInBulkUpdate()) return;
+    if (inlay.getVerticalAlignment() == Inlay.VerticalAlignment.INLINE) {
       doWithCaretMerging(() -> {
         for (CaretImpl caret : myCarets) {
-          caret.onInlayRemoved(inlay.getOffset(), ((InlineInlayImpl)inlay).getOrder());
+          caret.onInlayRemoved(inlay.getOffset(), ((InlayImpl)inlay).getOrder());
         }
       });
     }
-    else if (placement != Inlay.Placement.AFTER_LINE_END || hasCaretInVirtualSpace()) {
+    else {
       updateVisualPosition();
     }
   }
@@ -629,13 +620,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   @Override
   public void onUpdated(@NotNull Inlay inlay) {
     if (myEditor.getDocument().isInBulkUpdate()) return;
-    if (inlay.getPlacement() != Inlay.Placement.AFTER_LINE_END || hasCaretInVirtualSpace()) {
-      updateVisualPosition();
-    }
-  }
-
-  private boolean hasCaretInVirtualSpace() {
-    return myEditor.getSettings().isVirtualSpace() && ContainerUtil.exists(myCarets, CaretImpl::isInVirtualSpace);
+    updateVisualPosition();
   }
 
   @TestOnly

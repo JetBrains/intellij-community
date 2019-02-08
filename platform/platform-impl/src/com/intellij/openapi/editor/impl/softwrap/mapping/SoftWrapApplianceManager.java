@@ -295,9 +295,7 @@ public class SoftWrapApplianceManager implements Dumpable {
       myContext.softWrapStartOffset++;
     }
 
-    myContext.inlineInlays = myEditor.getInlayModel().getInlineElementsInRange(start, endOffsetUpperEstimate);
-    myContext.afterLineEndInlays = myEditor.getInlayModel().getAfterLineEndElementsInRange(DocumentUtil.getLineStartOffset(start, document),
-                                                                                           endOffsetUpperEstimate);
+    myContext.inlays = myEditor.getInlayModel().getInlineElementsInRange(start, endOffsetUpperEstimate);
 
     // Perform soft wraps calculation.
     while (!iterationState.atEnd()) {
@@ -949,15 +947,10 @@ public class SoftWrapApplianceManager implements Dumpable {
     myDocumentChangedEvent = new IncrementalCacheUpdateEvent(event, myEditor);
   }
 
-  public void documentChanged(DocumentEvent event, boolean processAlsoLineEnd) {
+  public void documentChanged(DocumentEvent event) {
     LOG.assertTrue(myDocumentChangedEvent != null);
+    myDocumentChangedEvent.updateAfterDocumentChange(event.getDocument());
     recalculate(myDocumentChangedEvent);
-    if (processAlsoLineEnd) {
-      int lineEndOffset = DocumentUtil.getLineEndOffset(myDocumentChangedEvent.getMandatoryEndOffset(), event.getDocument());
-      if (lineEndOffset > myDocumentChangedEvent.getActualEndOffset()) {
-        recalculate(new IncrementalCacheUpdateEvent(lineEndOffset, lineEndOffset, myEditor));
-      }
-    }
     myDocumentChangedEvent = null;
   }
 
@@ -1212,10 +1205,8 @@ public class SoftWrapApplianceManager implements Dumpable {
     int            fontType;
     boolean        skipToLineEnd;
 
-    List<Inlay>    inlineInlays;
-    int            inlineInlayIndex;
-    List<Inlay>    afterLineEndInlays;
-    int            afterLineEndInlayIndex;
+    List<Inlay>    inlays;
+    int            inlayIndex;
 
     @Override
     public String toString() {
@@ -1241,10 +1232,8 @@ public class SoftWrapApplianceManager implements Dumpable {
       skipToLineEnd = false;
       fontType2spaceWidth.reset();
       logicalLineData.reset();
-      inlineInlays = null;
-      inlineInlayIndex = 0;
-      afterLineEndInlays = null;
-      afterLineEndInlayIndex = 0;
+      inlays = null;
+      inlayIndex = 0;
     }
 
     int getSpaceWidth() {
@@ -1329,11 +1318,11 @@ public class SoftWrapApplianceManager implements Dumpable {
     }
 
     private int getInlaysWidthForOffset(int offset) {
-      while (inlineInlayIndex < inlineInlays.size() && inlineInlays.get(inlineInlayIndex).getOffset() < offset) inlineInlayIndex++;
-      while (inlineInlayIndex > 0 && inlineInlays.get(inlineInlayIndex - 1).getOffset() >= offset) inlineInlayIndex--;
+      while (inlayIndex < inlays.size() && inlays.get(inlayIndex).getOffset() < offset) inlayIndex++;
+      while (inlayIndex > 0 && inlays.get(inlayIndex - 1).getOffset() >= offset) inlayIndex--;
       int width = 0;
-      while (inlineInlayIndex < inlineInlays.size() && inlineInlays.get(inlineInlayIndex).getOffset() == offset) {
-        width += inlineInlays.get(inlineInlayIndex++).getWidthInPixels();
+      while (inlayIndex < inlays.size() && inlays.get(inlayIndex).getOffset() == offset) {
+        width += inlays.get(inlayIndex++).getWidthInPixels();
       }
       return width;
     }
@@ -1343,28 +1332,7 @@ public class SoftWrapApplianceManager implements Dumpable {
       return nextOffset < text.length() && text.charAt(nextOffset) != '\n' ||
              nextOffset > tokenEndOffset ||
              nextOffset == tokenEndOffset && nextIsFoldRegion
-             ? 0 : getInlaysWidthForOffset(nextOffset) + getAfterLineEndInlaysWidth(currentPosition.logicalLine);
-    }
-
-    private int getAfterLineEndInlaysWidth(int logicalLine) {
-      int startOffset = myEditor.getDocument().getLineStartOffset(logicalLine);
-      int endOffset = myEditor.getDocument().getLineEndOffset(logicalLine);
-      while (afterLineEndInlayIndex < afterLineEndInlays.size()
-             && afterLineEndInlays.get(afterLineEndInlayIndex).getOffset() < startOffset) {
-        afterLineEndInlayIndex++;
-      }
-      while (afterLineEndInlayIndex > 0 && afterLineEndInlays.get(afterLineEndInlayIndex - 1).getOffset() >= startOffset) {
-        afterLineEndInlayIndex--;
-      }
-      int width = 0;
-      while (afterLineEndInlayIndex < afterLineEndInlays.size()) {
-        Inlay inlay = afterLineEndInlays.get(afterLineEndInlayIndex);
-        int offset = inlay.getOffset();
-        if (offset < startOffset || offset > endOffset) break;
-        width += inlay.getWidthInPixels();
-        afterLineEndInlayIndex++;
-      }
-      return width;
+             ? 0 : getInlaysWidthForOffset(nextOffset);
     }
 
     /**

@@ -98,7 +98,6 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   private boolean myDirty;
 
   private boolean myForceAdditionalColumns;
-  private boolean myAfterLineEndInlayUpdated;
 
   SoftWrapModelImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
@@ -398,7 +397,6 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
 
   @Override
   public void beforeDocumentChange(@NotNull DocumentEvent event) {
-    myAfterLineEndInlayUpdated = false;
     if (myBulkUpdateInProgress) {
       return;
     }
@@ -419,7 +417,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     if (!isSoftWrappingEnabled()) {
       return;
     }
-    myApplianceManager.documentChanged(event, myAfterLineEndInlayUpdated);
+    myApplianceManager.documentChanged(event);
   }
 
   @Override
@@ -474,23 +472,14 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
 
   @Override
   public void onUpdated(@NotNull Inlay inlay) {
-    if (myEditor.getDocument().isInBulkUpdate() ||
-        inlay.getPlacement() != Inlay.Placement.INLINE && inlay.getPlacement() != Inlay.Placement.AFTER_LINE_END) return;
+    if (myEditor.getDocument().isInEventsHandling() || myEditor.getDocument().isInBulkUpdate() ||
+        inlay.getVerticalAlignment() != Inlay.VerticalAlignment.INLINE) return;
     if (!isSoftWrappingEnabled()) {
       myDirty = true;
       return;
     }
     if (!myDirty) {
-      if (myEditor.getDocument().isInEventsHandling()) {
-        if (inlay.getPlacement() == Inlay.Placement.AFTER_LINE_END) {
-          myAfterLineEndInlayUpdated = true;
-        }
-        return;
-      }
       int offset = inlay.getOffset();
-      if (inlay.getPlacement() == Inlay.Placement.AFTER_LINE_END) {
-        offset = DocumentUtil.getLineEndOffset(offset, myEditor.getDocument());
-      }
       myApplianceManager.recalculate(Collections.singletonList(new TextRange(offset, offset)));
     }
   }

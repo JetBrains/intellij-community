@@ -8,6 +8,7 @@ import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.internal.performance.LatenciometerKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -627,13 +628,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myDocument.isInEventsHandling() || myDocument.isInBulkUpdate()) return;
     validateSize();
     int offset = inlay.getOffset();
-    Inlay.Placement placement = inlay.getPlacement();
-    if (placement == Inlay.Placement.INLINE) {
+    if (inlay.getVerticalAlignment() == Inlay.VerticalAlignment.INLINE) {
       repaint(offset, offset, false);
-    }
-    else if (placement == Inlay.Placement.AFTER_LINE_END) {
-      int lineEndOffset = DocumentUtil.getLineEndOffset(offset, myDocument);
-      repaint(lineEndOffset, lineEndOffset, false);
     }
     else {
       int visualLine = offsetToVisualLine(offset);
@@ -2073,7 +2069,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
            + ", caret model: " + getCaretModel().dumpState()
            + ", soft wraps data: " + getSoftWrapModel().dumpState()
            + "\n\nfolding data: " + getFoldingModel().dumpState()
-           + "\ninlay model: " + getInlayModel().dumpState()
            + (myDocument instanceof DocumentImpl ? "\n\ndocument info: " + ((DocumentImpl)myDocument).dumpState() : "")
            + "\nfont preferences: " + myScheme.getFontPreferences()
            + "\npure painting mode: " + myPurePaintingMode

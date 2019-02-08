@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.util.Key;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,8 +12,6 @@ import java.awt.*;
 import java.util.List;
 
 class InlineInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R, InlineInlayImpl> {
-  private static final Key<Integer> ORDER_BEFORE_DISPOSAL = Key.create("inlay.order.before.disposal");
-
   InlineInlayImpl(@NotNull EditorImpl editor,
                   int offset,
                   boolean relatesToPrecedingText,
@@ -52,16 +49,6 @@ class InlineInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R
   }
 
   @Override
-  public void dispose() {
-    if (isValid()) {
-      int offset = getOffset();
-      List<Inlay> inlays = myEditor.getInlayModel().getInlineElementsInRange(offset, offset);
-      putUserData(ORDER_BEFORE_DISPOSAL, inlays.indexOf(this));
-    }
-    super.dispose();
-  }
-
-  @Override
   void doUpdateSize() {
     myWidthInPixels = myRenderer.calcWidthInPixels(this);
     if (myWidthInPixels <= 0) {
@@ -71,8 +58,8 @@ class InlineInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R
 
   @NotNull
   @Override
-  public Placement getPlacement() {
-    return Placement.INLINE;
+  public VerticalAlignment getVerticalAlignment() {
+    return VerticalAlignment.INLINE;
   }
 
   @NotNull
@@ -94,10 +81,5 @@ class InlineInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R
   @Override
   public int getHeightInPixels() {
     return myEditor.getLineHeight();
-  }
-
-  int getOrder() {
-    Integer value = getUserData(ORDER_BEFORE_DISPOSAL);
-    return value == null ? -1 : value;
   }
 }
