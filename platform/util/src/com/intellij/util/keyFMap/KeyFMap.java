@@ -2,7 +2,7 @@
 package com.intellij.util.keyFMap;
 
 import com.intellij.openapi.util.Key;
-import org.jetbrains.annotations.Debugger;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author peter
  */
-@Debugger.Renderer(text = "\"size = \" + size()", hasChildren = "!isEmpty()", childrenArray = "KeyFMapRenderer.childrenArray(this)")
+@Debug.Renderer(text = "\"size = \" + size()", hasChildren = "!isEmpty()", childrenArray = "KeyFMapRenderer.childrenArray(this)")
 public interface KeyFMap {
   /**
    * An empty {@code KeyFMap}. No additional instances of empty {@code KeyFMap} should be created as they are indistinguishable.
