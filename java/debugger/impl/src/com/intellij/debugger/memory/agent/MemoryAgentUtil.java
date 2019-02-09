@@ -10,6 +10,7 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.memory.agent.extractor.AgentExtractor;
 import com.intellij.debugger.memory.ui.JavaReferenceInfo;
 import com.intellij.debugger.memory.ui.SizedReferenceInfo;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
@@ -37,7 +38,7 @@ public class MemoryAgentUtil {
   private static final Logger LOG = Logger.getInstance(MemoryAgentUtil.class);
 
   public static void addMemoryAgent(@NotNull JavaParameters parameters) {
-    if (!Registry.is("debugger.enable.memory.agent")) {
+    if (!DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT) {
       return;
     }
 
@@ -113,8 +114,8 @@ public class MemoryAgentUtil {
 
       @Nullable
       private MemoryAgent initMemoryAgent(@NotNull SuspendContextImpl suspendContext) {
-        if (!Registry.is("debugger.enable.memory.agent")) {
-          LOG.info("Memory agent disabled by registry key");
+        if (!DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT) {
+          LOG.info("Memory agent disabled");
           return AgentLoader.DEFAULT_PROXY;
         }
 
