@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.actions;
 
 import com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService;
+import com.intellij.internal.statistic.service.fus.FUSWhitelist;
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -15,8 +16,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Set;
 
 public class RecordStateStatisticsEventLogAction extends AnAction {
   private static final FUStateUsagesLogger myStatesLogger = new FUStateUsagesLogger();
@@ -37,13 +36,13 @@ public class RecordStateStatisticsEventLogAction extends AnAction {
           return;
         }
 
-        final Set<String> approvedGroups = myEventLogSettingsService.getApprovedGroups();
-        if (approvedGroups.isEmpty() && !ApplicationManagerEx.getApplicationEx().isInternal()) {
+        final FUSWhitelist whitelist = myEventLogSettingsService.getApprovedGroups();
+        if (whitelist.isEmpty() && !ApplicationManagerEx.getApplicationEx().isInternal()) {
           return;
         }
 
-        myStatesLogger.logApplicationStates(approvedGroups, true);
-        myStatesLogger.logProjectStates(project, approvedGroups, true);
+        myStatesLogger.logApplicationStates(whitelist, true);
+        myStatesLogger.logProjectStates(project, whitelist, true);
 
         ApplicationManager.getApplication().invokeLater(
           () -> showNotification(project, e, "Collecting and recording events was finished")
