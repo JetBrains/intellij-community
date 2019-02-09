@@ -111,6 +111,7 @@ envs {
 
   if (Os.isFamily(Os.FAMILY_UNIX)) {
     createPython("pyqt_env", "3.5.4", ["pyqt5==5.10.1"], "pyqt5", true)
+    createPython("pyside2_env", "3.7.2", ["PySide2==5.12.1"], "pyside2", true)
   }
 
   createPython("django_latest", "3.5.4", ["django", "behave-django", "behave", "pytest", "untangle"],

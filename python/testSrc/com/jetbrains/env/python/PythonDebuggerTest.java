@@ -1002,6 +1002,123 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
+  @Test
+  public void testPySide2QThreadInheritor() {
+    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
+
+    runPythonTest(new PyDebuggerTask("/debug", "test_pyside2_1.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void before() {
+        toggleBreakpoint(getScriptName(), 8);
+      }
+
+      @Override
+      public void testing() throws Exception {
+
+        waitForPause();
+
+        eval("i").hasValue("0");
+
+        resume();
+
+        waitForPause();
+
+        eval("i").hasValue("1");
+
+        resume();
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return Sets.newHashSet("pyside2");
+      }
+    });
+
+  }
+
+  @Test
+  public void testPySide2MoveToThread() {
+    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
+
+    runPythonTest(new PyDebuggerTask("/debug", "test_pyside2_2.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void before() {
+        toggleBreakpoint(getScriptName(), 10);
+      }
+
+      @Override
+      public void testing() throws Exception {
+
+        waitForPause();
+
+        eval("i").hasValue("0");
+
+        resume();
+
+        waitForPause();
+
+        eval("i").hasValue("1");
+
+        resume();
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return Sets.newHashSet("pyside2");
+      }
+    });
+  }
+
+  @Test
+  public void testPySide2QRunnableInheritor() {
+    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
+
+    runPythonTest(new PyDebuggerTask("/debug", "test_pyside2_3.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void before() {
+        toggleBreakpoint(getScriptName(), 9);
+      }
+
+      @Override
+      public void testing() throws Exception {
+
+        waitForPause();
+
+        eval("i").hasValue("0");
+
+        resume();
+
+        waitForPause();
+
+        eval("i").hasValue("1");
+
+        resume();
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return Sets.newHashSet("pyside2");
+      }
+    });
+  }
 
   @Test
   public void testStepOverYieldFrom() {
