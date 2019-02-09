@@ -3,7 +3,6 @@ package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
-import com.intellij.debugger.engine.ReferringObjectsProvider;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
@@ -15,7 +14,6 @@ import com.intellij.debugger.memory.agent.parsers.LongValueParser;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -87,9 +85,9 @@ public class MemoryAgentImpl implements MemoryAgent {
     return myCanFindGcRoots;
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public ReferringObjectsProvider findGcRoots(@NotNull ObjectReference reference, int limit) throws EvaluateException {
+  public ReferringObjectsInfo findGcRoots(@NotNull ObjectReference reference, int limit) throws EvaluateException {
     if (!canFindGcRoots()) throw new UnsupportedOperationException();
 
     IntegerValue limitValue = myDebugProcess.getVirtualMachineProxy().mirrorOf(limit);

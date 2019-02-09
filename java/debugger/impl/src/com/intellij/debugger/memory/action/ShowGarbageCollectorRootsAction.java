@@ -6,6 +6,7 @@ import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.ReferringObjectsProvider;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.memory.agent.MemoryAgent;
+import com.intellij.debugger.memory.agent.MemoryAgentReferringObjectsProvider;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,12 +19,14 @@ import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowGarbageCollectorRootsAction extends MemoryAgentActionBase {
-  private static final int DEFAULT_OBJECTS_LIMIT = 1000;
+  private static final int DEFAULT_OBJECTS_LIMIT = 3;
   @Override
   protected void perform(@NotNull MemoryAgent memoryAgent,
                          @NotNull ObjectReference reference,
                          @NotNull XValueNodeImpl node) throws EvaluateException {
-    ReferringObjectsProvider roots = memoryAgent.canFindGcRoots() ? memoryAgent.findGcRoots(reference, DEFAULT_OBJECTS_LIMIT) : null;
+    ReferringObjectsProvider roots = memoryAgent.canFindGcRoots()
+                                     ? new MemoryAgentReferringObjectsProvider(memoryAgent, DEFAULT_OBJECTS_LIMIT)
+                                     : null;
     if (roots == null) {
       XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification("This feature is unavailable", NotificationType.INFORMATION);
       return;

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
+import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.Field;
 import com.sun.jdi.ObjectReference;
@@ -12,7 +13,7 @@ import java.util.List;
 
 public interface ReferringObjectsProvider {
   @NotNull
-  List<ReferringObject> getReferringObjects(@NotNull ObjectReference value, long limit);
+  List<ReferringObject> getReferringObjects(@NotNull ObjectReference value, long limit) throws EvaluateException;
 
   ReferringObjectsProvider BASIC_JDI = new ReferringObjectsProvider() {
     @NotNull

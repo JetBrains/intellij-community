@@ -6,6 +6,7 @@ import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.ReferringObject;
 import com.intellij.debugger.engine.ReferringObjectsProvider;
 import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
@@ -74,6 +75,10 @@ public class JavaReferringObjectsValue extends JavaValue {
             referringObjects = myReferringObjectsProvider.getReferringObjects((ObjectReference)value, MAX_REFERRING);
           } catch (ObjectCollectedException e) {
             node.setErrorMessage(DebuggerBundle.message("evaluation.error.object.collected"));
+            return;
+          }
+          catch (EvaluateException e) {
+            node.setErrorMessage(e.getMessage());
             return;
           }
 
