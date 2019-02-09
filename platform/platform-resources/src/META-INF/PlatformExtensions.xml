@@ -599,5 +599,52 @@
     </experimentalFeature>
 
     <rawEditorTypedHandler implementationClass="com.intellij.openapi.editor.impl.EditorFactoryImpl$MyRawTypedHandler"/>
+
+    <stalledStorage file="statistics.toolbar.clicks.xml">
+      <components>
+        <component>ToolbarClicksCollector</component>
+      </components>
+    </stalledStorage>
+    <stalledStorage file="statistics.main_menu.xml">
+      <components>
+        <component>MainMenuCollector</component>
+      </components>
+    </stalledStorage>
+    <stalledStorage file="statistics.shortcuts.xml">
+      <components>
+        <component>ShortcutsCollector</component>
+      </components>
+    </stalledStorage>
+    <stalledStorage file="statistics.application.usages.xml">
+      <components>
+        <component>StatisticsApplicationUsages</component>
+        <component>UsageTrigger</component>
+      </components>
+    </stalledStorage>
+    <stalledStorage file="usage.statistics.xml">
+      <components>
+        <component>StatisticsApplicationUsages</component>
+        <component>UsageTrigger</component>
+        <component>ToolWindowCollector</component>
+        <component>ToolWindowsCollector</component>
+        <component>ShortcutsCollector</component>
+        <component>ToolbarClicksCollector</component>
+        <component>MainMenuCollector</component>
+        <component>IntentionsCollector</component>
+        <component>ActionsCollector</component>
+        <component>FUSApplicationUsageTrigger</component>
+      </components>
+    </stalledStorage>
+
+    <stalledStorage file="usage.statistics.xml" isProjectLevel="true">
+      <components>
+        <component>FUSProjectUsageTrigger</component>
+      </components>
+    </stalledStorage>
+    <stalledStorage file="workspace.xml" isProjectLevel="true">
+      <components>
+        <component>FUSProjectUsageTrigger</component>
+      </components>
+    </stalledStorage>
   </extensions>
 </idea-plugin>
