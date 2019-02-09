@@ -5,6 +5,7 @@ import java.awt.*
 
 open class JBDefaultTabsBackgroundAndBorder(tabs: JBTabsImpl) : JBBaseTabsBackgroundAndBorder(tabs) {
   override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
+    if (tabs.isEmptyVisible) return
     g as Graphics2D
 
     super.paintBorder(c, g, x, y, width, height);

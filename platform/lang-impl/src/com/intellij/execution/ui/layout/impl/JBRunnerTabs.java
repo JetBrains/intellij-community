@@ -51,6 +51,7 @@ public class JBRunnerTabs extends JBEditorTabs {
 
       @Override
       public void paintBorder(@NotNull Component c, @NotNull Graphics g, int x, int y, int width, int height) {
+        if(isEmptyVisible()) return;
         super.paintBorder(c, g, x, y, width, height);
 
         getTabPainter().paintBorderLine((Graphics2D)g, getBorderThickness(), new Point(x, y), new Point(x, y + height));

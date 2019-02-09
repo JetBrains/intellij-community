@@ -6,7 +6,7 @@ import java.awt.*
 
 class JBEditorTabsBackgroundAndBorder(tabs: JBTabsImpl) : JBBaseTabsBackgroundAndBorder(tabs) {
 
-  override fun getEffectiveBorder(): Insets = Insets(thickness, if (tabs.position == JBTabsPosition.right) thickness else 0, 0, if (tabs.position == JBTabsPosition.left) thickness else 0)
+  override fun getEffectiveBorder(): Insets = Insets(thickness, 0, 0, 0)
 
   override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
     super.paintBorder(c, g, x, y, width, height)
@@ -27,10 +27,8 @@ class JBEditorTabsBackgroundAndBorder(tabs: JBTabsImpl) : JBBaseTabsBackgroundAn
         tabs.getTabPainter().paintBorderLine(g, thickness, Point(x, y), Point(x + width, y))
       }
       JBTabsPosition.right -> {
-        tabs.getTabPainter().paintBorderLine(g, thickness, Point(headerRectangle.x, y), Point(headerRectangle.x, y + height))
-      }
-      JBTabsPosition.left -> {
-        tabs.getTabPainter().paintBorderLine(g, thickness, Point(headerRectangle.maxX.toInt(), y), Point(headerRectangle.maxX.toInt(), y + height))
+        val lx = headerRectangle.x
+        tabs.getTabPainter().paintBorderLine(g, thickness, Point(lx, y), Point(lx, y + height))
       }
     }
   }
