@@ -22,9 +22,9 @@ import org.jetbrains.plugins.github.api.search.GithubIssueSearchSort
 import java.awt.event.KeyEvent
 import javax.swing.KeyStroke
 
-internal class GithubPullRequestSearchComponent(project: Project,
-                                                private val autoPopupController: AutoPopupController,
-                                                private val model: GithubPullRequestSearchModel) : BorderLayoutPanel() {
+internal class GithubPullRequestSearchPanel(project: Project,
+                                            private val autoPopupController: AutoPopupController,
+                                            private val holder: GithubPullRequestSearchQueryHolder) : BorderLayoutPanel() {
 
   private val searchField = object : TextFieldWithCompletion(project, SearchCompletionProvider(), "", true, true, false, false) {
 
@@ -64,7 +64,7 @@ internal class GithubPullRequestSearchComponent(project: Project,
   }
 
   private fun updateQuery() {
-    model.query = GithubPullRequestSearchQuery.parseFromString(searchField.text)
+    holder.searchQuery = GithubPullRequestSearchQuery.parseFromString(searchField.text)
   }
 
   override fun updateUI() {

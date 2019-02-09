@@ -24,15 +24,11 @@ import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIcons
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTrackerImpl
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsLoader
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsListLoaderImpl
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsMetadataServiceImpl
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityServiceImpl
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateServiceImpl
-import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestChangesComponent
-import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestDetailsComponent
-import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestPreviewComponent
-import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsListComponent
-import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsListSelectionModel.SelectionChangedListener
+import org.jetbrains.plugins.github.pullrequest.ui.*
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
 import org.jetbrains.plugins.github.util.GithubSharedProjectSettings
@@ -87,12 +83,11 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
                                                             avatarIconsProviderFactory)
     private val preview = GithubPullRequestPreviewComponent(changes, details)
 
-    private val listLoader = GithubPullRequestsLoader(progressManager, requestExecutor, account.server, repoDetails.fullPath)
-    private val list = GithubPullRequestsListComponent(project, copyPasteManager, actionManager, autoPopupController,
-                                                       listLoader,
-                                                       avatarIconsProviderFactory).apply {
-      requestExecutor.addListener(this) { this.refresh() }
-    }
+    private val listSelectionHolder = GithubPullRequestsListSelectionHolderImpl()
+    private val listLoader = GithubPullRequestsListLoaderImpl(progressManager, requestExecutor, account.server, repoDetails.fullPath)
+    private val list = GithubPullRequestsListWithSearchPanel(project, copyPasteManager, actionManager, autoPopupController,
+                                                             avatarIconsProviderFactory,
+                                                             listLoader, listLoader, listLoader, listSelectionHolder)
 
 
     init {
@@ -100,18 +95,16 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
       secondComponent = preview
       isFocusCycleRoot = true
 
-      list.selectionModel.addChangesListener(object : SelectionChangedListener {
-        override fun selectionChanged() {
-          val dataProvider = list.selectionModel.current?.number?.let(dataLoader::getDataProvider)
-          preview.setPreviewDataProvider(dataProvider)
-        }
-      }, preview)
+      listSelectionHolder.addSelectionChangeListener(preview) {
+        val dataProvider = listSelectionHolder.selection?.number?.let(dataLoader::getDataProvider)
+        preview.setPreviewDataProvider(dataProvider)
+      }
 
       dataLoader.addProviderChangesListener(object : GithubPullRequestsDataLoader.ProviderChangedListener {
         override fun providerChanged(pullRequestNumber: Long) {
           runInEdt {
             if (Disposer.isDisposed(preview)) return@runInEdt
-            val selection = list.selectionModel.current
+            val selection = listSelectionHolder.selection
             if (selection != null && selection.number == pullRequestNumber) {
               preview.setPreviewDataProvider(dataLoader.getDataProvider(pullRequestNumber))
             }
@@ -122,7 +115,7 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
 
     @CalledInAwt
     fun refreshAllPullRequests() {
-      list.refresh()
+      listLoader.reset()
       dataLoader.invalidateAllData()
     }
 
@@ -141,9 +134,9 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
         GithubPullRequestKeys.SERVER_PATH.`is`(dataId) -> account.server
         GithubPullRequestKeys.API_REQUEST_EXECUTOR.`is`(dataId) -> requestExecutor
         GithubPullRequestKeys.PULL_REQUESTS_COMPONENT.`is`(dataId) -> this
-        GithubPullRequestKeys.SELECTED_PULL_REQUEST.`is`(dataId) -> list.selectionModel.current
+        GithubPullRequestKeys.SELECTED_PULL_REQUEST.`is`(dataId) -> listSelectionHolder.selection
         GithubPullRequestKeys.SELECTED_PULL_REQUEST_DATA_PROVIDER.`is`(dataId) ->
-          list.selectionModel.current?.number?.let(dataLoader::getDataProvider)
+          listSelectionHolder.selection?.number?.let(dataLoader::getDataProvider)
         else -> null
       }
     }
