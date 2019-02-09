@@ -1,6 +1,7 @@
 plugins {
-  id "org.jetbrains.intellij" version "0.3.12"
+  id "org.jetbrains.intellij" version "0.4.2"
   id "org.jetbrains.grammarkit" version "2018.2.2"
+  id "com.github.ManifestClasspath" version "0.1.0-RELEASE"
 }
 
 repositories {
@@ -13,6 +14,7 @@ apply plugin: 'idea'
 apply plugin: 'org.jetbrains.intellij'
 apply plugin: 'org.jetbrains.grammarkit'
 apply plugin: 'jacoco'
+apply plugin: "com.github.ManifestClasspath"
 
 
 def ideaVersionExternDefinition = System.getenv("IDEA_VERSION")

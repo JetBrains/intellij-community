@@ -1,4 +1,4 @@
-public class Test {
+public class Issue37 {
 
   @lombok.EqualsAndHashCode
   class Car {

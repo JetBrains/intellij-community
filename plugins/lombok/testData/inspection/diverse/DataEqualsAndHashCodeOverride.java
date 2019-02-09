@@ -1,6 +1,6 @@
 import lombok.Data;
 
-public class DataWithOverrideEqualsAndHashCodeSugestion184 {
+public class DataEqualsAndHashCodeOverride {
   @Data
   private static class SomeBasic {
     private int property;
@@ -26,7 +26,7 @@ public class DataWithOverrideEqualsAndHashCodeSugestion184 {
     }
   }
 
-  @Data
+  <warning descr="Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '(callSuper=false)' to your type.">@Data</warning>
   private static class SomeDifferent extends SomeBasic {
     private final String value;
   }

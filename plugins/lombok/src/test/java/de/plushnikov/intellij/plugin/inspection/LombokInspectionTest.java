@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.inspection;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -9,10 +10,10 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.util.PathUtil;
 import com.siyeh.ig.LightInspectionTestCase;
-import de.plushnikov.TestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -25,10 +26,11 @@ public abstract class LombokInspectionTest extends LightInspectionTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    final String lombokLibPath = PathUtil.toSystemIndependentName(new File(TEST_DATA_INSPECTION_DIRECTORY, "lib").getAbsolutePath());
-    VfsRootAccess.allowRootAccess(lombokLibPath);
 
-    TestUtil.addLibrary(myFixture, getModule(), "Lombok", lombokLibPath, "lombok.jar");
+    final String lombokLibPath = PathUtil.toSystemIndependentName(new File(TEST_DATA_INSPECTION_DIRECTORY, "lib").getAbsolutePath());
+    final Disposable projectDisposable = myFixture.getProjectDisposable();
+    VfsRootAccess.allowRootAccess(projectDisposable, lombokLibPath);
+    PsiTestUtil.addLibrary(projectDisposable, getModule(), "Lombok Library", lombokLibPath, "lombok.jar");
   }
 
   @NotNull
