@@ -8,6 +8,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public interface MemoryAgent {
+  /**
+   * Maximal number of objects that will be retrieved by {@code findGcRoots} call
+   */
+  int DEFAULT_GC_ROOTS_OBJECTS_LIMIT = 1000;
+
   boolean isLoaded();
 
   boolean canEvaluateObjectSize();
