@@ -259,14 +259,12 @@ java_library(
         "//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-stdlib-jdk7",
         "//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-stdlib-jdk8",
         "//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-stdlib",
-        "//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/mutability-annotations-compat",
     ],
     # do not sort: must match IML order
     runtime_deps = [
         "//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-stdlib-jdk7",
         "//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-stdlib-jdk8",
         "//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-stdlib",
-        "//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/mutability-annotations-compat",
     ],
 )
 
