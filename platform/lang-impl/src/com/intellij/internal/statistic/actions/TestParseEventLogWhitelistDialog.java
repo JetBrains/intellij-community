@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.actions;
 
 import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.service.fus.FUSWhitelist;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -33,7 +34,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.Set;
 
 public class TestParseEventLogWhitelistDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(TestParseEventLogWhitelistDialog.class);
@@ -126,9 +126,9 @@ public class TestParseEventLogWhitelistDialog extends DialogWrapper {
     updateOutputText("");
 
     final BuildNumber build = BuildNumber.fromString(EventLogConfiguration.INSTANCE.getBuild());
-    final Set<String> groups = FUStatisticsWhiteListGroupsService.parseApprovedGroups(myEditor.getDocument().getText(), build);
+    final FUSWhitelist whitelist = FUStatisticsWhiteListGroupsService.parseApprovedGroups(myEditor.getDocument().getText(), build);
     try {
-      final String parsed = parseLogAndFilter(new LogEventWhitelistFilter(groups), myEventLogPanel.getText());
+      final String parsed = parseLogAndFilter(new LogEventWhitelistFilter(whitelist), myEventLogPanel.getText());
       updateOutputText(parsed.trim());
     }
     catch (IOException | ParseEventLogWhitelistException e) {

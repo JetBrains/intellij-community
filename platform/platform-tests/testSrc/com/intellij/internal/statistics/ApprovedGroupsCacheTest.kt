@@ -2,6 +2,7 @@
 package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.persistence.ApprovedGroupsCacheConfigurable
+import com.intellij.internal.statistic.service.fus.FUSWhitelist
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
@@ -30,7 +31,7 @@ class ApprovedGroupsCacheTest : UsefulTestCase() {
       myFixture?.tearDown()
     }
     catch (e: Throwable) {
-      addSuppressedException(e);
+      addSuppressedException(e)
     }
     finally {
       myFixture = null
@@ -41,24 +42,62 @@ class ApprovedGroupsCacheTest : UsefulTestCase() {
   fun testCacheValues() {
     val cache = ApprovedGroupsCacheConfigurable.getInstance()
     val date = Date()
-    cache.cacheGroups(date, setOf("firstGroup", "secondGroup"), build)
-    assertEquals(setOf("firstGroup", "secondGroup"), cache.getCachedGroups(date, 100))
+    val whitelist = WhitelistBuilder().add("firstGroup").add("secondGroup").build()
+    cache.cacheGroups(date, whitelist, build)
+    assertEquals(whitelist, cache.getCachedGroups(date, 100))
+  }
+
+  @Test
+  fun testCacheValuesWithVersion() {
+    val cache = ApprovedGroupsCacheConfigurable.getInstance()
+    val date = Date()
+    val whitelist = WhitelistBuilder().
+      add("firstGroup", FUSWhitelist.VersionRange.create("2", "5")).
+      add("secondGroup", FUSWhitelist.VersionRange.create("1", "2"), FUSWhitelist.VersionRange.create("3", null)).build()
+    cache.cacheGroups(date, whitelist, build)
+    assertEquals(whitelist, cache.getCachedGroups(date, 100))
   }
 
   @Test
   fun testCacheUpdatesValues() {
     val cache = ApprovedGroupsCacheConfigurable.getInstance()
     val date = Date()
-    cache.cacheGroups(date, setOf("firstGroup", "secondGroup"), build)
-    cache.cacheGroups(Date(date.time + 1), setOf("thirdGroup"), build)
-    assertEquals(setOf("thirdGroup"), cache.getCachedGroups(date, 100))
+    cache.cacheGroups(date, WhitelistBuilder().add("firstGroup").add("secondGroup").build(), build)
+
+    val latestWhitelist = WhitelistBuilder().add("thirdGroup").build()
+    cache.cacheGroups(Date(date.time + 1), latestWhitelist, build)
+    assertEquals(latestWhitelist, cache.getCachedGroups(date, 100))
+  }
+
+  @Test
+  fun testCacheUpdatesValuesWithVersion() {
+    val cache = ApprovedGroupsCacheConfigurable.getInstance()
+    val date = Date()
+    cache.cacheGroups(date, WhitelistBuilder().
+      add("firstGroup", FUSWhitelist.VersionRange.create("2", null)).
+      add("secondGroup", FUSWhitelist.VersionRange.create(null, "5")).build(), build)
+
+    val latestWhitelist = WhitelistBuilder().add("thirdGroup", FUSWhitelist.VersionRange.create("5", null)).build()
+    cache.cacheGroups(Date(date.time + 1), latestWhitelist, build)
+    assertEquals(latestWhitelist, cache.getCachedGroups(date, 100))
   }
 
   @Test
   fun testDoestReturnStaleValues() {
     val cache = ApprovedGroupsCacheConfigurable.getInstance()
     val date = Date()
-    cache.cacheGroups(date, setOf("firstGroup", "secondGroup"), build)
+    cache.cacheGroups(date, WhitelistBuilder().add("firstGroup").add("secondGroup").build(), build)
+    TestCase.assertNull(cache.getCachedGroups(Date(date.time + 101), 100))
+  }
+
+  @Test
+  fun testDoestReturnStaleValuesWithVersion() {
+    val cache = ApprovedGroupsCacheConfigurable.getInstance()
+    val date = Date()
+    val whitelist = WhitelistBuilder().
+      add("firstGroup", FUSWhitelist.VersionRange.create(null, null)).
+      add("secondGroup").build()
+    cache.cacheGroups(date, whitelist, build)
     TestCase.assertNull(cache.getCachedGroups(Date(date.time + 101), 100))
   }
 
@@ -66,15 +105,36 @@ class ApprovedGroupsCacheTest : UsefulTestCase() {
   fun testCacheValuesByBuild() {
     val cache = ApprovedGroupsCacheConfigurable.getInstance()
     val date = Date()
-    cache.cacheGroups(date, setOf("firstGroup", "secondGroup"), build)
-    assertEquals(setOf("firstGroup", "secondGroup"), cache.getCachedGroups(date, 100, build))
+    val whitelist = WhitelistBuilder().add("firstGroup").add("secondGroup").build()
+    cache.cacheGroups(date, whitelist, build)
+    assertEquals(whitelist, cache.getCachedGroups(date, 100, build))
+  }
+
+  @Test
+  fun testCacheValuesByBuildWithVersion() {
+    val cache = ApprovedGroupsCacheConfigurable.getInstance()
+    val date = Date()
+    val whitelist = WhitelistBuilder().
+      add("firstGroup", FUSWhitelist.VersionRange.create("5", "10"), FUSWhitelist.VersionRange.create("11", "13")).
+      add("secondGroup", FUSWhitelist.VersionRange.create(null, null)).build()
+    cache.cacheGroups(date, whitelist, build)
+    assertEquals(whitelist, cache.getCachedGroups(date, 100, build))
   }
 
   @Test
   fun testDoestReturnValuesOutdatedByBuild() {
     val cache = ApprovedGroupsCacheConfigurable.getInstance()
     val date = Date()
-    cache.cacheGroups(date, setOf("firstGroup", "secondGroup"), build)
+    cache.cacheGroups(date, WhitelistBuilder().add("firstGroup").add("secondGroup").build(), build)
+    TestCase.assertNull(cache.getCachedGroups(date, 100, BuildNumber.fromString("191")))
+  }
+
+  @Test
+  fun testDoestReturnValuesOutdatedByBuildWithVersion() {
+    val cache = ApprovedGroupsCacheConfigurable.getInstance()
+    val date = Date()
+    val whitelist = WhitelistBuilder().add("firstGroup", FUSWhitelist.VersionRange.create("5", "10")).add("secondGroup").build()
+    cache.cacheGroups(date, whitelist, build)
     TestCase.assertNull(cache.getCachedGroups(date, 100, BuildNumber.fromString("191")))
   }
 }
