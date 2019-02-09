@@ -512,7 +512,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     return new XReferrersProvider() {
       @Override
       public XValue getReferringObjectsValue() {
-        return new JavaReferringObjectsValue(JavaValue.this, ReferringObjectsProvider.BASIC_JDI, false);
+        return new JavaReferringObjectsValue(JavaValue.this, ReferringObjectsProvider.BASIC_JDI, null);
       }
     };
   }

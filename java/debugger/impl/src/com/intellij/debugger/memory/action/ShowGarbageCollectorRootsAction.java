@@ -33,7 +33,7 @@ public class ShowGarbageCollectorRootsAction extends MemoryAgentActionBase {
         XDebuggerTree tree = node.getTree();
         JavaValue javaValue = (JavaValue)node.getValueContainer();
         XDebugSession session = javaValue.getEvaluationContext().getDebugProcess().getSession().getXDebugSession();
-        JavaReferringObjectsValue value = new JavaReferringObjectsValue(javaValue, roots, false);
+        JavaReferringObjectsValue value = new JavaReferringObjectsValue(javaValue, roots, null);
         XInspectDialog dialog =
           new XInspectDialog(tree.getProject(), tree.getEditorsProvider(), tree.getSourcePosition(), StringUtil.notNullize(node.getName()),
                              value, tree.getValueMarkers(),
