@@ -191,7 +191,7 @@ class FeatureEventLogSerializationTest {
     records.add(LogEventRecord(first))
     records.add(LogEventRecord(second))
 
-    val request = requestByRecords("IU", "generated-device-id", false, records)
+    val request = LogEventRecordRequest("IU", "generated-device-id", records, false)
     val json = JsonParser().parse(LogEventSerializer.toString(request)).asJsonObject
     assertLogEventContentIsValid(json, "IU", "generated-device-id", false, false)
   }
@@ -322,138 +322,6 @@ class FeatureEventLogSerializationTest {
   }
 
   @Test
-  fun testEmptyWhitelist() {
-    val all = ArrayList<LogEvent>()
-    all.add(newEvent("recorder-id", "first"))
-    all.add(newEvent("recorder-id-1", "second"))
-    all.add(newEvent("recorder-id-2", "third"))
-
-    testWhitelistFilter(HashSet(), all, ArrayList())
-  }
-
-  @Test
-  fun testWhitelist() {
-    val first = newEvent("recorder-id", "first")
-    val second = newEvent("recorder-id-1", "second")
-    val third = newEvent("recorder-id", "third")
-
-    val all = ArrayList<LogEvent>()
-    all.add(first)
-    all.add(second)
-    all.add(third)
-    val filtered = ArrayList<LogEvent>()
-    filtered.add(first)
-    filtered.add(third)
-
-    val whitelist = HashSet<String>()
-    whitelist.add("recorder-id")
-    testWhitelistFilter(whitelist, all, filtered)
-  }
-
-  @Test
-  fun testWhitelistWithMultiGroups() {
-    val first = newEvent("recorder-id", "first")
-    val second = newEvent("recorder-id-1", "second")
-    val third = newEvent("recorder-id-2", "third")
-
-    val all = ArrayList<LogEvent>()
-    all.add(first)
-    all.add(second)
-    all.add(third)
-    val filtered = ArrayList<LogEvent>()
-    filtered.add(first)
-    filtered.add(third)
-
-    val whitelist = HashSet<String>()
-    whitelist.add("recorder-id")
-    whitelist.add("recorder-id-2")
-    testWhitelistFilter(whitelist, all, filtered)
-  }
-
-  @Test
-  fun testWhitelistAll() {
-    val first = newEvent("recorder-id", "first")
-    val second = newEvent("recorder-id-1", "second")
-    val third = newEvent("recorder-id-2", "third")
-
-    val all = ArrayList<LogEvent>()
-    all.add(first)
-    all.add(second)
-    all.add(third)
-    val filtered = ArrayList<LogEvent>()
-    filtered.add(first)
-    filtered.add(second)
-    filtered.add(third)
-
-    val whitelist = HashSet<String>()
-    whitelist.add("recorder-id")
-    whitelist.add("recorder-id-1")
-    whitelist.add("recorder-id-2")
-    testWhitelistFilter(whitelist, all, filtered)
-  }
-
-  @Test
-  fun testPartialSnapshotBuildsFilter() {
-    val first = newEvent("recorder-id", "first", build="999.9999")
-    val second = newEvent("recorder-id-1", "second", build="999.0")
-    val third = newEvent("recorder-id", "third", build="999.9999")
-
-    val all = ArrayList<LogEvent>()
-    all.add(first)
-    all.add(second)
-    all.add(third)
-    val filtered = ArrayList<LogEvent>()
-    filtered.add(first)
-    filtered.add(third)
-
-    testSnapshotBuilderFilter(all, filtered)
-  }
-
-  @Test
-  fun testNoneSnapshotBuildsFilter() {
-    val first = newEvent("recorder-id", "first", build="999.9999")
-    val second = newEvent("recorder-id-1", "second", build="999.01")
-    val third = newEvent("recorder-id", "third", build="999.9999")
-
-    val all = ArrayList<LogEvent>()
-    all.add(first)
-    all.add(second)
-    all.add(third)
-    testSnapshotBuilderFilter(all, all)
-  }
-
-  @Test
-  fun testAllSnapshotBuildsFilter() {
-    val first = newEvent("recorder-id", "first", build="999.00")
-    val second = newEvent("recorder-id-1", "second", build="999.0")
-    val third = newEvent("recorder-id", "third", build="999.0")
-
-    val all = ArrayList<LogEvent>()
-    all.add(first)
-    all.add(second)
-    all.add(third)
-    testSnapshotBuilderFilter(all, ArrayList())
-  }
-
-  @Test
-  fun testSnapshotBuildsAndWhitelistFilter() {
-    val first = newEvent("recorder-id", "first", build="999.9999")
-    val second = newEvent("recorder-id-1", "second", build="999.9999")
-    val third = newEvent("recorder-id", "third", build="999.0")
-
-    val all = ArrayList<LogEvent>()
-    all.add(first)
-    all.add(second)
-    all.add(third)
-    val filtered = ArrayList<LogEvent>()
-    filtered.add(first)
-
-    val whitelist = HashSet<String>()
-    whitelist.add("recorder-id")
-    testWhitelistAndSnapshotBuildFilter(whitelist, all, filtered)
-  }
-
-  @Test
   fun testInvalidEventWithoutSession() {
     val json =
       "{\"build\":\"183.0\",\"bucket\":\"-1\",\"time\":1529428045322," +
@@ -520,40 +388,6 @@ class FeatureEventLogSerializationTest {
     assertNull(deserialized)
   }
 
-  private fun testWhitelistFilter(whitelist: Set<String>, all: List<LogEvent>, filtered: List<LogEvent>) {
-    testEventLogFilter(all, filtered, LogEventWhitelistFilter(whitelist))
-  }
-
-  private fun testWhitelistAndSnapshotBuildFilter(whitelist: Set<String>, all: List<LogEvent>, filtered: List<LogEvent>) {
-    testEventLogFilter(all, filtered, LogEventCompositeFilter(LogEventWhitelistFilter(whitelist), LogEventSnapshotBuildFilter))
-  }
-
-  private fun testSnapshotBuilderFilter(all: List<LogEvent>, filtered: List<LogEvent>) {
-    testEventLogFilter(all, filtered, LogEventSnapshotBuildFilter)
-  }
-
-  private fun testEventLogFilter(all: List<LogEvent>, filtered: List<LogEvent>, filter : LogEventFilter) {
-    val records = ArrayList<LogEventRecord>()
-    if (!filtered.isEmpty()) {
-      records.add(LogEventRecord(filtered))
-    }
-    val expected = requestByRecords("IU", "user-id", false, records)
-
-    val log = FileUtil.createTempFile("feature-event-log", ".log")
-    try {
-      val out = StringBuilder()
-      for (event in all) {
-        out.append(LogEventSerializer.toString(event)).append("\n")
-      }
-      FileUtil.writeToFile(log, out.toString())
-      val actual = LogEventRecordRequest.create(log, "IU", "user-id", 600, filter, false)
-      assertEquals(expected, actual)
-    }
-    finally {
-      FileUtil.delete(log)
-    }
-  }
-
   private fun testDeserialization(vararg batches: List<LogEvent>) {
     val events = ArrayList<LogEvent>()
     val records = ArrayList<LogEventRecord>()
@@ -561,7 +395,7 @@ class FeatureEventLogSerializationTest {
       events.addAll(batch)
       records.add(LogEventRecord(batch))
     }
-    val expected = requestByRecords("IU", "user-id", false, records)
+    val expected = LogEventRecordRequest("IU", "user-id", records, false)
 
     val log = FileUtil.createTempFile("feature-event-log", ".log")
     try {
@@ -683,10 +517,6 @@ class FeatureEventLogSerializationTest {
   private fun requestByEvents(product: String, device: String, internal: Boolean, events: List<LogEvent>) : LogEventRecordRequest {
     val records = ArrayList<LogEventRecord>()
     records.add(LogEventRecord(events))
-    return LogEventRecordRequest(product, device, records, internal)
-  }
-
-  private fun requestByRecords(product: String, device: String, internal: Boolean, records: List<LogEventRecord>) : LogEventRecordRequest {
     return LogEventRecordRequest(product, device, records, internal)
   }
 }
