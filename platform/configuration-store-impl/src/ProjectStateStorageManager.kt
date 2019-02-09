@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.PathMacroSubstitutor
@@ -16,10 +16,10 @@ open class ProjectStateStorageManager(macroSubstitutor: PathMacroSubstitutor,
                                       useVirtualFileTracker: Boolean = true) : StateStorageManagerImpl(ROOT_TAG_NAME, macroSubstitutor, if (useVirtualFileTracker) project else null) {
   companion object {
     internal const val VERSION_OPTION = "version"
-    const val ROOT_TAG_NAME: String = "project"
+    const val ROOT_TAG_NAME = "project"
   }
 
-  override fun normalizeFileSpec(fileSpec: String): String = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), PROJECT_CONFIG_DIR)
+  override fun normalizeFileSpec(fileSpec: String) = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), PROJECT_CONFIG_DIR)
 
   override fun expandMacros(path: String): String {
     if (path[0] == '$') {
