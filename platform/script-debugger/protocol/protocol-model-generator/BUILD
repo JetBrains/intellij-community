@@ -39,6 +39,6 @@ iml_module(
         "//tools/idea/.idea/libraries:Trove4j",
         "//tools/idea/platform/util-rt:intellij.platform.util.rt[module]",
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
     ],
 )

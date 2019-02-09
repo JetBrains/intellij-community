@@ -24,7 +24,7 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/jvm/jvm-analysis-tests-api:intellij.jvm.analysis.tests[module]",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime[test]",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8[test]",
         "//tools/idea:intellij.java.tests[module, test]",
     ],
 )

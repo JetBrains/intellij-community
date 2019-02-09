@@ -26,7 +26,7 @@ iml_module(
     ],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module]",
         "//tools/idea/platform/vcs-api:intellij.platform.vcs[module]",
         "//tools/idea/platform/vcs-impl:intellij.platform.vcs.impl[module]",

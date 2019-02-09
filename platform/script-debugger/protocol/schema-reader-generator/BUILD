@@ -30,7 +30,7 @@ iml_module(
     deps = [
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/platform/script-debugger/protocol/protocol-reader:intellij.javascript.protocolReader[module]",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
     ],
 )

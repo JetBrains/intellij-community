@@ -42,7 +42,7 @@ iml_module(
         "//tools/idea/.idea/libraries:http-client",
         "//tools/idea/jps/model-impl:intellij.platform.jps.model.impl[module, test]",
         "//tools/idea/.idea/libraries:gson",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime[test]",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8[test]",
         "//tools/idea/platform/util:intellij.platform.util.tests[module, test]",
         "//tools/idea/.idea/libraries:assertJ[test]",
         "//tools/idea/.idea/libraries:kotlin-test[test]",

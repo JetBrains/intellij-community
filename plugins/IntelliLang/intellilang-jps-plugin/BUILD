@@ -29,7 +29,7 @@ iml_module(
         "//tools/idea/java/compiler/instrumentation-util:intellij.java.compiler.instrumentationUtil[module]",
         "//tools/idea/jps/model-serialization:intellij.platform.jps.model.serialization[module]",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime[test]",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8[test]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/.idea/libraries:assertJ[test]",
     ],

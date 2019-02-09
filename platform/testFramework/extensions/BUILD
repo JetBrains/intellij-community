@@ -26,7 +26,7 @@ iml_module(
     exports = ["//tools/idea/.idea/libraries:assertJ"],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime[test]",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8[test]",
         "//tools/idea/platform/util:intellij.platform.util[module, test]",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
         "//tools/idea/.idea/libraries:JDOM[test]",

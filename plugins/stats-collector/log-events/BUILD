@@ -11,7 +11,7 @@ iml_module(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/.idea/libraries:jetbrains-annotations",
         "//tools/idea/.idea/libraries:JUnit4[test]",

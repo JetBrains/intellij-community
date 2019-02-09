@@ -13,7 +13,7 @@ iml_module(
         "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
         "//tools/idea/platform/projectModel-api:intellij.platform.projectModel[module]",
         "//tools/idea/platform/indexing-api:intellij.platform.indexing[module]",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/.idea/libraries:JDOM",
     ],
 )

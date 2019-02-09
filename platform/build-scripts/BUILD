@@ -82,7 +82,7 @@ iml_module(
         "//tools/idea/jps/model-api:intellij.platform.jps.model[module]",
         "//tools/idea/jps/model-impl:intellij.platform.jps.model.impl[module]",
         "//tools/idea/jps/model-serialization:intellij.platform.jps.model.serialization[module]",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/platform/testFramework/core:intellij.platform.testFramework.core[module, test]",

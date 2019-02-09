@@ -30,7 +30,7 @@ iml_module(
         "//tools/idea/.idea/libraries:Velocity",
         "//tools/idea/.idea/libraries:commons-collections",
         "//tools/idea/xml/impl:intellij.xml.impl[module]",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions[module, test]",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
         "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl[module, test]",

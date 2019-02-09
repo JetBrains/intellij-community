@@ -22,6 +22,6 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/plugins/devkit/devkit-tests-api:intellij.devkit.tests[module]",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime[test]",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8[test]",
     ],
 )

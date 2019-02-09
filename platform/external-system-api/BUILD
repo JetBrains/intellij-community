@@ -44,7 +44,7 @@ iml_module(
         "//tools/idea/platform/lang-api:intellij.platform.lang[module]",
         "//tools/idea/java/compiler/openapi:intellij.java.compiler[module]",
         "//tools/idea/platform/external-system-rt:intellij.platform.externalSystem.rt[module]",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/.idea/libraries:JDOM",
         "//tools/idea/.idea/libraries:de.ruedigermoeller_fst",
     ],

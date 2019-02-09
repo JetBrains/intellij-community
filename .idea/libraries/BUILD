@@ -252,7 +252,7 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "KotlinJavaRuntime",
+    name = "kotlin-stdlib-jdk8",
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [

@@ -32,7 +32,7 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/uast/uast-common:intellij.platform.uast[module]",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/.idea/libraries:JUnit4",
         "//tools/idea/platform/core-impl:intellij.platform.core.impl[module]",
         "//tools/idea/uast/uast-java:intellij.java.uast[module]",

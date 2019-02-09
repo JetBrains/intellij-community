@@ -25,7 +25,7 @@ iml_module(
         "//tools/idea/platform/indexing-api:intellij.platform.indexing[module]",
         "//tools/idea/platform/projectModel-api:intellij.platform.projectModel[module]",
         "//tools/idea/platform/analysis-api:intellij.platform.analysis[module]",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/.idea/libraries:JDOM",
         "//tools/idea/.idea/libraries:Mocks[test]",
         "//tools/idea/.idea/libraries:JUnit4[test]",

@@ -12,7 +12,7 @@ iml_module(
         "//tools/idea/platform/analysis-api:intellij.platform.analysis[module]",
         "//tools/idea/java/java-psi-api:intellij.java.psi[module]",
         "//tools/idea/platform/projectModel-api:intellij.platform.projectModel[module]",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/uast/uast-common:intellij.platform.uast[module]",
     ],
 )

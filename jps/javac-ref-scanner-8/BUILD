@@ -25,7 +25,7 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea:intellij.platform.jps.build_and_others[module]",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime[test]",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8[test]",
         "//tools/idea/platform/core-api:intellij.platform.core[module, test]",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
     ],

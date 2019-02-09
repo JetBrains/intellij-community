@@ -45,7 +45,7 @@ iml_module(
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
         "//tools/idea/platform/vcs-log/graph-api:intellij.platform.vcs.log.graph[module]",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime[test]",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8[test]",
         "//tools/idea/.idea/libraries:kotlin-test[test]",
         "//tools/idea/platform/vcs-tests:intellij.platform.vcs.tests[module, test]",
         "//tools/idea/platform/util:intellij.platform.util[module]",

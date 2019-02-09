@@ -43,7 +43,7 @@ iml_module(
         "//tools/idea/platform/projectModel-impl:intellij.platform.projectModel.impl[module]",
         "//tools/idea/platform/editor-ui-ex:intellij.platform.editor.ex[module]",
         "//tools/idea/platform/indexing-impl:intellij.platform.indexing.impl[module]",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/platform/external-system-api:intellij.platform.externalSystem[module]",
     ],
 )

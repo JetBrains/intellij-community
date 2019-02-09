@@ -11,7 +11,7 @@ iml_module(
     deps = [
         "//tools/idea/java/java-psi-api:intellij.java.psi[module]",
         "//tools/idea/uast/uast-common:intellij.platform.uast[module]",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/java/java-psi-impl:intellij.java.psi.impl[module]",
     ],
 )

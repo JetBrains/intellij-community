@@ -10,7 +10,7 @@ iml_module(
     deps = [
         "//tools/idea/platform/core-api:intellij.platform.core[module]",
         "//tools/idea/.idea/libraries:Guava",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/platform/platform-api:intellij.platform.ide[module]",
         "//tools/idea/.idea/libraries:netty-codec-http",
     ],

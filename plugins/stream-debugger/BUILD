@@ -24,7 +24,7 @@ iml_module(
     ],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/.idea/libraries:StreamEx",
         "//tools/idea:intellij.platform.jps.build_and_others[module]",
         "//tools/idea/platform/editor-ui-api:intellij.platform.editor[module]",

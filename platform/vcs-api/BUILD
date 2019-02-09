@@ -21,5 +21,6 @@ iml_module(
         "//tools/idea/platform/diff-api:intellij.platform.diff[module]",
         "//tools/idea/.idea/libraries:StreamEx",
         "//tools/idea/.idea/libraries:JDOM",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
     ],
 )

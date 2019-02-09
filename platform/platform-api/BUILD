@@ -44,7 +44,7 @@ iml_module(
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/.idea/libraries:http-client",
         "//tools/idea/.idea/libraries:jna",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/.idea/libraries:ini4j",
         "//tools/idea/.idea/libraries:JDOM",
         "//tools/idea/.idea/libraries:jackson",

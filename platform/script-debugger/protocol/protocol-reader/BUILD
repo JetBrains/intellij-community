@@ -34,7 +34,7 @@ iml_module(
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/platform/script-debugger/protocol/protocol-reader-runtime:intellij.platform.scriptDebugger.protocolReaderRuntime[module]",
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/.idea/libraries:kotlin-reflect",
     ],
 )

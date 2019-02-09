@@ -51,7 +51,7 @@ iml_module(
         "//tools/idea/platform/testFramework/bootstrap:intellij.tools.testsBootstrap[module]",
         "//tools/idea/java/java-runtime:intellij.java.rt[module]",
         "//tools/idea/.idea/libraries:Groovy",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/platform/boot:intellij.platform.boot[module]",
         "//tools/idea/.idea/libraries:jetCheck",
         "//tools/idea/platform/testFramework/core:intellij.platform.testFramework.core[module]",
