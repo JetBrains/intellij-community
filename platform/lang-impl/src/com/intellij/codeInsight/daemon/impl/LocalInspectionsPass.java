@@ -446,6 +446,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
     InspectionResult result = new InspectionResult(tool, descriptors);
     appendResult(file, result);
+    InspectionStatisticsCollector.trigger(file, tool, descriptors.size());
   }
 
   private void appendResult(@NotNull PsiFile file, @NotNull InspectionResult result) {
