@@ -18,6 +18,7 @@ package de.thomasrosenau.diffplugin.highlighter;
 
 import static com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey;
 
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diff.DiffColors;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
@@ -31,19 +32,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class DiffSyntaxHighlighter extends SyntaxHighlighterBase {
     public static final TextAttributesKey COMMAND = createTextAttributesKey("PATCH_COMMAND",
-            DefaultLanguageHighlighterColors.KEYWORD);
+            ConsoleViewContentType.USER_INPUT_KEY);
+    public static final TextAttributesKey FILE = createTextAttributesKey("PATCH_FILEINFO",
+            DefaultLanguageHighlighterColors.LINE_COMMENT);
     public static final TextAttributesKey ADDED = createTextAttributesKey("PATCH_ADDED",
             DiffColors.DIFF_INSERTED);
     public static final TextAttributesKey DELETED = createTextAttributesKey("PATCH_DELETED",
             DiffColors.DIFF_DELETED);
+    public static final TextAttributesKey MODIFIED = createTextAttributesKey("PATCH_MODIFIED",
+            DiffColors.DIFF_MODIFIED);
     public static final TextAttributesKey HUNK_HEAD = createTextAttributesKey("PATCH_HUNK_HEAD",
+            DefaultLanguageHighlighterColors.LABEL);
+    public static final TextAttributesKey SEPARATOR = createTextAttributesKey("PATCH_SEPARATOR",
             DefaultLanguageHighlighterColors.LINE_COMMENT);
-
-    private static final TextAttributesKey[] COMMAND_KEYS = new TextAttributesKey[] {COMMAND};
-    private static final TextAttributesKey[] ADDED_KEYS = new TextAttributesKey[] {ADDED};
-    private static final TextAttributesKey[] DELETED_KEYS = new TextAttributesKey[] {DELETED};
-    private static final TextAttributesKey[] HUNK_HEAD_KEYS = new TextAttributesKey[] {HUNK_HEAD};
-    private static final TextAttributesKey[] TEXT_KEYS = new TextAttributesKey[] {HighlighterColors.TEXT};
+    public static final TextAttributesKey EOLHINT = createTextAttributesKey("PATCH_EOLHINT",
+            DefaultLanguageHighlighterColors.DOC_COMMENT);
 
     @NotNull
     @Override
@@ -55,16 +58,23 @@ public class DiffSyntaxHighlighter extends SyntaxHighlighterBase {
     @Override
     public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
         if (tokenType.equals(DiffTypes.COMMAND)) {
-            return COMMAND_KEYS;
+            return new TextAttributesKey[] {COMMAND};
+        } else if (tokenType.equals(DiffTypes.FILE)) {
+            return new TextAttributesKey[] {FILE};
         } else if (tokenType.equals(DiffTypes.ADDED)) {
-            return ADDED_KEYS;
+            return new TextAttributesKey[] {ADDED};
         } else if (tokenType.equals(DiffTypes.DELETED)) {
-            return DELETED_KEYS;
+            return new TextAttributesKey[] {DELETED};
+        } else if (tokenType.equals(DiffTypes.MODIFIED)) {
+            return new TextAttributesKey[] {MODIFIED};
         } else if (tokenType.equals(DiffTypes.HUNK_HEAD)) {
-            return HUNK_HEAD_KEYS;
-        // TODO add more colors
+            return new TextAttributesKey[] {HUNK_HEAD};
+        } else if (tokenType.equals(DiffTypes.SEPARATOR)) {
+            return new TextAttributesKey[] {SEPARATOR};
+        } else if (tokenType.equals(DiffTypes.EOLHINT)) {
+            return new TextAttributesKey[] {EOLHINT};
         } else {
-            return TEXT_KEYS;
+            return new TextAttributesKey[] {HighlighterColors.TEXT};
         }
     }
 }

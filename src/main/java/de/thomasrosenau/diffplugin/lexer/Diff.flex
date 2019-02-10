@@ -51,12 +51,12 @@ Range = {Digits} "," {Digits}
   ^ "--- " {InputCharacters} $ { return FILE; } // TODO: find out if first or second file (-u vs. -c)
   ^ "+++ " {InputCharacters} $ { return FILE; }
 
-  ^ "--" "-"? {Newline} { return SEPARATOR; }
+  ^ "--" ("-" | " ")? {Newline} { return SEPARATOR; }
   ^ "***************" {Newline} { return SEPARATOR; }
 
   // TODO: handle EOF
-  ^ [+>] {InputCharacters} {Newline} { return ADDED; }
-  ^ [-<] {InputCharacters} {Newline} { return DELETED; }
+  ^ [+>] {InputCharacters}? {Newline} { return ADDED; }
+  ^ [-<] {InputCharacters}? {Newline} { return DELETED; }
   ^ "!" {InputCharacters} {Newline} { return MODIFIED; } // TODO: find out if added or deleted
 
   ^ "\\" {InputCharacters} $ { return EOLHINT; } // TODO: find out if added or deleted

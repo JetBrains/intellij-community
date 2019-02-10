@@ -16,8 +16,6 @@
 
 package de.thomasrosenau.diffplugin.psi;
 
-import javax.swing.*;
-
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.FileViewProvider;
@@ -38,11 +36,6 @@ public class DiffFile extends PsiFileBase {
 
   @Override
   public String toString() {
-    return "Simple File";
-  }
-
-  @Override
-  public Icon getIcon(int flags) {
-    return super.getIcon(flags);
+    return "Diff / Patch File";
   }
 }
