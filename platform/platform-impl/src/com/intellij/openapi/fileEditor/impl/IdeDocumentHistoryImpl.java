@@ -383,8 +383,30 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   @Override
+  @NotNull
+  public List<PlaceInfo> getBackPlaces() {
+    return ContainerUtil.immutableList(myBackPlaces);
+  }
+
+  @Override
   public List<PlaceInfo> getChangePlaces() {
     return ContainerUtil.immutableList(myChangePlaces);
+  }
+
+  @Override
+  public void removeBackPlace(@NotNull Project project, @NotNull PlaceInfo placeInfo) {
+    boolean removed = myBackPlaces.remove(placeInfo);
+    if (removed) {
+      project.getMessageBus().syncPublisher(RecentPlacesListener.TOPIC).recentPlaceRemoved(placeInfo, false);
+    }
+  }
+
+  @Override
+  public void removeChangePlace(@NotNull Project project, @NotNull PlaceInfo placeInfo) {
+    boolean removed = myChangePlaces.remove(placeInfo);
+    if (removed) {
+      project.getMessageBus().syncPublisher(RecentPlacesListener.TOPIC).recentPlaceRemoved(placeInfo, true);
+    }
   }
 
   @Override
@@ -543,12 +565,6 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     public String toString() {
       return getFile().getName() + " " + getNavigationState();
     }
-  }
-
-  @Override
-  @NotNull
-  public List<PlaceInfo> getBackPlaces() {
-    return ContainerUtil.immutableList(myBackPlaces);
   }
 
   @Override
