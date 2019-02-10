@@ -311,6 +311,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     removeInvalidFilesFromStacks();
     if (myBackPlaces.isEmpty()) return;
     final PlaceInfo info = myBackPlaces.removeLast();
+    myProject.getMessageBus().syncPublisher(RecentPlacesListener.TOPIC).recentPlaceRemoved(info, false);
 
     PlaceInfo current = getCurrentPlaceInfo();
     if (current != null) myForwardPlaces.add(current);
@@ -515,7 +516,8 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     list.add(next);
     listener.recentPlaceAdded(next, isChanged);
     if (list.size() > limit) {
-      list.removeFirst();
+      PlaceInfo first = list.removeFirst();
+      listener.recentPlaceRemoved(first, isChanged);
     }
   }
 
