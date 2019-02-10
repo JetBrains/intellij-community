@@ -47,6 +47,8 @@ public class DiffSyntaxHighlighter extends SyntaxHighlighterBase {
             DefaultLanguageHighlighterColors.LINE_COMMENT);
     public static final TextAttributesKey EOLHINT = createTextAttributesKey("PATCH_EOLHINT",
             DefaultLanguageHighlighterColors.DOC_COMMENT);
+    public static final TextAttributesKey TEXT = createTextAttributesKey("PATCH_TEXT",
+            HighlighterColors.TEXT);
 
     @NotNull
     @Override
@@ -74,7 +76,7 @@ public class DiffSyntaxHighlighter extends SyntaxHighlighterBase {
         } else if (tokenType.equals(DiffTypes.EOLHINT)) {
             return new TextAttributesKey[] {EOLHINT};
         } else {
-            return new TextAttributesKey[] {HighlighterColors.TEXT};
+            return new TextAttributesKey[] {TEXT};
         }
     }
 }

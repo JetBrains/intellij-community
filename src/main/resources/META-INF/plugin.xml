@@ -35,6 +35,7 @@
         implementationClass="de.thomasrosenau.diffplugin.parser.DiffParserDefinition" />
     <lang.syntaxHighlighterFactory language="Diff"
         implementationClass="de.thomasrosenau.diffplugin.highlighter.DiffSyntaxHighlighterFactory" />
+    <colorSettingsPage implementation="de.thomasrosenau.diffplugin.highlighter.DiffColorSettingsPage" />
   </extensions>
 
 </idea-plugin>
