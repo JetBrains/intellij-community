@@ -50,7 +50,7 @@ open class DialogCommitWorkflow(val project: Project,
 
   fun showDialog(): Boolean {
     val dialog = CommitChangeListDialog(this)
-    val handler = SingleChangeListCommitWorkflowHandler(dialog)
+    val handler = SingleChangeListCommitWorkflowHandler(this, dialog)
 
     Disposer.register(dialog.disposable, handler)
     initDialog(dialog)
