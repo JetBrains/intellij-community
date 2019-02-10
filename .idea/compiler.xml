@@ -5,8 +5,8 @@
       <profile default="true" name="Default" enabled="true" />
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="de.thomas-rosenau.intellij-diff-plugin.main" target="1.8" />
-      <module name="de.thomas-rosenau.intellij-diff-plugin.test" target="1.8" />
+      <module name="de.thomasrosenau.intellij-diff-plugin.main" target="1.8" />
+      <module name="de.thomasrosenau.intellij-diff-plugin.test" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

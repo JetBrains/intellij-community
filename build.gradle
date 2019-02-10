@@ -62,7 +62,6 @@ task generateDiffLexer(type: GenerateLexer) {
     source = 'src/main/java/de/thomasrosenau/diffplugin/lexer/Diff.flex'
     targetDir = 'src/main/generated-java/de/thomasrosenau/diffplugin'
     targetClass = 'DiffLexer'
-    skeleton = 'idea-flex.skeleton'
     purgeOldFiles = true
 }
 

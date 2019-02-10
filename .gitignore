@@ -11,6 +11,7 @@ out/
 !.idea/compiler.xml
 !.idea/encodings.xml
 !.idea/externalDependencies.xml
+!.idea/misc.xml
 !.idea/vcs.xml
 !.idea/codeStyles
 !.idea/codeStyles/**
