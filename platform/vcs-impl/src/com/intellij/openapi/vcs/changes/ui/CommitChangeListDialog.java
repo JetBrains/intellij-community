@@ -71,7 +71,7 @@ import static java.lang.Math.min;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.*;
 
-public class CommitChangeListDialog extends DialogWrapper implements CheckinProjectPanel, SingleChangeListCommitWorkflowUi, DataProvider {
+public class CommitChangeListDialog extends DialogWrapper implements CheckinProjectPanel, SingleChangeListCommitWorkflowUi {
   private static final Logger LOG = getInstance(CommitChangeListDialog.class);
 
   public static final String DIALOG_TITLE = message("commit.dialog.title");
@@ -94,6 +94,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @Nullable private final CommitResultHandler myResultHandler;
   @NotNull private final EventDispatcher<CommitExecutorListener> myExecutorEventDispatcher =
     EventDispatcher.create(CommitExecutorListener.class);
+  @NotNull private final List<DataProvider> myDataProviders = newArrayList();
 
   @NotNull private final Set<? extends AbstractVcs<?>> myAffectedVcses;
   @NotNull private final List<? extends CommitExecutor> myExecutors;
@@ -553,7 +554,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     });
   }
 
-  public void execute(@NotNull CommitExecutor commitExecutor) {
+  void execute(@NotNull CommitExecutor commitExecutor) {
     CommitSession session = commitExecutor.createCommitSession();
     if (session == CommitSession.VCS_COMMIT) {
       executeDefaultCommitSession(commitExecutor);
@@ -843,11 +844,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   @NotNull
-  public List<? extends CommitExecutor> getExecutors() {
-    return myExecutors;
-  }
-
-  @NotNull
   @Override
   public Collection<VirtualFile> getRoots() {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
@@ -996,10 +992,18 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @Nullable
   @Override
   public Object getData(@NotNull String dataId) {
-    if (Refreshable.PANEL_KEY.is(dataId)) {
-      return this;
-    }
-    return myBrowser.getData(dataId);
+    if (Refreshable.PANEL_KEY.is(dataId)) return this;
+
+    return StreamEx.of(myDataProviders)
+      .map(provider -> provider.getData(dataId))
+      .nonNull()
+      .findFirst()
+      .orElseGet(() -> myBrowser.getData(dataId));
+  }
+
+  @Override
+  public void addDataProvider(@NotNull DataProvider provider) {
+    myDataProviders.add(provider);
   }
 
   @Override
