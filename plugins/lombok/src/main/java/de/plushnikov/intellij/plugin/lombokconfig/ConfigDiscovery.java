@@ -18,9 +18,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ConfigDiscovery {
   private final FileBasedIndex fileBasedIndex;
+  private final Map<String, String> easyCache;
 
   public static ConfigDiscovery getInstance() {
     return ServiceManager.getService(ConfigDiscovery.class);
@@ -28,13 +31,19 @@ public class ConfigDiscovery {
 
   public ConfigDiscovery(FileBasedIndex fileBasedIndex) {
     this.fileBasedIndex = fileBasedIndex;
+    easyCache = new ConcurrentHashMap<>();
+  }
+
+  void resetEasyCache() {
+    easyCache.clear();
   }
 
   @NotNull
   public String getStringLombokConfigProperty(@NotNull ConfigKey configKey, @NotNull PsiClass psiClass) {
     final String canonicalPath = calculateCanonicalPath(psiClass);
     if (null != canonicalPath) {
-      return discoverProperty(configKey, canonicalPath, psiClass.getProject());
+      return easyCache.computeIfAbsent(configKey.ordinal() + canonicalPath,
+        k -> discoverProperty(configKey, canonicalPath, psiClass.getProject()));
     } else {
       return configKey.getConfigDefaultValue();
     }

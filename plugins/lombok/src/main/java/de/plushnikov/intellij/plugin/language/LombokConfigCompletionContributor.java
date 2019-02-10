@@ -27,9 +27,15 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
 
   public LombokConfigCompletionContributor() {
     final Collection<String> booleanOptions = new HashSet<>(Arrays.asList(
-      "config.stopBubbling", "lombok.accessors.chain", "lombok.accessors.fluent",
-      "lombok.anyConstructor.suppressConstructorProperties", "lombok.equalsAndHashCode.doNotUseGetters", "lombok.getter.noIsPrefix",
-      "lombok.log.fieldIsStatic", "lombok.toString.doNotUseGetters", "lombok.toString.includeFieldNames",
+      ConfigKey.CONFIG_STOP_BUBBLING.getConfigKey(),
+      ConfigKey.ACCESSORS_CHAIN.getConfigKey(), ConfigKey.ACCESSORS_FLUENT.getConfigKey(),
+      ConfigKey.ANYCONSTRUCTOR_SUPPRESS_CONSTRUCTOR_PROPERTIES.getConfigKey(),
+      ConfigKey.EQUALSANDHASHCODE_DO_NOT_USE_GETTERS.getConfigKey(),
+      ConfigKey.GETTER_NO_IS_PREFIX.getConfigKey(),
+      ConfigKey.LOG_FIELD_IS_STATIC.getConfigKey(),
+      ConfigKey.TOSTRING_DO_NOT_USE_GETTERS.getConfigKey(),
+      ConfigKey.TOSTRING_INCLUDE_FIELD_NAMES.getConfigKey(),
+      ConfigKey.FIELDDEFAULTS_FINAL.getConfigKey(), ConfigKey.FIELDDEFAULTS_PRIVATE.getConfigKey(),
       ConfigKey.NO_ARGS_CONSTRUCTOR_EXTRA_PRIVATE.getConfigKey()));
 
     final Collection<String> flagUsageOptions = new HashSet<>(Arrays.asList(

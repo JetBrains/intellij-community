@@ -48,11 +48,11 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     compareFiles(loadBeforeLombokFile(testName), loadAfterDeLombokFile(testName));
   }
 
-  protected PsiJavaFile loadBeforeLombokFile(String testName) {
+  private PsiJavaFile loadBeforeLombokFile(String testName) {
     return getPsiJavaFile(testName, "before");
   }
 
-  protected PsiJavaFile loadAfterDeLombokFile(String testName) {
+  private PsiJavaFile loadAfterDeLombokFile(String testName) {
     return getPsiJavaFile(testName, "after");
   }
 
