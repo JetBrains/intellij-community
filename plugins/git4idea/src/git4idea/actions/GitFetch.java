@@ -7,11 +7,18 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
+import git4idea.commands.Git;
+import git4idea.stash.GitShelveChangesSaver;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+
 import static git4idea.GitUtil.getRepositories;
-import static git4idea.fetch.GitFetchSupport.fetchSupport;
+import static java.util.Arrays.asList;
 
 public class GitFetch extends DumbAwareAction {
 
@@ -34,7 +41,14 @@ public class GitFetch extends DumbAwareAction {
     GitVcs.runInBackground(new Task.Backgroundable(project, "Fetching...", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        fetchSupport(project).fetchAllRemotes(getRepositories(project)).showNotification();
+        Collection<VirtualFile> roots = asList(ProjectLevelVcsManager.getInstance(project).getAllVersionedRoots());
+        try {
+          new GitShelveChangesSaver(project, Git.getInstance(), indicator, myTitle).saveLocalChanges(roots);
+        }
+        catch (VcsException ex) {
+          ex.printStackTrace();
+        }
+        //fetchSupport(project).fetchAllRemotes(getRepositories(project)).showNotification();
       }
     });
   }
