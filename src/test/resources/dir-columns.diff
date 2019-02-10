@@ -1,0 +1,7 @@
+diff -y y/a z/a
+foo								foo
+bar							      |	qux
+baz								baz
+							      >	hello
+world								world
+end							      <

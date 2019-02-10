@@ -1,0 +1,82 @@
+<component name="CopyrightManager">
+  <settings default="Apache 2.0">
+    <LanguageOptions name="ActionScript">
+      <option name="fileTypeOverride" value="3" />
+      <option name="addBlankAfter" value="false" />
+      <option name="separateBefore" value="true" />
+      <option name="prefixLines" value="false" />
+      <option name="lenBefore" value="1" />
+      <option name="filler" value="!" />
+    </LanguageOptions>
+    <LanguageOptions name="CSS">
+      <option name="fileTypeOverride" value="3" />
+      <option name="addBlankAfter" value="false" />
+      <option name="separateBefore" value="true" />
+      <option name="prefixLines" value="false" />
+      <option name="lenBefore" value="1" />
+      <option name="filler" value="!" />
+    </LanguageOptions>
+    <LanguageOptions name="ECMAScript 6">
+      <option name="fileTypeOverride" value="3" />
+      <option name="addBlankAfter" value="false" />
+      <option name="separateBefore" value="true" />
+      <option name="prefixLines" value="false" />
+      <option name="lenBefore" value="1" />
+      <option name="filler" value="!" />
+    </LanguageOptions>
+    <LanguageOptions name="JAVA" />
+    <LanguageOptions name="JSX Harmony">
+      <option name="fileTypeOverride" value="3" />
+      <option name="addBlankAfter" value="false" />
+      <option name="separateBefore" value="true" />
+      <option name="prefixLines" value="false" />
+      <option name="lenBefore" value="1" />
+      <option name="filler" value="!" />
+    </LanguageOptions>
+    <LanguageOptions name="JavaScript">
+      <option name="fileTypeOverride" value="3" />
+      <option name="addBlankAfter" value="false" />
+      <option name="separateBefore" value="true" />
+      <option name="prefixLines" value="false" />
+      <option name="lenBefore" value="1" />
+      <option name="filler" value="!" />
+    </LanguageOptions>
+    <LanguageOptions name="PostCSS">
+      <option name="fileTypeOverride" value="3" />
+      <option name="addBlankAfter" value="false" />
+      <option name="separateBefore" value="true" />
+      <option name="prefixLines" value="false" />
+      <option name="lenBefore" value="1" />
+      <option name="filler" value="!" />
+    </LanguageOptions>
+    <LanguageOptions name="SCSS">
+      <option name="fileTypeOverride" value="3" />
+      <option name="addBlankAfter" value="false" />
+      <option name="separateBefore" value="true" />
+      <option name="prefixLines" value="false" />
+      <option name="lenBefore" value="1" />
+      <option name="filler" value="!" />
+    </LanguageOptions>
+    <LanguageOptions name="TypeScript">
+      <option name="fileTypeOverride" value="3" />
+      <option name="addBlankAfter" value="false" />
+      <option name="separateBefore" value="true" />
+      <option name="prefixLines" value="false" />
+      <option name="lenBefore" value="1" />
+      <option name="filler" value="!" />
+    </LanguageOptions>
+    <LanguageOptions name="TypeScript JSX">
+      <option name="fileTypeOverride" value="3" />
+      <option name="addBlankAfter" value="false" />
+      <option name="separateBefore" value="true" />
+      <option name="prefixLines" value="false" />
+      <option name="lenBefore" value="1" />
+      <option name="filler" value="!" />
+    </LanguageOptions>
+    <LanguageOptions name="__TEMPLATE__">
+      <option name="prefixLines" value="false" />
+      <option name="lenBefore" value="1" />
+      <option name="filler" value="!" />
+    </LanguageOptions>
+  </settings>
+</component>

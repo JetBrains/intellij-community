@@ -1,0 +1,6 @@
+foo								foo
+bar							      |	qux
+baz								baz
+							      >	hello
+world								world
+end							      <

@@ -1,0 +1,40 @@
+<!--
+  Copyright 2019 Thomas Rosenau
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+  -->
+
+<idea-plugin>
+  <id>de.thomasrosenau.diffplugin</id>
+  <version>0.0.1</version>
+  <name>Diff / Patch File Support</name>
+  <vendor email="thomasr@fantasymail.de" url="https://github.com/ThomasR/">Thomas Rosenau</vendor>
+
+  <description><![CDATA[
+    <p>Syntax highlighting for .diff files and .patch files.</p>
+    <p>Supports the common formats: normal, contextual, unified.</p>
+    <p>Does not support the formats: side-by-side, ed, RCS.</p>
+    <p>Icons by <a href="https://www.iconfinder.com/korawan_m">BomSymbols</a>.</p>
+    ]]></description>
+
+  <depends>com.intellij.modules.lang</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileTypeFactory implementation="de.thomasrosenau.diffplugin.DiffFileTypeFactory" />
+    <lang.parserDefinition language="Diff"
+        implementationClass="de.thomasrosenau.diffplugin.parser.DiffParserDefinition" />
+    <lang.syntaxHighlighterFactory language="Diff"
+        implementationClass="de.thomasrosenau.diffplugin.highlighter.DiffSyntaxHighlighterFactory" />
+  </extensions>
+
+</idea-plugin>
