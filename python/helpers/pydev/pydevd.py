@@ -1099,7 +1099,8 @@ class PyDB:
             while not self.ready_to_run:
                 time.sleep(0.1)  # busy wait until we receive run command
 
-            if self.break_on_caught_exceptions or (self.plugin and self.plugin.has_exception_breaks()) or self.signature_factory:
+            if self.break_on_caught_exceptions or self.has_plugin_line_breaks or self.has_plugin_exception_breaks \
+                    or self.signature_factory:
                 # disable frame evaluation if there are exception breakpoints with 'On raise' activation policy
                 # or if there are plugin exception breakpoints or if collecting run-time types is enabled
                 self.frame_eval_func = None
