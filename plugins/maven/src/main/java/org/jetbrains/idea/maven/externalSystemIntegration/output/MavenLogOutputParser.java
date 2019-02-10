@@ -84,9 +84,10 @@ public class MavenLogOutputParser implements BuildOutputParser {
   private static Pair<LogMessageType, String> nextLine(String line) {
     if (line == null) {
       return null;
+
     }
-    LogMessageType type = LogMessageType.determine(line);
     line = clearProgressCarriageReturns(line);
+    LogMessageType type = LogMessageType.determine(line);
     return Pair.create(type, clearLine(type, line));
   }
 
