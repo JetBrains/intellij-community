@@ -23,12 +23,9 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Pass;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.tabs.JBTabsPosition;
+import com.intellij.ui.tabs.JBTabPainter;
 import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.UiDecorator;
-import com.intellij.ui.tabs.impl.table.TableLayout;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.Centerizer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -42,7 +39,6 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
 
 public class TabLabel extends JPanel implements Accessible {
   // If this System property is set to true 'close' button would be shown on the left of text (it's on the right by default)
@@ -57,9 +53,6 @@ public class TabLabel extends JPanel implements Accessible {
 
   private final Wrapper myLabelPlaceholder = new Wrapper(false);
   protected final JBTabsImpl myTabs;
-
-  private BufferedImage myInactiveStateImage;
-  private Rectangle myLastPaintedInactiveImageBounds;
 
   public TabLabel(JBTabsImpl tabs, final TabInfo info) {
     super(false);
@@ -183,32 +176,6 @@ public class TabLabel extends JPanel implements Accessible {
       }
 
       @Override
-      protected void doPaint(Graphics2D g) {
-        Rectangle clip = getVisibleRect();
-        if (getPreferredSize().width <= clip.width + 2) {
-          super.doPaint(g);
-          return;
-        }
-        int dimSize = 10;
-        int dimStep = 2;
-        Composite oldComposite = g.getComposite();
-        Shape oldClip = g.getClip();
-        try {
-          g.setClip(clip.x, clip.y, Math.max(0, clip.width - dimSize), clip.height);
-          super.doPaint(g);
-
-          for (int x = clip.x + clip.width - dimSize; x < clip.x + clip.width; x+=dimStep) {
-            g.setClip(x, clip.y, dimStep, clip.height);
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1 - ((float)x - (clip.x + clip.width - dimSize)) / dimSize));
-            super.doPaint(g);
-          }
-        } finally {
-          g.setComposite(oldComposite);
-          g.setClip(oldClip);
-        }
-      }
-
-      @Override
       protected Color getActiveTextColor(Color attributesColor) {
         return myTabs.getSelectedInfo() == myInfo && (UIUtil.getLabelForeground().equals(attributesColor) || attributesColor == null) ?
           JBColor.namedColor("EditorTabs.selectedForeground", UIUtil.getLabelForeground()) : super.getActiveTextColor(attributesColor);
@@ -257,8 +224,7 @@ public class TabLabel extends JPanel implements Accessible {
 
     myCentered = toCenter;
   }
-  
-  
+
 
   public void paintOffscreen(Graphics g) {
     synchronized (getTreeLock()) {
@@ -270,107 +236,20 @@ public class TabLabel extends JPanel implements Accessible {
   @Override
   public void paint(final Graphics g) {
     if (myTabs.isDropTarget(myInfo)) return;
-
-    if (myTabs.getSelectedInfo() != myInfo) {
-      doPaint(g);
-    }
-  }
-
-  public void paintImage(Graphics g) {
-    final Rectangle b = getBounds();
-    final Graphics lG = g.create(b.x, b.y, b.width, b.height);
-    try {
-      lG.setColor(Color.red);
-      doPaint(lG);
-    }
-    finally {
-      lG.dispose();
-    }
-  }
-
-  public void doTranslate(PairConsumer<? super Integer, ? super Integer> consumer) {
-    final JBTabsPosition pos = myTabs.getTabsPosition();
-
-    int dX = 0;
-    int dXs = 0;
-    int dY = 0;
-    int dYs = 0;
-    int selected = getSelectedOffset();
-    int plain = getNonSelectedOffset();
-
-    switch (pos) {
-      case bottom:
-        dY = -plain;
-        dYs = -selected;
-        break;
-      case left:
-        dX = plain;
-        dXs = selected;
-        break;
-      case right:
-        dX = -plain;
-        dXs = -selected;
-        break;
-      case top:
-        dY = plain;
-        dYs = selected;
-        break;
-    }
-
-    if (!myTabs.isDropTarget(myInfo)) {
-      if (myTabs.getSelectedInfo() != myInfo) {
-        consumer.consume(dX, dY);
-      }
-      else {
-        consumer.consume(dXs, dYs);
-      }
-    }
+    doPaint(g);
   }
 
   private void doPaint(final Graphics g) {
-    doTranslate((x, y) -> g.translate(x, y));
-
-    final Composite oldComposite = ((Graphics2D)g).getComposite();
-    //if (myTabs instanceof JBEditorTabs && !myTabs.isSingleRow() && myTabs.getSelectedInfo() != myInfo) {
-    //  ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.9f));
-    //}
     super.paint(g);
-    ((Graphics2D)g).setComposite(oldComposite);
-
-    doTranslate((x2, y2) -> g.translate(-x2, -y2));
-  }
-
-  protected int getNonSelectedOffset() {
-    if (myTabs.isEditorTabs() && (myTabs.isSingleRow() || ((TableLayout)myTabs.getEffectiveLayout()).isLastRow(getInfo()))) {
-      return -myTabs.getActiveTabUnderlineHeight() / 2 + 1;
-    }
-    return 1;
-  }
-
-  protected int getSelectedOffset() {
-    return getNonSelectedOffset();
   }
 
   @Override
   public Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();
-    size.height += TabsUtil.TAB_VERTICAL_PADDING.get();
 
     if (myActionPanel != null && !myActionPanel.isVisible()) {
       final Dimension actionPanelSize = myActionPanel.getPreferredSize();
       size.width += actionPanelSize.width;
-    }
-
-    final JBTabsPosition pos = myTabs.getTabsPosition();
-    switch (pos) {
-      case top:
-      case bottom:
-        if (myTabs.hasUnderline()) size.height += myTabs.getActiveTabUnderlineHeight() - JBUI.scale(1);
-        break;
-      case left:
-      case right:
-        size.width += getSelectedOffset();
-        break;
     }
 
     return size;
@@ -430,8 +309,6 @@ public class TabLabel extends JPanel implements Accessible {
     if (d != null && d.equals(pref)) {
       return;
     }
-
-    setInactiveStateImage(null);
 
     getLabelComponent().invalidate();
 
@@ -606,6 +483,29 @@ public class TabLabel extends JPanel implements Accessible {
   }
 
   @Override
+  protected void paintComponent(Graphics g) {
+    super.paintComponent(g);
+
+    paintBackground(g);
+  }
+
+  private void paintBackground(Graphics g) {
+    JBTabPainter painter = myTabs.getTabPainter();
+    boolean isSelected = myInfo == myTabs.getSelectedInfo();
+
+    Rectangle rect = new Rectangle(0, 0, getWidth(), getHeight());
+
+    Graphics2D g2d = (Graphics2D)g;
+    if (isSelected) {
+      painter
+        .paintSelectedTab(myTabs.getPosition(), g2d, rect, myInfo.getTabColor(), myTabs.isActiveTabs(myInfo), myTabs.isHoveredTab(this));
+    }
+    else {
+      painter.paintTab(myTabs.getPosition(), g2d, rect, myTabs.getBorderThickness(), myInfo.getTabColor(), myTabs.isHoveredTab(this));
+    }
+  }
+
+  @Override
   protected void paintChildren(final Graphics g) {
     super.paintChildren(g);
 
@@ -661,27 +561,6 @@ public class TabLabel extends JPanel implements Accessible {
 
   public void setTabEnabled(boolean enabled) {
     getLabelComponent().setEnabled(enabled);
-  }
-
-
-  @Nullable
-  public BufferedImage getInactiveStateImage(Rectangle effectiveBounds) {
-    BufferedImage img = null;
-    if (myLastPaintedInactiveImageBounds != null && myLastPaintedInactiveImageBounds.getSize().equals(effectiveBounds.getSize())) {
-      img = myInactiveStateImage;
-    }
-    else {
-      setInactiveStateImage(null);
-    }
-    myLastPaintedInactiveImageBounds = effectiveBounds;
-    return img;
-  }
-
-  public void setInactiveStateImage(@Nullable BufferedImage img) {
-    if (myInactiveStateImage != null && img != myInactiveStateImage) {
-      myInactiveStateImage.flush();
-    }
-    myInactiveStateImage = img;
   }
 
   public JComponent getLabelComponent() {

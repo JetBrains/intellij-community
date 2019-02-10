@@ -34,11 +34,6 @@ public class JBTabsPaneImpl implements TabbedPane {
       public boolean supportsCompression() {
         return false;
       }
-
-      @Override
-      protected Color getEmptySpaceColor() {
-        return UIUtil.getBgFillColor(getParent());
-      }
     };
     myTabs.setFirstTabOffset(10);
 
