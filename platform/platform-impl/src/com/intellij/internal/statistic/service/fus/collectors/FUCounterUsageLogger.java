@@ -124,7 +124,7 @@ public class FUCounterUsageLogger {
   @Nullable
   private FeatureUsageGroup findRegisteredGroupById(@NotNull String groupId) {
     if (!myGroups.containsKey(groupId)) {
-      LOG.warn("Cannot record event because group is not registered.");
+      LOG.warn("Cannot record event because group '" + groupId + "' is not registered.");
       return null;
     }
     return myGroups.get(groupId);
