@@ -2,10 +2,13 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import java.util.*
 
-interface SingleChangeListCommitWorkflowUi {
+interface SingleChangeListCommitWorkflowUi : DataProvider {
+  fun addDataProvider(provider: DataProvider)
+
   fun addExecutorListener(listener: CommitExecutorListener, parent: Disposable)
 }
 
