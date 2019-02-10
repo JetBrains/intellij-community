@@ -5,10 +5,7 @@ import com.intellij.diff.util.Side;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsOutgoingChangesProvider;
-import com.intellij.openapi.vcs.VcsRoot;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.ex.PartialCommitHelper;
 import com.intellij.openapi.vcs.impl.PartialChangesUtil;
@@ -40,16 +37,17 @@ public class IdeaTextPatchBuilder {
     for (VcsRoot root : byRoots.keySet()) {
       final Collection<Change> rootChanges = byRoots.get(root);
 
-      if (root.getVcs() == null || root.getVcs().getOutgoingChangesProvider() == null) {
-        addConvertChanges(project, rootChanges, result, null, honorExcludedFromCommit);
+      AbstractVcs vcs = root.getVcs();
+      if (vcs == null || vcs.getOutgoingChangesProvider() == null) {
+        addConvertChanges(project, rootChanges, result, null, null, honorExcludedFromCommit);
       }
       else {
-        final VcsOutgoingChangesProvider<?> provider = root.getVcs().getOutgoingChangesProvider();
+        final VcsOutgoingChangesProvider<?> provider = vcs.getOutgoingChangesProvider();
         final Collection<Change> basedOnLocal = provider.filterLocalChangesBasedOnLocalCommits(rootChanges, root.getPath());
         rootChanges.removeAll(basedOnLocal);
 
-        addConvertChanges(project, rootChanges, result, null, honorExcludedFromCommit);
-        addConvertChanges(project, basedOnLocal, result, provider, honorExcludedFromCommit);
+        addConvertChanges(project, rootChanges, result, vcs, null, honorExcludedFromCommit);
+        addConvertChanges(project, basedOnLocal, result, vcs, provider, honorExcludedFromCommit);
       }
     }
     return result;
@@ -58,6 +56,7 @@ public class IdeaTextPatchBuilder {
   private static void addConvertChanges(@NotNull Project project,
                                         @NotNull Collection<? extends Change> changes,
                                         @NotNull List<? super BeforeAfter<AirContentRevision>> result,
+                                        @Nullable AbstractVcs vcs,
                                         @Nullable VcsOutgoingChangesProvider<?> provider,
                                         boolean honorExcludedFromCommit) {
     Collection<Change> otherChanges = PartialChangesUtil.processPartialChanges(project, changes, false, (partialChanges, tracker) -> {
@@ -69,14 +68,14 @@ public class IdeaTextPatchBuilder {
       PartialCommitHelper helper = tracker.handlePartialCommit(Side.LEFT, changelistIds, honorExcludedFromCommit);
       String actualText = helper.getContent();
 
-      result.add(new BeforeAfter<>(convertRevision(change.getBeforeRevision(), null, provider),
-                                   convertRevision(change.getAfterRevision(), actualText, provider)));
+      result.add(new BeforeAfter<>(convertRevision(change.getBeforeRevision(), null, vcs, provider),
+                                   convertRevision(change.getAfterRevision(), actualText, vcs, provider)));
       return true;
     });
 
     for (Change change : otherChanges) {
-      result.add(new BeforeAfter<>(convertRevision(change.getBeforeRevision(), null, provider),
-                                   convertRevision(change.getAfterRevision(), null, provider)));
+      result.add(new BeforeAfter<>(convertRevision(change.getBeforeRevision(), null, vcs, provider),
+                                   convertRevision(change.getAfterRevision(), null, vcs, provider)));
     }
   }
 
@@ -111,15 +110,16 @@ public class IdeaTextPatchBuilder {
 
   @Nullable
   private static AirContentRevision convertRevision(@Nullable ContentRevision cr) {
-    return convertRevision(cr, null, null);
+    return convertRevision(cr, null, null, null);
   }
 
   @Nullable
   private static AirContentRevision convertRevision(@Nullable ContentRevision cr,
                                                     @Nullable String actualTextContent,
+                                                    @Nullable AbstractVcs vcs,
                                                     @Nullable VcsOutgoingChangesProvider provider) {
     if (cr == null) return null;
-    if (provider != null) {
+    if (provider != null && vcs != null && vcs.getType() != VcsType.distributed) {
       final Date date = provider.getRevisionDate(cr.getRevisionNumber(), cr.getFile());
       final Long ts = date == null ? null : date.getTime();
       return convertRevisionToAir(cr, actualTextContent, ts);
