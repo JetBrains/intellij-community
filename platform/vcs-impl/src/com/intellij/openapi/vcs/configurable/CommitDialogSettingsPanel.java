@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.Disposable;
@@ -12,7 +12,7 @@ import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.vcs.commit.CommitMessageInspectionsPanel;
+import com.intellij.vcs.commit.message.inspections.CommitMessageInspectionsPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -31,7 +31,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import com.intellij.vcs.commit.CommitMessageInspectionProfile;
+import com.intellij.vcs.commit.message.inspections.CommitMessageInspectionProfile;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -46,7 +46,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
-import static com.intellij.vcs.commit.CommitMessageInspectionProfile.getBodyRightMargin;
+import static com.intellij.vcs.commit.message.inspections.CommitMessageInspectionProfile.getBodyRightMargin;
 import static javax.swing.BorderFactory.createEmptyBorder;
 
 public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageI {

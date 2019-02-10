@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions
 
 import com.intellij.ide.TextCopyProvider
@@ -28,7 +28,7 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil.applySpeedSearchHighlighting
 import com.intellij.util.ObjectUtils.sentinel
 import com.intellij.util.containers.nullize
 import com.intellij.util.ui.JBUI.scale
-import com.intellij.vcs.commit.CommitMessageInspectionProfile.getSubjectRightMargin
+import com.intellij.vcs.commit.message.inspections.CommitMessageInspectionProfile.getSubjectRightMargin
 import java.awt.Point
 import javax.swing.JList
 import javax.swing.ListSelectionModel.SINGLE_SELECTION
