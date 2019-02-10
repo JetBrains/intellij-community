@@ -25,6 +25,7 @@ import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProject
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTrackerImpl
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsListLoaderImpl
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsRepositoryDataLoaderImpl
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsMetadataServiceImpl
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityServiceImpl
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateServiceImpl
@@ -65,12 +66,15 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
                                           private val account: GithubAccount)
     : OnePixelSplitter("Github.PullRequests.Component", 0.33f), Disposable, DataProvider {
 
+    private val repoDataLoader = GithubPullRequestsRepositoryDataLoaderImpl(progressManager, requestExecutor,
+                                                                            account.server, repoDetails.fullPath)
     private val dataLoader = GithubPullRequestsDataLoader(project, progressManager, git, requestExecutor, repository, remote,
                                                           account.server, repoDetails.fullPath)
+
     private val securityService = GithubPullRequestsSecurityServiceImpl(sharedProjectSettings, accountDetails, repoDetails)
     private val busyStateTracker = GithubPullRequestsBusyStateTrackerImpl()
-
-    private val metadataService = GithubPullRequestsMetadataServiceImpl(project, progressManager, dataLoader, busyStateTracker,
+    private val metadataService = GithubPullRequestsMetadataServiceImpl(project, progressManager,
+                                                                        repoDataLoader, dataLoader, busyStateTracker,
                                                                         requestExecutor,
                                                                         avatarIconsProviderFactory, account.server, repoDetails.fullPath)
     private val stateService = GithubPullRequestsStateServiceImpl(project, progressManager, dataLoader, busyStateTracker, requestExecutor,
@@ -147,6 +151,7 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
       Disposer.dispose(changes)
       Disposer.dispose(details)
 
+      Disposer.dispose(repoDataLoader)
       Disposer.dispose(listLoader)
       Disposer.dispose(dataLoader)
     }
