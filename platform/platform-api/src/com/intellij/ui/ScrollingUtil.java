@@ -567,7 +567,11 @@ public class ScrollingUtil {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(SpeedSearchSupply.getSupply(myComponent) == null && !isEmpty(myComponent));
+      e.getPresentation().setEnabled(isEnabled());
+    }
+
+    protected boolean isEnabled() {
+      return SpeedSearchSupply.getSupply(myComponent) == null && !isEmpty(myComponent);
     }
   }
 
@@ -626,8 +630,8 @@ public class ScrollingUtil {
       }
 
       @Override
-      public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabled(!isMultiline(target));
+      protected boolean isEnabled() {
+        return super.isEnabled() && !isMultiline(target);
       }
     }.registerCustomShortcutSet(CommonShortcuts.getMoveDown(), target);
     new MyScrollingAction(table) {
@@ -637,8 +641,8 @@ public class ScrollingUtil {
       }
 
       @Override
-      public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabled(!isMultiline(target));
+      protected boolean isEnabled() {
+        return super.isEnabled() && !isMultiline(target);
       }
     }.registerCustomShortcutSet(CommonShortcuts.getMoveUp(), target);
     new MyScrollingAction(table) {
