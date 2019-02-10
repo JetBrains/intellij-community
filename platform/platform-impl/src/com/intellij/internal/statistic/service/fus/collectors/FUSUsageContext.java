@@ -11,39 +11,9 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * <p>FUSUsageContext represents additional data for submitted groups (UsageCollector) or usages (metrics).</p>
- *
- * <h3>Example</h3>
- *
- * <p>My usage collector collects actions invocations. <i>"my.foo.action"</i> could be invoked from one of the following contexts:
- * "main.menu", "context.menu", "my.dialog", "all-actions-run".</p>
- *
- * <p>If I write {@code MyCollector.trigger("my.foo.action")}, I'll know how many times the action was invoked (e.g. 239)</p>
- *
- * <p>If I write {@code MyCollector.trigger("my.foo.action", SystemInfo.OS_NAME, "main.menu")}, I'll get the same
- * total count of action invocations (239), but I'll also know that the action was activated 230 times on macOS and 9 on Windows,
- * or that it was called 3 times from "main.menu", 235 times from "my.dialog" and only once from "context.menu".
- * <br/>
- * Submitted data format is:
- * <pre>
- * {
- *   "id": "my.collector",
- *   "metrics": [
- *     {
- *       "id": "my.foo.action",
- *       "value": 125,
- *       "context": { "data_1": "Mac OS X", "data_2": "main.menu"}
- *     },
- *     {
- *       "id": "my.foo.action",
- *       "value": 1,
- *       "context": { "data_1": "Mac OS X", "data_2": "context.menu"}
- *     }
- *   ]
- * }
- * </pre>
- * </p>
+ * Use {@link com.intellij.internal.statistic.eventLog.FeatureUsageData} instead because it supports named data.
  */
+@Deprecated
 public class FUSUsageContext {
   public static final FUSUsageContext OS_CONTEXT = create(getOSNameContextData());
 
