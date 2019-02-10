@@ -6,7 +6,6 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -78,10 +77,7 @@ public class RecentLocationManager implements ProjectComponent {
                                             editorManagerEx.getCurrentWindow());
 
         int offset = editor.getCaretModel().getOffset();
-        PlaceInfoPersistentItem placeInfoPersistentItem =
-          new PlaceInfoPersistentItem(editor.getDocument().createRangeMarker(offset, offset), editor.getColorsScheme());
-
-        myRecentItems.put(placeInfo, placeInfoPersistentItem);
+        myRecentItems.put(placeInfo, new PlaceInfoPersistentItem(editor.getDocument().createRangeMarker(offset, offset)));
       }
     });
   }
@@ -136,8 +132,7 @@ public class RecentLocationManager implements ProjectComponent {
         }
 
         int offset = editor.logicalPositionToOffset(logicalPosition);
-        getItems(isChanged).put(changePlace, new PlaceInfoPersistentItem(editor.getDocument().createRangeMarker(offset, offset),
-                                                                         editor.getColorsScheme()));
+        getItems(isChanged).put(changePlace, new PlaceInfoPersistentItem(editor.getDocument().createRangeMarker(offset, offset)));
       }
 
       @Override
@@ -219,16 +214,9 @@ public class RecentLocationManager implements ProjectComponent {
 
   private static class PlaceInfoPersistentItem {
     @NotNull private final RangeMarker myPositionOffsetMarker;
-    @NotNull private final EditorColorsScheme myScheme;
 
-    PlaceInfoPersistentItem(@NotNull RangeMarker positionOffsetMarker, @NotNull EditorColorsScheme scheme) {
+    PlaceInfoPersistentItem(@NotNull RangeMarker positionOffsetMarker) {
       myPositionOffsetMarker = positionOffsetMarker;
-      myScheme = scheme;
-    }
-
-    @NotNull
-    private EditorColorsScheme getScheme() {
-      return myScheme;
     }
 
     @NotNull
