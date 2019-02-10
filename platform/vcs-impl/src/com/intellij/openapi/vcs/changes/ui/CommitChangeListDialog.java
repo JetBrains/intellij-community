@@ -6,6 +6,7 @@ import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.ide.HelpIdProvider;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -35,6 +36,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SplitterWithSecondHideable;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBUI;
@@ -69,7 +71,7 @@ import static java.lang.Math.min;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.*;
 
-public class CommitChangeListDialog extends DialogWrapper implements CheckinProjectPanel, DataProvider {
+public class CommitChangeListDialog extends DialogWrapper implements CheckinProjectPanel, SingleChangeListCommitWorkflowUi, DataProvider {
   private static final Logger LOG = getInstance(CommitChangeListDialog.class);
 
   public static final String DIALOG_TITLE = message("commit.dialog.title");
@@ -90,6 +92,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private final boolean myShowVcsCommit;
   @NotNull private final DialogCommitWorkflow myWorkflow;
   @Nullable private final CommitResultHandler myResultHandler;
+  @NotNull private final EventDispatcher<CommitExecutorListener> myExecutorEventDispatcher =
+    EventDispatcher.create(CommitExecutorListener.class);
 
   @NotNull private final Set<? extends AbstractVcs<?>> myAffectedVcses;
   @NotNull private final List<? extends CommitExecutor> myExecutors;
@@ -487,7 +491,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      executeDefaultCommitSession(null);
+      myExecutorEventDispatcher.getMulticaster().executorCalled(null);
     }
 
     @NotNull
@@ -526,7 +530,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return result.toArray(new Action[0]);
   }
 
-  private void executeDefaultCommitSession(@Nullable CommitExecutor executor) {
+  void executeDefaultCommitSession(@Nullable CommitExecutor executor) {
     if (!myWorkflow.prepareCommit(myBrowser.getIncludedUnversionedFiles(), myBrowser)) return;
     if (!saveDialogState()) return;
     saveComments(true);
@@ -997,6 +1001,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return myBrowser.getData(dataId);
   }
 
+  @Override
+  public void addExecutorListener(@NotNull CommitExecutorListener listener, @NotNull Disposable parent) {
+    myExecutorEventDispatcher.addListener(listener, parent);
+  }
+
   @NotNull
   private CommitContext getCommitContext() {
     return myWorkflow.getCommitContext();
@@ -1062,7 +1071,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     @Override
     public void actionPerformed(ActionEvent e) {
       if (myCommitExecutor != null) {
-        execute(myCommitExecutor);
+        myExecutorEventDispatcher.getMulticaster().executorCalled(myCommitExecutor);
       }
     }
 

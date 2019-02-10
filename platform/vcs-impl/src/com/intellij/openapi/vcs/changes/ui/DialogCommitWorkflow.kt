@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Messages.getWarningIcon
 import com.intellij.openapi.ui.Messages.showYesNoDialog
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
@@ -49,6 +50,9 @@ open class DialogCommitWorkflow(val project: Project,
 
   fun showDialog(): Boolean {
     val dialog = CommitChangeListDialog(this)
+    val handler = SingleChangeListCommitWorkflowHandler(dialog)
+
+    Disposer.register(dialog.disposable, handler)
     initDialog(dialog)
     dialog.init()
     return dialog.showAndGet()
