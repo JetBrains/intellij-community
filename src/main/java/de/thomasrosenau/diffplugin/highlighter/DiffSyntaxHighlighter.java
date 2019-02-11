@@ -60,23 +60,23 @@ public class DiffSyntaxHighlighter extends SyntaxHighlighterBase {
     @Override
     public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
         if (tokenType.equals(DiffTypes.COMMAND)) {
-            return new TextAttributesKey[] {COMMAND};
+            return pack(COMMAND);
         } else if (tokenType.equals(DiffTypes.FILE)) {
-            return new TextAttributesKey[] {FILE};
+            return pack(FILE);
         } else if (tokenType.equals(DiffTypes.ADDED)) {
-            return new TextAttributesKey[] {ADDED};
+            return pack(ADDED);
         } else if (tokenType.equals(DiffTypes.DELETED)) {
-            return new TextAttributesKey[] {DELETED};
+            return pack(DELETED);
         } else if (tokenType.equals(DiffTypes.MODIFIED)) {
-            return new TextAttributesKey[] {MODIFIED};
+            return pack(MODIFIED);
         } else if (tokenType.equals(DiffTypes.HUNK_HEAD)) {
-            return new TextAttributesKey[] {HUNK_HEAD};
+            return pack(HUNK_HEAD);
         } else if (tokenType.equals(DiffTypes.SEPARATOR)) {
-            return new TextAttributesKey[] {SEPARATOR};
+            return pack(SEPARATOR);
         } else if (tokenType.equals(DiffTypes.EOLHINT)) {
-            return new TextAttributesKey[] {EOLHINT};
+            return pack(EOLHINT);
         } else {
-            return new TextAttributesKey[] {TEXT};
+            return pack(TEXT);
         }
     }
 }
