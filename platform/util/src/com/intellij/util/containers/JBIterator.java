@@ -228,22 +228,12 @@ public abstract class JBIterator<E> implements Iterator<E> {
 
   @NotNull
   public final JBIterable<Function<Object, Object>> getTransformations() {
-    return (JBIterable<Function<Object, Object>>)(JBIterable)operationsImpl().map(new Function<Op, Object>() {
-      @Override
-      public Object fun(Op op) {
-        return op.impl;
-      }
-    }).filter(Function.class);
+    return (JBIterable<Function<Object, Object>>)(JBIterable)operationsImpl().map(op -> op.impl).filter(Function.class);
   }
 
   @NotNull
   private JBIterable<Op> operationsImpl() {
-    return JBIterable.generate(myFirstOp, new Function<Op, Op>() {
-      @Override
-      public Op fun(Op op) {
-        return op.nextOp;
-      }
-    });
+    return JBIterable.generate(myFirstOp, op -> op.nextOp);
   }
 
   @NotNull

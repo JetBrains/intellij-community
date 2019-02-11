@@ -683,12 +683,7 @@ public class ContainerUtil extends ContainerUtilRt {
                                              @NotNull Comparator<? super T> comparator,
                                              boolean mergeEqualItems) {
     final List<T> result = new ArrayList<>(list1.size() + list2.size());
-    processSortedListsInOrder(list1, list2, comparator, mergeEqualItems, new Consumer<T>() {
-      @Override
-      public void consume(T t) {
-        result.add(t);
-      }
-    });
+    processSortedListsInOrder(list1, list2, comparator, mergeEqualItems, t -> result.add(t));
     return result;
   }
 
@@ -856,23 +851,13 @@ public class ContainerUtil extends ContainerUtilRt {
   @Nullable
   @Contract(pure=true)
   public static <T> T find(@NotNull Iterable<? extends T> iterable, @NotNull final T equalTo) {
-    return find(iterable, new Condition<T>() {
-      @Override
-      public boolean value(final T object) {
-        return equalTo == object || equalTo.equals(object);
-      }
-    });
+    return find(iterable, (Condition<T>)object -> equalTo == object || equalTo.equals(object));
   }
 
   @Nullable
   @Contract(pure=true)
   public static <T> T find(@NotNull Iterator<? extends T> iterator, @NotNull final T equalTo) {
-    return find(iterator, new Condition<T>() {
-      @Override
-      public boolean value(final T object) {
-        return equalTo == object || equalTo.equals(object);
-      }
-    });
+    return find(iterator, (Condition<T>)object -> equalTo == object || equalTo.equals(object));
   }
 
   @Nullable
@@ -1875,12 +1860,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T extends Comparable<? super T>> List<T> sorted(@NotNull Collection<? extends T> list) {
-    return sorted(list, new Comparator<T>() {
-      @Override
-      public int compare(T o1, T o2) {
-        return o1.compareTo(o2);
-      }
-    });
+    return sorted(list, (o1, o2) -> o1.compareTo(o2));
   }
 
   public static <T> void sort(@NotNull T[] a, @NotNull Comparator<? super T> comparator) {
@@ -2435,24 +2415,14 @@ public class ContainerUtil extends ContainerUtilRt {
   @Nullable
   @Contract(pure = true)
   public static <T, U extends T> U findLastInstance(@NotNull List<? extends T> list, @NotNull final Class<? extends U> clazz) {
-    int i = lastIndexOf(list, new Condition<T>() {
-      @Override
-      public boolean value(T t) {
-        return clazz.isInstance(t);
-      }
-    });
+    int i = lastIndexOf(list, (Condition<T>)t -> clazz.isInstance(t));
     //noinspection unchecked
     return i < 0 ? null : (U)list.get(i);
   }
 
   @Contract(pure = true)
   public static <T, U extends T> int lastIndexOfInstance(@NotNull List<? extends T> list, @NotNull final Class<U> clazz) {
-    return lastIndexOf(list, new Condition<T>() {
-      @Override
-      public boolean value(T t) {
-        return clazz.isInstance(t);
-      }
-    });
+    return lastIndexOf(list, (Condition<T>)t -> clazz.isInstance(t));
   }
 
   @NotNull

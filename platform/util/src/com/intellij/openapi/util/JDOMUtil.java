@@ -34,12 +34,7 @@ import java.util.List;
  */
 @SuppressWarnings("HardCodedStringLiteral")
 public class JDOMUtil {
-  private static final Condition<Attribute> NOT_EMPTY_VALUE_CONDITION = new Condition<Attribute>() {
-    @Override
-    public boolean value(Attribute attribute) {
-      return !StringUtil.isEmpty(attribute.getValue());
-    }
-  };
+  private static final Condition<Attribute> NOT_EMPTY_VALUE_CONDITION = attribute -> !StringUtil.isEmpty(attribute.getValue());
 
   private static final String XML_INPUT_FACTORY_KEY = "javax.xml.stream.XMLInputFactory";
   private static final String XML_INPUT_FACTORY_IMPL = "com.sun.xml.internal.stream.XMLInputFactoryImpl";

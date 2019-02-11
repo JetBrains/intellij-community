@@ -51,12 +51,7 @@ public class EnvironmentUtil {
     if (SystemInfo.isMac &&
         "unlocked".equals(System.getProperty("__idea.mac.env.lock")) &&
         SystemProperties.getBooleanProperty("idea.fix.mac.env", true)) {
-      ourEnvGetter = AppExecutorUtil.getAppExecutorService().submit(new Callable<Map<String, String>>() {
-        @Override
-        public Map<String, String> call() throws Exception {
-          return unmodifiableMap(setCharsetVar(getShellEnv()));
-        }
-      });
+      ourEnvGetter = AppExecutorUtil.getAppExecutorService().submit(() -> unmodifiableMap(setCharsetVar(getShellEnv())));
     }
     else {
       ourEnvGetter = new FixedFuture<>(getSystemEnv());

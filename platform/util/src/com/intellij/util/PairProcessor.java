@@ -20,17 +20,7 @@ package com.intellij.util;
  * @author Gregory.Shrago
  */
 public interface PairProcessor<S, T> {
-  PairProcessor TRUE = new PairProcessor() {
-    @Override
-    public boolean process(Object o, Object o1) {
-      return true;
-    }
-  };
-  PairProcessor FALSE = new PairProcessor() {
-    @Override
-    public boolean process(Object o, Object o1) {
-      return false;
-    }
-  };
+  PairProcessor TRUE = (o, o1) -> true;
+  PairProcessor FALSE = (o, o1) -> false;
   boolean process(S s, T t);
 }

@@ -73,14 +73,11 @@ public class CompressedAppendableFile {
     assert bufferSize <= MAX_PAGE_LENGTH; // length of compressed buffer size should be in short range
     file.getParentFile().mkdirs();
     
-    myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
-      @Override
-      public void run() {
-        dropCaches();
-        
-        synchronized (ourDecompressedCache) {
-          ourDecompressedCache.clear();
-        }
+    myLowMemoryWatcher = LowMemoryWatcher.register(() -> {
+      dropCaches();
+
+      synchronized (ourDecompressedCache) {
+        ourDecompressedCache.clear();
       }
     });
   }

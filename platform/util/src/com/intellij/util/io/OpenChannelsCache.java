@@ -84,15 +84,12 @@ public class OpenChannelsCache { // TODO: Will it make sense to have a backgroun
     if (descriptor != null) {
       assert !descriptor.isLocked();
 
-      AntivirusDetector.getInstance().execute(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            descriptor.getChannel().close();
-          }
-          catch (IOException e) {
-            throw new RuntimeException(e);
-          }
+      AntivirusDetector.getInstance().execute(() -> {
+        try {
+          descriptor.getChannel().close();
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
         }
       });
     }

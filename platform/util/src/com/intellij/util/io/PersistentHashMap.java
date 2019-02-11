@@ -120,12 +120,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     return myCanReEnumerate && size + POSITIVE_VALUE_SHIFT < Integer.MAX_VALUE;
   }
 
-  private final LowMemoryWatcher myAppendCacheFlusher = LowMemoryWatcher.register(new Runnable() {
-    @Override
-    public void run() {
-      dropMemoryCaches();
-    }
-  });
+  private final LowMemoryWatcher myAppendCacheFlusher = LowMemoryWatcher.register(() -> dropMemoryCaches());
 
   public PersistentHashMap(@NotNull final File file,
                            @NotNull KeyDescriptor<Key> keyDescriptor,
@@ -870,12 +865,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
   private static File[] getFilesInDirectoryWithNameStartingWith(@NotNull File fileFromDirectory, @NotNull final String baseFileName) {
     File parentFile = fileFromDirectory.getParentFile();
-    return parentFile != null ? parentFile.listFiles(new FileFilter() {
-      @Override
-      public boolean accept(final File pathname) {
-        return pathname.getName().startsWith(baseFileName);
-      }
-    }) : null;
+    return parentFile != null ? parentFile.listFiles(pathname -> pathname.getName().startsWith(baseFileName)) : null;
   }
 
   private void newCompact(@NotNull PersistentHashMapValueStorage newStorage) throws IOException {

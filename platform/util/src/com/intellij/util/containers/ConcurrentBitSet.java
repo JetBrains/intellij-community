@@ -80,12 +80,7 @@ public class ConcurrentBitSet {
    * @throws IndexOutOfBoundsException if the specified index is negative
    */
   public boolean flip(final int bitIndex) {
-    long prevWord = changeWord(bitIndex, new TLongFunction() {
-      @Override
-      public long execute(long word) {
-        return word ^ (1L << bitIndex);
-      }
-    });
+    long prevWord = changeWord(bitIndex, word -> word ^ (1L << bitIndex));
     return (prevWord & (1L << bitIndex)) == 0;
   }
 
@@ -98,12 +93,7 @@ public class ConcurrentBitSet {
    */
   public boolean set(final int bitIndex) {
     final long mask = 1L << bitIndex;
-    long prevWord = changeWord(bitIndex, new TLongFunction() {
-      @Override
-      public long execute(long word) {
-        return word | mask;
-      }
-    });
+    long prevWord = changeWord(bitIndex, word -> word | mask);
     return (prevWord & mask) != 0;
   }
 
@@ -149,12 +139,7 @@ public class ConcurrentBitSet {
    * @return previous value
    */
   public boolean clear(final int bitIndex) {
-    long prevWord = changeWord(bitIndex, new TLongFunction() {
-      @Override
-      public long execute(long word) {
-        return word & ~(1L << bitIndex);
-      }
-    });
+    long prevWord = changeWord(bitIndex, word -> word & ~(1L << bitIndex));
     return (prevWord & (1L << bitIndex)) != 0;
   }
 

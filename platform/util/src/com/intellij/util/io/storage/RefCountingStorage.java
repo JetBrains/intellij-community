@@ -148,12 +148,9 @@ public class RefCountingStorage extends AbstractStorage {
       if (myPendingWriteRequestsSize > MAX_PENDING_WRITE_SIZE) {
         zipAndWrite(bytes, record, fixedSize);
       } else {
-        myPendingWriteRequests.put(record, myPendingWriteRequestsExecutor.submit(new Callable<Object>() {
-          @Override
-          public Object call() throws IOException {
-            zipAndWrite(bytes, record, fixedSize);
-            return null;
-          }
+        myPendingWriteRequests.put(record, myPendingWriteRequestsExecutor.submit(() -> {
+          zipAndWrite(bytes, record, fixedSize);
+          return null;
         }));
       }
     }

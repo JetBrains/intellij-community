@@ -117,12 +117,7 @@ class WeakKeyIntValueHashMap<K> implements ObjectIntMap<K> {
   @NotNull
   @Override
   public Set<K> keySet() {
-    return new THashSet<>(ContainerUtil.map(myMap.keys(), new Function<Object, K>() {
-      @Override
-      public K fun(Object ref) {
-        return SoftReference.dereference((MyReference<K>)ref);
-      }
-    }));
+    return new THashSet<>(ContainerUtil.map(myMap.keys(), ref -> SoftReference.dereference((MyReference<K>)ref)));
   }
 
   @Override
@@ -168,12 +163,7 @@ class WeakKeyIntValueHashMap<K> implements ObjectIntMap<K> {
               }
             };
           }
-        }, new Condition<Entry<K>>() {
-          @Override
-          public boolean value(Entry<K> o) {
-            return o.getKey() != GCED;
-          }
-        });
+        }, o -> o.getKey() != GCED);
       }
     };
   }

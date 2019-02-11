@@ -176,33 +176,30 @@ public class UnixProcessManager {
                                          final ProcessInfo processInfo,
                                          final List<? super Integer> childrenPids) {
     final Ref<Boolean> ourPidFound = Ref.create(false);
-    processPSOutput(getPSCmd(false), new Processor<String>() {
-      @Override
-      public boolean process(String s) {
-        StringTokenizer st = new StringTokenizer(s, " ");
+    processPSOutput(getPSCmd(false), s -> {
+      StringTokenizer st = new StringTokenizer(s, " ");
 
-        int parent_pid = Integer.parseInt(st.nextToken());
-        int pid = Integer.parseInt(st.nextToken());
+      int parent_pid = Integer.parseInt(st.nextToken());
+      int pid = Integer.parseInt(st.nextToken());
 
-        processInfo.register(pid, parent_pid);
+      processInfo.register(pid, parent_pid);
 
-        if (parent_pid == process_pid) {
-          childrenPids.add(pid);
-        }
-
-        if (pid == our_pid) {
-          ourPidFound.set(true);
-        }
-        else if (pid == process_pid) {
-          if (parent_pid == our_pid || our_pid == -1) {
-            foundPid.set(pid);
-          }
-          else {
-            throw new IllegalStateException("Process (pid=" + process_pid + ") is not our child(our pid = " + our_pid + ")");
-          }
-        }
-        return false;
+      if (parent_pid == process_pid) {
+        childrenPids.add(pid);
       }
+
+      if (pid == our_pid) {
+        ourPidFound.set(true);
+      }
+      else if (pid == process_pid) {
+        if (parent_pid == our_pid || our_pid == -1) {
+          foundPid.set(pid);
+        }
+        else {
+          throw new IllegalStateException("Process (pid=" + process_pid + ") is not our child(our pid = " + our_pid + ")");
+        }
+      }
+      return false;
     });
     if (our_pid != -1 && !ourPidFound.get()) {
       throw new IllegalStateException("IDE pid is not found in ps list(" + our_pid + ")");

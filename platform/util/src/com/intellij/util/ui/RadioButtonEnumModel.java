@@ -40,12 +40,7 @@ public class RadioButtonEnumModel<E extends Enum<E>> {
   private RadioButtonEnumModel(Class<E> e, ButtonGroup group) {
 
     myGroup = group;
-    myModels = ContainerUtil.map(Collections.list(myGroup.getElements()), new Function<AbstractButton, ButtonModel>() {
-      @Override
-      public ButtonModel fun(AbstractButton abstractButton) {
-        return abstractButton.getModel();
-      }
-    });
+    myModels = ContainerUtil.map(Collections.list(myGroup.getElements()), abstractButton -> abstractButton.getModel());
     myEnums = Arrays.asList(e.getEnumConstants());
   }
 

@@ -38,40 +38,34 @@ public class ProcessWaitFor {
   }
 
   public ProcessWaitFor(@NotNull final Process process, @NotNull TaskExecutor executor, @NotNull final String presentableName) {
-    myWaitForThreadFuture = executor.executeTask(new Runnable() {
-      @Override
-      public void run() {
-        String threadName = StringUtil.isEmptyOrSpaces(presentableName) ? Thread.currentThread().getName() : presentableName;
-        ConcurrencyUtil.runUnderThreadName(threadName, new Runnable() {
-          @Override
-          public void run() {
-            int exitCode = 0;
+    myWaitForThreadFuture = executor.executeTask(() -> {
+      String threadName = StringUtil.isEmptyOrSpaces(presentableName) ? Thread.currentThread().getName() : presentableName;
+      ConcurrencyUtil.runUnderThreadName(threadName, () -> {
+        int exitCode = 0;
+        try {
+          while (!myDetached) {
             try {
-              while (!myDetached) {
-                try {
-                  exitCode = process.waitFor();
-                  break;
-                }
-                catch (InterruptedException e) {
-                  if (!myDetached) {
-                    LOG.debug(e);
-                  }
-                }
-              }
+              exitCode = process.waitFor();
+              break;
             }
-            finally {
+            catch (InterruptedException e) {
               if (!myDetached) {
-                try {
-                  myTerminationCallback.take().consume(exitCode);
-                }
-                catch (InterruptedException e) {
-                  LOG.info(e);
-                }
+                LOG.debug(e);
               }
             }
           }
-        });
-      }
+        }
+        finally {
+          if (!myDetached) {
+            try {
+              myTerminationCallback.take().consume(exitCode);
+            }
+            catch (InterruptedException e) {
+              LOG.info(e);
+            }
+          }
+        }
+      });
     });
   }
 

@@ -205,10 +205,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
    */
   @NotNull
   public static <T, V> ConcurrentMap<T, V> createWeakMap(@NotNull Function<? super T, ? extends V> compute) {
-    return createMap(compute, new Producer<ConcurrentMap<T, V>>() {
-      @Override
-      public ConcurrentMap<T, V> produce() {return ContainerUtil.createConcurrentWeakMap();}
-    });
+    return createMap(compute, () -> ContainerUtil.createConcurrentWeakMap());
   }
 
   /**

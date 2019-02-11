@@ -211,20 +211,17 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   public final Computable<Boolean> update(final int inputId, @Nullable final Input content) {
     final UpdateData<Key, Value> updateData = calculateUpdateData(inputId, content);
 
-    return new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        try {
-          updateWithMap(inputId, updateData);
-        }
-        catch (StorageException | ProcessCanceledException ex) {
-          LOG.info("Exception during updateWithMap:" + ex);
-          requestRebuild(ex);
-          return Boolean.FALSE;
-        }
-
-        return Boolean.TRUE;
+    return () -> {
+      try {
+        updateWithMap(inputId, updateData);
       }
+      catch (StorageException | ProcessCanceledException ex) {
+        LOG.info("Exception during updateWithMap:" + ex);
+        requestRebuild(ex);
+        return Boolean.FALSE;
+      }
+
+      return Boolean.TRUE;
     };
   }
 

@@ -320,20 +320,17 @@ public class FileUtil extends FileUtilRt {
   }
 
   private static Future<Void> startDeletionThread(@NotNull final File... tempFiles) {
-    final RunnableFuture<Void> deleteFilesTask = new FutureTask<>(new Runnable() {
-      @Override
-      public void run() {
-        final Thread currentThread = Thread.currentThread();
-        final int priority = currentThread.getPriority();
-        currentThread.setPriority(Thread.MIN_PRIORITY);
-        try {
-          for (File tempFile : tempFiles) {
-            delete(tempFile);
-          }
+    final RunnableFuture<Void> deleteFilesTask = new FutureTask<>(() -> {
+      final Thread currentThread = Thread.currentThread();
+      final int priority = currentThread.getPriority();
+      currentThread.setPriority(Thread.MIN_PRIORITY);
+      try {
+        for (File tempFile : tempFiles) {
+          delete(tempFile);
         }
-        finally {
-          currentThread.setPriority(priority);
-        }
+      }
+      finally {
+        currentThread.setPriority(priority);
       }
     }, null);
 
@@ -521,12 +518,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static void copyDir(@NotNull File fromDir, @NotNull File toDir, boolean copySystemFiles) throws IOException {
-    copyDir(fromDir, toDir, copySystemFiles ? null : new FileFilter() {
-      @Override
-      public boolean accept(@NotNull File file) {
-        return !StringUtil.startsWithChar(file.getName(), '.');
-      }
-    });
+    copyDir(fromDir, toDir, copySystemFiles ? null : (FileFilter)file -> !StringUtil.startsWithChar(file.getName(), '.'));
   }
 
   public static void copyDir(@NotNull File fromDir, @NotNull File toDir, @Nullable final FileFilter filter) throws IOException {
@@ -573,12 +565,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static File findSequentNonexistentFile(@NotNull File parentFolder, @NotNull  String filePrefix, @NotNull String extension) {
-    return findSequentFile(parentFolder, filePrefix, extension, new Condition<File>() {
-      @Override
-      public boolean value(File file) {
-        return !file.exists();
-      }
-    });
+    return findSequentFile(parentFolder, filePrefix, extension, file -> !file.exists());
   }
 
   /**
@@ -1107,12 +1094,8 @@ public class FileUtil extends FileUtilRt {
     return FILE_TRAVERSER.withRoot(root);
   }
 
-  private static final JBTreeTraverser<File> FILE_TRAVERSER = JBTreeTraverser.from(new Function<File, Iterable<File>>() {
-    @Override
-    public Iterable<File> fun(File file) {
-      return file != null && file.isDirectory() ? JBIterable.of(file.listFiles()) : JBIterable.<File>empty();
-    }
-  });
+  private static final JBTreeTraverser<File> FILE_TRAVERSER = JBTreeTraverser.from(
+    (Function<File, Iterable<File>>)file -> file != null && file.isDirectory() ? JBIterable.of(file.listFiles()) : JBIterable.<File>empty());
 
   public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<? super File> processor) {
     return fileTraverser(root).bfsTraversal().processEach(processor);

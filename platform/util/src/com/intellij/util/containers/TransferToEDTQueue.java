@@ -99,12 +99,9 @@ public class TransferToEDTQueue<T> {
   }
 
   public static TransferToEDTQueue<Runnable> createRunnableMerger(@NotNull @NonNls String name, int maxUnitOfWorkThresholdMs) {
-    return new TransferToEDTQueue<>(name, new Processor<Runnable>() {
-      @Override
-      public boolean process(Runnable runnable) {
-        runnable.run();
-        return true;
-      }
+    return new TransferToEDTQueue<>(name, runnable -> {
+      runnable.run();
+      return true;
     }, Conditions.alwaysFalse(), maxUnitOfWorkThresholdMs);
   }
 
@@ -145,12 +142,7 @@ public class TransferToEDTQueue<T> {
 
   public boolean offerIfAbsent(@NotNull final T thing, @NotNull final Equality<? super T> equality) {
     synchronized (myQueue) {
-      boolean absent = myQueue.process(new Processor<T>() {
-        @Override
-        public boolean process(T t) {
-          return !equality.equals(t, thing);
-        }
-      });
+      boolean absent = myQueue.process(t -> !equality.equals(t, thing));
       if (absent) {
         myQueue.addLast(thing);
         scheduleUpdate();
@@ -203,12 +195,7 @@ public class TransferToEDTQueue<T> {
   public void waitFor() {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    schedule(new Runnable() {
-      @Override
-      public void run() {
-        semaphore.up();
-      }
-    });
+    schedule(() -> semaphore.up());
     semaphore.waitFor();
   }
 }

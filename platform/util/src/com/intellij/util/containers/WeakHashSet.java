@@ -67,18 +67,8 @@ final class WeakHashSet<T> extends AbstractSet<T> {
 
   @Override
   public Iterator<T> iterator() {
-    return ContainerUtil.filterIterator(ContainerUtil.mapIterator(set.iterator(), new Function<MyRef<T>, T>() {
-          @Override
-          public T fun(MyRef<T> ref) {
-            return ref.get();
-          }
-       }
-    ), new Condition<T>() {
-      @Override
-      public boolean value(T t) {
-        return t != null;
-      }
-    });
+    return ContainerUtil.filterIterator(ContainerUtil.mapIterator(set.iterator(), ref -> ref.get()
+    ), t -> t != null);
   }
 
   @Override

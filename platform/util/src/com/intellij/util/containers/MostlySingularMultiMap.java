@@ -150,13 +150,10 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
 
   @Override
   public String toString() {
-    return "{" + StringUtil.join(myMap.entrySet(), new Function<Map.Entry<K, Object>, String>() {
-      @Override
-      public String fun(Map.Entry<K, Object> entry) {
-        Object value = entry.getValue();
-        String s = (value instanceof MostlySingularMultiMap.ValueList ? ((ValueList)value) : Collections.singletonList(value)).toString();
-        return entry.getKey() + ": " + s;
-      }
+    return "{" + StringUtil.join(myMap.entrySet(), entry -> {
+      Object value = entry.getValue();
+      String s = (value instanceof MostlySingularMultiMap.ValueList ? ((ValueList)value) : Collections.singletonList(value)).toString();
+      return entry.getKey() + ": " + s;
     }, "; ") + "}";
   }
 

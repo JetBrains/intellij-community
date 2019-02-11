@@ -26,7 +26,6 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.util.Arrays;
-import java.util.Comparator;
 
 /**
  * @author yole
@@ -103,19 +102,16 @@ public class ThreadDumper {
 
   @NotNull
   private static ThreadInfo[] sort(@NotNull ThreadInfo[] threads) {
-    Arrays.sort(threads, new Comparator<ThreadInfo>() {
-      @Override
-      public int compare(ThreadInfo o1, ThreadInfo o2) {
-        boolean awt1 = o1.getThreadName().startsWith("AWT-EventQueue");
-        boolean awt2 = o2.getThreadName().startsWith("AWT-EventQueue");
-        if (awt1 && !awt2) return -1;
-        if (awt2 && !awt1) return 1;
-        boolean r1 = o1.getThreadState() == Thread.State.RUNNABLE;
-        boolean r2 = o2.getThreadState() == Thread.State.RUNNABLE;
-        if (r1 && !r2) return -1;
-        if (r2 && !r1) return 1;
-        return 0;
-      }
+    Arrays.sort(threads, (o1, o2) -> {
+      boolean awt1 = o1.getThreadName().startsWith("AWT-EventQueue");
+      boolean awt2 = o2.getThreadName().startsWith("AWT-EventQueue");
+      if (awt1 && !awt2) return -1;
+      if (awt2 && !awt1) return 1;
+      boolean r1 = o1.getThreadState() == Thread.State.RUNNABLE;
+      boolean r2 = o2.getThreadState() == Thread.State.RUNNABLE;
+      if (r1 && !r2) return -1;
+      if (r2 && !r1) return 1;
+      return 0;
     });
 
     return threads;

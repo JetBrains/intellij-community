@@ -908,12 +908,7 @@ public class UIUtil {
 
   public static void setEnabled(@NotNull Component component, boolean enabled, boolean recursively, final boolean visibleOnly) {
     JBIterable<Component> all = recursively ? uiTraverser(component).expandAndFilter(
-      visibleOnly ? new Condition<Component>() {
-        @Override
-        public boolean value(Component c) {
-          return c.isVisible();
-        }
-      } : Conditions.<Component>alwaysTrue()).traverse() : JBIterable.of(component);
+      visibleOnly ? (Condition<Component>)c -> c.isVisible() : Conditions.<Component>alwaysTrue()).traverse() : JBIterable.of(component);
     Color fg = enabled ? getLabelForeground() : getLabelDisabledForeground();
     for (Component c : all) {
       c.setEnabled(enabled);
@@ -2262,12 +2257,7 @@ public class UIUtil {
       }
     }
     final double _scale = scale;
-    Function<Integer, Integer> size = new Function<Integer, Integer>() {
-      @Override
-      public Integer fun(Integer size) {
-        return (int)Math.round(size * _scale);
-      }
-    };
+    Function<Integer, Integer> size = size1 -> (int)Math.round(size1 * _scale);
     try {
       if (op != null && image instanceof BufferedImage) {
         image = op.filter((BufferedImage)image, null);
@@ -2408,12 +2398,9 @@ public class UIUtil {
   public static void pump() {
     assert !SwingUtilities.isEventDispatchThread();
     final BlockingQueue<Object> queue = new LinkedBlockingQueue<>();
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        //noinspection CollectionAddedToSelf
-        queue.offer(queue);
-      }
+    SwingUtilities.invokeLater(() -> {
+      //noinspection CollectionAddedToSelf
+      queue.offer(queue);
     });
     try {
       queue.take();
@@ -2563,12 +2550,7 @@ public class UIUtil {
 
   @Nullable
   public static Component findNearestOpaque(Component c) {
-    return findParentByCondition(c, new Condition<Component>() {
-      @Override
-      public boolean value(Component component) {
-        return component.isOpaque();
-      }
-    });
+    return findParentByCondition(c, component -> component.isOpaque());
   }
 
   @Nullable
@@ -2683,12 +2665,7 @@ public class UIUtil {
       c.requestFocus();
     }
     else {
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          c.requestFocus();
-        }
-      });
+      SwingUtilities.invokeLater(() -> c.requestFocus());
     }
   }
 
@@ -2723,12 +2700,7 @@ public class UIUtil {
   public static void disposeProgress(@NotNull final JProgressBar progress) {
     if (!isUnderNativeMacLookAndFeel()) return;
 
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        progress.setUI(null);
-      }
-    });
+    SwingUtilities.invokeLater(() -> progress.setUI(null));
   }
 
   @Nullable
@@ -2935,12 +2907,7 @@ public class UIUtil {
 
     @NotNull
     private static List<LinkController> filterLinkControllerListeners(@NotNull Object[] listeners) {
-      return ContainerUtil.mapNotNull(listeners, new Function<Object, LinkController>() {
-        @Override
-        public LinkController fun(Object o) {
-          return ObjectUtils.tryCast(o, LinkController.class);
-        }
-      });
+      return ContainerUtil.mapNotNull(listeners, o -> ObjectUtils.tryCast(o, LinkController.class));
     }
 
     @Override
@@ -3158,12 +3125,7 @@ public class UIUtil {
    */
   public static <T> T invokeAndWaitIfNeeded(@NotNull final Computable<T> computable) {
     final Ref<T> result = Ref.create();
-    invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        result.set(computable.compute());
-      }
-    });
+    invokeAndWaitIfNeeded((Runnable)() -> result.set(computable.compute()));
     return result.get();
   }
 
@@ -3185,15 +3147,12 @@ public class UIUtil {
     }
     else {
       final Ref<Throwable> ref = Ref.create();
-      EdtInvocationManager.getInstance().invokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            runnable.run();
-          }
-          catch (Throwable throwable) {
-            ref.set(throwable);
-          }
+      EdtInvocationManager.getInstance().invokeAndWait(() -> {
+        try {
+          runnable.run();
+        }
+        catch (Throwable throwable) {
+          ref.set(throwable);
         }
       });
       if (!ref.isNull()) throw ref.get();
@@ -3525,34 +3484,31 @@ public class UIUtil {
 
   public static final Key<Iterable<? extends Component>> NOT_IN_HIERARCHY_COMPONENTS = Key.create("NOT_IN_HIERARCHY_COMPONENTS");
 
-  private static final JBTreeTraverser<Component> UI_TRAVERSER = JBTreeTraverser.from(new Function<Component, JBIterable<Component>>() {
-    @Override
-    public JBIterable<Component> fun(@NotNull Component c) {
-      JBIterable<Component> result;
-      if (c instanceof JMenu) {
-        result = JBIterable.of(((JMenu)c).getMenuComponents());
-      }
-      else if (c instanceof JComboBox && isUnderAquaLookAndFeel()) {
-        // On Mac JComboBox instances have children: com.apple.laf.AquaComboBoxButton and javax.swing.CellRendererPane.
-        // Disabling these children results in ugly UI: WEB-10733
-        result = JBIterable.empty();
-      }
-      else {
-        result = uiChildren(c);
-      }
-      if (c instanceof JComponent) {
-        JComponent jc = (JComponent)c;
-        Iterable<? extends Component> orphans = getClientProperty(jc, NOT_IN_HIERARCHY_COMPONENTS);
-        if (orphans != null) {
-          result = result.append(orphans);
-        }
-        JPopupMenu jpm = jc.getComponentPopupMenu();
-        if (jpm != null && jpm.isVisible() && jpm.getInvoker() == jc) {
-          result = result.append(Collections.singletonList(jpm));
-        }
-      }
-      return result;
+  private static final JBTreeTraverser<Component> UI_TRAVERSER = JBTreeTraverser.from((Function<Component, JBIterable<Component>>)c -> {
+    JBIterable<Component> result;
+    if (c instanceof JMenu) {
+      result = JBIterable.of(((JMenu)c).getMenuComponents());
     }
+    else if (c instanceof JComboBox && isUnderAquaLookAndFeel()) {
+      // On Mac JComboBox instances have children: com.apple.laf.AquaComboBoxButton and javax.swing.CellRendererPane.
+      // Disabling these children results in ugly UI: WEB-10733
+      result = JBIterable.empty();
+    }
+    else {
+      result = uiChildren(c);
+    }
+    if (c instanceof JComponent) {
+      JComponent jc = (JComponent)c;
+      Iterable<? extends Component> orphans = getClientProperty(jc, NOT_IN_HIERARCHY_COMPONENTS);
+      if (orphans != null) {
+        result = result.append(orphans);
+      }
+      JPopupMenu jpm = jc.getComponentPopupMenu();
+      if (jpm != null && jpm.isVisible() && jpm.getInvoker() == jc) {
+        result = result.append(Collections.singletonList(jpm));
+      }
+    }
+    return result;
   });
 
   private static final Function.Mono<Component> COMPONENT_PARENT = new Function.Mono<Component>() {
@@ -3564,16 +3520,13 @@ public class UIUtil {
 
 
   public static void scrollListToVisibleIfNeeded(@NotNull final JList list) {
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        final int selectedIndex = list.getSelectedIndex();
-        if (selectedIndex >= 0) {
-          final Rectangle visibleRect = list.getVisibleRect();
-          final Rectangle cellBounds = list.getCellBounds(selectedIndex, selectedIndex);
-          if (!visibleRect.contains(cellBounds)) {
-            list.scrollRectToVisible(cellBounds);
-          }
+    SwingUtilities.invokeLater(() -> {
+      final int selectedIndex = list.getSelectedIndex();
+      if (selectedIndex >= 0) {
+        final Rectangle visibleRect = list.getVisibleRect();
+        final Rectangle cellBounds = list.getCellBounds(selectedIndex, selectedIndex);
+        if (!visibleRect.contains(cellBounds)) {
+          list.scrollRectToVisible(cellBounds);
         }
       }
     });
@@ -3735,116 +3688,110 @@ public class UIUtil {
         final int[] maxWidth = {0};
         final int[] height = {0};
         final int[] maxBulletWidth = {0};
-        ContainerUtil.process(myLines, new Processor<Pair<String, LineInfo>>() {
-          @Override
-          public boolean process(final Pair<String, LineInfo> pair) {
-            final LineInfo info = pair.getSecond();
-            Font old = null;
-            if (info.smaller) {
-              old = g.getFont();
-              g.setFont(old.deriveFont(old.getSize() * 0.70f));
-            }
-
-            final FontMetrics fm = g.getFontMetrics();
-
-            final int bulletWidth = info.withBullet ? fm.stringWidth(" " + info.bulletChar) : 0;
-            maxBulletWidth[0] = Math.max(maxBulletWidth[0], bulletWidth);
-
-            maxWidth[0] = Math.max(fm.stringWidth(pair.getFirst().replace("<shortcut>", "").replace("</shortcut>", "") + bulletWidth), maxWidth[0]);
-            height[0] += (fm.getHeight() + fm.getLeading()) * myLineSpacing;
-
-            if (old != null) {
-              g.setFont(old);
-            }
-
-            return true;
+        ContainerUtil.process(myLines, pair -> {
+          final LineInfo info = pair.getSecond();
+          Font old = null;
+          if (info.smaller) {
+            old = g.getFont();
+            g.setFont(old.deriveFont(old.getSize() * 0.70f));
           }
+
+          final FontMetrics fm = g.getFontMetrics();
+
+          final int bulletWidth = info.withBullet ? fm.stringWidth(" " + info.bulletChar) : 0;
+          maxBulletWidth[0] = Math.max(maxBulletWidth[0], bulletWidth);
+
+          maxWidth[0] = Math.max(fm.stringWidth(pair.getFirst().replace("<shortcut>", "").replace("</shortcut>", "") + bulletWidth), maxWidth[0]);
+          height[0] += (fm.getHeight() + fm.getLeading()) * myLineSpacing;
+
+          if (old != null) {
+            g.setFont(old);
+          }
+
+          return true;
         });
 
         final Couple<Integer> position = _position.fun(maxWidth[0] + 20, height[0]);
         assert position != null;
 
         final int[] yOffset = {position.getSecond()};
-        ContainerUtil.process(myLines, new Processor<Pair<String, LineInfo>>() {
-          @Override
-          public boolean process(final Pair<String, LineInfo> pair) {
-            final LineInfo info = pair.getSecond();
-            String text = pair.first;
-            String shortcut = "";
-            if (pair.first.contains("<shortcut>")) {
-              shortcut = text.substring(text.indexOf("<shortcut>") + "<shortcut>".length(), text.indexOf("</shortcut>"));
-              text = text.substring(0, text.indexOf("<shortcut>"));
+        ContainerUtil.process(myLines, pair -> {
+          final LineInfo info = pair.getSecond();
+          String text = pair.first;
+          String shortcut = "";
+          if (pair.first.contains("<shortcut>")) {
+            shortcut = text.substring(text.indexOf("<shortcut>") + "<shortcut>".length(), text.indexOf("</shortcut>"));
+            text = text.substring(0, text.indexOf("<shortcut>"));
+          }
+
+          Font old = null;
+          if (info.smaller) {
+            old = g.getFont();
+            g.setFont(old.deriveFont(old.getSize() * 0.70f));
+          }
+
+          final int x = position.getFirst() + maxBulletWidth[0] + 10;
+
+          final FontMetrics fm = g.getFontMetrics();
+          int xOffset = x;
+          if (info.center) {
+            xOffset = x + (maxWidth[0] - fm.stringWidth(text)) / 2;
+          }
+
+          if (myDrawShadow) {
+            int xOff = isUnderDarcula() ? 1 : 0;
+            Color oldColor1 = g.getColor();
+            g.setColor(myShadowColor);
+
+            int yOff = 1;
+            if (info.withBullet) {
+              g.drawString(info.bulletChar + " ", x - fm.stringWidth(" " + info.bulletChar) + xOff, yOffset[0] + yOff);
             }
 
-            Font old = null;
-            if (info.smaller) {
-              old = g.getFont();
-              g.setFont(old.deriveFont(old.getSize() * 0.70f));
+            g.drawString(text, xOffset + xOff, yOffset[0] + yOff);
+            g.setColor(oldColor1);
+          }
+
+          if (info.withBullet) {
+            g.drawString(info.bulletChar + " ", x - fm.stringWidth(" " + info.bulletChar), yOffset[0]);
+          }
+
+          g.drawString(text, xOffset, yOffset[0]);
+          if (!StringUtil.isEmpty(shortcut)) {
+            Color oldColor1 = g.getColor();
+            g.setColor(JBColor.namedColor("Editor.shortcutForeground", new JBColor(new Color(82, 99, 155), new Color(88, 157, 246))));
+            g.drawString(shortcut, xOffset + fm.stringWidth(text + (isUnderDarcula() ? " " : "")), yOffset[0]);
+            g.setColor(oldColor1);
+          }
+
+          if (info.underlined) {
+            Color c = null;
+            if (info.underlineColor != null) {
+              c = g.getColor();
+              g.setColor(info.underlineColor);
             }
 
-            final int x = position.getFirst() + maxBulletWidth[0] + 10;
-
-            final FontMetrics fm = g.getFontMetrics();
-            int xOffset = x;
-            if (info.center) {
-              xOffset = x + (maxWidth[0] - fm.stringWidth(text)) / 2;
+            drawLine(g ,x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent(), x + maxWidth[0] + 10, yOffset[0] + fm.getDescent());
+            if (c != null) {
+              g.setColor(c);
             }
 
             if (myDrawShadow) {
-              int xOff = isUnderDarcula() ? 1 : 0;
-              Color oldColor = g.getColor();
+              c = g.getColor();
               g.setColor(myShadowColor);
-
-              int yOff = 1;
-              if (info.withBullet) {
-                g.drawString(info.bulletChar + " ", x - fm.stringWidth(" " + info.bulletChar) + xOff, yOffset[0] + yOff);
-              }
-
-              g.drawString(text, xOffset + xOff, yOffset[0] + yOff);
-              g.setColor(oldColor);
+              drawLine(g ,x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent() + 1, x + maxWidth[0] + 10,
+                         yOffset[0] + fm.getDescent() + 1);
+              g.setColor(c);
             }
-
-            if (info.withBullet) {
-              g.drawString(info.bulletChar + " ", x - fm.stringWidth(" " + info.bulletChar), yOffset[0]);
-            }
-
-            g.drawString(text, xOffset, yOffset[0]);
-            if (!StringUtil.isEmpty(shortcut)) {
-              Color oldColor = g.getColor();
-              g.setColor(JBColor.namedColor("Editor.shortcutForeground", new JBColor(new Color(82, 99, 155), new Color(88, 157, 246))));
-              g.drawString(shortcut, xOffset + fm.stringWidth(text + (isUnderDarcula() ? " " : "")), yOffset[0]);
-              g.setColor(oldColor);
-            }
-
-            if (info.underlined) {
-              Color c = null;
-              if (info.underlineColor != null) {
-                c = g.getColor();
-                g.setColor(info.underlineColor);
-              }
-
-              drawLine(g ,x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent(), x + maxWidth[0] + 10, yOffset[0] + fm.getDescent());
-              if (c != null) {
-                g.setColor(c);
-              }
-
-              if (myDrawShadow) {
-                c = g.getColor();
-                g.setColor(myShadowColor);
-                drawLine(g ,x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent() + 1, x + maxWidth[0] + 10,
-                           yOffset[0] + fm.getDescent() + 1);
-                g.setColor(c);
-              }
-            }
-
-            yOffset[0] += (fm.getHeight() + fm.getLeading()) * myLineSpacing;
-
-            if (old != null) {
-              g.setFont(old);
-            }
-
-            return true;
           }
+
+          yOffset[0] += (fm.getHeight() + fm.getLeading()) * myLineSpacing;
+
+          if (old != null) {
+            g.setFont(old);
+          }
+
+          return true;
         });
       }
       finally {
@@ -4004,12 +3951,9 @@ public class UIUtil {
 
     if (!newSize.equals(size)) {
       //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (window.isShowing()) {
-            window.setSize(newSize);
-          }
+      SwingUtilities.invokeLater(() -> {
+        if (window.isShowing()) {
+          window.setSize(newSize);
         }
       });
     }
@@ -4190,12 +4134,7 @@ public class UIUtil {
           UndoableEditListener[] undoableEditListeners = ((AbstractDocument)document).getUndoableEditListeners();
           for (final UndoableEditListener listener : undoableEditListeners) {
             if (listener instanceof UndoManager) {
-              Runnable runnable = new Runnable() {
-                @Override
-                public void run() {
-                  ((UndoManager)listener).discardAllEdits();
-                }
-              };
+              Runnable runnable = () -> ((UndoManager)listener).discardAllEdits();
               //noinspection SSBasedInspection
               SwingUtilities.invokeLater(runnable);
               return;
@@ -4232,34 +4171,26 @@ public class UIUtil {
   public static void playSoundFromResource(@NotNull final String resourceName) {
     final Class callerClass = ReflectionUtil.getGrandCallerClass();
     if (callerClass == null) return;
-    playSoundFromStream(new Factory<InputStream>() {
-      @Override
-      public InputStream create() {
-        return callerClass.getResourceAsStream(resourceName);
-      }
-    });
+    playSoundFromStream(() -> callerClass.getResourceAsStream(resourceName));
   }
 
   public static void playSoundFromStream(@NotNull final Factory<? extends InputStream> streamProducer) {
-    new Thread(new Runnable() {
-      // The wrapper thread is unnecessary, unless it blocks on the
-      // Clip finishing; see comments.
-      @Override
-      public void run() {
-        try {
-          Clip clip = AudioSystem.getClip();
-          InputStream stream = streamProducer.create();
-          if (!stream.markSupported()) stream = new BufferedInputStream(stream);
-          AudioInputStream inputStream = AudioSystem.getAudioInputStream(stream);
-          clip.open(inputStream);
+    // The wrapper thread is unnecessary, unless it blocks on the
+    // Clip finishing; see comments.
+    new Thread(() -> {
+      try {
+        Clip clip = AudioSystem.getClip();
+        InputStream stream = streamProducer.create();
+        if (!stream.markSupported()) stream = new BufferedInputStream(stream);
+        AudioInputStream inputStream = AudioSystem.getAudioInputStream(stream);
+        clip.open(inputStream);
 
-          clip.start();
-        }
-        catch (Exception e) {
-          LOG.info(e);
-        }
+        clip.start();
       }
-    },"play sound").start();
+      catch (Exception e) {
+        LOG.info(e);
+      }
+    }, "play sound").start();
   }
 
   // Experimental!!!

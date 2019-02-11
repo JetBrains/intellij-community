@@ -28,12 +28,8 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class MessageBusImpl implements MessageBus {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.messages.impl.MessageBusImpl");
-  private static final Comparator<MessageBusImpl> MESSAGE_BUS_COMPARATOR = new Comparator<MessageBusImpl>() {
-    @Override
-    public int compare(MessageBusImpl bus1, MessageBusImpl bus2) {
-      return ContainerUtil.compareLexicographically(bus1.myOrder, bus2.myOrder);
-    }
-  };
+  private static final Comparator<MessageBusImpl> MESSAGE_BUS_COMPARATOR =
+    (bus1, bus2) -> ContainerUtil.compareLexicographically(bus1.myOrder, bus2.myOrder);
   @SuppressWarnings("SSBasedInspection") private final ThreadLocal<Queue<DeliveryJob>> myMessageQueue = createThreadLocalQueue();
 
   /**

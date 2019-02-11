@@ -69,12 +69,7 @@ public abstract class TreeTraversal {
 
   @NotNull
   public final <T> Function<T, JBIterable<T>> traversal(@NotNull final Function<? super T, ? extends Iterable<? extends T>> tree) {
-    return new Function<T, JBIterable<T>>() {
-      @Override
-      public JBIterable<T> fun(T t) {
-        return traversal(t, tree);
-      }
-    };
+    return t -> traversal(t, tree);
   }
 
   /**
@@ -714,12 +709,7 @@ public abstract class TreeTraversal {
     /** @noinspection unchecked */
     static <T> Function<P<T, ?>, P<T, ?>> toPrev() { return TO_PREV; }
 
-    static final Function TO_NODE = new Function<P<?, ?>, Object>() {
-      @Override
-      public Object fun(P<?, ?> tp) {
-        return tp.node;
-      }
-    };
+    static final Function TO_NODE = (Function<P<?, ?>, Object>)tp -> tp.node;
     static final Function TO_PREV = new Function.Mono<P<?, ?>>() {
       @Override
       public P<?, ?> fun(P<?, ?> tp) {

@@ -65,15 +65,12 @@ abstract class Timed<T> implements Disposable {
   }
 
   static {
-    AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          disposeTimed();
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
+    AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
+      try {
+        disposeTimed();
+      }
+      catch (Throwable e) {
+        LOG.error(e);
       }
     }, SERVICE_DELAY, SERVICE_DELAY, TimeUnit.SECONDS);
   }

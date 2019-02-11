@@ -252,23 +252,13 @@ public class DFSTBuilder<Node> {
   public Comparator<Node> comparator(boolean useNNumber) {
     if (useNNumber) {
       if (myNComparator == null) {
-        myNComparator = new Comparator<Node>() {
-          @Override
-          public int compare(@NotNull Node t, @NotNull Node t1) {
-            return myNodeToNNumber.get(t) - myNodeToNNumber.get(t1);
-          }
-        };
+        myNComparator = (t, t1) -> myNodeToNNumber.get(t) - myNodeToNNumber.get(t1);
       }
       return myNComparator;
     }
     else {
       if (myTComparator == null) {
-        myTComparator = new Comparator<Node>() {
-          @Override
-          public int compare(@NotNull Node t, @NotNull Node t1) {
-            return myNodeToTNumber.get(t) - myNodeToTNumber.get(t1);
-          }
-        };
+        myTComparator = (t, t1) -> myNodeToTNumber.get(t) - myNodeToTNumber.get(t1);
       }
       return myTComparator;
     }

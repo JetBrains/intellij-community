@@ -2,7 +2,6 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -59,15 +58,12 @@ class SchedulingWrapper implements ScheduledExecutorService {
 
   @NotNull
   List<Runnable> cancelAndRemoveTasksFromQueue() {
-    List<MyScheduledFutureTask> result = ContainerUtil.filter(delayQueue, new Condition<MyScheduledFutureTask>() {
-      @Override
-      public boolean value(MyScheduledFutureTask task) {
-        if (task.getBackendExecutorService() == backendExecutorService) {
-          task.cancel(false);
-          return true;
-        }
-        return false;
+    List<MyScheduledFutureTask> result = ContainerUtil.filter(delayQueue, task -> {
+      if (task.getBackendExecutorService() == backendExecutorService) {
+        task.cancel(false);
+        return true;
       }
+      return false;
     });
     delayQueue.removeAll(new HashSet<>(result));
     if (LOG.isTraceEnabled()) {

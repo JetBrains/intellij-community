@@ -22,12 +22,8 @@ public class ColorUtil {
 
   @NotNull
   public static Color marker(@NotNull final String name) {
-    return new JBColor(new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        throw new AssertionError(name);
-      }
+    return new JBColor(() -> {
+      throw new AssertionError(name);
     }) {
       @Override
       public boolean equals(Object obj) {
@@ -98,17 +94,12 @@ public class ColorUtil {
 
   @NotNull
   public static Color dimmer(@NotNull final Color color) {
-    NotNullProducer<Color> func = new NotNullProducer<Color>() {
+    NotNullProducer<Color> func = () -> {
+      float[] rgb = color.getRGBColorComponents(null);
 
-      @NotNull
-      @Override
-      public Color produce() {
-        float[] rgb = color.getRGBColorComponents(null);
-
-        float alpha = 0.80f;
-        float rem = 1 - alpha;
-        return new Color(rgb[0] * alpha + rem, rgb[1] * alpha + rem, rgb[2] * alpha + rem);
-      }
+      float alpha = 0.80f;
+      float rem = 1 - alpha;
+      return new Color(rgb[0] * alpha + rem, rgb[1] * alpha + rem, rgb[2] * alpha + rem);
     };
     return wrap(color, func);
   }
@@ -124,13 +115,7 @@ public class ColorUtil {
 
   @NotNull
   public static Color shift(@NotNull final Color c, final double d) {
-    NotNullProducer<Color> func = new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        return new Color(shift(c.getRed(), d), shift(c.getGreen(), d), shift(c.getBlue(), d), c.getAlpha());
-      }
-    };
+    NotNullProducer<Color> func = () -> new Color(shift(c.getRed(), d), shift(c.getGreen(), d), shift(c.getBlue(), d), c.getAlpha());
     return wrap(c, func);
   }
 
@@ -163,13 +148,7 @@ public class ColorUtil {
   @NotNull
   public static Color toAlpha(@Nullable Color color, final int a) {
     final Color c = color == null ? Color.black : color;
-    NotNullProducer<Color> func = new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        return new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
-      }
-    };
+    NotNullProducer<Color> func = () -> new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
     return wrap(c, func);
   }
 

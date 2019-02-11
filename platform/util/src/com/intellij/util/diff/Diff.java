@@ -183,12 +183,7 @@ public class Diff {
 
   @NotNull
   private static String[] trim(@NotNull String[] lines) {
-    return ContainerUtil.map2Array(lines, String.class, new Function<String, String>() {
-      @Override
-      public String fun(String s) {
-        return s.trim();
-      }
-    });
+    return ContainerUtil.map2Array(lines, String.class, s -> s.trim());
   }
 
   /**

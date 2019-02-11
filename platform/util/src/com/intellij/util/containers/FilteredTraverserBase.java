@@ -63,12 +63,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
 
   @NotNull
   public final JBIterable<T> traverse(@NotNull TreeTraversal traversal) {
-    Function<T, Iterable<? extends T>> adjusted = new Function<T, Iterable<? extends T>>() {
-      @Override
-      public Iterable<? extends T> fun(T t) {
-        return children(t);
-      }
-    };
+    Function<T, Iterable<? extends T>> adjusted = t -> children(t);
     return myMeta.interceptor.fun(traversal).traversal(getRoots(), adjusted).filter(myMeta.filter.AND);
   }
 
@@ -185,12 +180,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
    */
   @NotNull
   public final Self unique(@NotNull final Function<? super T, Object> identity) {
-    return interceptTraversal(new Function<TreeTraversal, TreeTraversal>() {
-      @Override
-      public TreeTraversal fun(TreeTraversal traversal) {
-        return traversal.unique(identity);
-      }
-    });
+    return interceptTraversal(traversal -> traversal.unique(identity));
   }
 
   /**
@@ -201,12 +191,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
    */
   @NotNull
   public Self onRange(@NotNull final Condition<? super T> rangeCondition) {
-    return interceptTraversal(new Function<TreeTraversal, TreeTraversal>() {
-      @Override
-      public TreeTraversal fun(TreeTraversal traversal) {
-        return traversal.onRange(rangeCondition);
-      }
-    });
+    return interceptTraversal(traversal -> traversal.onRange(rangeCondition));
   }
 
   /**
@@ -450,19 +435,9 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
       return false;
     }
 
-    final Condition<? super T> OR = new Condition<T>() {
-      @Override
-      public boolean value(T t) {
-        return valueOr(t);
-      }
-    };
+    final Condition<? super T> OR = (Condition<T>)t -> valueOr(t);
 
-    final Condition<? super T> AND = new Condition<T>() {
-      @Override
-      public boolean value(T t) {
-        return valueAnd(t);
-      }
-    };
+    final Condition<? super T> AND = (Condition<T>)t -> valueAnd(t);
 
     @Override
     public String toString() {

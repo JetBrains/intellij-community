@@ -105,21 +105,11 @@ public final class IconLoader {
   }
 
   public static void installPathPatcher(@NotNull final IconPathPatcher patcher) {
-    updateTransform(new Function<IconTransform, IconTransform>() {
-      @Override
-      public IconTransform fun(IconTransform transform) {
-        return transform.withPathPatcher(patcher);
-      }
-    });
+    updateTransform(transform -> transform.withPathPatcher(patcher));
   }
 
   public static void removePathPatcher(@NotNull final IconPathPatcher patcher) {
-    updateTransform(new Function<IconTransform, IconTransform>() {
-      @Override
-      public IconTransform fun(IconTransform transform) {
-        return transform.withoutPathPatcher(patcher);
-      }
-    });
+    updateTransform(transform -> transform.withoutPathPatcher(patcher));
   }
 
   @Deprecated
@@ -129,30 +119,17 @@ public final class IconLoader {
   }
 
   public static void setUseDarkIcons(final boolean useDarkIcons) {
-    updateTransform(new Function<IconTransform, IconTransform>() {
-      @Override
-      public IconTransform fun(IconTransform transform) {
-        return transform.withDark(useDarkIcons);
-      }
-    });
+    updateTransform(transform -> transform.withDark(useDarkIcons));
   }
 
   public static void setFilter(final ImageFilter filter) {
-    updateTransform(new Function<IconTransform, IconTransform>() {
-      @Override
-      public IconTransform fun(IconTransform transform) {
-        return transform.withFilter(filter);
-      }
-    });
+    updateTransform(transform -> transform.withFilter(filter));
   }
 
   public static void clearCache() {
-    updateTransform(new Function<IconTransform, IconTransform>() {
-      @Override
-      public IconTransform fun(IconTransform transform) {
-        // Copy the transform to trigger update of cached icons
-        return transform.copy();
-      }
+    updateTransform(transform -> {
+      // Copy the transform to trigger update of cached icons
+      return transform.copy();
     });
   }
 
@@ -409,11 +386,8 @@ public final class IconLoader {
 
     Icon disabledIcon = ourIcon2DisabledIcon.get(icon);
     if (disabledIcon == null) {
-      disabledIcon = filterIcon(icon, new Producer<RGBImageFilter>() {
-        @Override
-        public RGBImageFilter produce() {
-          return UIUtil.getGrayFilter(); // returns laf-aware instance
-        }
+      disabledIcon = filterIcon(icon, () -> {
+        return UIUtil.getGrayFilter(); // returns laf-aware instance
       }, null); // [tav] todo: lack ancestor
       ourIcon2DisabledIcon.put(icon, disabledIcon);
     }
@@ -869,21 +843,11 @@ public final class IconLoader {
           if (path != null) {
             if (myClassLoader != null) {
               path = StringUtil.trimStart(path, "/"); // Paths in ClassLoader getResource shouldn't start with "/"
-              url = findURL(path, new Function<String, URL>() {
-                @Override
-                public URL fun(String path) {
-                  return myClassLoader.getResource(path);
-                }
-              });
+              url = findURL(path, path12 -> myClassLoader.getResource(path12));
             }
             if (url == null && myClass != null) {
               // Some plugins use findIcon("icon.png",IconContainer.class)
-              url = findURL(path, new Function<String, URL>() {
-                @Override
-                public URL fun(String path) {
-                  return myClass.getResource(path);
-                }
-              });
+              url = findURL(path, path1 -> myClass.getResource(path1));
             }
           }
           if (url == null) {

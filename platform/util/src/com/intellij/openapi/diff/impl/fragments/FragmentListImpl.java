@@ -81,14 +81,11 @@ public class FragmentListImpl implements FragmentList {
     return newFragments;
   }
 
-  private static final Comparator<Fragment> FRAGMENT_COMPARATOR = new Comparator<Fragment>() {
-    @Override
-    public int compare(Fragment fragment1, Fragment fragment2) {
-      int result = compareBySide(fragment1, fragment2, FragmentSide.SIDE1);
-      int check = compareBySide(fragment1, fragment2, FragmentSide.SIDE2);
-      LOG.assertTrue(result == 0 || check == 0 || sign(result) == sign(check));
-      return result;
-    }
+  private static final Comparator<Fragment> FRAGMENT_COMPARATOR = (fragment1, fragment2) -> {
+    int result = compareBySide(fragment1, fragment2, FragmentSide.SIDE1);
+    int check = compareBySide(fragment1, fragment2, FragmentSide.SIDE2);
+    LOG.assertTrue(result == 0 || check == 0 || sign(result) == sign(check));
+    return result;
   };
 
   private static int sign(int n) {

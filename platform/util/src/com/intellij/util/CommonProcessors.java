@@ -66,12 +66,7 @@ public class CommonProcessors {
 
   @NotNull
   public static <T> Processor<T> notNullProcessor(@NotNull final Processor<? super T> processor) {
-    return new Processor<T>() {
-      @Override
-      public boolean process(@NotNull T t) {
-        return processor.process(t);
-      }
-    };
+    return t -> processor.process(t);
   }
 
 
@@ -186,27 +181,14 @@ public class CommonProcessors {
    */
   @NotNull
   public static <T> Processor<T> processAll(@NotNull final Consumer<? super T> consumer) {
-    return new Processor<T>() {
-      @Override
-      public boolean process(T t) {
-        consumer.consume(t);
-        return true;
-      }
+    return t -> {
+      consumer.consume(t);
+      return true;
     };
   }
   
-  private static final Processor FALSE = new Processor<Object>() {
-    @Override
-    public boolean process(Object t) {
-      return false;
-    }
-  };
-  private static final Processor TRUE = new Processor<Object>() {
-    @Override
-    public boolean process(Object t) {
-      return true;
-    }
-  };
+  private static final Processor FALSE = (Processor<Object>)t -> false;
+  private static final Processor TRUE = (Processor<Object>)t -> true;
 
   @NotNull
   @SuppressWarnings("unchecked")

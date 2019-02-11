@@ -134,12 +134,7 @@ public class ReflectionUtil {
 
   @NotNull
   public static Field findField(@NotNull Class clazz, @Nullable final Class type, @NotNull final String name) throws NoSuchFieldException {
-    Field result = findFieldInHierarchy(clazz, new Condition<Field>() {
-      @Override
-      public boolean value(Field field) {
-        return name.equals(field.getName()) && (type == null || field.getType().equals(type));
-      }
-    });
+    Field result = findFieldInHierarchy(clazz, field -> name.equals(field.getName()) && (type == null || field.getType().equals(type)));
     if (result != null) return result;
 
     throw new NoSuchFieldException("Class: " + clazz + " name: " + name + " type: " + type);
@@ -147,12 +142,7 @@ public class ReflectionUtil {
 
   @NotNull
   public static Field findAssignableField(@NotNull Class<?> clazz, @Nullable("null means any type") final Class<?> fieldType, @NotNull final String fieldName) throws NoSuchFieldException {
-    Field result = findFieldInHierarchy(clazz, new Condition<Field>() {
-      @Override
-      public boolean value(Field field) {
-        return fieldName.equals(field.getName()) && (fieldType == null || fieldType.isAssignableFrom(field.getType()));
-      }
-    });
+    Field result = findFieldInHierarchy(clazz, field -> fieldName.equals(field.getName()) && (fieldType == null || fieldType.isAssignableFrom(field.getType())));
     if (result != null) return result;
     throw new NoSuchFieldException("Class: " + clazz + " fieldName: " + fieldName + " fieldType: " + fieldType);
   }
@@ -260,12 +250,7 @@ public class ReflectionUtil {
 
   @Nullable
   public static Field getDeclaredField(@NotNull Class aClass, @NonNls @NotNull final String name) {
-    return findFieldInHierarchy(aClass, new Condition<Field>() {
-      @Override
-      public boolean value(Field field) {
-        return name.equals(field.getName());
-      }
-    });
+    return findFieldInHierarchy(aClass, field -> name.equals(field.getName()));
   }
 
   @NotNull
@@ -543,12 +528,7 @@ public class ReflectionUtil {
   }
 
   public static <T> boolean comparePublicNonFinalFields(@NotNull T first, @NotNull T second) {
-    return compareFields(first, second, new Predicate<Field>() {
-      @Override
-      public boolean apply(Field field) {
-        return isPublic(field) && !isFinal(field);
-      }
-    });
+    return compareFields(first, second, field -> isPublic(field) && !isFinal(field));
   }
 
   public static <T> boolean compareFields(@NotNull T defaultSettings, @NotNull T newSettings, @NotNull Predicate<? super Field> useField) {
@@ -653,10 +633,6 @@ public class ReflectionUtil {
     return CLASS_TRAVERSER.unique().withRoot(root);
   }
 
-  private static final JBTreeTraverser<Class> CLASS_TRAVERSER = JBTreeTraverser.from(new Function<Class, Iterable<Class>>() {
-    @Override
-    public Iterable<Class> fun(Class aClass) {
-      return JBIterable.of(aClass.getSuperclass()).append(aClass.getInterfaces());
-    }
-  });
+  private static final JBTreeTraverser<Class> CLASS_TRAVERSER = JBTreeTraverser.from(
+    (Function<Class, Iterable<Class>>)aClass -> JBIterable.of(aClass.getSuperclass()).append(aClass.getInterfaces()));
 }

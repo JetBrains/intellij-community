@@ -48,12 +48,7 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements Editab
     mySortByColumn = selectedColumn;
     mySortOrder = order;
 
-    setSortable(ContainerUtil.find(columnNames, new Condition<ColumnInfo>() {
-      @Override
-      public boolean value(ColumnInfo columnInfo) {
-        return columnInfo.isSortable();
-      }
-    }) != null);
+    setSortable(ContainerUtil.find(columnNames, columnInfo -> columnInfo.isSortable()) != null);
   }
 
   @Override

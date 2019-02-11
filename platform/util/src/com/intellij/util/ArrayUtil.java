@@ -34,20 +34,8 @@ public class ArrayUtil extends ArrayUtilRt {
   public static final Runnable[] EMPTY_RUNNABLE_ARRAY = ArrayUtilRt.EMPTY_RUNNABLE_ARRAY;
   public static final CharSequence EMPTY_CHAR_SEQUENCE = new CharArrayCharSequence(EMPTY_CHAR_ARRAY);
 
-  public static final ArrayFactory<String> STRING_ARRAY_FACTORY = new ArrayFactory<String>() {
-    @NotNull
-    @Override
-    public String[] create(int count) {
-      return newStringArray(count);
-    }
-  };
-  public static final ArrayFactory<Object> OBJECT_ARRAY_FACTORY = new ArrayFactory<Object>() {
-    @NotNull
-    @Override
-    public Object[] create(int count) {
-      return newObjectArray(count);
-    }
-  };
+  public static final ArrayFactory<String> STRING_ARRAY_FACTORY = count -> newStringArray(count);
+  public static final ArrayFactory<Object> OBJECT_ARRAY_FACTORY = count -> newObjectArray(count);
 
   private ArrayUtil() { }
 

@@ -191,17 +191,14 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
       myBackendExecutor.execute(new Runnable() {
         @Override
         public void run() {
-          ConcurrencyUtil.runUnderThreadName(myName, new Runnable() {
-            @Override
-            public void run() {
-              Runnable task = currentTask.get();
-              do {
-                currentTask.set(task);
-                doRun(task);
-                task = pollOrGiveUp(status);
-              }
-              while (task != null);
+          ConcurrencyUtil.runUnderThreadName(myName, () -> {
+            Runnable task = currentTask.get();
+            do {
+              currentTask.set(task);
+              doRun(task);
+              task = pollOrGiveUp(status);
             }
+            while (task != null);
           });
         }
 
@@ -237,28 +234,22 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
   public void waitAllTasksExecuted(long timeout, @NotNull TimeUnit unit) throws ExecutionException, InterruptedException, TimeoutException {
     final CountDownLatch started = new CountDownLatch(myMaxThreads);
     final CountDownLatch readyToFinish = new CountDownLatch(1);
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        try {
-          started.countDown();
-          readyToFinish.await();
-        }
-        catch (InterruptedException e) {
-          throw new RuntimeException(e);
-        }
+    final Runnable runnable = () -> {
+      try {
+        started.countDown();
+        readyToFinish.await();
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeException(e);
       }
     };
     // Submit 'myMaxTasks' runnables and wait for them all to start.
     // They will spread to all executor threads and ensure the previously submitted tasks are completed.
     // Wait for all empty runnables to finish to free up the threads.
-    List<Future> futures = ContainerUtil.map(Collections.nCopies(myMaxThreads, null), new Function<Object, Future>() {
-      @Override
-      public Future fun(Object o) {
-        LastTask wait = new LastTask(runnable);
-        execute(wait);
-        return wait;
-      }
+    List<Future> futures = ContainerUtil.map(Collections.nCopies(myMaxThreads, null), o -> {
+      LastTask wait = new LastTask(runnable);
+      execute(wait);
+      return wait;
     });
     try {
       if (!started.await(timeout, unit)) {
@@ -293,12 +284,8 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     return "BoundedExecutor(" + myMaxThreads + ") " + (isShutdown() ? "SHUTDOWN " : "") +
            "inProgress: " + (int)myStatus.get() +
            "; " +
-           (myTaskQueue.isEmpty() ? "" : "Queue size: "+myTaskQueue.size() +"; tasks in queue: [" + ContainerUtil.map(myTaskQueue, new Function<Runnable, Object>() {
-             @Override
-             public Object fun(Runnable runnable) {
-               return info(runnable);
-             }
-           }) + "]") +
+           (myTaskQueue.isEmpty() ? "" : "Queue size: " + myTaskQueue.size() + "; tasks in queue: [" + ContainerUtil.map(myTaskQueue,
+                                                                                                                         runnable -> info(runnable)) + "]") +
            "name: " + myName;
   }
 }

@@ -48,12 +48,7 @@ public class EventDispatcher<T extends EventListener> {
     List<Method> declared = new ArrayList<>(ReflectionUtil.getClassPublicMethods(listenerClass));
     for (final Map.Entry<String, Object> entry : methodReturnValues.entrySet()) {
       final String methodName = entry.getKey();
-      Method found = ContainerUtil.find(declared, new Condition<Method>() {
-        @Override
-        public boolean value(Method m) {
-          return methodName.equals(m.getName());
-        }
-      });
+      Method found = ContainerUtil.find(declared, m -> methodName.equals(m.getName()));
       assert found != null : "Method " + methodName + " must be declared in " + listenerClass;
       assert !found.getReturnType().equals(void.class) :
         "Method " + methodName + " must be non-void if you want to specify what its proxy should return";

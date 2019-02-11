@@ -166,15 +166,12 @@ public class BeanBinding extends NotNullDeserializeBinding {
   }
 
   public final void sortBindings(@NotNull final TObjectFloatHashMap<? super String> weights) {
-    Arrays.sort(myBindings, new Comparator<Binding>() {
-      @Override
-      public int compare(@NotNull Binding o1, @NotNull Binding o2) {
-        String n1 = o1.getAccessor().getName();
-        String n2 = o2.getAccessor().getName();
-        float w1 = weights.get(n1);
-        float w2 = weights.get(n2);
-        return (int)(w1 - w2);
-      }
+    Arrays.sort(myBindings, (o1, o2) -> {
+      String n1 = o1.getAccessor().getName();
+      String n2 = o2.getAccessor().getName();
+      float w1 = weights.get(n1);
+      float w2 = weights.get(n2);
+      return (int)(w1 - w2);
     });
   }
 

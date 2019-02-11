@@ -88,14 +88,10 @@ class ImmutableElement extends Element {
     }
 
     if (type == null) {
-      return Collections.unmodifiableList(ContainerUtil.map(originAttributes, new Function<Attribute, Attribute>() {
-        @Override
-        public Attribute fun(Attribute attribute) {
-          return new ImmutableAttribute(interner.internString(attribute.getName()),
-                                        interner.internString(attribute.getValue()),
-                                        attribute.getAttributeType(), attribute.getNamespace());
-        }
-      }));
+      return Collections.unmodifiableList(ContainerUtil.map(originAttributes,
+                                                            (Function<Attribute, Attribute>)attribute -> new ImmutableAttribute(interner.internString(attribute.getName()),
+                                                                                                                                                                                  interner.internString(attribute.getValue()),
+                                                                                                                                                                                  attribute.getAttributeType(), attribute.getNamespace())));
     }
     else {
       return new ImmutableSameTypeAttributeList(nameValues, type, namespace);
@@ -115,12 +111,7 @@ class ImmutableElement extends Element {
 
   @Override
   public <T extends Content> List<T> getContent(final Filter<T> filter) {
-    return (List<T>)ContainerUtil.filter(myContent, new Condition<Content>() {
-      @Override
-      public boolean value(Content content) {
-        return filter.matches(content);
-      }
-    });
+    return (List<T>)ContainerUtil.filter(myContent, content -> filter.matches(content));
   }
 
   @Override

@@ -60,12 +60,7 @@ public class UniqueNameGenerator implements Condition<String> {
 
   @NotNull
   public static String generateUniqueName(String defaultName, String prefix, String suffix, final Collection<String> existingNames) {
-    return generateUniqueName(defaultName, prefix, suffix, new Condition<String>() {
-      @Override
-      public boolean value(String s) {
-        return !existingNames.contains(s); 
-      }
-    });
+    return generateUniqueName(defaultName, prefix, suffix, s -> !existingNames.contains(s));
   }
 
   @NotNull

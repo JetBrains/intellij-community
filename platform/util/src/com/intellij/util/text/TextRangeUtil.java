@@ -29,12 +29,9 @@ import java.util.List;
  */
 public class TextRangeUtil {
 
-  public static final Comparator<TextRange> RANGE_COMPARATOR = new Comparator<TextRange>() {
-    @Override
-    public int compare(TextRange range1, TextRange range2) {
-      int startOffsetDiff = range1.getStartOffset() - range2.getStartOffset();
-      return startOffsetDiff != 0 ? startOffsetDiff : range1.getEndOffset() - range2.getEndOffset();
-    }
+  public static final Comparator<TextRange> RANGE_COMPARATOR = (range1, range2) -> {
+    int startOffsetDiff = range1.getStartOffset() - range2.getStartOffset();
+    return startOffsetDiff != 0 ? startOffsetDiff : range1.getEndOffset() - range2.getEndOffset();
   };
   
   private TextRangeUtil() {

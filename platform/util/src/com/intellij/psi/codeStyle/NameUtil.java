@@ -13,12 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class NameUtil {
-  private static final Function<String,String> LOWERCASE_MAPPING = new Function<String, String>() {
-    @Override
-    public String fun(final String s) {
-      return s.toLowerCase();
-    }
-  };
+  private static final Function<String,String> LOWERCASE_MAPPING = s -> s.toLowerCase();
   private static final int MAX_LENGTH = 40;
 
   private NameUtil() {}
@@ -450,12 +445,7 @@ public class NameUtil {
 
   @NotNull
   public static String capitalizeAndUnderscore(@NotNull String name) {
-    return splitWords(name, '_', new Function<String, String>() {
-      @Override
-      public String fun(String s) {
-        return StringUtil.toUpperCase(s);
-      }
-    });
+    return splitWords(name, '_', s -> StringUtil.toUpperCase(s));
   }
 
   @NotNull
