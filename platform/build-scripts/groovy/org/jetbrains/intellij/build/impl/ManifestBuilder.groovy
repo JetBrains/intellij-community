@@ -10,9 +10,10 @@ import java.nio.channels.FileChannel
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.security.MessageDigest
+import java.util.function.Function
 
 /**
- * Recursively computes hashes of files under given paths and writs them in sha*sum utility format.
+ * Recursively computes hashes of files under given paths and writes them in sha*sum utility format.
  */
 @CompileStatic
 class ManifestBuilder {
@@ -22,8 +23,8 @@ class ManifestBuilder {
     digest = MessageDigest.getInstance(context.options.hashAlgorithm)
   }
 
-  String buildManifest(List<String> paths, String basePath) {
-    Map<String, byte[]> hashes = collectHashes(paths)
+  String buildManifest(List<String> paths, String basePath, Function<String, String> mapper = null) {
+    Map<String, byte[]> hashes = collectHashes(paths, mapper)
     String ext = digest.algorithm.toLowerCase(Locale.ENGLISH).replace("-", "")
     String path = "${basePath}.${ext}"
     writeHashes(hashes, path)
@@ -31,7 +32,7 @@ class ManifestBuilder {
   }
 
   @CompileDynamic
-  private SortedMap<String, byte[]> collectHashes(List<String> paths) {
+  private SortedMap<String, byte[]> collectHashes(List<String> paths, Function<String, String> mapper) {
     Map<String, byte[]> hashes = new TreeMap<String, byte[]>()
 
     paths.each {
@@ -40,11 +41,12 @@ class ManifestBuilder {
         @Override
         FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
           String relPath = (file == root ? file.fileName : root.relativize(file)).toString()
+          String key = mapper != null ? mapper.apply(relPath) : relPath
           byte[] hash = new RandomAccessFile(file.toFile(), "r").withCloseable {
             digest.update(it.channel.map(FileChannel.MapMode.READ_ONLY, 0, attrs.size()))
             digest.digest()
           }
-          hashes[relPath] = hash
+          hashes[key] = hash
           return FileVisitResult.CONTINUE
         }
       })
