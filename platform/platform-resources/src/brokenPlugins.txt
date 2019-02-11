@@ -115,4 +115,4 @@ Bazel 2018.12.03.0.2 2018.11.12.0.4
 ru.makkarpov.ucl 0.1 0.1.1 0.1.2
 com.undo_software.clion.reverse 2.0.0
 "Randori Compiler" 0.2.0 0.2.1 0.2.3 0.2.4 0.3.0
-Docker 173.2605 191.4212.41
+Docker 173.2605 191.4212.41 191.4738.6
