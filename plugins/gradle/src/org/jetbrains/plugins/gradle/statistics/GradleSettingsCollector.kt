@@ -33,7 +33,13 @@ class GradleSettingsCollector : ProjectUsagesCollector() {
       usages.add(getBooleanUsage("disableWrapperSourceDistributionNotification", setting.isDisableWrapperSourceDistributionNotification))
       usages.add(getBooleanUsage("createModulePerSourceSet", setting.isResolveModulePerSourceSet))
       usages.add(UsageDescriptor("gradleJvm." + ConvertUsagesUtil.escapeDescriptorName(setting.gradleJvm ?: "empty"), 1))
-      usages.add(UsageDescriptor("gradleVersion." + setting.resolveGradleVersion().version, 1))
+      val gradleVersion = setting.resolveGradleVersion()
+      if(gradleVersion.isSnapshot) {
+        usages.add(UsageDescriptor("gradleVersion." + gradleVersion.baseVersion.version + ".SNAPSHOT", 1))
+      } else {
+        usages.add(UsageDescriptor("gradleVersion." + gradleVersion.version, 1))
+      }
+
     }
 
     // running settings
