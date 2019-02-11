@@ -126,7 +126,8 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
     assertConfigurationFromContext<PatternGradleConfigurationProducer>(
       """:cleanTest :test --tests "TestCase" :cleanAutoTest :autoTest --tests "AutomationTestCase" --continue""",
       projectData["project"]["TestCase"].element,
-      projectData["project"]["AutomationTestCase"].element
+      projectData["project"]["AutomationTestCase"].element,
+      testTasksFilter = { it in setOf("test", "autoTest") }
     )
   }
 }

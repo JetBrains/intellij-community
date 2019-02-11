@@ -126,13 +126,12 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
     chooseTestClassConfiguration(fromContext, context, performRunnable, psiMethod, psiClass);
   }
 
-  private static void chooseTestClassConfiguration(@NotNull ConfigurationFromContext fromContext,
+  private void chooseTestClassConfiguration(@NotNull ConfigurationFromContext fromContext,
                                                    @NotNull ConfigurationContext context,
                                                    @NotNull Runnable performRunnable,
                                                    @NotNull PsiMethod psiMethod,
                                                    @NotNull PsiClass... classes) {
-    TasksChooser tasksChooser = new TasksChooser();
-    tasksChooser.runTaskChoosing(context, classes, tasks -> {
+    getTasksChooser().runTaskChoosing(context, classes, tasks -> {
         ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
         ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
         Function1<PsiClass, String> createFilter = (psiClass) -> createTestFilter(context.getLocation(), psiClass, psiMethod);

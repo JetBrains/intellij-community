@@ -89,8 +89,7 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
     Project project = context.getProject();
     List<String> tests = getTestPatterns(context);
     TestMappings testMappings = getTestMappings(project, tests);
-    TasksChooser tasksChooser = new TasksChooser();
-    tasksChooser.runTaskChoosing(context, testMappings.getClasses().values(), tasks -> {
+    getTasksChooser().runTaskChoosing(context, testMappings.getClasses().values(), tasks -> {
         ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
         Function1<String, PsiClass> findPsiClass = test -> testMappings.getClasses().get(test);
         Function2<PsiClass, String, String> createFilter = (psiClass, test) ->
