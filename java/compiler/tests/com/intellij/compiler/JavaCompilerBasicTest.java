@@ -48,8 +48,8 @@ public class JavaCompilerBasicTest extends BaseCompilerTestCase {
     final File linkFile = new File(srcRoot.getParent().getPath(), "src-link");
     FileUtil.delete(linkFile); // ensure the link does not exist
     String symlink = Files.createSymbolicLink(linkFile.toPath(), Paths.get(srcRoot.getPath())).getFileName().toString();
-    srcRoot.getParent().refresh(false, true);
-    VirtualFile sourceRoot = srcRoot.getParent().findChild(symlink);
+
+    VirtualFile sourceRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(srcRoot.getParent().getPath(), symlink));
     assertNotNull(sourceRoot);
     final Module module = addModule("a", sourceRoot);
 
