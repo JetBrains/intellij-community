@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -72,11 +72,12 @@ fun loadSettings(settingsFile: Path): IcsSettings {
 @JsonInclude(value = JsonInclude.Include.NON_DEFAULT)
 @JsonIgnoreProperties(ignoreUnknown = true)
 class IcsSettings {
-  var commitDelay: Int = DEFAULT_COMMIT_DELAY
-  var doNoAskMapProject: Boolean = false
+  var commitDelay = DEFAULT_COMMIT_DELAY
+  var doNoAskMapProject = false
   var readOnlySources: List<ReadonlySource> = SmartList()
 
-  var autoSync: Boolean = true
+  var autoSync = true
+  var includeHostIntoCommitMessage = true
 }
 
 @JsonInclude(value = JsonInclude.Include.NON_DEFAULT)
