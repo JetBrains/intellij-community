@@ -2,11 +2,12 @@
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
-public interface XBreakpointTypeDelegateDocument {
+public interface XBreakpointTypeWithDocumentDelegation {
   /*
    * return a custom document which should be used for breakpoint highlighting
    */
-  Document getDocumentForHighlighting(Project project, Document document);
+  @NotNull
+  Document getDocumentForHighlighting(@NotNull Document document);
 }
