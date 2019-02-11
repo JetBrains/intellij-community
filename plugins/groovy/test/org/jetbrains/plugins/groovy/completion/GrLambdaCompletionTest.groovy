@@ -4,8 +4,6 @@ package org.jetbrains.plugins.groovy.completion
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
-import org.jetbrains.plugins.groovy.LightGroovyTestCase
-import org.jetbrains.plugins.groovy.util.HighlightingTest
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 @CompileStatic
