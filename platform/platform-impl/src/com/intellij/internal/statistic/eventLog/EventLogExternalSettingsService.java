@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.eventLog;
 import com.intellij.facet.frameworks.SettingsConnectionService;
 import com.intellij.internal.statistic.persistence.ApprovedGroupsCacheConfigurable;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -90,7 +91,7 @@ public class EventLogExternalSettingsService extends SettingsConnectionService i
 
   @Override
   public boolean isInternal() {
-    return false;
+    return StatisticsUploadAssistant.isTestStatisticsEnabled();
   }
 
   @Nullable
