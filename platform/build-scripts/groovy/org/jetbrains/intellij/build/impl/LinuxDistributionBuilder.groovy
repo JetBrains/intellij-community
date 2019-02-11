@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.text.StringUtil
@@ -127,16 +125,19 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
   private void generateReadme(String unixDistPath) {
     String fullName = buildContext.applicationInfo.productName
-    BuildUtils.copyAndPatchFile("$buildContext.paths.communityHome/platform/build-scripts/resources/linux/Install-Linux-tar.txt", "$unixDistPath/Install-Linux-tar.txt",
-                     ["product_full"   : fullName,
-                      "product"        : buildContext.productProperties.baseFileName,
-                      "system_selector": buildContext.systemSelector], "@@")
+    BuildUtils.copyAndPatchFile(
+      "$buildContext.paths.communityHome/platform/build-scripts/resources/linux/Install-Linux-tar.txt",
+      "$unixDistPath/Install-Linux-tar.txt",
+      ["product_full"   : fullName,
+       "product"        : buildContext.productProperties.baseFileName,
+       "system_selector": buildContext.systemSelector], "@@")
     buildContext.ant.fixcrlf(file: "$unixDistPath/bin/Install-Linux-tar.txt", eol: "unix")
   }
 
   private void buildTarGz(String jreDirectoryPath, String unixDistPath, String suffix) {
     def tarRoot = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
-    def tarPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${suffix}.tar"
+    def baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
+    def tarPath = "${buildContext.paths.artifacts}/${baseName}${suffix}.tar"
     def extraBins = customizer.extraExecutables
     def paths = [buildContext.paths.distAll, unixDistPath]
     String javaExecutablePath
@@ -191,8 +192,8 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
   private void generateProductJson(String targetDir, String javaExecutablePath) {
     def scriptName = buildContext.productProperties.baseFileName
-    new ProductInfoGenerator(buildContext)
-      .generateProductJson(targetDir, "bin", getFrameClass(buildContext), "bin/${scriptName}.sh", javaExecutablePath, "bin/${scriptName}64.vmoptions", OsFamily.LINUX)
+    new ProductInfoGenerator(buildContext).generateProductJson(
+      targetDir, "bin", getFrameClass(buildContext), "bin/${scriptName}.sh", javaExecutablePath, "bin/${scriptName}64.vmoptions", OsFamily.LINUX)
   }
 
   private void buildSnapPackage(String jreDirectoryPath, String unixDistPath) {
