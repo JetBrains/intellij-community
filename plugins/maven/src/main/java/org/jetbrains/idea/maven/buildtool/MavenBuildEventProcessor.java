@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.buildtool;
 
+import com.intellij.build.BuildDescriptor;
+import com.intellij.build.BuildProgressListener;
 import com.intellij.build.BuildViewManager;
 import com.intellij.build.DefaultBuildDescriptor;
 import com.intellij.build.events.impl.OutputBuildEventImpl;
@@ -18,16 +20,11 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenResumeAction;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLogOutputParser;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenOutputParserProvider;
-import org.jetbrains.idea.maven.externalSystemIntegration.output.events.ArtifactDownloadScanning;
-import org.jetbrains.idea.maven.externalSystemIntegration.output.events.BuildErrorNotification;
-import org.jetbrains.idea.maven.externalSystemIntegration.output.events.ProjectScanning;
-import org.jetbrains.idea.maven.externalSystemIntegration.output.events.WarningNotifier;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -36,45 +33,50 @@ import java.util.Collections;
 import static com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType.EXECUTE_TASK;
 
 public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAcceptor {
-  @NotNull private final BuildViewManager myViewManager;
+  @NotNull private final BuildProgressListener myBuildProgressListener;
   @NotNull private final Project myProject;
   @NotNull private final BuildOutputInstantReader myInstantReader;
   @NotNull private final ExternalSystemTaskId myTaskId;
   @NotNull private final String myTitle;
   @NotNull private final String myWorkingDir;
   @NotNull private final MavenLogOutputParser myParser;
+  private final BuildDescriptor myDescriptor;
 
   public MavenBuildEventProcessor(@NotNull Project project,
-                                  @NotNull String title,
-                                  @NotNull String workingDir) {
-    myViewManager = ServiceManager.getService(project, BuildViewManager.class);
+                                  @NotNull String workingDir,
+                                  @NotNull BuildProgressListener buildProgressListener,
+                                  @NotNull BuildDescriptor descriptor,
+                                  @NotNull ExternalSystemTaskId taskId) {
+
+    myBuildProgressListener = buildProgressListener;
     myProject = project;
-    myTaskId = ExternalSystemTaskId.create(MavenConstants.SYSTEM_ID, EXECUTE_TASK, project);
-    myTitle = title;
+    myTaskId = taskId;
+    myTitle = descriptor.getTitle();
     myWorkingDir = workingDir;
+    myDescriptor = descriptor;
 
     myParser = MavenOutputParserProvider.createMavenOutputParser(myTaskId);
 
     myInstantReader = new BuildOutputInstantReaderImpl(
       myTaskId,
-      myViewManager,
+      myBuildProgressListener,
       Collections.singletonList(myParser));
   }
 
   public void finish() {
     myInstantReader.close();
-    myParser.finish(e -> myViewManager.onEvent(e));
+    myParser.finish(e -> myBuildProgressListener.onEvent(e));
   }
 
   public void start(@Nullable ExecutionEnvironment executionEnvironment, @Nullable ProcessHandler processHandler) {
-    DefaultBuildDescriptor descriptor = new DefaultBuildDescriptor(myTaskId, myTitle, myWorkingDir, System.currentTimeMillis());
-    StartBuildEventImpl startEvent = new StartBuildEventImpl(descriptor, "Maven run");
+
+    StartBuildEventImpl startEvent = new StartBuildEventImpl(myDescriptor, "Maven run");
     if (executionEnvironment != null && processHandler != null) {
       startEvent
         .withRestartAction(new MavenResumeAction(processHandler, DefaultJavaProgramRunner.getInstance(), executionEnvironment));
     }
 
-    myViewManager.onEvent(startEvent);
+    myBuildProgressListener.onEvent(startEvent);
   }
 
   public void notifyException(Throwable throwable) {
@@ -83,14 +85,14 @@ public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAc
   }
 
   public void onTextAvailable(String text, boolean stdError) {
-    myViewManager.onEvent(new OutputBuildEventImpl(myTaskId, text, !stdError));
+    myBuildProgressListener.onEvent(new OutputBuildEventImpl(myTaskId, text, !stdError));
     myInstantReader.append(text);
   }
 
   @Override
   public void coloredTextAvailable(@NotNull String text, @NotNull Key outputType) {
     boolean stdError = outputType == ProcessOutputTypes.STDERR;
-    myViewManager.onEvent(new OutputBuildEventImpl(myTaskId, text, !stdError));
+    myBuildProgressListener.onEvent(new OutputBuildEventImpl(myTaskId, text, !stdError));
     myInstantReader.append(text);
   }
 }

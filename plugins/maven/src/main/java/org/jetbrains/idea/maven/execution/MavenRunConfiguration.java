@@ -3,6 +3,9 @@
  */
 package org.jetbrains.idea.maven.execution;
 
+import com.intellij.build.BuildView;
+import com.intellij.build.DefaultBuildDescriptor;
+import com.intellij.build.ViewManager;
 import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -11,9 +14,12 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
@@ -25,10 +31,12 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.util.xmlb.XmlSerializer;
+import org.apache.velocity.texen.util.FileUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.buildtool.BuildToolConsoleProcessAdapter;
+import org.jetbrains.idea.maven.buildtool.BuildToolWindowMavenConsole;
 import org.jetbrains.idea.maven.buildtool.MavenBuildEventProcessor;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
@@ -40,6 +48,7 @@ import java.io.File;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import static com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType.EXECUTE_TASK;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.util.containers.ContainerUtil.indexOf;
 import static org.jetbrains.idea.maven.execution.MavenApplicationConfigurationExecutionEnvironmentProvider.patchVmParameters;
@@ -298,7 +307,12 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     @NotNull
     @Override
     public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
-      DefaultExecutionResult res = (DefaultExecutionResult)super.execute(executor, runner);
+
+      final ProcessHandler processHandler = startProcess();
+
+      final ConsoleView console = createConsoleViewAndAttachToProcess(executor, processHandler);
+
+      DefaultExecutionResult res = new DefaultExecutionResult(console, processHandler, createActions(console, processHandler, executor));
       if (executor.getId().equals(ToolWindowId.RUN)
           && MavenResumeAction.isApplicable(getEnvironment().getProject(), getJavaParameters(), MavenRunConfiguration.this)) {
         MavenResumeAction resumeAction = new MavenResumeAction(res.getProcessHandler(), runner, getEnvironment());
@@ -307,18 +321,35 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       return res;
     }
 
+    private @Nullable
+    ConsoleView createConsoleViewAndAttachToProcess(Executor executor, ProcessHandler processHandler) throws ExecutionException {
+      ConsoleView console = super.createConsole(executor);
+      if (console == null) {
+        return null;
+      }
+      console.attachToProcess(processHandler);
+      if (!Registry.is("maven.build.tool.window.enabled")) {
+        return console;
+      }
+      else {
+        ExternalSystemTaskId taskId = ExternalSystemTaskId.create(MavenConstants.SYSTEM_ID, EXECUTE_TASK, getProject());
+        DefaultBuildDescriptor descriptor =
+          new DefaultBuildDescriptor(taskId, "Run Maven task", getEnvironment().getProject().getBasePath(), System.currentTimeMillis());
+
+        BuildView buildView = BuildToolWindowMavenConsole.createBuildView(getProject(), console, descriptor);
+
+        MavenBuildEventProcessor eventProcessor =
+          new MavenBuildEventProcessor(getProject(), getProject().getBasePath(), buildView, descriptor, taskId);
+        processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(eventProcessor));
+        return buildView;
+      }
+    }
+
     @NotNull
     @Override
     protected OSProcessHandler startProcess() throws ExecutionException {
       OSProcessHandler result = super.startProcess();
       result.setShouldDestroyProcessRecursively(true);
-      if(Registry.is("maven.build.tool.window.enabled")) {
-        MavenBuildEventProcessor eventParser =
-          new MavenBuildEventProcessor(getEnvironment().getProject(), getEnvironment().getExecutionTarget().getDisplayName(),
-                                       getEnvironment().getProject().getBasePath());
-        result.addProcessListener(new BuildToolConsoleProcessAdapter(eventParser));
-      }
-
       result.addProcessListener(new ProcessAdapter() {
         @Override
         public void processTerminated(@NotNull ProcessEvent event) {

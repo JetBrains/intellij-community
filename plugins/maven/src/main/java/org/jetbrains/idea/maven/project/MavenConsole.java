@@ -19,6 +19,7 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.SmartList;
@@ -74,6 +75,7 @@ public abstract class MavenConsole {
   public boolean isSuppressed(String line) {
     return isSuppressed(getLevel(line));
   }
+
 
   public abstract boolean canPause();
 

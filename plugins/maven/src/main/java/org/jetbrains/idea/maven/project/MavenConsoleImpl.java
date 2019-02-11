@@ -78,10 +78,13 @@ public class MavenConsoleImpl extends MavenConsole {
     return MavenProjectsManager.getInstance(project).getGeneralSettings();
   }
 
-  private ConsoleView createConsoleView() {
+  public ConsoleView createConsoleView() {
     return createConsoleBuilder(myProject).getConsole();
   }
 
+  /**
+   * to be refactored
+   */
   public static TextConsoleBuilder createConsoleBuilder(final Project project) {
     TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
     builder.addFilter(new RegexpFilter(project, CONSOLE_FILTER_REGEXP) {
@@ -157,7 +160,7 @@ public class MavenConsoleImpl extends MavenConsole {
       default:
         contentType = ConsoleViewContentType.NORMAL_OUTPUT;
     }
-    myConsoleView.print(text, contentType);
+   myConsoleView.print(text, contentType);
   }
 
   private void ensureAttachedToToolWindow() {

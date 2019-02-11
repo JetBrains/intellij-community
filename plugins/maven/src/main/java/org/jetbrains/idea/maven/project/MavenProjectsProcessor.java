@@ -101,13 +101,14 @@ public class MavenProjectsProcessor {
   }
 
   private void startProcessing(final MavenProjectsProcessorTask task) {
+    MavenConsole console = MavenConsole.createGuiMavenConsole(myProject, "Maven", myProject.getBasePath());
     MavenUtil.runInBackground(myProject, myTitle, myCancellable, new MavenTask() {
       @Override
       public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
         Condition<MavenProgressIndicator> condition = mavenProgressIndicator -> isStopped;
         indicator.addCancelCondition(condition);
         try {
-          doProcessPendingTasks(indicator, task);
+          doProcessPendingTasks(indicator, task, console);
         }
         finally {
           indicator.removeCancelCondition(condition);
@@ -116,7 +117,9 @@ public class MavenProjectsProcessor {
     });
   }
 
-  private void doProcessPendingTasks(MavenProgressIndicator indicator, MavenProjectsProcessorTask task)
+  private void doProcessPendingTasks(MavenProgressIndicator indicator,
+                                     MavenProjectsProcessorTask task,
+                                     MavenConsole console)
     throws MavenProcessCanceledException {
     int counter = 0;
     try {
@@ -132,9 +135,7 @@ public class MavenProjectsProcessor {
 
         try {
           final MavenGeneralSettings mavenGeneralSettings = MavenProjectsManager.getInstance(myProject).getGeneralSettings();
-          task.perform(myProject, myEmbeddersManager,
-                       MavenConsole.createGuiMavenConsole(myProject, "Maven", myProject.getBasePath()),
-                       indicator);
+          task.perform(myProject, myEmbeddersManager, console, indicator);
         }
         catch (MavenProcessCanceledException e) {
           throw e;
