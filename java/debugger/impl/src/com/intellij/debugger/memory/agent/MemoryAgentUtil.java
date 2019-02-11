@@ -36,6 +36,7 @@ import java.util.jar.Attributes;
 
 public class MemoryAgentUtil {
   private static final Logger LOG = Logger.getInstance(MemoryAgentUtil.class);
+  private static final int ESTIMATE_OBJECTS_SIZE_LIMIT = 2000;
 
   public static void addMemoryAgent(@NotNull JavaParameters parameters) {
     if (!DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT) {
@@ -83,6 +84,10 @@ public class MemoryAgentUtil {
 
   public static List<JavaReferenceInfo> tryCalculateSizes(@NotNull List<JavaReferenceInfo> objects, @Nullable MemoryAgent agent) {
     if (agent == null || !agent.canEvaluateObjectsSizes()) return objects;
+    if (objects.size() > ESTIMATE_OBJECTS_SIZE_LIMIT) {
+      LOG.info("Too many objects to estimate their sizess");
+      return objects;
+    }
     try {
       long[] sizes = agent.evaluateObjectsSizes(ContainerUtil.map(objects, x -> x.getObjectReference()));
       return IntStreamEx.range(0, objects.size())
