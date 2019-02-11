@@ -10,7 +10,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.ui.UIUtil;
@@ -94,7 +93,8 @@ public abstract class JvmSmartStepIntoHandler {
   private static void highlightTarget(PsiMethodListPopupStep popupStep, SmartStepTarget target, SourcePosition position) {
     final PsiElement highlightElement = target.getHighlightElement();
     if (highlightElement != null) {
-      if (!PsiTreeUtil.isAncestor(position.getFile(), highlightElement, false)) {
+      PsiFile containingFile = highlightElement.getContainingFile();
+      if (containingFile == null || !containingFile.getOriginalFile().equals(position.getFile())) {
         LOG.error("Highlight element " + highlightElement + " in " + target + " is not from the current file", target.myCreationStack);
       }
       popupStep.getScopeHighlighter().highlight(highlightElement, Collections.singletonList(highlightElement));
