@@ -176,7 +176,7 @@ public abstract class Decompressor {
   //<editor-fold desc="Internal interface">
   protected Decompressor() { }
 
-  private static class Entry {
+  protected static class Entry {
     private final String name;
     private final boolean isDirectory;
 
