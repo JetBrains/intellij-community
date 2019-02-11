@@ -529,7 +529,9 @@ public class Switcher extends AnAction implements DumbAware {
       ScrollingUtil.ensureSelectionExists(files);
 
       myShowOnlyEditedFilesCheckBox = new MyCheckBox(actionId, onlyEdited);
-      myTopPanel = createTopPanel(myShowOnlyEditedFilesCheckBox, isCheckboxMode() ? IdeBundle.message("title.popup.recent.files") : title);
+      myTopPanel = createTopPanel(myShowOnlyEditedFilesCheckBox,
+                                  isCheckboxMode() ? IdeBundle.message("title.popup.recent.files") : title,
+                                  pinned);
       if (isCheckboxMode()) {
         myShowOnlyEditedFilesCheckBox.addActionListener(e -> setShowOnlyEditedFiles(myShowOnlyEditedFilesCheckBox.isSelected()));
       }
@@ -699,7 +701,9 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     @NotNull
-    private static JPanel createTopPanel(JBCheckBox showOnlyEditedFilesCheckBox, @NotNull String title) {
+    private static JPanel createTopPanel(@NotNull JBCheckBox showOnlyEditedFilesCheckBox,
+                                         @NotNull String title,
+                                         boolean isMovable) {
       JPanel topPanel = new CaptionPanel();
       JBLabel titleLabel = new JBLabel(title);
       titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD));
@@ -711,6 +715,13 @@ public class Switcher extends AnAction implements DumbAware {
       size.width = titleLabel.getPreferredSize().width + showOnlyEditedFilesCheckBox.getPreferredSize().width + JBUI.scale(50);
       topPanel.setPreferredSize(size);
       topPanel.setBorder(JBUI.Borders.empty(5, 8));
+
+      if (isMovable) {
+        WindowMoveListener moveListener = new WindowMoveListener(topPanel);
+        topPanel.addMouseListener(moveListener);
+        topPanel.addMouseMotionListener(moveListener);
+      }
+
       return topPanel;
     }
 
