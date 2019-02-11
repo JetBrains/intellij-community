@@ -359,7 +359,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       if (myElement != null) {
         PsiElement element = myElement.getPsiElement();
         if (element != null) {
-          commentOutDead(PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class));
+          commentOutDead(element);
         }
       }
     }
