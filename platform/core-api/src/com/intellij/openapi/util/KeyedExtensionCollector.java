@@ -150,33 +150,35 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   protected List<T> buildExtensions(@NotNull String stringKey, @NotNull KeyT key) {
     synchronized (lock) {
       List<T> list = myExplicitExtensions.get(stringKey);
-      List<T> result = list == null ? null : new ArrayList<>(list);
-
-      result = buildExtensionsFromExtensionPoint(result, bean -> stringKey.equals(bean.getKey()));
-      return result == null ? Collections.emptyList() : result;
+      return ContainerUtil.notNullize(buildExtensionsFromExtensionPoint(list == null ? null : new ArrayList<>(list), bean -> stringKey.equals(bean.getKey())));
     }
   }
 
-  protected List<T> buildExtensionsFromExtensionPoint(@Nullable List<T> result, @NotNull Predicate<? super KeyedLazyInstance<T>> isMyBean) {
+  protected final List<T> buildExtensionsFromExtensionPoint(@Nullable List<T> result, @NotNull Predicate<? super KeyedLazyInstance<T>> isMyBean) {
     final ExtensionPoint<KeyedLazyInstance<T>> point = getPoint();
-    if (point != null) {
-      final KeyedLazyInstance<T>[] beans = point.getExtensions();
-      for (KeyedLazyInstance<T> bean : beans) {
-        if (isMyBean.test(bean)) {
-          final T instance;
-          try {
-            instance = bean.getInstance();
-          }
-          catch (ProcessCanceledException e) {
-            throw e;
-          }
-          catch (Exception | LinkageError e) {
-            LOG.error(e);
-            continue;
-          }
-          if (result == null) result = new SmartList<>();
-          result.add(instance);
+    if (point == null) {
+      return result;
+    }
+
+    for (KeyedLazyInstance<T> bean : point.getExtensionList()) {
+      if (isMyBean.test(bean)) {
+        final T instance;
+        try {
+          instance = bean.getInstance();
         }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (ExtensionNotApplicableException ignore) {
+          continue;
+        }
+        catch (Exception | LinkageError e) {
+          LOG.error(e);
+          continue;
+        }
+
+        if (result == null) result = new SmartList<>();
+        result.add(instance);
       }
     }
     return result;
