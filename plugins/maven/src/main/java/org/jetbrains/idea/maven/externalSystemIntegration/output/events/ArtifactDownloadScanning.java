@@ -65,7 +65,7 @@ public class ArtifactDownloadScanning implements MavenLoggedEventParser {
   public void finish(@NotNull ExternalSystemTaskId taskId, @NotNull Consumer<? super BuildEvent> messageConsumer) {
     for (String resource : startedToDownload) {
       messageConsumer.accept(new FinishEventImpl(getMessage(resource), taskId, System.currentTimeMillis(), getMessage(resource),
-                                    new FailureResultImpl("Cannot download artifact", "Cannot download artifact")));
+                                    new FailureResultImpl("Cannot download artifact", null)));
     }
     startedToDownload.clear();
   }

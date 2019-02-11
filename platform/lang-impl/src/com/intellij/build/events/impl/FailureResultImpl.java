@@ -42,11 +42,7 @@ public class FailureResultImpl implements FailureResult {
   public FailureResultImpl(List<Failure> failures) {
     myFailures = failures;
   }
-
-  public FailureResultImpl(String message, String description) {
-    myFailures = Collections.singletonList(new FailureImpl(message, description));
-  }
-
+  
   @Override
   public List<? extends Failure> getFailures() {
     return myFailures;
