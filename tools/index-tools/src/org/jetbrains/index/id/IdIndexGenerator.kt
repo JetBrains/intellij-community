@@ -9,14 +9,14 @@ import com.intellij.psi.impl.cache.impl.id.IdIndexers
 import com.intellij.psi.stubs.HashCodeDescriptor
 import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.io.PersistentHashMap
-import org.jetbrains.index.IndexGenerator
+import org.jetbrains.index.SingleIndexGenerator
 import java.io.File
 
 /**
  * @author traff
  */
 
-open class IdIndexGenerator(private val idIndexStorageFilePath: String) : IndexGenerator<Map<IdIndexEntry, Int>>(idIndexStorageFilePath) {
+open class IdIndexGenerator(private val idIndexStorageFilePath: String) : SingleIndexGenerator<Map<IdIndexEntry, Int>>(idIndexStorageFilePath) {
   override fun getIndexValue(fileContent: FileContentImpl): Map<IdIndexEntry, Int> {
     return IdIndexers.INSTANCE.forFileType(fileContent.file.fileType).map(fileContent)
   }

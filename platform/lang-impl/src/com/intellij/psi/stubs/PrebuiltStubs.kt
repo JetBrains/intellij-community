@@ -46,6 +46,7 @@ class HashCodeDescriptor : HashCodeExternalizers(), KeyDescriptor<HashCode> {
   override fun isEqual(val1: HashCode, val2: HashCode): Boolean = val1 == val2
 
   companion object {
+    @JvmField
     val instance: HashCodeDescriptor = HashCodeDescriptor()
   }
 }

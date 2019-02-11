@@ -2,6 +2,7 @@
 package org.jetbrains.index
 
 import com.google.common.hash.HashCode
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
@@ -17,7 +18,18 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * @author traff
  */
-abstract class IndexGenerator<Value>(private val indexStorageFilePath: String) {
+
+interface GeneratorFileVisitor {
+  fun accepts(file: VirtualFile): Boolean
+
+  fun visit(file: VirtualFile, content: FileContentImpl, fileType: FileType)
+}
+
+abstract class IndexGenerator(private val indexStorageDir: String) {
+
+}
+
+abstract class SingleIndexGenerator<Value>(private val indexStorageFilePath: String) {
   companion object {
     const val CHECK_HASH_COLLISIONS_PROPERTY = "idea.index.generator.check.hash.collisions"
     val CHECK_HASH_COLLISIONS: Boolean = SystemProperties.`is`(CHECK_HASH_COLLISIONS_PROPERTY)

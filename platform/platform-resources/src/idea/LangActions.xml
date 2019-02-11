@@ -1,5 +1,7 @@
 <idea-plugin>
   <actions>
+    <action id="DumpIndices" class="org.jetbrains.index.actions.DumpIndicesAction"/>
+
     <action id="IncrementalSearch" class="com.intellij.codeInsight.navigation.actions.IncrementalSearchAction"/>
     <action id="AddToFavoritesPopup" class="com.intellij.ide.favoritesTreeView.actions.AddToFavoritesPopupAction"/>
     <group id="AddToFavorites" class="com.intellij.ide.favoritesTreeView.actions.AddToFavoritesActionGroup" popup="true"/>

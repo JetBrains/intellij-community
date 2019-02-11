@@ -21,7 +21,7 @@ import com.intellij.psi.stubs.*
 import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.io.PersistentHashMap
 import junit.framework.TestCase
-import org.jetbrains.index.IndexGenerator
+import org.jetbrains.index.SingleIndexGenerator
 import java.io.File
 import java.util.*
 
@@ -29,7 +29,7 @@ import java.util.*
  * Generates stubs and stores them in one persistent hash map
  */
 open class StubsGenerator(private val stubsVersion: String, private val stubsStorageFilePath: String) :
-  IndexGenerator<SerializedStubTree>(stubsStorageFilePath) {
+  SingleIndexGenerator<SerializedStubTree>(stubsStorageFilePath) {
 
   private val serializationManager = SerializationManagerImpl(File("$stubsStorageFilePath.names"))
 
