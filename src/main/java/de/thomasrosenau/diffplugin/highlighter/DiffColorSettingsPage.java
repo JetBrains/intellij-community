@@ -56,7 +56,7 @@ public class DiffColorSettingsPage implements ColorSettingsPage {
     @NotNull
     @Override
     public String getDemoText() {
-        return "#contextual diff" +
+        return "#contextual diff\n" +
                 "diff -c y/a z/a\n" +
                 "*** y/a\t2019-02-10 05:29:03.000000000 +0100\n" +
                 "--- z/a\t2019-02-10 05:28:44.000000000 +0100\n" +

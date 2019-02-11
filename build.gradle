@@ -44,12 +44,6 @@ intellij {
 sourceSets.main.java.srcDir file('src/main/generated-java')
 idea.module.generatedSourceDirs += file('src/main/generated-java')
 
-//patchPluginXml {
-//    changeNotes """
-//
-//    """
-//}
-
 def intellijPublishUsername = project.properties['intellijPublishUsername'] ?: "see http://www.jetbrains.org/intellij/sdk/docs/tutorials/build_system/deployment.html"
 def intellijPublishPassword = project.properties['intellijPublishPassword'] ?: "see http://www.jetbrains.org/intellij/sdk/docs/tutorials/build_system/deployment.html"
 
