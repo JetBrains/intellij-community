@@ -37,9 +37,9 @@ public interface RestartableLexer {
 
   IElementType unpackTokenData(int data);
 
-  int unpackState(long data);
+  int unpackState(int data);
 
-  boolean containsRestartableState(long data);
+  boolean containsRestartableState(int data);
 
   boolean isRestartableState(int state);
 }

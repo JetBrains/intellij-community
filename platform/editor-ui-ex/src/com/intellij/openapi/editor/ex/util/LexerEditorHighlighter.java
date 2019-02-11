@@ -131,7 +131,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return document == null || document.getTextLength() == 0 || mySegments.getSegmentCount() > 0;
   }
 
-  private boolean isInitialState(long data) {
+  private boolean isInitialState(int data) {
     if (myLexer instanceof RestartableLexer) {
       return ((RestartableLexer)myLexer).containsRestartableState(data);
     } else {
