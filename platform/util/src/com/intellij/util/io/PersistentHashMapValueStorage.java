@@ -280,7 +280,8 @@ public class PersistentHashMapValueStorage {
   private long compactValuesWithoutChunks(@NotNull List<? extends PersistentHashMap.CompactionRecordInfo> infos, @NotNull PersistentHashMapValueStorage storage)
     throws IOException {
     //infos = new ArrayList<PersistentHashMap.CompactionRecordInfo>(infos);
-    Collections.sort(infos, (Comparator<PersistentHashMap.CompactionRecordInfo>)(info, info2) -> Comparing.compare(info.valueAddress, info2.valueAddress));
+    infos
+      .sort((Comparator<PersistentHashMap.CompactionRecordInfo>)(info, info2) -> Comparing.compare(info.valueAddress, info2.valueAddress));
 
     final int fileBufferLength = 256 * 1024;
     final byte[] buffer = new byte[fileBufferLength];

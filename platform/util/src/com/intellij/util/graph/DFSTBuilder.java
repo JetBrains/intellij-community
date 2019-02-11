@@ -370,7 +370,7 @@ public class DFSTBuilder<Node> {
   @NotNull
   public List<Node> getSortedNodes() {
     List<Node> result = new ArrayList<>(myGraph.getNodes());
-    Collections.sort(result, comparator());
+    result.sort(comparator());
     return result;
   }
 }

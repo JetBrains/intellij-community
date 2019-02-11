@@ -1808,7 +1808,7 @@ public class ContainerUtil extends ContainerUtilRt {
       }
     }
     else {
-      Collections.sort(list, comparator);
+      list.sort(comparator);
     }
   }
 

@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 
@@ -34,7 +33,7 @@ public class FragmentListImpl implements FragmentList {
   }
 
   private void init() {
-    Collections.sort(myFragments, FRAGMENT_COMPARATOR);
+    myFragments.sort(FRAGMENT_COMPARATOR);
     myFragments.trimToSize();
   }
 

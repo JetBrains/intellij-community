@@ -49,7 +49,7 @@ public class TextRangeUtil {
   public static Iterable<TextRange> excludeRanges(@NotNull TextRange original, @NotNull List<? extends TextRange> excludedRanges) {
     if (!excludedRanges.isEmpty()) {
       if (excludedRanges.size() > 1) {
-        Collections.sort(excludedRanges, RANGE_COMPARATOR);
+        excludedRanges.sort(RANGE_COMPARATOR);
       }
       int enabledRangeStart = original.getStartOffset();
       List<TextRange> enabledRanges = new ArrayList<>();

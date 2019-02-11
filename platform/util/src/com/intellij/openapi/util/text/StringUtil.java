@@ -109,7 +109,7 @@ public class StringUtil extends StringUtilRt {
   public static List<String> getWordsInStringLongestFirst(@NotNull String find) {
     List<String> words = getWordsIn(find);
     // hope long words are rare
-    Collections.sort(words, (o1, o2) -> o2.length() - o1.length());
+    words.sort((o1, o2) -> o2.length() - o1.length());
     return words;
   }
 

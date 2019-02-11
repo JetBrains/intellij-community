@@ -126,7 +126,7 @@ public final class FontInfo {
         if (info != null) list.add(info);
       }
     }
-    Collections.sort(list, COMPARATOR);
+    list.sort(COMPARATOR);
     return Collections.unmodifiableList(list);
   }
 
@@ -145,7 +145,7 @@ public final class FontInfo {
       FontInfo info = find(list, name);
       if (info != null) list.remove(info);
     }
-    Collections.sort(list, COMPARATOR);
+    list.sort(COMPARATOR);
     return Collections.unmodifiableList(list);
   }
 

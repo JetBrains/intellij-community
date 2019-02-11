@@ -805,7 +805,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   @NotNull
   public final JBIterable<E> sort(@NotNull Comparator<? super E> comparator) {
     ArrayList<E> list = addAllTo(ContainerUtilRt.<E>newArrayList());
-    Collections.sort(list, comparator);
+    list.sort(comparator);
     return from(list);
   }
 

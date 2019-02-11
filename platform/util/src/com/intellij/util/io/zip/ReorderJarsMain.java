@@ -53,7 +53,7 @@ public class ReorderJarsMain {
         final List<JBZipEntry> entries = zipFile.getEntries();
         final List<String> orderedEntries = toReorder.get(jarUrl);
         assert orderedEntries.size() <= Short.MAX_VALUE : jarUrl;
-        Collections.sort(entries, (o1, o2) -> {
+        entries.sort((o1, o2) -> {
           if ("META-INF/plugin.xml".equals(o2.getName())) return Integer.MAX_VALUE;
           if ("META-INF/plugin.xml".equals(o1.getName())) return -Integer.MAX_VALUE;
           if (orderedEntries.contains(o1.getName())) {
