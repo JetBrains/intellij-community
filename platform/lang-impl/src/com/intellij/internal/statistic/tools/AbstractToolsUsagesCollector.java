@@ -7,9 +7,12 @@ import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.internal.statistic.utils.StatisticsUtilKt;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -47,14 +50,23 @@ public abstract class AbstractToolsUsagesCollector extends ProjectUsagesCollecto
     final List<ScopeToolState> tools = InspectionProjectProfileManager.getInstance(project).getCurrentProfile().getAllTools();
     return filter(tools.stream())
       .map(ScopeToolState::getTool)
-      .map(this::getInspectionToolId)
-      .map(UsageDescriptor::new)
+      .map(tool -> new UsageDescriptor(tool.getID(), getInspectionToolData(tool)))
       .collect(Collectors.toSet());
   }
 
   @NotNull
-  protected String getInspectionToolId(InspectionToolWrapper tool) {
-    return tool.getLanguage() + "." + tool.getID();
+  protected FeatureUsageData getInspectionToolData(InspectionToolWrapper tool) {
+    final FeatureUsageData data = new FeatureUsageData();
+    final String language = tool.getLanguage();
+    if (StringUtil.isNotEmpty(language)) {
+      data.addData("lang", language);
+    }
+    return data;
+  }
+
+  @Override
+  public int getVersion() {
+    return 2;
   }
 
   @NotNull
@@ -63,8 +75,13 @@ public abstract class AbstractToolsUsagesCollector extends ProjectUsagesCollecto
   protected static abstract class AbstractListedToolsUsagesCollector extends AbstractToolsUsagesCollector {
     @NotNull
     @Override
-    protected String getInspectionToolId(InspectionToolWrapper tool) {
-      return tool.getLanguage() + "." + tool.getExtension().getPluginId() + "." + tool.getID();
+    protected FeatureUsageData getInspectionToolData(InspectionToolWrapper tool) {
+      final FeatureUsageData data = super.getInspectionToolData(tool);
+      final PluginId pluginId = tool.getExtension().getPluginId();
+      if (pluginId != null) {
+        data.addData("plugin_id", pluginId.getIdString());
+      }
+      return data;
     }
   }
 
