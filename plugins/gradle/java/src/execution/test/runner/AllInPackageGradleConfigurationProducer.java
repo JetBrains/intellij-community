@@ -86,7 +86,7 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
       performRunnable.run();
       return;
     }
-    getTasksChooser().runTaskChoosing(context, ContainerUtil.newArrayList(configurationData.sourceElement), tasks -> {
+    getTestTasksChooser().chooseTestTasks(context, ContainerUtil.newArrayList(configurationData.sourceElement), tasks -> {
         ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
         ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
         Function1<PsiElement, String> createFilter = (e) -> createTestFilterFrom(configurationData.psiPackage, /*hasSuffix=*/false);

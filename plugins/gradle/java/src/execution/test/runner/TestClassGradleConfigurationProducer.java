@@ -162,7 +162,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
                                                    @NotNull ConfigurationContext context,
                                                    @NotNull Runnable performRunnable,
                                                    @NotNull PsiClass... classes) {
-    getTasksChooser().runTaskChoosing(context, classes, tasks -> {
+    getTestTasksChooser().chooseTestTasks(context, classes, tasks -> {
         ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
         ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
         Function1<PsiClass, String> createFilter = (psiClass) -> createTestFilterFrom(psiClass, /*hasSuffix=*/true);
