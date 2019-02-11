@@ -1047,6 +1047,10 @@ public class AllIcons {
     /**
      * 16x16
      */
+    public static final Icon EvaluationResult = IconLoader.getIcon("/debugger/evaluationResult.svg");
+    /**
+     * 16x16
+     */
     public static final Icon Frame = IconLoader.getIcon("/debugger/frame.svg");
     /**
      * 16x16
@@ -1091,6 +1095,14 @@ public class AllIcons {
      * 16x16
      */
     public static final Icon Overhead = IconLoader.getIcon("/debugger/overhead.svg");
+    /**
+     * 16x16
+     */
+    public static final Icon PromptInput = IconLoader.getIcon("/debugger/promptInput.svg");
+    /**
+     * 16x16
+     */
+    public static final Icon PromptInputHistory = IconLoader.getIcon("/debugger/promptInputHistory.svg");
     /**
      * 7x9
      */
