@@ -385,6 +385,11 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
       }
       removeHighlighter(e);
 
+      Editor editor = e.getEditor();
+      if (editor.getDocument().getLineCount() == 0) {
+        return;
+      }
+
       TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES);
       Color backgroundColor = attributes.getBackgroundColor();
       if (backgroundColor != null) {
@@ -392,7 +397,6 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
         attributes.setBackgroundColor(ColorUtil.softer(backgroundColor));
       }
 
-      Editor editor = e.getEditor();
       myCurrentHighlighter = editor.getMarkupModel().addLineHighlighter(getLineNumber(e),
                                                                         DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,
                                                                         attributes);
