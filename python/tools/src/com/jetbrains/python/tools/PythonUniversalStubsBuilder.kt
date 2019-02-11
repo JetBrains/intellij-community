@@ -37,8 +37,7 @@ object PythonUniversalStubsBuilder : PyGeneratorBase() {
       app
 
       val files = rootFiles(root)
-      PyStubsGenerator("$outputPath/${PrebuiltStubsProviderBase.SDK_STUBS_STORAGE_NAME}")
-        .buildStubsForRoots(files)
+      PyStubsGenerator().buildStubsForRoots(files, "$outputPath/${PrebuiltStubsProviderBase.SDK_STUBS_STORAGE_NAME}")
     }
     catch (e: Throwable) {
       e.printStackTrace()
@@ -58,8 +57,7 @@ object PythonUniversalStubsBuilder : PyGeneratorBase() {
       app
 
       val unzippedFiles = unzipArchivesToRoots(zipsDirectory)
-      PyStubsGenerator("${tmpFolder.absolutePath}/${PrebuiltStubsProviderBase.SDK_STUBS_STORAGE_NAME}")
-        .buildStubsForRoots(unzippedFiles)
+      PyStubsGenerator().buildStubsForRoots(unzippedFiles, "${tmpFolder.absolutePath}/${PrebuiltStubsProviderBase.SDK_STUBS_STORAGE_NAME}")
     }
     catch (e: Throwable) {
       e.printStackTrace()

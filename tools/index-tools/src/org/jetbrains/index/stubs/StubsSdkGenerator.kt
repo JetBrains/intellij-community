@@ -34,7 +34,7 @@ import java.io.File
  */
 
 abstract class ProjectSdkStubsGenerator {
-  open fun createStubsGenerator(stubsFilePath: String): StubsGenerator = StubsGenerator("", stubsFilePath)
+  open fun createStubsGenerator(): StubsGenerator = StubsGenerator("")
 
   abstract val moduleTypeId: String
 
@@ -81,9 +81,9 @@ abstract class ProjectSdkStubsGenerator {
 
       val roots: List<VirtualFile> = sdk!!.rootProvider.getFiles(OrderRootType.CLASSES).asList()
 
-      val stubsGenerator = createStubsGenerator(stubsFilePath)
+      val stubsGenerator = createStubsGenerator()
 
-      stubsGenerator.buildStubsForRoots(roots)
+      stubsGenerator.buildStubsForRoots(roots, stubsFilePath)
     }
     finally {
       UIUtil.invokeAndWaitIfNeeded(Runnable {

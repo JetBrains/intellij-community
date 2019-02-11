@@ -22,8 +22,7 @@ object IndicesBuilder: PyGeneratorBase() {
       app
 
       val files = rootFiles(root)
-      IdIndexGenerator("$outputPath/${PrebuiltIndexAwareIdIndexer.ID_INDEX_FILE_NAME}")
-        .buildIdIndexForRoots(files)
+      IdIndexGenerator().buildIdIndexForRoots(files, "$outputPath/${PrebuiltIndexAwareIdIndexer.ID_INDEX_FILE_NAME}")
     }
     catch (e: Throwable) {
       e.printStackTrace()

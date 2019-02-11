@@ -94,13 +94,13 @@ class PyProjectSdkStubsGenerator : ProjectSdkStubsGenerator() {
 
   override fun createSdkProducer(sdkPath: String): (Project, Module) -> Sdk = createPythonSdkProducer(sdkPath)
 
-  override fun createStubsGenerator(stubsFilePath: String): PyStubsGenerator = PyStubsGenerator(stubsFilePath)
+  override fun createStubsGenerator(): PyStubsGenerator = PyStubsGenerator()
 
   override val root: String?
     get() = System.getenv(PYCHARM_PYTHONS)
 }
 
-class PyStubsGenerator(stubsStorageFilePath: String) : LanguageLevelAwareStubsGenerator<LanguageLevel>(PyFileElementType.INSTANCE.stubVersion.toString(), stubsStorageFilePath) {
+class PyStubsGenerator : LanguageLevelAwareStubsGenerator<LanguageLevel>(PyFileElementType.INSTANCE.stubVersion.toString()) {
   override fun defaultLanguageLevel(): LanguageLevel = LanguageLevel.getDefault()
 
   override fun languageLevelIterator(): MutableIterator<LanguageLevel> = LanguageLevel.SUPPORTED_LEVELS.iterator()

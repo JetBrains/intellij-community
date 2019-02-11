@@ -9,6 +9,8 @@ import com.intellij.psi.impl.cache.impl.id.IdIndexers
 import com.intellij.psi.stubs.HashCodeDescriptor
 import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.io.PersistentHashMap
+import org.jetbrains.index.PrebuiltIndexer
+import org.jetbrains.index.RootsPrebuiltIndexer
 import org.jetbrains.index.SingleIndexGenerator
 import java.io.File
 
@@ -16,17 +18,20 @@ import java.io.File
  * @author traff
  */
 
-open class IdIndexGenerator(private val idIndexStorageFilePath: String) : SingleIndexGenerator<Map<IdIndexEntry, Int>>(idIndexStorageFilePath) {
+open class IdIndexGenerator : SingleIndexGenerator<Map<IdIndexEntry, Int>>() {
+  override val internalName: String
+    get() = "id.indexers"
+
   override fun getIndexValue(fileContent: FileContentImpl): Map<IdIndexEntry, Int> {
     return IdIndexers.INSTANCE.forFileType(fileContent.file.fileType).map(fileContent)
   }
 
-  override fun createStorage(stubsStorageFilePath: String): PersistentHashMap<HashCode, Map<IdIndexEntry, Int>> {
-    return PersistentHashMap(File("$idIndexStorageFilePath.input"),
+  override fun createStorage(storageFilePath: String): PersistentHashMap<HashCode, Map<IdIndexEntry, Int>> {
+    return PersistentHashMap(File("$storageFilePath.input"),
                              HashCodeDescriptor.instance, IdIndexMapDataExternalizer())
   }
 
-  fun buildIdIndexForRoots(rootFiles: Collection<VirtualFile>) {
-    buildIndexForRoots(rootFiles)
+  fun buildIdIndexForRoots(rootFiles: Collection<VirtualFile>, idIndexStorageFilePath: String) {
+    RootsPrebuiltIndexer(rootFiles).buildIndex(arrayOf(this), idIndexStorageFilePath)
   }
 }

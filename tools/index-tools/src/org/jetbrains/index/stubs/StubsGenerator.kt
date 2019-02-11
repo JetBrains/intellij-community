@@ -21,6 +21,7 @@ import com.intellij.psi.stubs.*
 import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.io.PersistentHashMap
 import junit.framework.TestCase
+import org.jetbrains.index.RootsPrebuiltIndexer
 import org.jetbrains.index.SingleIndexGenerator
 import java.io.File
 import java.util.*
@@ -28,31 +29,36 @@ import java.util.*
 /**
  * Generates stubs and stores them in one persistent hash map
  */
-open class StubsGenerator(private val stubsVersion: String, private val stubsStorageFilePath: String) :
-  SingleIndexGenerator<SerializedStubTree>(stubsStorageFilePath) {
+open class StubsGenerator(private val stubsVersion: String) : SingleIndexGenerator<SerializedStubTree>() {
+  override val internalName: String
+    get() = "stubs.index"
 
-  private val serializationManager = SerializationManagerImpl(File("$stubsStorageFilePath.names"))
+  private var serializationManager: SerializationManagerImpl? = null
 
-  fun buildStubsForRoots(roots: Collection<VirtualFile>) {
-    try {
-      buildIndexForRoots(roots)
-    }
-    finally {
-      Disposer.dispose(serializationManager)
+  override fun openStorage(indexStorageFilePath: String) {
+    super.openStorage(indexStorageFilePath)
+    serializationManager = SerializationManagerImpl(File("$indexStorageFilePath.names"))
+  }
 
-      writeStubsVersionFile(stubsStorageFilePath, stubsVersion)
-    }
+  override fun closeStorage() {
+    super.closeStorage()
+    serializationManager?.let { Disposer.dispose(it) }
+  }
+
+
+  fun buildStubsForRoots(roots: Collection<VirtualFile>, indexStorageFilePath: String) {
+    RootsPrebuiltIndexer(roots).buildIndex(arrayOf(this), indexStorageFilePath)
   }
 
   override fun getIndexValue(fileContent: FileContentImpl): SerializedStubTree? {
-    val stub = buildStubForFile(fileContent, serializationManager)
+    val stub = buildStubForFile(fileContent, serializationManager!!)
 
     if (stub == null) {
       return null
     }
 
     val bytes = BufferExposingByteArrayOutputStream()
-    serializationManager.serialize(stub, bytes)
+    serializationManager!!.serialize(stub, bytes)
 
     val file = fileContent.file
 
@@ -196,8 +202,7 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
  * Generates stubs for file content for different language levels returned by languageLevelIterator
  * and checks that they are all equal.
  */
-abstract class LanguageLevelAwareStubsGenerator<T>(stubsVersion: String, stubsStorageFilePath: String) : StubsGenerator(stubsVersion,
-                                                                                                                        stubsStorageFilePath) {
+abstract class LanguageLevelAwareStubsGenerator<T>(stubsVersion: String) : StubsGenerator(stubsVersion) {
   companion object {
     val FAIL_ON_ERRORS: Boolean = System.getenv("STUB_GENERATOR_FAIL_ON_ERRORS")?.toBoolean() ?: false
   }
