@@ -2,6 +2,7 @@
 package com.intellij.refactoring.ui;
 
 import com.intellij.ide.HelpTooltip;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
@@ -49,6 +50,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
 
   @Override
   public void show() {
+    IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
     LOG.assertTrue(TransactionGuard.getInstance().getContextTransaction() != null, "Refactorings should be invoked inside transaction");
     super.show();
   }
