@@ -50,7 +50,7 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
 
   protected static final Logger LOG = Logger.getInstance(GradleTestRunConfigurationProducer.class);
 
-  private TasksChooser tasksChooser = new TasksChooser();
+  private TestTasksChooser testTasksChooser = new TestTasksChooser();
 
   /**
    * @deprecated Override {@link #getConfigurationFactory()}.
@@ -113,13 +113,13 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
     return GradleRunnerUtil.resolveProjectPath(module);
   }
 
-  protected TasksChooser getTasksChooser() {
-    return tasksChooser;
+  protected TestTasksChooser getTestTasksChooser() {
+    return testTasksChooser;
   }
 
   @TestOnly
-  public void setTasksChooser(TasksChooser tasksChooser) {
-    this.tasksChooser = tasksChooser;
+  public void setTestTasksChooser(TestTasksChooser testTasksChooser) {
+    this.testTasksChooser = testTasksChooser;
   }
 
   public static boolean hasTasksInConfiguration(VirtualFile source, Project project, ExternalSystemTaskExecutionSettings settings) {

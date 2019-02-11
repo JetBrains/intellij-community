@@ -16,42 +16,42 @@ import javax.swing.DefaultListCellRenderer
 
 typealias SourcePath = String
 typealias TestName = String
-typealias Tests = List<String>
+typealias TestTasks = List<String>
 
-open class TasksChooser {
-  private val LOG = Logger.getInstance(TasksChooser::class.java)
+open class TestTasksChooser {
+  private val LOG = Logger.getInstance(TestTasksChooser::class.java)
 
   @Suppress("CAST_NEVER_SUCCEEDS")
   private fun error(message: String): Nothing = LOG.error(message) as Nothing
 
-  fun runTaskChoosing(
+  fun chooseTestTasks(
     context: ConfigurationContext,
     elements: Iterable<PsiElement>,
-    perform: Consumer<List<Map<SourcePath, Tests>>>
+    perform: Consumer<List<Map<SourcePath, TestTasks>>>
   ) {
     val sources = elements.map { getSourceFile(it) ?: error("Can not find source file for $it") }
-    runTaskChoosing(context.dataContext, sources, context.project, perform)
+    chooseTestTasks(context.dataContext, sources, context.project, perform)
   }
 
-  fun runTaskChoosing(
+  fun chooseTestTasks(
     context: ConfigurationContext,
     vararg elements: PsiElement,
-    perform: Consumer<List<Map<SourcePath, Tests>>>
+    perform: Consumer<List<Map<SourcePath, TestTasks>>>
   ) {
-    runTaskChoosing(context, elements.asIterable(), perform)
+    chooseTestTasks(context, elements.asIterable(), perform)
   }
 
-  private fun runTaskChoosing(
+  private fun chooseTestTasks(
     context: DataContext,
     sources: List<VirtualFile>,
     project: Project,
-    perform: Consumer<List<Map<SourcePath, Tests>>>
+    perform: Consumer<List<Map<SourcePath, TestTasks>>>
   ) {
-    val tasks = findAllTestsTaskToRun(sources, project)
+    val testTasks = findAllTestsTaskToRun(sources, project)
     when {
-      tasks.isEmpty() -> showWarningTooltip(context)
-      tasks.size == 1 -> perform.accept(tasks.values.toList())
-      else -> chooseTasks(context, tasks, perform)
+      testTasks.isEmpty() -> showWarningTooltip(context)
+      testTasks.size == 1 -> perform.accept(testTasks.values.toList())
+      else -> chooseTestTasks(context, testTasks, perform)
     }
   }
 
@@ -59,28 +59,30 @@ open class TasksChooser {
     sources: List<VirtualFile>,
     project: Project
   ): Map<TestName, Map<SourcePath, TasksToRun>> {
-    val tasks: Map<SourcePath, Map<TestName, TasksToRun>> =
+    val testTasks: Map<SourcePath, Map<TestName, TasksToRun>> =
       sources.map { source -> source.path to findAllTestsTaskToRun(source, project).map { it.testName to it }.toMap() }.toMap()
-    val taskNames = tasks.flatMap { it.value.keys }.toSet()
-    return taskNames.map { name -> name to tasks.mapNotNullValues { it.value[name] } }.toMap()
+    val testTaskNames = testTasks.flatMap { it.value.keys }.toSet()
+    return testTaskNames.map { name -> name to testTasks.mapNotNullValues { it.value[name] } }.toMap()
   }
 
-  protected open fun chooseTasks(context: DataContext,
-                                 tasks: Map<TestName, Map<SourcePath, TasksToRun>>,
-                                 perform: Consumer<List<Map<SourcePath, Tests>>>) {
+  protected open fun chooseTestTasks(
+    context: DataContext,
+    testTasks: Map<TestName, Map<SourcePath, TasksToRun>>,
+    perform: Consumer<List<Map<SourcePath, TestTasks>>>
+  ) {
     assert(!ApplicationManager.getApplication().isCommandLine)
     JBPopupFactory.getInstance()
-      .createPopupChooserBuilder(tasks.keys.toList())
+      .createPopupChooserBuilder(testTasks.keys.toList())
       .setRenderer(DefaultListCellRenderer())
       .setTitle("Choose Tasks to Run")
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
       .setItemsChosenCallback {
-        val choosesTasks = it.mapNotNull(tasks::get)
+        val choosesTestTasks = it.mapNotNull(testTasks::get)
         when {
-          choosesTasks.isEmpty() -> showWarningTooltip(context)
-          else -> perform.accept(choosesTasks)
+          choosesTestTasks.isEmpty() -> showWarningTooltip(context)
+          else -> perform.accept(choosesTestTasks)
         }
       }
       .createPopup()

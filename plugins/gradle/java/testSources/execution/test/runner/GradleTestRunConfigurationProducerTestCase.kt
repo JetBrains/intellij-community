@@ -69,11 +69,11 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
   }
 
   protected fun GradleTestRunConfigurationProducer.setTestTasksChooser(testTasksFilter: (TestName) -> Boolean) {
-    tasksChooser = object : TasksChooser() {
-      override fun chooseTasks(context: DataContext,
-                               tasks: Map<TestName, Map<SourcePath, TasksToRun>>,
-                               perform: Consumer<List<Map<SourcePath, Tests>>>) {
-        perform.accept(tasks.filterKeys(testTasksFilter).values.toList())
+    testTasksChooser = object : TestTasksChooser() {
+      override fun chooseTestTasks(context: DataContext,
+                                   testTasks: Map<TestName, Map<SourcePath, TasksToRun>>,
+                                   perform: Consumer<List<Map<SourcePath, TestTasks>>>) {
+        perform.accept(testTasks.filterKeys(testTasksFilter).values.toList())
       }
     }
   }
