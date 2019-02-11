@@ -41,6 +41,7 @@ public class UnixProcessManager {
   private static final Logger LOG = Logger.getInstance(UnixProcessManager.class);
 
   public static final int SIGINT = getSignalNumber("INT");
+  public static final int SIGQUIT = getSignalNumber("QUIT");
   public static final int SIGKILL = getSignalNumber("KILL");
   public static final int SIGTERM = getSignalNumber("TERM");
 
