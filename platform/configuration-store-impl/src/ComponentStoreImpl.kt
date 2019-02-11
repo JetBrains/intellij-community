@@ -357,7 +357,7 @@ abstract class ComponentStoreImpl : IComponentStore {
         }
 
         val storage = storageManager.getStateStorage(storageSpec)
-        val stateGetter = createStateGetter(isUseLoadedStateAsExistingForComponent(storage, name), storage, component, name, stateClass,
+        val stateGetter = createStateGetter(stateSpec.useLoadedStateAsExisting && isUseLoadedStateAsExistingForComponent(storage, name), storage, component, name, stateClass,
                                             reloadData = reloadData)
         var state = stateGetter.getState(defaultState)
         if (state == null) {
@@ -395,16 +395,12 @@ abstract class ComponentStoreImpl : IComponentStore {
   // use.loaded.state.as.existing used in upsource
   private fun isUseLoadedStateAsExistingForComponent(storage: StateStorage, name: String): Boolean {
     return isUseLoadedStateAsExisting(storage) &&
-           name != "AntConfiguration" &&
            name != "ProjectModuleManager" /* why after loadState we get empty state on getState, test CMakeWorkspaceContentRootsTest */ &&
            name != "FacetManager" &&
-           name != "ProjectRunConfigurationManager" && /* ProjectRunConfigurationManager is used only for IPR, avoid relatively cost call getState */
-           name != "NewModuleRootManager" /* will be changed only on actual user change, so, to speed up module loading, skip it */ &&
-           name != "DeprecatedModuleOptionManager" /* doesn't make sense to check it */ &&
            SystemProperties.getBooleanProperty("use.loaded.state.as.existing", true)
   }
 
-  protected open fun isUseLoadedStateAsExisting(storage: StateStorage): Boolean = (storage as? XmlElementStorage)?.roamingType != RoamingType.DISABLED
+  protected open fun isUseLoadedStateAsExisting(storage: StateStorage) = (storage as? XmlElementStorage)?.roamingType != RoamingType.DISABLED
 
   protected open fun getPathMacroManagerForDefaults(): PathMacroManager? = null
 
