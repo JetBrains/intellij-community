@@ -704,7 +704,7 @@ public class PagedFileStorage implements Forceable {
         for (Map.Entry<Integer, ByteBufferWrapper> entry : mySegments.entrySet()) {
           if ((entry.getKey() & FILE_INDEX_MASK) == index) {
             if (mineBuffers == null) {
-              mineBuffers = new TreeMap<>((o1, o2) -> o1 - o2);
+              mineBuffers = new TreeMap<>(Comparator.comparingInt(o -> o));
             }
             mineBuffers.put(entry.getKey(), entry.getValue());
           }

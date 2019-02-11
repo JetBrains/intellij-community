@@ -1860,7 +1860,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T extends Comparable<? super T>> List<T> sorted(@NotNull Collection<? extends T> list) {
-    return sorted(list, (o1, o2) -> o1.compareTo(o2));
+    return sorted(list, Comparator.naturalOrder());
   }
 
   public static <T> void sort(@NotNull T[] a, @NotNull Comparator<? super T> comparator) {
