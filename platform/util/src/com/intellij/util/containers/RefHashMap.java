@@ -285,16 +285,12 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
       return ent.setValue(value);
     }
 
-    private static boolean valEqual(Object o1, Object o2) {
-      return o1 == null ? o2 == null : o1.equals(o2);
-    }
-
     @Override
     public boolean equals(Object o) {
       if (!(o instanceof Entry)) return false;
       //noinspection unchecked
       Entry<K,V> e = (Entry)o;
-      return keyEqual(key, e.getKey(), myStrategy) && valEqual(getValue(), e.getValue());
+      return keyEqual(key, e.getKey(), myStrategy) && Objects.equals(getValue(), e.getValue());
     }
 
     @Override

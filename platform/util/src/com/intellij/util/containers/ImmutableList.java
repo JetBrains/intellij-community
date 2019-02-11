@@ -111,7 +111,7 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
     while (e1.hasNext() && e2.hasNext()) {
       E o1 = e1.next();
       Object o2 = e2.next();
-      if (o1 == null ? o2 != null : !o1.equals(o2)) {
+      if (!Objects.equals(o1, o2)) {
         return false;
       }
     }

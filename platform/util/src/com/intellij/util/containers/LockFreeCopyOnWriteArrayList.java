@@ -62,13 +62,6 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
   }
 
   /**
-   * Test for equality, coping with nulls.
-   */
-  private static boolean eq(Object o1, Object o2) {
-    return o1 == null ? o2 == null : o1.equals(o2);
-  }
-
-  /**
    * static version of indexOf, to allow repeated calls without
    * needing to re-acquire array each time.
    *
@@ -443,7 +436,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
     int i;
     for (i = newLen; i != 0; --i) {
       Object element = elements[i];
-      if (eq(o, element)) {
+      if (Objects.equals(o, element)) {
         // found one;  copy remaining and exit
         System.arraycopy(elements, 0, newElements, 0, i);
         break;
@@ -452,7 +445,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
     }
 
     // special handling for last cell
-    if (i == 0 && !eq(o, elements[0])) {
+    if (i == 0 && !Objects.equals(o, elements[0])) {
       return null;
     }
     return newElements;
@@ -511,7 +504,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
       int len = elements.length;
       newElements = new Object[len + 1];
       for (int i = 0; i < len; ++i) {
-        if (eq(e, elements[i])) {
+        if (Objects.equals(e, elements[i])) {
           return false; // exit, throwing away copy
         }
         newElements[i] = elements[i];
@@ -813,7 +806,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
     List<?> list = (List<?>)o;
     Iterator<?> it = list.iterator();
     for (Object element : array) {
-      if (!it.hasNext() || !eq(element, it.next())) {
+      if (!it.hasNext() || !Objects.equals(element, it.next())) {
         return false;
       }
     }

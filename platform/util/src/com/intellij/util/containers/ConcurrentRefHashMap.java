@@ -249,15 +249,11 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
       return ent.setValue(value);
     }
 
-    private static boolean valEquals(Object o1, Object o2) {
-      return o1 == null ? o2 == null : o1.equals(o2);
-    }
-
     @Override
     public boolean equals(Object o) {
       if (!(o instanceof Map.Entry)) return false;
       Map.Entry e = (Map.Entry)o;
-      return valEquals(key, e.getKey()) && valEquals(getValue(), e.getValue());
+      return Objects.equals(key, e.getKey()) && Objects.equals(getValue(), e.getValue());
     }
 
     @Override

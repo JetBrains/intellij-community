@@ -611,7 +611,7 @@ public class ContainerUtil extends ContainerUtilRt {
       K key = entry.getKey();
       V v2 = entry.getValue();
       V v1 = map1.get(key);
-      if (!(v1 == v2 || v1 != null && v1.equals(v2))) {
+      if (!Objects.equals(v1, v2)) {
         res.remove(key);
       }
     }
@@ -626,7 +626,7 @@ public class ContainerUtil extends ContainerUtilRt {
     for (K k : keys) {
       V v1 = map1.get(k);
       V v2 = map2.get(k);
-      if (!(v1 == v2 || v1 != null && v1.equals(v2))) {
+      if (!Objects.equals(v1, v2)) {
         res.put(k, Couple.of(v1, v2));
       }
     }
