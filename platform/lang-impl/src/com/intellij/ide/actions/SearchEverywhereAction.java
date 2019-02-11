@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -2300,7 +2300,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
            && ((GotoActionModel.ActionWrapper)o).getAction() instanceof ActivateToolWindowAction;
   }
 
-  private void fillConfigurablesIds(String pathToParent, Configurable[] configurables) {
+  private void fillConfigurablesIds(String pathToParent, @NotNull List<Configurable> configurables) {
     for (Configurable configurable : configurables) {
       if (configurable instanceof SearchableConfigurable) {
         final String id = ((SearchableConfigurable)configurable).getId();
@@ -2310,7 +2310,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
         myConfigurables.put(id, name);
         if (configurable instanceof SearchableConfigurable.Parent) {
-          fillConfigurablesIds(name, ((SearchableConfigurable.Parent)configurable).getConfigurables());
+          fillConfigurablesIds(name, Arrays.asList(((SearchableConfigurable.Parent)configurable).getConfigurables()));
         }
       }
     }
