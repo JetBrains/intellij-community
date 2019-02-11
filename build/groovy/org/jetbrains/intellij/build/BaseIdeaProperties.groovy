@@ -80,7 +80,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "lib/idea_rt.jar": "1.3",
     "lib/forms_rt.jar": "1.4",
     "lib/annotations.jar": "1.5",
-    "lib/util.jar": "1.6",
+    "lib/util.jar": "1.8",
     "lib/rt/debugger-agent.jar": "1.6",
     "lib/rt/debugger-agent-storage.jar": "1.6",
     "lib/external-system-rt.jar": "1.6",
