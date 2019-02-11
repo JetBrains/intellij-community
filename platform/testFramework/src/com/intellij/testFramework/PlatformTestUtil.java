@@ -130,14 +130,24 @@ public class PlatformTestUtil {
     return uppercaseChars >= 3;
   }
 
+  /**
+   * @see ExtensionPointImpl#maskAll(List, Disposable)
+   */
   public static <T> void maskExtensions(@NotNull ExtensionPointName<T> pointName, @NotNull List<T> newExtensions, @NotNull Disposable parentDisposable) {
     ((ExtensionPointImpl<T>)pointName.getPoint(null)).maskAll(newExtensions, parentDisposable);
   }
 
+  /**
+   * @see ExtensionPointImpl#maskAll(List, Disposable)
+   */
   public static <T> void maskExtensions(@NotNull ProjectExtensionPointName<T> pointName, @NotNull Project project, @NotNull List<T> newExtensions, @NotNull Disposable parentDisposable) {
     ((ExtensionPointImpl<T>)pointName.getPoint(project)).maskAll(newExtensions, parentDisposable);
   }
 
+  /**
+   * @deprecated Use {@link ExtensionPointName#getPoint(AreaInstance)} and {@link ExtensionPoint#registerExtension(Object, Disposable)}.
+   */
+  @Deprecated
   public static <T> void registerExtension(@NotNull ExtensionPointName<T> name, @NotNull T t, @NotNull Disposable parentDisposable) {
     registerExtension(Extensions.getRootArea(), name, t, parentDisposable);
   }

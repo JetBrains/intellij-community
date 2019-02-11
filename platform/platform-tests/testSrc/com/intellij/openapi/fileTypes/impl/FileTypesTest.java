@@ -465,7 +465,7 @@ public class FileTypesTest extends PlatformTestCase {
     //String s = JDOMUtil.writeElement(element);
 
     final AbstractFileType typeFromPlugin = new AbstractFileType(new SyntaxTable());
-    PlatformTestUtil.registerExtension(FileTypeFactory.FILE_TYPE_FACTORY_EP, new FileTypeFactory() {
+    FileTypeFactory.FILE_TYPE_FACTORY_EP.getPoint(null).registerExtension(new FileTypeFactory() {
       @Override
       public void createFileTypes(@NotNull FileTypeConsumer consumer) {
         consumer.consume(typeFromPlugin, "fromPlugin");
