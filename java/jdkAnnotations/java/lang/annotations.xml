@@ -283,6 +283,16 @@
   <item name="java.lang.Runtime java.lang.Process exec(java.lang.String[]) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
+  <item name='java.lang.Runtime void exit(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val val="&quot;_ -&gt; fail&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Runtime void halt(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val val="&quot;_ -&gt; fail&quot;"/>
+    </annotation>
+  </item>
   <item name="java.lang.RuntimeException RuntimeException(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
