@@ -6,12 +6,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,11 +41,10 @@ class VfsEventGenerationHelper {
 
   void scheduleCreation(@NotNull VirtualFile parent,
                         @NotNull String childName,
-                        @NotNull Path path,
                         @NotNull FileAttributes attributes,
+                        boolean isEmptyDir,
                         String symlinkTarget) {
     if (LOG.isTraceEnabled()) LOG.trace("create parent=" + parent + " name=" + childName + " attr=" + attributes);
-    boolean isEmptyDir = attributes.isDirectory() && !LocalFileSystemBase.hasChildren(path);
     myEvents.add(new VFileCreateEvent(null, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, true, isEmptyDir));
   }
 

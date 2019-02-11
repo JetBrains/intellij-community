@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -270,7 +271,7 @@ class LocalFileSystemRefreshWorker {
           VirtualFile parent = myFileOrDir.isDirectory() ? myFileOrDir : myFileOrDir.getParent();
 
           String symlinkTarget = attrs.isSymbolicLink() ? file.toRealPath().toString() : null;
-          myHelper.scheduleCreation(parent, name, file, convert(file, attrs), symlinkTarget);
+          myHelper.scheduleCreation(parent, name, convert(file, attrs), isEmptyDir(file, attrs), symlinkTarget);
           return FileVisitResult.CONTINUE;
         }
 
@@ -299,7 +300,7 @@ class LocalFileSystemRefreshWorker {
           myHelper.scheduleDeletion(child);
           VirtualFile parent = myFileOrDir.isDirectory() ? myFileOrDir : myFileOrDir.getParent();
           String symlinkTarget = isLink ? file.toRealPath().toString() : null;
-          myHelper.scheduleCreation(parent, child.getName(), file, convert(file, attrs), symlinkTarget);
+          myHelper.scheduleCreation(parent, child.getName(), convert(file, attrs), isEmptyDir(file, attrs), symlinkTarget);
           // ignore everything else
           child.markClean();
           return FileVisitResult.CONTINUE;
@@ -403,6 +404,10 @@ class LocalFileSystemRefreshWorker {
 
       return myHelper;
     }
+  }
+
+  private static boolean isEmptyDir(Path path, BasicFileAttributes a) {
+    return a.isDirectory() && !LocalFileSystemBase.hasChildren(path);
   }
 
   private static FileAttributes convert(Path path, BasicFileAttributes a) throws IOException {
