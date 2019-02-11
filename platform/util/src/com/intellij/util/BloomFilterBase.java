@@ -15,7 +15,7 @@
  */
 package com.intellij.util;
 
-import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -65,16 +65,16 @@ public class BloomFilterBase {
   }
 
   protected BloomFilterBase(DataInput input) throws IOException {
-    myHashFunctionCount = DataInputOutputUtil.readINT(input);
-    myBitsCount = DataInputOutputUtil.readINT(input);
+    myHashFunctionCount = DataInputOutputUtilRt.readINT(input);
+    myBitsCount = DataInputOutputUtilRt.readINT(input);
     myElementsSet = new long[(myBitsCount >> BITS_PER_ELEMENT) + 1];
 
     for(int i = 0; i < myElementsSet.length; ++i) myElementsSet[i] = input.readLong();
   }
   
   protected void save(DataOutput output) throws IOException {
-    DataInputOutputUtil.writeINT(output, myHashFunctionCount);
-    DataInputOutputUtil.writeINT(output, myBitsCount);
+    DataInputOutputUtilRt.writeINT(output, myHashFunctionCount);
+    DataInputOutputUtilRt.writeINT(output, myBitsCount);
     for(long l:myElementsSet) output.writeLong(l);
   }
 }
