@@ -312,7 +312,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   public final JBIterable<E> append(@Nullable Iterable<? extends E> other) {
     if (other == null || other == EMPTY) return this;
     if (this == EMPTY) return from(other);
-    Appended parent = this instanceof Appended ? (Appended)this : new Appended<E>(this, null);
+    Appended parent = this instanceof Appended ? (Appended)this : new Appended<>(this, null);
     // to keep append lazy, ignore the fact that 'other' can also be an Appended
     return new Appended<E>(other, parent);
   }
@@ -464,7 +464,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @NotNull
   public <T> JBIterable<T> flatten(@NotNull final Function<? super E, ? extends Iterable<? extends T>> function) {
-    return intercept(new FlattenFun<E, T>(function));
+    return intercept(new FlattenFun<>(function));
   }
 
   private static final class FlattenFun<E, T> implements Function<Iterator<E>, Iterator<T>> {
@@ -474,7 +474,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
 
     @Override
     public Iterator<T> fun(final Iterator<E> iterator) {
-      return new FlattenIt<E, T>(iterator, Stateful.copy(function));
+      return new FlattenIt<>(iterator, Stateful.copy(function));
     }
 
     static final class FlattenIt<E, T> extends JBIterator<T> {
@@ -516,7 +516,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
 
       @Override
       public boolean value(E e) {
-        if (visited == null) visited = new java.util.HashSet<Object>();
+        if (visited == null) visited = new java.util.HashSet<>();
         return visited.add(identity.fun(e));
       }
     });
@@ -533,7 +533,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
         ((Intercepted)this).original,
         Functions.compose(((Intercepted)this).interceptor, function));
     }
-    return new Intercepted<E, T, X>(this, function);
+    return new Intercepted<>(this, function);
   }
 
   private static final class Intercepted<E, T, X> extends JBIterable<T> {

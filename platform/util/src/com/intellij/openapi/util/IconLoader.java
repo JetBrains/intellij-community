@@ -61,7 +61,7 @@ public final class IconLoader {
     }
   };
 
-  private static final AtomicReference<IconTransform> ourTransform = new AtomicReference<IconTransform>(IconTransform.getDefault());
+  private static final AtomicReference<IconTransform> ourTransform = new AtomicReference<>(IconTransform.getDefault());
 
   static {
     installPathPatcher(new DeprecatedDuplicatesIconPathPatcher());
@@ -299,7 +299,7 @@ public final class IconLoader {
                                boolean findReflectiveIcon)
   {
     if (findReflectiveIcon) {
-      Ref<Icon> reflectiveIcon = new Ref<Icon>(null);
+      Ref<Icon> reflectiveIcon = new Ref<>(null);
       if (findReflectiveIcon(originalPath, classLoader, reflectiveIcon)) {
         return reflectiveIcon.get(); // @Nullable
       }
@@ -318,7 +318,7 @@ public final class IconLoader {
 
   @Nullable
   public static Icon findIcon(@NotNull String path, @NotNull ClassLoader classLoader) {
-    Ref<Icon> reflectiveIcon = new Ref<Icon>(null);
+    Ref<Icon> reflectiveIcon = new Ref<>(null);
     if (findReflectiveIcon(path, classLoader, reflectiveIcon)) {
       return reflectiveIcon.get(); // @Nullable
     }
@@ -641,7 +641,7 @@ public final class IconLoader {
 
         ImageIcon icon = myScaledIconsCache.getOrScaleIcon(1f);
         if (icon != null) {
-          myRealIcon = icon.getIconWidth() < 50 && icon.getIconHeight() < 50 ? icon : new SoftReference<ImageIcon>(icon);
+          myRealIcon = icon.getIconWidth() < 50 && icon.getIconHeight() < 50 ? icon : new SoftReference<>(icon);
           return icon;
         }
       }
@@ -766,10 +766,11 @@ public final class IconLoader {
     private class MyScaledIconsCache {
       private static final int SCALED_ICONS_CACHE_LIMIT = 5;
 
-      private final Map<Couple<Double>, SoftReference<ImageIcon>> scaledIconsCache = Collections.synchronizedMap(new FixedHashMap<Couple<Double>, SoftReference<ImageIcon>>(SCALED_ICONS_CACHE_LIMIT));
+      private final Map<Couple<Double>, SoftReference<ImageIcon>> scaledIconsCache = Collections.synchronizedMap(
+        new FixedHashMap<>(SCALED_ICONS_CACHE_LIMIT));
 
       private Couple<Double> key(@NotNull ScaleContext ctx) {
-        return new Couple<Double>(ctx.getScale(USR_SCALE) * ctx.getScale(OBJ_SCALE), ctx.getScale(SYS_SCALE));
+        return new Couple<>(ctx.getScale(USR_SCALE) * ctx.getScale(OBJ_SCALE), ctx.getScale(SYS_SCALE));
       }
 
       /**
@@ -790,7 +791,7 @@ public final class IconLoader {
         icon = checkIcon(image, CachedImageIcon.this);
 
         if (icon != null && 4L * icon.getIconWidth() * icon.getIconHeight() < ImageLoader.CACHED_IMAGE_MAX_SIZE) {
-          scaledIconsCache.put(key(ctx), new SoftReference<ImageIcon>(icon));
+          scaledIconsCache.put(key(ctx), new SoftReference<>(icon));
         }
         return icon;
       }

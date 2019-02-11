@@ -31,7 +31,7 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements Editab
   private SortOrder mySortOrder = SortOrder.ASCENDING;
 
   public ListTableModel(@NotNull ColumnInfo... columnInfos) {
-    this(columnInfos, new ArrayList<Item>(), 0, SortOrder.ASCENDING);
+    this(columnInfos, new ArrayList<>(), 0, SortOrder.ASCENDING);
   }
 
   public ListTableModel(@NotNull ColumnInfo[] columnNames, @NotNull List<Item> items, int selectedColumn) {

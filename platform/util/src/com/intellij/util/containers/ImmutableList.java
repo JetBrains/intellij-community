@@ -94,7 +94,7 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
   @NotNull
   @Override
   public ImmutableList<E> subList(int fromIndex, int toIndex) {
-    return new SubList<E>(this, fromIndex, toIndex);
+    return new SubList<>(this, fromIndex, toIndex);
   }
 
   @Override
@@ -247,7 +247,7 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
   @NotNull
   @Contract("_ -> new")
   public static <T> ImmutableList<T> singleton(T element) {
-    return new Singleton<T>(element);
+    return new Singleton<>(element);
   }
   private static class Singleton<E> extends ImmutableList<E> {
     private final E element;

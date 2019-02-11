@@ -52,7 +52,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
       merged.addValue(inputId, value);
     }
 
-    if (myAdded == null) myAdded = new ValueContainerImpl<Value>();
+    if (myAdded == null) myAdded = new ValueContainerImpl<>();
     myAdded.addValue(inputId, value);
   }
 
@@ -119,7 +119,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
           (newMerged.size() > ValueContainerImpl.NUMBER_OF_VALUES_THRESHOLD ||
            (myAdded != null && myAdded.size() > ValueContainerImpl.NUMBER_OF_VALUES_THRESHOLD))) {
         // Calculate file ids that have Value mapped to avoid O(NumberOfValuesInMerged) during removal
-        fileId2ValueMapping = new FileId2ValueMapping<Value>(newMerged);
+        fileId2ValueMapping = new FileId2ValueMapping<>(newMerged);
       }
       final FileId2ValueMapping<Value> finalFileId2ValueMapping = fileId2ValueMapping;
       if (myInvalidated != null) {

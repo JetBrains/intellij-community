@@ -325,42 +325,42 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
 
     public Meta<T> reset() {
       Meta<T> e = empty();
-      return new Meta<T>(roots, e.traversal, e.expand, e.regard, e.filter, forceIgnore, forceDisregard, e.interceptor);
+      return new Meta<>(roots, e.traversal, e.expand, e.regard, e.filter, forceIgnore, forceDisregard, e.interceptor);
     }
 
     public Meta<T> withRoots(@NotNull Iterable<? extends T> roots) {
-      return new Meta<T>(roots, traversal, expand, regard, filter, forceIgnore, forceDisregard, interceptor);
+      return new Meta<>(roots, traversal, expand, regard, filter, forceIgnore, forceDisregard, interceptor);
     }
 
     public Meta<T> withTraversal(TreeTraversal traversal) {
-      return new Meta<T>(roots, traversal, expand, regard, filter, forceIgnore, forceDisregard, interceptor);
+      return new Meta<>(roots, traversal, expand, regard, filter, forceIgnore, forceDisregard, interceptor);
     }
 
     public Meta<T> expand(@NotNull Condition<? super T> c) {
-      return new Meta<T>(roots, traversal, expand.append(c), regard, this.filter, forceIgnore, forceDisregard, interceptor);
+      return new Meta<>(roots, traversal, expand.append(c), regard, this.filter, forceIgnore, forceDisregard, interceptor);
     }
 
     public Meta<T> regard(@NotNull Condition<? super T> c) {
-      return new Meta<T>(roots, traversal, expand, regard.append(c), this.filter, forceIgnore, forceDisregard, interceptor);
+      return new Meta<>(roots, traversal, expand, regard.append(c), this.filter, forceIgnore, forceDisregard, interceptor);
     }
 
     public Meta<T> filter(@NotNull Condition<? super T> c) {
-      return new Meta<T>(roots, traversal, expand, regard, this.filter.append(c), forceIgnore, forceDisregard, interceptor);
+      return new Meta<>(roots, traversal, expand, regard, this.filter.append(c), forceIgnore, forceDisregard, interceptor);
     }
 
     public Meta<T> forceIgnore(Condition<? super T> c) {
-      return new Meta<T>(roots, traversal, expand, regard, this.filter, forceIgnore.append(c), forceDisregard, interceptor);
+      return new Meta<>(roots, traversal, expand, regard, this.filter, forceIgnore.append(c), forceDisregard, interceptor);
     }
 
     public Meta<T> forceDisregard(Condition<? super T> c) {
-      return new Meta<T>(roots, traversal, expand, regard, this.filter, forceIgnore, forceDisregard.append(c), interceptor);
+      return new Meta<>(roots, traversal, expand, regard, this.filter, forceIgnore, forceDisregard.append(c), interceptor);
     }
 
     public Meta<T> interceptTraversal(Function<TreeTraversal, TreeTraversal> transform) {
       if (transform == Function.ID) return this;
       Function<TreeTraversal, TreeTraversal> newTransform = this.interceptor == Function.ID ? transform :
                                                             Functions.compose(this.interceptor, transform);
-      return new Meta<T>(roots, traversal, expand, regard, this.filter, forceIgnore, forceDisregard, newTransform);
+      return new Meta<>(roots, traversal, expand, regard, this.filter, forceIgnore, forceDisregard, newTransform);
     }
 
     TreeTraversal.GuidedIt.Guide<T> createChildrenGuide(final T parent) {
@@ -421,8 +421,8 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
   }
 
   private static class Cond<T> {
-    final static Cond TRUE = new Cond<Object>(Conditions.TRUE, null);
-    final static Cond FALSE = new Cond<Object>(Conditions.FALSE, null);
+    final static Cond TRUE = new Cond<>(Conditions.TRUE, null);
+    final static Cond FALSE = new Cond<>(Conditions.FALSE, null);
 
     final Condition<? super T> impl;
     final Cond<T> next;
@@ -433,7 +433,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
     }
 
     Cond<T> append(Condition<? super T> impl) {
-      return new Cond<T>(impl, this);
+      return new Cond<>(impl, this);
     }
 
     boolean valueAnd(T t) {

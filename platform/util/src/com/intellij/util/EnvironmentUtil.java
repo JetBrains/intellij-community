@@ -59,7 +59,7 @@ public class EnvironmentUtil {
       });
     }
     else {
-      ourEnvGetter = new FixedFuture<Map<String, String>>(getSystemEnv());
+      ourEnvGetter = new FixedFuture<>(getSystemEnv());
     }
   }
 
@@ -79,7 +79,7 @@ public class EnvironmentUtil {
 
   private static Map<String, String> getSystemEnv() {
     if (SystemInfo.isWindows) {
-      return unmodifiableMap(new THashMap<String, String>(System.getenv(), CaseInsensitiveStringHashingStrategy.INSTANCE));
+      return unmodifiableMap(new THashMap<>(System.getenv(), CaseInsensitiveStringHashingStrategy.INSTANCE));
     }
     else {
       return System.getenv();
@@ -214,7 +214,7 @@ public class EnvironmentUtil {
     protected Pair<String, Map<String, String>> readBatOutputAndEnv(@NotNull File batchFile, List<String> args) throws Exception {
       File envFile = FileUtil.createTempFile("intellij-cmd-env.", ".tmp", false);
       try {
-        List<String> cl = new ArrayList<String>();
+        List<String> cl = new ArrayList<>();
         cl.add(CommandLineUtil.getWinShellName());
         cl.add("/c");
         cl.add("call");
@@ -311,9 +311,9 @@ public class EnvironmentUtil {
 
   @NotNull
   public static Map<String, String> parseEnv(String... lines) throws Exception {
-    Set<String> toIgnore = new HashSet<String>(Arrays.asList("_", "PWD", "SHLVL", DISABLE_OMZ_AUTO_UPDATE, INTELLIJ_ENVIRONMENT_READER));
+    Set<String> toIgnore = new HashSet<>(Arrays.asList("_", "PWD", "SHLVL", DISABLE_OMZ_AUTO_UPDATE, INTELLIJ_ENVIRONMENT_READER));
     Map<String, String> env = System.getenv();
-    Map<String, String> newEnv = new HashMap<String, String>();
+    Map<String, String> newEnv = new HashMap<>();
 
     for (String line : lines) {
       int pos = line.indexOf('=');

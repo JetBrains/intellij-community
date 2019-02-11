@@ -115,7 +115,7 @@ public final class FontInfo {
 
   private static List<FontInfo> byName() {
     String[] names = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames(ENGLISH);
-    List<FontInfo> list = new ArrayList<FontInfo>(names.length);
+    List<FontInfo> list = new ArrayList<>(names.length);
     for (String name : names) {
       FontInfo info = byName(name);
       if (info != null) list.add(info);
@@ -136,7 +136,7 @@ public final class FontInfo {
 
   private static List<FontInfo> byFont() {
     Font[] fonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
-    List<FontInfo> list = new ArrayList<FontInfo>(fonts.length);
+    List<FontInfo> list = new ArrayList<>(fonts.length);
     for (Font font : fonts) {
       FontInfo info = byFont(font);
       if (info != null) list.add(info);

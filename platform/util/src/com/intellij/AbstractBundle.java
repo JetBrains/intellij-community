@@ -49,7 +49,7 @@ public abstract class AbstractBundle {
     ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(myBundle);
     if (bundle == null) {
       bundle = getResourceBundle(myPathToBundle, getClass().getClassLoader());
-      myBundle = new SoftReference<ResourceBundle>(bundle);
+      myBundle = new SoftReference<>(bundle);
     }
     return bundle;
   }

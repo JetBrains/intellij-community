@@ -49,7 +49,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
 
   @NotNull
   protected Map<K, V> createMap() {
-    return new THashMap<K, V>();
+    return new THashMap<>();
   }
 
   @Nullable
@@ -118,7 +118,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
     final Set<K> ts = getMap().keySet();
     K nullKey = FAKE_NULL();
     if (ts.contains(nullKey)) {
-      final java.util.HashSet<K> hashSet = new HashSet<K>(ts);
+      final java.util.HashSet<K> hashSet = new HashSet<>(ts);
       hashSet.remove(nullKey);
       hashSet.add(null);
       return hashSet;
@@ -177,7 +177,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
     return ContainerUtil.map2Set(getMap().entrySet(), new Function<Entry<K,V>, Entry<K,V>>() {
           @Override
           public Entry<K,V> fun(Entry<K,V> entry) {
-            return new AbstractMap.SimpleEntry<K, V>(nullize(entry.getKey()), nullize(entry.getValue()));
+            return new AbstractMap.SimpleEntry<>(nullize(entry.getKey()), nullize(entry.getValue()));
           }
         });
   }

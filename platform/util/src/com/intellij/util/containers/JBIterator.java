@@ -176,7 +176,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
   @NotNull
   public final JBIterator<E> take(int count) {
     // add first so that the underlying iterator stay on 'count' position
-    return addOp(!(myLastOp instanceof NextOp), new WhileOp<E>(new CountDown<E>(count)));
+    return addOp(!(myLastOp instanceof NextOp), new WhileOp<>(new CountDown<>(count)));
   }
 
   @NotNull
@@ -186,7 +186,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
 
   @NotNull
   public final JBIterator<E> skip(int count) {
-    return skipWhile(new CountDown<E>(count));
+    return skipWhile(new CountDown<>(count));
   }
 
   @NotNull

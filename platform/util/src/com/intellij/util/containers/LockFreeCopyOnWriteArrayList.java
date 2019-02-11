@@ -662,7 +662,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
     do {
       elements = array;
       Set<Object> existing = ContainerUtil.map2Set(elements, Functions.identity());
-      List<Object> toAddList = new ArrayList<Object>(c.size());
+      List<Object> toAddList = new ArrayList<>(c.size());
       for (E e : c) {
         if (!existing.contains(e)) toAddList.add(e);
       }

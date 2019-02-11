@@ -281,7 +281,7 @@ class ImmutableElement extends Element {
 
     // Cloning additional namespaces
     if (additionalNamespaces != null) {
-      element.additionalNamespaces = new ArrayList<Namespace>(additionalNamespaces);
+      element.additionalNamespaces = new ArrayList<>(additionalNamespaces);
     }
 
     // Cloning content

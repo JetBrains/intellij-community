@@ -101,7 +101,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   private final LimitedPool<BufferExposingByteArrayOutputStream> myStreamPool =
-    new LimitedPool<BufferExposingByteArrayOutputStream>(10, new LimitedPool.ObjectFactory<BufferExposingByteArrayOutputStream>() {
+    new LimitedPool<>(10, new LimitedPool.ObjectFactory<BufferExposingByteArrayOutputStream>() {
       @Override
       @NotNull
       public BufferExposingByteArrayOutputStream create() {
@@ -520,8 +520,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
   @NotNull
   public Collection<Key> getAllKeysWithExistingMapping() throws IOException {
-    final List<Key> values = new ArrayList<Key>();
-    processKeysWithExistingMapping(new CommonProcessors.CollectProcessor<Key>(values));
+    final List<Key> values = new ArrayList<>();
+    processKeysWithExistingMapping(new CommonProcessors.CollectProcessor<>(values));
     return values;
   }
 
@@ -884,7 +884,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
   private void newCompact(@NotNull PersistentHashMapValueStorage newStorage) throws IOException {
     long started = System.currentTimeMillis();
-    final List<CompactionRecordInfo> infos = new ArrayList<CompactionRecordInfo>(10000);
+    final List<CompactionRecordInfo> infos = new ArrayList<>(10000);
 
     traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
       @Override

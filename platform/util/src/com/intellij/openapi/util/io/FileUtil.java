@@ -251,7 +251,7 @@ public class FileUtil extends FileUtilRt {
       total += n;
       if (count == chars.length) {
         if (buffers == null) {
-          buffers = new ArrayList<char[]>();
+          buffers = new ArrayList<>();
         }
         buffers.add(chars);
         int newLength = Math.min(1024 * 1024, chars.length * 2);
@@ -284,7 +284,7 @@ public class FileUtil extends FileUtilRt {
       total += n;
       if (count == bytes.length) {
         if (buffers == null) {
-          buffers = new ArrayList<byte[]>();
+          buffers = new ArrayList<>();
         }
         buffers.add(bytes);
         int newLength = Math.min(1024 * 1024, bytes.length * 2);
@@ -310,7 +310,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static Future<Void> asyncDelete(@NotNull Collection<? extends File> files) {
-    List<File> tempFiles = new ArrayList<File>();
+    List<File> tempFiles = new ArrayList<>();
     for (File file : files) {
       final File tempFile = renameToTempFileOrDelete(file);
       if (tempFile != null) {
@@ -320,11 +320,11 @@ public class FileUtil extends FileUtilRt {
     if (!tempFiles.isEmpty()) {
       return startDeletionThread(tempFiles.toArray(new File[0]));
     }
-    return new FixedFuture<Void>(null);
+    return new FixedFuture<>(null);
   }
 
   private static Future<Void> startDeletionThread(@NotNull final File... tempFiles) {
-    final RunnableFuture<Void> deleteFilesTask = new FutureTask<Void>(new Runnable() {
+    final RunnableFuture<Void> deleteFilesTask = new FutureTask<>(new Runnable() {
       @Override
       public void run() {
         final Thread currentThread = Thread.currentThread();
@@ -1140,7 +1140,7 @@ public class FileUtil extends FileUtilRt {
   @Deprecated
   public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<? super File> processor,
                                                 @Nullable final Processor<? super File> directoryFilter) {
-    final LinkedList<File> queue = new LinkedList<File>();
+    final LinkedList<File> queue = new LinkedList<>();
     queue.add(root);
     while (!queue.isEmpty()) {
       final File file = queue.removeFirst();
@@ -1169,7 +1169,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static List<File> findFilesByMask(@NotNull Pattern pattern, @NotNull File dir) {
-    final ArrayList<File> found = new ArrayList<File>();
+    final ArrayList<File> found = new ArrayList<>();
     final File[] files = dir.listFiles();
     if (files != null) {
       for (File file : files) {
@@ -1186,7 +1186,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static List<File> findFilesOrDirsByMask(@NotNull Pattern pattern, @NotNull File dir) {
-    final ArrayList<File> found = new ArrayList<File>();
+    final ArrayList<File> found = new ArrayList<>();
     final File[] files = dir.listFiles();
     if (files != null) {
       for (File file : files) {
@@ -1467,7 +1467,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static List<String> splitPath(@NotNull String path) {
-    ArrayList<String> list = new ArrayList<String>();
+    ArrayList<String> list = new ArrayList<>();
     int index = 0;
     int nextSeparator;
     while ((nextSeparator = path.indexOf(File.separatorChar, index)) != -1) {

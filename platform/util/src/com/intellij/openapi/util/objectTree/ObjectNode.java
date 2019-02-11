@@ -66,7 +66,7 @@ final class ObjectNode<T> {
   void addChild(@NotNull ObjectNode<T> child) {
     List<ObjectNode<T>> children = myChildren;
     if (children == null) {
-      myChildren = new SmartList<ObjectNode<T>>(child);
+      myChildren = new SmartList<>(child);
     }
     else {
       children.add(child);

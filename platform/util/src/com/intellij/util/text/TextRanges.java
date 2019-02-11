@@ -62,7 +62,7 @@ public class TextRanges implements Iterable<TextRange> {
 
   @Override
   public Iterator<TextRange> iterator() {
-    return new UnmodifiableIterator<TextRange>(myRanges.iterator());
+    return new UnmodifiableIterator<>(myRanges.iterator());
   }
 
   public Iterator<TextRange> revIterator() {

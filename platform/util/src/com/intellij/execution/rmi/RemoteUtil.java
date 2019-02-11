@@ -44,7 +44,7 @@ public class RemoteUtil {
     ConcurrentFactoryMap.createMap(new Function<Couple<Class<?>>, Map<Method, Method>>() {
      @Override
      public Map<Method, Method> fun(Couple<Class<?>> key) {
-       final THashMap<Method, Method> map = new THashMap<Method, Method>();
+       final THashMap<Method, Method> map = new THashMap<>();
        for (Method method : key.second.getMethods()) {
          Method m = null;
          main:

@@ -30,7 +30,7 @@ public class SortedList<T> extends AbstractList<T>{
 
   public SortedList(@NotNull Comparator<T> comparator) {
     myComparator = comparator;
-    myMap = new TreeMap<T, List<T>>(comparator);
+    myMap = new TreeMap<>(comparator);
   }
 
   @NotNull
@@ -46,7 +46,7 @@ public class SortedList<T> extends AbstractList<T>{
   private void addToMap(T element) {
     List<T> group = myMap.get(element);
     if (group == null) {
-      myMap.put(element, group = new SmartList<T>());
+      myMap.put(element, group = new SmartList<>());
     }
     group.add(element);
     myDelegate = null;

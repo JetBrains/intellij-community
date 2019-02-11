@@ -102,13 +102,13 @@ public class ReorderJarsMain {
 
   private static Set<String> loadIgnoredJars(String libPath) throws IOException {
     final File ignoredJarsFile = new File(libPath, "required_for_dist.txt");
-    final Set<String> ignoredJars = new HashSet<String>();
+    final Set<String> ignoredJars = new HashSet<>();
     ContainerUtil.addAll(ignoredJars, FileUtil.loadFile(ignoredJarsFile).split("\r\n"));
     return ignoredJars;
   }
 
   private static Map<String, List<String>> getOrder(final File loadingFile) throws IOException {
-    final Map<String, List<String>> entriesOrder = new HashMap<String, List<String>>();
+    final Map<String, List<String>> entriesOrder = new HashMap<>();
     final String[] lines = FileUtil.loadFile(loadingFile).split("\n");
     for (String line : lines) {
       line = line.trim();
@@ -118,7 +118,7 @@ public class ReorderJarsMain {
         final String jarUrl = line.substring(i + 1);
         List<String> entries = entriesOrder.get(jarUrl);
         if (entries == null) {
-          entries = new ArrayList<String>();
+          entries = new ArrayList<>();
           entriesOrder.put(jarUrl, entries);
         }
         entries.add(entry);

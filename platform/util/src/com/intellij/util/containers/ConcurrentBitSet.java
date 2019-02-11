@@ -41,7 +41,7 @@ public class ConcurrentBitSet {
    * Each long word stores next 64 bits part of the set.
    * Therefore the i-th bit of the set is stored in {@code arrays.get(arrayIndex(i)).get(wordIndexInArray(i))} word in the {@code 1L << i} position.
    */
-  private final AtomicReferenceArray<AtomicLongArray> arrays = new AtomicReferenceArray<AtomicLongArray>(32);
+  private final AtomicReferenceArray<AtomicLongArray> arrays = new AtomicReferenceArray<>(32);
   private static int arrayIndex(int bitIndex) {
     int i = (bitIndex >> ADDRESS_BITS_PER_WORD) + 1;
     return 31 - Integer.numberOfLeadingZeros(i);

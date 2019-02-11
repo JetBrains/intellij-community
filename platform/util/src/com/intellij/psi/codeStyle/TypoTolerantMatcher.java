@@ -753,7 +753,7 @@ class TypoTolerantMatcher extends MinusculeMatcher {
     }
 
     void addError(int index, @NotNull Error error) {
-      if (myErrors == null) myErrors = new SmartList<Pair<Integer, Error>>();
+      if (myErrors == null) myErrors = new SmartList<>();
       Pair<Integer, Error> pair = Pair.create(index, error);
       myErrors.add(pair);
 
@@ -871,7 +871,7 @@ class TypoTolerantMatcher extends MinusculeMatcher {
     }
 
     public int length(char[] pattern) {
-      final Ref<Integer> ref = new Ref<Integer>(pattern.length);
+      final Ref<Integer> ref = new Ref<>(pattern.length);
       processErrors(0, Integer.MAX_VALUE, new Processor<Pair<Integer, Error>>() {
         @Override
         public boolean process(Pair<Integer, Error> error) {

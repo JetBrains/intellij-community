@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentMap;
  * Null values are NOT allowed
  */
 abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V>, TObjectHashingStrategy<K> {
-  final ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<K>();
+  final ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<>();
   private final ConcurrentMap<KeyReference<K, V>, V> myMap; // hashing strategy must be canonical, we compute corresponding hash codes using our own myHashingStrategy
   @NotNull
   private final TObjectHashingStrategy<? super K> myHashingStrategy;
@@ -288,7 +288,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
               /* Weak key has been cleared by GC */
               continue;
             }
-            next = new RefEntry<K, V>(ent, k);
+            next = new RefEntry<>(ent, k);
             return true;
           }
           return false;

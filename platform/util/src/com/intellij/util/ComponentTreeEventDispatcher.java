@@ -41,7 +41,7 @@ public class ComponentTreeEventDispatcher<T extends EventListener> {
   }
 
   public static <T extends EventListener> ComponentTreeEventDispatcher<T> create(@Nullable Component root, @NotNull Class<T> listenerClass) {
-    return new ComponentTreeEventDispatcher<T>(root, listenerClass);
+    return new ComponentTreeEventDispatcher<>(root, listenerClass);
   }
 
   private ComponentTreeEventDispatcher(@Nullable final Component root, @NotNull Class<T> listenerClass) {

@@ -53,7 +53,7 @@ public class TransferToEDTQueue<T> {
   private final Condition<?> myShutUpCondition;
   private final int myMaxUnitOfWorkThresholdMs; //-1 means indefinite
 
-  private final Queue<T> myQueue = new Queue<T>(10); // guarded by myQueue
+  private final Queue<T> myQueue = new Queue<>(10); // guarded by myQueue
   private final AtomicBoolean invokeLaterScheduled = new AtomicBoolean();
   private final Runnable myUpdateRunnable = new Runnable() {
     @Override
@@ -99,7 +99,7 @@ public class TransferToEDTQueue<T> {
   }
 
   public static TransferToEDTQueue<Runnable> createRunnableMerger(@NotNull @NonNls String name, int maxUnitOfWorkThresholdMs) {
-    return new TransferToEDTQueue<Runnable>(name, new Processor<Runnable>() {
+    return new TransferToEDTQueue<>(name, new Processor<Runnable>() {
       @Override
       public boolean process(Runnable runnable) {
         runnable.run();

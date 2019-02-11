@@ -126,7 +126,7 @@ public class FocusWatcher implements ContainerListener,FocusListener{
   }
 
   public final void install(@NotNull Component component){
-    myTopComponent = new WeakReference<Component>(component);
+    myTopComponent = new WeakReference<>(component);
     installImpl(component);
   }
   
@@ -184,10 +184,10 @@ public class FocusWatcher implements ContainerListener,FocusListener{
   protected void focusLostImpl(final FocusEvent e){}
 
   private void setFocusedComponent(final Component focusedComponent) {
-    myFocusedComponent = new WeakReference<Component>(focusedComponent);
+    myFocusedComponent = new WeakReference<>(focusedComponent);
   }
 
   private void setNearestFocusableComponent(final Component nearestFocusableComponent) {
-    myNearestFocusableComponent = new WeakReference<Component>(nearestFocusableComponent);
+    myNearestFocusableComponent = new WeakReference<>(nearestFocusableComponent);
   }
 }

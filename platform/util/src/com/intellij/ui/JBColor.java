@@ -348,7 +348,7 @@ public class JBColor extends Color {
     return namedColor("Borders.color", new JBColor(Gray._192, Gray._50));
   }
 
-  private static final Map<String, Color> defaultThemeColors = new HashMap<String, Color>();
+  private static final Map<String, Color> defaultThemeColors = new HashMap<>();
 
   @NotNull 
   public static Color get(@NotNull final String colorId, @NotNull final Color defaultColor) {

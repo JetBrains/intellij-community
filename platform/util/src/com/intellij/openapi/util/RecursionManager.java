@@ -131,7 +131,7 @@ public class RecursionManager {
       @NotNull
       @Override
       public List<Object> currentStack() {
-        ArrayList<Object> result = new ArrayList<Object>();
+        ArrayList<Object> result = new ArrayList<>();
         LinkedHashMap<MyKey, Integer> map = ourStack.get().progressMap;
         for (MyKey pair : map.keySet()) {
           if (pair.guardId.equals(id)) {
@@ -188,9 +188,9 @@ public class RecursionManager {
     private int reentrancyCount;
     private int memoizationStamp;
     private int depth;
-    private final LinkedHashMap<MyKey, Integer> progressMap = new LinkedHashMap<MyKey, Integer>();
-    private final Set<MyKey> toMemoize = new THashSet<MyKey>();
-    private final THashMap<MyKey, MyKey> key2ReentrancyDuringItsCalculation = new THashMap<MyKey, MyKey>();
+    private final LinkedHashMap<MyKey, Integer> progressMap = new LinkedHashMap<>();
+    private final Set<MyKey> toMemoize = new THashSet<>();
+    private final THashMap<MyKey, MyKey> key2ReentrancyDuringItsCalculation = new THashMap<>();
     private final Map<MyKey, Map<MyKey, Object>> intermediateCache = ContainerUtil.createSoftMap();
     private int enters;
     private int exits;
@@ -274,10 +274,10 @@ public class RecursionManager {
       if (depth == 0) {
         intermediateCache.clear();
         if (!key2ReentrancyDuringItsCalculation.isEmpty()) {
-          LOG.error("non-empty key2ReentrancyDuringItsCalculation: " + new HashMap<MyKey, MyKey>(key2ReentrancyDuringItsCalculation));
+          LOG.error("non-empty key2ReentrancyDuringItsCalculation: " + new HashMap<>(key2ReentrancyDuringItsCalculation));
         }
         if (!toMemoize.isEmpty()) {
-          LOG.error("non-empty toMemoize: " + new HashSet<MyKey>(toMemoize));
+          LOG.error("non-empty toMemoize: " + new HashSet<>(toMemoize));
         }
       }
 
@@ -292,7 +292,7 @@ public class RecursionManager {
 
     private void enableMemoization(MyKey realKey, Set<MyKey> loop) {
       toMemoize.addAll(loop);
-      List<MyKey> stack = new ArrayList<MyKey>(progressMap.keySet());
+      List<MyKey> stack = new ArrayList<>(progressMap.keySet());
 
       for (MyKey key : loop) {
         final MyKey existing = key2ReentrancyDuringItsCalculation.get(key);
@@ -309,9 +309,9 @@ public class RecursionManager {
         throw new AssertionError("zero1");
       }
 
-      Set<MyKey> loop = new THashSet<MyKey>();
+      Set<MyKey> loop = new THashSet<>();
       boolean inLoop = false;
-      for (Map.Entry<MyKey, Integer> entry: new ArrayList<Map.Entry<MyKey, Integer>>(progressMap.entrySet())) {
+      for (Map.Entry<MyKey, Integer> entry: new ArrayList<>(progressMap.entrySet())) {
         if (inLoop) {
           entry.setValue(reentrancyCount);
           loop.add(entry.getKey());

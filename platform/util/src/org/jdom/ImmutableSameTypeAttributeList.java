@@ -115,7 +115,7 @@ class ImmutableSameTypeAttributeList implements List<Attribute> {
   }
 
   private List<Attribute> toList() {
-    List<Attribute> list = new ArrayList<Attribute>(size());
+    List<Attribute> list = new ArrayList<>(size());
     for (int i = 0; i < size(); i++) {
       list.add(get(i));
     }                  

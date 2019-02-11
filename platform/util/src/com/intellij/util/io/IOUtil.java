@@ -240,7 +240,7 @@ public class IOUtil {
   @NotNull
   public static List<String> readStringList(@NotNull DataInput in) throws IOException {
     int size = DataInputOutputUtil.readINT(in);
-    List<String> strings = new ArrayList<String>(size);
+    List<String> strings = new ArrayList<>(size);
     for (int i = 0; i < size; i++) {
       strings.add(readUTF(in));
     }

@@ -398,7 +398,7 @@ public class LinePainter2D {
       sizeWithStroke = sw_1 + prefSize + sw_2;
     }
     _xy -= (pm == ParityMode.ODD ? sizeWithStroke - PaintUtil.devPixel(g) : sizeWithStroke) / 2 - sw_1;
-    return new Pair<Double, Double>(_xy, prefSize);
+    return new Pair<>(_xy, prefSize);
   }
 
   /**

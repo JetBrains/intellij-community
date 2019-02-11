@@ -42,7 +42,7 @@ import java.util.List;
 import java.util.Map;
 
 public class DebugReflectionUtil {
-  private static final Map<Class, Field[]> allFields = new THashMap<Class, Field[]>(new TObjectHashingStrategy<Class>() {
+  private static final Map<Class, Field[]> allFields = new THashMap<>(new TObjectHashingStrategy<Class>() {
     // default strategy seems to be too slow
     @Override
     public int computeHashCode(Class aClass) {
@@ -63,7 +63,7 @@ public class DebugReflectionUtil {
     if (cached == null) {
       try {
         Field[] declaredFields = aClass.getDeclaredFields();
-        List<Field> fields = new ArrayList<Field>(declaredFields.length + 5);
+        List<Field> fields = new ArrayList<>(declaredFields.length + 5);
         for (Field declaredField : declaredFields) {
           declaredField.setAccessible(true);
           Class<?> type = declaredField.getType();
@@ -130,7 +130,7 @@ public class DebugReflectionUtil {
                                     @NotNull Condition<Object> shouldExamineValue,
                                     @NotNull final PairProcessor<Object, ? super BackLink> leakProcessor) {
     TIntHashSet visited = new TIntHashSet(100);
-    Queue<BackLink> toVisit = new Queue<BackLink>(100);
+    Queue<BackLink> toVisit = new Queue<>(100);
 
     for (Map.Entry<Object, String> entry : startRoots.entrySet()) {
       Object startRoot = entry.getKey();

@@ -69,7 +69,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
         return false;
       }
     });
-    delayQueue.removeAll(new HashSet<MyScheduledFutureTask>(result));
+    delayQueue.removeAll(new HashSet<>(result));
     if (LOG.isTraceEnabled()) {
       LOG.trace("Shutdown. Drained tasks: "+result);
     }
@@ -90,7 +90,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
   @Override
   public boolean awaitTermination(long timeout, @NotNull TimeUnit unit) throws InterruptedException {
     if (!isShutdown()) throw new IllegalStateException("must await termination after shutdown() or shutdownNow() only");
-    List<MyScheduledFutureTask> tasks = new ArrayList<MyScheduledFutureTask>(delayQueue);
+    List<MyScheduledFutureTask> tasks = new ArrayList<>(delayQueue);
     for (MyScheduledFutureTask task : tasks) {
       if (task.getBackendExecutorService() != backendExecutorService) {
         continue;
@@ -321,7 +321,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
   public <V> ScheduledFuture<V> schedule(@NotNull Callable<V> callable,
                                          long delay,
                                          @NotNull TimeUnit unit) {
-    MyScheduledFutureTask<V> t = new MyScheduledFutureTask<V>(callable, triggerTime(delayQueue, delay, unit));
+    MyScheduledFutureTask<V> t = new MyScheduledFutureTask<>(callable, triggerTime(delayQueue, delay, unit));
     return delayedExecute(t);
   }
 
@@ -343,10 +343,10 @@ class SchedulingWrapper implements ScheduledExecutorService {
     if (delay <= 0) {
       throw new IllegalArgumentException("delay must be positive but got: "+delay);
     }
-    MyScheduledFutureTask<Void> sft = new MyScheduledFutureTask<Void>(command,
-                                                                      null,
-                                                                      triggerTime(delayQueue, initialDelay, unit),
-                                                                      unit.toNanos(-delay));
+    MyScheduledFutureTask<Void> sft = new MyScheduledFutureTask<>(command,
+                                                                  null,
+                                                                  triggerTime(delayQueue, initialDelay, unit),
+                                                                  unit.toNanos(-delay));
     return delayedExecute(sft);
   }
 

@@ -59,12 +59,12 @@ public class Topic<L> {
 
   @NotNull
   public static <L> Topic<L> create(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass) {
-    return new Topic<L>(displayName, listenerClass);
+    return new Topic<>(displayName, listenerClass);
   }
 
   @NotNull
   public static <L> Topic<L> create(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass, BroadcastDirection direction) {
-    return new Topic<L>(displayName, listenerClass, direction);
+    return new Topic<>(displayName, listenerClass, direction);
   }
 
   /**

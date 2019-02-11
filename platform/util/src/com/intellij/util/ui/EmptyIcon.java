@@ -24,7 +24,7 @@ import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
  * @see ColorIcon
  */
 public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
-  private static final Map<Pair<Integer, Boolean>, EmptyIcon> cache = new HashMap<Pair<Integer, Boolean>, EmptyIcon>();
+  private static final Map<Pair<Integer, Boolean>, EmptyIcon> cache = new HashMap<>();
 
   public static final Icon ICON_18 = JBUI.scale(create(18));
   public static final Icon ICON_16 = JBUI.scale(create(16));

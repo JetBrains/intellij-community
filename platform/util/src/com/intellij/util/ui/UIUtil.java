@@ -497,7 +497,7 @@ public class UIUtil {
   }
 
   // accessed from com.intellij.util.ui.TestScaleHelper via reflect
-  private static final AtomicReference<Boolean> jreHiDPI = new AtomicReference<Boolean>();
+  private static final AtomicReference<Boolean> jreHiDPI = new AtomicReference<>();
   private static volatile boolean jreHiDPI_earlierVersion;
 
   @TestOnly
@@ -957,7 +957,7 @@ public class UIUtil {
 
   @NotNull
   public static String[] splitText(@NotNull String text, @NotNull FontMetrics fontMetrics, int widthLimit, char separator) {
-    ArrayList<String> lines = new ArrayList<String>();
+    ArrayList<String> lines = new ArrayList<>();
     String currentLine = "";
     StringBuilder currentAtom = new StringBuilder();
 
@@ -1044,7 +1044,7 @@ public class UIUtil {
     return defColor;
   }
 
-  private static final Map<Class, Ref<Method>> ourDefaultIconMethodsCache = new ConcurrentHashMap<Class, Ref<Method>>();
+  private static final Map<Class, Ref<Method>> ourDefaultIconMethodsCache = new ConcurrentHashMap<>();
   public static int getCheckBoxTextHorizontalOffset(@NotNull JCheckBox cb) {
     // logic copied from javax.swing.plaf.basic.BasicRadioButtonUI.paint
     ButtonUI ui = cb.getUI();
@@ -1708,7 +1708,7 @@ public class UIUtil {
 
   @NotNull
   public static String[] getValidFontNames(final boolean familyName) {
-    Set<String> result = new TreeSet<String>();
+    Set<String> result = new TreeSet<>();
 
     // adds fonts that can display symbols at [A, Z] + [a, z] + [0, 9]
     for (Font font : GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts()) {
@@ -2409,7 +2409,7 @@ public class UIUtil {
   @TestOnly
   public static void pump() {
     assert !SwingUtilities.isEventDispatchThread();
-    final BlockingQueue<Object> queue = new LinkedBlockingQueue<Object>();
+    final BlockingQueue<Object> queue = new LinkedBlockingQueue<>();
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
@@ -3598,7 +3598,7 @@ public class UIUtil {
 
   @NotNull
   public static <T extends JComponent> List<T> findComponentsOfType(JComponent parent, @NotNull Class<? extends T> cls) {
-    final ArrayList<T> result = new ArrayList<T>();
+    final ArrayList<T> result = new ArrayList<>();
     findComponentsOfType(parent, cls, result);
     return result;
   }
@@ -3617,7 +3617,7 @@ public class UIUtil {
   }
 
   public static class TextPainter {
-    private final List<Pair<String, LineInfo>> myLines = new ArrayList<Pair<String, LineInfo>>();
+    private final List<Pair<String, LineInfo>> myLines = new ArrayList<>();
     private boolean myDrawShadow;
     private Color myShadowColor;
     private float myLineSpacing;
@@ -3883,7 +3883,7 @@ public class UIUtil {
   }
 
   public static void setFutureRootPane(@NotNull JComponent c, @NotNull JRootPane pane) {
-    c.putClientProperty(ROOT_PANE, new WeakReference<JRootPane>(pane));
+    c.putClientProperty(ROOT_PANE, new WeakReference<>(pane));
   }
 
   public static boolean isMeaninglessFocusOwner(@Nullable Component c) {
@@ -4305,7 +4305,7 @@ public class UIUtil {
       graphics.setFont(new Font(family, Font.PLAIN, patternSize));
       if (graphics.getFontMetrics().getStringBounds(pattern, graphics).equals(patternBounds)) {
         if (ourRealFontFamilies == null) {
-          ourRealFontFamilies = new HashMap<String, String>();
+          ourRealFontFamilies = new HashMap<>();
         }
         ourRealFontFamilies.put(genericFontFamily, family);
         return family;
@@ -4546,7 +4546,7 @@ public class UIUtil {
     Window c1Ancestor = findWindowAncestor(c1);
     Window c2Ancestor = findWindowAncestor(c2);
 
-    Set <Window> ownerSet = new HashSet<Window>();
+    Set <Window> ownerSet = new HashSet<>();
 
     Window owner = c1Ancestor;
 

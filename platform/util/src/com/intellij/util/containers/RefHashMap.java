@@ -29,7 +29,7 @@ import java.util.*;
  */
 abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   private final MyMap myMap;
-  private final ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<K>();
+  private final ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<>();
   private final HardKey myHardKeyInstance = new HardKey(); // "singleton"
   @NotNull
   private final TObjectHashingStrategy<? super K> myStrategy;
@@ -325,7 +325,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
               // weak key has been cleared by GC, ignore
               continue;
             }
-            next = new MyEntry<K, V>(ent, k, wk.hashCode(), myStrategy);
+            next = new MyEntry<>(ent, k, wk.hashCode(), myStrategy);
             return true;
           }
           return false;

@@ -26,7 +26,7 @@ public abstract class WeakListener<Src, Listener> implements InvocationHandler{
 
   protected WeakListener(Src source, Class<Listener> listenerInterface, Listener listenerImpl) {
     mySource = source;
-    myDelegate = new WeakReference<Listener>(listenerImpl);
+    myDelegate = new WeakReference<>(listenerImpl);
     final ClassLoader classLoader = listenerImpl.getClass().getClassLoader();
     final Listener proxy = (Listener)Proxy.newProxyInstance(classLoader, new Class[]{listenerInterface}, this);
     addListener(source, proxy);

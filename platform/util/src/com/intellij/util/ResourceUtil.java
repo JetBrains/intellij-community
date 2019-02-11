@@ -68,7 +68,7 @@ public class ResourceUtil {
    */
   @NotNull
   private static List<String> calculateBundleNames(@NotNull String baseName, @NotNull Locale locale) {
-    final List<String> result = new ArrayList<String>(3);
+    final List<String> result = new ArrayList<>(3);
 
     result.add(0, baseName);
 

@@ -657,7 +657,7 @@ public class JDOMUtil {
       }
     }
 
-    List<String> writtenFilesPaths = new ArrayList<String>();
+    List<String> writtenFilesPaths = new ArrayList<>();
     for (int i = 0; i < newFilePaths.length; i++) {
       String newFilePath = newFilePaths[i];
 

@@ -88,7 +88,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
   @NotNull
   @Override
   public Set<K> keySet() {
-    return new CollectionWrapper.Set<K>(myMap.keySet());
+    return new CollectionWrapper.Set<>(myMap.keySet());
   }
 
   public boolean removeValue(Object value) {
@@ -127,7 +127,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
   @NotNull
   @Override
   public Collection<V> values() {
-    return new CollectionWrapper<V>(myMap.values());
+    return new CollectionWrapper<>(myMap.values());
   }
 
   @NotNull
@@ -141,7 +141,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
 
       @Override
       public Entry<K, V> unwrap(Entry<K, V> val) {
-        return val.getKey() == FAKE_NULL() || val.getValue() == FAKE_NULL() ? new EntryWrapper<K, V>(val) : val;
+        return val.getKey() == FAKE_NULL() || val.getValue() == FAKE_NULL() ? new EntryWrapper<>(val) : val;
       }
     };
   }

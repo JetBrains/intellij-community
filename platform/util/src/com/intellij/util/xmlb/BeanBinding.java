@@ -145,7 +145,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
 
   @NotNull
   public final TObjectFloatHashMap<String> computeBindingWeights(@NotNull LinkedHashSet<String> accessorNameTracker) {
-    TObjectFloatHashMap<String> weights = new TObjectFloatHashMap<String>(accessorNameTracker.size());
+    TObjectFloatHashMap<String> weights = new TObjectFloatHashMap<>(accessorNameTracker.size());
     float weight = 0;
     float step = (float)myBindings.length / (float)accessorNameTracker.size();
     for (String name : accessorNameTracker) {
@@ -287,7 +287,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
       return accessors;
     }
 
-    accessors = new ArrayList<MutableAccessor>();
+    accessors = new ArrayList<>();
 
     Map<String, Couple<Method>> nameToAccessors;
     // special case for Rectangle.class to avoid infinite recursion during serialization due to bounds() method
@@ -350,7 +350,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
 
   @NotNull
   private static Map<String, Couple<Method>> collectPropertyAccessors(@NotNull Class<?> aClass, @NotNull List<? super MutableAccessor> accessors) {
-    final Map<String, Couple<Method>> candidates = new TreeMap<String, Couple<Method>>(); // (name,(getter,setter))
+    final Map<String, Couple<Method>> candidates = new TreeMap<>(); // (name,(getter,setter))
     for (Method method : aClass.getMethods()) {
       if (!Modifier.isPublic(method.getModifiers())) {
         continue;

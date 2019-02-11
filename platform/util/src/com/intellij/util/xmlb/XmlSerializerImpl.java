@@ -97,7 +97,7 @@ public final class XmlSerializerImpl {
       Map<Pair<Type, MutableAccessor>, Binding> map = com.intellij.reference.SoftReference.dereference(ourBindings);
       if (map == null) {
         map = ContainerUtil.newConcurrentMap();
-        ourBindings = new SoftReference<Map<Pair<Type, MutableAccessor>, Binding>>(map);
+        ourBindings = new SoftReference<>(map);
       }
       return map;
     }

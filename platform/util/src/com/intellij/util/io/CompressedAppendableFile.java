@@ -495,7 +495,7 @@ public class CompressedAppendableFile {
   }
 
   private static class FileChunkReadCache extends SLRUMap<FileChunkKey<CompressedAppendableFile>, byte[]> {
-    private final FileChunkKey<CompressedAppendableFile> myKey = new FileChunkKey<CompressedAppendableFile>(null, 0);
+    private final FileChunkKey<CompressedAppendableFile> myKey = new FileChunkKey<>(null, 0);
 
     FileChunkReadCache() {
       super(64, 64);

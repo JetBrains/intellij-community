@@ -453,7 +453,7 @@ public class ReflectionUtil {
 
       Constructor<?>[] constructors = aClass.getDeclaredConstructors();
       Exception exception = null;
-      List<Constructor<?>> defaultCtors = new SmartList<Constructor<?>>();
+      List<Constructor<?>> defaultCtors = new SmartList<>();
       ctorLoop:
       for (Constructor<?> constructor : constructors) {
         try {

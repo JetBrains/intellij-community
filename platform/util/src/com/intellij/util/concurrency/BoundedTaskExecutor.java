@@ -32,7 +32,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
   // low  32 bits: number of tasks running (or trying to run)
   // high 32 bits: myTaskQueue modification stamp
   private final AtomicLong myStatus = new AtomicLong();
-  private final BlockingQueue<Runnable> myTaskQueue = new LinkedBlockingQueue<Runnable>();
+  private final BlockingQueue<Runnable> myTaskQueue = new LinkedBlockingQueue<>();
 
   BoundedTaskExecutor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name, @NotNull Executor backendExecutor, int maxThreads) {
     myName = name;
@@ -187,7 +187,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
 
   private void wrapAndExecute(@NotNull final Runnable firstTask, final long status) {
     try {
-      final AtomicReference<Runnable> currentTask = new AtomicReference<Runnable>(firstTask);
+      final AtomicReference<Runnable> currentTask = new AtomicReference<>(firstTask);
       myBackendExecutor.execute(new Runnable() {
         @Override
         public void run() {
@@ -282,7 +282,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
 
   @NotNull
   public List<Runnable> clearAndCancelAll() {
-    List<Runnable> queued = new ArrayList<Runnable>();
+    List<Runnable> queued = new ArrayList<>();
     myTaskQueue.drainTo(queued);
     for (Runnable task : queued) {
       if (task instanceof FutureTask) {

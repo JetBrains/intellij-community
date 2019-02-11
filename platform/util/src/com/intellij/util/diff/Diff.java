@@ -61,7 +61,7 @@ public class Diff {
     if (changeRef != null) return changeRef.get();
 
     int trimmedLength = objects1.length + objects2.length - 2 * startShift - 2 * endCut;
-    Enumerator<T> enumerator = new Enumerator<T>(trimmedLength, ContainerUtil.<T>canonicalStrategy());
+    Enumerator<T> enumerator = new Enumerator<>(trimmedLength, ContainerUtil.<T>canonicalStrategy());
     int[] ints1 = enumerator.enumerate(objects1, startShift, endCut);
     int[] ints2 = enumerator.enumerate(objects2, startShift, endCut);
     return doBuildChanges(ints1, ints2, new ChangeBuilder(startShift));
@@ -89,7 +89,7 @@ public class Diff {
     Change change = trimmedLength1 != 0 || trimmedLength2 != 0 ?
                     new Change(startShift, startShift, trimmedLength1, trimmedLength2, null) :
                     null;
-    return new Ref<Change>(change);
+    return new Ref<>(change);
   }
 
   private static Change doBuildChanges(@NotNull int[] ints1, @NotNull int[] ints2, @NotNull ChangeBuilder builder)
@@ -257,7 +257,7 @@ public class Diff {
     }
 
     public ArrayList<Change> toList() {
-      ArrayList<Change> result = new ArrayList<Change>();
+      ArrayList<Change> result = new ArrayList<>();
       Change current = this;
       while (current != null) {
         result.add(current);

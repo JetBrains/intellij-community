@@ -53,7 +53,7 @@ public final class WeakHashMap<K, V> extends RefHashMap<K, V> {
   @NotNull
   @Override
   protected <T> Key<T> createKey(@NotNull T k, @NotNull TObjectHashingStrategy<? super T> strategy, @NotNull ReferenceQueue<? super T> q) {
-    return new WeakKey<T>(k, strategy, q);
+    return new WeakKey<>(k, strategy, q);
   }
 
   private static class WeakKey<T> extends WeakReference<T> implements Key<T> {

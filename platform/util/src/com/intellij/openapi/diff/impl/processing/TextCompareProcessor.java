@@ -83,7 +83,7 @@ public class TextCompareProcessor {
           DiffString subText1 = lineBlock.getText(diffText1, FragmentSide.SIDE1);
           DiffString subText2 = lineBlock.getText(diffText2, FragmentSide.SIDE2);
           ArrayList<LineFragment> subFragments = findSubFragments(subText1, subText2);
-          lineBlock.setChildren(new ArrayList<Fragment>(subFragments));
+          lineBlock.setChildren(new ArrayList<>(subFragments));
           lineBlock.adjustTypeFromChildrenTypes();
         }
         catch (FilesTooBigForDiffException ignore) {

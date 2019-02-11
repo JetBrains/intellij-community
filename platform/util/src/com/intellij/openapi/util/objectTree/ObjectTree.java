@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class ObjectTree<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectTree");
   
-  private static final ThreadLocal<Throwable> ourTopmostDisposeTrace = new ThreadLocal<Throwable>();
+  private static final ThreadLocal<Throwable> ourTopmostDisposeTrace = new ThreadLocal<>();
 
   private final List<ObjectTreeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -46,8 +46,8 @@ public final class ObjectTree<T> {
   // Disposable to trace or boolean marker (if trace unavailable)
   private final Map<T, Object> myDisposedObjects = ContainerUtil.createWeakMap(100, 0.5f, ContainerUtil.identityStrategy()); // guarded by treeLock
 
-  private final List<ObjectNode<T>> myExecutedNodes = new ArrayList<ObjectNode<T>>(); // guarded by myExecutedNodes
-  private final List<T> myExecutedUnregisteredObjects = new ArrayList<T>(); // guarded by myExecutedUnregisteredObjects
+  private final List<ObjectNode<T>> myExecutedNodes = new ArrayList<>(); // guarded by myExecutedNodes
+  private final List<T> myExecutedUnregisteredObjects = new ArrayList<>(); // guarded by myExecutedUnregisteredObjects
 
   final Object treeLock = new Object();
 
@@ -125,7 +125,7 @@ public final class ObjectTree<T> {
 
   @NotNull
   private ObjectNode<T> createNodeFor(@NotNull T object, @Nullable ObjectNode<T> parentNode) {
-    final ObjectNode<T> newNode = new ObjectNode<T>(this, parentNode, object, getNextModification());
+    final ObjectNode<T> newNode = new ObjectNode<>(this, parentNode, object, getNextModification());
     if (parentNode == null) {
       myRootObjects.add(object);
     }
@@ -154,7 +154,7 @@ public final class ObjectTree<T> {
         }
       }
       else {
-        SmartList<Throwable> exceptions = new SmartList<Throwable>();
+        SmartList<Throwable> exceptions = new SmartList<>();
         ObjectNode<T> parent;
         synchronized (treeLock) {
           parent = node.getParent();

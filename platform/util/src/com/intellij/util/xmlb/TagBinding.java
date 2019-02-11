@@ -55,7 +55,7 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
     }
     else {
       String name = elements.get(0).getName();
-      children = new ArrayList<Element>();
+      children = new ArrayList<>();
       for (Element element : elements) {
         assert element.getName().equals(name);
         children.addAll(element.getChildren());

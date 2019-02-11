@@ -46,7 +46,7 @@ public class RefCountingStorage extends AbstractStorage {
 
   @NotNull
   protected ExecutorService createExecutor() {
-    return new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<Runnable>(), ConcurrencyUtil
+    return new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<>(), ConcurrencyUtil
       .newNamedThreadFactory("RefCountingStorage write content helper"));
   }
 

@@ -1270,7 +1270,7 @@ public class StringUtil extends StringUtilRt {
     if (separator.length() == 0) {
       return Collections.singletonList(s);
     }
-    List<CharSequence> result = new ArrayList<CharSequence>();
+    List<CharSequence> result = new ArrayList<>();
     int pos = 0;
     while (true) {
       int index = indexOf(s, separator, pos);
@@ -1360,13 +1360,13 @@ public class StringUtil extends StringUtilRt {
       }
       if (isIdentifierPart && i == text.length() - 1) {
         if (result == null) {
-          result = new SmartList<String>();
+          result = new SmartList<>();
         }
         result.add(text.substring(start, i + 1));
       }
       else if (!isIdentifierPart && start != -1) {
         if (result == null) {
-          result = new SmartList<String>();
+          result = new SmartList<>();
         }
         result.add(text.substring(start, i));
         start = -1;
@@ -1393,7 +1393,7 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static List<TextRange> getWordIndicesIn(@NotNull String text, @Nullable Set<Character> separatorsSet) {
-    List<TextRange> result = new SmartList<TextRange>();
+    List<TextRange> result = new SmartList<>();
     int start = -1;
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
@@ -1739,7 +1739,7 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static List<String> findMatches(@NotNull String s, @NotNull Pattern pattern, int groupIndex) {
-    List<String> result = new SmartList<String>();
+    List<String> result = new SmartList<>();
     Matcher m = pattern.matcher(s);
     while (m.find()) {
       String group = m.group(groupIndex);

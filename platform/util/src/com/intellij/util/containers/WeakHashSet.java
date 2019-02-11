@@ -30,8 +30,8 @@ import java.util.Set;
  * Null keys are NOT allowed
  */
 final class WeakHashSet<T> extends AbstractSet<T> {
-  private final Set<MyRef<T>> set = new THashSet<MyRef<T>>();
-  private final ReferenceQueue<T> queue = new ReferenceQueue<T>();
+  private final Set<MyRef<T>> set = new THashSet<>();
+  private final ReferenceQueue<T> queue = new ReferenceQueue<>();
 
   private static class MyRef<T> extends WeakReference<T> {
     private final int myHashCode;
@@ -89,7 +89,7 @@ final class WeakHashSet<T> extends AbstractSet<T> {
   @Override
   public boolean add(@NotNull T t) {
     processQueue();
-    MyRef<T> ref = new MyRef<T>(t, queue);
+    MyRef<T> ref = new MyRef<>(t, queue);
     return set.add(ref);
   }
 
@@ -97,14 +97,14 @@ final class WeakHashSet<T> extends AbstractSet<T> {
   public boolean remove(@NotNull Object o) {
     processQueue();
     //noinspection unchecked
-    return set.remove(new HardRef<T>((T)o));
+    return set.remove(new HardRef<>((T)o));
   }
 
   @Override
   public boolean contains(@NotNull Object o) {
     processQueue();
     //noinspection unchecked
-    return set.contains(new HardRef<T>((T)o));
+    return set.contains(new HardRef<>((T)o));
   }
 
   @Override

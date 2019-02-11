@@ -28,7 +28,7 @@ public class ProcessWaitFor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.ProcessWaitFor");
 
   private final Future<?> myWaitForThreadFuture;
-  private final BlockingQueue<Consumer<Integer>> myTerminationCallback = new ArrayBlockingQueue<Consumer<Integer>>(1);
+  private final BlockingQueue<Consumer<Integer>> myTerminationCallback = new ArrayBlockingQueue<>(1);
   private volatile boolean myDetached;
 
   /** @deprecated use {@link #ProcessWaitFor(Process, TaskExecutor, String)} instead (to be removed in IDEA 2018) */

@@ -36,7 +36,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   private final List<ProcessListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private enum State {INITIAL, RUNNING, TERMINATING, TERMINATED}
-  private final AtomicReference<State> myState = new AtomicReference<State>(State.INITIAL);
+  private final AtomicReference<State> myState = new AtomicReference<>(State.INITIAL);
 
   private final Semaphore myWaitSemaphore;
   private final ProcessListener myEventMulticaster;
@@ -242,7 +242,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   }
 
   private final class TasksRunner extends ProcessAdapter {
-    private final List<Runnable> myPendingTasks = new ArrayList<Runnable>();
+    private final List<Runnable> myPendingTasks = new ArrayList<>();
 
     @Override
     public void startNotified(@NotNull ProcessEvent event) {

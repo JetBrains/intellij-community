@@ -34,7 +34,7 @@ public class RadioButtonEnumModel<E extends Enum<E>> {
   private final List<E> myEnums;
 
   public static <E extends Enum<E>> RadioButtonEnumModel<E> bindEnum(Class<E> e, ButtonGroup group) {
-    return new RadioButtonEnumModel<E>(e, group);
+    return new RadioButtonEnumModel<>(e, group);
   }
 
   private RadioButtonEnumModel(Class<E> e, ButtonGroup group) {

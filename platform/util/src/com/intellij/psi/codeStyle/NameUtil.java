@@ -30,7 +30,7 @@ public class NameUtil {
 
   @NotNull
   public static String[] nameToWords(@NotNull String name){
-    List<String> array = new ArrayList<String>();
+    List<String> array = new ArrayList<>();
     int index = 0;
 
     while(index < name.length()){
@@ -228,7 +228,7 @@ public class NameUtil {
   @NotNull
   public static String[] splitNameIntoWords(@NotNull String name) {
     final String[] underlineDelimited = name.split("_");
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     for (String word : underlineDelimited) {
       addAllWords(word, result);
     }
@@ -242,7 +242,7 @@ public class NameUtil {
                                                   boolean upperCaseStyle,
                                                   boolean preferLongerNames,
                                                   boolean isArray) {
-    ArrayList<String> answer = new ArrayList<String>();
+    ArrayList<String> answer = new ArrayList<>();
     String[] words = nameToWords(name);
 
     for (int step = 0; step < words.length; step++) {

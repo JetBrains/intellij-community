@@ -15,9 +15,9 @@
  */
 package com.intellij.util.concurrency;
 
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -37,7 +37,7 @@ public class BlockingSet<T> {
   private final Lock lock;
 
   public BlockingSet() {
-    set = new HashSet<T>();
+    set = new HashSet<>();
     lock = new ReentrantLock();
     unlock = lock.newCondition();
   }
@@ -78,6 +78,6 @@ public class BlockingSet<T> {
   }
 
   public static <T> BlockingSet<T> newInstance() {
-    return new BlockingSet<T>();
+    return new BlockingSet<>();
   }
 }

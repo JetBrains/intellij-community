@@ -25,7 +25,7 @@ import java.util.Set;
 public class LoadedResourcesDumper implements ClassPath.ResourceLoadingLogger {
   private PrintStream myOrder;
   private long myOrderSize;
-  private final Set<String> myOrderedUrls = new HashSet<String>();
+  private final Set<String> myOrderedUrls = new HashSet<>();
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   @Override

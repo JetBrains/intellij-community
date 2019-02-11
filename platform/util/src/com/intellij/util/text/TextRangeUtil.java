@@ -55,7 +55,7 @@ public class TextRangeUtil {
         Collections.sort(excludedRanges, RANGE_COMPARATOR);
       }
       int enabledRangeStart = original.getStartOffset();
-      List<TextRange> enabledRanges = new ArrayList<TextRange>();
+      List<TextRange> enabledRanges = new ArrayList<>();
       for (TextRange excludedRange : excludedRanges) {
         if (excludedRange.getEndOffset() < enabledRangeStart) continue;
         int excludedRangeStart = excludedRange.getStartOffset();

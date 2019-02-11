@@ -408,7 +408,7 @@ public class PathManager {
   public static void loadProperties() {
     getHomePath();
 
-    Set<String> paths = new LinkedHashSet<String>();
+    Set<String> paths = new LinkedHashSet<>();
     paths.add(System.getProperty(PROPERTIES_FILE));
     paths.add(getCustomPropertiesFile());
     paths.add(SystemProperties.getUserHome() + '/' + PROPERTIES_FILE_NAME);
@@ -534,7 +534,7 @@ public class PathManager {
       LZ4Factory.class,             // lz4-java
     };
 
-    final Set<String> classPath = new HashSet<String>();
+    final Set<String> classPath = new HashSet<>();
     for (Class<?> aClass : classes) {
       final String path = getJarPathForClass(aClass);
       if (path != null) {

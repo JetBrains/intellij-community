@@ -44,7 +44,7 @@ public class CompoundRuntimeException extends RuntimeException {
   }
 
   public List<Throwable> getExceptions() {
-    return new ArrayList<Throwable>(myExceptions);
+    return new ArrayList<>(myExceptions);
   }
 
   @Override

@@ -30,7 +30,7 @@ import java.util.BitSet;
 public class Page {
   public static final int PAGE_SIZE = SystemProperties.getIntProperty("idea.io.page.size", 8 * 1024);
 
-  private static final LimitedPool<ByteBuffer> ourBufferPool = new LimitedPool<ByteBuffer>(10, new LimitedPool.ObjectFactory<ByteBuffer>() {
+  private static final LimitedPool<ByteBuffer> ourBufferPool = new LimitedPool<>(10, new LimitedPool.ObjectFactory<ByteBuffer>() {
     @NotNull
     @Override
     public ByteBuffer create() {

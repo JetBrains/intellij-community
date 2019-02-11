@@ -145,9 +145,9 @@ public class UnixProcessManager {
       LOG.debug("Sending signal " + signal + " to process tree with root PID " + processId);
     }
 
-    final Ref<Integer> foundPid = new Ref<Integer>();
+    final Ref<Integer> foundPid = new Ref<>();
     final ProcessInfo processInfo = new ProcessInfo();
-    final List<Integer> childrenPids = new ArrayList<Integer>();
+    final List<Integer> childrenPids = new ArrayList<>();
 
     findChildProcesses(ourPid, processId, foundPid, processInfo, childrenPids);
 
@@ -278,11 +278,11 @@ public class UnixProcessManager {
   }
 
   private static class ProcessInfo {
-    private final Map<Integer, List<Integer>> BY_PARENT = new TreeMap<Integer, List<Integer>>(); // pid -> list of children pids
+    private final Map<Integer, List<Integer>> BY_PARENT = new TreeMap<>(); // pid -> list of children pids
 
     public void register(Integer pid, Integer parentPid) {
       List<Integer> children = BY_PARENT.get(parentPid);
-      if (children == null) BY_PARENT.put(parentPid, children = new LinkedList<Integer>());
+      if (children == null) BY_PARENT.put(parentPid, children = new LinkedList<>());
       children.add(pid);
     }
 

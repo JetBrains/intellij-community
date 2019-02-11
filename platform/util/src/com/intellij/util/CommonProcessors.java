@@ -38,7 +38,7 @@ public class CommonProcessors {
     }
 
     public CollectProcessor() {
-      myCollection = new ArrayList<T>();
+      myCollection = new ArrayList<>();
     }
 
     @Override
@@ -79,7 +79,7 @@ public class CommonProcessors {
     private final Set<T> myCollection;
 
     public CollectUniquesProcessor() {
-      myCollection = new HashSet<T>();
+      myCollection = new HashSet<>();
     }
 
     @Override
@@ -109,7 +109,7 @@ public class CommonProcessors {
 
     public UniqueProcessor(@NotNull Processor<? super T> delegate, @NotNull TObjectHashingStrategy<T> strategy) {
       myDelegate = delegate;
-      processed = new THashSet<T>(strategy);
+      processed = new THashSet<>(strategy);
     }
 
     @Override
