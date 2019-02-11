@@ -106,10 +106,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
       getWriteLock().lock();
       doClear();
     }
-    catch (StorageException e) {
-      LOG.error(e);
-    }
-    catch (IOException e) {
+    catch (StorageException | IOException e) {
       LOG.error(e);
     }
     finally {
@@ -220,12 +217,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
         try {
           updateWithMap(inputId, updateData);
         }
-        catch (StorageException ex) {
-          LOG.info("Exception during updateWithMap:" + ex);
-          requestRebuild(ex);
-          return Boolean.FALSE;
-        }
-        catch (ProcessCanceledException ex) {
+        catch (StorageException | ProcessCanceledException ex) {
           LOG.info("Exception during updateWithMap:" + ex);
           requestRebuild(ex);
           return Boolean.FALSE;

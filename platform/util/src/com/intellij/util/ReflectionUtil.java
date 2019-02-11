@@ -319,11 +319,7 @@ public class ReflectionUtil {
       @SuppressWarnings("unchecked") T t = (T)field.get(object);
       return t;
     }
-    catch (NoSuchFieldException e) {
-      LOG.debug(e);
-      return null;
-    }
-    catch (IllegalAccessException e) {
+    catch (NoSuchFieldException | IllegalAccessException e) {
       LOG.debug(e);
       return null;
     }
@@ -338,11 +334,7 @@ public class ReflectionUtil {
       @SuppressWarnings("unchecked") T t = (T)field.get(null);
       return t;
     }
-    catch (NoSuchFieldException e) {
-      LOG.debug(e);
-      return null;
-    }
-    catch (IllegalAccessException e) {
+    catch (NoSuchFieldException | IllegalAccessException e) {
       LOG.debug(e);
       return null;
     }
@@ -359,14 +351,10 @@ public class ReflectionUtil {
       field.set(object, value);
       return true;
     }
-    catch (NoSuchFieldException e) {
+    catch (NoSuchFieldException | IllegalAccessException e) {
       LOG.debug(e);
       // this 'return' was moved into 'catch' block because otherwise reference to common super-class of these exceptions (ReflectiveOperationException)
       // which doesn't exist in JDK 1.6 will be added to class-file during instrumentation
-      return false;
-    }
-    catch (IllegalAccessException e) {
-      LOG.debug(e);
       return false;
     }
   }

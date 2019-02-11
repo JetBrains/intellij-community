@@ -200,10 +200,7 @@ public class IOUtil {
         ((FileOutputStream)stream).getFD().sync();
       }
     }
-    catch (NoSuchFieldException e) {
-      throw new RuntimeException(e);
-    }
-    catch (IllegalAccessException e) {
+    catch (NoSuchFieldException | IllegalAccessException e) {
       throw new RuntimeException(e);
     }
   }

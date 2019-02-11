@@ -43,10 +43,7 @@ public class ConcurrentInstanceMap {
     try {
       return key.newInstance();
     }
-    catch (InstantiationException e) {
-      throw new RuntimeException("Couldn't instantiate " + key, e);
-    }
-    catch (IllegalAccessException e) {
+    catch (InstantiationException | IllegalAccessException e) {
       throw new RuntimeException("Couldn't instantiate " + key, e);
     }
   }

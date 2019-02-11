@@ -80,15 +80,9 @@ public class DebugReflectionUtil {
         }
         cached = fields.isEmpty() ? EMPTY_FIELD_ARRAY : fields.toArray(new Field[0]);
       }
-      catch (IncompatibleClassChangeError e) {
+      catch (IncompatibleClassChangeError | NoClassDefFoundError | SecurityException e) {
         //this exception may be thrown because there are two different versions of org.objectweb.asm.tree.ClassNode from different plugins
         //I don't see any sane way to fix it until we load all the plugins by the same classloader in tests
-        cached = EMPTY_FIELD_ARRAY;
-      }
-      catch (SecurityException e) {
-        cached = EMPTY_FIELD_ARRAY;
-      }
-      catch (NoClassDefFoundError e) {
         cached = EMPTY_FIELD_ARRAY;
       }
       catch (@ReviseWhenPortedToJDK("9") RuntimeException e) {
@@ -169,10 +163,7 @@ public class DebugReflectionUtil {
       try {
         value = field.get(root);
       }
-      catch (IllegalArgumentException e) {
-        throw new RuntimeException(e);
-      }
-      catch (IllegalAccessException e) {
+      catch (IllegalArgumentException | IllegalAccessException e) {
         throw new RuntimeException(e);
       }
 

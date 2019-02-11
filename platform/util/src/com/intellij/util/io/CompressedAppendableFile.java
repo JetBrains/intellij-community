@@ -207,10 +207,8 @@ public class CompressedAppendableFile {
       assert false:"data corruption detected:"+chunkNumber + "," + myChunkTableLength;
       return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
-    catch (RuntimeException e) { // CorruptedException, ArrayIndexOutofBounds, etc
+    catch (RuntimeException | AssertionError e) { // CorruptedException, ArrayIndexOutofBounds, etc
       throw new IOException(e);
-    } catch(AssertionError ae) {
-      throw new IOException(ae);
     }
   }
 

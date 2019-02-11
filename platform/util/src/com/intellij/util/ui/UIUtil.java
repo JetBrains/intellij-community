@@ -576,12 +576,11 @@ public class UIUtil {
       Method getScaleFactorMethod = null;
       try {
         getScaleFactorMethod = Class.forName("sun.awt.CGraphicsDevice").getMethod("getScaleFactor");
-      } catch (ClassNotFoundException e) {
+      } catch (ClassNotFoundException | NoSuchMethodException e) {
         // not an Oracle Mac JDK or API has been changed
         LOG.debug("CGraphicsDevice.getScaleFactor(): not an Oracle Mac JDK or API has been changed");
-      } catch (NoSuchMethodException e) {
-        LOG.debug("CGraphicsDevice.getScaleFactor(): not an Oracle Mac JDK or API has been changed");
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
         LOG.debug(e);
         LOG.debug("CGraphicsDevice.getScaleFactor(): probably it is Java 9");
       }
@@ -681,8 +680,7 @@ public class UIUtil {
               return true;
             }
           }
-          catch (AWTError ignore) { }
-          catch (Exception ignore) { }
+          catch (AWTError | Exception ignore) { }
           ourRetina.set(false);
         }
 
@@ -4134,9 +4132,7 @@ public class UIUtil {
       try {
         onWindow.getClass().getMethod("setAutoRequestFocus", boolean.class).invoke(onWindow, set);
       }
-      catch (NoSuchMethodException e) { LOG.debug(e); }
-      catch (InvocationTargetException e) { LOG.debug(e); }
-      catch (IllegalAccessException e) { LOG.debug(e); }
+      catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) { LOG.debug(e); }
     }
   }
 
@@ -4344,10 +4340,7 @@ public class UIUtil {
             leftGap += ((Icon)o).getIconWidth();
           }
         }
-        catch (IllegalAccessException e) {
-          e.printStackTrace();
-        }
-        catch (InvocationTargetException e) {
+        catch (IllegalAccessException | InvocationTargetException e) {
           e.printStackTrace();
         }
       }
@@ -4582,10 +4575,7 @@ public class UIUtil {
                                       event != null ? event.getWhen() : System.currentTimeMillis(), component);
       }
     }
-    catch (IllegalAccessException e) {
-      LOG.debug(e);
-    }
-    catch (InvocationTargetException e) {
+    catch (IllegalAccessException | InvocationTargetException e) {
       LOG.debug(e);
     }
   }

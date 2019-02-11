@@ -181,10 +181,7 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
     try {
       myMap.close();
     }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-    catch (RuntimeException e) {
+    catch (IOException | RuntimeException e) {
       LOG.error(e);
     }
     try {

@@ -101,8 +101,7 @@ public class ProcessWaitFor {
     catch (ExecutionException e) {
       LOG.error(e);
     }
-    catch (CancellationException ignored) { }
-    catch (TimeoutException ignored) { }
+    catch (CancellationException | TimeoutException ignored) { }
 
     return myWaitForThreadFuture.isDone();
   }

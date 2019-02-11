@@ -150,13 +150,7 @@ public class MacUtil {
         Method getNSWindowPtrMethod = cPlatformWindowClass.getDeclaredMethod("getNSWindowPtr");
         windowId = new ID((Long)getNSWindowPtrMethod.invoke(cPlatformWindow));
       }
-      catch (NoSuchMethodException e) {
-        LOG.debug(e);
-      }
-      catch (InvocationTargetException e) {
-        LOG.debug(e);
-      }
-      catch (IllegalAccessException e) {
+      catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
         LOG.debug(e);
       }
     }

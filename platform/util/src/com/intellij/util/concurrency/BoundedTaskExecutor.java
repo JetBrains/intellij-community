@@ -211,11 +211,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
         }
       });
     }
-    catch (Error e) {
-      myStatus.decrementAndGet();
-      throw e;
-    }
-    catch (RuntimeException e) {
+    catch (Error | RuntimeException e) {
       myStatus.decrementAndGet();
       throw e;
     }
