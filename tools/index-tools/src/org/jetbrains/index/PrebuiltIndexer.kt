@@ -2,9 +2,11 @@
 package org.jetbrains.index
 
 import com.google.common.hash.HashCode
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
@@ -14,6 +16,7 @@ import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileContentImpl
 import java.io.Closeable
 import java.io.IOException
+import java.lang.RuntimeException
 import java.util.concurrent.atomic.AtomicInteger
 
 abstract class PrebuiltIndexer {
@@ -109,6 +112,8 @@ class RootsPrebuiltIndexer(private val roots: Collection<VirtualFile>): Prebuilt
 class ProjectContentPrebuiltIndexer(private val project: Project,
                                     private val indicator: ProgressIndicator = ProgressManager.getInstance().progressIndicator): PrebuiltIndexer() {
   override fun iterateFiles(fileVisitor: (VirtualFile) -> Boolean) {
-    FileBasedIndex.getInstance().iterateIndexableFiles(fileVisitor, project, indicator)
+    FileBasedIndex.getInstance().iterateIndexableFiles({ f -> ReadAction.compute<Boolean, RuntimeException> { fileVisitor.invoke(f)} },
+                                                       project,
+                                                       indicator)
   }
 }
