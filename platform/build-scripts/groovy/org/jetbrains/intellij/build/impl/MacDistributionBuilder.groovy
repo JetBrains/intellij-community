@@ -116,7 +116,8 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
         buildContext.executeStep("Build .dmg artifact for macOS", BuildOptions.MAC_DMG_STEP) {
           MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath)
           if (secondJreBuild != null) {
-            def jreArchive = "jbsdk${buildContext.bundledJreManager.getSecondJreVersion()}${secondJreBuild}_osx_${JvmArchitecture.x64}.tar.gz"
+            def seconJreVersion = buildContext.bundledJreManager.getSecondJreVersion()
+            def jreArchive = "jbrsdk-${seconJreVersion}${buildContext.bundledJreManager.jreArchiveSuffix(secondJreBuild, JvmArchitecture.x64, 'osx')}"
             File archive = new File(buildContext.bundledJreManager.jreDir(), jreArchive)
             if (archive.file) {
               MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath, archive.absolutePath)

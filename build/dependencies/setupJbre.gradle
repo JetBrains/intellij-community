@@ -15,14 +15,30 @@ if (System.getProperty('intellij.build.bundle.second.jre', 'false').toBoolean())
   createJbreTasks(secondJreBuild, secondJreVersion, targetOs)
 }
 
+static def splitJreBuild(jreBuild) {
+  def split = jreBuild.toString().split('b')
+  if (split.length > 2) {
+    throw new IllegalArgumentException(
+      "$jreBuild is expected in format <update>b<build_number>. Examples: u202b1483.24, _0_2b140, b96"
+    )
+  }
+  if (split.length == 2) {
+    [split[0], "b${split[1]}"]
+  }
+  else {
+    ['', jreBuild.toString()]
+  }
+}
+
 def createJbreTasks(String defaultBuild, int version, String targetOs) {
   def isModular = version >= 9
-  def jbsdkPrefix = version == 8 ? 'jbrex8' : "jbsdk$version"
+  def jbsdkPrefix = version == 8 ? 'jbrx-8' : "jbrsdk-$version"
   jrePlatformsToDownload(targetOs).each { platform ->
     archToDownload(platform, !isModular).each { arch ->
       def jreBuild = project.ext.has("jreBuild_$platform") ? project.ext["jreBuild_$platform"] : defaultBuild
-      def jbsdkArtifactName = "${jbsdkPrefix}${jreBuild}_${platform}_$arch".toString()
-      def jbreArtifactName = "jbre${version}${jreBuild}_${platform}_$arch"
+      def (update, buildNumber) = splitJreBuild(jreBuild)
+      def jbsdkArtifactName = "$jbsdkPrefix$update-$platform-$arch-$buildNumber".toString()
+      def jbreArtifactName = "jbr-$version$update-$platform-$arch-$buildNumber"
       def download = createDownloadJbreTask(jbsdkArtifactName, jreBuild.toString(), !isModular)
       if (!isModular) {
         def untarTask = createUntarJbreTask(download, jbsdkArtifactName.capitalize(), platform)
@@ -149,5 +165,5 @@ static def jrePlatformsToDownload(targetOs) {
 }
 
 static def archToDownload(platform, is32BitArchSupported) {
-  is32BitArchSupported && platform == 'windows' ? ['x86', 'x64'] : ['x64']
+  is32BitArchSupported && platform == 'windows' ? ['i586', 'x64'] : ['x64']
 }
