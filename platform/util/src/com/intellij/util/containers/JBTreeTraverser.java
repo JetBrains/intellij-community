@@ -28,7 +28,7 @@ public class JBTreeTraverser<T> extends FilteredTraverserBase<T, JBTreeTraverser
 
   @NotNull
   public static <T> JBTreeTraverser<T> of(@NotNull Function<? super T, T[]> treeStructure) {
-    return new JBTreeTraverser<>(Functions.compose(treeStructure, Functions.<T>wrapArray()));
+    return new JBTreeTraverser<>(Functions.compose(treeStructure, Functions.wrapArray()));
   }
 
   public JBTreeTraverser(Function<? super T, ? extends Iterable<? extends T>> treeStructure) {

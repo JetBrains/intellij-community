@@ -57,7 +57,7 @@ public class CachingSemiGraph<Node> implements GraphGenerator.SemiGraph<Node> {
     final List<Node> inNodes = myIn.get(n);
     return inNodes != null
            ? inNodes.iterator()
-           : ContainerUtil.<Node>emptyIterator();
+           : ContainerUtil.emptyIterator();
   }
 
 }

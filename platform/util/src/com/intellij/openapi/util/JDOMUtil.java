@@ -71,7 +71,7 @@ public class JDOMUtil {
 
   @NotNull
   public static List<Element> getChildren(@Nullable Element parent) {
-    return parent == null ? Collections.<Element>emptyList() : parent.getChildren();
+    return parent == null ? Collections.emptyList() : parent.getChildren();
   }
 
   @NotNull
@@ -696,7 +696,7 @@ public class JDOMUtil {
   @NotNull
   public static List<Attribute> getAttributes(@NotNull Element e) {
     // avoid AttributeList creation if no attributes
-    return e.hasAttributes() ? e.getAttributes() : Collections.<Attribute>emptyList();
+    return e.hasAttributes() ? e.getAttributes() : Collections.emptyList();
   }
 
   @Nullable

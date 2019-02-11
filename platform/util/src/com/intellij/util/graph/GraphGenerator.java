@@ -84,7 +84,7 @@ public class GraphGenerator<Node> implements Graph<Node> {
     final List<Node> outNodes = myOuts.get(n);
     return outNodes != null
            ? outNodes.iterator()
-           : ContainerUtil.<Node>emptyIterator();
+           : ContainerUtil.emptyIterator();
   }
 
   //<editor-fold desc="Deprecated stuff.">

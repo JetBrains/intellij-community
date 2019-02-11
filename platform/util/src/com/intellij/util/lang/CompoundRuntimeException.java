@@ -49,17 +49,17 @@ public class CompoundRuntimeException extends RuntimeException {
 
   @Override
   public String getMessage() {
-    return processAll(Throwable::getMessage, EmptyConsumer.<String>getInstance());
+    return processAll(Throwable::getMessage, EmptyConsumer.getInstance());
   }
 
   @Override
   public String getLocalizedMessage() {
-    return processAll(Throwable::getLocalizedMessage, EmptyConsumer.<String>getInstance());
+    return processAll(Throwable::getLocalizedMessage, EmptyConsumer.getInstance());
   }
 
   @Override
   public String toString() {
-    return processAll(Throwable::toString, EmptyConsumer.<String>getInstance());
+    return processAll(Throwable::toString, EmptyConsumer.getInstance());
   }
 
   @Override

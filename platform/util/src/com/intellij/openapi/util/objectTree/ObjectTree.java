@@ -206,7 +206,7 @@ public final class ObjectTree<T> {
                                                   @NotNull final ObjectTreeAction<? super T> action) {
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (recursiveGuard) {
-      if (ArrayUtil.indexOf(recursiveGuard, object, ContainerUtil.<T>identityStrategy()) != -1) return;
+      if (ArrayUtil.indexOf(recursiveGuard, object, ContainerUtil.identityStrategy()) != -1) return;
       recursiveGuard.add(object);
     }
 
@@ -216,7 +216,7 @@ public final class ObjectTree<T> {
     finally {
       //noinspection SynchronizationOnLocalVariableOrMethodParameter
       synchronized (recursiveGuard) {
-        int i = ArrayUtil.lastIndexOf(recursiveGuard, object, ContainerUtil.<T>identityStrategy());
+        int i = ArrayUtil.lastIndexOf(recursiveGuard, object, ContainerUtil.identityStrategy());
         assert i != -1;
         recursiveGuard.remove(i);
       }

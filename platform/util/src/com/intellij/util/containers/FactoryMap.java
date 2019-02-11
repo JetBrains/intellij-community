@@ -86,7 +86,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
 
   private static <T> T notNull(final Object key) {
     //noinspection unchecked
-    return key == null ? FactoryMap.<T>FAKE_NULL() : (T)key;
+    return key == null ? FactoryMap.FAKE_NULL() : (T)key;
   }
   @Nullable
   private static <T> T nullize(T value) {

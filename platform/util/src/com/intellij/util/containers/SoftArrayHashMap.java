@@ -31,7 +31,7 @@ public class SoftArrayHashMap<T,V> implements Cloneable {
   private final TObjectHashingStrategy<T> myStrategy;
 
   public SoftArrayHashMap() {
-    this(ContainerUtil.<T>canonicalStrategy());
+    this(ContainerUtil.canonicalStrategy());
   }
 
   public SoftArrayHashMap(@NotNull TObjectHashingStrategy<T> strategy) {

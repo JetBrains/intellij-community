@@ -99,7 +99,7 @@ public class FilteringIterator<Dom, E extends Dom> implements PeekableIterator<E
   }
 
   public static <T> Iterator<T> skipNulls(Iterator<T> iterator) {
-    return create(iterator, Conditions.<T>notNull());
+    return create(iterator, Conditions.notNull());
   }
 
   public static <Dom, T extends Dom> Iterator<T> create(Iterator<Dom> iterator, Condition<? super Dom> condition) {

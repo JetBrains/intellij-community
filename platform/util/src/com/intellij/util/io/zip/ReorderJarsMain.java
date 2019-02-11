@@ -18,7 +18,6 @@ package com.intellij.util.io.zip;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import com.intellij.util.lang.JarMemoryLoader;
 
 import java.io.File;
@@ -40,7 +39,7 @@ public class ReorderJarsMain {
       final String libPath = args.length > 3 ? args[3] : null;
 
       final Map<String, List<String>> toReorder = getOrder(new File(orderTxtPath));
-      final Set<String> ignoredJars = libPath == null ? Collections.<String>emptySet() : loadIgnoredJars(libPath);
+      final Set<String> ignoredJars = libPath == null ? Collections.emptySet() : loadIgnoredJars(libPath);
 
       for (String jarUrl : toReorder.keySet()) {
         if (ignoredJars.contains(StringUtil.trimStart(jarUrl, "/lib/"))) continue;

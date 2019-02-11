@@ -394,7 +394,7 @@ public abstract class TreeTraversal {
     @NotNull
     public JBIterable<T> backtrace() {
       if (cur == null) throw new NoSuchElementException();
-      return _transform(JBIterable.generate(cur, P.<T>toPrev()).filterMap(P.<T>toNode()));
+      return _transform(JBIterable.generate(cur, P.toPrev()).filterMap(P.toNode()));
     }
   }
 
@@ -570,7 +570,7 @@ public abstract class TreeTraversal {
   private final static class TracingBfsIt<T> extends TracingIt<T> {
 
     final ArrayDeque<T> queue = new ArrayDeque<>();
-    final Map<T, T> paths = ContainerUtil.newTroveMap(ContainerUtil.<T>identityStrategy());
+    final Map<T, T> paths = ContainerUtil.newTroveMap(ContainerUtil.identityStrategy());
     P1<T> top;
     P1<T> cur;
 

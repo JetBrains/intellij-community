@@ -1095,7 +1095,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   private static final JBTreeTraverser<File> FILE_TRAVERSER = JBTreeTraverser.from(
-    (Function<File, Iterable<File>>)file -> file != null && file.isDirectory() ? JBIterable.of(file.listFiles()) : JBIterable.<File>empty());
+    (Function<File, Iterable<File>>)file -> file != null && file.isDirectory() ? JBIterable.of(file.listFiles()) : JBIterable.empty());
 
   public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<? super File> processor) {
     return fileTraverser(root).bfsTraversal().processEach(processor);

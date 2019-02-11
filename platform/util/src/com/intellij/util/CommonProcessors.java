@@ -99,7 +99,7 @@ public class CommonProcessors {
     private final Processor<? super T> myDelegate;
 
     public UniqueProcessor(@NotNull Processor<? super T> delegate) {
-      this(delegate, ContainerUtil.<T>canonicalStrategy());
+      this(delegate, ContainerUtil.canonicalStrategy());
     }
 
     public UniqueProcessor(@NotNull Processor<? super T> delegate, @NotNull TObjectHashingStrategy<T> strategy) {

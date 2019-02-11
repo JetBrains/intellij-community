@@ -52,7 +52,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
 
   @NotNull
   public static <E extends JBIterator<?>> JBIterable<E> cursor(@NotNull E iterator) {
-    return JBIterable.generate(iterator, Functions.<E>id()).intercept(CURSOR_NEXT);
+    return JBIterable.generate(iterator, Functions.id()).intercept(CURSOR_NEXT);
   }
 
   @NotNull

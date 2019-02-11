@@ -94,7 +94,7 @@ public final class FontInfo {
    */
   public static List<FontInfo> getAll(boolean withAllStyles) {
     return GraphicsEnvironment.isHeadless()
-           ? Collections.<FontInfo>emptyList()
+           ? Collections.emptyList()
            : withAllStyles
              ? LazyListByFont.LIST
              : LazyListByName.LIST;

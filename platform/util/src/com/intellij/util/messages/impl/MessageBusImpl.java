@@ -400,7 +400,7 @@ public class MessageBusImpl implements MessageBus {
       }
     }
     while (true);
-    return exceptions == null ? Collections.<Throwable>emptyList() : exceptions;
+    return exceptions == null ? Collections.emptyList() : exceptions;
   }
 
   void notifyOnSubscription(@NotNull MessageBusConnectionImpl connection, @NotNull Topic<?> topic) {

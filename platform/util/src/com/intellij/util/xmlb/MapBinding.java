@@ -251,7 +251,7 @@ class MapBinding extends Binding implements MultiNodeBinding {
     }
     else {
       Element entryChild = entry.getChild(attributeName);
-      List<Element> children = entryChild == null ? Collections.<Element>emptyList() : entryChild.getChildren();
+      List<Element> children = entryChild == null ? Collections.emptyList() : entryChild.getChildren();
       if (children.isEmpty()) {
         return null;
       }

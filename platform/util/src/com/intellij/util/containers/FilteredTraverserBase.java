@@ -35,7 +35,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
 
   protected FilteredTraverserBase(@Nullable Meta<T> meta, @NotNull Function<? super T, ? extends Iterable<? extends T>> tree) {
     this.myTree = tree;
-    this.myMeta = meta == null ? Meta.<T>empty() : meta;
+    this.myMeta = meta == null ? Meta.empty() : meta;
   }
 
   @NotNull
@@ -397,7 +397,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
     private static final Meta<?> EMPTY = new Meta<Object>(
       JBIterable.empty(), TreeTraversal.PRE_ORDER_DFS,
       Cond.TRUE, Cond.TRUE, Cond.TRUE,
-      Cond.FALSE, Cond.FALSE, Functions.<TreeTraversal>id());
+      Cond.FALSE, Cond.FALSE, Functions.id());
 
     public static <T> Meta<T> empty() {
       return (Meta<T>)EMPTY;

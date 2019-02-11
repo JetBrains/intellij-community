@@ -41,13 +41,13 @@ public class BidirectionalMultiMap<K, V> {
   @NotNull
   public Set<V> getValues(K key) {
     Set<V> set = myKey2Values.get(key);
-    return set != null ? set : Collections.<V>emptySet();
+    return set != null ? set : Collections.emptySet();
   }
 
   @NotNull
   public Set<K> getKeys(V value) {
     Set<K> set = myValue2Keys.get(value);
-    return set != null ? set : Collections.<K>emptySet();
+    return set != null ? set : Collections.emptySet();
   }
 
   public boolean containsKey(K key) {

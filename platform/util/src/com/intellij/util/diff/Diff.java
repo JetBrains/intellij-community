@@ -60,7 +60,7 @@ public class Diff {
     if (changeRef != null) return changeRef.get();
 
     int trimmedLength = objects1.length + objects2.length - 2 * startShift - 2 * endCut;
-    Enumerator<T> enumerator = new Enumerator<>(trimmedLength, ContainerUtil.<T>canonicalStrategy());
+    Enumerator<T> enumerator = new Enumerator<>(trimmedLength, ContainerUtil.canonicalStrategy());
     int[] ints1 = enumerator.enumerate(objects1, startShift, endCut);
     int[] ints2 = enumerator.enumerate(objects2, startShift, endCut);
     return doBuildChanges(ints1, ints2, new ChangeBuilder(startShift));

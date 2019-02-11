@@ -309,7 +309,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <T> Set<T> newHashOrEmptySet(@Nullable Iterable<? extends T> iterable) {
     boolean empty = iterable == null || iterable instanceof Collection && ((Collection)iterable).isEmpty();
-    return empty ? Collections.<T>emptySet() : ContainerUtilRt.newHashSet(iterable);
+    return empty ? Collections.emptySet() : ContainerUtilRt.newHashSet(iterable);
   }
 
   @NotNull
@@ -369,24 +369,24 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <K> THashSet<K> newIdentityTroveSet() {
-    return new THashSet<>(ContainerUtil.<K>identityStrategy());
+    return new THashSet<>(ContainerUtil.identityStrategy());
   }
 
   @NotNull
   @Contract(pure=true)
   public static <K> THashSet<K> newIdentityTroveSet(int initialCapacity) {
-    return new THashSet<>(initialCapacity, ContainerUtil.<K>identityStrategy());
+    return new THashSet<>(initialCapacity, ContainerUtil.identityStrategy());
   }
   @NotNull
   @Contract(pure=true)
   public static <K> THashSet<K> newIdentityTroveSet(@NotNull Collection<? extends K> collection) {
-    return new THashSet<>(collection, ContainerUtil.<K>identityStrategy());
+    return new THashSet<>(collection, ContainerUtil.identityStrategy());
   }
 
   @NotNull
   @Contract(pure=true)
   public static <K,V> THashMap<K,V> newIdentityTroveMap() {
-    return new THashMap<>(ContainerUtil.<K>identityStrategy());
+    return new THashMap<>(ContainerUtil.identityStrategy());
   }
 
   @NotNull
@@ -410,7 +410,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> Set<T> newConcurrentSet() {
-    return Collections.newSetFromMap(ContainerUtil.<T, Boolean>newConcurrentMap());
+    return Collections.newSetFromMap(ContainerUtil.newConcurrentMap());
   }
 
   @NotNull
@@ -1117,7 +1117,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> Iterator<T> iterate(@NotNull T[] array) {
-    return array.length == 0 ? EmptyIterator.<T>getInstance() : Arrays.asList(array).iterator();
+    return array.length == 0 ? EmptyIterator.getInstance() : Arrays.asList(array).iterator();
   }
 
   @NotNull
@@ -1364,7 +1364,7 @@ public class ContainerUtil extends ContainerUtilRt {
     for (final Collection<? extends T> ts : list) {
       result.addAll(ts);
     }
-    return result.isEmpty() ? Collections.<T>emptyList() : result;
+    return result.isEmpty() ? Collections.emptyList() : result;
   }
 
   @NotNull
@@ -1528,7 +1528,7 @@ public class ContainerUtil extends ContainerUtilRt {
     for (final V v : list) {
       result.addAll(listGenerator.fun(v));
     }
-    return result.isEmpty() ? ContainerUtil.<T>emptyList() : result;
+    return result.isEmpty() ? ContainerUtil.emptyList() : result;
   }
 
   @Contract(pure=true)
@@ -1562,7 +1562,7 @@ public class ContainerUtil extends ContainerUtilRt {
         result.add(t);
       }
     }
-    return result.isEmpty() ? ContainerUtil.<T>emptyList() : result;
+    return result.isEmpty() ? ContainerUtil.emptyList() : result;
   }
 
   @NotNull
@@ -1728,7 +1728,7 @@ public class ContainerUtil extends ContainerUtilRt {
   public static <T> Collection<T> subtract(@NotNull Collection<? extends T> from, @NotNull Collection<? extends T> what) {
     final Set<T> set = ContainerUtilRt.newHashSet(from);
     set.removeAll(what);
-    return set.isEmpty() ? ContainerUtil.<T>emptyList() : set;
+    return set.isEmpty() ? ContainerUtil.emptyList() : set;
   }
 
   @NotNull
@@ -1906,7 +1906,7 @@ public class ContainerUtil extends ContainerUtilRt {
     for (T t : iterable) {
       result.add(mapping.fun(t));
     }
-    return result.isEmpty() ? ContainerUtil.<V>emptyList() : result;
+    return result.isEmpty() ? ContainerUtil.emptyList() : result;
   }
 
   /**
@@ -1969,7 +1969,7 @@ public class ContainerUtil extends ContainerUtilRt {
         result.add(o);
       }
     }
-    return result.isEmpty() ? ContainerUtil.<V>emptyList() : result;
+    return result.isEmpty() ? ContainerUtil.emptyList() : result;
   }
 
   /**
@@ -1993,7 +1993,7 @@ public class ContainerUtil extends ContainerUtilRt {
     for (T element : elements) {
       addIfNotNull(list, element);
     }
-    return list.isEmpty() ? ContainerUtil.<T>emptyList() : list;
+    return list.isEmpty() ? ContainerUtil.emptyList() : list;
   }
 
   /**
@@ -2006,7 +2006,7 @@ public class ContainerUtil extends ContainerUtilRt {
     for (T t : array) {
       result.add(mapping.fun(t));
     }
-    return result.isEmpty() ? ContainerUtil.<V>emptyList() : result;
+    return result.isEmpty() ? ContainerUtil.emptyList() : result;
   }
 
   @NotNull
@@ -2069,13 +2069,13 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> List<T> createMaybeSingletonList(@Nullable T element) {
-    return element == null ? ContainerUtil.<T>emptyList() : Collections.singletonList(element);
+    return element == null ? ContainerUtil.emptyList() : Collections.singletonList(element);
   }
 
   @NotNull
   @Contract(pure=true)
   public static <T> Set<T> createMaybeSingletonSet(@Nullable T element) {
-    return element == null ? Collections.<T>emptySet() : Collections.singleton(element);
+    return element == null ? Collections.emptySet() : Collections.singleton(element);
   }
 
   @NotNull
@@ -2327,7 +2327,7 @@ public class ContainerUtil extends ContainerUtilRt {
       result.addAll(list);
     }
 
-    return result.isEmpty() ? ContainerUtil.<E>emptyList() : result;
+    return result.isEmpty() ? ContainerUtil.emptyList() : result;
   }
 
   /**
@@ -2346,7 +2346,7 @@ public class ContainerUtil extends ContainerUtilRt {
         result.add(e);
       }
     }
-    return result.isEmpty() ? ContainerUtil.<E>emptyList() : result;
+    return result.isEmpty() ? ContainerUtil.emptyList() : result;
   }
 
   @NotNull
@@ -2475,7 +2475,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(value = " -> new", pure = true)
   public static <T> CopyOnWriteArrayList<T> createEmptyCOWList() {
     // does not create garbage new Object[0]
-    return new CopyOnWriteArrayList<>(ContainerUtilRt.<T>emptyList());
+    return new CopyOnWriteArrayList<>(ContainerUtilRt.emptyList());
   }
 
   /**
@@ -2564,13 +2564,13 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(value = " -> new", pure = true)
   public static <K,V> ConcurrentMap<K,V> createConcurrentWeakKeySoftValueMap() {
-    return createConcurrentWeakKeySoftValueMap(100, 0.75f, Runtime.getRuntime().availableProcessors(), ContainerUtil.<K>canonicalStrategy());
+    return createConcurrentWeakKeySoftValueMap(100, 0.75f, Runtime.getRuntime().availableProcessors(), ContainerUtil.canonicalStrategy());
   }
 
   @NotNull
   @Contract(value = " -> new", pure = true)
   public static <K,V> ConcurrentMap<K,V> createConcurrentWeakKeyWeakValueMap() {
-    return createConcurrentWeakKeyWeakValueMap(ContainerUtil.<K>canonicalStrategy());
+    return createConcurrentWeakKeyWeakValueMap(ContainerUtil.canonicalStrategy());
   }
 
   @NotNull
@@ -2704,7 +2704,7 @@ public class ContainerUtil extends ContainerUtilRt {
         set.add(value);
       }
     }
-    return set.isEmpty() ? Collections.<V>emptySet() : set;
+    return set.isEmpty() ? Collections.emptySet() : set;
   }
 
   /**
@@ -2790,19 +2790,19 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> List<T> notNullize(@Nullable List<T> list) {
-    return list == null ? ContainerUtilRt.<T>emptyList() : list;
+    return list == null ? ContainerUtilRt.emptyList() : list;
   }
 
   @NotNull
   @Contract(pure=true)
   public static <T> Set<T> notNullize(@Nullable Set<T> set) {
-    return set == null ? Collections.<T>emptySet() : set;
+    return set == null ? Collections.emptySet() : set;
   }
 
   @NotNull
   @Contract(pure = true)
   public static <K, V> Map<K, V> notNullize(@Nullable Map<K, V> map) {
-    return map == null ? Collections.<K, V>emptyMap() : map;
+    return map == null ? Collections.emptyMap() : map;
   }
 
   @Contract(pure = true)
@@ -2910,7 +2910,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   public static <K,V> Map<K,V> createSoftValueMap() {
     //noinspection deprecation
-    return new SoftValueHashMap<>(ContainerUtil.<K>canonicalStrategy());
+    return new SoftValueHashMap<>(ContainerUtil.canonicalStrategy());
   }
 
   /**
@@ -2922,7 +2922,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   public static <K,V> Map<K,V> createWeakValueMap() {
     //noinspection deprecation
-    return new WeakValueHashMap<>(ContainerUtil.<K>canonicalStrategy());
+    return new WeakValueHashMap<>(ContainerUtil.canonicalStrategy());
   }
 
   /**
@@ -2958,7 +2958,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(value = "_ -> new", pure = true)
   @NotNull
   public static <K,V> Map<K,V> createWeakMap(int initialCapacity) {
-    return createWeakMap(initialCapacity, 0.8f, ContainerUtil.<K>canonicalStrategy());
+    return createWeakMap(initialCapacity, 0.8f, ContainerUtil.canonicalStrategy());
   }
 
   @Contract(value = "_, _, _ -> new", pure = true)

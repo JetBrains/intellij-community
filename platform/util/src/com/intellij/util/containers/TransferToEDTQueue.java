@@ -137,7 +137,7 @@ public class TransferToEDTQueue<T> {
   }
 
   public boolean offerIfAbsent(@NotNull T thing) {
-    return offerIfAbsent(thing, ContainerUtil.<T>canonicalStrategy());
+    return offerIfAbsent(thing, ContainerUtil.canonicalStrategy());
   }
 
   public boolean offerIfAbsent(@NotNull final T thing, @NotNull final Equality<? super T> equality) {

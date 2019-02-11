@@ -220,7 +220,7 @@ public class JDOMXIncluder {
     }
     else {
       Element resolvedElement = resolveNonXIncludeElement(original, bases);
-      return Collections.<Content>singletonList(resolvedElement);
+      return Collections.singletonList(resolvedElement);
     }
   }
 

@@ -42,7 +42,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   }
 
   RefHashMap(int initialCapacity, float loadFactor) {
-    this(initialCapacity, loadFactor, ContainerUtil.<K>canonicalStrategy());
+    this(initialCapacity, loadFactor, ContainerUtil.canonicalStrategy());
   }
 
   RefHashMap(int initialCapacity) {

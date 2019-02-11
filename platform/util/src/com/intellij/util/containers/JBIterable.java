@@ -176,7 +176,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @NotNull
   public static <E> JBIterable<E> of(@Nullable E... elements) {
-    return elements == null || elements.length == 0 ? JBIterable.<E>empty() : from(ContainerUtilRt.newArrayList(elements));
+    return elements == null || elements.length == 0 ? JBIterable.empty() : from(ContainerUtilRt.newArrayList(elements));
   }
 
   private static final JBIterable EMPTY = new Empty();
@@ -627,7 +627,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @NotNull
   public final <T> JBIterable<T> filterMap(@NotNull Function<? super E, T> function) {
-    return map(function).filter(Conditions.<T>notNull());
+    return map(function).filter(Conditions.notNull());
   }
 
   /**
@@ -668,7 +668,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   @NotNull
   public final JBIterable<List<E>> split(final int size, final boolean strict) {
     return split(size).filterMap(es -> {
-      List<E> list = es.addAllTo(ContainerUtilRt.<E>newArrayListWithCapacity(size));
+      List<E> list = es.addAllTo(ContainerUtilRt.newArrayListWithCapacity(size));
       return strict && list.size() < size ? null : list;
     });
   }
@@ -795,7 +795,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   @NotNull
   public final JBIterable<E> collect() {
     if (content instanceof Collection) return this;
-    return collect(ContainerUtilRt.<E>newArrayList());
+    return collect(ContainerUtilRt.newArrayList());
   }
 
   /**
@@ -804,7 +804,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @NotNull
   public final JBIterable<E> sort(@NotNull Comparator<? super E> comparator) {
-    ArrayList<E> list = addAllTo(ContainerUtilRt.<E>newArrayList());
+    ArrayList<E> list = addAllTo(ContainerUtilRt.newArrayList());
     list.sort(comparator);
     return from(list);
   }
@@ -857,7 +857,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   public final <K, V> Map<K, V> toMap(@NotNull Convertor<E, K> toKey, @NotNull Convertor<E, V> toValue) {
     Map<K, V> map = ContainerUtil.newLinkedHashMap();
     for (E e : this) map.put(toKey.convert(e), toValue.convert(e));
-    return map.isEmpty() ? Collections.<K, V>emptyMap() : Collections.unmodifiableMap(map);
+    return map.isEmpty() ? Collections.emptyMap() : Collections.unmodifiableMap(map);
   }
 
   /**
