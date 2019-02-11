@@ -20,13 +20,10 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl.RecentPlacesListener
-import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.components.breadcrumbs.Crumb
-import com.intellij.util.CollectConsumer
 import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.ContainerUtil
@@ -85,25 +82,14 @@ data class RecentLocationsDataModel(val project: Project, val editorsToRelease: 
       return fileName
     }
 
-    val collector = FileBreadcrumbsCollector.findBreadcrumbsCollector(project, placeInfo.file)
-    var breadcrumbs: Collection<Iterable<Crumb>> = emptyList()
-    if (collector != null) {
-      val consumer = CollectConsumer<Iterable<Crumb>>()
-      collector.updateCrumbs(placeInfo.file,
-                             rangeMarker.document,
-                             rangeMarker.startOffset,
-                             ProgressIndicatorBase(),
-                             consumer,
-                             true)
-      breadcrumbs = consumer.result
-    }
+    val collector = FileBreadcrumbsCollector.findBreadcrumbsCollector(project, placeInfo.file) ?: return fileName
+    val crumbs = collector.computeCrumbs(placeInfo.file, rangeMarker.document, rangeMarker.startOffset, true)
 
-    if (breadcrumbs.isEmpty()) {
+    if (!crumbs.iterator().hasNext()) {
       return fileName
     }
 
-    val crumbs = ContainerUtil.getFirstItem(breadcrumbs) ?: return fileName
-    val breadcrumbsText = StringUtil.join(ContainerUtil.map(crumbs) { crumb -> crumb.text }, " > ")
+    val breadcrumbsText = crumbs.joinToString(" > ") { it.text }
 
     return StringUtil.shortenTextWithEllipsis(breadcrumbsText, 50, 0)
   }
