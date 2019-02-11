@@ -14,10 +14,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.security.CodeSigner;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SignatureException;
+import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.jar.Attributes;
@@ -30,17 +27,11 @@ public class SecureJarLoader extends JarLoader {
   private static final Object ourPristineDigestsMonitor = new Object();
 
   private final MultiMap<String, Map.Entry<String, byte[]>> myDigestByFileName;
-
-  /**
-   * Map from file name inside ZIP archive to collection of code signers.
-   * Implementation via Hashtable is required by {@link SignatureFileVerifier}.
-   */
-  private Hashtable<String, CodeSigner[]> myCodeSignersMap;
   private Set<String> myVerifiedEntries;
+  @Nullable private ProtectionDomain myProtectionDomain;
 
   SecureJarLoader(URL url, int index, ClassPath configuration) throws IOException {
     super(url, index, configuration);
-    myCodeSignersMap = new Hashtable<String, CodeSigner[]>();
     myDigestByFileName = MultiMap.createSmart();
     myVerifiedEntries = ContainerUtil.newHashSet();
   }
@@ -88,6 +79,11 @@ public class SecureJarLoader extends JarLoader {
    */
   private void verifyManifestAndLoadDigests(ZipFile zipFile, byte[] manifestBytes)
     throws IOException, CertificateException, NoSuchAlgorithmException, SignatureException {
+
+    // Map from file name inside ZIP archive to collection of code signers.
+    // Implementation via Hashtable is required by {@link SignatureFileVerifier}.
+    Hashtable<String, CodeSigner[]> codeSignersMap = new Hashtable<String, CodeSigner[]>();
+
     String META_INF = "META-INF/";
 
     ManifestDigester manifestDigester = new ManifestDigester(manifestBytes);
@@ -112,7 +108,7 @@ public class SecureJarLoader extends JarLoader {
           for (SignatureFileVerifier verifier : pendingVerifiers) {
             if (verifier.needSignatureFile(pathWithoutExtension)) {
               verifier.setSignatureFile(entryContents);
-              verifier.process(myCodeSignersMap, manifestDigests);
+              verifier.process(codeSignersMap, manifestDigests);
             }
           }
         }
@@ -125,7 +121,7 @@ public class SecureJarLoader extends JarLoader {
             }
             else {
               verifier.setSignatureFile(signature);
-              verifier.process(myCodeSignersMap, manifestDigests);
+              verifier.process(codeSignersMap, manifestDigests);
             }
           }
         }
@@ -135,6 +131,24 @@ public class SecureJarLoader extends JarLoader {
       if (sfv.needSignatureFileBytes()) {
         throw new SecurityException("Some META-INF/ entries was not verified.");
       }
+    }
+
+    initializeProtectionDomain(codeSignersMap);
+  }
+
+  private void initializeProtectionDomain(Hashtable<String, CodeSigner[]> codeSignersMap) {
+    CodeSigner[] codeSignersForEveryFile;
+    Iterator<CodeSigner[]> codeSignersMapIter = codeSignersMap.values().iterator();
+    if (codeSignersMapIter.hasNext()) {
+      codeSignersForEveryFile = codeSignersMapIter.next();
+      while (codeSignersMapIter.hasNext()) {
+        CodeSigner[] otherSigners = codeSignersMapIter.next();
+        if (!Arrays.equals(codeSignersForEveryFile, otherSigners)) {
+          throw new IllegalStateException("JAR " + getBaseURL() + " has different code signers for different files.");
+        }
+      }
+      CodeSource codeSource = new CodeSource(getBaseURL(), codeSignersForEveryFile);
+      myProtectionDomain = new ProtectionDomain(codeSource, new Permissions());
     }
   }
 
@@ -199,16 +213,11 @@ public class SecureJarLoader extends JarLoader {
 
     @Nullable
     @Override
-    public CodeSigner[] getCodeSigners() {
+    public ProtectionDomain getProtectionDomain() {
       if (!myVerifiedEntries.contains(myEntry.getName())) {
         throw new IllegalStateException("Method `getBytes()` should be called first.");
       }
-      return myCodeSignersMap.get(myEntry.getName());
-    }
-
-    @Override
-    public boolean isSigned() {
-      return true;
+      return myProtectionDomain;
     }
 
     private void verifySignature(byte[] contents) {

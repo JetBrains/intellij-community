@@ -319,10 +319,9 @@ public class UrlClassLoader extends ClassLoader {
     }
 
     byte[] b = res.getBytes();
-    if (res.isSigned()) {
-      CodeSigner[] signers = res.getCodeSigners();
-      CodeSource codeSource = new CodeSource(res.getURL(), signers);
-      return _defineClass(name, b, new ProtectionDomain(codeSource, new Permissions()));
+    ProtectionDomain protectionDomain = res.getProtectionDomain();
+    if (protectionDomain != null) {
+      return _defineClass(name, b, protectionDomain);
     }
     else {
       return _defineClass(name, b);
