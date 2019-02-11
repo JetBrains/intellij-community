@@ -27,6 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
@@ -48,6 +49,8 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
   private static final List<String> TEST_SOURCE_SET_TASKS = ContainerUtil.list("cleanTest", "test");
 
   protected static final Logger LOG = Logger.getInstance(GradleTestRunConfigurationProducer.class);
+
+  private TasksChooser tasksChooser = new TasksChooser();
 
   /**
    * @deprecated Override {@link #getConfigurationFactory()}.
@@ -110,6 +113,14 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
     return GradleRunnerUtil.resolveProjectPath(module);
   }
 
+  protected TasksChooser getTasksChooser() {
+    return tasksChooser;
+  }
+
+  @TestOnly
+  public void setTasksChooser(TasksChooser tasksChooser) {
+    this.tasksChooser = tasksChooser;
+  }
 
   public static boolean hasTasksInConfiguration(VirtualFile source, Project project, ExternalSystemTaskExecutionSettings settings) {
     List<TasksToRun> tasksToRun = findAllTestsTaskToRun(source, project);
@@ -149,7 +160,7 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
       List<String> tasks = provider.getTasks(module, source);
       if (!ContainerUtil.isEmpty(tasks)) {
         String testName = StringUtil.join(tasks, " ");
-        testTasks.add(new TasksToRun.Impl(source, module, testName, tasks));
+        testTasks.add(new TasksToRun.Impl(testName, tasks));
       }
     }
     DataNode<ModuleData> moduleDataNode = ExternalSystemApiUtil.findModuleData(module, GradleConstants.SYSTEM_ID);
@@ -164,7 +175,7 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
           String testTaskName = testData.getTestTaskName();
           String clearTestTaskName = testData.getCleanTestTaskName();
           List<String> tasks = ContainerUtil.newArrayList(clearTestTaskName, testTaskName);
-          testTasks.add(new TasksToRun.Impl(source, module, testName, tasks));
+          testTasks.add(new TasksToRun.Impl(testName, tasks));
         }
       }
     }
