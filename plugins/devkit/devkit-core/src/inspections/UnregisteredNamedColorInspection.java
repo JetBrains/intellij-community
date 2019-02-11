@@ -4,14 +4,12 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.ide.ui.UIThemeMetadata;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiMethod;
-import com.intellij.uast.UastVisitorAdapter;
+import com.intellij.uast.UastHintedVisitorAdapter;
 import com.intellij.ui.JBColor;
-import com.intellij.util.PairProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -27,11 +25,14 @@ public class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
   private static final String JB_COLOR_FQN = JBColor.class.getCanonicalName();
   private static final String NAMED_COLOR_METHOD_NAME = "namedColor";
 
+  @SuppressWarnings("unchecked")
+  private static final Class<? extends UElement>[] U_ELEMENT_TYPES_HINT = new Class[]{UCallExpression.class};
+
   @Override
   protected PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if (!PsiUtil.isPluginProject(holder.getProject())) return PsiElementVisitor.EMPTY_VISITOR;
 
-    return new UastVisitorAdapter(new AbstractUastNonRecursiveVisitor() {
+    return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
       @Override
       public boolean visitExpression(@NotNull UExpression node) {
         if (node instanceof UCallExpression) {
@@ -46,7 +47,7 @@ public class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
 
         return true;
       }
-    }, true);
+    }, U_ELEMENT_TYPES_HINT);
   }
 
   private static void handleCallExpression(@NotNull ProblemsHolder holder, @NotNull UCallExpression expression) {
