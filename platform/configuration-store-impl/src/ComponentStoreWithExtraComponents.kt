@@ -4,12 +4,17 @@ package com.intellij.configurationStore
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.async.coroutineDispatchingContext
 import com.intellij.openapi.components.SettingsSavingComponent
+import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
+
+// A way to remove stalled/unused component data.
+internal val STALLED_STORAGE_EP = ExtensionPointName<StalledStorageBean>("com.intellij.stalledStorage")
 
 abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
   @Suppress("DEPRECATION")
@@ -73,6 +78,28 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
     // SchemeManager (old settingsSavingComponent) must be saved before saving components (component state uses scheme manager in an ipr project, so, we must save it before)
     // so, call sequentially it, not inside coroutineScope
     return createSaveSessionManagerAndSaveComponents(result, isForceSavingAllSettings)
+  }
+
+  override fun commitComponents(isForce: Boolean, session: SaveSessionProducerManager, errors: MutableList<Throwable>) {
+    // ensure that this task will not interrupt regular saving
+    LOG.runAndLogException {
+      commitStalledComponents(session, false)
+    }
+
+    super.commitComponents(isForce, session, errors)
+  }
+
+  internal open fun commitStalledComponents(session: SaveSessionProducerManager, isProjectLevel: Boolean) {
+    for (bean in STALLED_STORAGE_EP.extensionList) {
+      if (bean.isProjectLevel != isProjectLevel) {
+        continue
+      }
+
+      val storage = (storageManager as StateStorageManagerImpl).getOrCreateStorage(bean.file ?: continue)
+      for (componentName in bean.components) {
+        session.getProducer(storage)?.setState(null, componentName, null)
+      }
+    }
   }
 }
 

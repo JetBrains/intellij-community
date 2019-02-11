@@ -2,14 +2,13 @@
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.ui.AntialiasingType;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.EngravedTextGraphics;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OffsetIcon;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WatermarkIcon;
 
@@ -60,12 +59,7 @@ public class BaseLabel extends JLabel {
   }
 
   public static Font getLabelFont() {
-    UISettings uiSettings = UISettings.getInstance();
-    if (uiSettings.getOverrideLafFonts()) {
-      return UIUtil.getLabelFont().deriveFont((float)uiSettings.getFontSize() + JBUI.CurrentTheme.ToolWindow.overrideHeaderFontSizeOffset());
-    }
-
-    return JBUI.CurrentTheme.ToolWindow.headerFont();
+    return TabsUtil.getLabelFont();
   }
 
   public void setActiveFg(final Color fg) {

@@ -18,6 +18,7 @@ class CodeStyleCachingUtil {
   private final static ExtensionPointName<CodeStyleSettingsModifier> CODE_STYLE_SETTINGS_MODIFIER_EP_NAME =
     ExtensionPointName.create("com.intellij.codeStyleSettingsModifier");
 
+  @NotNull
   static CodeStyleSettings getCachedCodeStyle(@NotNull PsiFile file) {
     CachedCodeStyleHolder cachedCodeStyleHolder = CachedValuesManager.getCachedValue(
       file,

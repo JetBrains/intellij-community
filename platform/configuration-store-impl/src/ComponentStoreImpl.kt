@@ -142,21 +142,21 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
     return withContext(uiExecutor.coroutineDispatchingContext()) {
       val errors = SmartList<Throwable>()
-      val manager = doCreateSaveSessionManagerAndSaveComponents(isForceSavingAllSettings, errors)
+      val manager = doCreateSaveSessionManagerAndCommitComponents(isForceSavingAllSettings, errors)
       saveResult.addErrors(errors)
       manager
     }
   }
 
   @CalledInAwt
-  internal fun doCreateSaveSessionManagerAndSaveComponents(isForce: Boolean, errors: MutableList<Throwable>): SaveSessionProducerManager {
+  internal fun doCreateSaveSessionManagerAndCommitComponents(isForce: Boolean, errors: MutableList<Throwable>): SaveSessionProducerManager {
     val saveManager = createSaveSessionProducerManager()
-    saveComponents(isForce, saveManager, errors)
+    commitComponents(isForce, saveManager, errors)
     return saveManager
   }
 
   @CalledInAwt
-  private fun saveComponents(isForce: Boolean, session: SaveSessionProducerManager, errors: MutableList<Throwable>) {
+  internal open fun commitComponents(isForce: Boolean, session: SaveSessionProducerManager, errors: MutableList<Throwable>) {
     if (components.isEmpty()) {
       return
     }
@@ -593,8 +593,12 @@ private fun notifyUnknownMacros(store: IComponentStore, project: Project, compon
 // (because these stores combine several calls for better control/async instead of simple sequential delegation)
 abstract class ChildlessComponentStore : ComponentStoreImpl() {
   override suspend fun doSave(result: SaveResult, isForceSavingAllSettings: Boolean) {
-    createSaveSessionManagerAndSaveComponents(result, isForceSavingAllSettings)
-      .save()
-      .appendTo(result)
+    childlessSaveImplementation(result, isForceSavingAllSettings)
   }
+}
+
+internal suspend fun ComponentStoreImpl.childlessSaveImplementation(result: SaveResult, isForceSavingAllSettings: Boolean) {
+  createSaveSessionManagerAndSaveComponents(result, isForceSavingAllSettings)
+    .save()
+    .appendTo(result)
 }

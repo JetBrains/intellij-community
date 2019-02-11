@@ -185,4 +185,20 @@ public class UnwrapSwitchStatementTest extends UnwrapTestCase {
                     "}\n" +
                     "System.out.println(2);");
   }
+
+  public void testNestedWhileWithBreak() {
+    assertUnwrapped("switch (0) {\n" +
+                    "    case 1:\n" +
+                    "        while (true) {\n" +
+                    "            break;\n" +
+                    "        }\n" +
+                    "        System.out.println(1);<caret>\n" +
+                    "        break;\n" +
+                    "}\n",
+
+                    "while (true) {\n" +
+                    "    break;\n" +
+                    "}\n" +
+                    "System.out.println(1);");
+  }
 }

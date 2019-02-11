@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.themes;
 
-import com.google.common.collect.Lists;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -14,7 +13,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.SmartList;
@@ -25,7 +23,6 @@ import org.jetbrains.idea.devkit.themes.metadata.UIThemeMetadataService;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * Completion in IntelliJ theme files.
@@ -51,7 +48,7 @@ public class ThemeJsonCompletionContributor extends CompletionContributor {
   }
 
   private static boolean isThemeJsonFile(@Nullable PsiFile file) {
-    return file instanceof JsonFile && ThemeJsonSchemaProviderFactory.isAllowedFileName(file.getName());
+    return file instanceof JsonFile && ThemeJsonUtil.isThemeFilename(file.getName());
   }
 
   private static void handleJsonProperty(@NotNull PsiElement element,
@@ -62,14 +59,7 @@ public class ThemeJsonCompletionContributor extends CompletionContributor {
     if (!isInsideUiProperty(property)) return;
     if (!isPropertyKey(element)) return;
 
-    List<JsonProperty> parentProperties = PsiTreeUtil.collectParents(property, JsonProperty.class, false, e -> {
-      //TODO check that it is TOP-LEVEL 'ui'  property
-      return e instanceof JsonProperty && "ui".equals(((JsonProperty)e).getName());
-    });
-
-    String presentNamePart = Lists.reverse(parentProperties).stream()
-      .map(p -> p.getName())
-      .collect(Collectors.joining("."));
+    String presentNamePart = ThemeJsonUtil.getParentNames(property);
 
     boolean shouldSurroundWithQuotes = !element.getText().startsWith("\"");
     Iterable<LookupElement> lookupElements = getLookupElements(presentNamePart, shouldSurroundWithQuotes);

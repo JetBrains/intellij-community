@@ -34,6 +34,7 @@ public class VcsShelveUtils {
 
   public static void doSystemUnshelve(final Project project,
                                       final ShelvedChangeList shelvedChangeList,
+                                      @Nullable final LocalChangeList targetChangeList,
                                       final ShelveChangesManager shelveManager,
                                       @Nullable final String leftConflictTitle,
                                       @Nullable final String rightConflictTitle) {
@@ -49,7 +50,7 @@ public class VcsShelveUtils {
     LOG.info("Unshelving shelvedChangeList: " + shelvedChangeList);
     final List<ShelvedChange> changes = shelvedChangeList.getChanges(project);
     // we pass null as target change list for Patch Applier to do NOTHING with change lists
-    shelveManager.unshelveChangeList(shelvedChangeList, changes, shelvedChangeList.getBinaryFiles(), null, false, true,
+    shelveManager.unshelveChangeList(shelvedChangeList, changes, shelvedChangeList.getBinaryFiles(), targetChangeList, false, true,
                                      true, leftConflictTitle, rightConflictTitle, true);
     ApplicationManager.getApplication().invokeAndWait(() -> markUnshelvedFilesNonUndoable(project, changes));
   }

@@ -126,4 +126,7 @@ public abstract class AbstractCodeStylePropertyMapper {
   public boolean containsProperty(@NotNull String name) {
     return getAccessorMap().containsKey(name);
   }
+
+  @Nullable
+  public abstract String getPropertyDescription(@NotNull String externalName);
 }

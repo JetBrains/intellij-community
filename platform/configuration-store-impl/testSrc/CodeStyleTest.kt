@@ -1,29 +1,33 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.options.Configurable
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings
+import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.containers.ContainerUtil
-import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
 import org.junit.ClassRule
+import org.junit.Rule
 import org.junit.Test
 
-class CodeStyleTest {
+internal class CodeStyleTest {
   companion object {
     @JvmField
     @ClassRule
     val projectRule = ProjectRule()
   }
 
-  @Test fun `do not remove unknown`() {
+  @JvmField
+  @Rule
+  val disposableRule = DisposableRule()
+
+  @Test
+  fun `do not remove unknown`() {
     val settings = CodeStyleSettings()
     val loaded = """
     <code_scheme name="testSchemeName" version="${CodeStyleSettings.CURR_VERSION}">
@@ -47,14 +51,13 @@ class CodeStyleTest {
 
     val serialized = Element("code_scheme").setAttribute("name", "testSchemeName")
     settings.writeExternal(serialized)
-    assertThat(JDOMUtil.writeElement(serialized)).isEqualTo(loaded)
+    assertThat(serialized).isEqualTo(loaded)
   }
 
   @Test fun `do not duplicate known extra sections`() {
     val newProvider: CodeStyleSettingsProvider = object : CodeStyleSettingsProvider() {
       override fun createCustomSettings(settings: CodeStyleSettings?): CustomCodeStyleSettings {
         return object : CustomCodeStyleSettings("NewComponent", settings) {
-
           override fun getKnownTagNames(): List<String> {
             return ContainerUtil.concat(super.getKnownTagNames(), listOf("NewComponent-extra"))
           }
@@ -87,20 +90,12 @@ class CodeStyleTest {
           }
         }
       }
-
-      override fun createSettingsPage(settings: CodeStyleSettings?, originalSettings: CodeStyleSettings?): Configurable {
-        throw UnsupportedOperationException("not implemented")
-      }
     }
 
-    val disposable = Disposable {}
-    PlatformTestUtil.registerExtension(com.intellij.psi.codeStyle.CodeStyleSettingsProvider.EXTENSION_POINT_NAME,
-                                       newProvider, disposable)
-
-    try {
-      val settings = CodeStyleSettings()
-      val text : (param: String) -> String = { param ->
-        """
+    PlatformTestUtil.maskExtensions(CodeStyleSettingsProvider.EXTENSION_POINT_NAME, listOf(newProvider), disposableRule.disposable)
+    val settings = CodeStyleSettings()
+    fun text(param: String): String {
+      return """
       <code_scheme name="testSchemeName" version="${CodeStyleSettings.CURR_VERSION}">
         <NewComponent>
           <option name="MAIN" value="${param}" />
@@ -121,16 +116,13 @@ class CodeStyleTest {
           <option name="KEEP_BLANK_LINES_IN_CODE" value="10" />
         </codeStyleSettings>
       </code_scheme>""".trimIndent()
-      }
-      settings.readExternal(JDOMUtil.load(text("2")))
+    }
 
-      val serialized = Element("code_scheme").setAttribute("name", "testSchemeName")
-      settings.writeExternal(serialized)
-      assertThat(JDOMUtil.writeElement(serialized)).isEqualTo(text("3"))
-    }
-    finally {
-      Disposer.dispose(disposable)
-    }
+    settings.readExternal(JDOMUtil.load(text("2")))
+
+    val serialized = Element("code_scheme").setAttribute("name", "testSchemeName")
+    settings.writeExternal(serialized)
+    assertThat(serialized).isEqualTo(text("3"))
   }
 
   @Test fun `reset deprecations`() {
@@ -150,6 +142,6 @@ class CodeStyleTest {
 
     val serialized = Element("code_scheme").setAttribute("name", "testSchemeName")
     settings.writeExternal(serialized)
-    assertThat(JDOMUtil.writeElement(serialized)).isEqualTo(expected)
+    assertThat(serialized).isEqualTo(expected)
   }
 }

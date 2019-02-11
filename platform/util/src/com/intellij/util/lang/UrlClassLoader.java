@@ -2,7 +2,7 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.WeakStringInterner;
@@ -315,7 +315,7 @@ public class UrlClassLoader extends ClassLoader {
 
   @Nullable
   private Resource findResourceImpl(String name) {
-    String n = FileUtil.toCanonicalUriPath(name);
+    String n = FileUtilRt.toCanonicalPath(name, '/', false);
     Resource resource = getClassPath().getResource(n);
     if (resource == null && n.startsWith("/")) { // compatibility with existing code, non-standard classloader behavior
       resource = getClassPath().getResource(n.substring(1));

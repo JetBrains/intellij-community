@@ -2,15 +2,12 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.text.StringUtil
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
 
 import java.nio.channels.FileChannel
-import java.nio.file.FileVisitOption
-import java.nio.file.FileVisitResult
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.SimpleFileVisitor
+import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.security.MessageDigest
 
@@ -33,6 +30,7 @@ class ManifestBuilder {
     return path
   }
 
+  @CompileDynamic
   private SortedMap<String, byte[]> collectHashes(List<String> paths) {
     Map<String, byte[]> hashes = new TreeMap<String, byte[]>()
 

@@ -518,7 +518,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       if (!visibleRect.intersects(rect)) {
         table.scrollRectToVisible(rect);
       }
-      popupMenuPoint = new Point(rect.x, rect.y + rect.height);
+      popupMenuPoint = new Point(rect.x, rect.y + rect.height - 1);
     }
     else if (component instanceof PopupOwner) {
       popupMenuPoint = ((PopupOwner)component).getBestPopupPosition();

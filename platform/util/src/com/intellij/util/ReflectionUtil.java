@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.DifferenceFilter;
@@ -419,8 +419,13 @@ public class ReflectionUtil {
       return constructor.newInstance();
     }
     catch (Exception e) {
-      if (e instanceof InvocationTargetException && ((InvocationTargetException) e).getTargetException() instanceof ProcessCanceledException) {
-        throw (ProcessCanceledException) (((InvocationTargetException) e).getTargetException());
+      //noinspection InstanceofCatchParameter
+      if (e instanceof InvocationTargetException) {
+        Throwable targetException = ((InvocationTargetException)e).getTargetException();
+        // handle ExtensionNotApplicableException also (extends ControlFlowException)
+        if (targetException instanceof ControlFlowException && targetException instanceof RuntimeException) {
+          throw (RuntimeException)targetException;
+        }
       }
 
       if (isKotlinDataClassesSupported) {

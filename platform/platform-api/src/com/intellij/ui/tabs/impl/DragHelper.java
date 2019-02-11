@@ -162,7 +162,7 @@ class DragHelper extends MouseDragHelper {
       myTabs.moveDraggedTabLabel();
     } else {
       myTabs.moveDraggedTabLabel();
-      final int border = myTabs.getTabsBorder().getTabBorderSize();
+      final int border = myTabs.getBorderThickness();
       headerRec.x -= border;
       headerRec.y -= border;
       headerRec.width += border * 2;

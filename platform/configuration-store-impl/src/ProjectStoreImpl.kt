@@ -358,6 +358,12 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
   }
 
   final override fun createSaveSessionProducerManager() = ProjectSaveSessionProducerManager(project)
+
+  final override fun commitStalledComponents(session: SaveSessionProducerManager, isProjectLevel: Boolean) {
+    if (isDirectoryBased) {
+      super.commitStalledComponents(session, true)
+    }
+  }
 }
 
 private class ProjectWithModulesStoreImpl(project: Project, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
@@ -374,7 +380,7 @@ private class ProjectWithModulesStoreImpl(project: Project, pathMacroManager: Pa
       for (module in modules) {
         val moduleStore = ModuleServiceManager.getService(module, IComponentStore::class.java) as ComponentStoreImpl
         // collectSaveSessions is very cheap, so, do it in EDT
-        moduleStore.doCreateSaveSessionManagerAndSaveComponents(isForceSavingAllSettings, errors).collectSaveSessions(saveSessions)
+        moduleStore.doCreateSaveSessionManagerAndCommitComponents(isForceSavingAllSettings, errors).collectSaveSessions(saveSessions)
       }
       saveSessions
     }

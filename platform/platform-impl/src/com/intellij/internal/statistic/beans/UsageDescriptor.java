@@ -21,10 +21,12 @@ public final class UsageDescriptor {
     this(key, value, (FUSUsageContext)null);
   }
 
+  @Deprecated
   public UsageDescriptor(@NotNull String key, int value, @NotNull String... contextData) {
     this(key, value, contextData.length > 0 ? FUSUsageContext.create(contextData) : null);
   }
 
+  @Deprecated
   public UsageDescriptor(@NotNull String key, int value, @Nullable FUSUsageContext context) {
     myKey = ConvertUsagesUtil.ensureProperKey(key);
     myValue = value;

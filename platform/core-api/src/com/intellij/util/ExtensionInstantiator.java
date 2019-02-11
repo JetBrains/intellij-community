@@ -6,6 +6,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -39,7 +40,7 @@ public final class ExtensionInstantiator {
     try {
       return ReflectionUtil.newInstance(clazz, false);
     }
-    catch (ProcessCanceledException e) {
+    catch (ProcessCanceledException | ExtensionNotApplicableException e) {
       throw e;
     }
     catch (Throwable e) {

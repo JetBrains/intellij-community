@@ -57,6 +57,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.im.InputContext;
 import java.awt.image.*;
+import java.awt.print.PrinterGraphics;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedInputStream;
@@ -3417,7 +3418,7 @@ public class UIUtil {
   }
 
   public static boolean isPrinting(Graphics g) {
-    return g instanceof PrintGraphics;
+    return g instanceof PrintGraphics || g instanceof PrinterGraphics;
   }
 
   public static int getSelectedButton(@NotNull ButtonGroup group) {

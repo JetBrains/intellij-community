@@ -17,12 +17,12 @@ package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.io.URLUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -32,9 +32,14 @@ class FileLoader extends Loader {
   private final String myRootDirAbsolutePath;
   private final ClassPath myConfiguration;
 
-  FileLoader(URL url, int index, ClassPath configuration) {
+  FileLoader(URL url, int index, ClassPath configuration) throws IOException {
     super(url, index);
-    myRootDir = new File(URLUtil.unescapePercentSequences(url.getFile()));
+    try {
+      myRootDir = new File(url.toURI());
+    }
+    catch (URISyntaxException e) {
+      throw new IOException(e);
+    }
     myRootDirAbsolutePath = myRootDir.getAbsolutePath();
     myConfiguration = configuration;
   }
@@ -103,7 +108,7 @@ class FileLoader extends Loader {
 
         while (true) {
           int nameEnd = nextIndex == -1 ? name.length() : nextIndex; // prevIndex, nameEnd is package or class name
-          int nameHash = StringUtil.stringHashCodeInsensitive(name, prevIndex, nameEnd);
+          int nameHash = stringHashCodeInsensitive(name, prevIndex, nameEnd);
           if (!nameHashIsPresentInChildren(lastEntry, name, prevIndex, nameHash)) return null;
           if (nextIndex == -1 || nextIndex == name.length() - 1) {
             break;
@@ -174,7 +179,7 @@ class FileLoader extends Loader {
       if (list != null) {
         childrenNameHashes = new int[list.length];
         for (int i = 0; i < list.length; ++i) {
-          childrenNameHashes[i] = StringUtil.stringHashCodeInsensitive(list[i]);
+          childrenNameHashes[i] = stringHashCodeInsensitive(list[i], 0, list[i].length());
         }
       }
       else {
@@ -371,6 +376,14 @@ class FileLoader extends Loader {
   @Override
   public String toString() {
     return "FileLoader [" + myRootDir + "]";
+  }
+
+  private static int stringHashCodeInsensitive(@NotNull String s, int from, int to) {
+    int h = 0;
+    for (int off = from; off < to; off++) {
+      h = 31 * h + StringUtilRt.toLowerCase(s.charAt(off));
+    }
+    return h;
   }
 
   private static class UnsyncDataOutputStream extends java.io.DataOutputStream {

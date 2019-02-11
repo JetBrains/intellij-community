@@ -124,4 +124,9 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
     return mySettingsProvider == null ? Collections.emptySet() : mySettingsProvider.getSupportedFields();
   }
 
+  @Nullable
+  @Override
+  public String getPropertyDescription(@NotNull String externalName) {
+    return null;
+  }
 }
