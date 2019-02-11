@@ -4,12 +4,13 @@ package com.intellij.internal.statistic.collectors.fus.ui;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
-import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Set;
@@ -46,7 +47,7 @@ public class UiInfoUsageCollector extends ApplicationUsagesCollector {
     add(set, "Recent.Files[30_50]", 30 < recent() && recent() < 51 ? 1 : 0);
     add(set, "Recent.Files[more.than.50]", 50 < recent() ? 1 : 0);
 
-    set.add(new UsageDescriptor("recent.files", 1, FUSUsageContext.create(recentPeriod(recent()))));
+    set.add(new UsageDescriptor("recent.files", 1, new FeatureUsageData().addData("grouped", recentPeriod(recent()))));
 
     add(set, "Block.cursor", EditorSettingsExternalizable.getInstance().isBlockCursor() ? 1 : 0);
     add(set, "Line.Numbers", EditorSettingsExternalizable.getInstance().isLineNumbersShown() ? 1 : 0);
@@ -105,8 +106,9 @@ public class UiInfoUsageCollector extends ApplicationUsagesCollector {
     return UISettings.getInstance().getShowNavigationBar();
   }
 
+  @Nullable
   @Override
-  public FUSUsageContext getContext() {
-    return FUSUsageContext.OS_CONTEXT;
+  public FeatureUsageData getData() {
+    return new FeatureUsageData().addOS();
   }
 }
