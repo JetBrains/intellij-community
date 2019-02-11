@@ -10,6 +10,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.lang.UrlClassLoader;
 import com.sun.jna.TypeMapper;
 import com.sun.jna.platform.FileUtils;
 import gnu.trove.THashSet;
@@ -523,6 +524,7 @@ public class PathManager {
       PathManager.class,            // module 'intellij.platform.util'
       Flow.class,                   // jetbrains-annotations-java5
       SystemInfoRt.class,           // module 'intellij.platform.util.rt'
+      UrlClassLoader.class,         // module 'intellij.platform.util.classLoader'
       Document.class,               // jDOM
       Appender.class,               // log4j
       THashSet.class,               // trove4j

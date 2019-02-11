@@ -117,6 +117,7 @@ class DistributionJARsBuilder {
       }
       withModule("intellij.platform.util")
       withModule("intellij.platform.util.rt", "util.jar")
+      withModule("intellij.platform.util.classLoader", "util.jar")
       withModule("intellij.platform.extensions")
       withModule("intellij.platform.bootstrap")
       withModule("intellij.java.guiForms.rt")
