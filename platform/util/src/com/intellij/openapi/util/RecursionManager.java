@@ -37,12 +37,7 @@ import java.util.*;
 public class RecursionManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.RecursionManager");
   private static final Object NULL = ObjectUtils.sentinel("RecursionManager.NULL");
-  private static final ThreadLocal<CalculationStack> ourStack = new ThreadLocal<CalculationStack>() {
-    @Override
-    protected CalculationStack initialValue() {
-      return new CalculationStack();
-    }
-  };
+  private static final ThreadLocal<CalculationStack> ourStack = ThreadLocal.withInitial(() -> new CalculationStack());
   private static boolean ourAssertOnPrevention;
 
   /**

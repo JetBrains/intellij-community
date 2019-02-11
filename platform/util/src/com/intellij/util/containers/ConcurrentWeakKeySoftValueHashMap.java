@@ -201,12 +201,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
     }
   }
 
-  private static final ThreadLocal<HardKey> HARD_KEY = new ThreadLocal<HardKey>() {
-    @Override
-    protected HardKey initialValue() {
-      return new HardKey();
-    }
-  };
+  private static final ThreadLocal<HardKey> HARD_KEY = ThreadLocal.withInitial(() -> new HardKey());
 
   @NotNull
   private HardKey<K,V> createHardKey(Object o) {

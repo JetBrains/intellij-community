@@ -166,12 +166,7 @@ public class JBUI {
 
     // The cache radically reduces potentially thousands of equal Scale instances.
     private static final ThreadLocal<EnumMap<ScaleType, TDoubleObjectHashMap<Scale>>> cache =
-      new ThreadLocal<EnumMap<ScaleType, TDoubleObjectHashMap<Scale>>>() {
-        @Override
-        protected EnumMap<ScaleType, TDoubleObjectHashMap<Scale>> initialValue() {
-          return new EnumMap<>(ScaleType.class);
-        }
-      };
+      ThreadLocal.withInitial(() -> new EnumMap<>(ScaleType.class));
 
     @NotNull
     public static Scale create(double value, @NotNull ScaleType type) {

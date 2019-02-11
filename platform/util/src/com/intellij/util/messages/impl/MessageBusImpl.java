@@ -449,12 +449,7 @@ public class MessageBusImpl implements MessageBus {
 
   @NotNull
   static <T> ThreadLocal<Queue<T>> createThreadLocalQueue() {
-    return new ThreadLocal<Queue<T>>() {
-      @Override
-      protected Queue<T> initialValue() {
-        return new ConcurrentLinkedQueue<>();
-      }
-    };
+    return ThreadLocal.withInitial(() -> new ConcurrentLinkedQueue<>());
   }
 
   public static class RootBus extends MessageBusImpl {
