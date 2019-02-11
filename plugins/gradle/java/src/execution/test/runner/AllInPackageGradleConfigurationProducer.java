@@ -47,7 +47,6 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
     if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, configurationData.module)) return false;
 
     TasksToRun tasksToRun = findTestsTaskToRun(configurationData.source, context.getProject());
-    if (tasksToRun.isEmpty()) return false;
 
     sourceElement.set(configurationData.sourceElement);
 
@@ -87,8 +86,7 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
       performRunnable.run();
       return;
     }
-    TasksChooser tasksChooser = new TasksChooser();
-    tasksChooser.runTaskChoosing(context, ContainerUtil.newArrayList(configurationData.sourceElement), tasks -> {
+    getTasksChooser().runTaskChoosing(context, ContainerUtil.newArrayList(configurationData.sourceElement), tasks -> {
         ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
         ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
         Function1<PsiElement, String> createFilter = (e) -> createTestFilterFrom(configurationData.psiPackage, /*hasSuffix=*/false);
