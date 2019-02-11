@@ -12,7 +12,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 /**
- * An utility for running non-blocking read actions in background thread.
+ * A utility for running non-blocking read actions in background thread.
  * "Non-blocking" means to prevent UI freezes, when a write action is about to occur, a read action can be interrupted by a
  * {@link com.intellij.openapi.progress.ProcessCanceledException} and then restarted.
  */
@@ -24,6 +24,13 @@ public interface NonBlockingReadAction<T> {
    */
   @Contract(pure=true)
   NonBlockingReadAction<T> inSmartMode(@NotNull Project project);
+
+  /**
+   * @return a copy of this builder that runs read actions only when all documents are committed.
+   * @see com.intellij.psi.PsiDocumentManager
+   */
+  @Contract(pure=true)
+  NonBlockingReadAction<T> withDocumentsCommitted(@NotNull Project project);
 
   /**
    * @return a copy of this builder that cancels submitted read actions after they become obsolete (i.e. when the provided condition returns true). If {@code expireWhen} is called several times, any of the corresponding conditions being {@code true} is sufficient for cancelling
