@@ -211,7 +211,13 @@ public class ClassPath {
       return new FileLoader(url, index, this);
     }
     if (file.isFile()) {
-      JarLoader loader = new JarLoader(url, index, this, myURLsWithProtectionDomain.contains(url));
+      JarLoader loader;
+      if (myURLsWithProtectionDomain.contains(url)) {
+        loader = new SecureJarLoader(url, index, this);
+      }
+      else {
+        loader = new JarLoader(url, index, this);
+      }
       if (processRecursively) {
         String[] referencedJars = loadManifestClasspath(loader);
         if (referencedJars != null) {
