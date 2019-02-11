@@ -230,6 +230,11 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       public boolean supportsCompression() {
         return false;
       }
+
+      @Override
+      protected Color getEmptySpaceColor() {
+        return UIUtil.getBgFillColor(getParent());
+      }
     };
   }
 
