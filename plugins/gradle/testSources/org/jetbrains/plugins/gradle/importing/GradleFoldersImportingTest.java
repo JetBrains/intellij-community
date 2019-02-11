@@ -557,6 +557,36 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
                        "../outer4/generated");
   }
 
+  @Test
+  @TargetVersions("5.1+")
+  public void testSharedSourceFolders() throws Exception {
+    createProjectSubFile("settings.gradle", "include 'app1', 'app2'");
+    createProjectSubFile("shared/resources/resource.txt");
+    createProjectSubFile("app1/build.gradle", new GradleBuildScriptBuilderEx()
+      .withJavaPlugin()
+      .addPostfix(
+        "sourceSets {",
+        "  main.resources.srcDir '../shared/resources'",
+        "  }"
+      )
+      .generate());
+    createProjectSubFile("app2/build.gradle", new GradleBuildScriptBuilderEx()
+      .withJavaPlugin()
+      .addPostfix(
+        "sourceSets {",
+        "  main.resources.srcDir '../shared/resources'",
+        "  }"
+      )
+      .generate());
+
+    importPerSourceSet(false);
+    importProject("");
+
+    assertModules("project", "project.app1", "project.app2");
+    assertResources("project.app1", getProjectPath() + "/shared/resources");
+    assertResources("project.app2" );
+  }
+
   protected void assertDefaultGradleJavaProjectFolders(@NotNull String mainModuleName) {
     assertExcludes(mainModuleName, ".gradle", "build", "out");
     final String mainSourceSetModuleName = mainModuleName + ".main";

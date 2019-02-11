@@ -17,6 +17,9 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -60,9 +63,8 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.pathToUrl;
 
@@ -103,6 +105,9 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
 
     Set<Module> modulesToExpand = ContainerUtil.newTroveSet();
     MultiMap<DataNode<ModuleData>, DataNode<ContentRootData>> byModule = ExternalSystemApiUtil.groupBy(toImport, ModuleData.class);
+
+    filterAndReportDuplicatingContentRoots(byModule, project);
+
     for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> entry : byModule.entrySet()) {
       Module module = entry.getKey().getUserData(AbstractModuleDataService.MODULE_KEY);
       module = module != null ? module : modelsProvider.findIdeModule(entry.getKey().getData());
@@ -342,6 +347,98 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
     entry.addExcludeFolder(pathToUrl(rootPath));
     if (!Registry.is("ide.hide.excluded.files")) {
       ChangeListManager.getInstance(project).addDirectoryToIgnoreImplicitly(rootPath);
+    }
+  }
+
+
+  private static void filterAndReportDuplicatingContentRoots(@NotNull MultiMap<DataNode<ModuleData>, DataNode<ContentRootData>> moduleNodeToRootNodes,
+                                                             @NotNull Project project) {
+    Map<String, DuplicateModuleReport> filter = ContainerUtil.newHashMap();
+
+    for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> entry : moduleNodeToRootNodes.entrySet()) {
+      ModuleData moduleData = entry.getKey().getData();
+      Collection<DataNode<ContentRootData>> crDataNodes = entry.getValue();
+      for (Iterator<DataNode<ContentRootData>> iterator = crDataNodes.iterator(); iterator.hasNext(); ) {
+        DataNode<ContentRootData> crDataNode = iterator.next();
+        String rootPath = crDataNode.getData().getRootPath();
+        DuplicateModuleReport report = filter.putIfAbsent(rootPath, new DuplicateModuleReport(moduleData));
+        if (report != null) {
+          report.addDuplicate(moduleData);
+          iterator.remove();
+          crDataNode.clear(true);
+        }
+      }
+    }
+
+    Map<String, DuplicateModuleReport> toReport = filter.entrySet().stream()
+      .filter(e -> e.getValue().hasDuplicates())
+      .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+    if (!toReport.isEmpty()) {
+      String notificationMessage = prepareMessageAndLogWarnings(toReport);
+      if (notificationMessage != null) {
+        showNotificationsPopup(project, toReport, notificationMessage);
+      }
+    }
+  }
+
+  @Nullable
+  private static String prepareMessageAndLogWarnings(@NotNull Map<String, DuplicateModuleReport> toReport) {
+    String firstMessage = null;
+    LOG.warn("Duplicating content roots detected.");
+    for (Map.Entry<String, DuplicateModuleReport> entry : toReport.entrySet()) {
+      String path = entry.getKey();
+      DuplicateModuleReport report = entry.getValue();
+      String message = String.format("Path [%s] of module [%s] was removed from modules [%s]", path, report.getOriginalName(),
+                                     StringUtil.join(report.getDuplicatesNames(), ", "));
+      if (firstMessage == null) {
+        firstMessage = message;
+      }
+      LOG.warn(message);
+    }
+    return firstMessage;
+  }
+
+  private static void showNotificationsPopup(@NotNull Project project,
+                                             @NotNull Map<String, DuplicateModuleReport> toReport,
+                                             @NotNull String notificationMessage) {
+    int count = toReport.size() - 1;
+    if (count > 0) {
+      notificationMessage += "<br>Also " + count + " more "
+                             + StringUtil.pluralize("path", count)
+                             + " was deduplicated. See idea log for details";
+    }
+
+    Notification notification = new Notification("Content root duplicates",
+                                                 "Duplicate content roots detected",
+                                                 notificationMessage,
+                                                 NotificationType.WARNING);
+    Notifications.Bus.notify(notification, project);
+  }
+
+
+  private static class DuplicateModuleReport {
+    private final ModuleData myOriginal;
+    private final List<ModuleData> myDuplicates = new ArrayList<>();
+
+    public DuplicateModuleReport(@NotNull ModuleData original) {
+      myOriginal = original;
+    }
+
+    public void addDuplicate(@NotNull ModuleData duplicate) {
+      myDuplicates.add(duplicate);
+    }
+
+    public boolean hasDuplicates() {
+      return !myDuplicates.isEmpty();
+    }
+
+    public String getOriginalName() {
+      return myOriginal.getInternalName();
+    }
+
+    public Collection<String> getDuplicatesNames() {
+      return ContainerUtil.map(myDuplicates, ModuleData::getInternalName);
     }
   }
 }
