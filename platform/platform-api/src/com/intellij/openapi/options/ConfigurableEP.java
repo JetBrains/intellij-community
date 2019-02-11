@@ -6,6 +6,7 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
@@ -354,6 +355,9 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
       }
       catch (ProcessCanceledException exception) {
         throw exception;
+      }
+      catch (ExtensionNotApplicableException ignore) {
+        return null;
       }
       catch (AssertionError | LinkageError | Exception e) {
         LOG.error(e);
