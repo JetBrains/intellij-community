@@ -688,6 +688,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myRestartingPrefixConditions.add(Pair.create(startOffset, restartCondition));
   }
 
+  @Override
   public void prefixUpdated() {
     final int caretOffset = myEditor.getCaretModel().getOffset();
     if (caretOffset < myStartCaret) {
@@ -712,6 +713,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     hideAutopopupIfMeaningless();
   }
 
+  @Override
   public void scheduleRestart() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (ApplicationManager.getApplication().isUnitTestMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
@@ -744,8 +746,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       if (phase.checkExpired()) return;
 
       CompletionAutoPopupHandler.invokeCompletion(myCompletionType,
-                                                  isAutopopupCompletion(), project, myEditor, myInvocationCount,
-                                                  true);
+                                                  isAutopopupCompletion(), project, myEditor, myInvocationCount
+      );
     });
   }
 
