@@ -3,8 +3,6 @@ package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Base64;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.security.util.ManifestDigester;
@@ -23,17 +21,17 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class SecureJarLoader extends JarLoader {
-  private static final Map<String, MessageDigest> ourPristineDigests = ContainerUtil.newHashMap();
+  private static final Map<String, MessageDigest> ourPristineDigests = new HashMap<String, MessageDigest>();
   private static final Object ourPristineDigestsMonitor = new Object();
 
-  private final MultiMap<String, Map.Entry<String, byte[]>> myDigestByFileName;
+  private final Map<String, Collection<Map.Entry<String, byte[]>>> myDigestByFileName;
   private Set<String> myVerifiedEntries;
   @Nullable private ProtectionDomain myProtectionDomain;
 
   SecureJarLoader(URL url, int index, ClassPath configuration) throws IOException {
     super(url, index, configuration);
-    myDigestByFileName = MultiMap.createSmart();
-    myVerifiedEntries = ContainerUtil.newHashSet();
+    myDigestByFileName = new HashMap<String, Collection<Map.Entry<String, byte[]>>>();
+    myVerifiedEntries = new com.intellij.util.containers.hash.HashSet<String>();
   }
 
   @Nullable
@@ -87,10 +85,10 @@ public class SecureJarLoader extends JarLoader {
     String META_INF = "META-INF/";
 
     ManifestDigester manifestDigester = new ManifestDigester(manifestBytes);
-    Map<String, byte[]> signatureFiles = ContainerUtil.newHashMap();
-    List<SignatureFileVerifier> pendingVerifiers = ContainerUtil.newArrayList();
-    ArrayList<CodeSigner[]> signerCache = ContainerUtil.newArrayList();
-    List<Object> manifestDigests = ContainerUtil.newArrayList();
+    Map<String, byte[]> signatureFiles = new HashMap<String, byte[]>();
+    List<SignatureFileVerifier> pendingVerifiers = new ArrayList<SignatureFileVerifier>();
+    ArrayList<CodeSigner[]> signerCache = new ArrayList<CodeSigner[]>();
+    List<Object> manifestDigests = new ArrayList<Object>();
 
     Enumeration<? extends ZipEntry> entries = zipFile.entries();
     while (entries.hasMoreElements()) {
@@ -177,7 +175,7 @@ public class SecureJarLoader extends JarLoader {
     // then SignatureFileVerifier will find this mismatch and will throw SecurityError.
     // So it is safe to take checksum only from MANIFEST.MF even if it contains broken one.
     String suffix = "-DIGEST";
-    Map<String, byte[]> digestByAlgorithm = ContainerUtil.newHashMap();
+    Map<String, byte[]> digestByAlgorithm = new HashMap<String, byte[]>();
     for (Map.Entry<String, Attributes> attributesEntry : manifest.getEntries().entrySet()) {
       digestByAlgorithm.clear();
       for (Map.Entry<Object, Object> attribute : attributesEntry.getValue().entrySet()) {
@@ -189,7 +187,8 @@ public class SecureJarLoader extends JarLoader {
           digestByAlgorithm.put(algorithm, newDigest);
         }
       }
-      myDigestByFileName.putValues(attributesEntry.getKey(), digestByAlgorithm.entrySet());
+      myDigestByFileName.put(attributesEntry.getKey(),
+                             new ArrayList<Map.Entry<String, byte[]>>(digestByAlgorithm.entrySet()));
     }
   }
 
