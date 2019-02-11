@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.containers.WeakStringInterner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -185,7 +184,7 @@ public class UrlClassLoader extends ClassLoader {
 
   private final List<URL> myURLs;
   private final ClassPath myClassPath;
-  private final WeakStringInterner myClassNameInterner;
+  private final ClassLoadingLocks myClassLoadingLocks;
   private final boolean myAllowBootstrapResources;
 
   /** @deprecated use {@link #build()}, left for compatibility with java.system.class.loader setting */
@@ -206,7 +205,7 @@ public class UrlClassLoader extends ClassLoader {
     });
     myClassPath = createClassPath(builder);
     myAllowBootstrapResources = builder.myAllowBootstrapResources;
-    myClassNameInterner = ourParallelCapableLoaders != null && ourParallelCapableLoaders.contains(getClass()) ? new WeakStringInterner() : null;
+    myClassLoadingLocks = ourParallelCapableLoaders != null && ourParallelCapableLoaders.contains(getClass()) ? new ClassLoadingLocks() : null;
   }
 
   @NotNull
@@ -348,7 +347,7 @@ public class UrlClassLoader extends ClassLoader {
   @NotNull
   protected Object getClassLoadingLock(String className) {
     //noinspection RedundantStringConstructorCall
-    return myClassNameInterner != null ? myClassNameInterner.intern(new String(className)) : this;
+    return myClassLoadingLocks != null ? myClassLoadingLocks.getOrCreateLock(className) : this;
   }
 
   /**
