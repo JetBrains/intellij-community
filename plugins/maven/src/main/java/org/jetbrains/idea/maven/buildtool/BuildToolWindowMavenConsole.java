@@ -72,18 +72,18 @@ public class BuildToolWindowMavenConsole extends MavenConsole {
                                           @NotNull ExecutionConsole console,
                                           @NotNull BuildDescriptor descriptor) {
 
-    return new BuildView(project, console, descriptor, "build.toolwindow.run.selection.state",
-                         new ViewManager() {
-                           @Override
-                           public boolean isConsoleEnabledByDefault() {
-                             return true;
-                           }
+   return new BuildView(project, console, descriptor, "build.toolwindow.run.selection.state",
+                                        new ViewManager() {
+                                          @Override
+                                          public boolean isConsoleEnabledByDefault() {
+                                            return true;
+                                          }
 
-                           @Override
-                           public boolean isBuildContentView() {
-                             return true;
-                           }
-                         });
+                                          @Override
+                                          public boolean isBuildContentView() {
+                                            return true;
+                                          }
+                                        });
   }
 
   @Override

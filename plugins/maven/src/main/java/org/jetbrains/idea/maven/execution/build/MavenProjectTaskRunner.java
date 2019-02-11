@@ -216,6 +216,12 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
       AtomicInteger warnings = new AtomicInteger();
       MavenConsole console = MavenConsole.createGuiMavenConsole(project, title, project.getBasePath());
       console.addProcessListener(new ProcessAdapter() {
+
+        @Override
+        public void processTerminated(@NotNull ProcessEvent event) {
+          super.processTerminated(event);
+        }
+
         @Override
         public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
           String line = event.getText();

@@ -89,7 +89,6 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
   @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
     JavaCommandLineState state = new JavaCommandLineStateImpl(env);
-    state.setConsoleBuilder(MavenConsoleImpl.createConsoleBuilder(getProject()));
     return state;
   }
 
@@ -327,8 +326,9 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       if (console == null) {
         return null;
       }
-      console.attachToProcess(processHandler);
+
       if (!Registry.is("maven.build.tool.window.enabled")) {
+        console.attachToProcess(processHandler);
         return console;
       }
       else {
@@ -341,6 +341,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
         MavenBuildEventProcessor eventProcessor =
           new MavenBuildEventProcessor(getProject(), getProject().getBasePath(), buildView, descriptor, taskId);
         processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(eventProcessor));
+        buildView.attachToProcess(processHandler);
         return buildView;
       }
     }
