@@ -19,7 +19,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class BuildErrorNotification implements MavenLoggedEventParser {
-  private static final int[] UNKNOWN = {0, 0};
   private static final Pattern LINE_AND_COLUMN = Pattern.compile("[^\\d]*?(\\d+)[^\\d]*(\\d*)[^\\d]*");
 
   @Override

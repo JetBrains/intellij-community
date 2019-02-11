@@ -4,6 +4,8 @@ package org.jetbrains.idea.maven.externalSystemIntegration.output;
 import com.intellij.build.events.*;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.hamcrest.BaseMatcher;
@@ -13,12 +15,14 @@ import org.hamcrest.SelfDescribing;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenConstants;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static com.intellij.build.events.MessageEvent.Kind.WARNING;
 import static com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType.EXECUTE_TASK;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
@@ -35,7 +39,8 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
     private List<Pair<String, Matcher<BuildEvent>>> myExpectedEvents = new ArrayList<>();
 
     public TestCaseBuider withLines(String... lines) {
-      ContainerUtil.addAll(myLines, lines);
+      List<String> joinedAndSplitted = ContainerUtil.newArrayList(StringUtil.join(lines, "\n").split("\n"));
+      ContainerUtil.addAll(myLines, joinedAndSplitted);
       return this;
     }
 
@@ -47,6 +52,16 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
     public TestCaseBuider expectSucceed(String message) {
       myExpectedEvents.add(event(message, StartEventMatcher::new));
       myExpectedEvents.add(event(message, FinishSuccessEventMatcher::new));
+      return this;
+    }
+
+    public TestCaseBuider expect(String message, Function<String, Matcher<BuildEvent>> creator) {
+      myExpectedEvents.add(event(message, creator));
+      return this;
+    }
+
+    public TestCaseBuider expect(String message, Matcher<BuildEvent> matcher) {
+      myExpectedEvents.add(Pair.create(message, matcher));
       return this;
     }
 
@@ -97,11 +112,11 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
   }
 
   @NotNull
-  private static Pair<String, Matcher<BuildEvent>> event(String message, Function<String, BaseMatcher<BuildEvent>> creator) {
+  public static Pair<String, Matcher<BuildEvent>> event(String message, Function<String, Matcher<BuildEvent>> creator) {
     return Pair.create(message, creator.apply(message));
   }
 
-  private class FinishSuccessEventMatcher extends BaseMatcher<BuildEvent> implements SelfDescribing {
+  public class FinishSuccessEventMatcher extends BaseMatcher<BuildEvent> implements SelfDescribing {
     private final String myMessage;
 
     public FinishSuccessEventMatcher(String message) {myMessage = message;}
@@ -119,7 +134,25 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
     }
   }
 
-  private class StartEventMatcher extends BaseMatcher<BuildEvent> implements SelfDescribing {
+  public class FinishFailedEventMatcher extends BaseMatcher<BuildEvent> implements SelfDescribing {
+    private final String myMessage;
+
+    public FinishFailedEventMatcher(String message) {myMessage = message;}
+
+    @Override
+    public boolean matches(Object item) {
+      return item instanceof FinishEvent
+             && ((FinishEvent)item).getMessage().equals(myMessage)
+             && ((FinishEvent)item).getResult() instanceof FailureResult;
+    }
+
+    @Override
+    public void describeTo(@NotNull Description description) {
+      description.appendText("Expected failed FinishEvent " + myMessage);
+    }
+  }
+
+  public class StartEventMatcher extends BaseMatcher<BuildEvent> implements SelfDescribing {
     private final String myMessage;
 
     public StartEventMatcher(String message) {myMessage = message;}
@@ -133,6 +166,52 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
     @Override
     public void describeTo(@NotNull Description description) {
       description.appendText("Expected StartEvent " + myMessage);
+    }
+  }
+
+  public class WarningEventMatcher extends BaseMatcher<BuildEvent> implements SelfDescribing {
+    private final String myMessage;
+
+    public WarningEventMatcher(String message) {myMessage = message;}
+
+    @Override
+    public boolean matches(Object item) {
+      return item instanceof MessageEvent
+             && ((MessageEvent)item).getMessage().equals(myMessage)
+             && ((MessageEvent)item).getKind() == WARNING;
+    }
+
+    @Override
+    public void describeTo(@NotNull Description description) {
+      description.appendText("Expected WarningEvent " + myMessage);
+    }
+  }
+
+  public class FileEventMatcher extends BaseMatcher<BuildEvent> implements SelfDescribing {
+    private final String myMessage;
+    private final String myFileName;
+    private final int myLine;
+    private final int myColumn;
+
+    public FileEventMatcher(String message, String fileName, int line, int column) {
+      myMessage = message;
+      myFileName = fileName;
+      myLine = line;
+      myColumn = column;
+    }
+
+    @Override
+    public boolean matches(Object item) {
+      return item instanceof FileMessageEvent
+             && ((FileMessageEvent)item).getMessage().equals(myMessage)
+             && FileUtil.filesEqual(new File(myFileName), ((FileMessageEvent)item).getFilePosition().getFile())
+             && ((FileMessageEvent)item).getFilePosition().getStartLine() == myLine
+             && ((FileMessageEvent)item).getFilePosition().getStartColumn() == myColumn;
+    }
+
+    @Override
+    public void describeTo(@NotNull Description description) {
+      description.appendText("Expected FileEvent " + myMessage + "at " + myFileName + ":" + myLine + ":" + myColumn);
     }
   }
 }

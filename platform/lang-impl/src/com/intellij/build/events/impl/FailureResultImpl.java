@@ -20,6 +20,7 @@ import com.intellij.build.events.FailureResult;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -40,6 +41,10 @@ public class FailureResultImpl implements FailureResult {
 
   public FailureResultImpl(List<Failure> failures) {
     myFailures = failures;
+  }
+
+  public FailureResultImpl(String message, String description) {
+    myFailures = Collections.singletonList(new FailureImpl(message, description));
   }
 
   @Override

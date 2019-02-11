@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.externalSystemIntegration.output.events;
 
 import com.intellij.build.events.BuildEvent;
+import com.intellij.build.events.impl.FailureResultImpl;
 import com.intellij.build.events.impl.FinishEventImpl;
 import com.intellij.build.events.impl.StartEventImpl;
 import com.intellij.build.events.impl.SuccessResultImpl;
@@ -63,10 +64,10 @@ public class ArtifactDownloadScanning implements MavenLoggedEventParser {
   @Override
   public void finish(@NotNull ExternalSystemTaskId taskId, @NotNull Consumer<? super BuildEvent> messageConsumer) {
     for (String resource : startedToDownload) {
-      messageConsumer
-        .accept(new FinishEventImpl(getMessage(resource), taskId, System.currentTimeMillis(), getMessage(resource),
-                                    new SuccessResultImpl()));
+      messageConsumer.accept(new FinishEventImpl(getMessage(resource), taskId, System.currentTimeMillis(), getMessage(resource),
+                                    new FailureResultImpl("Cannot download artifact", "Cannot download artifact")));
     }
+    startedToDownload.clear();
   }
 
   @NotNull

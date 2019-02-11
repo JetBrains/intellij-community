@@ -29,14 +29,18 @@ public class MavenLogOutputParser implements BuildOutputParser {
 
 
   public void finish(Consumer<? super BuildEvent> messageConsumer) {
-    for (MavenLoggedEventParser parser : myRegisteredEvents) {
-      parser.finish(myTaskId, messageConsumer);
-    }
+    completeParsers(messageConsumer);
 
     if (!myCompleted) {
       messageConsumer
         .accept(new FinishBuildEventImpl(myTaskId, null, System.currentTimeMillis(), "Maven run",
                                          new FailureResultImpl(new Exception())));
+    }
+  }
+
+  private void completeParsers(Consumer<? super BuildEvent> messageConsumer) {
+    for (MavenLoggedEventParser parser : myRegisteredEvents) {
+      parser.finish(myTaskId, messageConsumer);
     }
   }
 
@@ -65,6 +69,7 @@ public class MavenLogOutputParser implements BuildOutputParser {
 
   private boolean checkComplete(Consumer<? super BuildEvent> messageConsumer, Pair<LogMessageType, String> logLine) {
     if (logLine.second.equals("BUILD FAILURE")) {
+      completeParsers(messageConsumer);
       messageConsumer
         .accept(new FinishBuildEventImpl(myTaskId, null, System.currentTimeMillis(), "Maven run",
                                          new FailureResultImpl(new Exception())));
@@ -72,6 +77,7 @@ public class MavenLogOutputParser implements BuildOutputParser {
       return true;
     }
     if (logLine.second.equals("BUILD SUCCESS")) {
+      completeParsers(messageConsumer);
       messageConsumer
         .accept(new FinishBuildEventImpl(myTaskId, null, System.currentTimeMillis(), "Maven run", new SuccessResultImpl()));
       myCompleted = true;
