@@ -273,6 +273,7 @@ IDS_VM_OPTIONS=$vmOptions
           zipfileset(dir: it, prefix: zipPrefix)
         }
       }
+
       new ProductInfoValidator(buildContext).checkInArchive(targetPath, zipPrefix)
       buildContext.notifyArtifactBuilt(targetPath)
     }

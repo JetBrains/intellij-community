@@ -140,18 +140,17 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     def tarPath = "${buildContext.paths.artifacts}/${baseName}${suffix}.tar.gz"
     def extraBins = customizer.extraExecutables
     def paths = [buildContext.paths.distAll, unixDistPath]
-    String javaExecutablePath
+
+    String javaExecutablePath = null
     if (jreDirectoryPath != null) {
       paths += jreDirectoryPath
       extraBins += "jre64/bin/*"
       javaExecutablePath = "jre64/bin/java"
     }
-    else {
-      javaExecutablePath = null
-    }
     def productJsonDir = new File(buildContext.paths.temp, "linux.dist.product-info.json$suffix").absolutePath
     generateProductJson(productJsonDir, javaExecutablePath)
     paths += productJsonDir
+
     def description = "archive${jreDirectoryPath != null ? "" : " (without JRE)"}"
     buildContext.messages.block("Build Linux tar.gz $description") {
       buildContext.messages.progress("Building Linux tar.gz $description")
@@ -253,6 +252,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
           include(name: "jre64/bin/*")
         }
       }
+
       generateProductJson(unixSnapDistPath, "jre64/bin/java")
       new ProductInfoValidator(buildContext).validateInDirectory(unixSnapDistPath, "", [unixSnapDistPath, jreDirectoryPath], [])
 

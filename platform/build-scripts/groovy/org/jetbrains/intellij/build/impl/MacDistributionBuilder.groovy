@@ -118,7 +118,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
           if (secondJreBuild != null) {
             def jreArchive = "jbsdk${buildContext.bundledJreManager.getSecondJreVersion()}${secondJreBuild}_osx_${JvmArchitecture.x64}.tar.gz"
             File archive = new File(buildContext.bundledJreManager.jreDir(), jreArchive)
-            if (archive.file && archive.exists()) {
+            if (archive.file) {
               MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath, archive.absolutePath)
             }
           }
@@ -276,8 +276,8 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     return buildContext.messages.block("Build zip archive for macOS") {
       def extraBins = customizer.extraExecutables
       def allPaths = [buildContext.paths.distAll, macDistPath]
-      String zipRoot = getZipRoot(buildContext, customizer)
-      String suffix = buildContext.bundledJreManager.jreSuffix()
+      def zipRoot = getZipRoot(buildContext, customizer)
+      def suffix = buildContext.bundledJreManager.jreSuffix()
       def baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
       def targetPath = "${buildContext.paths.artifacts}/${baseName}${suffix}.mac.zip"
       buildContext.messages.progress("Building zip archive for macOS")
