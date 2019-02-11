@@ -908,7 +908,7 @@ public class UIUtil {
 
   public static void setEnabled(@NotNull Component component, boolean enabled, boolean recursively, final boolean visibleOnly) {
     JBIterable<Component> all = recursively ? uiTraverser(component).expandAndFilter(
-      visibleOnly ? (Condition<Component>)c -> c.isVisible() : Conditions.<Component>alwaysTrue()).traverse() : JBIterable.of(component);
+      visibleOnly ? (Condition<Component>)Component::isVisible : Conditions.<Component>alwaysTrue()).traverse() : JBIterable.of(component);
     Color fg = enabled ? getLabelForeground() : getLabelDisabledForeground();
     for (Component c : all) {
       c.setEnabled(enabled);
@@ -2550,7 +2550,7 @@ public class UIUtil {
 
   @Nullable
   public static Component findNearestOpaque(Component c) {
-    return findParentByCondition(c, component -> component.isOpaque());
+    return findParentByCondition(c, Component::isOpaque);
   }
 
   @Nullable
@@ -2665,7 +2665,7 @@ public class UIUtil {
       c.requestFocus();
     }
     else {
-      SwingUtilities.invokeLater(() -> c.requestFocus());
+      SwingUtilities.invokeLater(c::requestFocus);
     }
   }
 
@@ -4134,7 +4134,7 @@ public class UIUtil {
           UndoableEditListener[] undoableEditListeners = ((AbstractDocument)document).getUndoableEditListeners();
           for (final UndoableEditListener listener : undoableEditListeners) {
             if (listener instanceof UndoManager) {
-              Runnable runnable = () -> ((UndoManager)listener).discardAllEdits();
+              Runnable runnable = ((UndoManager)listener)::discardAllEdits;
               //noinspection SSBasedInspection
               SwingUtilities.invokeLater(runnable);
               return;

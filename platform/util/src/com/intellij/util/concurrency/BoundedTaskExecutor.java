@@ -285,7 +285,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
            "inProgress: " + (int)myStatus.get() +
            "; " +
            (myTaskQueue.isEmpty() ? "" : "Queue size: " + myTaskQueue.size() + "; tasks in queue: [" + ContainerUtil.map(myTaskQueue,
-                                                                                                                         runnable -> info(runnable)) + "]") +
+                                                                                                                         BoundedTaskExecutor::info) + "]") +
            "name: " + myName;
   }
 }

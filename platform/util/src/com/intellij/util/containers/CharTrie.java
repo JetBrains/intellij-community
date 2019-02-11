@@ -221,5 +221,5 @@ public class CharTrie {
     init();
   }
 
-  private static final ArrayFactory<char[]> FACTORY = count -> new char[count][];
+  private static final ArrayFactory<char[]> FACTORY = char[][]::new;
 }

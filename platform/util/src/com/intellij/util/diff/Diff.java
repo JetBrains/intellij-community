@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.LineTokenizer;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Enumerator;
 import org.jetbrains.annotations.NonNls;
@@ -183,7 +182,7 @@ public class Diff {
 
   @NotNull
   private static String[] trim(@NotNull String[] lines) {
-    return ContainerUtil.map2Array(lines, String.class, s -> s.trim());
+    return ContainerUtil.map2Array(lines, String.class, String::trim);
   }
 
   /**

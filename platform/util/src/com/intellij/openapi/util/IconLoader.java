@@ -127,10 +127,8 @@ public final class IconLoader {
   }
 
   public static void clearCache() {
-    updateTransform(transform -> {
-      // Copy the transform to trigger update of cached icons
-      return transform.copy();
-    });
+    // Copy the transform to trigger update of cached icons
+    updateTransform(IconTransform::copy);
   }
 
   //TODO[kb] support iconsets
@@ -386,9 +384,7 @@ public final class IconLoader {
 
     Icon disabledIcon = ourIcon2DisabledIcon.get(icon);
     if (disabledIcon == null) {
-      disabledIcon = filterIcon(icon, () -> {
-        return UIUtil.getGrayFilter(); // returns laf-aware instance
-      }, null); // [tav] todo: lack ancestor
+      disabledIcon = filterIcon(icon, UIUtil::getGrayFilter/* returns laf-aware instance */, null); // [tav] todo: lack ancestor
       ourIcon2DisabledIcon.put(icon, disabledIcon);
     }
     return disabledIcon;
@@ -843,11 +839,11 @@ public final class IconLoader {
           if (path != null) {
             if (myClassLoader != null) {
               path = StringUtil.trimStart(path, "/"); // Paths in ClassLoader getResource shouldn't start with "/"
-              url = findURL(path, path12 -> myClassLoader.getResource(path12));
+              url = findURL(path, myClassLoader::getResource);
             }
             if (url == null && myClass != null) {
               // Some plugins use findIcon("icon.png",IconContainer.class)
-              url = findURL(path, path1 -> myClass.getResource(path1));
+              url = findURL(path, myClass::getResource);
             }
           }
           if (url == null) {

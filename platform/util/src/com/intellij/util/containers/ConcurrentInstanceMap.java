@@ -29,7 +29,7 @@ public class ConcurrentInstanceMap {
 
   @NotNull
   public static <T> Map<Class<? extends T>,T> create() {
-    return ConcurrentFactoryMap.createMap(key -> calculate(key));
+    return ConcurrentFactoryMap.createMap(ConcurrentInstanceMap::calculate);
   }
 
   @NotNull

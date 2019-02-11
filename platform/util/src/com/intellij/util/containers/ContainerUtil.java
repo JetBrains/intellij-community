@@ -683,7 +683,7 @@ public class ContainerUtil extends ContainerUtilRt {
                                              @NotNull Comparator<? super T> comparator,
                                              boolean mergeEqualItems) {
     final List<T> result = new ArrayList<>(list1.size() + list2.size());
-    processSortedListsInOrder(list1, list2, comparator, mergeEqualItems, t -> result.add(t));
+    processSortedListsInOrder(list1, list2, comparator, mergeEqualItems, result::add);
     return result;
   }
 
@@ -2415,14 +2415,14 @@ public class ContainerUtil extends ContainerUtilRt {
   @Nullable
   @Contract(pure = true)
   public static <T, U extends T> U findLastInstance(@NotNull List<? extends T> list, @NotNull final Class<? extends U> clazz) {
-    int i = lastIndexOf(list, (Condition<T>)t -> clazz.isInstance(t));
+    int i = lastIndexOf(list, (Condition<T>)clazz::isInstance);
     //noinspection unchecked
     return i < 0 ? null : (U)list.get(i);
   }
 
   @Contract(pure = true)
   public static <T, U extends T> int lastIndexOfInstance(@NotNull List<? extends T> list, @NotNull final Class<U> clazz) {
-    return lastIndexOf(list, (Condition<T>)t -> clazz.isInstance(t));
+    return lastIndexOf(list, (Condition<T>)clazz::isInstance);
   }
 
   @NotNull

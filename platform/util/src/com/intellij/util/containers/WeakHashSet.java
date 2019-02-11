@@ -14,15 +14,15 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.util.Function;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.AbstractSet;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -67,8 +67,7 @@ final class WeakHashSet<T> extends AbstractSet<T> {
 
   @Override
   public Iterator<T> iterator() {
-    return ContainerUtil.filterIterator(ContainerUtil.mapIterator(set.iterator(), ref -> ref.get()
-    ), t -> t != null);
+    return ContainerUtil.filterIterator(ContainerUtil.mapIterator(set.iterator(), Reference::get), Objects::nonNull);
   }
 
   @Override

@@ -49,17 +49,17 @@ public class CompoundRuntimeException extends RuntimeException {
 
   @Override
   public String getMessage() {
-    return processAll(throwable -> throwable.getMessage(), EmptyConsumer.<String>getInstance());
+    return processAll(Throwable::getMessage, EmptyConsumer.<String>getInstance());
   }
 
   @Override
   public String getLocalizedMessage() {
-    return processAll(throwable -> throwable.getLocalizedMessage(), EmptyConsumer.<String>getInstance());
+    return processAll(Throwable::getLocalizedMessage, EmptyConsumer.<String>getInstance());
   }
 
   @Override
   public String toString() {
-    return processAll(throwable -> throwable.toString(), EmptyConsumer.<String>getInstance());
+    return processAll(Throwable::toString, EmptyConsumer.<String>getInstance());
   }
 
   @Override
@@ -67,7 +67,7 @@ public class CompoundRuntimeException extends RuntimeException {
     processAll(throwable -> {
       throwable.printStackTrace(s);
       return "";
-    }, str -> s.print(str));
+    }, s::print);
   }
 
   @Override
@@ -75,7 +75,7 @@ public class CompoundRuntimeException extends RuntimeException {
     processAll(throwable -> {
       throwable.printStackTrace(s);
       return "";
-    }, str -> s.print(str));
+    }, s::print);
   }
 
   private String processAll(@NotNull Function<? super Throwable, String> exceptionProcessor, @NotNull Consumer<? super String> stringProcessor) {

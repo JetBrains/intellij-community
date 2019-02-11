@@ -195,7 +195,7 @@ public class TransferToEDTQueue<T> {
   public void waitFor() {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    schedule(() -> semaphore.up());
+    schedule(semaphore::up);
     semaphore.waitFor();
   }
 }

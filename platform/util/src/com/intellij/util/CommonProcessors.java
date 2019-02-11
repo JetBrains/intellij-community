@@ -66,7 +66,7 @@ public class CommonProcessors {
 
   @NotNull
   public static <T> Processor<T> notNullProcessor(@NotNull final Processor<? super T> processor) {
-    return t -> processor.process(t);
+    return processor::process;
   }
 
 

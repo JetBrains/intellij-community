@@ -122,11 +122,11 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static <T> Function<T, String> createToStringFunction(@SuppressWarnings("unused") @NotNull Class<T> cls) {
-    return o -> o.toString();
+    return Object::toString;
   }
 
   @NotNull
-  public static final Function<String, String> TRIMMER = s -> trim(s);
+  public static final Function<String, String> TRIMMER = StringUtil::trim;
 
   // Unlike String.replace(CharSequence,CharSequence) does not allocate intermediate objects on non-match
   // TODO revise when JDK9 arrives - its String.replace(CharSequence, CharSequence) is more optimized

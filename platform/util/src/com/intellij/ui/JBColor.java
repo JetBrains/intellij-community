@@ -307,12 +307,12 @@ public class JBColor extends Color {
 
   @NotNull
   public static Color foreground() {
-    return new JBColor(() -> UIUtil.getLabelForeground());
+    return new JBColor(UIUtil::getLabelForeground);
   }
 
   @NotNull
   public static Color background() {
-    return new JBColor(() -> UIUtil.getListBackground());
+    return new JBColor(UIUtil::getListBackground);
   }
 
   @NotNull

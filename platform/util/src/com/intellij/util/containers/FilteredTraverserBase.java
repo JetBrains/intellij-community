@@ -63,7 +63,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
 
   @NotNull
   public final JBIterable<T> traverse(@NotNull TreeTraversal traversal) {
-    Function<T, Iterable<? extends T>> adjusted = t -> children(t);
+    Function<T, Iterable<? extends T>> adjusted = this::children;
     return myMeta.interceptor.fun(traversal).traversal(getRoots(), adjusted).filter(myMeta.filter.AND);
   }
 
@@ -435,9 +435,9 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
       return false;
     }
 
-    final Condition<? super T> OR = (Condition<T>)t -> valueOr(t);
+    final Condition<? super T> OR = (Condition<T>)this::valueOr;
 
-    final Condition<? super T> AND = (Condition<T>)t -> valueAnd(t);
+    final Condition<? super T> AND = (Condition<T>)this::valueAnd;
 
     @Override
     public String toString() {

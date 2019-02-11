@@ -2,7 +2,6 @@
 package org.jdom;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -111,7 +110,7 @@ class ImmutableElement extends Element {
 
   @Override
   public <T extends Content> List<T> getContent(final Filter<T> filter) {
-    return (List<T>)ContainerUtil.filter(myContent, content -> filter.matches(content));
+    return (List<T>)ContainerUtil.filter(myContent, filter::matches);
   }
 
   @Override

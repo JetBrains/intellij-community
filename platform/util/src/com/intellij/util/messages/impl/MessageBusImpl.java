@@ -449,7 +449,7 @@ public class MessageBusImpl implements MessageBus {
 
   @NotNull
   static <T> ThreadLocal<Queue<T>> createThreadLocalQueue() {
-    return ThreadLocal.withInitial(() -> new ConcurrentLinkedQueue<>());
+    return ThreadLocal.withInitial(ConcurrentLinkedQueue::new);
   }
 
   public static class RootBus extends MessageBusImpl {

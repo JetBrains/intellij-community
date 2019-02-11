@@ -42,7 +42,7 @@ public class LoadedResourcesDumper implements ClassPath.ResourceLoadingLogger {
       try {
         if (!FileUtil.ensureCanCreateFile(orderFile)) return;
         myOrder = new PrintStream(new FileOutputStream(orderFile, true));
-        ShutDownTracker.getInstance().registerShutdownTask(() -> closeOrderStream());
+        ShutDownTracker.getInstance().registerShutdownTask(this::closeOrderStream);
       }
       catch (IOException e) {
         return;

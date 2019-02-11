@@ -120,7 +120,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     return myCanReEnumerate && size + POSITIVE_VALUE_SHIFT < Integer.MAX_VALUE;
   }
 
-  private final LowMemoryWatcher myAppendCacheFlusher = LowMemoryWatcher.register(() -> dropMemoryCaches());
+  private final LowMemoryWatcher myAppendCacheFlusher = LowMemoryWatcher.register(this::dropMemoryCaches);
 
   public PersistentHashMap(@NotNull final File file,
                            @NotNull KeyDescriptor<Key> keyDescriptor,

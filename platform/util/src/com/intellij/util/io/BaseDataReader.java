@@ -58,7 +58,7 @@ public abstract class BaseDataReader {
           doRun();
         }
         else {
-          ConcurrencyUtil.runUnderThreadName("BaseDataReader: " + presentableName, () -> doRun());
+          ConcurrencyUtil.runUnderThreadName("BaseDataReader: " + presentableName, this::doRun);
         }
       });
     }

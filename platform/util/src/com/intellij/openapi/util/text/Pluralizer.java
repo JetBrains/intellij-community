@@ -401,7 +401,7 @@ class Pluralizer {
       "/o[iu]s$", // "carnivorous"
       "/pox$", // "chickpox", "smallpox"
       "/sheep$"
-    ).consumeEach(o -> pluralizer.addUncountableRule(o));
+    ).consumeEach(pluralizer::addUncountableRule);
 
     PLURALIZER = pluralizer;
   }

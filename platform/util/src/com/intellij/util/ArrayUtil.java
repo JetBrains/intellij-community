@@ -34,8 +34,8 @@ public class ArrayUtil extends ArrayUtilRt {
   public static final Runnable[] EMPTY_RUNNABLE_ARRAY = ArrayUtilRt.EMPTY_RUNNABLE_ARRAY;
   public static final CharSequence EMPTY_CHAR_SEQUENCE = new CharArrayCharSequence(EMPTY_CHAR_ARRAY);
 
-  public static final ArrayFactory<String> STRING_ARRAY_FACTORY = count -> newStringArray(count);
-  public static final ArrayFactory<Object> OBJECT_ARRAY_FACTORY = count -> newObjectArray(count);
+  public static final ArrayFactory<String> STRING_ARRAY_FACTORY = ArrayUtil::newStringArray;
+  public static final ArrayFactory<Object> OBJECT_ARRAY_FACTORY = ArrayUtil::newObjectArray;
 
   private ArrayUtil() { }
 

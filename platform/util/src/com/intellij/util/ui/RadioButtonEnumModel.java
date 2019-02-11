@@ -15,7 +15,6 @@
  */
 package com.intellij.util.ui;
 
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
@@ -40,7 +39,7 @@ public class RadioButtonEnumModel<E extends Enum<E>> {
   private RadioButtonEnumModel(Class<E> e, ButtonGroup group) {
 
     myGroup = group;
-    myModels = ContainerUtil.map(Collections.list(myGroup.getElements()), abstractButton -> abstractButton.getModel());
+    myModels = ContainerUtil.map(Collections.list(myGroup.getElements()), AbstractButton::getModel);
     myEnums = Arrays.asList(e.getEnumConstants());
   }
 

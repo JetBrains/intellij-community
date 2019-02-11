@@ -15,7 +15,6 @@
  */
 package com.intellij.util.ui;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +47,7 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements Editab
     mySortByColumn = selectedColumn;
     mySortOrder = order;
 
-    setSortable(ContainerUtil.find(columnNames, columnInfo -> columnInfo.isSortable()) != null);
+    setSortable(ContainerUtil.find(columnNames, ColumnInfo::isSortable) != null);
   }
 
   @Override
