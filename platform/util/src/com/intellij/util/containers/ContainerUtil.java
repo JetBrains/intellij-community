@@ -2824,7 +2824,7 @@ public class ContainerUtil extends ContainerUtilRt {
         return result;
       }
     }
-    return o1.size() < o2.size() ? -1 : o1.size() == o2.size() ? 0 : 1;
+    return Integer.compare(o1.size(), o2.size());
   }
 
   @Contract(pure=true)
@@ -2835,7 +2835,7 @@ public class ContainerUtil extends ContainerUtilRt {
         return result;
       }
     }
-    return o1.size() < o2.size() ? -1 : o1.size() == o2.size() ? 0 : 1;
+    return Integer.compare(o1.size(), o2.size());
   }
 
   /**
