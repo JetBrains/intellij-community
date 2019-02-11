@@ -2,9 +2,12 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.VerticalFlowLayout
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.components.JBOptionButton
+import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -16,10 +19,7 @@ import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsS
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
 import java.awt.FlowLayout
 import java.awt.event.ActionEvent
-import javax.swing.AbstractAction
-import javax.swing.Action
-import javax.swing.JButton
-import javax.swing.JLabel
+import javax.swing.*
 
 internal class GithubPullRequestStatePanel(private val model: GithubPullRequestDetailsModel,
                                            private val securityService: GithubPullRequestsSecurityService,
@@ -65,12 +65,24 @@ internal class GithubPullRequestStatePanel(private val model: GithubPullRequestD
   }
   private val mergeButton = JBOptionButton(null, null)
 
+  private val browseButton = LinkLabel.create("Open on GitHub") {
+    model.details?.run { BrowserUtil.browse(htmlUrl) }
+  }.apply {
+    icon = AllIcons.Ide.External_link_arrow
+    setHorizontalTextPosition(SwingConstants.LEFT)
+  }
+
   private val buttonsPanel = NonOpaquePanel(FlowLayout(FlowLayout.LEADING, 0, 0)).apply {
     border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, 0)
 
-    add(mergeButton)
-    add(closeButton)
-    add(reopenButton)
+    if (Registry.`is`("github.action.pullrequest.state.useapi")) {
+      add(mergeButton)
+      add(closeButton)
+      add(reopenButton)
+    }
+    else {
+      add(browseButton)
+    }
   }
 
   init {
@@ -157,6 +169,8 @@ internal class GithubPullRequestStatePanel(private val model: GithubPullRequestD
       mergeButton.action = null
       mergeButton.options = emptyArray()
       mergeButton.isVisible = false
+
+      browseButton.isVisible = false
     }
     else {
       reopenButton.isVisible = (state.editAllowed || state.currentUserIsAuthor) && state.state == GithubIssueState.closed && !state.merged
@@ -181,6 +195,8 @@ internal class GithubPullRequestStatePanel(private val model: GithubPullRequestD
       val actions = if (allowedActions.size > 1) Array(allowedActions.size - 1) { allowedActions[it + 1] } else emptyArray()
       mergeButton.action = action
       mergeButton.options = actions
+
+      browseButton.isVisible = true
     }
   }
 

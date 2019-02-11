@@ -39,6 +39,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
@@ -391,23 +392,49 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         withTopRightComponent(linkLabel)
       ).createPanel();
 
+      JCheckBox cb1 = new JCheckBox("Checkbox 1");
+      JCheckBox cb2 = new JCheckBox("Checkbox 2");
+      JCheckBox cb3 = new JCheckBox("Checkbox 3");
+
       ButtonGroup bg = new ButtonGroup();
-      JRadioButton rb1 = new JRadioButton("RadioButton 1");
-      JRadioButton rb2 = new JRadioButton("RadioButton 2");
-      JRadioButton rb3 = new JRadioButton("RadioButton 3");
+      JRadioButton rb1 = new JRadioButton("Normal");
+      JRadioButton rb2 = new JRadioButton("Warning");
+      JRadioButton rb3 = new JRadioButton("Error");
       bg.add(rb1);
       bg.add(rb2);
       bg.add(rb3);
       rb1.setSelected(true);
 
-      JPanel p2 = UI.PanelFactory.grid().
-        add(UI.PanelFactory.panel(new JCheckBox("Checkbox 1")).withComment("Comment 1").moveCommentRight()).
-        add(UI.PanelFactory.panel(new JCheckBox("Checkbox 2")).withComment("Comment 2")).
-        add(UI.PanelFactory.panel(new JCheckBox("<html>Multiline<br/>Checkbox 3</html>")).withTooltip("Checkbox tooltip")).
+      new ComponentValidator(getDisposable()).withValidator(() -> {
+        if (rb1.isSelected()) {
+          return null;
+        } else if (rb2.isSelected()) {
+          return new ValidationInfo("Checkbox warning <a href=\"#warning\">with link</a>", cb3).asWarning();
+        } else if (rb3.isSelected()) {
+          return new ValidationInfo("Checkbox error <a href=\"#error\">with link</a>", cb3);
+        } else {
+          return null;
+        }
+      }).withHyperlinkListener(e -> {
+        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          System.out.println("Checkbox validator tooltip clicked: desc = " + e.getDescription());
+        }
+      }).installOn(cb3);
 
-        add(UI.PanelFactory.panel(rb1).withComment("Comment 1").moveCommentRight()).
-        add(UI.PanelFactory.panel(rb2).withComment("Comment 2").withTooltip("Checkbox tooltip")).
-        add(UI.PanelFactory.panel(rb3).withTooltip("RadioButton tooltip")).
+      ActionListener al = e -> ComponentValidator.getInstance(cb3).ifPresent(ComponentValidator::revalidate);
+
+      rb1.addActionListener(al);
+      rb2.addActionListener(al);
+      rb3.addActionListener(al);
+
+      JPanel p2 = UI.PanelFactory.grid().
+        add(UI.PanelFactory.panel(cb1).withComment("Comment 1").moveCommentRight()).
+        add(UI.PanelFactory.panel(cb2).withComment("Comment 2")).
+        add(UI.PanelFactory.panel(cb3).withTooltip("Checkbox tooltip")).
+
+        add(UI.PanelFactory.panel(rb1).withComment("No validation").moveCommentRight()).
+        add(UI.PanelFactory.panel(rb2).withComment("Warning checkbox validation").moveCommentRight()).
+        add(UI.PanelFactory.panel(rb3).withComment("Error checkbox validation").moveCommentRight()).
 
         createPanel();
 
@@ -482,6 +509,10 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           return ecbEditor;
         }
       });
+
+      new ComponentValidator(getDisposable())
+        .withValidator(() -> "Two".equals(eComboBox.getSelectedItem()) ? new ValidationInfo("Two is not preferred", eComboBox).asWarning() : null)
+        .installOn(eComboBox);
 
       // Panels factory
       return UI.PanelFactory.grid().

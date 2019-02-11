@@ -385,6 +385,11 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
       }
       removeHighlighter(e);
 
+      int lineNumber = getLineNumber(e);
+      if (lineNumber < 0) {
+        return;
+      }
+
       TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES);
       Color backgroundColor = attributes.getBackgroundColor();
       if (backgroundColor != null) {
@@ -393,7 +398,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
       }
 
       Editor editor = e.getEditor();
-      myCurrentHighlighter = editor.getMarkupModel().addLineHighlighter(getLineNumber(e),
+      myCurrentHighlighter = editor.getMarkupModel().addLineHighlighter(lineNumber,
                                                                         DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,
                                                                         attributes);
 
@@ -423,6 +428,9 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     private int getLineNumber(EditorMouseEvent event) {
       Editor editor = event.getEditor();
       int line = editor.yToVisualLine(event.getMouseEvent().getY());
+      if (line >= ((EditorImpl)editor).getVisibleLineCount()) {
+        return -1;
+      }
       int offset = ((EditorImpl)editor).visualLineStartOffset(line);
       int lineStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, offset);
       return editor.getDocument().getLineNumber(lineStartOffset);
@@ -431,9 +439,10 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     @Override
     public void mousePressed(@NotNull EditorMouseEvent e) {
       if (e.getMouseEvent().getButton() == MouseEvent.BUTTON1 && isEnabled(e)) {
+        int lineNumber = getLineNumber(e);
         XDebugSessionImpl session = getCurrentSession();
-        if (session != null) {
-          session.runToPosition(XSourcePositionImpl.create(((EditorEx)e.getEditor()).getVirtualFile(), getLineNumber(e)), false);
+        if (session != null && lineNumber >= 0) {
+          session.runToPosition(XSourcePositionImpl.create(((EditorEx)e.getEditor()).getVirtualFile(), lineNumber), false);
           e.consume();
         }
       }

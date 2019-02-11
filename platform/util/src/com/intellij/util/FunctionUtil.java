@@ -43,22 +43,11 @@ public class FunctionUtil {
 
   @NotNull
   public static <A, B> Function<A, B> constant(final B b) {
-    return new Function<A, B>() {
-      @Override
-      public B fun(A a) {
-        return b;
-      }
-    };
+    return a -> b;
   }
 
   @NotNull
   public static <A, B, C> NotNullFunction<A, C> composition(@NotNull final NotNullFunction<? super B, ? extends C> f, @NotNull final NotNullFunction<? super A, ? extends B> g) {
-    return new NotNullFunction<A, C>() {
-      @Override
-      @NotNull
-      public C fun(A a) {
-        return f.fun(g.fun(a));
-      }
-    };
+    return a -> f.fun(g.fun(a));
   }
 }

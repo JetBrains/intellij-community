@@ -68,7 +68,6 @@ public class MainMenuCollector implements PersistentStateComponent<MainMenuColle
 
       if (!StringUtil.isEmpty(path)) {
         final FeatureUsageData data = new FeatureUsageData().addOS().addPluginInfo(info);
-        FUCounterUsageLogger.getInstance().logEvent("main.menu", ConvertUsagesUtil.escapeDescriptorName(path), data);
       }
     }
     catch (Exception ignore) {

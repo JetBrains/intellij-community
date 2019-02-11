@@ -7,8 +7,9 @@ configurations {
   kotlinPlugin
 }
 
+def host = kotlinPluginChannel ? "${kotlinPluginChannel}.com.jetbrains.plugins" : "com.jetbrains.plugins"
 dependencies {
-  kotlinPlugin "com.jetbrains.plugins:org.jetbrains.kotlin:$kotlinPluginBuild@zip"
+  kotlinPlugin "$host:org.jetbrains.kotlin:$kotlinPluginBuild@zip"
 }
 
 task setupKotlinPlugin(dependsOn: configurations.kotlinPlugin, type: Sync) {

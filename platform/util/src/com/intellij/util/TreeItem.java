@@ -21,7 +21,7 @@ import java.util.List;
 public class TreeItem <Data> {
   private Data myData;
   private TreeItem<Data> myParent;
-  private final List<TreeItem<Data>> myChildren = new ArrayList<TreeItem<Data>>();
+  private final List<TreeItem<Data>> myChildren = new ArrayList<>();
 
   public TreeItem(Data data) {
     myData = data;

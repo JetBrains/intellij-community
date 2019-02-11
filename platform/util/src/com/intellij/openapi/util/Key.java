@@ -47,7 +47,7 @@ public class Key<T> {
 
   @NotNull
   public static <T> Key<T> create(@NotNull String name) {
-    return new Key<T>(name);
+    return new Key<>(name);
   }
 
   public T get(@Nullable UserDataHolder holder) {

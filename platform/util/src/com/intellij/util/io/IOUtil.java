@@ -164,12 +164,7 @@ public class IOUtil {
   public static boolean deleteAllFilesStartingWith(@NotNull File file) {
     final String baseName = file.getName();
     File parentFile = file.getParentFile();
-    final File[] files = parentFile != null ? parentFile.listFiles(new FileFilter() {
-      @Override
-      public boolean accept(final File pathname) {
-        return pathname.getName().startsWith(baseName);
-      }
-    }) : null;
+    final File[] files = parentFile != null ? parentFile.listFiles(pathname -> pathname.getName().startsWith(baseName)) : null;
 
     boolean ok = true;
     if (files != null) {
@@ -200,22 +195,14 @@ public class IOUtil {
         ((FileOutputStream)stream).getFD().sync();
       }
     }
-    catch (NoSuchFieldException e) {
-      throw new RuntimeException(e);
-    }
-    catch (IllegalAccessException e) {
+    catch (NoSuchFieldException | IllegalAccessException e) {
       throw new RuntimeException(e);
     }
   }
 
   public static <T> T openCleanOrResetBroken(@NotNull ThrowableComputable<T, ? extends IOException> factoryComputable,
                                              @NotNull final File file) throws IOException {
-    return openCleanOrResetBroken(factoryComputable, new Runnable() {
-      @Override
-      public void run() {
-        deleteAllFilesStartingWith(file);
-      }
-    });
+    return openCleanOrResetBroken(factoryComputable, () -> deleteAllFilesStartingWith(file));
   }
 
   public static <T> T openCleanOrResetBroken(@NotNull ThrowableComputable<T, ? extends IOException> factoryComputable,
@@ -240,7 +227,7 @@ public class IOUtil {
   @NotNull
   public static List<String> readStringList(@NotNull DataInput in) throws IOException {
     int size = DataInputOutputUtil.readINT(in);
-    List<String> strings = new ArrayList<String>(size);
+    List<String> strings = new ArrayList<>(size);
     for (int i = 0; i < size; i++) {
       strings.add(readUTF(in));
     }

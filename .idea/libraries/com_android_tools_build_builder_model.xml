@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="com.android.tools.build:builder-model" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.android.tools.build:builder-model:3.3.0" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/android/tools/build/builder-model/3.3.0/builder-model-3.3.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

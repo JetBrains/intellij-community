@@ -3,15 +3,14 @@ package com.intellij.openapi.application.impl;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.NonBlockingReadAction;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.async.AsyncExecution;
+import com.intellij.openapi.application.async.InSmartMode;
+import com.intellij.openapi.application.async.WithDocumentsCommitted;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.concurrency.Semaphore;
@@ -24,6 +23,7 @@ import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promises;
 
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
@@ -38,35 +38,40 @@ import java.util.function.Consumer;
 @VisibleForTesting
 public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
   private final @Nullable Pair<ModalityState, Consumer<T>> myEdtFinish;
-  private final @Nullable DumbService myRequireSmartMode; //todo a more pluggable constraint API
+  private final List<AsyncExecution.ExpirableContextConstraint> myConstraints;
   private final BooleanSupplier myExpireCondition;
   private final Callable<T> myComputation;
 
   private static final Set<CancellablePromise<?>> ourTasks = ContainerUtil.newConcurrentSet();
 
   NonBlockingReadActionImpl(@Nullable Pair<ModalityState, Consumer<T>> edtFinish,
-                            @Nullable DumbService requireSmartMode,
+                            @NotNull List<AsyncExecution.ExpirableContextConstraint> constraints,
                             @NotNull BooleanSupplier expireCondition,
                             @NotNull Callable<T> computation) {
     myEdtFinish = edtFinish;
-    myRequireSmartMode = requireSmartMode;
+    myConstraints = constraints;
     myExpireCondition = expireCondition;
     myComputation = computation;
   }
 
   @Override
   public NonBlockingReadAction<T> inSmartMode(@NotNull Project project) {
-    return new NonBlockingReadActionImpl<>(myEdtFinish, DumbService.getInstance(project), myExpireCondition, myComputation).expireWhen(project::isDisposed);
+    return new NonBlockingReadActionImpl<>(myEdtFinish, ContainerUtil.append(myConstraints, new InSmartMode(project)), myExpireCondition, myComputation).expireWhen(project::isDisposed);
+  }
+
+  @Override
+  public NonBlockingReadAction<T> withDocumentsCommitted(@NotNull Project project) {
+    return new NonBlockingReadActionImpl<>(myEdtFinish, ContainerUtil.append(myConstraints, new WithDocumentsCommitted(project, ModalityState.any())), myExpireCondition, myComputation).expireWhen(project::isDisposed);
   }
 
   @Override
   public NonBlockingReadAction<T> expireWhen(@NotNull BooleanSupplier expireCondition) {
-    return new NonBlockingReadActionImpl<>(myEdtFinish, myRequireSmartMode, () -> myExpireCondition.getAsBoolean() || expireCondition.getAsBoolean(), myComputation);
+    return new NonBlockingReadActionImpl<>(myEdtFinish, myConstraints, () -> myExpireCondition.getAsBoolean() || expireCondition.getAsBoolean(), myComputation);
   }
 
   @Override
   public NonBlockingReadAction<T> finishOnUiThread(@NotNull ModalityState modality, @NotNull Consumer<T> uiThreadAction) {
-    return new NonBlockingReadActionImpl<>(Pair.create(modality, uiThreadAction), myRequireSmartMode, myExpireCondition, myComputation);
+    return new NonBlockingReadActionImpl<>(Pair.create(modality, uiThreadAction), myConstraints, myExpireCondition, myComputation);
   }
 
   @Override
@@ -115,11 +120,13 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
     }
 
     private void rescheduleLater() {
-      if (myRequireSmartMode != null) {
-        myRequireSmartMode.runWhenSmart(this::transferToBgThread);
-      } else {
-        ApplicationManager.getApplication().invokeLater(this::transferToBgThread, ModalityState.any());
+      for (AsyncExecution.ExpirableContextConstraint constraint : myConstraints) {
+        if (!constraint.isCorrectContext()) {
+          constraint.scheduleExpirable(this::transferToBgThread);
+          return;
+        }
       }
+      ApplicationManager.getApplication().invokeLater(this::transferToBgThread, ModalityState.any());
     }
 
     void insideReadAction(ProgressIndicator indicator) {
@@ -142,7 +149,7 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
     }
 
     private boolean constraintsAreSatisfied() {
-      return myRequireSmartMode == null || !myRequireSmartMode.isDumb();
+      return ContainerUtil.all(myConstraints, AsyncExecution.ContextConstraint::isCorrectContext);
     }
 
     private boolean checkObsolete() {

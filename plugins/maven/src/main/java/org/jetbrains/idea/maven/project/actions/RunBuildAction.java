@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
+import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -48,14 +49,14 @@ public class RunBuildAction extends MavenAction {
     if (goals == null || goals.isEmpty()) return false;
 
     final Project project = MavenActionUtil.getProject(context);
-    if(project == null) return false;
+    if (project == null) return false;
     final MavenProject mavenProject = MavenActionUtil.getMavenProject(context);
     if (mavenProject == null) return false;
 
     if (!perform) return true;
 
     final MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(context);
-    if(projectsManager == null) return false;
+    if (projectsManager == null) return false;
     MavenExplicitProfiles explicitProfiles = projectsManager.getExplicitProfiles();
     final MavenRunnerParameters params = new MavenRunnerParameters(true,
                                                                    mavenProject.getDirectory(),
@@ -63,7 +64,11 @@ public class RunBuildAction extends MavenAction {
                                                                    goals,
                                                                    explicitProfiles.getEnabledProfiles(),
                                                                    explicitProfiles.getDisabledProfiles());
+
+    //    MavenRunner mavenRunner = MavenRunner.getInstance(project);
+    //  mavenRunner.run(params, mavenRunner.getSettings(), null);
     MavenRunConfigurationType.runConfiguration(project, params, null);
+
 
     return true;
   }

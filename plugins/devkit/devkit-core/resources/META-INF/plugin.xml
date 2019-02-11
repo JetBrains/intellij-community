@@ -278,6 +278,9 @@
                           implementationClass="org.jetbrains.idea.devkit.themes.ThemeSpellcheckingStrategy"/>
     <editorNotificationProviderApp implementation="org.jetbrains.idea.devkit.themes.ThemeEditorToolbar"/>
     <applicationService serviceImplementation="org.jetbrains.idea.devkit.themes.metadata.UIThemeMetadataService"/>
+    <lang.documentationProvider language="JSON"
+                                order="first"
+                                implementationClass="org.jetbrains.idea.devkit.themes.ThemeJsonDocumentationProvider"/>
   </extensions>
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="org.jetbrains.idea.devkit.themes.ThemeJsonSchemaProviderFactory"/>

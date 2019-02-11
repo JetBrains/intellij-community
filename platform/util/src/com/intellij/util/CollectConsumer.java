@@ -30,7 +30,7 @@ public class CollectConsumer<T> implements Consumer<T> {
   }
 
   public CollectConsumer() {
-    this(new SmartList<T>());
+    this(new SmartList<>());
   }
 
   @Override

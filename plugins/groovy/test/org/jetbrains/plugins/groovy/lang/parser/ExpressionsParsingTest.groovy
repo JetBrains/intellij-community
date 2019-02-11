@@ -800,6 +800,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testlambda$assign7() { doTest() }
 
+  void testlambda$assign8() { doTest() }
+
   void testlambda$methodCall1() { doTest() }
 
   void testlambda$methodCall2() { doTest() }

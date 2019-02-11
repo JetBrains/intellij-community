@@ -15,10 +15,15 @@
  */
 package org.jetbrains.idea.maven.model;
 
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Arrays;
 import java.util.List;
 
 public class MavenConstants {
+  @NotNull @NonNls public static final ProjectSystemId SYSTEM_ID = new ProjectSystemId("MAVEN");
   public static final String POM_EXTENSION = "pom";
   public static final String POM_XML = "pom.xml";
   public static final String[] POM_NAMES = new String[]{POM_XML, "pom.scala", "pom.groovy", "pom.atom", "pom.rb", "pom.yml", "pom.clj"};

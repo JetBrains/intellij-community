@@ -18,7 +18,7 @@ public class MultiValuesMap<K, V>{
 
   public MultiValuesMap(boolean ordered) {
     myOrdered = ordered;
-    myBaseMap = ordered ? new LinkedHashMap<K, Collection<V>>() : new HashMap<K, Collection<V>>();
+    myBaseMap = ordered ? new LinkedHashMap<>() : new HashMap<>();
   }
 
   public void putAll(K key, @NotNull Collection<V> values) {
@@ -36,7 +36,7 @@ public class MultiValuesMap<K, V>{
   public void put(K key, V value) {
     Collection<V> collection = myBaseMap.get(key);
     if (collection == null) {
-      collection = myOrdered ? new LinkedHashSet<V>() : new HashSet<V>();
+      collection = myOrdered ? new LinkedHashSet<>() : new HashSet<>();
       myBaseMap.put(key, collection);
     }
 
@@ -54,7 +54,7 @@ public class MultiValuesMap<K, V>{
 
   @NotNull
   public Collection<V> values() {
-    Set<V> result = myOrdered ? new LinkedHashSet<V>() : new HashSet<V>();
+    Set<V> result = myOrdered ? new LinkedHashSet<>() : new HashSet<>();
     for (final Collection<V> values : myBaseMap.values()) {
       result.addAll(values);
     }

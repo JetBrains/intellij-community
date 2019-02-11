@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
   private final ConcurrentMap<K, ValueReference<K, V>> myMap = ContainerUtil.newConcurrentMap();
-  protected final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
+  protected final ReferenceQueue<V> myQueue = new ReferenceQueue<>();
 
   interface ValueReference<K, V> {
     @NotNull
@@ -166,7 +166,7 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
   @NotNull
   @Override
   public Collection<V> values() {
-    Collection<V> result = new ArrayList<V>();
+    Collection<V> result = new ArrayList<>();
     final Collection<ValueReference<K, V>> refs = myMap.values();
     for (ValueReference<K, V> ref : refs) {
       final V value = ref.get();
@@ -181,7 +181,7 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
   @Override
   public Set<Entry<K, V>> entrySet() {
     final Set<K> keys = keySet();
-    Set<Entry<K, V>> entries = new HashSet<Entry<K, V>>();
+    Set<Entry<K, V>> entries = new HashSet<>();
 
     for (final K key : keys) {
       final V value = get(key);

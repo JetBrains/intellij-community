@@ -49,7 +49,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
 
   @NotNull
   protected Map<K, V> createMap() {
-    return new THashMap<K, V>();
+    return new THashMap<>();
   }
 
   @Nullable
@@ -86,7 +86,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
 
   private static <T> T notNull(final Object key) {
     //noinspection unchecked
-    return key == null ? FactoryMap.<T>FAKE_NULL() : (T)key;
+    return key == null ? FactoryMap.FAKE_NULL() : (T)key;
   }
   @Nullable
   private static <T> T nullize(T value) {
@@ -118,7 +118,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
     final Set<K> ts = getMap().keySet();
     K nullKey = FAKE_NULL();
     if (ts.contains(nullKey)) {
-      final java.util.HashSet<K> hashSet = new HashSet<K>(ts);
+      final java.util.HashSet<K> hashSet = new HashSet<>(ts);
       hashSet.remove(nullKey);
       hashSet.add(null);
       return hashSet;
@@ -163,23 +163,14 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   @NotNull
   @Override
   public Collection<V> values() {
-    return ContainerUtil.map(getMap().values(), new Function<V, V>() {
-      @Override
-      public V fun(V v) {
-        return nullize(v);
-      }
-    });
+    return ContainerUtil.map(getMap().values(), FactoryMap::nullize);
   }
 
   @NotNull
   @Override
   public Set<Entry<K, V>> entrySet() {
-    return ContainerUtil.map2Set(getMap().entrySet(), new Function<Entry<K,V>, Entry<K,V>>() {
-          @Override
-          public Entry<K,V> fun(Entry<K,V> entry) {
-            return new AbstractMap.SimpleEntry<K, V>(nullize(entry.getKey()), nullize(entry.getValue()));
-          }
-        });
+    return ContainerUtil.map2Set(getMap().entrySet(),
+                                 entry -> new AbstractMap.SimpleEntry<>(nullize(entry.getKey()), nullize(entry.getValue())));
   }
 
   /**

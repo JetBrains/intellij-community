@@ -422,7 +422,7 @@ public class IntToIntBtree {
         @Override
         public int fun(int mid) {
           int midValue = keyAt(mid);
-          return midValue < value ? -1 : midValue == value ? 0 : 1;
+          return Integer.compare(midValue, value);
         }
       });
     }

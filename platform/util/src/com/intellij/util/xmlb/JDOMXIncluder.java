@@ -77,7 +77,7 @@ public class JDOMXIncluder {
     throws XIncludeException, MalformedURLException {
     LOG.assertTrue(!isIncludeElement(original));
 
-    Stack<URL> bases = new Stack<URL>();
+    Stack<URL> bases = new Stack<>();
     if (base != null) {
       bases.push(base);
     }
@@ -201,7 +201,7 @@ public class JDOMXIncluder {
 
   @NotNull
   private List<Content> doResolve(@NotNull Element original, URL base) throws XIncludeException, MalformedURLException {
-    Stack<URL> bases = new Stack<URL>();
+    Stack<URL> bases = new Stack<>();
     if (base != null) {
       bases.push(base);
     }
@@ -220,7 +220,7 @@ public class JDOMXIncluder {
     }
     else {
       Element resolvedElement = resolveNonXIncludeElement(original, bases);
-      return Collections.<Content>singletonList(resolvedElement);
+      return Collections.singletonList(resolvedElement);
     }
   }
 
@@ -315,7 +315,7 @@ public class JDOMXIncluder {
       e = e.getChild(subTagName.substring(1));
     }
     assert e != null;
-    return new ArrayList<Content>(e.getContent());
+    return new ArrayList<>(e.getContent());
   }
 
   @NotNull

@@ -26,7 +26,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.roots.JdkOrderEntry
-import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testGuiFramework.cellReader.ExtendedJTreeCellReader
@@ -53,6 +52,7 @@ import org.junit.Assert.assertNotNull
 import java.awt.Point
 import java.awt.Rectangle
 import java.util.*
+import javax.swing.JPopupMenu
 import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeModel
@@ -243,7 +243,7 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
     }
 
     fun rightClick() {
-      repeatUntil({ isComponentShowing(JBPopupMenu::class.java) }, {
+      repeatUntil({ isComponentShowing(JPopupMenu::class.java) }, {
         invokeContextMenu()
       })
     }

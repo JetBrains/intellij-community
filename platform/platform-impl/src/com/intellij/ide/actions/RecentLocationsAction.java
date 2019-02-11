@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
+import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -51,6 +52,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.List;
 
 import static com.intellij.ui.speedSearch.SpeedSearchSupply.ENTERED_PREFIX_PROPERTY_NAME;
 
@@ -78,8 +80,8 @@ public class RecentLocationsAction extends AnAction {
       return;
     }
 
-    RecentLocationsDataModel data = new RecentLocationsDataModel(project, ContainerUtil.newArrayList());
-    JBList<RecentLocationItem> list = new JBList<>(JBList.createDefaultListModel(data.getPlaces(showChanged(project))));
+    RecentLocationsDataModel model = new RecentLocationsDataModel(project, ContainerUtil.newArrayList());
+    JBList<RecentLocationItem> list = new JBList<>(JBList.createDefaultListModel(model.getPlaces(showChanged(project))));
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(list,
                                                                       ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                                       ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -87,7 +89,7 @@ public class RecentLocationsAction extends AnAction {
     scrollPane.setBorder(BorderFactory.createEmptyBorder());
 
     ListWithFilter<RecentLocationItem> listWithFilter = (ListWithFilter<RecentLocationItem>)ListWithFilter
-        .wrap(list, scrollPane, getNamer(project, data), true);
+      .wrap(list, scrollPane, getNamer(project, model), true);
 
     listWithFilter.setBorder(BorderFactory.createEmptyBorder());
 
@@ -96,12 +98,12 @@ public class RecentLocationsAction extends AnAction {
       evt -> {
         if (evt.getPropertyName().equals(ENTERED_PREFIX_PROPERTY_NAME)) {
           if (StringUtil.isEmpty(speedSearch.getFilter())) {
-            data.getEditorsToRelease().forEach(editor -> clearSelectionInEditor(editor));
+            model.getEditorsToRelease().forEach(editor -> clearSelectionInEditor(editor));
           }
         }
       });
 
-    list.setCellRenderer(new RecentLocationsRenderer(project, speedSearch, data));
+    list.setCellRenderer(new RecentLocationsRenderer(project, speedSearch, model));
     list.setEmptyText(IdeBundle.message("recent.locations.popup.empty.text"));
     list.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
     ScrollingUtil.installActions(list);
@@ -141,13 +143,13 @@ public class RecentLocationsAction extends AnAction {
 
     DumbAwareAction.create(event -> {
       checkBox.setSelected(!checkBox.isSelected());
-      updateItems(project, data, listWithFilter, title, checkBox, popup);
+      updateItems(project, model, listWithFilter, title, checkBox, popup);
     }).registerCustomShortcutSet(showChangedOnlyShortcutSet, list, popup);
 
     checkBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        updateItems(project, data, listWithFilter, title, checkBox, popup);
+        updateItems(project, model, listWithFilter, title, checkBox, popup);
       }
     });
 
@@ -178,11 +180,12 @@ public class RecentLocationsAction extends AnAction {
     popup.addListener(new JBPopupListener() {
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {
-        data.getEditorsToRelease().forEach(editor -> EditorFactory.getInstance().releaseEditor(editor));
+        model.getEditorsToRelease().forEach(editor -> EditorFactory.getInstance().releaseEditor(editor));
+        model.getProjectConnection().disconnect();
       }
     });
 
-    initSearchActions(project, list, popup, navigationRef);
+    initSearchActions(project, model, listWithFilter, list, popup, navigationRef);
 
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
 
@@ -324,10 +327,12 @@ public class RecentLocationsAction extends AnAction {
   }
 
   private static void initSearchActions(@NotNull Project project,
+                                        @NotNull RecentLocationsDataModel data,
+                                        @NotNull ListWithFilter<RecentLocationItem> listWithFilter,
                                         @NotNull JBList<RecentLocationItem> list,
                                         @NotNull JBPopup popup,
                                         @NotNull Ref<Boolean> navigationRef) {
-    list.addMouseListener(new MouseAdapter() {
+    listWithFilter.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent event) {
         int clickCount = event.getClickCount();
@@ -339,7 +344,39 @@ public class RecentLocationsAction extends AnAction {
     });
 
     DumbAwareAction.create(e -> navigateToSelected(project, list, popup, navigationRef))
-      .registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), list, null);
+      .registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), listWithFilter, popup);
+
+    DumbAwareAction.create(e -> removePlaces(project, listWithFilter, list, data))
+      .registerCustomShortcutSet(CustomShortcutSet.fromString("DELETE", "BACK_SPACE"), listWithFilter, popup);
+  }
+
+  private static void removePlaces(@NotNull Project project,
+                                   @NotNull ListWithFilter<RecentLocationItem> listWithFilter,
+                                   @NotNull JBList<RecentLocationItem> list,
+                                   @NotNull RecentLocationsDataModel data) {
+    List<RecentLocationItem> selectedValue = list.getSelectedValuesList();
+    if (selectedValue.isEmpty()) {
+      return;
+    }
+
+    int index = list.getSelectedIndex();
+
+    boolean changed = showChanged(project);
+    IdeDocumentHistory ideDocumentHistory = IdeDocumentHistory.getInstance(project);
+    for (RecentLocationItem item : selectedValue) {
+      if (changed) {
+        ContainerUtil.filter(ideDocumentHistory.getChangePlaces(), info -> IdeDocumentHistoryImpl.isSame(info, item.getInfo()))
+          .forEach(info -> ideDocumentHistory.removeChangePlace(project, info));
+      }
+      else {
+        ContainerUtil.filter(ideDocumentHistory.getBackPlaces(), info -> IdeDocumentHistoryImpl.isSame(info, item.getInfo()))
+          .forEach(info -> ideDocumentHistory.removeBackPlace(project, info));
+      }
+    }
+
+    updateModel(listWithFilter, data, showChanged(project));
+
+    if (list.getModel().getSize() > 0) ScrollingUtil.selectItem(list, index < list.getModel().getSize() ? index : index - 1);
   }
 
   private static void navigateToSelected(@NotNull Project project,

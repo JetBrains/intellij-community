@@ -424,7 +424,6 @@
 
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.ProjectStructureUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.FacetTypeUsageCollector"/>
-    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ProductivityUsageCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.plugins.DisabledPluginsUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.plugins.NonBundledPluginsUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.EditorColorSchemesUsagesCollector"/>
@@ -538,7 +537,7 @@
     <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupLocalConfiguration"/>
     <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupSharedConfiguration"/>
     <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupTaskManager"/>
-    <projectConfigurable groupId="tools" instance="com.intellij.execution.startup.ProjectStartupConfigurable"
+    <projectConfigurable groupId="tools" provider="com.intellij.execution.startup.ProjectStartupConfigurable$ProjectStartupConfigurableProvider"
                          displayName="Startup Tasks"
                          id="preferences.startup.tasks" nonDefaultProject="true"/>
     <postStartupActivity implementation="com.intellij.execution.startup.ProjectStartupRunner"/>
@@ -599,5 +598,52 @@
     </experimentalFeature>
 
     <rawEditorTypedHandler implementationClass="com.intellij.openapi.editor.impl.EditorFactoryImpl$MyRawTypedHandler"/>
+
+    <stalledStorage file="statistics.toolbar.clicks.xml">
+      <components>
+        <component>ToolbarClicksCollector</component>
+      </components>
+    </stalledStorage>
+    <stalledStorage file="statistics.main_menu.xml">
+      <components>
+        <component>MainMenuCollector</component>
+      </components>
+    </stalledStorage>
+    <stalledStorage file="statistics.shortcuts.xml">
+      <components>
+        <component>ShortcutsCollector</component>
+      </components>
+    </stalledStorage>
+    <stalledStorage file="statistics.application.usages.xml">
+      <components>
+        <component>StatisticsApplicationUsages</component>
+        <component>UsageTrigger</component>
+      </components>
+    </stalledStorage>
+    <stalledStorage file="usage.statistics.xml">
+      <components>
+        <component>StatisticsApplicationUsages</component>
+        <component>UsageTrigger</component>
+        <component>ToolWindowCollector</component>
+        <component>ToolWindowsCollector</component>
+        <component>ShortcutsCollector</component>
+        <component>ToolbarClicksCollector</component>
+        <component>MainMenuCollector</component>
+        <component>IntentionsCollector</component>
+        <component>ActionsCollector</component>
+        <component>FUSApplicationUsageTrigger</component>
+      </components>
+    </stalledStorage>
+
+    <stalledStorage file="usage.statistics.xml" isProjectLevel="true">
+      <components>
+        <component>FUSProjectUsageTrigger</component>
+      </components>
+    </stalledStorage>
+    <stalledStorage file="workspace.xml" isProjectLevel="true">
+      <components>
+        <component>FUSProjectUsageTrigger</component>
+      </components>
+    </stalledStorage>
   </extensions>
 </idea-plugin>

@@ -93,15 +93,4 @@
     </group>
   </actions>
 
-    <change-notes>
-        <![CDATA[
-            <li>TESTNG-151 Final passing test result is not properly hidden
-            <li>Fix method popup if test has class level @Test annotation
-            <li>Added auto-completion for method names in dependsOnMethods
-            <li>Added auto-completion for group names in dependsOnGroups
-            <li>Fix for NPE on annotations without an annotation name (@ only).
-            <li>Added TestNG 5.6 jars
-            <li>Added inspection descriptions
-        ]]>
-    </change-notes>
 </idea-plugin>

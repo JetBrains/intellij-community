@@ -100,33 +100,16 @@ public class StringUtil extends StringUtilRt {
 
   private static final MyHtml2Text html2TextParser = new MyHtml2Text(false);
 
-  public static final NotNullFunction<String, String> QUOTER = new NotNullFunction<String, String>() {
-    @Override
-    @NotNull
-    public String fun(String s) {
-      return "\"" + s + "\"";
-    }
-  };
+  public static final NotNullFunction<String, String> QUOTER = s -> "\"" + s + "\"";
 
-  public static final NotNullFunction<String, String> SINGLE_QUOTER = new NotNullFunction<String, String>() {
-    @Override
-    @NotNull
-    public String fun(String s) {
-      return "'" + s + "'";
-    }
-  };
+  public static final NotNullFunction<String, String> SINGLE_QUOTER = s -> "'" + s + "'";
 
   @NotNull
   @Contract(pure = true)
   public static List<String> getWordsInStringLongestFirst(@NotNull String find) {
     List<String> words = getWordsIn(find);
     // hope long words are rare
-    Collections.sort(words, new Comparator<String>() {
-      @Override
-      public int compare(@NotNull final String o1, @NotNull final String o2) {
-        return o2.length() - o1.length();
-      }
-    });
+    words.sort((o1, o2) -> o2.length() - o1.length());
     return words;
   }
 
@@ -139,22 +122,11 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static <T> Function<T, String> createToStringFunction(@SuppressWarnings("unused") @NotNull Class<T> cls) {
-    return new Function<T, String>() {
-      @Override
-      public String fun(@NotNull T o) {
-        return o.toString();
-      }
-    };
+    return Object::toString;
   }
 
   @NotNull
-  public static final Function<String, String> TRIMMER = new Function<String, String>() {
-    @Nullable
-    @Override
-    public String fun(@Nullable String s) {
-      return trim(s);
-    }
-  };
+  public static final Function<String, String> TRIMMER = StringUtil::trim;
 
   // Unlike String.replace(CharSequence,CharSequence) does not allocate intermediate objects on non-match
   // TODO revise when JDK9 arrives - its String.replace(CharSequence, CharSequence) is more optimized
@@ -565,14 +537,10 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static NotNullFunction<String, String> escaper(final boolean escapeSlash, @Nullable final String additionalChars) {
-    return new NotNullFunction<String, String>() {
-      @NotNull
-      @Override
-      public String fun(@NotNull String dom) {
-        final StringBuilder builder = new StringBuilder(dom.length());
-        escapeStringCharacters(dom.length(), dom, additionalChars, escapeSlash, builder);
-        return builder.toString();
-      }
+    return dom -> {
+      final StringBuilder builder = new StringBuilder(dom.length());
+      escapeStringCharacters(dom.length(), dom, additionalChars, escapeSlash, builder);
+      return builder.toString();
     };
   }
 
@@ -1270,7 +1238,7 @@ public class StringUtil extends StringUtilRt {
     if (separator.length() == 0) {
       return Collections.singletonList(s);
     }
-    List<CharSequence> result = new ArrayList<CharSequence>();
+    List<CharSequence> result = new ArrayList<>();
     int pos = 0;
     while (true) {
       int index = indexOf(s, separator, pos);
@@ -1360,13 +1328,13 @@ public class StringUtil extends StringUtilRt {
       }
       if (isIdentifierPart && i == text.length() - 1) {
         if (result == null) {
-          result = new SmartList<String>();
+          result = new SmartList<>();
         }
         result.add(text.substring(start, i + 1));
       }
       else if (!isIdentifierPart && start != -1) {
         if (result == null) {
-          result = new SmartList<String>();
+          result = new SmartList<>();
         }
         result.add(text.substring(start, i));
         start = -1;
@@ -1393,7 +1361,7 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static List<TextRange> getWordIndicesIn(@NotNull String text, @Nullable Set<Character> separatorsSet) {
-    List<TextRange> result = new SmartList<TextRange>();
+    List<TextRange> result = new SmartList<>();
     int start = -1;
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
@@ -1739,7 +1707,7 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static List<String> findMatches(@NotNull String s, @NotNull Pattern pattern, int groupIndex) {
-    List<String> result = new SmartList<String>();
+    List<String> result = new SmartList<>();
     Matcher m = pattern.matcher(s);
     while (m.find()) {
       String group = m.group(groupIndex);

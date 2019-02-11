@@ -13,15 +13,11 @@ public class CounterUsageCollectorEP extends AbstractExtensionPointBean {
   @Attribute("groupId")
   public String groupID;
 
-  @Deprecated
-  @Attribute("group_id")
-  public String legacyGroupID;
-
   @Attribute("version")
   public int version;
 
   @Nullable
   public String getGroupId() {
-    return groupID != null ? groupID : legacyGroupID;
+    return groupID;
   }
 }

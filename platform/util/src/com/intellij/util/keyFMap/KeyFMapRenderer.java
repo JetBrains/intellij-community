@@ -14,7 +14,7 @@ class KeyFMapRenderer {
     Map.Entry[] res = new Map.Entry[length];
     for (int i = 0; i < length; i++) {
       Key key = keys[i];
-      res[i] = new AbstractMap.SimpleImmutableEntry<Key, Object>(key, map.get(key));
+      res[i] = new AbstractMap.SimpleImmutableEntry<>(key, map.get(key));
     }
     return res;
   }

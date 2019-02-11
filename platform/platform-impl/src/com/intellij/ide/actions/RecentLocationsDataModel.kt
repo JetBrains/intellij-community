@@ -19,39 +19,50 @@ import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
-import com.intellij.openapi.progress.util.ProgressIndicatorBase
+import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl.RecentPlacesListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.components.breadcrumbs.Crumb
-import com.intellij.util.CollectConsumer
 import com.intellij.util.DocumentUtil
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.ContainerUtil
 import java.util.*
 import java.util.stream.Collectors
 import javax.swing.ScrollPaneConstants
 
 data class RecentLocationsDataModel(val project: Project, val editorsToRelease: ArrayList<Editor> = arrayListOf()) {
+  val projectConnection = project.messageBus.connect()
 
-  private val navigationPlaces: List<RecentLocationItem> by lazy {
-    calculateItems(project, false)
+  init {
+    projectConnection.subscribe(RecentPlacesListener.TOPIC, object : RecentPlacesListener {
+      override fun recentPlaceAdded(changePlace: IdeDocumentHistoryImpl.PlaceInfo, isChanged: Boolean) =
+        resetPlaces(isChanged)
+
+      override fun recentPlaceRemoved(changePlace: IdeDocumentHistoryImpl.PlaceInfo, isChanged: Boolean) {
+        resetPlaces(isChanged)
+      }
+
+      private fun resetPlaces(isChanged: Boolean) {
+        if (isChanged) changedPlaces.drop() else navigationPlaces.drop()
+      }
+    })
   }
 
-  private val changedPlaces: List<RecentLocationItem> by lazy {
-    calculateItems(project, true)
-  }
+  private val navigationPlaces: SynchronizedClearableLazy<List<RecentLocationItem>> = calculateItems(project, false)
+
+  private val changedPlaces: SynchronizedClearableLazy<List<RecentLocationItem>> = calculateItems(project, true)
 
   private val navigationPlacesBreadcrumbsMap: Map<IdeDocumentHistoryImpl.PlaceInfo, String> by lazy {
-    collectBreadcrumbs(project, navigationPlaces)
+    collectBreadcrumbs(project, navigationPlaces.value)
   }
 
   private val changedPlacedBreadcrumbsMap: Map<IdeDocumentHistoryImpl.PlaceInfo, String> by lazy {
-    collectBreadcrumbs(project, changedPlaces)
+    collectBreadcrumbs(project, changedPlaces.value)
   }
 
   fun getPlaces(changed: Boolean): List<RecentLocationItem> {
-    return if (changed) changedPlaces else navigationPlaces
+    return if (changed) changedPlaces.value else navigationPlaces.value
   }
 
   fun getBreadcrumbsMap(changed: Boolean): Map<IdeDocumentHistoryImpl.PlaceInfo, String> {
@@ -71,37 +82,27 @@ data class RecentLocationsDataModel(val project: Project, val editorsToRelease: 
       return fileName
     }
 
-    val collector = FileBreadcrumbsCollector.findBreadcrumbsCollector(project, placeInfo.file)
-    var breadcrumbs: Collection<Iterable<Crumb>> = emptyList()
-    if (collector != null) {
-      val consumer = CollectConsumer<Iterable<Crumb>>()
-      collector.updateCrumbs(placeInfo.file,
-                             rangeMarker.document,
-                             rangeMarker.startOffset,
-                             ProgressIndicatorBase(),
-                             consumer,
-                             true)
-      breadcrumbs = consumer.result
-    }
+    val collector = FileBreadcrumbsCollector.findBreadcrumbsCollector(project, placeInfo.file) ?: return fileName
+    val crumbs = collector.computeCrumbs(placeInfo.file, rangeMarker.document, rangeMarker.startOffset, true)
 
-    if (breadcrumbs.isEmpty()) {
+    if (!crumbs.iterator().hasNext()) {
       return fileName
     }
 
-    val crumbs = ContainerUtil.getFirstItem(breadcrumbs) ?: return fileName
-    val breadcrumbsText = StringUtil.join(ContainerUtil.map(crumbs) { crumb -> crumb.text }, " > ")
+    val breadcrumbsText = crumbs.joinToString(" > ") { it.text }
 
     return StringUtil.shortenTextWithEllipsis(breadcrumbsText, 50, 0)
   }
 
-  private fun calculateItems(project: Project, changed: Boolean): List<RecentLocationItem> {
-    val items = getPlaceLinePairs(project, changed)
-    editorsToRelease.addAll(ContainerUtil.map<RecentLocationItem, EditorEx>(items) { item -> item.editor })
-
-    return items
+  private fun calculateItems(project: Project, changed: Boolean): SynchronizedClearableLazy<List<RecentLocationItem>> {
+    return SynchronizedClearableLazy {
+      val items = createPlaceLinePairs(project, changed)
+      editorsToRelease.addAll(ContainerUtil.map(items) { item -> item.editor })
+      items
+    }
   }
 
-  private fun getPlaceLinePairs(project: Project, changed: Boolean): List<RecentLocationItem> {
+  private fun createPlaceLinePairs(project: Project, changed: Boolean): List<RecentLocationItem> {
     val places = getPlaces(project, changed)
     if (places.isEmpty()) {
       return emptyList()

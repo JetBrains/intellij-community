@@ -53,7 +53,7 @@ public class LineTokenizer {
     }
 
     LineTokenizer tokenizer = new LineTokenizer(chars);
-    List<String> lines = new ArrayList<String>();
+    List<String> lines = new ArrayList<>();
     while(!tokenizer.atEnd()){
       int offset = tokenizer.getOffset();
       String line;

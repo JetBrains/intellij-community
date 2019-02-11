@@ -138,8 +138,10 @@ public class JavaScratchCompilationSupport implements CompileTask {
                                                                          : () -> ProjectRootManager.getInstance(project).orderEntries();
 
       ApplicationManager.getApplication().runReadAction(() -> {
-        for (String s : orderEnumerator.compute().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().getPathList()) {
-          cp.add(new File(s));
+        if (module != null || scratchConfig.isBuildProjectOnEmptyModuleList()) {
+          for (String s : orderEnumerator.compute().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().getPathList()) {
+            cp.add(new File(s));
+          }
         }
         for (String s : orderEnumerator.compute().compileOnly().sdkOnly().getPathsList().getPathList()) {
           platformCp.add(new File(s));

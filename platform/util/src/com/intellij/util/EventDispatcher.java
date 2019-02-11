@@ -34,26 +34,21 @@ public class EventDispatcher<T extends EventListener> {
 
   @NotNull
   public static <T extends EventListener> EventDispatcher<T> create(@NotNull Class<T> listenerClass) {
-    return new EventDispatcher<T>(listenerClass, null);
+    return new EventDispatcher<>(listenerClass, null);
   }
 
   @NotNull
   public static <T extends EventListener> EventDispatcher<T> create(@NotNull Class<T> listenerClass, @NotNull Map<String, Object> methodReturnValues) {
     assertNonVoidMethodReturnValuesAreDeclared(methodReturnValues, listenerClass);
-    return new EventDispatcher<T>(listenerClass, methodReturnValues);
+    return new EventDispatcher<>(listenerClass, methodReturnValues);
   }
 
   private static void assertNonVoidMethodReturnValuesAreDeclared(@NotNull Map<String, Object> methodReturnValues,
                                                                  @NotNull Class<?> listenerClass) {
-    List<Method> declared = new ArrayList<Method>(ReflectionUtil.getClassPublicMethods(listenerClass));
+    List<Method> declared = new ArrayList<>(ReflectionUtil.getClassPublicMethods(listenerClass));
     for (final Map.Entry<String, Object> entry : methodReturnValues.entrySet()) {
       final String methodName = entry.getKey();
-      Method found = ContainerUtil.find(declared, new Condition<Method>() {
-        @Override
-        public boolean value(Method m) {
-          return methodName.equals(m.getName());
-        }
-      });
+      Method found = ContainerUtil.find(declared, m -> methodName.equals(m.getName()));
       assert found != null : "Method " + methodName + " must be declared in " + listenerClass;
       assert !found.getReturnType().equals(void.class) :
         "Method " + methodName + " must be non-void if you want to specify what its proxy should return";

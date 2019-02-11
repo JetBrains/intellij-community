@@ -148,10 +148,14 @@ public class ThreadTracker {
         //  System.err.println("waiting for " + thread + "\n" + ThreadDumper.dumpThreadsToString());
         //}
         StackTraceElement[] traceBeforeWait = thread.getStackTrace();
+        if (shouldIgnore(thread, traceBeforeWait)) continue;
         int WAIT_SEC = 10;
-        while (!shouldIgnore(thread, thread.getStackTrace()) && System.currentTimeMillis() < start + WAIT_SEC*1_000) {
+        StackTraceElement[] stackTrace = traceBeforeWait;
+        while (System.currentTimeMillis() < start + WAIT_SEC*1_000) {
           UIUtil.dispatchAllInvocationEvents(); // give blocked thread opportunity to die if it's stuck doing invokeAndWait()
           // afters some time the submitted task can finish and the thread become idle pool
+          stackTrace = thread.getStackTrace();
+          if (shouldIgnore(thread, stackTrace)) break;
         }
         //long elapsed = System.currentTimeMillis() - start;
         //if (elapsed > 1_000) {
@@ -159,9 +163,7 @@ public class ThreadTracker {
         //}
 
         // check once more because the thread name may be set via race
-        StackTraceElement[] stackTrace = thread.getStackTrace();
         stackTraces.put(thread, stackTrace);
-
         if (shouldIgnore(thread, stackTrace)) continue;
 
         all.keySet().removeAll(after.keySet());
@@ -183,7 +185,7 @@ public class ThreadTracker {
   private static String dumpThreadsToString(Map<String, Thread> after, Map<Thread, StackTraceElement[]> stackTraces) {
     StringBuilder f = new StringBuilder();
     after.forEach((name, thread) -> {
-      f.append("\"" + name + "\" " + " (" + (thread.isAlive() ? "alive" : "dead") + ") " + thread.getState() + "\n");
+      f.append("\"" + name + "\" (" + (thread.isAlive() ? "alive" : "dead") + ") " + thread.getState() + "\n");
       for (StackTraceElement element : stackTraces.get(thread)) {
         f.append("\tat " + element + "\n");
       }

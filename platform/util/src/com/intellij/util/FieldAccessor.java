@@ -43,7 +43,7 @@ public class FieldAccessor<E, T> {
   public boolean isAvailable() {
     if (myFieldRef == null) {
       try {
-        myFieldRef = new Ref<Field>();
+        myFieldRef = new Ref<>();
         myFieldRef.set(myClass.getDeclaredField(myName));
         myFieldRef.get().setAccessible(true);
       }

@@ -10,7 +10,6 @@ import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.junit.InheritorChooser;
-import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -157,11 +156,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
       }
     };
     if (inheritorChooser.runMethodInAbstractClass(context, performRunnable, null, (PsiClass)fromContext.getSourceElement())) return;
-    if (RunConfigurationProducer.getInstance(PatternGradleConfigurationProducer.class).isMultipleElementsSelected(context)) return;
-    Location contextLocation = context.getLocation();
-    if (contextLocation == null) return;
-    PsiClass psiClass = getPsiClassForLocation(contextLocation);
-    if (psiClass == null) return;
+    PsiClass psiClass = (PsiClass)fromContext.getSourceElement();
     chooseTestClassConfiguration(fromContext, context, performRunnable, psiClass);
   }
 
@@ -169,15 +164,17 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
                                                    @NotNull ConfigurationContext context,
                                                    @NotNull Runnable performRunnable,
                                                    @NotNull PsiClass... classes) {
-    String systemId = ExternalSystemModulePropertyManager.getInstance(context.getModule()).getExternalSystemId();
-    if (!StringUtil.equals(systemId, GradleConstants.SYSTEM_ID.toString())) return;
     TasksChooser tasksChooser = new TasksChooser() {
       @Override
       protected void choosesTasks(@NotNull List<? extends Map<String, ? extends List<String>>> tasks) {
         ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
         ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
         Function1<PsiClass, String> createFilter = (psiClass) -> createTestFilterFrom(psiClass, /*hasSuffix=*/true);
-        if (!applyTestConfiguration(settings, context.getProject(), tasks, classes, createFilter)) return;
+        if (!applyTestConfiguration(settings, context.getProject(), tasks, classes, createFilter)) {
+          LOG.warn("Cannot apply class test configuration, uses raw run configuration");
+          performRunnable.run();
+          return;
+        }
         configuration.setName(StringUtil.join(classes, aClass -> aClass.getName(), "|"));
         performRunnable.run();
       }

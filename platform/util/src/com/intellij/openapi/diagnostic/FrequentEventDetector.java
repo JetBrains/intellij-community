@@ -37,7 +37,7 @@ public class FrequentEventDetector {
   private long myStartedCounting = System.currentTimeMillis();
   private final AtomicInteger myEventsPosted = new AtomicInteger();
   private final AtomicInteger myLastTraceId = new AtomicInteger();
-  private final Map<String, Integer> myRecentTraces = new FixedHashMap<String, Integer>(50);
+  private final Map<String, Integer> myRecentTraces = new FixedHashMap<>(50);
   private final int myEventCountThreshold;
   private final int myTimeSpanMs;
   private final Level myLevel;

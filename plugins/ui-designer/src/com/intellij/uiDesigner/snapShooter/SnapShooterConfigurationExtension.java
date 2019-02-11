@@ -22,6 +22,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.util.PathUtil;
+import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.net.NetUtils;
 import com.intellij.xml.util.XmlStringUtil;
 import com.jgoodies.forms.layout.FormLayout;
@@ -66,6 +67,7 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
       paths.add(PathUtil.getJarPathForClass(LafManagerListener.class));        // intellij.platform.ide
       paths.add(PathUtil.getJarPathForClass(DataProvider.class));              // intellij.platform.editor
       paths.add(PathUtil.getJarPathForClass(XmlStringUtil.class));             // intellij.platform.util
+      paths.add(PathUtil.getJarPathForClass(UrlClassLoader.class));            // intellij.platform.util.classLoader
       paths.add(PathUtil.getJarPathForClass(Navigatable.class));               // intellij.platform.core
       paths.add(PathUtil.getJarPathForClass(AreaInstance.class));              // intellij.platform.extensions
       paths.add(PathUtil.getJarPathForClass(FormLayout.class));                // jgoodies

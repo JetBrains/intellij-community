@@ -28,7 +28,7 @@ public abstract class KeyCollectionBasedForwardIndex<Key, Value> extends MapBase
 
   @Override
   protected InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId, Collection<Key> keys) {
-    return new CollectionInputDataDiffBuilder<Key, Value>(inputId, keys);
+    return new CollectionInputDataDiffBuilder<>(inputId, keys);
   }
 
   @Override

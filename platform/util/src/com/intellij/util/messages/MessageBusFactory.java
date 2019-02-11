@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class MessageBusFactory {
 
-  private static final AtomicReference<Impl> ourImpl = new AtomicReference<Impl>(Impl.DEFAULT);
+  private static final AtomicReference<Impl> ourImpl = new AtomicReference<>(Impl.DEFAULT);
 
   private MessageBusFactory() {}
 

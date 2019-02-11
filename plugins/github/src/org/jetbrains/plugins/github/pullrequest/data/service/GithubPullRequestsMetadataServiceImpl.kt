@@ -39,6 +39,7 @@ import java.awt.event.ActionListener
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer
 import java.util.function.Function
@@ -218,21 +219,21 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
           list.setPaintBusy(true)
           list.emptyText.text = "Loading..."
 
-
           val progressIndicator = EmptyProgressIndicator()
 
           loadingFuture = GithubAsyncUtil
             .futureOfMutable { dataLoader.getDataProvider(pullRequest).detailsRequest }
             .thenComposeAsync(Function { details: GithubPullRequestDetailedWithHtml ->
               originalSelection = currentListExtractor(details).toHashSet()
-              progressManager.submitBackgroundTask(project, "Load List Of Possibilities", true, progressIndicator) {
-                availableListProvider(it, details)
+              progressManager.submitBackgroundTask(project, "Load List Of Possibilities", true, progressIndicator) { indicator ->
+                availableListProvider(indicator, details)
+                  .map { SelectableWrapper(it, originalSelection.contains(it)) }
+                  .sortedWith(Comparator.comparing<SelectableWrapper<T>, Boolean> { !it.selected }
+                                .thenComparing({ listCellRenderer.getText(it.value) }) { a, b -> StringUtil.compare(a, b, true) })
               }
             })
             .thenAcceptAsync(Consumer { possibilities ->
-              listModel.replaceAll(possibilities
-                                     .map { SelectableWrapper(it, originalSelection.contains(it)) }
-                                     .sortedBy { !it.selected })
+              listModel.replaceAll(possibilities)
 
               list.setPaintBusy(false)
               list.emptyText.text = UIBundle.message("message.noMatchesFound")

@@ -4,6 +4,7 @@ package com.intellij.application.options.codeStyle.properties;
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.SmartIndentOptionsEditor;
 import com.intellij.lang.Language;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
@@ -127,6 +128,7 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
   @Nullable
   @Override
   public String getPropertyDescription(@NotNull String externalName) {
-    return null;
+    String key = "codestyle.property.description." + externalName;
+    return OptionsBundle.getBundle().containsKey(key) ? OptionsBundle.message(key) : null;
   }
 }

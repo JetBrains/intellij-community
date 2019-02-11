@@ -1,7 +1,8 @@
 <component name="libraryTable">
-  <library name="truth">
+  <library name="truth" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.google.truth:truth:0.34" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/android/android/lib/truth-0.28.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/truth/truth/0.34/truth-0.34.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

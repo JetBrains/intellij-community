@@ -2,7 +2,6 @@
 package org.jdom;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -88,14 +87,10 @@ class ImmutableElement extends Element {
     }
 
     if (type == null) {
-      return Collections.unmodifiableList(ContainerUtil.map(originAttributes, new Function<Attribute, Attribute>() {
-        @Override
-        public Attribute fun(Attribute attribute) {
-          return new ImmutableAttribute(interner.internString(attribute.getName()),
-                                        interner.internString(attribute.getValue()),
-                                        attribute.getAttributeType(), attribute.getNamespace());
-        }
-      }));
+      return Collections.unmodifiableList(ContainerUtil.map(originAttributes,
+                                                            (Function<Attribute, Attribute>)attribute -> new ImmutableAttribute(interner.internString(attribute.getName()),
+                                                                                                                                                                                  interner.internString(attribute.getValue()),
+                                                                                                                                                                                  attribute.getAttributeType(), attribute.getNamespace())));
     }
     else {
       return new ImmutableSameTypeAttributeList(nameValues, type, namespace);
@@ -115,12 +110,7 @@ class ImmutableElement extends Element {
 
   @Override
   public <T extends Content> List<T> getContent(final Filter<T> filter) {
-    return (List<T>)ContainerUtil.filter(myContent, new Condition<Content>() {
-      @Override
-      public boolean value(Content content) {
-        return filter.matches(content);
-      }
-    });
+    return (List<T>)ContainerUtil.filter(myContent, filter::matches);
   }
 
   @Override
@@ -281,7 +271,7 @@ class ImmutableElement extends Element {
 
     // Cloning additional namespaces
     if (additionalNamespaces != null) {
-      element.additionalNamespaces = new ArrayList<Namespace>(additionalNamespaces);
+      element.additionalNamespaces = new ArrayList<>(additionalNamespaces);
     }
 
     // Cloning content

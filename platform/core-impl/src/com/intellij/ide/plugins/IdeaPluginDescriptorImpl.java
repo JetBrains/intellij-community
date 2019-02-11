@@ -703,6 +703,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myOptionalConfigs;
   }
 
+  @Nullable
   Map<PluginId, List<IdeaPluginDescriptorImpl>> getOptionalDescriptors() {
     return myOptionalDescriptors;
   }

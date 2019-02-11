@@ -19,6 +19,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 
+@Deprecated
 public class MavenProjectImportProvider extends ProjectImportProvider {
   public MavenProjectImportProvider(@NotNull MavenProjectBuilder builder) {
     super(builder);

@@ -28,7 +28,7 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
 
   @NotNull
   protected Map<K, Object> createMap() {
-    return new THashMap<K, Object>();
+    return new THashMap<>();
   }
 
   public void add(@NotNull K key, @NotNull V value) {
@@ -42,7 +42,7 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
       curList.add(value);
     }
     else {
-      ValueList<Object> newList = new ValueList<Object>();
+      ValueList<Object> newList = new ValueList<>();
       newList.add(current);
       newList.add(value);
       myMap.put(key, newList);
@@ -150,13 +150,10 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
 
   @Override
   public String toString() {
-    return "{" + StringUtil.join(myMap.entrySet(), new Function<Map.Entry<K, Object>, String>() {
-      @Override
-      public String fun(Map.Entry<K, Object> entry) {
-        Object value = entry.getValue();
-        String s = (value instanceof MostlySingularMultiMap.ValueList ? ((ValueList)value) : Collections.singletonList(value)).toString();
-        return entry.getKey() + ": " + s;
-      }
+    return "{" + StringUtil.join(myMap.entrySet(), entry -> {
+      Object value = entry.getValue();
+      String s = (value instanceof MostlySingularMultiMap.ValueList ? ((ValueList)value) : Collections.singletonList(value)).toString();
+      return entry.getKey() + ": " + s;
     }, "; ") + "}";
   }
 
@@ -172,7 +169,7 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
 
   @NotNull
   public static <K, V> MostlySingularMultiMap<K, V> newMap() {
-    return new MostlySingularMultiMap<K, V>();
+    return new MostlySingularMultiMap<>();
   }
   private static final MostlySingularMultiMap EMPTY = new EmptyMap();
 

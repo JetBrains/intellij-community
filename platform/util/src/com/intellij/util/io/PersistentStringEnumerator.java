@@ -51,7 +51,7 @@ public class PersistentStringEnumerator extends PersistentEnumeratorDelegate<Str
                                      boolean cacheLastMappings,
                                      @Nullable PagedFileStorage.StorageLockContext lockContext) throws IOException {
     super(file, EnumeratorStringDescriptor.INSTANCE, initialSize, lockContext);
-    myCache = cacheLastMappings ? new CachingEnumerator<String>(new DataEnumerator<String>() {
+    myCache = cacheLastMappings ? new CachingEnumerator<>(new DataEnumerator<String>() {
       @Override
       public int enumerate(@Nullable String value) throws IOException {
         return PersistentStringEnumerator.super.enumerate(value);

@@ -34,7 +34,7 @@ public class HeavyProcessLatch {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.storage.HeavyProcessLatch");
   public static final HeavyProcessLatch INSTANCE = new HeavyProcessLatch();
 
-  private final Set<String> myHeavyProcesses = new THashSet<String>();
+  private final Set<String> myHeavyProcesses = new THashSet<>();
   private final EventDispatcher<HeavyProcessListener> myEventDispatcher = EventDispatcher.create(HeavyProcessListener.class);
 
   private final EventDispatcher<HeavyProcessListener> myUIProcessDispatcher = EventDispatcher.create(HeavyProcessListener.class);
@@ -46,7 +46,7 @@ public class HeavyProcessLatch {
   private static final int MAX_PRIORITIZATION_MILLIS = 12 * 1000;
   private volatile long myPrioritizingStarted;
 
-  private final List<Runnable> toExecuteOutOfHeavyActivity = new ArrayList<Runnable>();
+  private final List<Runnable> toExecuteOutOfHeavyActivity = new ArrayList<>();
 
   private HeavyProcessLatch() {
   }
@@ -76,7 +76,7 @@ public class HeavyProcessLatch {
         toRunNow = Collections.emptyList();
       }
       else {
-        toRunNow = new ArrayList<Runnable>(toExecuteOutOfHeavyActivity);
+        toRunNow = new ArrayList<>(toExecuteOutOfHeavyActivity);
         toExecuteOutOfHeavyActivity.clear();
       }
     }

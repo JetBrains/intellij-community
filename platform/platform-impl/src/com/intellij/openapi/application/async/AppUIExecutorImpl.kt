@@ -70,29 +70,11 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
   }
 
   override fun withDocumentsCommitted(project: Project): AppUIExecutor {
-    return withConstraint(object : ExpirableContextConstraint {
-      override val isCorrectContext: Boolean
-        get() = !PsiDocumentManager.getInstance(project).hasUncommitedDocuments()
-
-      override fun scheduleExpirable(runnable: Runnable) {
-        PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(runnable, modality)
-      }
-
-      override fun toString() = "withDocumentsCommitted"
-    }, project)
+    return withConstraint(WithDocumentsCommitted(project, modality), project)
   }
 
   override fun inSmartMode(project: Project): AppUIExecutor {
-    return withConstraint(object : ExpirableContextConstraint {
-      override val isCorrectContext: Boolean
-        get() = !DumbService.getInstance(project).isDumb
-
-      override fun scheduleExpirable(runnable: Runnable) {
-        DumbService.getInstance(project).runWhenSmart(runnable)
-      }
-
-      override fun toString() = "inSmartMode"
-    }, project)
+    return withConstraint(InSmartMode(project), project)
   }
 
   override fun inTransaction(parentDisposable: Disposable): AppUIExecutor {
@@ -137,4 +119,26 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
       override fun toString() = "inWriteAction"
     })
   }
+}
+
+internal class WithDocumentsCommitted(private val project: Project, private val modality: ModalityState) : ExpirableContextConstraint {
+  override val isCorrectContext: Boolean
+    get() = !PsiDocumentManager.getInstance(project).hasUncommitedDocuments()
+
+  override fun scheduleExpirable(runnable: Runnable) {
+    PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(runnable, modality)
+  }
+
+  override fun toString() = "withDocumentsCommitted"
+}
+
+internal class InSmartMode(private val project: Project) : ExpirableContextConstraint {
+  override val isCorrectContext: Boolean
+    get() = !DumbService.getInstance(project).isDumb
+
+  override fun scheduleExpirable(runnable: Runnable) {
+    DumbService.getInstance(project).runWhenSmart(runnable)
+  }
+
+  override fun toString() = "inSmartMode"
 }

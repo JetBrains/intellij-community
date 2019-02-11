@@ -31,10 +31,10 @@ public class ThemeJsonCompletionContributor extends CompletionContributor {
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    if (!isThemeJsonFile(parameters.getOriginalFile())) return;
-
     PsiElement position = parameters.getPosition();
     if (!(position instanceof LeafPsiElement)) return;
+
+    if (!isThemeJsonFile(parameters.getOriginalFile())) return;
 
     PsiElement parent = position.getParent();
     if (parent instanceof JsonStringLiteral || parent instanceof JsonReferenceExpression) {

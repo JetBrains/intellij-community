@@ -42,9 +42,7 @@ class ScreenshotOnFailure: TestWatcher() {
     fun takeScreenshot(screenshotName: String, t: Throwable? = null) {
       try {
         val file = getOrCreateScreenshotFile(screenshotName)
-        if (t is ComponentLookupException) {
-          File(GuiTestPaths.failedTestScreenshotDir, "$screenshotName.hierarchy.txt").writeText(getHierarchy())
-        }
+        File(GuiTestPaths.failedTestScreenshotDir, "$screenshotName.hierarchy.txt").writeText(getHierarchy())
         myScreenshotTaker.safeTakeScreenshotAndSave(file)
         logInfo("Screenshot saved to '$file'")
       }

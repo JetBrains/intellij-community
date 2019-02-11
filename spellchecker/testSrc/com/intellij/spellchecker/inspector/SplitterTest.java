@@ -331,7 +331,19 @@ public class SplitterTest {
     String text = "http://www.test.com/test/example.html?var=This+is+a+simple+%26+short+test";
     correctListToCheck(PlainTextSplitter.getInstance(), text);
   }
-  
+
+  @Test
+  public void testUUID() {
+    String text = "cc27bbbc-d763-44b5-95fd-46124b6e84ca";
+    correctListToCheck(PlainTextSplitter.getInstance(), text);
+  }
+
+  @Test
+  public void testUUIDInsideText() {
+    String text = "asdasd ee3aaabc-98cb-47cf-a732-00f55f65975d asdasd";
+    correctListToCheck(PlainTextSplitter.getInstance(), text, "asdasd", "asdasd");
+  }
+
   @Test
   public void testWordBeforeDelimiter() {
     String text = "badd,";
