@@ -137,7 +137,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   private void buildTarGz(String jreDirectoryPath, String unixDistPath, String suffix) {
     def tarRoot = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
     def baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
-    def tarPath = "${buildContext.paths.artifacts}/${baseName}${suffix}.tar"
+    def tarPath = "${buildContext.paths.artifacts}/${baseName}${suffix}.tar.gz"
     def extraBins = customizer.extraExecutables
     def paths = [buildContext.paths.distAll, unixDistPath]
     String javaExecutablePath
@@ -154,8 +154,8 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     paths += productJsonDir
     def description = "archive${jreDirectoryPath != null ? "" : " (without JRE)"}"
     buildContext.messages.block("Build Linux tar.gz $description") {
-      buildContext.messages.progress("Building Linux tar $description")
-      buildContext.ant.tar(tarfile: tarPath, longfile: "gnu") {
+      buildContext.messages.progress("Building Linux tar.gz $description")
+      buildContext.ant.tar(tarfile: tarPath, longfile: "gnu", compression: "gzip") {
         paths.each {
           tarfileset(dir: it, prefix: tarRoot) {
             exclude(name: "bin/*.sh")
@@ -181,12 +181,8 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         }
       }
 
-      String gzPath = "${tarPath}.gz"
-      buildContext.messages.progress("Building Linux tar.gz $description")
-      buildContext.ant.gzip(src: tarPath, zipfile: gzPath)
-      buildContext.ant.delete(file: tarPath)
-      new ProductInfoValidator(buildContext).checkInArchive(gzPath, tarRoot)
-      buildContext.notifyArtifactBuilt(gzPath)
+      new ProductInfoValidator(buildContext).checkInArchive(tarPath, tarRoot)
+      buildContext.notifyArtifactBuilt(tarPath)
     }
   }
 
