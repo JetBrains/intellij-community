@@ -169,11 +169,11 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     // Rerun
     actions.add(createRerunAction());
     // Stop
-    actions.add(createStopAction());
+ //   actions.add(createStopAction());
     // Execute
-    actions.add(
-      new ConsoleExecuteAction(myConsoleView, myConsoleExecuteActionHandler, myConsoleExecuteActionHandler.getEmptyExecuteAction(),
-                               myConsoleExecuteActionHandler));
+    //actions.add(
+    //  new ConsoleExecuteAction(myConsoleView, myConsoleExecuteActionHandler, myConsoleExecuteActionHandler.getEmptyExecuteAction(),
+    //                           myConsoleExecuteActionHandler));
     toolbarActions.addAll(actions);
     // Attach Debugger
     toolbarActions.add(new ConnectDebuggerAction());
@@ -184,7 +184,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     settings.add(new PyVariableViewSettings.VariablesPolicyGroup());
     toolbarActions.add(settings);
     // New console
-    toolbarActions.add(new NewConsoleAction());
+    //toolbarActions.add(new NewConsoleAction());
 
     // Actions without icons
     actions.add(PyConsoleUtil.createInterruptAction(myConsoleView));
