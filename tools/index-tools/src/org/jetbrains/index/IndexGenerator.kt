@@ -7,6 +7,8 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileVisitor
+import com.intellij.psi.stubs.StubUpdatingIndex
+import com.intellij.util.indexing.FileBasedIndexExtension
 import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.io.PersistentHashMap
 import java.io.IOException
@@ -63,4 +65,8 @@ abstract class SingleIndexGenerator<Value>: IndexGenerator() {
       return FileIndexingResult.EXCEPTION
     }
   }
+}
+
+fun getAvailableFileBasedIndexExtensions() : List<FileBasedIndexExtension<*, *>> {
+  return FileBasedIndexExtension.EXTENSION_POINT_NAME.extensions.filter { it.dependsOnFileContent() && it.name != StubUpdatingIndex.INDEX_ID }
 }

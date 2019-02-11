@@ -2,11 +2,15 @@
 package org.jetbrains.index
 
 import com.google.common.hash.HashCode
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.psi.stubs.FileContentHashing
 import com.intellij.util.SystemProperties
+import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileContentImpl
 import java.io.Closeable
 import java.io.IOException
@@ -99,5 +103,12 @@ class RootsPrebuiltIndexer(private val roots: Collection<VirtualFile>): Prebuilt
                                              }
                                            })
     }
+  }
+}
+
+class ProjectContentPrebuiltIndexer(private val project: Project,
+                                    private val indicator: ProgressIndicator = ProgressManager.getInstance().progressIndicator): PrebuiltIndexer() {
+  override fun iterateFiles(fileVisitor: (VirtualFile) -> Boolean) {
+    FileBasedIndex.getInstance().iterateIndexableFiles(fileVisitor, project, indicator)
   }
 }
