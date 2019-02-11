@@ -87,14 +87,10 @@ public class RefCountingStorage extends AbstractStorage {
       result = super.readBytes(record);
     }
 
-    InflaterInputStream in = new CustomInflaterInputStream(result);
-    try {
+    try (InflaterInputStream in = new CustomInflaterInputStream(result)) {
       final BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
       StreamUtil.copyStreamContent(in, outputStream);
       return outputStream;
-    }
-    finally {
-      in.close();
     }
   }
 
@@ -165,12 +161,8 @@ public class RefCountingStorage extends AbstractStorage {
 
   private void zipAndWrite(ByteArraySequence bytes, int record, boolean fixedSize) throws IOException {
     BufferExposingByteArrayOutputStream s = new BufferExposingByteArrayOutputStream();
-    DeflaterOutputStream out = new DeflaterOutputStream(s);
-    try {
+    try (DeflaterOutputStream out = new DeflaterOutputStream(s)) {
       out.write(bytes.getBytes(), bytes.getOffset(), bytes.getLength());
-    }
-    finally {
-      out.close();
     }
 
     synchronized (myLock) {

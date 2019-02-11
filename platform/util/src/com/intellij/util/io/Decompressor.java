@@ -150,12 +150,8 @@ public abstract class Decompressor {
           InputStream inputStream = openEntryStream(entry);
           try {
             FileUtil.createParentDirs(outputFile);
-            FileOutputStream outputStream = new FileOutputStream(outputFile);
-            try {
+            try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
               FileUtil.copy(inputStream, outputStream);
-            }
-            finally {
-              outputStream.close();
             }
           }
           finally {

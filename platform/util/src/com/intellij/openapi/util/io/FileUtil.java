@@ -191,8 +191,7 @@ public class FileUtil extends FileUtilRt {
   @NotNull
   public static byte[] loadFileBytes(@NotNull File file) throws IOException {
     byte[] bytes;
-    final InputStream stream = new FileInputStream(file);
-    try {
+    try (InputStream stream = new FileInputStream(file)) {
       final long len = file.length();
       if (len < 0) {
         throw new IOException("File length reported negative, probably doesn't exist");
@@ -203,9 +202,6 @@ public class FileUtil extends FileUtilRt {
       }
 
       bytes = loadBytes(stream, (int)len);
-    }
-    finally {
-      stream.close();
     }
     return bytes;
   }
@@ -437,19 +433,11 @@ public class FileUtil extends FileUtilRt {
 
   private static void performCopy(@NotNull File fromFile, @NotNull File toFile, final boolean syncTimestamp) throws IOException {
     if (filesEqual(fromFile, toFile)) return;
-    final FileOutputStream fos = openOutputStream(toFile);
 
-    try {
-      final FileInputStream fis = new FileInputStream(fromFile);
-      try {
+    try (FileOutputStream fos = openOutputStream(toFile)) {
+      try (FileInputStream fis = new FileInputStream(fromFile)) {
         copy(fis, fos);
       }
-      finally {
-        fis.close();
-      }
-    }
-    finally {
-      fos.close();
     }
 
     if (syncTimestamp) {
@@ -1109,12 +1097,8 @@ public class FileUtil extends FileUtilRt {
   private static void writeToFile(@NotNull File file, @NotNull byte[] text, int off, int len, boolean append) throws IOException {
     createParentDirs(file);
 
-    OutputStream stream = new FileOutputStream(file, append);
-    try {
+    try (OutputStream stream = new FileOutputStream(file, append)) {
       stream.write(text, off, len);
-    }
-    finally {
-      stream.close();
     }
   }
 

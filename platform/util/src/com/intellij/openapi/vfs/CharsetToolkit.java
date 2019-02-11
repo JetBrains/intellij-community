@@ -472,12 +472,8 @@ public class CharsetToolkit {
   public static Charset guessEncoding(@NotNull File f, int bufferLength, @NotNull Charset defaultCharset) throws IOException {
     byte[] buffer = new byte[bufferLength];
     int read;
-    FileInputStream fis = new FileInputStream(f);
-    try {
+    try (FileInputStream fis = new FileInputStream(f)) {
       read = fis.read(buffer);
-    }
-    finally {
-      fis.close();
     }
     CharsetToolkit toolkit = new CharsetToolkit(buffer, defaultCharset);
     return toolkit.guessEncoding(read);

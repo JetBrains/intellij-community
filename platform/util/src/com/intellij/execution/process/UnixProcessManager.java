@@ -224,10 +224,8 @@ public class UnixProcessManager {
   }
 
   private static void processCommandOutput(Process process, Processor<? super String> processor, boolean skipFirstLine, boolean throwOnError) throws IOException {
-    BufferedReader stdOutput = new BufferedReader(new InputStreamReader(process.getInputStream()));
-    try {
-      BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-      try {
+    try (BufferedReader stdOutput = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+      try (BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
         if (skipFirstLine) {
           stdOutput.readLine(); //ps output header
         }
@@ -247,12 +245,6 @@ public class UnixProcessManager {
           throw new IOException("Error reading ps output:" + errorStr.toString());
         }
       }
-      finally {
-        stdError.close();
-      }
-    }
-    finally {
-      stdOutput.close();
     }
   }
 

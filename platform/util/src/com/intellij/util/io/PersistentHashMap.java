@@ -602,13 +602,9 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
     final PersistentHashMapValueStorage.ReadResult readResult = myValueStorage.readBytes(valueOffset);
 
-    DataInputStream input = new DataInputStream(new UnsyncByteArrayInputStream(readResult.buffer));
     final Value valueRead;
-    try {
+    try (DataInputStream input = new DataInputStream(new UnsyncByteArrayInputStream(readResult.buffer))) {
       valueRead = myValueExternalizer.read(input);
-    }
-    finally {
-      input.close();
     }
 
     if (myValueStorage.performChunksCompaction(readResult.chunksCount, readResult.buffer.length)) {

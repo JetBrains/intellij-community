@@ -31,18 +31,10 @@ public class ReadOnlyMappedBufferWrapper extends MappedBufferWrapper {
 
   @Override
   protected MappedByteBuffer map() throws IOException {
-    final FileInputStream stream = new FileInputStream(myFile);
-    try {
-      final FileChannel channel = stream.getChannel();
-      try {
+    try (FileInputStream stream = new FileInputStream(myFile)) {
+      try (FileChannel channel = stream.getChannel()) {
         return channel.map(FileChannel.MapMode.READ_ONLY, myPosition, myLength);
       }
-      finally {
-        channel.close();
-      }
-    }
-    finally {
-      stream.close();
     }
   }
 }

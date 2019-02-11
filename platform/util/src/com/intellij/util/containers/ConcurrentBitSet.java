@@ -440,15 +440,11 @@ public class ConcurrentBitSet {
   }
 
   public void writeTo(@NotNull File file) throws IOException {
-    DataOutputStream bitSetStorage = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
-    try {
+    try (DataOutputStream bitSetStorage = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)))) {
       long[] words = toLongArray();
       for (long word : words) {
         bitSetStorage.writeLong(word);
       }
-    }
-    finally {
-      bitSetStorage.close();
     }
   }
 
@@ -457,17 +453,13 @@ public class ConcurrentBitSet {
     if (!file.exists()) {
       return new ConcurrentBitSet();
     }
-    DataInputStream bitSetStorage = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
-    try {
+    try (DataInputStream bitSetStorage = new DataInputStream(new BufferedInputStream(new FileInputStream(file)))) {
       long length = file.length();
-      long[] words = new long[(int)(length/8)];
-      for (int i=0; i<words.length;i++) {
+      long[] words = new long[(int)(length / 8)];
+      for (int i = 0; i < words.length; i++) {
         words[i] = bitSetStorage.readLong();
       }
       return new ConcurrentBitSet(words);
-    }
-    finally {
-      bitSetStorage.close();
     }
   }
 

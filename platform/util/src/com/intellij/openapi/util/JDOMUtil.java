@@ -355,12 +355,8 @@ public class JDOMUtil {
   }
 
   public static void writeDocument(@NotNull Document document, @NotNull String filePath, String lineSeparator) throws IOException {
-    OutputStream stream = new BufferedOutputStream(new FileOutputStream(filePath));
-    try {
+    try (OutputStream stream = new BufferedOutputStream(new FileOutputStream(filePath))) {
       writeDocument(document, stream, lineSeparator);
-    }
-    finally {
-      stream.close();
     }
   }
 
@@ -374,12 +370,8 @@ public class JDOMUtil {
 
   public static void write(@NotNull Element element, @NotNull File file, @Nullable String lineSeparator) throws IOException {
     FileUtil.createParentDirs(file);
-    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), CharsetToolkit.UTF8_CHARSET));
-    try {
+    try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), CharsetToolkit.UTF8_CHARSET))) {
       writeElement(element, writer, createOutputter(lineSeparator));
-    }
-    finally {
-      writer.close();
     }
   }
 
@@ -390,12 +382,8 @@ public class JDOMUtil {
   public static void write(@NotNull Parent element, @NotNull File file, @NotNull String lineSeparator) throws IOException {
     FileUtil.createParentDirs(file);
 
-    OutputStream stream = new BufferedOutputStream(new FileOutputStream(file));
-    try {
+    try (OutputStream stream = new BufferedOutputStream(new FileOutputStream(file))) {
       write(element, stream, lineSeparator);
-    }
-    finally {
-      stream.close();
     }
   }
 
@@ -404,17 +392,13 @@ public class JDOMUtil {
   }
 
   public static void write(@NotNull Parent element, @NotNull OutputStream stream, @NotNull String lineSeparator) throws IOException {
-    OutputStreamWriter writer = new OutputStreamWriter(stream, CharsetToolkit.UTF8_CHARSET);
-    try {
+    try (OutputStreamWriter writer = new OutputStreamWriter(stream, CharsetToolkit.UTF8_CHARSET)) {
       if (element instanceof Document) {
         writeDocument((Document)element, writer, lineSeparator);
       }
       else {
         writeElement((Element)element, writer, lineSeparator);
       }
-    }
-    finally {
-      writer.close();
     }
   }
 

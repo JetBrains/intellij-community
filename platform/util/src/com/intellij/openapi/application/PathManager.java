@@ -420,8 +420,7 @@ public class PathManager {
     for (String path : paths) {
       if (path != null && new File(path).exists()) {
         try {
-          Reader fis = new BufferedReader(new FileReader(path));
-          try {
+          try (Reader fis = new BufferedReader(new FileReader(path))) {
             Map<String, String> properties = FileUtil.loadProperties(fis);
             for (Map.Entry<String, String> entry : properties.entrySet()) {
               String key = entry.getKey();
@@ -432,9 +431,6 @@ public class PathManager {
                 sysProperties.setProperty(key, substituteVars(entry.getValue()));
               }
             }
-          }
-          finally {
-            fis.close();
           }
         }
         catch (IOException e) {

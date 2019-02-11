@@ -354,12 +354,8 @@ public class PagedFileStorage implements Forceable {
 
   private void resizeFile(long newSize) throws IOException {
     mySize = -1;
-    RandomAccessFile raf = new RandomAccessFile(myFile, RW);
-    try {
+    try (RandomAccessFile raf = new RandomAccessFile(myFile, RW)) {
       raf.setLength(newSize);
-    }
-    finally {
-      raf.close();
     }
     mySize = newSize;
   }

@@ -114,8 +114,7 @@ public class ResourceUtil {
   public static String loadText(@NotNull URL url) throws IOException {
     InputStream inputStream = new BufferedInputStream(URLUtil.openStream(url));
 
-    InputStreamReader reader = new InputStreamReader(inputStream, CharsetToolkit.UTF8_CHARSET);
-    try {
+    try (InputStreamReader reader = new InputStreamReader(inputStream, CharsetToolkit.UTF8_CHARSET)) {
       StringBuilder text = new StringBuilder();
       char[] buf = new char[5000];
       while (reader.ready()) {
@@ -124,9 +123,6 @@ public class ResourceUtil {
         text.append(buf, 0, length);
       }
       return text.toString();
-    }
-    finally {
-      reader.close();
     }
   }
 }
