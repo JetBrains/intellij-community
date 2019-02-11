@@ -204,14 +204,18 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
           // we are interested only in extension changes or removals.
           // addition of an extension is handled separately by RootsChanged event
           if (!newExtensions.keySet().containsAll(oldExtensions.keySet())) {
-            rebuildAllIndices();
+            Set<FileType> removedFileTypes = new HashSet<>(oldExtensions.keySet());
+            removedFileTypes.removeAll(newExtensions.keySet());
+            rebuildAllIndices("The following file types were removed/are no longer associated: " + removedFileTypes);
             return;
           }
           for (Map.Entry<FileType, Set<String>> entry : oldExtensions.entrySet()) {
             FileType fileType = entry.getKey();
             Set<String> strings = entry.getValue();
             if (!newExtensions.get(fileType).containsAll(strings)) {
-              rebuildAllIndices();
+              Set<String> removedExtensions = new HashSet<>(strings);
+              removedExtensions.removeAll(newExtensions.get(fileType));
+              rebuildAllIndices(fileType.getName() + " is no longer associated with extension(s) " + String.join(",", removedExtensions));
               return;
             }
           }
@@ -227,9 +231,9 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
         return set;
       }
 
-      private void rebuildAllIndices() {
+      private void rebuildAllIndices(@NotNull String reason) {
         doClearIndices();
-        scheduleIndexRebuild("File type change");
+        scheduleIndexRebuild("File type change" + ", " + reason);
       }
     });
 
