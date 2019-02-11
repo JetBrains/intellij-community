@@ -754,7 +754,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   /**
-   * @return true if {@code path} represents a directory which has children.
+   * @return {@code true} if {@code path} represents a directory with at least one child.
    */
   public static boolean hasChildren(@NotNull Path path) {
     // make sure to not load all children
