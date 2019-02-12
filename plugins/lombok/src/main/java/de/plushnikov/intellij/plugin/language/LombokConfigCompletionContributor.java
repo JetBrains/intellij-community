@@ -52,7 +52,7 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
     final Collection<String> otherOptions = new HashSet<>(Arrays.asList(
       ConfigKey.ACCESSORS_PREFIX.getConfigKey(), ConfigKey.LOG_FIELDNAME.getConfigKey(),
       ConfigKey.NONNULL_EXCEPTIONTYPE.getConfigKey(), ConfigKey.EQUALSANDHASHCODE_CALL_SUPER.getConfigKey(),
-      ConfigKey.FIELD_NAME_CONSTANTS_PREFIX.getConfigKey(), ConfigKey.FIELD_NAME_CONSTANTS_SUFFIX.getConfigKey()));
+      ConfigKey.FIELD_NAME_CONSTANTS_TYPENAME.getConfigKey()));
 
     final Collection<String> allOptions = new HashSet<>(booleanOptions);
     allOptions.addAll(flagUsageOptions);

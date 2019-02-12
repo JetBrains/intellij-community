@@ -30,8 +30,7 @@ public enum ConfigKey {
   ADD_GENERATED_ANNOTATION("lombok.addGeneratedAnnotation", "true"),
   ADD_SUPPRESS_FB_WARNINGS("lombok.extern.findbugs.addSuppressFBWarnings", "false"),
 
-  FIELD_NAME_CONSTANTS_PREFIX("lombok.fieldNameConstants.prefix", "FIELD_"),
-  FIELD_NAME_CONSTANTS_SUFFIX("lombok.fieldNameConstants.suffix", ""),
+  FIELD_NAME_CONSTANTS_TYPENAME("lombok.fieldNameConstants.innerTypeName","Fields"),
 
   NO_ARGS_CONSTRUCTOR_EXTRA_PRIVATE("lombok.noArgsConstructor.extraPrivate", "false"),
 

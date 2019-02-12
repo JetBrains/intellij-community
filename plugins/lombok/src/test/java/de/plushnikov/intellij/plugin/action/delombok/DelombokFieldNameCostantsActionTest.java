@@ -14,11 +14,11 @@ public class DelombokFieldNameCostantsActionTest extends LombokLightActionTestCa
     return super.getBasePath() + "/action/delombok/fieldnameconstants";
   }
 
-  public void testFieldNameConstantsFields() throws Exception {
+  public void testFieldNameConstantsClass() throws Exception {
     doTest();
   }
 
-  public void testFieldNameConstantsClass() throws Exception {
+  public void testFieldNameConstantsEnumClass() throws Exception {
     doTest();
   }
 

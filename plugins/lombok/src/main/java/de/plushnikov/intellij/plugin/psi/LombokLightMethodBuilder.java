@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
 
 /**
@@ -31,7 +32,7 @@ public class LombokLightMethodBuilder extends LightMethodBuilder {
   public LombokLightMethodBuilder(@NotNull PsiManager manager, @NotNull String name) {
     super(manager, JavaLanguage.INSTANCE, name,
       new LombokLightParameterListBuilder(manager, JavaLanguage.INSTANCE),
-      new LombokLightModifierList(manager, JavaLanguage.INSTANCE),
+      new LombokLightModifierList(manager, JavaLanguage.INSTANCE, Collections.emptySet()),
       new LombokLightReferenceListBuilder(manager, JavaLanguage.INSTANCE, PsiReferenceList.Role.THROWS_LIST),
       new LightTypeParameterListBuilder(manager, JavaLanguage.INSTANCE));
     setBaseIcon(LombokIcons.METHOD_ICON);

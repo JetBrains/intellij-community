@@ -1,11 +1,11 @@
 import lombok.experimental.FieldNameConstants;
 import lombok.AccessLevel;
 
-@FieldNameConstants
+@FieldNameConstants(level = AccessLevel.PACKAGE)
 public class FieldNameConstantsBasic {
-	@FieldNameConstants(level = AccessLevel.PROTECTED)
-	String iAmADvdPlayer;
-	int $skipMe;
-	static double skipMeToo;
-	String butPrintMePlease;
+  String iAmADvdPlayer;
+  int $skipMe;
+  static double skipMeToo;
+  @FieldNameConstants.Exclude int andMe;
+  String butPrintMePlease;
 }

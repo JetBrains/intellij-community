@@ -59,8 +59,8 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
   @NotNull
   private PsiJavaFile getPsiJavaFile(String testName, String type) {
     final String fileName = testName.replace('$', '/') + ".java";
-    final String beforeFileName = type + "/" + fileName;
-    final PsiFile psiFile = loadToPsiFile(beforeFileName);
+    final String filePath = type + "/" + fileName;
+    final PsiFile psiFile = loadToPsiFile(filePath);
     if (!(psiFile instanceof PsiJavaFile)) {
       fail("The test file type is not supported");
     }

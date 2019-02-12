@@ -24,7 +24,6 @@ import de.plushnikov.intellij.plugin.processor.clazz.log.LogProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.Slf4jProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.XSlf4jProcessor;
 import de.plushnikov.intellij.plugin.processor.field.DelegateFieldProcessor;
-import de.plushnikov.intellij.plugin.processor.field.FieldNameConstantsFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.field.GetterFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.field.WitherFieldProcessor;
@@ -60,7 +59,6 @@ public class DelombokEverythingAction extends AbstractDelombokAction {
       findExtension(DelegateFieldProcessor.class),
       findExtension(DelegateMethodProcessor.class),
 
-      findExtension(FieldNameConstantsFieldProcessor.class),
       findExtension(FieldNameConstantsProcessor.class),
 
       findExtension(BuilderPreDefinedInnerClassFieldProcessor.class),

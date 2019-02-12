@@ -143,6 +143,7 @@ Developed By
 - [**@twillouer** William Delanoue](https://github.com/twillouer)
 - [**@uvpoblotzki** Ulrich von Poblotzki](https://github.com/uvpoblotzki)
 - [**@yiftizur** Yiftach Tzur](https://github.com/yiftizur)
+- [**@alanachtenberg** Alan Achtenberg](https://github.com/alanachtenberg)
 
 Supporters
 --------

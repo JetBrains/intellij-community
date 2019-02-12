@@ -10,6 +10,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import lombok.Builder;
+import lombok.experimental.FieldNameConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +51,7 @@ public class LombokElementFinder extends PsiElementFinder {
 
     final PsiClass parentClass = getPsiClassAndPreventRecursionCalls(parentName, scope);
     if (null != parentClass) {
-      if (PsiAnnotationSearchUtil.isAnnotatedWith(parentClass, Builder.class)) {
+      if (PsiAnnotationSearchUtil.isAnnotatedWith(parentClass, Builder.class, FieldNameConstants.class)) {
         return parentClass.findInnerClassByName(shortName, false);
       } else {
         final Collection<PsiMethod> psiMethods = PsiClassUtil.collectClassMethodsIntern(parentClass);
@@ -70,7 +71,6 @@ public class LombokElementFinder extends PsiElementFinder {
     if (null == javaFileManager) {
       return null;
     }
-
 
     final PsiClass foundPsiClass;
     try {

@@ -11,7 +11,7 @@ public class FieldNameConstantsTest extends AbstractLombokParsingTestCase {
     doTest(true);
   }
 
-  public void testFieldnameconstants$FieldNameConstantsWeird() {
+  public void testFieldnameconstants$FieldNameConstantsEnum() {
     doTest(true);
   }
 

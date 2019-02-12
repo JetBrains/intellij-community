@@ -7,6 +7,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.util.PsiUtilCore;
+import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
+import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +17,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 /**
- * It should find calls to getters/setters of some filed changed by lombok accessors
+ * It should find calls to getters/setters of some field changed by lombok accessors
  */
 public class LombokFieldFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
 
@@ -28,8 +30,8 @@ public class LombokFieldFindUsagesHandlerFactory extends FindUsagesHandlerFactor
       final PsiField psiField = (PsiField) element;
       final PsiClass containingClass = psiField.getContainingClass();
       if (containingClass != null) {
-        return Arrays.stream(containingClass.getAllMethods())
-          .anyMatch(LombokLightMethodBuilder.class::isInstance);
+        return Arrays.stream(containingClass.getMethods()).anyMatch(LombokLightMethodBuilder.class::isInstance) ||
+          Arrays.stream(containingClass.getInnerClasses()).anyMatch(LombokLightClassBuilder.class::isInstance);
       }
     }
     return false;
@@ -46,14 +48,26 @@ public class LombokFieldFindUsagesHandlerFactory extends FindUsagesHandlerFactor
         if (containingClass != null) {
 
           final Collection<PsiElement> elements = new ArrayList<>();
-          processClassMethods(containingClass, psiField, elements);
+          processClass(containingClass, psiField, elements);
 
           Arrays.stream(containingClass.getInnerClasses())
-            .forEach(psiClass -> processClassMethods(psiClass, psiField, elements));
+            .forEach(psiClass -> processClass(psiClass, psiField, elements));
 
           return PsiUtilCore.toPsiElementArray(elements);
         }
         return PsiElement.EMPTY_ARRAY;
+      }
+
+      private void processClass(PsiClass containingClass, PsiField refPsiField, Collection<PsiElement> collector) {
+        processClassMethods(containingClass, refPsiField, collector);
+        processClassFields(containingClass, refPsiField, collector);
+      }
+
+      private void processClassFields(PsiClass containingClass, PsiField refPsiField, Collection<PsiElement> collector) {
+        Arrays.stream(containingClass.getFields())
+          .filter(LombokLightFieldBuilder.class::isInstance)
+          .filter(psiField -> psiField.getNavigationElement() == refPsiField)
+          .forEach(collector::add);
       }
 
       private void processClassMethods(PsiClass containingClass, PsiField refPsiField, Collection<PsiElement> collector) {

@@ -12,6 +12,8 @@ import com.intellij.psi.impl.light.LightVariableBuilder;
 import de.plushnikov.intellij.plugin.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+
 /**
  * @author Plushnikov Michail
  */
@@ -25,7 +27,7 @@ public class LombokLightParameter extends LightParameter {
     PsiManager manager = declarationScope.getManager();
     myNameIdentifier = new LombokLightIdentifier(manager, name);
     ReflectionUtil.setFinalFieldPerReflection(LightVariableBuilder.class, this, LightModifierList.class,
-      new LombokLightModifierList(manager, language));
+      new LombokLightModifierList(manager, language, Collections.emptySet()));
   }
 
   @NotNull
@@ -53,7 +55,7 @@ public class LombokLightParameter extends LightParameter {
   }
 
   public LombokLightParameter setModifiers(String... modifiers) {
-    LombokLightModifierList modifierList = new LombokLightModifierList(getManager(), getLanguage(), modifiers);
+    LombokLightModifierList modifierList = new LombokLightModifierList(getManager(), getLanguage(), Collections.emptySet(), modifiers);
     ReflectionUtil.setFinalFieldPerReflection(LightVariableBuilder.class, this, LightModifierList.class, modifierList);
     return this;
   }

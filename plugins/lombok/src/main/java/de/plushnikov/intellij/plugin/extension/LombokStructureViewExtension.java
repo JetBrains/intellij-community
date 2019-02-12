@@ -14,7 +14,6 @@ import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.stream.Stream;
 
 /**
@@ -40,9 +39,7 @@ public class LombokStructureViewExtension implements StructureViewExtension {
 
     final Stream<JavaClassTreeElement> lombokInnerClasses = Arrays.stream(parentClass.getInnerClasses())
       .filter(LombokLightClassBuilder.class::isInstance)
-      .map(psiClass -> new JavaClassTreeElement(psiClass, false, new HashSet<PsiClass>() {{
-        add(parentClass);
-      }}));
+      .map(psiClass -> new JavaClassTreeElement(psiClass, false));
 
     return Stream.concat(Stream.concat(lombokFields, lombokMethods), lombokInnerClasses)
       .toArray(StructureViewTreeElement[]::new);

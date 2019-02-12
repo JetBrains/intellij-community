@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 
 public class DelombokHandler {
@@ -59,7 +60,7 @@ public class DelombokHandler {
       for (PsiClass innerClass : allInnerClasses) {
         //skip our self generated classes
         if (!(innerClass instanceof LombokLightClassBuilder)) {
-          invoke(project, innerClass, processInnerClasses);
+          invoke(project, innerClass, true);
         }
       }
     }
@@ -107,9 +108,41 @@ public class DelombokHandler {
     } else if (psiElement instanceof PsiField) {
       return rebuildField(project, (PsiField) psiElement);
     } else if (psiElement instanceof PsiClass) {
-      return rebuildClass(project, (PsiClass) psiElement);
+      if (((PsiClass) psiElement).isEnum()) {
+        return rebuildEnum(project, (PsiClass) psiElement);
+      } else {
+        return rebuildClass(project, (PsiClass) psiElement);
+      }
     }
     return null;
+  }
+
+  private PsiClass rebuildEnum(@NotNull Project project, @NotNull PsiClass fromClass) {
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+
+    final PsiClass resultClass = elementFactory.createEnum(StringUtil.defaultIfEmpty(fromClass.getName(), "UnknownClassName"));
+    copyModifiers(fromClass.getModifierList(), resultClass.getModifierList());
+    rebuildTypeParameter(fromClass, resultClass);
+
+    final List<PsiField> fields = Arrays.asList(fromClass.getFields());
+
+    if (!fields.isEmpty()) {
+      final Iterator<PsiField> iterator = fields.iterator();
+      PsiField prev = iterator.next();
+      resultClass.add(rebuildField(project, prev));
+      while (iterator.hasNext()) {
+        PsiField curr = iterator.next();
+        //guarantees order of enum constants, should match declaration order
+        resultClass.addBefore(rebuildField(project, curr), prev);
+        prev = curr;
+      }
+    }
+
+    for (PsiMethod psiMethod : fromClass.getMethods()) {
+      resultClass.add(rebuildMethod(project, psiMethod));
+    }
+
+    return (PsiClass) CodeStyleManager.getInstance(project).reformat(resultClass);
   }
 
   private PsiClass rebuildClass(@NotNull Project project, @NotNull PsiClass fromClass) {
@@ -200,16 +233,21 @@ public class DelombokHandler {
 
   private void copyModifiers(PsiModifierList fromModifierList, PsiModifierList resultModifierList) {
     for (String modifier : PsiModifier.MODIFIERS) {
-      resultModifierList.setModifierProperty(modifier, fromModifierList.hasModifierProperty(modifier));
+      resultModifierList.setModifierProperty(modifier, fromModifierList.hasExplicitModifier(modifier));
     }
   }
 
   private PsiField rebuildField(@NotNull Project project, @NotNull PsiField fromField) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
 
-    final PsiField resultField = elementFactory.createField(fromField.getName(), fromField.getType());
+    final PsiField resultField;
+    if (fromField instanceof PsiEnumConstant) {
+      resultField = elementFactory.createEnumConstantFromText(fromField.getName(), fromField.getContext());
+    } else {
+      resultField = elementFactory.createField(fromField.getName(), fromField.getType());
+      resultField.setInitializer(fromField.getInitializer());
+    }
     copyModifiers(fromField.getModifierList(), resultField.getModifierList());
-    resultField.setInitializer(fromField.getInitializer());
 
     return (PsiField) CodeStyleManager.getInstance(project).reformat(resultField);
   }
