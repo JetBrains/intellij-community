@@ -3,7 +3,7 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.notebook.editor.NotebookSourceVirtualFile;
+import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -92,7 +92,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   public Module getModuleForFile(@NotNull VirtualFile file, boolean honorExclusion) {
     if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
-    if (file instanceof NotebookSourceVirtualFile) file = ((NotebookSourceVirtualFile)file).getOriginFile();
+    if (file instanceof BackedVirtualFile) file = ((BackedVirtualFile)file).getOriginFile();
     DirectoryInfo info = getInfoForFileOrDirectory(file);
     if (info.isInProject(file) || !honorExclusion && info.isExcluded(file)) {
       return info.getModule();
