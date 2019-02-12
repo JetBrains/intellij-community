@@ -29,10 +29,7 @@ class GrLambdaExpressionImpl(node: ASTNode) : GrExpressionImpl(node), GrLambdaEx
 
   override fun isVarArgs(): Boolean = false
 
-  override fun getBody(): GrLambdaBody? {
-    val body = lastChild
-    return if (body is GrLambdaBody) body else null
-  }
+  override fun getBody(): GrLambdaBody? = lastChild as? GrLambdaBody
 
   override fun processDeclarations(processor: PsiScopeProcessor, state: ResolveState, lastParent: PsiElement?, place: PsiElement): Boolean {
     return processParameters(processor, state) && processClosureClassMembers(processor, state, lastParent, place)
