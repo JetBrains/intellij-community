@@ -295,9 +295,8 @@ public class PlatformTestUtil {
     }
   }
 
-  private static boolean isBusy(JTree tree) {
+  private static boolean isBusy(JTree tree, TreeModel model) {
     UIUtil.dispatchAllInvocationEvents();
-    TreeModel model = tree.getModel();
     if (model instanceof AsyncTreeModel) {
       AsyncTreeModel async = (AsyncTreeModel)model;
       if (async.isProcessing()) return true;
@@ -312,9 +311,13 @@ public class PlatformTestUtil {
   }
 
   public static void waitWhileBusy(JTree tree) {
+    waitWhileBusy(tree, tree.getModel());
+  }
+
+  public static void waitWhileBusy(JTree tree, TreeModel model) {
     assertDispatchThreadWithoutWriteAccess();
     long startTimeMillis = System.currentTimeMillis();
-    while (isBusy(tree)) {
+    while (isBusy(tree, model)) {
       assertMaxWaitTimeSince(startTimeMillis);
       TimeoutUtil.sleep(5);
     }

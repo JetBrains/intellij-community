@@ -1,14 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree.treeTable
 
+import com.intellij.ui.tree.AsyncTreeModel
+import com.intellij.ui.tree.TreeVisitor
 import com.intellij.ui.treeStructure.treetable.TreeTableModel
 import com.intellij.util.ui.ColumnInfo
+import org.jetbrains.concurrency.Promise
 import javax.swing.JTree
 import javax.swing.tree.TreeModel
+import javax.swing.tree.TreePath
 
-class TreeTableModelWithColumns(val delegate: TreeModel,
+class TreeTableModelWithColumns(val delegate: AsyncTreeModel,
                                 val columns: Array<ColumnInfo<Any?, Any?>>)
-  : TreeTableModel, TreeModel by delegate {
+  : TreeTableModel, TreeModel by delegate, TreeVisitor.Acceptor {
 
   override fun getColumnCount(): Int = columns.size
 
@@ -25,4 +29,6 @@ class TreeTableModelWithColumns(val delegate: TreeModel,
   override fun setTree(tree: JTree?) {
     // do nothing
   }
+
+  override fun accept(visitor: TreeVisitor): Promise<TreePath> = delegate.accept(visitor)
 }

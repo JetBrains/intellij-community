@@ -10,6 +10,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
@@ -41,8 +42,6 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +81,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   private final String myWorkingDir;
   private volatile int myTimeColumnWidth;
   private final AtomicBoolean myDisposed = new AtomicBoolean();
-  private final MergingUpdateQueue myLaterInvocator = new MergingUpdateQueue("BuildTreeConsoleView later invocator", 100, true, null, this);
   private final StructureTreeModel<SimpleTreeStructure> myTreeModel;
   private final TreeTableTree myTree;
   private final ExecutionNode myRootNode;
@@ -320,6 +318,10 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
   @Override
   public void onEvent(@NotNull BuildEvent event) {
+    myTreeModel.getInvoker().runOrInvokeLater(() -> onEventInternal(event));
+  }
+
+  public void onEventInternal(@NotNull BuildEvent event) {
     ExecutionNode parentNode = event.getParentId() == null ? null : nodesMap.get(event.getParentId());
     ExecutionNode currentNode = nodesMap.get(event.getId());
     if (event instanceof StartEvent || event instanceof MessageEvent) {
@@ -387,13 +389,13 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     if (event instanceof FinishEvent) {
       currentNode.setEndTime(event.getEventTime());
       currentNode.setResult(((FinishEvent)event).getResult());
-      int timeColumnWidth = new JLabel("__" + currentNode.getDuration(), SwingConstants.RIGHT).getPreferredSize().width;
-      if (myTimeColumnWidth < timeColumnWidth) {
-        myTimeColumnWidth = timeColumnWidth;
-      }
-    }
-    else {
-      scheduleUpdate(currentNode);
+      final String text = "__" + currentNode.getDuration();
+      ApplicationManager.getApplication().invokeLater(() -> {
+        int timeColumnWidth = new JLabel(text, SwingConstants.RIGHT).getPreferredSize().width;
+        if (myTimeColumnWidth < timeColumnWidth) {
+          myTimeColumnWidth = timeColumnWidth;
+        }
+      });
     }
 
     if (event instanceof FinishBuildEvent) {
@@ -403,7 +405,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       currentNode.setHint(aHint);
       updateTimeColumnWidth(myTimeColumnWidth);
       if (myDetailsHandler.myExecutionNode == null) {
-        myDetailsHandler.setNode(getRootElement());
+        ExecutionNode element = getRootElement();
+        ApplicationManager.getApplication().invokeLater(() -> myDetailsHandler.setNode(element));
       }
 
       if (((FinishBuildEvent)event).getResult() instanceof FailureResult) {
@@ -419,17 +422,17 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
           resultNode.setTooltip(rootElement.getTooltip());
           rootElement.add(resultNode);
           scheduleUpdate(resultNode);
+          return;
         }
       }
-      myTreeModel.invalidate().onProcessed(o -> expand(myTree));
     }
+    scheduleUpdate(currentNode);
   }
 
   protected void expand(TreeTableTree tree) {
     TreeUtil.expand(tree,
                     path -> {
-                      Object component = TreeUtil.getLastUserObject(path);
-                      ExecutionNode node = component instanceof ExecutionNode ? (ExecutionNode)component : null;
+                      ExecutionNode node = TreeUtil.getLastUserObject(ExecutionNode.class, path);
                       if (node != null && node.isAutoExpandNode() && node.getChildCount() > 0) {
                         return TreeVisitor.Action.CONTINUE;
                       } else {
@@ -441,13 +444,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
   void scheduleUpdate(ExecutionNode executionNode) {
     SimpleNode node = executionNode.getParent() == null ? executionNode : executionNode.getParent();
-    final Update update = new Update(node) {
-      @Override
-      public void run() {
-        myTreeModel.invalidate(node, true).onProcessed(p -> expand(myTree));
-      }
-    };
-    myLaterInvocator.queue(update);
+    myTreeModel.invalidate(node, true).onProcessed(p -> expand(myTree));
   }
 
   private ExecutionNode createMessageParentNodes(MessageEvent messageEvent, ExecutionNode parentNode) {
@@ -612,6 +609,11 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       return nodes.toArray(result);
     }
     return result;
+  }
+
+  // visible for testing
+  JTree getTree() {
+    return myTree;
   }
 
   private static class DetailsHandler {
