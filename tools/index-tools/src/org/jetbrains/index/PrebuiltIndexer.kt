@@ -79,7 +79,6 @@ abstract class PrebuiltIndexer {
                  indexStorageFilePath: String,
                  hashVerifier: ContentHashVerifier = if (CHECK_HASH_COLLISIONS) InMemoryContentHashVerifier() else ContentHashVerifier.DEAF) {
     val generatorWrapper = Generators(generators, indexStorageFilePath)
-    val stats = Generators.Stats()
     val hashing = FileContentHashing()
 
     generatorWrapper.use {
@@ -93,7 +92,9 @@ abstract class PrebuiltIndexer {
       }
     }
 
-    println("${stats.indexed.get()} entries written, ${stats.skipped.get()} skipped")
+    for ((name, stats) in generatorWrapper.generators.map { it.internalName }.zip(generatorWrapper.stats)) {
+      println("index ${name}: ${stats.indexed.get()} entries written, ${stats.skipped.get()} skipped")
+    }
   }
 
   protected abstract fun iterateFiles(fileVisitor: (VirtualFile) -> Boolean)
