@@ -97,6 +97,7 @@
       <keyboard-shortcut first-keystroke="control L" keymap="$default"/>
       <keyboard-shortcut first-keystroke="control L" keymap="Visual Studio" remove="true"/>
     </action>
+    <action class="com.intellij.vcs.log.ui.actions.ToggleLogColumnsActionGroup" id="Vcs.Log.ToggleColumns"/>
     <group class="com.intellij.vcs.log.ui.actions.HighlightersActionGroup" id="Vcs.Log.HighlightersActionGroup"/>
     <action class="com.intellij.vcs.log.ui.actions.OpenAnotherLogTabAction" id="Vcs.Log.OpenAnotherTab"/>
     <action class="com.intellij.vcs.log.ui.actions.RefreshLogAction" id="Vcs.Log.Refresh" use-shortcut-of="Refresh"/>
@@ -134,6 +135,8 @@
       <reference id="Vcs.Log.CollapseAll"/>
       <reference id="Vcs.Log.ExpandAll"/>
       <reference id="Vcs.Log.HighlightersActionGroup"/>
+      <separator/>
+      <reference id="Vcs.Log.ToggleColumns"/>
     </group>
     <group id="Vcs.Log.TextFilterSettings" class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
            icon="AllIcons.General.GearPlain" text="Text Filter Settings" description="Text Filter Settings" popup="true">
@@ -189,6 +192,7 @@
       <reference id="Vcs.Log.ShowAllAffected"/>
       <separator/>
       <reference id="Vcs.Log.ShowOtherBranches"/>
+      <reference id="Vcs.Log.ToggleColumns"/>
       <separator/>
       <reference id="Vcs.Log.LayoutConfiguration"/>
       <separator/>
