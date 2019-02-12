@@ -113,7 +113,7 @@ envs {
                "3.6.8",
                ["django==2.1", "jinja2", "pandas", "pytest", "untangle"],
                "python3.6\npython3\ndjango\njinja2\npython34\npython36\npandas\npytest\nuntangle",
-
+                true)
 
   createPython("py37",
                "3.7.2",
