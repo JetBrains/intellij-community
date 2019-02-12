@@ -16,6 +16,7 @@
 
 <idea-plugin>
   <id>de.thomasrosenau.diffplugin</id>
+  <version>0.0.0-setByGradle</version>
   <name>Diff / Patch File Support</name>
   <vendor email="thomasr@fantasymail.de" url="https://github.com/ThomasR/">Thomas Rosenau</vendor>
 
@@ -38,6 +39,14 @@
     <br/>
     <p>Icons by <a href="https://www.iconfinder.com/korawan_m">BomSymbols</a>.</p>
     ]]></description>
+
+  <change-notes><![CDATA[
+    <h5>1.1.0</h5>
+    <ul>
+    <li>Support highlighting of file names, separators, EOL hints, and modified lines</li>
+    <li>Color settings page</li>
+    </ul>
+    ]]></change-notes>
 
   <depends>com.intellij.modules.lang</depends>
 
