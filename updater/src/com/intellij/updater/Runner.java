@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
+import com.studio.updater.StudioUpdaterAnalyticsReportingUI;
+import com.studio.updater.StudioUpdaterAnalyticsUtil;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -103,6 +105,8 @@ public class Runner {
     }
     else if (args.length >= 2 && ("install".equals(args[0]) || "apply".equals(args[0])) ||
              args.length >= 3 && ("batch-install".equals(args[0]))) {
+      // Android Studio: Analytics
+      StudioUpdaterAnalyticsUtil.logProcessStart();
       String destFolder = args[1];
       checkCaseSensitivity(destFolder);
 
@@ -121,6 +125,9 @@ public class Runner {
         ui = new ConsoleUpdaterUI();
       }
 
+      // Android Studio: Analytics
+      ui = new StudioUpdaterAnalyticsReportingUI(ui);
+
       boolean backup = !hasArgument(args, "no-backup");
       boolean success;
       if (!new File(destFolder).isDirectory()) {
@@ -134,6 +141,8 @@ public class Runner {
         String[] patches = args[2].split(File.pathSeparator);
         success = install(patches, destFolder, ui, backup);
       }
+      // Android Studio: Analytics
+      StudioUpdaterAnalyticsUtil.logProcessFinish(success);
       System.exit(success ? 0 : 1);
     }
     else {
@@ -367,6 +376,8 @@ public class Runner {
                          ui.bold("No files were changed. Please retry applying the patch.") + "\n\n" +
                          "More details in the log: " + logPath;
         ui.showError(message);
+        // Android Studio: Analytics
+        StudioUpdaterAnalyticsUtil.logException();
         return false;
       }
 
