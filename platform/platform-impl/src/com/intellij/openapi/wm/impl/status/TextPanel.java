@@ -107,15 +107,7 @@ public class TextPanel extends JComponent implements Accessible {
 
     final String[] lines = UIUtil.splitText(text, fontMetrics, widthLimit, ' ');
 
-    final StringBuilder result = new StringBuilder();
-    for (int i = 0; i < lines.length; i++) {
-      final String line = lines[i];
-      if (i > 0) {
-        result.append('\n');
-      }
-      result.append(line);
-    }
-    return result.toString();
+    return String.join("\n", lines);
   }
 
   public final void setText(@Nullable String text) {
