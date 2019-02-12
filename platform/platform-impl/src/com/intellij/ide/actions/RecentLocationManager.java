@@ -7,16 +7,16 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorState;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl.PlaceInfo;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorState;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -51,35 +51,6 @@ public class RecentLocationManager implements ProjectComponent {
 
     subscribeRecentPlaces(connection);
     subscribeOnExternalChange(connection);
-    subscribeOnEditorClose(connection);
-  }
-
-  private void subscribeOnEditorClose(@NotNull MessageBusConnection connection) {
-    connection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, new FileEditorManagerListener.Before() {
-      @Override
-      public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-        FileEditor fileEditor = source.getSelectedEditor(file);
-        Editor editor = getEditor(fileEditor);
-        if (editor == null) {
-          return;
-        }
-
-        FileEditorManagerEx editorManagerEx = FileEditorManagerEx.getInstanceEx(myProject);
-        FileEditorWithProvider selectedEditorWithProvider = editorManagerEx.getSelectedEditorWithProvider(file);
-
-        if (selectedEditorWithProvider == null) {
-          return;
-        }
-
-        PlaceInfo placeInfo = new PlaceInfo(file,
-                                            fileEditor.getState(FileEditorStateLevel.NAVIGATION),
-                                            selectedEditorWithProvider.getProvider().getEditorTypeId(),
-                                            editorManagerEx.getCurrentWindow());
-
-        int offset = editor.getCaretModel().getOffset();
-        myRecentItems.put(placeInfo, new PlaceInfoPersistentItem(editor.getDocument().createRangeMarker(offset, offset)));
-      }
-    });
   }
 
   @Nullable
@@ -110,29 +81,7 @@ public class RecentLocationManager implements ProjectComponent {
     connection.subscribe(IdeDocumentHistoryImpl.RecentPlacesListener.TOPIC, new IdeDocumentHistoryImpl.RecentPlacesListener() {
       @Override
       public void recentPlaceAdded(@NotNull PlaceInfo changePlace, boolean isChanged) {
-        Editor editor = findEditor(myProject, changePlace);
-        if (editor == null) {
-          myRecentItems
-            .keySet()
-            .stream()
-            .filter(info -> arePlacesEqual(changePlace, info))
-            .findFirst()
-            .ifPresent(placeInfo -> {
-              //correct old key
-              PlaceInfoPersistentItem item = myRecentItems.remove(placeInfo);
-              myRecentItems.put(changePlace, item);
-            });
-
-          return;
-        }
-
-        LogicalPosition logicalPosition = getLogicalPosition(changePlace);
-        if (logicalPosition == null) {
-          return;
-        }
-
-        int offset = editor.logicalPositionToOffset(logicalPosition);
-        getItems(isChanged).put(changePlace, new PlaceInfoPersistentItem(editor.getDocument().createRangeMarker(offset, offset)));
+        update(changePlace, myProject, getItems(isChanged));
       }
 
       @Override
@@ -147,15 +96,25 @@ public class RecentLocationManager implements ProjectComponent {
     });
   }
 
-  private static boolean arePlacesEqual(@NotNull PlaceInfo info1, @NotNull PlaceInfo info2) {
-    return info2.getFile().equals(info1.getFile()) &&
-           info2.getEditorTypeId().equals(info1.getEditorTypeId())
-           && info2.getNavigationState().equals(info1.getNavigationState()) &&
-           info2.getWindow().equals(info1.getWindow());
-  }
-
   private static void removePlace(@NotNull PlaceInfo placeToRemove, @NotNull Map<PlaceInfo, PlaceInfoPersistentItem> items) {
     items.remove(placeToRemove);
+  }
+
+  private static void update(@NotNull PlaceInfo changePlace,
+                             @NotNull Project project,
+                             @NotNull Map<PlaceInfo, PlaceInfoPersistentItem> items) {
+    Editor editor = findEditor(project, changePlace);
+    if (editor == null) {
+      return;
+    }
+
+    LogicalPosition logicalPosition = getLogicalPosition(changePlace);
+    if (logicalPosition == null) {
+      return;
+    }
+
+    int offset = editor.logicalPositionToOffset(logicalPosition);
+    items.put(changePlace, new PlaceInfoPersistentItem(editor.getDocument().createRangeMarker(offset, offset)));
   }
 
   @Nullable
@@ -199,12 +158,12 @@ public class RecentLocationManager implements ProjectComponent {
       return null;
     }
 
-    return getEditor(composite.getSelectedWithProvider().getFileEditor());
-  }
+    FileEditor fileEditor = composite.getSelectedWithProvider().getFileEditor();
+    if (!(fileEditor instanceof TextEditor)) {
+      return null;
+    }
 
-  @Nullable
-  private static Editor getEditor(@Nullable FileEditor fileEditor) {
-    return !(fileEditor instanceof TextEditor) ? null : ((TextEditor)fileEditor).getEditor();
+    return ((TextEditor)fileEditor).getEditor();
   }
 
   @NotNull
