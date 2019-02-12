@@ -231,7 +231,8 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   public void visitPyDelStatement(PyDelStatement node) {
     myBuilder.startNode(node);
     for (PyExpression target : node.getTargets()) {
-      myBuilder.addNode(ReadWriteInstruction.newInstruction(myBuilder, target, target.getName(), ReadWriteInstruction.ACCESS.DELETE));
+      String name = target instanceof PySubscriptionExpression ? target.getText() : target.getName();
+      myBuilder.addNode(ReadWriteInstruction.newInstruction(myBuilder, target, name, ReadWriteInstruction.ACCESS.DELETE));
       if (target instanceof PyQualifiedExpression) {
         PyExpression qualifier = ((PyQualifiedExpression) target).getQualifier();
         if (qualifier != null) {
