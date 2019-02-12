@@ -480,7 +480,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     fs.assertFileEqual(file);
   }
 
-  private static void setFileContent(final VirtualFile file, final String content, final boolean advanceStamps) {
+  protected static void setFileContent(final VirtualFile file, final String content, final boolean advanceStamps) {
     try {
       WriteAction.runAndWait(() -> {
         if (advanceStamps) {

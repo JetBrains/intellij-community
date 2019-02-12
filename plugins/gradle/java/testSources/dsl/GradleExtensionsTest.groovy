@@ -16,30 +16,40 @@ import org.junit.Test
 class GradleExtensionsTest extends GradleHighlightingBaseTest implements ResolveTest {
 
   @Test
+  void extensionsTest() {
+    importProject("")
+    "project level extension property"()
+    "project level extension call type"()
+    "project level extension closure delegate type"()
+  }
+
   void "project level extension property"() {
     doTest("ext") {
       def ref = elementUnderCaret(GrReferenceExpression)
       assert ref.resolve() instanceof GroovyProperty
-      assert ref.type.equalsToText("org.gradle.api.internal.plugins.DefaultExtraPropertiesExtension")
+      assert ref.type.equalsToText(getExtraPropertiesExtensionFqn())
     }
   }
 
-  @Test
   void "project level extension call type"() {
     doTest("ext {}") {
       def call = elementUnderCaret(GrMethodCallExpression)
       assert call.resolveMethod() instanceof GrMethod
-      assert call.type.equalsToText("org.gradle.api.internal.plugins.DefaultExtraPropertiesExtension")
+      assert call.type.equalsToText(getExtraPropertiesExtensionFqn())
     }
   }
 
-  @Test
   void "project level extension closure delegate type"() {
     doTest("ext {<caret>}") {
       def closure = elementUnderCaret(GrClosableBlock)
       def info = GrDelegatesToUtilKt.getDelegatesToInfo(closure)
       assert info != null
-      assert info.typeToDelegate.equalsToText("org.gradle.api.internal.plugins.DefaultExtraPropertiesExtension")
+      assert info.typeToDelegate.equalsToText(getExtraPropertiesExtensionFqn())
     }
+  }
+
+  private String getExtraPropertiesExtensionFqn() {
+    isGradleOlderThen_5_2() ? "org.gradle.api.internal.plugins.DefaultExtraPropertiesExtension"
+                            : "org.gradle.internal.extensibility.DefaultExtraPropertiesExtension"
   }
 }
