@@ -37,19 +37,22 @@ public class ReadWriteInstruction extends InstructionImpl {
   };
 
   public enum ACCESS {
-    READ(true, false, false),
-    WRITE(false, true, false),
-    ASSERTTYPE(false, false, true),
-    READWRITE(true, true, false);
+    READ(true, false, false, false),
+    WRITE(false, true, false, false),
+    ASSERTTYPE(false, false, true, false),
+    READWRITE(true, true, false, false),
+    DELETE(false, false, false, true);
 
     private final boolean isWrite;
     private final boolean isRead;
     private final boolean isAssertType;
+    private final boolean isDelete;
 
-    ACCESS(boolean read, boolean write, boolean assertType) {
+    ACCESS(boolean read, boolean write, boolean assertType, boolean delete) {
       isRead = read;
       isWrite = write;
       isAssertType = assertType;
+      isDelete = delete;
     }
 
     public boolean isWriteAccess() {
@@ -62,6 +65,10 @@ public class ReadWriteInstruction extends InstructionImpl {
 
     public boolean isAssertTypeAccess() {
       return isAssertType;
+    }
+
+    public boolean isDeleteAccess() {
+      return isDelete;
     }
   }
 

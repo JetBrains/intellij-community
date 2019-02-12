@@ -24,6 +24,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
 import com.jetbrains.python.inspections.quickfix.AddGlobalQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyDelStatementNavigator;
 import com.jetbrains.python.psi.impl.PyGlobalStatementNavigator;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import org.jetbrains.annotations.Nls;
@@ -128,6 +129,9 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
           if (isBuiltin || ScopeUtil.getDeclarationScopeOwner(owner, name) != null) {
             return;
           }
+        }
+        if (PyDelStatementNavigator.getDelStatementByTarget(node) != null) {
+          return;
         }
         if (resolvedUnderWithStatement(node, resolved)) {
           return;

@@ -290,6 +290,11 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
                  "    print(val)");
   }
 
+  // PY-4537
+  public void testReferencedAfterDeletion() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
