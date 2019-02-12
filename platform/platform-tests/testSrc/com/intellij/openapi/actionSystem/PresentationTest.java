@@ -55,7 +55,7 @@ public class PresentationTest extends LightPlatformTestCase {
       assertEquals(testCase.menuText, p.getText());
       assertEquals(testCase.mnemonic, p.getMnemonic());
       assertEquals(testCase.index, p.getDisplayedMnemonicIndex());
-      assertEquals(testCase.fullMenuText, p.getTextWithMnemonic());
+      assertEquals(testCase.fullMenuText, p.getTextWithPossibleMnemonic().toString());
     }
   }
 
@@ -66,7 +66,7 @@ public class PresentationTest extends LightPlatformTestCase {
       assertEquals(testCase.menuText, p.getText());
       assertEquals(testCase.mnemonic, p.getMnemonic());
       assertEquals(testCase.index, p.getDisplayedMnemonicIndex());
-      assertEquals(testCase.fullMenuText, p.getTextWithMnemonic());
+      assertEquals(testCase.fullMenuText, p.getTextWithPossibleMnemonic().toString());
 
       assertTrue(testCase.menuText.length() > p.getDisplayedMnemonicIndex());
     }

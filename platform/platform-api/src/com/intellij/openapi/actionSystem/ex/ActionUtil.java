@@ -360,8 +360,8 @@ public class ActionUtil {
     p1.setDisabledIcon(ObjectUtils.chooseNotNull(p1.getDisabledIcon(), p2.getDisabledIcon()));
     p1.setSelectedIcon(ObjectUtils.chooseNotNull(p1.getSelectedIcon(), p2.getSelectedIcon()));
     p1.setHoveredIcon(ObjectUtils.chooseNotNull(p1.getHoveredIcon(), p2.getHoveredIcon()));
-    if (StringUtil.isEmpty(p1.getText())) {
-      p1.setText(p2.getTextWithMnemonic(), p2.getDisplayedMnemonicIndex() >= 0);
+    if (p1.getTextWithPossibleMnemonic() == null) {
+      p1.setTextWithMnemonic(p2.getTextWithPossibleMnemonic());
     }
     p1.setDescription(ObjectUtils.chooseNotNull(p1.getDescription(), p2.getDescription()));
     ShortcutSet ss1 = a1.getShortcutSet();

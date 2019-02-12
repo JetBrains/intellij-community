@@ -9,7 +9,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.*;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -2206,43 +2205,6 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  public static TextWithMnemonics parseMnemonics(@NotNull String text) {
-    if (text.indexOf(UIUtil.MNEMONIC) >= 0) {
-      text = text.replace(UIUtil.MNEMONIC, '&');
-    }
-
-    if (text.contains("_") || text.contains("&")) {
-      StringBuilder plainText = new StringBuilder();
-      int mnemonic = 0;
-      int mnemonicIndex = -1;
-
-      int backShift = 0;
-      for (int i = 0; i < text.length(); i++) {
-        char ch = text.charAt(i);
-        if (mnemonic == 0 && (ch == '_' || ch == '&')) {
-          //noinspection AssignmentToForLoopParameter
-          i++;
-          if (i >= text.length()) break;
-          ch = text.charAt(i);
-          if (ch != '_' && ch != '&') {
-            mnemonic = Character.toUpperCase(ch);  // mnemonics are case insensitive
-            mnemonicIndex = i - 1 - backShift;
-          }
-          else {
-            backShift++;
-          }
-        }
-        plainText.append(ch);
-      }
-      return new TextWithMnemonics(plainText.toString(), mnemonic, mnemonicIndex);
-    }
-    else {
-      return new TextWithMnemonics(text, 0, -1);
-    }
-  }
-
-  @NotNull
-  @Contract(pure = true)
   public static String htmlEmphasize(@NotNull String text) {
     return "<b><code>" + escapeXmlEntities(text) + "</code></b>";
   }
@@ -3405,17 +3367,5 @@ public class StringUtil extends StringUtilRt {
       return false;
     }
     return true;
-  }
-
-  public static class TextWithMnemonics {
-    @NotNull public final String plainText;
-    public final int mnemonic;
-    public final int mnemonicIndex;
-
-    public TextWithMnemonics(@NotNull String plainText, int mnemonic, int mnemonicIndex) {
-      this.plainText = plainText;
-      this.mnemonic = mnemonic;
-      this.mnemonicIndex = mnemonicIndex;
-    }
   }
 }

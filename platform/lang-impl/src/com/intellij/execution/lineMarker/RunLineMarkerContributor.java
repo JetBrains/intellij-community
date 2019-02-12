@@ -10,7 +10,7 @@ import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +75,7 @@ public abstract class RunLineMarkerContributor {
       return null;
     }
     String name = ((ExecutorAction)action).getActionName(dataContext);
-    return name == null ? null : StringUtil.parseMnemonics(name).plainText;
+    return name == null ? null : TextWithMnemonic.parse(name).getText();
   }
 
   @NotNull
