@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
@@ -86,6 +87,7 @@ import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.util.xml.NanoXmlBuilder.stop;
 
 public class MavenUtil {
+  public static final ProjectSystemId SYSTEM_ID = new ProjectSystemId("MAVEN");
   public static final String MAVEN_NOTIFICATION_GROUP = "Maven";
   public static final String SETTINGS_XML = "settings.xml";
   public static final String DOT_M2_DIR = ".m2";
@@ -99,6 +101,7 @@ public class MavenUtil {
   public static final String LIB_DIR = "lib";
   public static final String CLIENT_ARTIFACT_SUFFIX = "-client";
   public static final String CLIENT_EXPLODED_ARTIFACT_SUFFIX = CLIENT_ARTIFACT_SUFFIX + " exploded";
+
 
   @SuppressWarnings("unchecked")
   private static final Pair<Pattern, String>[] SUPER_POM_PATHS = new Pair[]{

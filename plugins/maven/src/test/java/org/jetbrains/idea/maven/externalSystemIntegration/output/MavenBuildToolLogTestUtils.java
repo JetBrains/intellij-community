@@ -13,7 +13,7 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.SelfDescribing;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.model.MavenConstants;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -73,7 +73,7 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
     public void check(boolean checkFinishEvent) {
       CollectConsumer collectConsumer = new CollectConsumer();
       MavenLogOutputParser parser =
-        new MavenLogOutputParser(ExternalSystemTaskId.create(MavenConstants.SYSTEM_ID, EXECUTE_TASK, "project"), myParsers);
+        new MavenLogOutputParser(ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, EXECUTE_TASK, "project"), myParsers);
 
       for (String line : myLines) {
         parser.parse(line, null, collectConsumer);
