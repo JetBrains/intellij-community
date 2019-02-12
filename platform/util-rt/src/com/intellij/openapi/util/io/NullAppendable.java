@@ -7,6 +7,7 @@ import java.io.IOException;
 
 class NullAppendable implements Appendable {
   static Appendable INSTANCE = new NullAppendable();
+
   @NotNull
   public Appendable append(CharSequence csq) throws IOException {
     return this;
