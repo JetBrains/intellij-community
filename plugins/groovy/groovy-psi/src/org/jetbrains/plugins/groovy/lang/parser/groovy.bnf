@@ -938,7 +938,7 @@ array_declaration ::= mandatory_expression optional_expression* { consumeTokenMe
 private mandatory_expression ::= '[' expression ']' { pin = 1 consumeTokenMethod = 'consumeTokenFast' }
 private optional_expression ::= '[' expression? ']' { pin = 1 consumeTokenMethod = 'consumeTokenFast' }
 
-private priority1_2 ::= method_call_expression | lazy_closure | lambda_expression | single_argument_lambda_expression | list_or_map
+private priority1_2 ::= method_call_expression | lazy_closure | lambda_expression | single_parameter_lambda_expression | list_or_map
 constructor_call_expression ::= &('this' | 'super') unqualified_reference_expression call_tail
 method_call_expression ::= expression call_tail
 private call_tail ::= call_argument_list (mb_nl lazy_closure)* | empty_argument_list <<closureArgumentSeparator lazy_closure+>>
@@ -952,17 +952,17 @@ private lambda_body ::=  (!<<isParameterizedClosure>> lazy_lambda_block) | lambd
 
 lambda_expression_form_body ::= expression_or_application
 
-single_argument_lambda_expression::= single_argument_lambda_expression_base | clear_variants_and_fail { elementType = lambda_expression }
-private single_argument_lambda_expression_base ::= single_argument_lambda_expression_head mb_nl single_argument_lambda_body { pin = 1 }
-private single_argument_lambda_expression_head ::= single_argument_lambda_parameter_list mb_nl '->' { consumeTokenMethod = 'consumeTokenFast' }
+single_parameter_lambda_expression::= single_parameter_lambda_expression_base | clear_variants_and_fail { elementType = lambda_expression }
+private single_parameter_lambda_expression_base ::= single_parameter_lambda_expression_head mb_nl single_parameter_lambda_body { pin = 1 }
+private single_parameter_lambda_expression_head ::= single_parameter_lambda_parameter_list mb_nl '->' { consumeTokenMethod = 'consumeTokenFast' }
 
-single_argument_lambda_parameter_list ::= !<<isApplicationArguments>> single_argument_lambda_parameter { elementType = parameter_list }
-single_argument_lambda_parameter ::= modifier_list IDENTIFIER {
+single_parameter_lambda_parameter_list ::= !<<isApplicationArguments>> single_parameter_lambda_parameter { elementType = parameter_list }
+single_parameter_lambda_parameter ::= modifier_list IDENTIFIER {
   elementType = parameter
 }
-private single_argument_lambda_body ::= single_argument_lambda_expression_form_body | lazy_lambda_block
-single_argument_lambda_expression_form_body ::= <<isParameterizedClosure>> expression_or_application
-                                              | expression_or_application !<<isParsedAsClosure>>
+private single_parameter_lambda_body ::= single_parameter_lambda_expression_form_body | lazy_lambda_block
+single_parameter_lambda_expression_form_body ::= <<isParameterizedClosure>> expression_or_application
+                                              | expression_or_application !<<isAfterClosure>>
 {
   elementType = lambda_expression_form_body
 }

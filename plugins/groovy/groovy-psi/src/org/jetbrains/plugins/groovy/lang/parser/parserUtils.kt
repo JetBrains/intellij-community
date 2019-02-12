@@ -417,7 +417,7 @@ private fun castOperandCheckInner(builder: PsiBuilder): Boolean {
   return false
 }
 
-fun isParsedAsClosure(builder: PsiBuilder, level: Int): Boolean {
+fun isAfterClosure(builder: PsiBuilder, level: Int): Boolean {
   return builder.latestDoneMarker?.tokenType == CLOSURE
 }
 
