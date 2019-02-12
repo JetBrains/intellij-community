@@ -152,4 +152,12 @@ public class ResolvePerformanceTest extends ResolveTestCase {
     PlatformTestUtil.startPerformanceTest(getTestName(false), 800, () -> assertNull(ref.resolve()))
       .attempts(1).assertTiming();
   }
+
+  public void testLongIdentifierDotChain() {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 800, () -> {
+      PsiFile file = createDummyFile("a.java", "class C { { " + StringUtil.repeat("obj.", 100) + "foo } }");
+      PsiReference ref = file.findReferenceAt(file.getText().indexOf("foo"));
+      assertNull(ref.resolve());
+    }).assertTiming();
+  }
 }

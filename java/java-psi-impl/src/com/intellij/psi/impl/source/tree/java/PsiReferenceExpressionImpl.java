@@ -273,9 +273,9 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       }
 
       if (result.length == 0 && variable == null) {
-        String qualifiedName = getQualifiedName();
+        String qualifiedName = getCachedNormalizedText();
         if (qualifiedName != null) {
-          result = PsiJavaCodeReferenceElementImpl.tryClassResult(qualifiedName, this, result);
+          result = PsiJavaCodeReferenceElementImpl.tryClassResult(qualifiedName, this);
         }
       }
 
