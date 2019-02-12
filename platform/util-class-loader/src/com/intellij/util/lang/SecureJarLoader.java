@@ -3,6 +3,7 @@ package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Base64;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.security.util.ManifestDigester;
@@ -27,8 +28,11 @@ public class SecureJarLoader extends JarLoader {
   /**
    * This table is filled once inside synchronization block in JarLoader.loadManifestAttributes()
    * and then used only for reads. It is thread-safe.
+   * <p>
+   * Key is a path to entry.
+   * Value is a map, which key is an algorithm name and value is signature of entry.
    */
-  private final Map<String, Collection<Map.Entry<String, byte[]>>> myDigestByFileName;
+  private final Map<String, Map<String, byte[]>> myDigestsByFileName;
 
   /**
    * This set may be modified from different threads.
@@ -43,7 +47,7 @@ public class SecureJarLoader extends JarLoader {
 
   SecureJarLoader(URL url, int index, ClassPath configuration) throws IOException {
     super(url, index, configuration);
-    myDigestByFileName = new HashMap<String, Collection<Map.Entry<String, byte[]>>>();
+    myDigestsByFileName = ContainerUtilRt.newHashMap();
     myVerifiedEntries = Collections.synchronizedSet(new HashSet<String>());
   }
 
@@ -107,7 +111,7 @@ public class SecureJarLoader extends JarLoader {
     while (entries.hasMoreElements()) {
       ZipEntry zipEntry = entries.nextElement();
       String name = zipEntry.getName();
-      String nameUpper = name.toUpperCase();
+      String nameUpper = name.toUpperCase(Locale.ENGLISH);
       boolean interestingFile = nameUpper.startsWith(META_INF)
                                 && nameUpper.indexOf('/', META_INF.length() + 1) < 0
                                 && !nameUpper.endsWith("/MANIFEST.MF");
@@ -188,20 +192,18 @@ public class SecureJarLoader extends JarLoader {
     // then SignatureFileVerifier will find this mismatch and will throw SecurityError.
     // So it is safe to take checksum only from MANIFEST.MF even if it contains broken one.
     String suffix = "-DIGEST";
-    Map<String, byte[]> digestByAlgorithm = new HashMap<String, byte[]>();
     for (Map.Entry<String, Attributes> attributesEntry : manifest.getEntries().entrySet()) {
-      digestByAlgorithm.clear();
+      Map<String, byte[]> digestByAlgorithm = new HashMap<String, byte[]>();
       for (Map.Entry<Object, Object> attribute : attributesEntry.getValue().entrySet()) {
         assert attribute.getKey() instanceof Attributes.Name;
-        String name = attribute.getKey().toString().toUpperCase();
+        String name = attribute.getKey().toString().toUpperCase(Locale.ENGLISH);
         if (name.endsWith(suffix)) {
           String algorithm = name.substring(0, name.length() - suffix.length()).intern();
           byte[] newDigest = Base64.decode((String)attribute.getValue());
           digestByAlgorithm.put(algorithm, newDigest);
         }
       }
-      myDigestByFileName.put(attributesEntry.getKey(),
-                             new ArrayList<Map.Entry<String, byte[]>>(digestByAlgorithm.entrySet()));
+      myDigestsByFileName.put(attributesEntry.getKey(), digestByAlgorithm);
     }
   }
 
@@ -233,7 +235,7 @@ public class SecureJarLoader extends JarLoader {
     }
 
     private void verifySignature(byte[] contents) {
-      Collection<Map.Entry<String, byte[]>> digests = myDigestByFileName.get(myEntry.getName());
+      Collection<Map.Entry<String, byte[]>> digests = myDigestsByFileName.get(myEntry.getName()).entrySet();
       for (Map.Entry<String, byte[]> digest : digests) {
         byte[] actualDigest = createMessageDigest(digest.getKey()).digest(contents);
         if (!MessageDigest.isEqual(actualDigest, digest.getValue())) {
