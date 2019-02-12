@@ -19,6 +19,7 @@ import com.intellij.vcs.log.history.FileNamesData
 import com.intellij.vcs.log.history.removeTrivialMerges
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.util.StopWatch
+import com.intellij.vcs.log.util.TroveUtil
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromHashes
@@ -125,8 +126,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     val filtersWithoutStructure = detailsFilters.filterNot { it is VcsLogStructureFilter }
     if (filtersWithoutStructure.isEmpty()) return Pair(namesData.getCommits(), namesData)
 
-    val filteredWithoutStructure = dataGetter.filter(filtersWithoutStructure)
-    return Pair(filteredWithoutStructure.intersect(namesData.getCommits()), namesData)
+    return Pair(dataGetter.filter(filtersWithoutStructure, TroveUtil.createTroveSet(namesData.getCommits())), namesData)
   }
 
   private fun filterWithVcs(graph: PermanentGraph<Int>,
