@@ -56,8 +56,8 @@ public class TableLayout extends TabLayout {
         eachX = data.toFitRec.x;
       }
       myTabs.layout(eachLabel, eachX, 0, size.width, 1);
-      eachX += size.width + myTabs.getInterTabSpaceLength();
-      data.requiredWidth += size.width + myTabs.getInterTabSpaceLength();
+      eachX += size.width + myTabs.getTabHGap();
+      data.requiredWidth += size.width + myTabs.getTabHGap();
     }
 
     int selectedRow = -1;
@@ -84,7 +84,7 @@ public class TableLayout extends TabLayout {
         if (myTabs.getSelectedInfo() == eachInfo) {
           selectedRow = eachRow;
         }
-        eachX += size.width + myTabs.getInterTabSpaceLength();
+        eachX += size.width + myTabs.getTabHGap();
       }
       else {
         eachTableRow = new TableRow(data);
@@ -130,9 +130,7 @@ public class TableLayout extends TabLayout {
     final Insets insets = myTabs.getLayoutInsets();
     int eachY = insets.top;
     int eachX;
-    int row = 0;
-    final int tabUnderlineFix = myTabs.isEditorTabs() ? myTabs.getActiveTabUnderlineHeight() : 0;
-    
+
     for (TableRow eachRow : data.table) {
       eachX = insets.left;
 
@@ -157,15 +155,13 @@ public class TableLayout extends TabLayout {
           width = data.toFitRec.width + insets.left - eachX;
         }
 
-        myTabs.layout(label, eachX, eachY, width, row < data.table.size() - 1 ? myTabs.myHeaderFitSize.height - tabUnderlineFix :  myTabs.myHeaderFitSize.height);
+        myTabs.layout(label, eachX, eachY, width, myTabs.myHeaderFitSize.height);
         label.setAlignmentToCenter(deltaToFit > 0);
 
         boolean lastCell = i == eachRow.myColumns.size() - 1;
-        eachX += width + (lastCell ? 0 : myTabs.getInterTabSpaceLength());
+        eachX += width + (lastCell ? 0 : myTabs.getTabHGap());
       }
-      eachY += myTabs.myHeaderFitSize.height - 1 + myTabs.getInterTabSpaceLength() - (row < data.table.size() - 1 ? tabUnderlineFix : 0);
-      
-      row++;
+      eachY += myTabs.myHeaderFitSize.height;
     }
 
     if (myTabs.getSelectedInfo() != null) {

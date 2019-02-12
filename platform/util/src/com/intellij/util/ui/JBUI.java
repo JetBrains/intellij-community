@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.border.CustomLineBorder;
@@ -31,8 +32,7 @@ import java.awt.image.ImageObserver;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.EnumMap;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -1561,6 +1561,76 @@ public class JBUI {
       }
     }
 
+    public static class DefaultTabs {
+      @NotNull
+      public static Color underlineColor() {
+        return JBColor.namedColor("DefaultTabs.underlineColor", new JBColor(0x4083C9, 0x4A88C7));
+      }
+
+      @NotNull
+      public static Color inactiveUnderlineColor() {
+        return JBColor.namedColor("DefaultTabs.inactiveUnderlineColor", new JBColor(0xABABAB, 0x7A7A7A));
+      }
+
+      @NotNull
+      public static Color borderColor() {
+        return JBColor.namedColor("DefaultTabs.borderColor", ToolWindow.headerBorderBackground());
+      }
+
+      @NotNull
+      public static Color backgroundColor() {
+        return JBColor.namedColor("DefaultTabs.backgroundColor", ToolWindow.headerBackground());
+      }
+
+      @NotNull
+      public static Color hoverOverlayColor() {
+        return JBColor.namedColor("DefaultTabs.hoverOverlayColor",
+                                  new JBColor(ColorUtil.withAlpha(Color.BLACK, .10),
+                                              ColorUtil.withAlpha(Color.BLACK, .35)));
+      }
+
+      @NotNull
+      public static Color unselectedOverlayColor() {
+        return JBColor.namedColor("DefaultTabs.unselectedOverlayColor",
+                                  new JBColor(ColorUtil.withAlpha(Color.BLACK, .07),
+                                              ColorUtil.withAlpha(Color.BLACK, .13)));
+
+      }
+    }
+
+    public static class EditorTabs {
+      @NotNull
+      public static Color underlineColor() {
+        return JBColor.namedColor("EditorTabs.underlineColor", DefaultTabs.underlineColor());
+      }
+
+      @NotNull
+      public static Color inactiveUnderlineColor() {
+        return JBColor.namedColor("EditorTabs.inactiveUnderlineColor", DefaultTabs.inactiveUnderlineColor());
+      }
+
+      @NotNull
+      public static Color borderColor() {
+        return JBColor.namedColor("EditorTabs.borderColor", DefaultTabs.borderColor());
+      }
+
+      @NotNull
+      public static Color backgroundColor() {
+        return JBColor.namedColor("EditorTabs.backgroundColor", DefaultTabs.backgroundColor());
+      }
+
+      @NotNull
+      public static Color hoverOverlayColor() {
+        return JBColor.namedColor("EditorTabs.hoverOverlayColor", DefaultTabs.hoverOverlayColor());
+      }
+
+      @NotNull
+      public static Color unselectedOverlayColor() {
+        return JBColor.namedColor("EditorTabs.unselectedOverlayColor", DefaultTabs.unselectedOverlayColor());
+      }
+
+    }
+
     public static class ToolWindow {
       @NotNull
       public static Color tabSelectedBackground() {
@@ -1591,16 +1661,6 @@ public class JBUI {
       }
 
       @NotNull
-      public static Color tabSelectedBackground(boolean active) {
-        return active ? tabSelectedActiveBackground() : tabSelectedBackground();
-      }
-
-      @NotNull
-      public static Color tabHoveredBackground(boolean active) {
-        return active ? tabHoveredActiveBackground() : tabHoveredBackground();
-      }
-
-      @NotNull
       public static Color headerBackground(boolean active) {
         return active ? headerActiveBackground() : headerBackground();
       }
@@ -1621,12 +1681,12 @@ public class JBUI {
       }
 
       public static int tabVerticalPadding() {
-        return getInt("ToolWindow.tab.verticalPadding", 0);
+        return getInt("ToolWindow.tab.verticalPadding", scale(6));
       }
 
       @NotNull
-      public static Border tabBorder() {
-        return getBorder("ToolWindow.tabBorder", JBUI.Borders.empty(1));
+      public static Border tabHeaderBorder() {
+        return getBorder("ToolWindow.tabHeaderBorder", Borders.empty(1, 0));
       }
 
       @NotNull
