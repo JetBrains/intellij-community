@@ -15,6 +15,11 @@ import org.junit.Test
 @CompileStatic
 class GradleExtensionsTest extends GradleHighlightingBaseTest implements ResolveTest {
 
+  protected List<String> getParentCalls() {
+    // todo resolve extensions also for non-root places
+    return []
+  }
+
   @Test
   void extensionsTest() {
     importProject("")

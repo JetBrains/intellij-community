@@ -16,6 +16,11 @@ import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesT
 @CompileStatic
 class GradleSourceSetsTest extends GradleHighlightingBaseTest implements ResolveTest {
 
+  @Override
+  protected List<String> getParentCalls() {
+    return super.getParentCalls() + 'buildscript'
+  }
+
   @Test
   void sourceSetsTest() {
     importProject("apply plugin: 'java'")

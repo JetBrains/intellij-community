@@ -60,8 +60,12 @@ abstract class GradleHighlightingBaseTest extends GradleImportingTestCase {
   }
 
   void doTest(@NotNull String text, Closure test) {
-    updateProjectFile(text)
-    ReadAction.run(test)
+    List<String> testPatterns = [text]
+    getParentCalls().each { testPatterns.add("$it { $text }") }
+    testPatterns.each {
+      updateProjectFile(it)
+      ReadAction.run(test)
+    }
   }
 
   void doTest(@NotNull List<String> testPatterns, Closure test) {
@@ -79,6 +83,15 @@ abstract class GradleHighlightingBaseTest extends GradleImportingTestCase {
       }
       fixture.configureFromExistingVirtualFile(vFile)
     })
+  }
+
+  protected List<String> getParentCalls() {
+    return [
+      'project(":")',
+      'allprojects',
+      'subprojects',
+      'configure(project(":"))'
+    ]
   }
 
   @Override
