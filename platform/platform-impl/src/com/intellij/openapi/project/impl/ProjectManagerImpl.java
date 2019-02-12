@@ -652,12 +652,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
     if (isLight(project)) {
       // if we close project at the end of the test, just mark it closed; if we are shutting down the entire test framework, proceed to full dispose
-      if (!((ProjectImpl)project).isTemporarilyDisposed()) {
-        ((ProjectImpl)project).setTemporarilyDisposed(true);
+      ProjectImpl projectImpl = (ProjectImpl)project;
+      if (!projectImpl.isTemporarilyDisposed()) {
+        projectImpl.setTemporarilyDisposed(true);
         removeFromOpened(project);
         return true;
       }
-      ((ProjectImpl)project).setTemporarilyDisposed(false);
+      projectImpl.setTemporarilyDisposed(false);
     }
     else if (!isProjectOpened(project)) {
       return true;
@@ -684,7 +685,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         return false;
       }
 
-      fireProjectClosing(project); // somebody can start progress here, do not wrap in write action
+      // somebody can start progress here, do not wrap in write action
+      fireProjectClosing(project);
 
       app.runWriteAction(() -> {
         removeFromOpened(project);
