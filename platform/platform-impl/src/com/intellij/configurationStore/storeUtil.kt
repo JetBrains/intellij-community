@@ -146,7 +146,7 @@ interface ConfigurationStorageReloader {
  * @param isForceSavingAllSettings Whether to force save non-roamable component configuration.
  */
 @CalledInAny
-internal suspend fun saveProjectsAndApp(isForceSavingAllSettings: Boolean, onlyProject: Project? = null) {
+suspend fun saveProjectsAndApp(isForceSavingAllSettings: Boolean, onlyProject: Project? = null) {
   (ProjectManager.getInstance() as? ConfigurationStorageReloader)?.reloadChangedStorageFiles()
 
   val start = System.currentTimeMillis()

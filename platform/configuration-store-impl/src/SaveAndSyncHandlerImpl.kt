@@ -1,8 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide
+package com.intellij.configurationStore
 
 import com.intellij.concurrency.JobScheduler
-import com.intellij.configurationStore.saveProjectsAndApp
+import com.intellij.ide.FrameStateListener
+import com.intellij.ide.GeneralSettings
+import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
@@ -11,7 +14,6 @@ import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.async.coroutineDispatchingContext
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.BaseComponent
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
@@ -31,8 +33,6 @@ import kotlinx.coroutines.runBlocking
 import java.beans.PropertyChangeListener
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
-
-private val LOG = Logger.getInstance(SaveAndSyncHandler::class.java)
 
 class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : SaveAndSyncHandler(), Disposable, BaseComponent {
   private val refreshDelayAlarm = SingleAlarm(Runnable { this.doScheduledRefresh() }, delay = 300, parentDisposable = this)
