@@ -1217,7 +1217,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     text.append(".toString();<caret>}");
     configureByText(StdFileTypes.JAVA, text.toString());
 
-    PlatformTestUtil.startPerformanceTest("highlighting deep call chain", 60_000, () -> {
+    PlatformTestUtil.startPerformanceTest("highlighting deep call chain", 100_000, () -> {
       List<HighlightInfo> infos = highlightErrors();
       assertEmpty(infos);
       type("k");
