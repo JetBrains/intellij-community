@@ -2,6 +2,7 @@ import errno
 import os
 import re
 import shutil
+import subprocess
 import sys
 import tempfile
 import textwrap
@@ -156,22 +157,45 @@ class SkeletonCachingTest(GeneratorTestCase):
     def find_binary_subdir(self, subdir):
         return os.path.join(self.binaries_dir, subdir)
 
-    def run_generator(self, mod_qname, mod_path=None, builtins=False, fake_hashes=False, extra_syspath_entry=None):
+    def run_generator(self, mod_qname, mod_path=None, fake_hashes=False, extra_syspath_entry=None):
+        output_dir = os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR, self.SDK_SKELETONS_DIR)
         if extra_syspath_entry is None:
             extra_syspath_entry = self.test_data_dir
 
+        args = [
+            sys.executable,
+            os.path.abspath(generator3.__file__),
+            '-d', output_dir,
+            '-s', extra_syspath_entry,
+            mod_qname
+        ]
+
+        if mod_path is None:
+            mod_path = self.imported_module_path(mod_qname, extra_syspath_entry)
+        if mod_path:
+            args.append(mod_path)
+
+        env = {
+            TEST_MODE_FLAG: 'True',
+        }
+        if fake_hashes:
+            env[CONTENT_INDEPENDENT_HASHES_FLAG] = 'True'
+
+        subprocess.call(args, env=env)
+        return mod_path
+
+    @staticmethod
+    def imported_module_path(mod_qname, extra_syspath_entry):
         sys.path.insert(0, extra_syspath_entry)
         try:
-            if mod_path is None:
-                mod_path = getattr(__import__(mod_qname), '__file__', None)
-            sdk_dir = os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR, self.SDK_SKELETONS_DIR)
-            with self.environment(CONTENT_INDEPENDENT_HASHES_FLAG, str(fake_hashes)):
-                generator3.process_one(mod_qname, mod_path, builtins, sdk_skeletons_dir=sdk_dir)
-                return mod_path
+            return os.path.abspath(getattr(__import__(mod_qname), '__file__'))
+        except AttributeError:
+            pass
         finally:
             if mod_qname != 'sys':
                 sys.modules.pop(mod_qname, None)
             sys.path.pop(0)
+        return None
 
     def test_basic_layout_for_builtin_module(self):
         self.run_generator(mod_qname='sys')
@@ -218,15 +242,3 @@ class SkeletonCachingTest(GeneratorTestCase):
             self.assertMultiLineEqual(expected, actual)
         except AttributeError:
             self.assertEquals(expected, actual)
-
-    @contextmanager
-    def environment(self, name, value):
-        old_value = os.environ.get(name)
-        os.environ[name] = value
-        try:
-            yield
-        finally:
-            if old_value is None:
-                del os.environ[name]
-            else:
-                os.environ[name] = old_value
