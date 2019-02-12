@@ -14,6 +14,7 @@ import com.intellij.psi.stubs.FileContentHashing
 import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileContentImpl
+import com.intellij.util.indexing.IndexingDataKeys
 import java.io.Closeable
 import java.io.IOException
 import java.lang.RuntimeException
@@ -85,6 +86,7 @@ abstract class PrebuiltIndexer {
       iterateFiles { f ->
         if (f.isDirectory) return@iterateFiles true
         val fileContent = FileContentImpl(f, f.contentsToByteArray())
+        project?.let {  fileContent.putUserData(IndexingDataKeys.PROJECT, it) }
         val hash = hashing.hashString(fileContent)
         hashVerifier.checkContent(hash, fileContent)
         return@iterateFiles generatorWrapper.indexFile(f, fileContent, hash)
@@ -95,6 +97,8 @@ abstract class PrebuiltIndexer {
   }
 
   protected abstract fun iterateFiles(fileVisitor: (VirtualFile) -> Boolean)
+
+  protected open val project: Project? = null
 }
 
 class RootsPrebuiltIndexer(private val roots: Collection<VirtualFile>): PrebuiltIndexer() {
@@ -110,7 +114,7 @@ class RootsPrebuiltIndexer(private val roots: Collection<VirtualFile>): Prebuilt
   }
 }
 
-class ProjectContentPrebuiltIndexer(private val project: Project,
+class ProjectContentPrebuiltIndexer(override val project: Project,
                                     private val indicator: ProgressIndicator = ProgressManager.getInstance().progressIndicator): PrebuiltIndexer() {
   override fun iterateFiles(fileVisitor: (VirtualFile) -> Boolean) {
     FileBasedIndex.getInstance().iterateIndexableFiles({ f -> ReadAction.compute<Boolean, RuntimeException> { fileVisitor.invoke(f)} },
