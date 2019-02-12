@@ -9,6 +9,7 @@ from contextlib import contextmanager
 from unittest import TestCase
 
 import generator3
+from generator3 import TEST_MODE_FLAG, CONTENT_INDEPENDENT_HASHES_FLAG
 from pycharm_generator_utils.util_methods import (
     copy_merging_packages,
     delete,
@@ -24,8 +25,10 @@ _test_data_root_dir = os.path.join(_test_dir, 'data')
 class GeneratorTestCase(TestCase):
     def setUp(self):
         self.temp_dir = tempfile.mkdtemp()
+        os.environ[TEST_MODE_FLAG] = 'True'
 
     def tearDown(self):
+        del os.environ[TEST_MODE_FLAG]
         shutil.rmtree(self.temp_dir)
 
     @property
@@ -38,8 +41,11 @@ class GeneratorTestCase(TestCase):
 
     @property
     def test_data_dir(self):
-        return os.path.join(_test_data_root_dir,
-                            self.test_class_name, self.test_name)
+        return os.path.join(self.class_test_data_dir, self.test_name)
+
+    @property
+    def class_test_data_dir(self):
+        return os.path.join(_test_data_root_dir, self.test_class_name)
 
     def assertDirsEqual(self, actual_dir, expected_dir):
         actual_dir_children = sorted(os.listdir(actual_dir))
@@ -149,10 +155,11 @@ class SkeletonCachingTest(GeneratorTestCase):
     def tearDown(self):
         sys.path.pop(0)
 
-    def run_generator(self, mod_qname, mod_path=None, builtins=False):
+    def run_generator(self, mod_qname, mod_path=None, builtins=False, fake_hashes=False):
         sdk_dir = os.path.join(self.temp_dir, self.SDK_SKELETONS_DIR)
-        generator3.process_one(mod_qname, mod_path, builtins,
-                               sdk_skeletons_dir=sdk_dir)
+
+        with self.environment(CONTENT_INDEPENDENT_HASHES_FLAG, str(fake_hashes)):
+            generator3.process_one(mod_qname, mod_path, builtins, sdk_skeletons_dir=sdk_dir)
 
     def test_basic_layout_for_builtin_module(self):
         self.run_generator(mod_qname='sys')
@@ -176,6 +183,11 @@ class SkeletonCachingTest(GeneratorTestCase):
             mod.py
         """.format(hash=generator3.module_hash('mod', mod_path)))
 
+    def test_outdated_stub_invalidation(self):
+        mod_path = self.copy_binary_to_test_dir('mod', 'versions/v2')
+        with self.comparing_dirs():
+            self.run_generator('mod', mod_path, fake_hashes=True)
+
     def assertDirLayoutEquals(self, dir_path, expected_layout):
         def format_dir(dir_path, indent=''):
             for child_name in os.listdir(dir_path):
@@ -194,3 +206,26 @@ class SkeletonCachingTest(GeneratorTestCase):
             self.assertMultiLineEqual(expected, actual)
         except AttributeError:
             self.assertEquals(expected, actual)
+
+    def copy_binary_to_test_dir(self, mod_name, subdir=''):
+        binary_dir = os.path.join(self.class_test_data_dir, 'binaries', subdir)
+        binary_name = self.select_binary_artifact(binary_dir, mod_name)
+        shutil.copy2(os.path.join(binary_dir, binary_name), self.test_data_dir)
+        return os.path.join(self.test_data_dir, binary_name)
+
+    def select_binary_artifact(self, dir_, mod_name):
+        # TODO sane way to select a binary depending on platform and interpreter version
+        return next(name for name in os.listdir(dir_) if name.startswith(mod_name) and name.endswith('.so'))
+
+    @contextmanager
+    def environment(self, name, value):
+        old_value = os.environ.get(name)
+        os.environ[name] = value
+        try:
+            yield
+        finally:
+            if old_value is None:
+                del os.environ[name]
+            else:
+                os.environ[name] = old_value
+
