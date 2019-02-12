@@ -81,32 +81,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
 
   protected BaseToolsPanel() {
     myTree = new CheckboxTree(
-      new CheckboxTree.CheckboxTreeCellRenderer() {
-        @Override
-        public void customizeRenderer(final JTree tree,
-                                      final Object value,
-                                      final boolean selected,
-                                      final boolean expanded,
-                                      final boolean leaf,
-                                      final int row,
-                                      final boolean hasFocus) {
-          if (!(value instanceof CheckedTreeNode)) return;
-          Object object = ((CheckedTreeNode)value).getUserObject();
-
-          if (object instanceof ToolsGroup) {
-            final String groupName = ((ToolsGroup)object).getName();
-            if (groupName != null) {
-              getTextRenderer().append(groupName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-            }
-            else {
-              getTextRenderer().append("[unnamed group]", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-            }
-          }
-          else if (object instanceof Tool) {
-            getTextRenderer().append(((Tool)object).getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-          }
-        }
-      },
+      getTreeCellRenderer(),
       new CheckedTreeNode(null)) {
       @Override
       protected void onDoubleClick(final CheckedTreeNode node) {
@@ -223,6 +198,38 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
   }
 
   protected abstract BaseToolManager<T> getToolManager();
+
+  protected CheckboxTree.CheckboxTreeCellRenderer getTreeCellRenderer() {
+    return new MyCheckboxTreeCellRenderer();
+  }
+
+  protected static class MyCheckboxTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
+    @Override
+    public void customizeRenderer(final JTree tree,
+                                  final Object value,
+                                  final boolean selected,
+                                  final boolean expanded,
+                                  final boolean leaf,
+                                  final int row,
+                                  final boolean hasFocus) {
+      if (!(value instanceof CheckedTreeNode)) return;
+      Object object = ((CheckedTreeNode)value).getUserObject();
+
+      if (object instanceof ToolsGroup) {
+        final String groupName = ((ToolsGroup)object).getName();
+        if (groupName != null) {
+          getTextRenderer().append(groupName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        }
+        else {
+          getTextRenderer().append("[unnamed group]", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        }
+      }
+      else if (object instanceof Tool) {
+        getTextRenderer().append(((Tool)object).getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      }
+    }
+  }
+
 
   @NotNull
   private CheckedTreeNode insertNewGroup(@NotNull ToolsGroup<T> groupCopy) {
