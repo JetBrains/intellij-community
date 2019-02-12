@@ -4,7 +4,6 @@ package com.intellij.util.lang;
 import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Function;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,9 +15,6 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.security.CodeSigner;
-import java.security.CodeSource;
-import java.security.Permissions;
 import java.security.ProtectionDomain;
 import java.util.*;
 
@@ -89,7 +85,7 @@ public class UrlClassLoader extends ClassLoader {
 
   public static final class Builder {
     private List<URL> myURLs = ContainerUtilRt.emptyList();
-    private Set<URL> myURLsWithProtectionDomain = new SmartHashSet<URL>();
+    private Set<URL> myURLsWithProtectionDomain = ContainerUtilRt.newHashSet();
     private ClassLoader myParent;
     private boolean myLockJars;
     private boolean myUseCache;
@@ -121,7 +117,7 @@ public class UrlClassLoader extends ClassLoader {
      * @see #urlsWithProtectionDomain(Set)
      */
     @NotNull
-    public Builder urlsWithProtectionDomain(@NotNull URL... urls) { return urlsWithProtectionDomain(ContainerUtil.newHashSet(urls)); }
+    public Builder urlsWithProtectionDomain(@NotNull URL... urls) { return urlsWithProtectionDomain(ContainerUtilRt.newHashSet(urls)); }
 
     /**
      * ZipFile handles opened in JarLoader will be kept in SoftReference. Depending on OS, the option significantly speeds up classloading 
@@ -224,8 +220,6 @@ public class UrlClassLoader extends ClassLoader {
     myClassPath = createClassPath(builder);
     myAllowBootstrapResources = builder.myAllowBootstrapResources;
     myClassLoadingLocks = ourParallelCapableLoaders != null && ourParallelCapableLoaders.contains(getClass()) ? new ClassLoadingLocks() : null;
-    myPackageBlacklist = builder.myPackageBlacklist;
-    myFallbackClassLoader = URLClassLoader.newInstance(myURLs.toArray(new URL[0]), null);
   }
 
   @NotNull
