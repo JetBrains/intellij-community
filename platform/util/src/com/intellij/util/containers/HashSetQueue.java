@@ -209,11 +209,7 @@ public class HashSetQueue<T> extends AbstractCollection<T> implements Queue<T> {
 
     @Override
     public int compareTo(@NotNull PositionalIterator.IteratorPosition<T> o) {
-      return compare(count, ((MyIteratorPosition)o).count);
-    }
-
-    private static int compare(long x, long y) {
-        return Long.compare(x, y);
+      return Long.compare(count, ((MyIteratorPosition)o).count);
     }
   }
 
