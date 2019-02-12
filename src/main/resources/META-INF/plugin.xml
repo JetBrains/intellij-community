@@ -37,7 +37,6 @@
        the specific language governing permissions and limitations under the License.</p>
     <hr/>
     <br/>
-    <p>Icons by <a href="https://www.iconfinder.com/korawan_m">BomSymbols</a>.</p>
     ]]></description>
 
   <change-notes><![CDATA[
@@ -45,6 +44,7 @@
     <ul>
     <li>Support highlighting of file names, separators, EOL hints, and modified lines</li>
     <li>Color settings page</li>
+    <li>Icon changed</li>
     </ul>
     ]]></change-notes>
 

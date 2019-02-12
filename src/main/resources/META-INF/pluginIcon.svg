@@ -1,17 +1,24 @@
-<!-- Icon by "BomSymbols" https://www.iconfinder.com/korawan_m -->
-<svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 91 91" version="1.1"
-    viewBox="0 0 91 91"
-    width="80px" height="80px">
-  <path
-      d="M19.888,77.474v-60.8H7.838v73.879h53.046c2.592,0,4.701-2.109,4.701-4.705v-5.561H22.703 C21.149,80.287,19.888,79.029,19.888,77.474z"
-      fill="#6EC4A7" />
-  <path
-      d="M70.176,17.614h8.905L65.476,4.566v8.348C65.476,15.507,67.583,17.614,70.176,17.614z"
-      fill="#45596B" />
-  <path
-      d="M70.173,23.243c-5.695,0-10.33-4.635-10.33-10.33V0.782H25.517V74.66h42.575 c0.101-0.012,0.202-0.031,0.308-0.031c0.107,0,0.207,0.02,0.311,0.031h9.854c2.595,0,4.701-2.111,4.701-4.705V23.243H70.173z"
-      fill="#647F94" />
-  <path
-      d="M48.013,54.627h-9.547c-1.557,0-2.815-1.258-2.815-2.814c0-1.553,1.259-2.813,2.815-2.813h9.547 c1.551,0,2.812,1.26,2.812,2.813C50.824,53.369,49.563,54.627,48.013,54.627zM63.149,54.627h-3.916c-1.555,0-2.815-1.258-2.815-2.814c0-1.553,1.261-2.813,2.815-2.813h3.916 c1.555,0,2.815,1.26,2.815,2.813C65.965,53.369,64.704,54.627,63.149,54.627zM70.315,41.701h-31.85c-1.557,0-2.815-1.259-2.815-2.814c0-1.554,1.259-2.814,2.815-2.814h31.85 c1.555,0,2.815,1.26,2.815,2.814C73.131,40.442,71.87,41.701,70.315,41.701z"
-      fill="#95AEC2" />
+<!--
+ Copyright 2019 Thomas Rosenau
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ -->
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1"
+    viewBox="0 0 16 16" width="16px" height="16px">
+    <path fill="#d3d3d3" d="M2,16H14V0H6.7l-4.7,4.7z" />
+    <path fill="#ffffff" d="M3,6V15h10V1h-5v5zM3,5h4v-4z" />
+    <path fill="#ffebf1" d="M5,7v3h6v-3z" />
+    <path fill="#cb2431" d="M4,8v1h3v-1z" />
+    <path fill="#daffe3" d="M5,11v3h6v-3z" />
+    <path fill="#2cbe4e" d="M4,12v1h1v1h1v-1h1v-1h-1v-1h-1v1z" />
 </svg>

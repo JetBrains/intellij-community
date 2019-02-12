@@ -21,5 +21,5 @@ import javax.swing.*;
 import com.intellij.openapi.util.IconLoader;
 
 public class DiffIcons {
-  public static final Icon FILE = IconLoader.getIcon("icons/paper.png");
+  public static final Icon FILE = IconLoader.getIcon("META-INF/pluginIcon.svg");
 }
