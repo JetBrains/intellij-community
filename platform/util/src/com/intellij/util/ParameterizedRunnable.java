@@ -18,6 +18,7 @@ package com.intellij.util;
 /**
  * Please use {@link java.util.function.Consumer} instead
  */
+@FunctionalInterface
 public interface ParameterizedRunnable<T> {
   void run(T t);
 }
