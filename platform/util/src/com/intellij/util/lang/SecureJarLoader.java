@@ -24,14 +24,27 @@ public class SecureJarLoader extends JarLoader {
   private static final Map<String, MessageDigest> ourPristineDigests = new HashMap<String, MessageDigest>();
   private static final Object ourPristineDigestsMonitor = new Object();
 
+  /**
+   * This table is filled once inside synchronization block in JarLoader.loadManifestAttributes()
+   * and then used only for reads. It is thread-safe.
+   */
   private final Map<String, Collection<Map.Entry<String, byte[]>>> myDigestByFileName;
-  private Set<String> myVerifiedEntries;
+
+  /**
+   * This set may be modified from different threads.
+   */
+  private final Set<String> myVerifiedEntries;
+
+  /**
+   * This object will be created once inside synchronization block in JarLoader.loadManifestAttributes()
+   * and then will never change.
+   */
   @Nullable private ProtectionDomain myProtectionDomain;
 
   SecureJarLoader(URL url, int index, ClassPath configuration) throws IOException {
     super(url, index, configuration);
     myDigestByFileName = new HashMap<String, Collection<Map.Entry<String, byte[]>>>();
-    myVerifiedEntries = new com.intellij.util.containers.hash.HashSet<String>();
+    myVerifiedEntries = Collections.synchronizedSet(new HashSet<String>());
   }
 
   @Nullable
