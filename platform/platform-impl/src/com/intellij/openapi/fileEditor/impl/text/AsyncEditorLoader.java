@@ -28,6 +28,7 @@ public class AsyncEditorLoader {
   private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("AsyncEditorLoader Pool", 2);
   private static final Key<AsyncEditorLoader> ASYNC_LOADER = Key.create("ASYNC_LOADER");
   private static final int SYNCHRONOUS_LOADING_WAITING_TIME_MS = 200;
+  private static final int DOCUMENT_COMMIT_WAITING_TIME_MS = 5_000;
   @NotNull private final Editor myEditor;
   @NotNull private final Project myProject;
   @NotNull private final TextEditorImpl myTextEditor;
@@ -76,7 +77,7 @@ public class AsyncEditorLoader {
   }
 
   private CancellablePromise<Runnable> scheduleLoading() {
-    long commitDeadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+    long commitDeadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(DOCUMENT_COMMIT_WAITING_TIME_MS);
 
     return ReadAction
       .nonBlocking(() -> {
