@@ -10,7 +10,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ShortcutSet;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -163,6 +162,21 @@ public class RecentLocationsAction extends DumbAwareAction {
     if (scrollPaneSize == null) {
       scrollPaneSize = new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
     }
+
+    list.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent event) {
+        int clickCount = event.getClickCount();
+        if (clickCount > 1 && clickCount % 2 == 0) {
+          event.consume();
+          final int i = list.locationToIndex(event.getPoint());
+          if (i != -1) {
+            list.setSelectedIndex(i);
+            navigateToSelected(project, list, popup, navigationRef);
+          }
+        }
+      }
+    });
 
     scrollPane.setMinimumSize(new Dimension(MINIMUM_WIDTH, MINIMUM_HEIGHT));
 
