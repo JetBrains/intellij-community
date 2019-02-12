@@ -39,7 +39,7 @@ class GradleConfigurationsTest extends GradleHighlightingBaseTest implements Res
   }
 
   void 'configuration via unqualified property reference'() {
-    doTest('configurations { foo }') {
+    doTest('configurations { <caret>foo }') {
       def ref = elementUnderCaret(GrReferenceExpression)
       assert ref.resolve() != null
       assert ref.type.equalsToText(GRADLE_API_CONFIGURATION)
