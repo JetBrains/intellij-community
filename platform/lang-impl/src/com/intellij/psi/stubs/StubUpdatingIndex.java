@@ -74,7 +74,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     }
   };
 
-  protected static final FileBasedIndex.InputFilter INPUT_FILTER = file -> canHaveStub(file);
+  public static final FileBasedIndex.InputFilter INPUT_FILTER = file -> canHaveStub(file);
 
   public static boolean canHaveStub(@NotNull VirtualFile file) {
     FileType fileType = SubstitutedFileType.substituteFileType(file, file.getFileType(), ProjectUtil.guessProjectForFile(file));

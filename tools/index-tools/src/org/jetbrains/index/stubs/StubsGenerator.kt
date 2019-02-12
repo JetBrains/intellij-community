@@ -16,8 +16,10 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.stubs.*
+import com.intellij.psi.stubs.StubUpdatingIndex.*
 import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.io.PersistentHashMap
 import junit.framework.TestCase
@@ -49,6 +51,9 @@ open class StubsGenerator(private val stubsVersion: String) : SingleIndexGenerat
   fun buildStubsForRoots(roots: Collection<VirtualFile>, indexStorageFilePath: String) {
     RootsPrebuiltIndexer(roots).buildIndex(arrayOf(this), indexStorageFilePath)
   }
+
+  override val fileFilter: VirtualFileFilter
+    get() = VirtualFileFilter { f -> INPUT_FILTER.acceptInput(f)}
 
   override fun getIndexValue(fileContent: FileContentImpl): SerializedStubTree? {
     val stub = buildStubForFile(fileContent, serializationManager!!) ?: return null

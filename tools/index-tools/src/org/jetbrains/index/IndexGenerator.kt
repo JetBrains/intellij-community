@@ -3,6 +3,7 @@ package org.jetbrains.index
 
 import com.google.common.hash.HashCode
 import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
@@ -12,6 +13,8 @@ import com.intellij.util.indexing.FileBasedIndexExtension
 import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.io.PersistentHashMap
 import org.jetbrains.index.id.SingleIndexGeneratorImpl
+import org.jetbrains.index.stubs.StubsGenerator
+import sun.rmi.rmic.iiop.StubGenerator
 import java.io.IOException
 
 /**
@@ -69,5 +72,10 @@ abstract class SingleIndexGenerator<Value>: IndexGenerator() {
 }
 
 fun getAllIdeIndexGenerators() : Array<SingleIndexGenerator<*>> {
-  return FileBasedIndexExtension.EXTENSION_POINT_NAME.extensions.filter { it.dependsOnFileContent() && it.name != StubUpdatingIndex.INDEX_ID }.map { SingleIndexGeneratorImpl(it) }.toTypedArray()
+  val regularIndices: Array<SingleIndexGenerator<*>> = FileBasedIndexExtension.EXTENSION_POINT_NAME.extensions.filter { it.dependsOnFileContent() && it.name != StubUpdatingIndex.INDEX_ID }.map {
+    SingleIndexGeneratorImpl(it)
+  }.toTypedArray()
+
+  val registeredFileTypes = FileTypeManager.getInstance().registeredFileTypes.map { it.name }.sorted().toString()
+  return regularIndices + arrayOf(StubsGenerator(registeredFileTypes))
 }
