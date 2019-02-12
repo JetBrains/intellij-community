@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Condition;
 
 import java.util.Collection;
 
+@FunctionalInterface
 public interface InternalIterator<T>{
   /**
    * @return false to stop iteration true to continue if more elements are avaliable.

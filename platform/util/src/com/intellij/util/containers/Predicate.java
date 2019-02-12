@@ -19,6 +19,7 @@ package com.intellij.util.containers;
 /**
  * Please use {@link java.util.function.Predicate} instead
  */
+@FunctionalInterface
 public interface Predicate<T> {
   boolean apply(T input);
 }

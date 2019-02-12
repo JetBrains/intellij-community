@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Nikolay Matveev
  */
+@FunctionalInterface
 public interface NotNullComputable<T> extends Computable<T> {
 
   @Override
