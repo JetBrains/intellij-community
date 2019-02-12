@@ -24,6 +24,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
 import com.jetbrains.python.inspections.quickfix.AddGlobalQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyDelStatementNavigator;
 import com.jetbrains.python.psi.impl.PyGlobalStatementNavigator;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import org.jetbrains.annotations.Nls;
@@ -90,15 +91,16 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
       if (owner == null || largeFunctions.contains(owner)) {
         return;
       }
-      // Ignore references declared in outer scopes
-      if (owner != ScopeUtil.getScopeOwner(node)) {
+      // Check if it is nonlocal to search in appropriate scope later
+      boolean isNonLocal = false;
+      ScopeOwner currentScopeOwner = ScopeUtil.getScopeOwner(node);
+      if (currentScopeOwner != null) {
+        isNonLocal = ControlFlowCache.getScope(currentScopeOwner).isNonlocal(name);
+      }
+      if (owner != currentScopeOwner && !isNonLocal) {
         return;
       }
-      final Scope scope = ControlFlowCache.getScope(owner);
-      // Ignore globals and if scope even doesn't contain such a declaration
-      if (scope.isGlobal(name) || (!scope.containsDeclaration(name))){
-        return;
-      }
+      final Scope scope = ControlFlowCache.getScope(isNonLocal ? currentScopeOwner : owner);
       // Start DFA from the assignment statement in case of augmented assignments
       final PsiElement anchor;
       final PyAugAssignmentStatement augAssignment = PsiTreeUtil.getParentOfType(node, PyAugAssignmentStatement.class);
@@ -129,6 +131,9 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
             return;
           }
         }
+        if (PyDelStatementNavigator.getDelStatementByTarget(node) != null) {
+          return;
+        }
         if (resolvedUnderWithStatement(node, resolved) || resolvedUnderAssignmentExpressionAndCondition(node, resolved)) {
           return;
         }
@@ -143,6 +148,12 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
             return;
           }
           registerProblem(node, PyBundle.message("INSP.unbound.name.not.defined", name));
+        }
+        else if (scope.isGlobal(name)) {
+          registerProblem(node, PyBundle.message("INSP.unbound.name.not.defined", name));
+        }
+        else if (isNonLocal) {
+          registerProblem(node, PyBundle.message("INSP.unbound.local.variable", name));
         }
         else {
           registerProblem(node, PyBundle.message("INSP.unbound.local.variable", node.getName()),

@@ -228,6 +228,24 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
+  public void visitPyDelStatement(PyDelStatement node) {
+    myBuilder.startNode(node);
+    for (PyExpression target : node.getTargets()) {
+      if (target instanceof PyReferenceExpression){
+        PyReferenceExpression expr = (PyReferenceExpression)target;
+        myBuilder.addNode(ReadWriteInstruction.newInstruction(myBuilder, target, expr.getName(), ReadWriteInstruction.ACCESS.DELETE));
+        PyExpression qualifier = expr.getQualifier();
+        if (qualifier != null) {
+          qualifier.accept(this);
+        }
+      }
+      else {
+        target.accept(this);
+      }
+    }
+  }
+
+  @Override
   public void visitPyAugAssignmentStatement(final PyAugAssignmentStatement node) {
     myBuilder.startNode(node);
     final PyExpression value = node.getValue();
