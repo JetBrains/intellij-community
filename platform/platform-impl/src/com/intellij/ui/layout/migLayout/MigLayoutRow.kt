@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.VisualPaddingsProvider
 import com.intellij.openapi.ui.OnePixelDivider
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
@@ -207,7 +208,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
   }
 
-  override operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int, growPolicy: GrowPolicy?, comment: String?): CellBuilder {
+  override operator fun <T : JComponent> T.invoke(vararg constraints: CCFlags, gapLeft: Int, growPolicy: GrowPolicy?, comment: String?): CellBuilder<T> {
     addComponent(this, constraints.create()?.let { lazyOf(it) } ?: lazy { CC() }, gapLeft, growPolicy, comment)
     return CellBuilderImpl(builder, this)
   }
@@ -320,13 +321,19 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   }
 }
 
-class CellBuilderImpl internal constructor(
+class CellBuilderImpl<T : JComponent> internal constructor(
   private val builder: MigLayoutBuilder,
-  private val component: JComponent
-) : CellBuilder {
+  private val component: T
+) : CellBuilder<T> {
 
-  override fun focused() {
+  override fun focused(): CellBuilder<T> {
     builder.preferredFocusedComponent = component
+    return this
+  }
+
+  override fun withValidation(callback: (T) -> ValidationInfo?): CellBuilder<T> {
+    builder.validateCallbacks.add { callback(component) }
+    return this
   }
 }
 

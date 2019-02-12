@@ -23,5 +23,6 @@ inline fun panel(vararg constraints: LCFlags, title: String? = null, init: Layou
   val panel = DialogPanel(title, layout = null)
   builder.builder.build(panel, constraints)
   panel.preferredFocusedComponent = builder.builder.preferredFocusedComponent
+  panel.validateCallbacks = builder.builder.validateCallbacks
   return panel
 }

@@ -38,6 +38,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
+import kotlin.jvm.functions.Function0;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -181,6 +182,8 @@ public abstract class DialogWrapper {
   private int myCurrentOptionsButtonIndex = -1;
   private boolean myResizeInProgress = false;
   private ComponentAdapter myResizeListener;
+
+  private final List<Function0<ValidationInfo>> myValidateCallbacks = newArrayList();
 
   @NotNull
   protected String getDoNotShowMessage() {
@@ -353,6 +356,19 @@ public abstract class DialogWrapper {
   @NotNull
   protected List<ValidationInfo> doValidateAll() {
     ValidationInfo vi = doValidate();
+
+    if (!myValidateCallbacks.isEmpty()) {
+      List<ValidationInfo> result = new ArrayList<>();
+      if (vi != null) result.add(vi);
+      for (Function0<ValidationInfo> callback : myValidateCallbacks) {
+        ValidationInfo callbackInfo = callback.invoke();
+        if (callbackInfo != null) {
+          result.add(callbackInfo);
+        }
+      }
+      return result;
+    }
+
     return vi != null ? Collections.singletonList(vi) : Collections.EMPTY_LIST;
   }
 
@@ -1306,7 +1322,9 @@ public abstract class DialogWrapper {
     if (centerPanel != null) {
       centerSection.add(centerPanel, BorderLayout.CENTER);
       if (centerPanel instanceof DialogPanel) {
-        myPreferredFocusedComponentFromPanel = ((DialogPanel) centerPanel).getPreferredFocusedComponent();
+        DialogPanel dialogPanel = (DialogPanel)centerPanel;
+        myPreferredFocusedComponentFromPanel = dialogPanel.getPreferredFocusedComponent();
+        myValidateCallbacks.addAll(dialogPanel.getValidateCallbacks());
       }
     }
 

@@ -10,6 +10,7 @@ import javax.swing.JPanel
  */
 class DialogPanel : JPanel {
   var preferredFocusedComponent: JComponent? = null
+  var validateCallbacks: List<() -> ValidationInfo?> = emptyList()
 
   constructor() : super()
   constructor(layout: LayoutManager?) : super(layout)
