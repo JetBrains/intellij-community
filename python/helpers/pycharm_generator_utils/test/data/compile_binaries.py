@@ -2,12 +2,12 @@ import os
 
 from Cython.Build.Cythonize import main as cythonize
 
-_binaries_dir = os.path.dirname(os.path.abspath(__file__))
+_test_data_dir = os.path.dirname(os.path.abspath(__file__))
 _cythonize_options = ['--inplace']
 
 
 def main():
-    for dir_path, _, file_names in os.walk(_binaries_dir):
+    for dir_path, _, file_names in os.walk(_test_data_dir):
         for file_name in file_names:
             mod_name, ext = os.path.splitext(file_name)
             if ext == '.pyx':
