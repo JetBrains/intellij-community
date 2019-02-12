@@ -40,9 +40,7 @@ DONT_TRACE = {
     '_pydev_xmlrpclib.py': PYDEV_FILE,
     'django_debug.py': PYDEV_FILE,
     'fix_getpass.py': PYDEV_FILE,
-    'io.py': PYDEV_FILE,
     'jinja2_debug.py': PYDEV_FILE,
-    'protocol.py': PYDEV_FILE,
     'pycompletionserver.py': PYDEV_FILE,
     'pydev_app_engine_debug_startup.py': PYDEV_FILE,
     'pydev_code_executor.py': PYDEV_FILE,
@@ -119,9 +117,6 @@ DONT_TRACE = {
     'pydevd_vars.py': PYDEV_FILE,
     'pydevd_vm_type.py': PYDEV_FILE,
     'pydevd_xml.py': PYDEV_FILE,
-    'rpc.py': PYDEV_FILE,
-    'server.py': PYDEV_FILE,
-    'transport.py': PYDEV_FILE,
 }
 
 if IS_PY3K:
