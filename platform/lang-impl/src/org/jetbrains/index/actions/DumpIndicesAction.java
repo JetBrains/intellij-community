@@ -26,6 +26,9 @@ import com.intellij.util.io.PersistentHashMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.index.IndexGeneratorKt;
+import org.jetbrains.index.OnDiskContentHashVerifier;
+import org.jetbrains.index.ProjectContentPrebuiltIndexer;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -50,145 +53,9 @@ public class DumpIndicesAction extends AnAction {
     ProgressManager.getInstance().run(new Task.Modal(project, "Dumping Indices...", false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        FileContentHashing fileContentHashing = new FileContentHashing();
-        try (IndexStorages storages = new IndexStorages(dir.getCanonicalPath())) {
-          Ref<IOException> exceptionRef = Ref.create();
-          FileBasedIndex.getInstance().iterateIndexableFiles(f -> {
-            try {
-              ReadAction.run(() -> {
-                if (f.isDirectory()) return;
-                FileContentImpl content = new FileContentImpl(f, f.contentsToByteArray());
-                PsiFile psiFile = psiManager.findFile(f);
-                if (psiFile != null) {
-                  content.putUserData(IndexingDataKeys.PSI_FILE, psiFile);
-                }
-                content.putUserData(IndexingDataKeys.PROJECT, project);
-                HashCode hashCode = fileContentHashing.hashString(content);
-                FileType type = content.getFileType();
-                storages.indexFile(content, f, type, hashCode);
-              });
-            }
-            catch (IOException ex) {
-              exceptionRef.set(ex);
-            }
-            return true;
-          }, project, indicator);
-        }
-        catch (IOException ex) {
-          ex.printStackTrace();
-        }
+        ProjectContentPrebuiltIndexer indexer = new ProjectContentPrebuiltIndexer(project, indicator);
+        indexer.buildIndex(IndexGeneratorKt.getAllIdeIndexGenerators(), dir.getPath(), new OnDiskContentHashVerifier(new File(dir.getPath(), "tmp").getAbsolutePath()));
       }
     });
-
-  }
-
-  private static <K, V> PersistentHashMap<HashCode, Map<K, V>> createStorageForIndex(@NotNull FileBasedIndexExtension<K, V> extension, @NotNull String basePath) throws IOException {
-    return new PersistentHashMap<>(new File(basePath, extension.getName().getName()),
-                                   HashCodeDescriptor.instance,
-                                   new MapDataExternalizer<>(extension.getKeyDescriptor(),
-                                                             extension.getValueExternalizer()));
-  }
-
-  private static class IndexStorages implements AutoCloseable {
-    private final PersistentHashMap<HashCode, Map<?, ?>>[] myStorages;
-    private final FileBasedIndexExtension<?, ?>[] myExtensions;
-    private final Set<FileType>[] myAcceptedFileTypes;
-
-    IndexStorages(@NotNull String basePath) throws IOException {
-      FileBasedIndexExtension[] extensions = FileBasedIndexExtension
-        .EXTENSION_POINT_NAME
-        .extensions()
-        .filter(ex -> !ex.indexDirectories() && ex.dependsOnFileContent() && !ex.getName().equals(StubUpdatingIndex.INDEX_ID))
-        .toArray(FileBasedIndexExtension[]::new);
-      //noinspection unchecked
-      myStorages = new PersistentHashMap[extensions.length];
-      //noinspection unchecked
-      myAcceptedFileTypes = new Set[extensions.length];
-      int i;
-      try {
-        for (i = 0; i < myStorages.length; i++) {
-          FileBasedIndexExtension extension = extensions[i];
-          //noinspection unchecked
-          myStorages[i] = createStorageForIndex(extension, basePath);
-          if (extension.getInputFilter() instanceof FileBasedIndex.FileTypeSpecificInputFilter) {
-            THashSet<FileType> acceptedFileTypes = new THashSet<>();
-            ((FileBasedIndex.FileTypeSpecificInputFilter)extension.getInputFilter()).registerFileTypesUsedForIndexing(acceptedFileTypes::add);
-            myAcceptedFileTypes[i] = acceptedFileTypes;
-          }
-        }
-      }
-      catch (IOException e) {
-        close();
-        throw e;
-      }
-      myExtensions = extensions;
-    }
-
-    void indexFile(FileContent fc, VirtualFile file, FileType type, HashCode hashCode) throws IOException {
-      IOException e = null;
-      for (int i = 0; i < myExtensions.length; i++) {
-        if (myAcceptedFileTypes[i] != null && !myAcceptedFileTypes[i].contains(type)) {
-          continue;
-        }
-        if (!myExtensions[i].getInputFilter().acceptInput(file)) {
-          continue;
-        }
-        Map<?, ?> result = myExtensions[i].getIndexer().map(fc);
-        try {
-          myStorages[i].put(hashCode, result);
-        }
-        catch (IOException e1) {
-          e = e1;
-        }
-      }
-      if (e != null) {
-        throw e;
-      }
-    }
-
-    public void close() {
-      IOException e = null;
-      for (PersistentHashMap<HashCode, Map<?, ?>> storage : myStorages) {
-        if (storage != null) {
-          try {
-            storage.close();
-          }
-          catch (IOException e1) {
-            e = e1;
-          }
-        }
-      }
-      if (e != null) {
-        e.printStackTrace();
-      }
-    }
-  }
-
-  private static class MapDataExternalizer<K, V> implements DataExternalizer<Map<K, V>> {
-    private final DataExternalizer<K> myKeyExternalizer;
-    private final DataExternalizer<V> myValueExternalizer;
-
-    MapDataExternalizer(DataExternalizer<K> externalizer, DataExternalizer<V> valueExternalizer) {
-      myKeyExternalizer = externalizer;
-      myValueExternalizer = valueExternalizer;
-    }
-
-    @Override
-    public void save(@NotNull DataOutput out, Map<K, V> value) throws IOException {
-      DataInputOutputUtil.writeSeq(out, value.entrySet(), e -> {
-        myKeyExternalizer.save(out, e.getKey());
-        myValueExternalizer.save(out, e.getValue());
-      });
-    }
-
-    @Override
-    public Map<K, V> read(@NotNull DataInput in) throws IOException {
-      int size = DataInputOutputUtil.readINT(in);
-      THashMap<K, V> map = new THashMap<>(size);
-      for (int i = 0; i < size; i++) {
-        map.put(myKeyExternalizer.read(in), myValueExternalizer.read(in));
-      }
-      return map;
-    }
   }
 }

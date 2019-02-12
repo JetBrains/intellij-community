@@ -11,6 +11,7 @@ import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.util.indexing.FileBasedIndexExtension
 import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.io.PersistentHashMap
+import org.jetbrains.index.id.SingleIndexGeneratorImpl
 import java.io.IOException
 
 /**
@@ -67,6 +68,6 @@ abstract class SingleIndexGenerator<Value>: IndexGenerator() {
   }
 }
 
-fun getAvailableFileBasedIndexExtensions() : List<FileBasedIndexExtension<*, *>> {
-  return FileBasedIndexExtension.EXTENSION_POINT_NAME.extensions.filter { it.dependsOnFileContent() && it.name != StubUpdatingIndex.INDEX_ID }
+fun getAllIdeIndexGenerators() : Array<SingleIndexGenerator<*>> {
+  return FileBasedIndexExtension.EXTENSION_POINT_NAME.extensions.filter { it.dependsOnFileContent() && it.name != StubUpdatingIndex.INDEX_ID }.map { SingleIndexGeneratorImpl(it) }.toTypedArray()
 }

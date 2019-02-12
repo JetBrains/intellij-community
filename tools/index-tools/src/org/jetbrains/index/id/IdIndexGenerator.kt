@@ -27,7 +27,7 @@ open class IdIndexGenerator : SingleIndexGeneratorImpl<IdIndexEntry, Int>(IdInde
   }
 }
 
-abstract class SingleIndexGeneratorImpl<K, V>(private val indexExtension: FileBasedIndexExtension<K, V>): SingleIndexGenerator<Map<K, V>>() {
+open class SingleIndexGeneratorImpl<K, V>(private val indexExtension: FileBasedIndexExtension<K, V>): SingleIndexGenerator<Map<K, V>>() {
   override val internalName: String
     get() = indexExtension.name.name
 

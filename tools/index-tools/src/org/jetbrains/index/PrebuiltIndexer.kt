@@ -93,7 +93,7 @@ abstract class PrebuiltIndexer {
     println("${stats.indexed.get()} entries written, ${stats.skipped.get()} skipped")
   }
 
-  abstract fun iterateFiles(fileVisitor: (VirtualFile) -> Boolean)
+  protected abstract fun iterateFiles(fileVisitor: (VirtualFile) -> Boolean)
 }
 
 class RootsPrebuiltIndexer(private val roots: Collection<VirtualFile>): PrebuiltIndexer() {
