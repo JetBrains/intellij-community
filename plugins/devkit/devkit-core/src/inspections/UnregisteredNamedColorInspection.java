@@ -68,6 +68,7 @@ public class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
   }
 
   private static boolean isNamedColorCall(@NotNull UCallExpression expression) {
+    if (expression.getKind() != UastCallKind.METHOD_CALL) return false;
     if (!NAMED_COLOR_METHOD_NAME.equals(expression.getMethodName())) return false;
     PsiMethod resolved = expression.resolve();
     if (resolved == null) return false;
