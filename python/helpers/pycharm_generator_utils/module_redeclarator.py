@@ -306,7 +306,11 @@ class ModuleRedeclarator(object):
                             import traceback
                             traceback.print_exc(file=sys.stderr)
                             return
-                        real_value = cleanup(representation)
+                        if 'GENERATOR3_TEST_MODE' not in os.environ:
+                            real_value = cleanup(representation)
+                        else:
+                            # Don't rely on repr() output in tests, as it may contain memory layout dependent id
+                            real_value = ''
                         if found_name:
                             if found_name == as_name:
                                 notice = " # (!) real value is %r" % real_value
@@ -790,9 +794,10 @@ class ModuleRedeclarator(object):
             filename = BUILT_IN_HEADER
         else:
             filename = getattr(self.module, "__file__", BUILT_IN_HEADER)
-
-        out(0, "# from %s" % filename)  # line 3
-        out(0, "# by generator %s" % VERSION) # line 4
+        test_mode = 'GENERATOR3_TEST_MODE' in os.environ
+        if not test_mode:
+            out(0, "# from %s" % filename)  # line 3
+        out(0, "# by generator %s" % (VERSION if not test_mode else 'test')) # line 4
         if p_name == BUILTIN_MOD_NAME and version[0] == 2 and version[1] >= 6:
             out(0, "from __future__ import print_function")
         out_doc_attr(out, self.module, 0)
