@@ -11,6 +11,8 @@ out/
 !.idea/compiler.xml
 !.idea/encodings.xml
 !.idea/externalDependencies.xml
+!.idea/icon.png
+!.idea/icon_dark.png
 !.idea/misc.xml
 !.idea/vcs.xml
 !.idea/codeStyles
