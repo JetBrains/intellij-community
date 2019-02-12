@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 public interface FileTypeUsageSchemaDescriptor {
   /**
    * Used to categorise file types usage statistics.
-   * If the file has some generic file file (e.g. XML), this method allow specifying the 'schema' more precisely,
+   * If the file has some generic file type (e.g. XML), this method allow specifying the 'schema' more precisely,
    * e.g `Maven` or `Spring`.
    */
   @Nullable
