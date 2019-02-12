@@ -20,11 +20,8 @@ import com.intellij.psi.stubs.ObjectStubSerializer;
 /**
  * @author Dmitry Avdeev
  */
-public class DomElementTypeHolder {
-  @SuppressWarnings("unused")
-  public static final ObjectStubSerializer XML_ELEMENT_STUB_SERIALIZER = ElementStubSerializer.INSTANCE;
-  @SuppressWarnings("unused")
-  public static final ObjectStubSerializer XML_ATTRIBUTE_STUB_SERIALIZER = AttributeStubSerializer.INSTANCE;
-  @SuppressWarnings("unused")
-  public static final FileStubSerializer XML_FILE_STUB_SERIALIZER = FileStubSerializer.INSTANCE;
+public interface DomElementTypeHolder {
+  @SuppressWarnings("unused") ObjectStubSerializer XML_ELEMENT_STUB_SERIALIZER = ElementStubSerializer.INSTANCE;
+  @SuppressWarnings("unused") ObjectStubSerializer XML_ATTRIBUTE_STUB_SERIALIZER = AttributeStubSerializer.INSTANCE;
+  @SuppressWarnings("unused") FileStubSerializer XML_FILE_STUB_SERIALIZER = FileStubSerializer.INSTANCE;
 }
