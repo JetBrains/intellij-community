@@ -25,6 +25,7 @@ class GitExternalFileNotifierTest : GitSingleRepoTest() {
     file("file1.txt").create()
     file("file2.txt").create()
 
+    refresh()
     waitForAllEvents()
 
     assertNotificationByMessage(VcsBundle.message("external.files.add.notification.message", vcs.displayName))
@@ -45,6 +46,7 @@ class GitExternalFileNotifierTest : GitSingleRepoTest() {
     assertTrue(file2.exists())
     assertTrue(file1.exists())
 
+    refresh()
     waitForAllEvents()
 
     assertNoNotification(VcsBundle.message("external.files.add.notification.message", vcs.displayName))
@@ -75,7 +77,7 @@ class GitExternalFileNotifierTest : GitSingleRepoTest() {
 
   private fun assertNoNotification(notificationContent: String) {
     if (vcsNotifier.notifications.find { it.content == notificationContent } != null) {
-      TestCase.fail("Notification $notificationContent not found")
+      TestCase.fail("Notification $notificationContent found")
     }
   }
 }
