@@ -123,7 +123,7 @@ public class IndexCounters {
     return OperationStats.newBuilder()
       .setOperation(operation)
       .setTotalCount(counter.getTotalCount())
-      .setTotalCpuNanos(counter.getTotalCount())
+      .setTotalCpuNanos(counter.getTotalCpuNanos())
       .setMaxCpuNanos((int)counter.getMaxCpuNanos())
       .setTotalWallNanos(counter.getTotalWallNanos())
       .setMaxWallNanos((int)counter.getMaxWallNanos())
