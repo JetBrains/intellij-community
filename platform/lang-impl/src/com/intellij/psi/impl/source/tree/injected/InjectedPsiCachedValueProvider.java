@@ -42,6 +42,6 @@ class InjectedPsiCachedValueProvider implements ParameterizedCachedValueProvider
 
     InjectionResult result = injectedManager.processInPlaceInjectorsFor(hostPsiFile, element);
 
-    return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT, hostDocument);
+    return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
   }
 }
