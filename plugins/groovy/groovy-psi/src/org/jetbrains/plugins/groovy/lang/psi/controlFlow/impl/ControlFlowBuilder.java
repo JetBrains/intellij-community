@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
@@ -116,7 +116,13 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitLambdaBody(@NotNull GrLambdaBody body) {
+  public void visitExpressionLambdaBody(@NotNull GrExpressionLambdaBody body) {
+    addFunctionalExpressionParameters(body.getLambdaExpression());
+    body.getExpression().accept(this);
+  }
+
+  @Override
+  public void visitBlockLambdaBody(@NotNull GrBlockLambdaBody body) {
     addFunctionalExpressionParameters(body.getLambdaExpression());
     addControlFlowInstructions(body);
   }
@@ -129,7 +135,6 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       handlePossibleReturn(statements[statements.length - 1]);
     }
   }
-
 
   @Nullable
   private InstructionImpl handlePossibleReturn(@NotNull GrStatement possibleReturn) {
@@ -153,7 +158,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     if (scope instanceof GrClosableBlock) {
       addFunctionalExpressionParameters((GrFunctionalExpression)scope);
-      addControlFlowInstructions((GrControlFlowOwner)scope);
+      addControlFlowInstructions((GrStatementOwner)scope);
     }
     else {
       scope.accept(this);
@@ -176,8 +181,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     return instructions;
   }
 
-
-  private void addControlFlowInstructions(final GrControlFlowOwner owner) {
+  private void addControlFlowInstructions(final GrStatementOwner owner) {
     PsiElement child = owner.getFirstChild();
     while (child != null) {
       if (child instanceof GroovyPsiElement) {

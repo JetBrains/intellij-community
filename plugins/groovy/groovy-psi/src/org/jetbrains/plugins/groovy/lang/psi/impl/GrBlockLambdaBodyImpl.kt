@@ -5,12 +5,12 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
-import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaBody
+import org.jetbrains.plugins.groovy.lang.psi.api.GrBlockLambdaBody
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrBlockImpl
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer
 
-class GrBlockLambdaBodyImpl(type: IElementType, buffer: CharSequence?) : GrBlockImpl(type, buffer), GrLambdaBody {
+class GrBlockLambdaBodyImpl(type: IElementType, buffer: CharSequence?) : GrBlockImpl(type, buffer), GrBlockLambdaBody {
 
   override fun getReturnType(): PsiType? = GroovyPsiManager.inferType(this, MethodTypeInferencer(this))
 
@@ -18,7 +18,7 @@ class GrBlockLambdaBodyImpl(type: IElementType, buffer: CharSequence?) : GrBlock
 
   override fun getLambdaExpression(): GrLambdaExpression = requireNotNull(parentOfType())
 
-  override fun accept(visitor: GroovyElementVisitor) = visitor.visitLambdaBody(this)
+  override fun accept(visitor: GroovyElementVisitor) = visitor.visitBlockLambdaBody(this)
 
   override fun toString(): String = "Lambda body block"
 }
