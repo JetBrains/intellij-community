@@ -37,9 +37,8 @@ class SwitchBootRuntimeAction : AnAction(), DumbAware {
 
     ProgressManager.getInstance().run(object : Task.Modal(e.project, "Loading Runtime List...", false) {
       override fun run(progressIndicator: ProgressIndicator) {
-        if (BinTrayUtil.getJdkConfigFilePath().exists()) {
           try {
-            val file = File(BinTrayUtil.getJdkConfigFilePath().readLines()[0])
+            val file = File(System.getProperty("java.home"))
             if (file.exists()) {
               val runtime = Local(project, file)
               installed = runtime
@@ -48,7 +47,6 @@ class SwitchBootRuntimeAction : AnAction(), DumbAware {
           } catch (exc : Exception) {
             // todo ask for file ramovale if it is broken
           }
-        }
         bundles.addAll(RuntimeLocationsFactory().localBundles(e.project!!))
         bundles.addAll(RuntimeLocationsFactory().bintrayBundles(e.project!!))
       }
