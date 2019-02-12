@@ -69,7 +69,7 @@ abstract class PrebuiltIndexer {
           exceptions.add(e)
         }
       }
-      exceptions[0].let { throw it }
+      if(exceptions.isNotEmpty()) throw exceptions[0]
     }
   }
 
