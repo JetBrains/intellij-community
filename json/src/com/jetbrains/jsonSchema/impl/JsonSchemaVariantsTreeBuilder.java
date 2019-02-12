@@ -389,7 +389,7 @@ public class JsonSchemaVariantsTreeBuilder {
 
   private static boolean interestingSchema(@NotNull JsonSchemaObject schema) {
     return schema.getAnyOf() != null || schema.getOneOf() != null || schema.getAllOf() != null || schema.getRef() != null
-           || schema.getIf() != null;
+           || schema.getIfThenElse() != null;
   }
 
 
@@ -425,23 +425,30 @@ public class JsonSchemaVariantsTreeBuilder {
         return Pair.create(ThreeState.UNSURE, parent.getAdditionalPropertiesSchema());
       }
 
-      // resolve inside V7 if-then-else conditionals
-      if (parent.getIf() != null) {
-        JsonSchemaObject childObject;
+      List<IfThenElse> ifThenElseList = parent.getIfThenElse();
+      if (ifThenElseList != null) {
+        for (IfThenElse ifThenElse : ifThenElseList) {
+          // resolve inside V7 if-then-else conditionals
+          JsonSchemaObject childObject;
 
-        // NOTE: do not resolve inside 'if' itself - it is just a condition, but not an actual validation!
-        // only 'then' and 'else' branches provide actual validation sources, but not the 'if' branch
+          // NOTE: do not resolve inside 'if' itself - it is just a condition, but not an actual validation!
+          // only 'then' and 'else' branches provide actual validation sources, but not the 'if' branch
 
-        if (parent.getThen() != null) {
-          childObject = parent.getThen().getProperties().get(name);
-          if (childObject != null) {
-            return Pair.create(ThreeState.UNSURE, childObject);
+          JsonSchemaObject then = ifThenElse.getThen();
+          //noinspection Duplicates
+          if (then != null) {
+            childObject = then.getProperties().get(name);
+            if (childObject != null) {
+              return Pair.create(ThreeState.UNSURE, childObject);
+            }
           }
-        }
-        if (parent.getElse() != null) {
-          childObject = parent.getElse().getProperties().get(name);
-          if (childObject != null) {
-            return Pair.create(ThreeState.UNSURE, childObject);
+          JsonSchemaObject elseBranch = ifThenElse.getElse();
+          //noinspection Duplicates
+          if (elseBranch != null) {
+            childObject = elseBranch.getProperties().get(name);
+            if (childObject != null) {
+              return Pair.create(ThreeState.UNSURE, childObject);
+            }
           }
         }
       }

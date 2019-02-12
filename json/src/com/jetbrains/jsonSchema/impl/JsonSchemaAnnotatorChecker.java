@@ -230,28 +230,25 @@ class JsonSchemaAnnotatorChecker {
       if (checker == null || checker.isCorrect()) error("Validates against 'not' schema", value.getDelegate(), JsonErrorPriority.NOT_SCHEMA);
     }
 
-    if (schema.getIf() != null) {
-      MatchResult result = new JsonSchemaResolver(schema.getIf()).detailedResolve();
-      if (result.mySchemas.isEmpty() && result.myExcludingSchemas.isEmpty()) return;
+    List<IfThenElse> ifThenElseList = schema.getIfThenElse();
+    if (ifThenElseList != null) {
+      for (IfThenElse ifThenElse : ifThenElseList) {
+        MatchResult result = new JsonSchemaResolver(ifThenElse.getIf()).detailedResolve();
+        if (result.mySchemas.isEmpty() && result.myExcludingSchemas.isEmpty()) return;
 
-      final JsonSchemaAnnotatorChecker checker = checkByMatchResult(value, result, myOptions);
-      if (checker != null) {
-        if (checker.isCorrect()) {
-          JsonSchemaObject then = schema.getThen();
-          if (then == null) {
-            error("Validates against 'if' branch but no 'then' branch is present", value.getDelegate(), JsonErrorPriority.LOW_PRIORITY);
+        final JsonSchemaAnnotatorChecker checker = checkByMatchResult(value, result, myOptions);
+        if (checker != null) {
+          if (checker.isCorrect()) {
+            JsonSchemaObject then = ifThenElse.getThen();
+            if (then != null) {
+              checkObjectBySchemaRecordErrors(then, value);
+            }
           }
           else {
-            checkObjectBySchemaRecordErrors(then, value);
-          }
-        }
-        else {
-          JsonSchemaObject schemaElse = schema.getElse();
-          if (schemaElse == null) {
-            error("Validates counter 'if' branch but no 'else' branch is present", value.getDelegate(), JsonErrorPriority.LOW_PRIORITY);
-          }
-          else {
-            checkObjectBySchemaRecordErrors(schemaElse, value);
+            JsonSchemaObject schemaElse = ifThenElse.getElse();
+            if (schemaElse != null) {
+              checkObjectBySchemaRecordErrors(schemaElse, value);
+            }
           }
         }
       }

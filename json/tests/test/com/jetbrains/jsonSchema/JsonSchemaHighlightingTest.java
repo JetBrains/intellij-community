@@ -1063,4 +1063,18 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                 "  \"x\": 9223372036854775807\n" +
                 "}");
   }
+
+  public void testMultipleIfThenElse() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/multipleIfThenElseSchema.json"));
+    doTest(schemaText, "{\n" +
+                       "  \"street_address\": \"1600 Pennsylvania Avenue NW\",\n" +
+                       "  \"country\": \"United States of America\",\n" +
+                       "  \"postal_code\": \"20500\"\n" +
+                       "}");
+    doTest(schemaText, "{\n" +
+                       "  \"street_address\": \"1600 Pennsylvania Avenue NW\",\n" +
+                       "  \"country\": \"Netherlands\",\n" +
+                       "  \"postal_code\": <warning descr=\"String is violating the pattern: '[0-9]{4} [A-Z]{2}'\">\"20500\"</warning>\n" +
+                       "}");
+  }
 }
