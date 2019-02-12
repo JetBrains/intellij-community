@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs
 
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -22,9 +23,10 @@ private const val SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY = "SHARE_PROJECT_CO
 private const val ASKED_SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY = "ASKED_SHARE_PROJECT_CONFIGURATION_FILES"
 
 class ProjectConfigurationFilesProcessorImpl(project: Project,
+                                             parentDisposable: Disposable,
                                              private val vcsName: String,
                                              private val addChosenFiles: (Collection<VirtualFile>) -> Unit)
-  : FilesProcessorWithNotificationImpl(project), FilesProcessor {
+  : FilesProcessorWithNotificationImpl(project, parentDisposable), FilesProcessor {
 
   private val fileSystem = LocalFileSystem.getInstance()
 
