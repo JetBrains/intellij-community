@@ -2,7 +2,7 @@
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.notebook.editor.NotebookSourceVirtualFile;
+import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
@@ -154,8 +154,8 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
       if (virtualFile instanceof VirtualFileWindow) {
         return GlobalSearchScope.fileScope(myProject, ((VirtualFileWindow)virtualFile).getDelegate());
       }
-      if (virtualFile instanceof NotebookSourceVirtualFile) {
-        return GlobalSearchScope.fileScope(myProject, ((NotebookSourceVirtualFile)virtualFile).getOriginFile());
+      if (virtualFile instanceof BackedVirtualFile) {
+        return GlobalSearchScope.fileScope(myProject, ((BackedVirtualFile)virtualFile).getOriginFile());
       }
       if ("Scratch".equals(virtualFile.getFileType().getName())) {
         return GlobalSearchScope.fileScope(myProject, virtualFile);

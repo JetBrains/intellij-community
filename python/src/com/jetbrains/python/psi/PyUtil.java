@@ -14,7 +14,7 @@ import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
-import com.intellij.notebook.editor.NotebookSourceVirtualFile;
+import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.editor.Document;
@@ -637,8 +637,8 @@ public class PyUtil {
     if (virtualFile instanceof VirtualFileWindow) {
       virtualFile = ((VirtualFileWindow)virtualFile).getDelegate();
     }
-    if (virtualFile instanceof NotebookSourceVirtualFile) {
-      virtualFile = ((NotebookSourceVirtualFile)virtualFile).getOriginFile();
+    if (virtualFile instanceof BackedVirtualFile) {
+      virtualFile = ((BackedVirtualFile)virtualFile).getOriginFile();
     }
 
     // Most of the cases should be handled by this one, PyLanguageLevelPusher pushes folders only
