@@ -199,11 +199,9 @@ public class FileWatcher {
     private final Object myLock = new Object();
     private DirtyPaths myDirtyPaths = new DirtyPaths();
 
-    private DirtyPaths getDirtyPaths() {
+    DirtyPaths getDirtyPaths() {
       DirtyPaths dirtyPaths = DirtyPaths.EMPTY;
 
-      flushCommandQueue();
-      
       synchronized (myLock) {
         if (!myDirtyPaths.isEmpty()) {
           dirtyPaths = myDirtyPaths;
@@ -211,11 +209,9 @@ public class FileWatcher {
         }
       }
 
-      waitForFuture(myFileWatcherExecutor.submit(() -> {
-        for (PluggableFileWatcher watcher : myWatchers) {
-          watcher.resetChangedPaths();
-        }
-      }));
+      for (PluggableFileWatcher watcher : myWatchers) {
+        watcher.resetChangedPaths();
+      }
 
       return dirtyPaths;
     }
