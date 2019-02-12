@@ -3,17 +3,17 @@ package org.jetbrains.plugins.groovy.lang.parser;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrBlockImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrLambdaBodyBlockImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrBlockLambdaBodyImpl;
 
-public class GrLambdaBlockFormBodyElementType extends GrCodeBlockElementType {
+public class GrBlockLambdaBodyElementType extends GrCodeBlockElementType {
 
-  public GrLambdaBlockFormBodyElementType(String debugName) {
+  public GrBlockLambdaBodyElementType(String debugName) {
     super(debugName);
   }
 
   @NotNull
   @Override
   public GrBlockImpl createNode(CharSequence text) {
-    return new GrLambdaBodyBlockImpl(this, text);
+    return new GrBlockLambdaBodyImpl(this, text);
   }
 }

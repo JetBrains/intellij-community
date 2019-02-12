@@ -10,7 +10,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrBlockImpl
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer
 
-class GrLambdaBodyBlockImpl(type: IElementType, buffer: CharSequence?) : GrBlockImpl(type, buffer), GrLambdaBody {
+class GrBlockLambdaBodyImpl(type: IElementType, buffer: CharSequence?) : GrBlockImpl(type, buffer), GrLambdaBody {
 
   override fun getReturnType(): PsiType? = GroovyPsiManager.inferType(this, MethodTypeInferencer(this))
 

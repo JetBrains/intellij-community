@@ -13,7 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder
 
-class GrLambdaBodyExpressionImpl(node: ASTNode) : GroovyPsiElementImpl(node), GrLambdaBody {
+class GrExpressionLambdaBodyImpl(node: ASTNode) : GroovyPsiElementImpl(node), GrLambdaBody {
   override fun getReturnType(): PsiType? = getExpression().type
 
   override fun getLambdaExpression(): GrLambdaExpression = requireNotNull(parentOfType())

@@ -1,5 +1,3 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 // This is a generated file. Not intended for manual editing.
 package org.jetbrains.plugins.groovy.lang.parser;
 
@@ -71,6 +69,9 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     }
     else if (t == ASSERT_STATEMENT) {
       r = assert_statement(b, 0);
+    }
+    else if (t == BLOCK_LAMBDA_BODY) {
+      r = block_lambda_body(b, 0);
     }
     else if (t == BLOCK_STATEMENT) {
       r = block_statement(b, 0);
@@ -144,6 +145,9 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     else if (t == EXPRESSION) {
       r = expression(b, 0, -1);
     }
+    else if (t == EXPRESSION_LAMBDA_BODY) {
+      r = expression_lambda_body(b, 0);
+    }
     else if (t == EXPRESSION_LIST) {
       r = expression_list(b, 0);
     }
@@ -173,12 +177,6 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     }
     else if (t == LABELED_STATEMENT) {
       r = labeled_statement(b, 0);
-    }
-    else if (t == LAMBDA_BLOCK_FORM_BODY) {
-      r = lambda_block_form_body(b, 0);
-    }
-    else if (t == LAMBDA_EXPRESSION_FORM_BODY) {
-      r = lambda_expression_form_body(b, 0);
     }
     else if (t == LEFT_SHIFT_SIGN) {
       r = left_shift_sign(b, 0);
@@ -1472,6 +1470,21 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     boolean r;
     r = capital_type_element(b, l + 1);
     if (!r) r = clear_variants_and_fail(b, l + 1);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // '{' mb_nl block_levels '}'
+  public static boolean block_lambda_body(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "block_lambda_body")) return false;
+    if (!nextTokenIsFast(b, T_LBRACE)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenFast(b, T_LBRACE);
+    r = r && mb_nl(b, l + 1);
+    r = r && block_levels(b, l + 1);
+    r = r && consumeToken(b, T_RBRACE);
+    exit_section_(b, m, BLOCK_LAMBDA_BODY, r);
     return r;
   }
 
@@ -3475,6 +3488,17 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // expression_or_application
+  public static boolean expression_lambda_body(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "expression_lambda_body")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _COLLAPSE_, EXPRESSION_LAMBDA_BODY, "<expression lambda body>");
+    r = expression_or_application(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
   // expression (',' expression)*
   public static boolean expression_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "expression_list")) return false;
@@ -3540,6 +3564,51 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
       if (!empty_element_parsed_guard_(b, "expression_or_application_inner_1", c)) break;
     }
     return true;
+  }
+
+  /* ********************************************************** */
+  // <<isParameterizedClosure>> expression_or_application
+  //                                               | expression_or_application !<<isAfterClosure>>
+  public static boolean expression_single_parameter_lambda_body(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "expression_single_parameter_lambda_body")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _COLLAPSE_, EXPRESSION_LAMBDA_BODY, "<expression single parameter lambda body>");
+    r = expression_single_parameter_lambda_body_0(b, l + 1);
+    if (!r) r = expression_single_parameter_lambda_body_1(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // <<isParameterizedClosure>> expression_or_application
+  private static boolean expression_single_parameter_lambda_body_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "expression_single_parameter_lambda_body_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = isParameterizedClosure(b, l + 1);
+    r = r && expression_or_application(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // expression_or_application !<<isAfterClosure>>
+  private static boolean expression_single_parameter_lambda_body_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "expression_single_parameter_lambda_body_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = expression_or_application(b, l + 1);
+    r = r && expression_single_parameter_lambda_body_1_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // !<<isAfterClosure>>
+  private static boolean expression_single_parameter_lambda_body_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "expression_single_parameter_lambda_body_1_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !isAfterClosure(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
   }
 
   /* ********************************************************** */
@@ -4305,39 +4374,24 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '{' mb_nl block_levels '}'
-  public static boolean lambda_block_form_body(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "lambda_block_form_body")) return false;
-    if (!nextTokenIsFast(b, T_LBRACE)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokenFast(b, T_LBRACE);
-    r = r && mb_nl(b, l + 1);
-    r = r && block_levels(b, l + 1);
-    r = r && consumeToken(b, T_RBRACE);
-    exit_section_(b, m, LAMBDA_BLOCK_FORM_BODY, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // (!<<isParameterizedClosure>> lazy_lambda_block) | lambda_expression_form_body
+  // (!<<isParameterizedClosure>> lazy_block_lambda_body) | expression_lambda_body
   static boolean lambda_body(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "lambda_body")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = lambda_body_0(b, l + 1);
-    if (!r) r = lambda_expression_form_body(b, l + 1);
+    if (!r) r = expression_lambda_body(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // !<<isParameterizedClosure>> lazy_lambda_block
+  // !<<isParameterizedClosure>> lazy_block_lambda_body
   private static boolean lambda_body_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "lambda_body_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = lambda_body_0_0(b, l + 1);
-    r = r && lazy_lambda_block(b, l + 1);
+    r = r && lazy_block_lambda_body(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -4365,17 +4419,6 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = p && lambda_body(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
-  }
-
-  /* ********************************************************** */
-  // expression_or_application
-  public static boolean lambda_expression_form_body(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "lambda_expression_form_body")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _COLLAPSE_, LAMBDA_EXPRESSION_FORM_BODY, "<lambda expression form body>");
-    r = expression_or_application(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
   }
 
   /* ********************************************************** */
@@ -4440,23 +4483,23 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // <<parseBlockLazy block_lambda_body 'BLOCK_LAMBDA_BODY'>>
+  public static boolean lazy_block_lambda_body(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lazy_block_lambda_body")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _COLLAPSE_, BLOCK_LAMBDA_BODY, "<lazy block lambda body>");
+    r = parseBlockLazy(b, l + 1, GroovyGeneratedParser::block_lambda_body, BLOCK_LAMBDA_BODY);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
   // <<parseBlockLazy constructor_block 'CONSTRUCTOR_BLOCK'>>
   public static boolean lazy_constructor_block(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "lazy_constructor_block")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, null, "<lazy constructor block>");
     r = parseBlockLazy(b, l + 1, GroovyGeneratedParser::constructor_block, CONSTRUCTOR_BLOCK);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // <<parseBlockLazy lambda_block_form_body 'LAMBDA_BLOCK_FORM_BODY'>>
-  public static boolean lazy_lambda_block(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "lazy_lambda_block")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _COLLAPSE_, LAMBDA_BLOCK_FORM_BODY, "<lazy lambda block>");
-    r = parseBlockLazy(b, l + 1, GroovyGeneratedParser::lambda_block_form_body, LAMBDA_BLOCK_FORM_BODY);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -6054,12 +6097,12 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // single_parameter_lambda_expression_form_body | lazy_lambda_block
+  // expression_single_parameter_lambda_body | lazy_block_lambda_body
   static boolean single_parameter_lambda_body(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "single_parameter_lambda_body")) return false;
     boolean r;
-    r = single_parameter_lambda_expression_form_body(b, l + 1);
-    if (!r) r = lazy_lambda_block(b, l + 1);
+    r = expression_single_parameter_lambda_body(b, l + 1);
+    if (!r) r = lazy_block_lambda_body(b, l + 1);
     return r;
   }
 
@@ -6075,51 +6118,6 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = p && single_parameter_lambda_body(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
-  }
-
-  /* ********************************************************** */
-  // <<isParameterizedClosure>> expression_or_application
-  //                                               | expression_or_application !<<isAfterClosure>>
-  public static boolean single_parameter_lambda_expression_form_body(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "single_parameter_lambda_expression_form_body")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _COLLAPSE_, LAMBDA_EXPRESSION_FORM_BODY, "<single parameter lambda expression form body>");
-    r = single_parameter_lambda_expression_form_body_0(b, l + 1);
-    if (!r) r = single_parameter_lambda_expression_form_body_1(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // <<isParameterizedClosure>> expression_or_application
-  private static boolean single_parameter_lambda_expression_form_body_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "single_parameter_lambda_expression_form_body_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = isParameterizedClosure(b, l + 1);
-    r = r && expression_or_application(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // expression_or_application !<<isAfterClosure>>
-  private static boolean single_parameter_lambda_expression_form_body_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "single_parameter_lambda_expression_form_body_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = expression_or_application(b, l + 1);
-    r = r && single_parameter_lambda_expression_form_body_1_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // !<<isAfterClosure>>
-  private static boolean single_parameter_lambda_expression_form_body_1_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "single_parameter_lambda_expression_form_body_1_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NOT_);
-    r = !isAfterClosure(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
   }
 
   /* ********************************************************** */
