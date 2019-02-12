@@ -53,8 +53,16 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myTempDirFixture.tearDown()
-    super.tearDown()
+    try {
+      myTempDirFixture.tearDown()
+    }
+    catch (Throwable e) {
+      addSuppressedException(e)
+    }
+    finally {
+      myTempDirFixture = null
+      super.tearDown()
+    }
   }
 
   @Override
