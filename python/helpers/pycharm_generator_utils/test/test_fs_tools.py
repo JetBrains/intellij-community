@@ -70,18 +70,19 @@ class GeneratorTestCase(TestCase):
                     '%r != %r' % (actual_child, expected_child))
 
     @contextmanager
-    def comparing_dirs(self, subdir=''):
+    def comparing_dirs(self, subdir='', tmp_subdir=''):
         before_dir = os.path.join(self.test_data_dir, subdir, 'before')
         after_dir = os.path.join(self.test_data_dir, subdir, 'after')
+        dst_dir = os.path.join(self.temp_dir, tmp_subdir)
         for child_name in os.listdir(before_dir):
             child_path = os.path.join(before_dir, child_name)
-            child_dst_path = os.path.join(self.temp_dir, child_name)
+            child_dst_path = os.path.join(dst_dir, child_name)
             if os.path.isfile(child_path):
                 shutil.copy2(child_path, child_dst_path)
             elif os.path.isdir(child_path):
                 shutil.copytree(child_path, child_dst_path)
-        yield
-        self.assertDirsEqual(self.temp_dir, after_dir)
+        yield dst_dir
+        self.assertDirsEqual(dst_dir, after_dir)
 
 
 class FileSystemUtilTest(GeneratorTestCase):
@@ -145,25 +146,36 @@ class FileSystemUtilTest(GeneratorTestCase):
 
 
 class SkeletonCachingTest(GeneratorTestCase):
+    PYTHON_STUBS_DIR = 'python_stubs'
     SDK_SKELETONS_DIR = 'sdk_skeletons'
-    _sha256_regex = re.compile(r'[0-9a-f]{64}')
 
-    def setUp(self):
-        super().setUp()
-        sys.path.insert(0, self.test_data_dir)
+    @property
+    def binaries_dir(self):
+        return os.path.join(self.class_test_data_dir, 'binaries')
 
-    def tearDown(self):
-        sys.path.pop(0)
+    def find_binary_subdir(self, subdir):
+        return os.path.join(self.binaries_dir, subdir)
 
-    def run_generator(self, mod_qname, mod_path=None, builtins=False, fake_hashes=False):
-        sdk_dir = os.path.join(self.temp_dir, self.SDK_SKELETONS_DIR)
+    def run_generator(self, mod_qname, mod_path=None, builtins=False, fake_hashes=False, extra_syspath_entry=None):
+        if extra_syspath_entry is None:
+            extra_syspath_entry = self.test_data_dir
 
-        with self.environment(CONTENT_INDEPENDENT_HASHES_FLAG, str(fake_hashes)):
-            generator3.process_one(mod_qname, mod_path, builtins, sdk_skeletons_dir=sdk_dir)
+        sys.path.insert(0, extra_syspath_entry)
+        try:
+            if mod_path is None:
+                mod_path = getattr(__import__(mod_qname), '__file__', None)
+            sdk_dir = os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR, self.SDK_SKELETONS_DIR)
+            with self.environment(CONTENT_INDEPENDENT_HASHES_FLAG, str(fake_hashes)):
+                generator3.process_one(mod_qname, mod_path, builtins, sdk_skeletons_dir=sdk_dir)
+                return mod_path
+        finally:
+            if mod_qname != 'sys':
+                sys.modules.pop(mod_qname, None)
+            sys.path.pop(0)
 
     def test_basic_layout_for_builtin_module(self):
         self.run_generator(mod_qname='sys')
-        self.assertDirLayoutEquals(self.temp_dir, """
+        self.assertDirLayoutEquals(os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR), """
         cache/
             {hash}/
                 sys.py
@@ -172,21 +184,21 @@ class SkeletonCachingTest(GeneratorTestCase):
         """.format(hash=generator3.module_hash('sys', None)))
 
     def test_basic_layout_for_physical_binary_module(self):
-        # XXX OS/interpreter version-agnostic binary file name
-        mod_path = __import__('mod').__file__
-        self.run_generator(mod_qname='mod', mod_path=mod_path)
-        self.assertDirLayoutEquals(self.temp_dir, """
+        path = self.run_generator(mod_qname='mod', extra_syspath_entry=self.binaries_dir)
+        self.assertDirLayoutEquals(os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR), """
         cache/
             {hash}/
                 mod.py
         sdk_skeletons/
             mod.py
-        """.format(hash=generator3.module_hash('mod', mod_path)))
+        """.format(hash=generator3.module_hash('mod', path)))
 
     def test_outdated_stub_invalidation(self):
-        mod_path = self.copy_binary_to_test_dir('mod', 'versions/v2')
-        with self.comparing_dirs():
-            self.run_generator('mod', mod_path, fake_hashes=True)
+        self.check_generator_output('mod', mod_location=self.find_binary_subdir('versions/v2'))
+
+    def check_generator_output(self, mod_name, mod_path=None, mod_location=None):
+        with self.comparing_dirs(tmp_subdir=self.PYTHON_STUBS_DIR):
+            self.run_generator(mod_name, mod_path, fake_hashes=True, extra_syspath_entry=mod_location)
 
     def assertDirLayoutEquals(self, dir_path, expected_layout):
         def format_dir(dir_path, indent=''):
@@ -207,16 +219,6 @@ class SkeletonCachingTest(GeneratorTestCase):
         except AttributeError:
             self.assertEquals(expected, actual)
 
-    def copy_binary_to_test_dir(self, mod_name, subdir=''):
-        binary_dir = os.path.join(self.class_test_data_dir, 'binaries', subdir)
-        binary_name = self.select_binary_artifact(binary_dir, mod_name)
-        shutil.copy2(os.path.join(binary_dir, binary_name), self.test_data_dir)
-        return os.path.join(self.test_data_dir, binary_name)
-
-    def select_binary_artifact(self, dir_, mod_name):
-        # TODO sane way to select a binary depending on platform and interpreter version
-        return next(name for name in os.listdir(dir_) if name.startswith(mod_name) and name.endswith('.so'))
-
     @contextmanager
     def environment(self, name, value):
         old_value = os.environ.get(name)
@@ -228,4 +230,3 @@ class SkeletonCachingTest(GeneratorTestCase):
                 del os.environ[name]
             else:
                 os.environ[name] = old_value
-
