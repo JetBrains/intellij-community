@@ -51,11 +51,7 @@ open class StubsGenerator(private val stubsVersion: String) : SingleIndexGenerat
   }
 
   override fun getIndexValue(fileContent: FileContentImpl): SerializedStubTree? {
-    val stub = buildStubForFile(fileContent, serializationManager!!)
-
-    if (stub == null) {
-      return null
-    }
+    val stub = buildStubForFile(fileContent, serializationManager!!) ?: return null
 
     val bytes = BufferExposingByteArrayOutputStream()
     serializationManager!!.serialize(stub, bytes)
