@@ -380,11 +380,11 @@ public class RecentLocationsAction extends DumbAwareAction {
     for (RecentLocationItem item : selectedValue) {
       if (changed) {
         ContainerUtil.filter(ideDocumentHistory.getChangePlaces(), info -> IdeDocumentHistoryImpl.isSame(info, item.getInfo()))
-          .forEach(info -> ideDocumentHistory.removeChangePlace(project, info));
+          .forEach(info -> ideDocumentHistory.removeChangePlace(info));
       }
       else {
         ContainerUtil.filter(ideDocumentHistory.getBackPlaces(), info -> IdeDocumentHistoryImpl.isSame(info, item.getInfo()))
-          .forEach(info -> ideDocumentHistory.removeBackPlace(project, info));
+          .forEach(info -> ideDocumentHistory.removeBackPlace(info));
       }
     }
 
