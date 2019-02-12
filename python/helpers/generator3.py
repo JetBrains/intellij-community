@@ -1,4 +1,3 @@
-# encoding: utf-8
 import atexit
 import hashlib
 import zipfile
@@ -6,6 +5,9 @@ import zipfile
 from pycharm_generator_utils.clr_tools import *
 from pycharm_generator_utils.module_redeclarator import *
 from pycharm_generator_utils.util_methods import *
+
+TEST_MODE_FLAG = 'GENERATOR3_TEST_MODE'
+CONTENT_INDEPENDENT_HASHES_FLAG = 'GENERATOR3_CONTENT_INDEPENDENT_HASHES'
 
 # TODO: Move all CLR-specific functions to clr_tools
 
@@ -307,8 +309,15 @@ def build_cache_dir_path(subdir, mod_qname, mod_path):
 def module_hash(mod_qname, mod_path):
     # Hash the content of a physical module
     if mod_path:
-        with fopen(mod_path, 'rb') as f:
-            return hashlib.sha256(f.read()).hexdigest()
+        if os.environ.get(CONTENT_INDEPENDENT_HASHES_FLAG):
+            prefix = 'sha256:' + mod_qname
+            version = getattr(__import__(mod_qname), '__version__', None)
+            if version:
+                return prefix + ':' + version
+            return prefix
+        else:
+            with fopen(mod_path, 'rb') as f:
+                return hashlib.sha256(f.read()).hexdigest()
 
     # Hash the content
     else:
