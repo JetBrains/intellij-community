@@ -8,8 +8,16 @@ import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ThrowableRunnable
 import org.junit.Test
+import org.junit.runners.Parameterized
 
 class GradleHighlightingPerformanceTest extends GradleHighlightingBaseTest {
+
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+  @Parameterized.Parameters(name = "with Gradle-{0}")
+  static Collection<Object[]> data() {
+    return [[BASE_GRADLE_VERSION].toArray()]
+  }
+
   @Test
   void testPerformance() throws Exception {
     def text = """
