@@ -30,4 +30,12 @@ public class ConstructorTest extends AbstractLombokParsingTestCase {
   public void testConstructors$RequiredArgsConstructorWithGeneric157() {
     doTest(true);
   }
+
+  public void testConstructors$RequiredArgsConstructorStaticNameAccess() {
+    doTest(true);
+  }
+
+  public void testConstructors$AllArgsConstructorStaticNameAccess() {
+    doTest(true);
+  }
 }

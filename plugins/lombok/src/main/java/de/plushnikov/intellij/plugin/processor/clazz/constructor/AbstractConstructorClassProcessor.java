@@ -244,7 +244,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
 
     final PsiMethod constructor = createConstructor(psiClass, constructorVisibility, suppressConstructorProperties, useJavaDefaults, params, psiAnnotation);
     if (staticConstructorRequired) {
-      PsiMethod staticConstructor = createStaticConstructor(psiClass, staticName, useJavaDefaults, params, psiAnnotation);
+      PsiMethod staticConstructor = createStaticConstructor(psiClass, methodModifier, staticName, useJavaDefaults, params, psiAnnotation);
       return Arrays.asList(constructor, staticConstructor);
     }
     return Collections.singletonList(constructor);
@@ -297,11 +297,12 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     return constructor;
   }
 
-  private PsiMethod createStaticConstructor(PsiClass psiClass, String staticName, boolean useJavaDefaults, Collection<PsiField> params, PsiAnnotation psiAnnotation) {
+  private PsiMethod createStaticConstructor(PsiClass psiClass, @PsiModifier.ModifierConstant String methodModifier, String staticName, boolean useJavaDefaults, Collection<PsiField> params, PsiAnnotation psiAnnotation) {
     LombokLightMethodBuilder method = new LombokLightMethodBuilder(psiClass.getManager(), staticName)
       .withContainingClass(psiClass)
       .withNavigationElement(psiAnnotation)
-      .withModifier(PsiModifier.PUBLIC, PsiModifier.STATIC);
+      .withModifier(methodModifier)
+      .withModifier(PsiModifier.STATIC);
 
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     if (psiClass.hasTypeParameters()) {
