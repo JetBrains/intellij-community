@@ -120,16 +120,15 @@ class NewThemeAction: AnAction() {
     override fun createCenterPanel(): JComponent? {
       return panel {
         row(DevKitBundle.message("new.theme.dialog.name.text.field.text")) {
-          cell {name(growPolicy = GrowPolicy.MEDIUM_TEXT)}
+          cell {
+            name(growPolicy = GrowPolicy.MEDIUM_TEXT)
+              .focused()
+          }
         }
         row("") {
           cell { isDark() }
         }
       }
-    }
-
-    override fun getPreferredFocusedComponent(): JComponent? {
-      return name
     }
 
     override fun doValidate(): ValidationInfo? {

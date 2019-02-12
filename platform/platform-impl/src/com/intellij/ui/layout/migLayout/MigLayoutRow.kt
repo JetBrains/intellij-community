@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout.migLayout
 
 import com.intellij.CommonBundle
@@ -207,8 +207,9 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
   }
 
-  override operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int, growPolicy: GrowPolicy?, comment: String?) {
+  override operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int, growPolicy: GrowPolicy?, comment: String?): CellBuilder {
     addComponent(this, constraints.create()?.let { lazyOf(it) } ?: lazy { CC() }, gapLeft, growPolicy, comment)
+    return CellBuilderImpl(builder, this)
   }
 
   // separate method to avoid JComponent as a receiver
@@ -316,6 +317,16 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
   override fun createRow(label: String?): Row {
     return createChildRow(label = label?.let { Label(it) })
+  }
+}
+
+class CellBuilderImpl internal constructor(
+  private val builder: MigLayoutBuilder,
+  private val component: JComponent
+) : CellBuilder {
+
+  override fun focused() {
+    builder.preferredFocusedComponent = component
   }
 }
 

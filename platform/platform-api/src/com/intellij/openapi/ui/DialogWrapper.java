@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -158,6 +158,7 @@ public abstract class DialogWrapper {
   private DoNotAskOption myDoNotAsk;
 
   protected JComponent myPreferredFocusedComponent;
+  private JComponent myPreferredFocusedComponentFromPanel;
   private Computable<Point> myInitialLocationCallback;
 
   private Dimension  myActualSize = null;
@@ -1163,6 +1164,9 @@ public abstract class DialogWrapper {
    */
   @Nullable
   public JComponent getPreferredFocusedComponent() {
+    if (myPreferredFocusedComponentFromPanel != null) {
+      return myPreferredFocusedComponentFromPanel;
+    }
     return SystemInfo.isMac ? myPreferredFocusedComponent : null;
   }
 
@@ -1301,6 +1305,9 @@ public abstract class DialogWrapper {
     final JComponent centerPanel = createCenterPanel();
     if (centerPanel != null) {
       centerSection.add(centerPanel, BorderLayout.CENTER);
+      if (centerPanel instanceof DialogPanel) {
+        myPreferredFocusedComponentFromPanel = ((DialogPanel) centerPanel).getPreferredFocusedComponent();
+      }
     }
 
     boolean isVisualPaddingCompensatedOnComponentLevel = centerPanel == null || centerPanel.getClientProperty("isVisualPaddingCompensatedOnComponentLevel") == null;

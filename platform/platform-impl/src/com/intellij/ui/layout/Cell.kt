@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
 import com.intellij.BundleBase
@@ -28,6 +28,10 @@ import javax.swing.*
 
 @DslMarker
 annotation class CellMarker
+
+interface CellBuilder {
+  fun focused()
+}
 
 // separate class to avoid row related methods in the `cell { } `
 @CellMarker
@@ -166,5 +170,5 @@ abstract class Cell {
     JBScrollPane(component)(*constraints)
   }
 
-  abstract operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int = 0, growPolicy: GrowPolicy? = null, comment: String? = null)
+  abstract operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int = 0, growPolicy: GrowPolicy? = null, comment: String? = null): CellBuilder
 }
