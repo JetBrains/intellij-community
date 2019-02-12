@@ -30,6 +30,18 @@ public class ObjectUtils {
     return (T)NULL;
   }
 
+  /**
+   * &quot;Wraps&quot; {@code null} with {@code null}-object.
+   * <p/>
+   * Useful when some generic data structure A does not allow {@code null}s,
+   * but there is a need to implement another structure B on top of A which should support {@code null}s.
+   * <br/>
+   * Returned value should never be presented to clients of structure B,
+   * and it must be &quot;unwrapped&quot; back with {@link #nullize(Object)}.
+   *
+   * @return {@code null} wrapper if value is {@code null}, otherwise original value
+   * @see #nullize(Object)
+   */
   @Contract(value = "!null -> param1", pure = true)
   @NotNull
   public static <T> T notNullize(@Nullable T value) {
@@ -41,6 +53,12 @@ public class ObjectUtils {
     }
   }
 
+  /**
+   * &quot;Unwraps&quot; {@code null} from the value returned by {@link #notNullize(Object)}.
+   *
+   * @return {@code null} if value is the {@code null} wrapper, otherwise original value
+   * @see #notNullize(Object)
+   */
   @Contract(pure = true)
   @Nullable
   public static <T> T nullize(@NotNull T value) {
