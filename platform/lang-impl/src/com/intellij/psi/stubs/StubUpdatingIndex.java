@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.stubs;
 
-import com.intellij.index.PrebuiltIndexProviderBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
@@ -27,7 +26,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -218,21 +216,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         };
 
         ApplicationManager.getApplication().runReadAction(() -> {
-          Stub rootStub = null;
-
-          if (Registry.is("use.prebuilt.indices")) {
-            final PrebuiltStubsProvider prebuiltStubsProvider =
-              PrebuiltStubsProviders.INSTANCE.forFileType(inputData.getFileType());
-            if (prebuiltStubsProvider != null) {
-              rootStub = prebuiltStubsProvider.findStub(inputData);
-              if (PrebuiltIndexProviderBase.DEBUG_PREBUILT_INDICES) {
-                Stub stub = StubTreeBuilder.buildStubTree(inputData);
-                if (rootStub != null && stub != null) {
-                  check(rootStub, stub);
-                }
-              }
-            }
-          }
+          Stub rootStub = PrebuiltStubsKt.findStub(inputData);
 
           if (rootStub == null) {
             rootStub = StubTreeBuilder.buildStubTree(inputData);
@@ -286,7 +270,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     };
   }
 
-  private static void check(@NotNull Stub stub, @NotNull Stub stub2) {
+  public static void check(@NotNull Stub stub, @NotNull Stub stub2) {
     assert stub.getStubType() == stub2.getStubType();
     List<? extends Stub> stubs = stub.getChildrenStubs();
     List<? extends Stub> stubs2 = stub2.getChildrenStubs();

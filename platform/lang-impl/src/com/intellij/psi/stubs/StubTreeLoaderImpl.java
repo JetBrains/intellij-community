@@ -256,20 +256,13 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
   }
 
   @Override
-  protected boolean isPrebuilt(@NotNull VirtualFile virtualFile) {
-      boolean canBePrebuilt = false;
+  protected boolean isPrebuilt(@NotNull VirtualFile virtualFile, @NotNull Project project) {
       try {
-        final PrebuiltStubsProvider prebuiltStubsProvider =
-          PrebuiltStubsProviders.INSTANCE.forFileType(virtualFile.getFileType());
-        if (prebuiltStubsProvider != null) {
-          canBePrebuilt = null !=
-                          prebuiltStubsProvider
-                            .findStub(new FileContentImpl(virtualFile, virtualFile.contentsToByteArray()));
-        }
+        return PrebuiltStubsKt.findStub(virtualFile, project) != null;
       }
       catch (Exception e) {
         // pass
       }
-      return canBePrebuilt;
+      return false;
     }
 }

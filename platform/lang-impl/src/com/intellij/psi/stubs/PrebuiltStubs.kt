@@ -7,9 +7,14 @@ import com.intellij.index.PrebuiltIndexProviderBase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileTypeExtension
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.FileContent
+import com.intellij.util.indexing.FileContentImpl
+import com.intellij.util.indexing.IndexingDataKeys
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.KeyDescriptor
@@ -28,8 +33,36 @@ const val EP_NAME: String = "com.intellij.filetype.prebuiltStubsProvider"
 
 object PrebuiltStubsProviders : FileTypeExtension<PrebuiltStubsProvider>(EP_NAME)
 
+fun findStub(virtualFile: VirtualFile, project: Project): Stub? {
+  return PrebuiltStubsProviders
+    .allForFileType(virtualFile.fileType)
+    .filter { it.isEnabled(project) }
+    .mapNotNull { it.findStub(FileContentImpl(virtualFile, virtualFile.contentsToByteArray()).also { c ->
+      c.putUserData(IndexingDataKeys.PROJECT, project)
+    }) }
+    .firstOrNull()
+}
+
+fun findStub(fileContent: FileContent): Stub? {
+  val rootStub = PrebuiltStubsProviders
+    .allForFileType(fileContent.fileType)
+    .filter { it.isEnabled(fileContent.project) }
+    .mapNotNull { it.findStub(fileContent) }
+    .firstOrNull()
+
+  if (PrebuiltIndexProviderBase.DEBUG_PREBUILT_INDICES) {
+    val stub = StubTreeBuilder.buildStubTree(fileContent)
+    if (rootStub != null && stub != null) {
+      StubUpdatingIndex.check(rootStub, stub)
+    }
+  }
+  return rootStub
+}
+
 @ApiStatus.Experimental
 interface PrebuiltStubsProvider {
+  fun isEnabled(project: Project): Boolean
+
   fun findStub(fileContent: FileContent): Stub?
 }
 
@@ -75,7 +108,6 @@ class StubTreeExternalizer : DataExternalizer<SerializedStubTree> {
 }
 
 abstract class PrebuiltStubsProviderBase : PrebuiltIndexProviderBase<SerializedStubTree>(), PrebuiltStubsProvider {
-
   private var mySerializationManager: SerializationManagerImpl? = null
 
   protected abstract val stubVersion: Int
@@ -83,6 +115,8 @@ abstract class PrebuiltStubsProviderBase : PrebuiltIndexProviderBase<SerializedS
   override val indexName: String get() = SDK_STUBS_STORAGE_NAME
 
   override val indexExternalizer: StubTreeExternalizer get() = StubTreeExternalizer()
+
+  override fun isEnabled(project: Project) = Registry.`is`("use.bundled.prebuilt.indices")
 
   companion object {
     const val PREBUILT_INDICES_PATH_PROPERTY: String = "prebuilt_indices_path"

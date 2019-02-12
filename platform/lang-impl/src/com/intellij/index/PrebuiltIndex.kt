@@ -64,7 +64,7 @@ abstract class PrebuiltIndexProviderBase<Value> : Disposable {
   }
 
   fun get(fileContent: FileContent): Value? {
-    if (Registry.`is`("use.prebuilt.indices")) {
+    if (Registry.`is`("use.bundled.prebuilt.indices")) {
       if (myPrebuiltIndexStorage != null) {
         val hashCode = myFileContentHashing.hashString(fileContent)
         try {

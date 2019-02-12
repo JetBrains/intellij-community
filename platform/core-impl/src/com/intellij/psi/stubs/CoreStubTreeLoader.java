@@ -85,7 +85,7 @@ public class CoreStubTreeLoader extends StubTreeLoader {
   }
 
   @Override
-  protected boolean isPrebuilt(@NotNull VirtualFile virtualFile) {
+  protected boolean isPrebuilt(@NotNull VirtualFile virtualFile, @NotNull Project project) {
     return false;
   }
 }

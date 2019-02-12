@@ -75,7 +75,7 @@ public abstract class StubTreeLoader {
     IndexingStampInfo indexingStampInfo = getIndexingStampInfo(file);
     boolean upToDate = indexingStampInfo != null && indexingStampInfo.isUpToDate(document, file, psiFile);
 
-    boolean canBePrebuilt = isPrebuilt(psiFile.getVirtualFile());
+    boolean canBePrebuilt = isPrebuilt(psiFile.getVirtualFile(), psiFile.getProject());
 
     String msg = "PSI and index do not match.\nPlease report the problem to JetBrains with the files attached\n";
 
@@ -142,7 +142,7 @@ public abstract class StubTreeLoader {
            new RuntimeExceptionWithAttachments(msg, cause, attachments);
   }
 
-  protected abstract boolean isPrebuilt(@NotNull VirtualFile virtualFile);
+  protected abstract boolean isPrebuilt(@NotNull VirtualFile virtualFile, @NotNull Project project);
 
   private static RuntimeExceptionWithAttachments handleUpToDateMismatch(@NotNull String message, Attachment[] attachments, @Nullable Throwable cause) {
     return new UpToDateStubIndexMismatch(message, cause, attachments);
