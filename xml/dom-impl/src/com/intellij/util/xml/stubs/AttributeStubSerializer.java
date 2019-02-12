@@ -33,7 +33,7 @@ public class AttributeStubSerializer implements ObjectStubSerializer<AttributeSt
   @NotNull
   @Override
   public String getExternalId() {
-    return "AttributeStub";
+    return "xml.XML_ATTRIBUTE_STUB_SERIALIZER";
   }
 
   @Override

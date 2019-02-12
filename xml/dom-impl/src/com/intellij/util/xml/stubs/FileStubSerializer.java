@@ -31,7 +31,7 @@ public class FileStubSerializer implements ObjectStubSerializer<FileStub, Stub> 
   @NotNull
   @Override
   public String getExternalId() {
-    return "FileStubSerializer";
+    return "xml.XML_FILE_STUB_SERIALIZER";
   }
 
   @Override

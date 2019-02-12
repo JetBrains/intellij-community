@@ -66,7 +66,7 @@ public class ElementStubSerializer implements ObjectStubSerializer<ElementStub, 
   @NotNull
   @Override
   public String getExternalId() {
-    return "ElementStubSerializer";
+    return "xml.XML_ELEMENT_STUB_SERIALIZER";
   }
 
   @Override
