@@ -224,14 +224,20 @@ data class RecentLocationsDataModel(val project: Project, val editorsToRelease: 
         return@processHighlights true
       }
 
-      if (info.severity != HighlightSeverity.INFORMATION) {
-        return@processHighlights true
+      when (info.severity) {
+        HighlightSeverity.ERROR,
+        HighlightSeverity.WARNING,
+        HighlightSeverity.WEAK_WARNING,
+        HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING
+        -> return@processHighlights true
       }
 
+      val textAttributes = if (info.forcedTextAttributes != null) info.forcedTextAttributes
+      else colorsScheme.getAttributes(info.forcedTextAttributesKey)
       editor.markupModel.addRangeHighlighter(
         info.actualStartOffset - rangeMarker.startOffset, info.actualEndOffset - rangeMarker.startOffset,
         HighlighterLayer.SYNTAX,
-        colorsScheme.getAttributes(info.forcedTextAttributesKey),
+        textAttributes,
         HighlighterTargetArea.EXACT_RANGE)
 
       true
