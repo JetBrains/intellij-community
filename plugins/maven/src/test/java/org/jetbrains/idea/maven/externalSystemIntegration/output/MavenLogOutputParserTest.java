@@ -6,13 +6,10 @@ import com.intellij.build.output.BuildOutputInstantReader;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.idea.maven.model.MavenConstants;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Consumer;
 
 import static com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType.EXECUTE_TASK;
@@ -33,7 +30,7 @@ public class MavenLogOutputParserTest extends UsefulTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     MockitoAnnotations.initMocks(this);
-    taskId = ExternalSystemTaskId.create(MavenConstants.SYSTEM_ID, EXECUTE_TASK, "PROJECT_ID");
+    taskId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, EXECUTE_TASK, "PROJECT_ID");
     myParser = new MavenLogOutputParser(taskId, ContainerUtil.list(parser1, parser2));
     when(parser1.supportsType(any())).thenReturn(true);
     when(parser2.supportsType(any())).thenReturn(true);

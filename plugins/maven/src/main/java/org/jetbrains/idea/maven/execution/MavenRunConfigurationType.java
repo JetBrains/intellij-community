@@ -22,7 +22,6 @@ import icons.MavenIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -46,7 +45,7 @@ public final class MavenRunConfigurationType extends AbstractExternalSystemTaskC
    * reflection
    */
   MavenRunConfigurationType() {
-    super(MavenConstants.SYSTEM_ID);
+    super(MavenUtil.SYSTEM_ID);
     myFactory = new ConfigurationFactory(this) {
       @NotNull
       @Override

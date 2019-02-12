@@ -2,20 +2,17 @@
 package org.jetbrains.idea.maven.buildtool;
 
 import com.intellij.build.*;
-import com.intellij.build.events.BuildEvent;
 import com.intellij.execution.process.*;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.project.MavenConsoleImpl;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-
-import javax.swing.*;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import static com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType.EXECUTE_TASK;
 
@@ -28,7 +25,7 @@ public class BuildToolWindowMavenConsole extends MavenConsole {
   public BuildToolWindowMavenConsole(@NotNull Project project, @NotNull String title, @NotNull String workingDir) {
     super(getSettings(project).getOutputLevel(), getSettings(project).isPrintErrorStackTraces());
 
-    ExternalSystemTaskId taskId = ExternalSystemTaskId.create(MavenConstants.SYSTEM_ID, EXECUTE_TASK, project);
+    ExternalSystemTaskId taskId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, EXECUTE_TASK, project);
     DefaultBuildDescriptor descriptor =
       new DefaultBuildDescriptor(taskId, "Run Maven task", project.getBasePath(), System.currentTimeMillis());
     ConsoleView console = MavenConsoleImpl.createConsoleBuilder(project).getConsole();
