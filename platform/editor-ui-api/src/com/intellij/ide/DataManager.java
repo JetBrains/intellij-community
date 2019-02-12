@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -22,7 +22,7 @@ public abstract class DataManager {
   @NonNls public static final String CLIENT_PROPERTY_DATA_PROVIDER = "DataProvider";
 
   /**
-   * @return {@link DataContext} constructed by the current focused component
+   * @return {@link DataContext} constructed by the currently focused component
    * @deprecated use either {@link #getDataContext(Component)} or {@link #getDataContextFromFocus()}
    */
   @Deprecated
@@ -43,7 +43,7 @@ public abstract class DataManager {
   }
 
   /**
-   * @return {@link DataContext} constructed by the specified {@code component}
+   * @return {@link DataContext} constructed by the currently focused component.
    */
   @NotNull
   public abstract Promise<DataContext> getDataContextFromFocusAsync();
