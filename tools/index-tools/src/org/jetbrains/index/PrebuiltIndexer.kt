@@ -83,6 +83,7 @@ abstract class PrebuiltIndexer {
 
     generatorWrapper.use {
       iterateFiles { f ->
+        if (f.isDirectory) return@iterateFiles true
         val fileContent = FileContentImpl(f, f.contentsToByteArray())
         val hash = hashing.hashString(fileContent)
         hashVerifier.checkContent(hash, fileContent)
