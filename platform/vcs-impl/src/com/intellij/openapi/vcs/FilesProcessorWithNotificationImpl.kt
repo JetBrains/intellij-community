@@ -5,11 +5,13 @@ import com.intellij.CommonBundle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 import com.intellij.openapi.vfs.VirtualFile
 
-abstract class FilesProcessorWithNotificationImpl(protected val project: Project) : FilesProcessor {
+abstract class FilesProcessorWithNotificationImpl(protected val project: Project, parentDisposable: Disposable) : FilesProcessor {
 
   private val vcsNotifier = VcsNotifier.getInstance(project)
 
@@ -38,6 +40,10 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
   abstract fun doFilterFiles(files: Collection<VirtualFile>): Collection<VirtualFile>
 
   abstract fun rememberForAllProjects()
+
+  init {
+    Disposer.register(parentDisposable, this)
+  }
 
   override fun processFiles(files: List<VirtualFile>): List<VirtualFile> {
 

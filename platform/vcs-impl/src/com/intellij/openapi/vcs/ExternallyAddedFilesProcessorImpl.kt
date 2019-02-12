@@ -29,7 +29,7 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
                                         parentDisposable: Disposable,
                                         private val vcs: AbstractVcs<*>,
                                         private val addChosenFiles: (Collection<VirtualFile>) -> Unit)
-  : FilesProcessorWithNotificationImpl(project), FilesProcessor, AsyncVfsEventsListener, ChangeListListener {
+  : FilesProcessorWithNotificationImpl(project, parentDisposable), FilesProcessor, AsyncVfsEventsListener, ChangeListListener {
 
   private val UNPROCESSED_FILES_LOCK = ReentrantReadWriteLock()
 

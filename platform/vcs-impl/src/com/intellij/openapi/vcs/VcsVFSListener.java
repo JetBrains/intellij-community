@@ -345,6 +345,7 @@ public abstract class VcsVFSListener implements Disposable {
   @SuppressWarnings("unchecked")
   private FilesProcessor createProjectConfigurationFilesProcessor() {
     return new ProjectConfigurationFilesProcessorImpl(myProject,
+                                                      this,
                                                       myVcs.getDisplayName(),
                                                       (files) -> {
                                                         performAdding((Collection<VirtualFile>)files, emptyMap());
