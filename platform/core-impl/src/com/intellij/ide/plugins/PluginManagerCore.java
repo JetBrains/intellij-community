@@ -571,6 +571,7 @@ public class PluginManagerCore {
       if (ApplicationManager.getApplication().isInternal()) {
         StringBuilder cycles = new StringBuilder();
         for (Collection<PluginId> component : builder.getComponents()) {
+          if (component.size() < 2) continue;
           if (cycles.length() > 0) cycles.append(';');
           for (PluginId id : component) {
             idToDescriptorMap.get(id).setEnabled(false);
