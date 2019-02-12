@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.mergeinfo;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -92,18 +92,6 @@ public class SvnMergeInfoCache {
     MyCurrentUrlData rootMapping = myCurrentUrlMapping.get(info.getUrl());
 
     return rootMapping != null ? rootMapping.getBranchInfo(branchPath) : null;
-  }
-
-  public enum MergeCheckResult {
-    COMMON,
-    MERGED,
-    NOT_MERGED,
-    NOT_EXISTS;
-
-    @NotNull
-    public static MergeCheckResult getInstance(boolean merged) {
-      return merged ? MERGED : NOT_MERGED;
-    }
   }
 
   static class CopyRevison {

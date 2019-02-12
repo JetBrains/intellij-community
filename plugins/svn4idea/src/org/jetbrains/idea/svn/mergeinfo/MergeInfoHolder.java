@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.mergeinfo;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -107,7 +107,7 @@ public class MergeInfoHolder {
     @Override
     public boolean report(final CommittedChangeList list) {
       if (list instanceof SvnChangeList) {
-        final SvnMergeInfoCache.MergeCheckResult checkState =
+        final MergeCheckResult checkState =
           myMergeInfoCache.getState(myRefreshedRoot, (SvnChangeList)list, myRefreshedBranch, myBranchPath);
         // todo make batches - by 10
         final long number = list.getNumber();
@@ -156,7 +156,7 @@ public class MergeInfoHolder {
 
   @NotNull
   public ListMergeStatus check(@NotNull CommittedChangeList list, @NotNull MergeInfoCached state, boolean isCached) {
-    SvnMergeInfoCache.MergeCheckResult mergeCheckResult = state.getMap().get(list.getNumber());
+    MergeCheckResult mergeCheckResult = state.getMap().get(list.getNumber());
     ListMergeStatus result = state.copiedAfter(list) ? ListMergeStatus.COMMON : ListMergeStatus.from(mergeCheckResult);
 
     return ObjectUtils.notNull(result, isCached ? ListMergeStatus.REFRESHING : ListMergeStatus.ALIEN);
