@@ -9,7 +9,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.util.ResolveTest
 import org.junit.Test
 
-import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
+import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_CONFIGURATION
+import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_CONFIGURATION_CONTAINER
 import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.getDelegatesToInfo
 
 @CompileStatic
@@ -27,6 +28,11 @@ class GradleConfigurationsTest extends GradleHighlightingBaseTest implements Res
     'configuration via qualified method call'()
     'configuration closure delegate in qualified method call'()
     'configuration member via qualified method call closure delegate'()
+  }
+
+  @Override
+  protected List<String> getParentCalls() {
+    return super.getParentCalls() + 'buildscript'
   }
 
   void 'configurations closure delegate'() {
