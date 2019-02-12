@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.PasteProvider;
 import com.intellij.ide.SaveAndSyncHandler;
-import com.intellij.ide.SaveAndSyncHandlerImpl;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.NodeRenderer;
@@ -341,7 +340,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       .subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
         @Override
         public void applicationActivated(@NotNull IdeFrame ideFrame) {
-          ((SaveAndSyncHandlerImpl)SaveAndSyncHandler.getInstance()).maybeRefresh(ModalityState.current());
+          SaveAndSyncHandler.getInstance().maybeRefresh(ModalityState.current());
         }
       });
 

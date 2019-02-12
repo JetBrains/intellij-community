@@ -4,15 +4,12 @@ package com.intellij.configurationStore
 import com.intellij.diagnostic.IdeErrorsDialog
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.SaveAndSyncHandler
-import com.intellij.ide.SaveAndSyncHandlerImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.async.coroutineDispatchingContext
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.PersistentStateComponent
@@ -20,12 +17,12 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.text.StringUtil
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
@@ -46,7 +43,7 @@ class StoreUtil private constructor() {
     @CalledInAny
     fun saveSettings(componentManager: ComponentManager, isForceSavingAllSettings: Boolean = false) {
       if (componentManager is Application) {
-        cancelScheduledSave()
+        SaveAndSyncHandler.getInstance().cancelScheduledSave()
       }
       runBlocking {
         com.intellij.configurationStore.saveSettings(componentManager, isForceSavingAllSettings)
@@ -73,7 +70,7 @@ class StoreUtil private constructor() {
     @CalledInAwt
     @JvmStatic
     fun saveDocumentsAndProjectsAndApp(isForceSavingAllSettings: Boolean) {
-      cancelScheduledSave()
+      SaveAndSyncHandler.getInstance().cancelScheduledSave()
 
       FileDocumentManager.getInstance().saveAllDocuments()
       runBlocking {
@@ -83,14 +80,11 @@ class StoreUtil private constructor() {
   }
 }
 
-private fun cancelScheduledSave() {
-  (SaveAndSyncHandler.getInstance() as? SaveAndSyncHandlerImpl)?.cancelScheduledSave()
-}
-
 @CalledInAny
-private suspend fun saveSettings(componentManager: ComponentManager, isForceSavingAllSettings: Boolean = false) {
+private suspend fun saveSettings(componentManager: ComponentManager, isForceSavingAllSettings: Boolean = false): Boolean {
   try {
     componentManager.stateStore.save(isForceSavingAllSettings = isForceSavingAllSettings)
+    return true
   }
   catch (e: UnresolvedReadOnlyFilesException) {
     LOG.info(e)
@@ -119,6 +113,7 @@ private suspend fun saveSettings(componentManager: ComponentManager, isForceSavi
     }
     notification.notify(componentManager as? Project)
   }
+  return false
 }
 
 fun <T> getStateSpec(persistentStateComponent: PersistentStateComponent<T>): State {
@@ -151,7 +146,7 @@ interface ConfigurationStorageReloader {
  * @param isForceSavingAllSettings Whether to force save non-roamable component configuration.
  */
 @CalledInAny
-private suspend fun saveProjectsAndApp(isForceSavingAllSettings: Boolean, onlyProject: Project? = null) {
+internal suspend fun saveProjectsAndApp(isForceSavingAllSettings: Boolean, onlyProject: Project? = null) {
   (ProjectManager.getInstance() as? ConfigurationStorageReloader)?.reloadChangedStorageFiles()
 
   val start = System.currentTimeMillis()
@@ -174,16 +169,41 @@ private suspend fun saveAllProjects(isForceSavingAllSettings: Boolean) {
   }
 }
 
-@CalledInAny
-internal suspend fun saveDocumentsAndProjectsAndApp(onlyProject: Project? = null,
-                                                    isForceSavingAllSettings: Boolean = false,
-                                                    isDocumentsSavingExplicit: Boolean = true) {
-  coroutineScope {
-    launch(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
-      (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(isDocumentsSavingExplicit)
-    }
-    launch {
-      saveProjectsAndApp(isForceSavingAllSettings = isForceSavingAllSettings, onlyProject = onlyProject)
-    }
+@CalledInAwt
+fun saveSettingsUnderModalProgress(componentManager: ComponentManager, isSaveAppAlso: Boolean = false): Boolean {
+  if (!ApplicationManager.getApplication().isDispatchThread) {
+    throw IllegalStateException(
+      "Method intended to be called only in EDT because otherwise wrapping into modal progress task is not required" +
+      " and `saveSettings` should be called directly")
+  }
+
+  var isSavedSuccessfully = true
+  runInSaveOnFrameDeactivationDisabledMode {
+    ProgressManager.getInstance().run(object : Task.Modal(componentManager as? Project, "Save", /* canBeCancelled = */ false) {
+      override fun run(indicator: ProgressIndicator) {
+        runBlocking { doSave() }
+      }
+
+      private suspend fun doSave() {
+        SaveAndSyncHandler.getInstance().waitScheduledSaveAndRemoveProject(myProject)
+
+        isSavedSuccessfully = saveSettings(componentManager, isForceSavingAllSettings = true)
+        if (isSaveAppAlso && componentManager !is Application) {
+          saveSettings(ApplicationManager.getApplication(), isForceSavingAllSettings = true)
+        }
+      }
+    })
+  }
+  return isSavedSuccessfully
+}
+
+internal inline fun runInSaveOnFrameDeactivationDisabledMode(task: () -> Unit) {
+  val saveAndSyncManager = SaveAndSyncHandler.getInstance()
+  saveAndSyncManager.blockSaveOnFrameDeactivation()
+  try {
+    task()
+  }
+  finally {
+    saveAndSyncManager.unblockSaveOnFrameDeactivation()
   }
 }

@@ -3,7 +3,6 @@ package com.intellij.openapi.project.ex;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 
 public interface ProjectEx extends Project {
@@ -12,12 +11,6 @@ public interface ProjectEx extends Project {
    */
   interface ProjectSaved {
     Topic<ProjectSaved> TOPIC = Topic.create("SaveProjectTopic", ProjectSaved.class);
-
-    @SuppressWarnings("unused")
-    @CalledInAwt
-    @Deprecated
-    default void saved(@NotNull Project project) {
-    }
 
     /**
      * Not called in EDT.

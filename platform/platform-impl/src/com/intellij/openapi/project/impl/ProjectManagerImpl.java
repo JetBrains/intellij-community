@@ -2,7 +2,7 @@
 package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StorageUtilKt;
-import com.intellij.configurationStore.StoreUtil;
+import com.intellij.configurationStore.StoreUtilKt;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
@@ -675,10 +675,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
       if (isSaveProject) {
         FileDocumentManager.getInstance().saveAllDocuments();
-        StoreUtil.saveSettings(project, true);
-        if (isSaveApp) {
-          StoreUtil.saveSettings(app, true);
-        }
+        StoreUtilKt.saveSettingsUnderModalProgress(project, isSaveApp);
       }
 
       if (checkCanClose && !ensureCouldCloseIfUnableToSave(project)) {
@@ -712,7 +709,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @Override
   public boolean closeAndDispose(@NotNull Project project) {
-    return closeProject(project, true /* save project */, false /* don't save app */, true /* dispose project */, true);
+    return closeProject(project, true /* save project */, false /* don't save app */, true /* dispose project */, true /* checkCanClose */);
   }
 
   private void fireProjectClosing(@NotNull Project project) {

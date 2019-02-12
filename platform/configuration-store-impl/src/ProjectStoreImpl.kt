@@ -346,10 +346,6 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
 
         projectSaved.duringSave(project)
       }
-      launch(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
-        @Suppress("DEPRECATION")
-        projectSaved.saved(project)
-      }
     }
   }
 

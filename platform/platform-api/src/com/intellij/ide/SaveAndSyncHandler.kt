@@ -1,19 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide;
+package com.intellij.ide
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
-/**
- * @author Kirill Likhodedov
- */
-public abstract class SaveAndSyncHandler {
-  @NotNull
-  public static SaveAndSyncHandler getInstance() {
-    return ApplicationManager.getApplication().getComponent(SaveAndSyncHandler.class);
+abstract class SaveAndSyncHandler {
+  companion object {
+    @JvmStatic
+    fun getInstance(): SaveAndSyncHandler {
+      return ApplicationManager.getApplication().getComponent(SaveAndSyncHandler::class.java)
+    }
   }
 
   /**
@@ -21,25 +20,41 @@ public abstract class SaveAndSyncHandler {
    *
    * Save is not performed immediately and not finished on method call return.
    */
-  public abstract void scheduleSaveDocumentsAndProjectsAndApp(@Nullable Project project);
-
-  @SuppressWarnings("MethodMayBeStatic")
-  @Deprecated
-  public final void saveProjectsAndDocuments() {
-    // used only by https://plugins.jetbrains.com/plugin/11072-openjml-esc
-    // so, just save documents and nothing more, to simplify SaveAndSyncHandlerImpl
-    FileDocumentManager.getInstance().saveAllDocuments();
+  fun scheduleSaveDocumentsAndProjectsAndApp(onlyProject: Project?) {
+    scheduleSaveDocumentsAndProjectsAndApp(onlyProject, isForceSavingAllSettings = false, isNeedToExecuteNow = false)
   }
 
-  public abstract void scheduleRefresh();
+  @ApiStatus.Experimental
+  abstract fun scheduleSaveDocumentsAndProjectsAndApp(onlyProject: Project?, isForceSavingAllSettings: Boolean, isNeedToExecuteNow: Boolean)
 
-  public abstract void refreshOpenFiles();
+  @Deprecated("", ReplaceWith("FileDocumentManager.getInstance().saveAllDocuments()", "com.intellij.openapi.fileEditor.FileDocumentManager"))
+  fun saveProjectsAndDocuments() {
+    // used only by https://plugins.jetbrains.com/plugin/11072-openjml-esc
+    // so, just save documents and nothing more, to simplify SaveAndSyncHandlerImpl
+    FileDocumentManager.getInstance().saveAllDocuments()
+  }
 
-  public abstract void blockSaveOnFrameDeactivation();
+  abstract fun scheduleRefresh()
 
-  public abstract void unblockSaveOnFrameDeactivation();
+  abstract fun refreshOpenFiles()
 
-  public abstract void blockSyncOnFrameActivation();
+  abstract fun blockSaveOnFrameDeactivation()
 
-  public abstract void unblockSyncOnFrameActivation();
+  abstract fun unblockSaveOnFrameDeactivation()
+
+  abstract fun blockSyncOnFrameActivation()
+
+  abstract fun unblockSyncOnFrameActivation()
+
+  @ApiStatus.Experimental
+  open fun maybeRefresh(modalityState: ModalityState) {
+  }
+
+  @ApiStatus.Experimental
+  open fun cancelScheduledSave() {
+  }
+
+  @ApiStatus.Experimental
+  open fun waitScheduledSaveAndRemoveProject(project: Project?) {
+  }
 }

@@ -7,9 +7,11 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Trivial implementation used in tests and in the headless mode.
  */
-public class SaveAndSyncHandlerStub extends SaveAndSyncHandler {
+final class SaveAndSyncHandlerStub extends SaveAndSyncHandler {
   @Override
-  public void scheduleSaveDocumentsAndProjectsAndApp(@Nullable Project project) {
+  public void scheduleSaveDocumentsAndProjectsAndApp(@Nullable Project onlyProject,
+                                                     boolean isForceSavingAllSettings,
+                                                     boolean isNeedToExecuteNow) {
   }
 
   @Override

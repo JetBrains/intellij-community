@@ -2,11 +2,13 @@
 package com.intellij.ide
 
 import com.intellij.concurrency.JobScheduler
-import com.intellij.configurationStore.saveDocumentsAndProjectsAndApp
+import com.intellij.configurationStore.saveProjectsAndApp
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.async.coroutineDispatchingContext
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.BaseComponent
 import com.intellij.openapi.diagnostic.Logger
@@ -23,6 +25,8 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.util.SingleAlarm
 import com.intellij.util.pooledThreadSingleAlarm
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.beans.PropertyChangeListener
 import java.util.concurrent.TimeUnit
@@ -37,17 +41,29 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : SaveAndSyn
   @Volatile
   private var refreshSessionId = -1L
 
+  private val saveQueue = LinkedHashSet<SaveTask>()
+
   private val saveAlarm = pooledThreadSingleAlarm(delay = 300, parentDisposable = this) {
     val app = ApplicationManager.getApplication()
     if (app != null && !app.isDisposed && !app.isDisposeInProgress && blockSaveOnFrameDeactivationCount.get() == 0) {
+      val list: Array<SaveTask>
+      synchronized(saveQueue) {
+        if (saveQueue.isEmpty()) {
+          return@pooledThreadSingleAlarm
+        }
+
+        list = saveQueue.toTypedArray()
+        saveQueue.clear()
+      }
+
       runBlocking {
-        saveDocumentsAndProjectsAndApp(isDocumentsSavingExplicit = false)
+        list.forEach { it.save() }
       }
     }
   }
 
   override fun initComponent() {
-    // add listeners after 10 seconds - doesn't make sense to listen earlier
+    // add listeners after some delay - doesn't make sense to listen earlier
     JobScheduler.getScheduler().schedule(Runnable {
       ApplicationManager.getApplication().invokeLater { addListeners() }
     }, 30, TimeUnit.SECONDS)
@@ -89,7 +105,7 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : SaveAndSyn
           return
         }
 
-        if (canSyncOrSave()) {
+        if (canSyncOrSave() && addToSaveQueue(saveAppTask)) {
           // do not cancel if there is already request - opposite to scheduleSaveDocumentsAndProjectsAndApp,
           // on frame deactivation better to save as soon as possible
           saveAlarm.request(delay = 100)
@@ -106,14 +122,37 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : SaveAndSyn
     })
   }
 
-  // well, currently it is not really scheduled - no alarm or something like that, but it will be addressed in turn
-  override fun scheduleSaveDocumentsAndProjectsAndApp(project: Project?) {
-    // todo respect that only specified project can be saved
-    saveAlarm.cancelAndRequest()
+  override fun scheduleSaveDocumentsAndProjectsAndApp(onlyProject: Project?, isForceSavingAllSettings: Boolean, isNeedToExecuteNow: Boolean) {
+    val task = when {
+      onlyProject == null && !isForceSavingAllSettings -> saveAppTask
+      else -> SaveTask(onlyProject, isForceSavingAllSettings)
+    }
+
+    if (addToSaveQueue(task) || isNeedToExecuteNow) {
+      saveAlarm.cancelAndRequest(forceRun = isNeedToExecuteNow)
+    }
   }
 
-  fun cancelScheduledSave() {
+  private fun addToSaveQueue(task: SaveTask): Boolean {
+    synchronized(saveQueue) {
+      if (task === saveAppTask) {
+        saveQueue.removeAll { it.onlyProject != null && !it.isForceSavingAllSettings }
+      }
+      return saveQueue.add(task)
+    }
+  }
+
+  override fun cancelScheduledSave() {
     saveAlarm.cancel()
+  }
+
+  override fun waitScheduledSaveAndRemoveProject(project: Project?) {
+    if (project != null) {
+      synchronized(saveQueue) {
+        saveQueue.removeAll { it.onlyProject === project }
+      }
+    }
+    saveAlarm.waitForAllExecuted(10, TimeUnit.SECONDS)
   }
 
   override fun dispose() {
@@ -139,7 +178,7 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : SaveAndSyn
     }
   }
 
-  fun maybeRefresh(modalityState: ModalityState) {
+  override fun maybeRefresh(modalityState: ModalityState) {
     if (blockSyncOnFrameActivationCount.get() == 0 && settings.isSyncOnFrameActivation) {
       val queue = RefreshQueue.getInstance()
       queue.cancelSession(refreshSessionId)
@@ -189,5 +228,26 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : SaveAndSyn
 
   private inline fun submitTransaction(crossinline handler: () -> Unit) {
     TransactionGuard.submitTransaction(this, Runnable { handler() })
+  }
+}
+
+private val saveAppTask = SaveTask(onlyProject = null, isForceSavingAllSettings = false)
+
+private data class SaveTask(val onlyProject: Project?, val isForceSavingAllSettings: Boolean) {
+  suspend fun save() {
+    if (onlyProject?.isDisposed == true) {
+      return
+    }
+
+    coroutineScope {
+      launch(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+        // isForceSavingAllSettings is set to true currently only if save triggered explicitly (or on close app/project), so, pass equal isDocumentsSavingExplicit
+        // in any case flag isDocumentsSavingExplicit is not really important
+        (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(isForceSavingAllSettings)
+      }
+      launch {
+        saveProjectsAndApp(isForceSavingAllSettings = isForceSavingAllSettings, onlyProject = onlyProject)
+      }
+    }
   }
 }
