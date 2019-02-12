@@ -2,10 +2,13 @@
 package org.jetbrains.index.id
 
 import com.google.common.hash.HashCode
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
 import com.intellij.psi.stubs.HashCodeDescriptor
+import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexExtension
 import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.io.DataExternalizer
@@ -27,7 +30,17 @@ open class IdIndexGenerator : SingleIndexGeneratorImpl<IdIndexEntry, Int>(IdInde
   }
 }
 
-open class SingleIndexGeneratorImpl<K, V>(private val indexExtension: FileBasedIndexExtension<K, V>): SingleIndexGenerator<Map<K, V>>() {
+open class SingleIndexGeneratorImpl<K, V>(private val indexExtension: FileBasedIndexExtension<K, V>) : SingleIndexGenerator<Map<K, V>>() {
+  private val suitableFleTypes: MutableSet<FileType>
+
+  init {
+    val inputFilter = indexExtension.inputFilter
+    suitableFleTypes = mutableSetOf()
+    if (inputFilter is FileBasedIndex.FileTypeSpecificInputFilter) {
+      inputFilter.registerFileTypesUsedForIndexing { suitableFleTypes.add(it)}
+    }
+  }
+
   override val internalName: String
     get() = indexExtension.name.name
 
@@ -41,6 +54,8 @@ open class SingleIndexGeneratorImpl<K, V>(private val indexExtension: FileBasedI
                              MapDataExternalizer(indexExtension.keyDescriptor, indexExtension.valueExternalizer))
   }
 
+  override val fileFilter: VirtualFileFilter
+    get() = VirtualFileFilter { file -> indexExtension.inputFilter.acceptInput(file!!) && suitableFleTypes.contains(file.fileType) }
 }
 
 private class MapDataExternalizer<K, V>(private val keyExternalizer: DataExternalizer<K>,
