@@ -95,7 +95,11 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
     ActionManager actionManager = ActionManager.getInstance();
     final DefaultActionGroup group = (DefaultActionGroup)actionManager.getAction(groupId);
     if (group != null) {
-      group.remove(actionManager.getAction(actionId));
+      final AnAction anAction = actionManager.getAction(actionId);
+      if (anAction == null) {
+        return;
+      }
+      group.remove(anAction);
       final AnAction action = map.get(actionId);
       if (action != null) {
         actionManager.unregisterAction(actionId);

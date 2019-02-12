@@ -171,9 +171,9 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     // Stop
  //   actions.add(createStopAction());
     // Execute
-    //actions.add(
-    //  new ConsoleExecuteAction(myConsoleView, myConsoleExecuteActionHandler, myConsoleExecuteActionHandler.getEmptyExecuteAction(),
-    //                           myConsoleExecuteActionHandler));
+    actions.add(
+      new ConsoleExecuteAction(myConsoleView, myConsoleExecuteActionHandler, myConsoleExecuteActionHandler.getEmptyExecuteAction(),
+                               myConsoleExecuteActionHandler));
     toolbarActions.addAll(actions);
     // Attach Debugger
     toolbarActions.add(new ConnectDebuggerAction());
