@@ -165,6 +165,12 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
 
       Semaphore semaphore = new Semaphore(1);
       ApplicationManager.getApplication().invokeLater(() -> {
+        if (indicator.isCanceled()) {
+          // a write action has managed to sneak in before us, or the whole computation got canceled;
+          // anyway, nobody waits for us on bg thread, so we just exit
+          return;
+        }
+
         if (checkObsolete()) {
           semaphore.up();
           return;
