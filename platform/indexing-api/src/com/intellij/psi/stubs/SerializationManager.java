@@ -33,6 +33,7 @@ public abstract class SerializationManager {
     return ApplicationManager.getApplication().getComponent(SerializationManager.class);
   }
 
+  @Deprecated
   public void registerSerializer(ObjectStubSerializer serializer) {
     registerSerializer(serializer.getExternalId(), new Computable.PredefinedValueComputable<>(serializer));
   }

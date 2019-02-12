@@ -15,16 +15,16 @@
  */
 package com.intellij.util.xml.stubs;
 
-import com.intellij.psi.stubs.SerializationManager;
+import com.intellij.psi.stubs.ObjectStubSerializer;
 
 /**
  * @author Dmitry Avdeev
  */
 public class DomElementTypeHolder {
-
-  static {
-    SerializationManager.getInstance().registerSerializer(ElementStubSerializer.INSTANCE);
-    SerializationManager.getInstance().registerSerializer(AttributeStubSerializer.INSTANCE);
-    SerializationManager.getInstance().registerSerializer(FileStubSerializer.INSTANCE);
-  }
+  @SuppressWarnings("unused")
+  public static final ObjectStubSerializer XML_ELEMENT_STUB_SERIALIZER = ElementStubSerializer.INSTANCE;
+  @SuppressWarnings("unused")
+  public static final ObjectStubSerializer XML_ATTRIBUTE_STUB_SERIALIZER = AttributeStubSerializer.INSTANCE;
+  @SuppressWarnings("unused")
+  public static final FileStubSerializer XML_FILE_STUB_SERIALIZER = FileStubSerializer.INSTANCE;
 }
