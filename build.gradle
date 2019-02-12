@@ -38,31 +38,31 @@ dependencies {
 }
 
 intellij {
-    version '2018.3.4'
+    version = '2018.3.4'
 }
 
-sourceSets.main.java.srcDir file('src/main/generated-java')
-idea.module.generatedSourceDirs += file('src/main/generated-java')
+File genSrc = file('src/main/generated-java')
+sourceSets.main.java.srcDir genSrc
+idea.module.generatedSourceDirs += genSrc
 
-def intellijPublishUsername = project.properties['intellijPublishUsername'] ?: "see http://www.jetbrains.org/intellij/sdk/docs/tutorials/build_system/deployment.html"
-def intellijPublishPassword = project.properties['intellijPublishPassword'] ?: "see http://www.jetbrains.org/intellij/sdk/docs/tutorials/build_system/deployment.html"
+def intellijPublishToken = project.properties['intellijPublishToken'] ?: "see http://www.jetbrains.org/intellij/sdk/docs/tutorials/build_system/deployment.html"
 
 publishPlugin {
-    username intellijPublishUsername
-    password intellijPublishPassword
+    token intellijPublishToken
+    channels 'alpha'
 }
 
 task generateDiffLexer(type: GenerateLexer) {
-    source = 'src/main/java/de/thomasrosenau/diffplugin/lexer/Diff.flex'
-    targetDir = 'src/main/generated-java/de/thomasrosenau/diffplugin'
-    targetClass = 'DiffLexer'
-    purgeOldFiles = true
+    source 'src/main/java/de/thomasrosenau/diffplugin/lexer/Diff.flex'
+    targetDir 'src/main/generated-java/de/thomasrosenau/diffplugin'
+    targetClass 'DiffLexer'
+    purgeOldFiles true
 }
 
 task generateDiffParser(type: GenerateParser) {
-    source = 'src/main/java/de/thomasrosenau/diffplugin/parser/Diff.bnf'
-    targetRoot = 'src/main/generated-java'
-    pathToParser = 'DiffParser.java'
-    pathToPsiRoot = 'psi'
-    purgeOldFiles = true
+    source 'src/main/java/de/thomasrosenau/diffplugin/parser/Diff.bnf'
+    targetRoot 'src/main/generated-java'
+    pathToParser 'DiffParser.java'
+    pathToPsiRoot 'psi'
+    purgeOldFiles true
 }
