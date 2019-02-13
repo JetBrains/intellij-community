@@ -11,13 +11,10 @@ import com.intellij.psi.stubs.HashCodeDescriptor
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexExtension
 import com.intellij.util.indexing.FileContentImpl
-import com.intellij.util.io.DataExternalizer
-import com.intellij.util.io.DataInputOutputUtil
+import com.intellij.util.io.MapDataExternalizer
 import com.intellij.util.io.PersistentHashMap
 import org.jetbrains.index.RootsPrebuiltIndexer
 import org.jetbrains.index.SingleIndexGenerator
-import java.io.DataInput
-import java.io.DataOutput
 import java.io.File
 
 /**
@@ -56,27 +53,4 @@ open class SingleIndexGeneratorImpl<K, V>(private val indexExtension: FileBasedI
 
   override val fileFilter: VirtualFileFilter
     get() = VirtualFileFilter { file -> indexExtension.inputFilter.acceptInput(file!!) && suitableFleTypes.contains(file.fileType) }
-}
-
-private class MapDataExternalizer<K, V>(private val keyExternalizer: DataExternalizer<K>,
-                                        private val valueExternalizer: DataExternalizer<V>) : DataExternalizer<Map<K, V>> {
-  override fun save(out: DataOutput, value: Map<K, V>) {
-    DataInputOutputUtil.writeINT(out, value.size)
-    for (e in value.entries) {
-      keyExternalizer.save(out, e.key)
-      valueExternalizer.save(out, e.value)
-    }
-  }
-
-  override fun read(`in`: DataInput): Map<K, V> {
-    val size = DataInputOutputUtil.readINT(`in`)
-    val map = HashMap<K, V>()
-    for (i in 0 until size) {
-      val key = keyExternalizer.read(`in`)
-      val value = valueExternalizer.read(`in`)
-      map[key] = value
-    }
-    return map
-  }
-
 }
