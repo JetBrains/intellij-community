@@ -10,6 +10,8 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManagerImpl;
+import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -154,6 +156,12 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     myContentManager.addContentManagerListener(new ContentManagerAdapter() {
       @Override
       public void selectionChanged(@NotNull ContentManagerEvent event) {
+        RunnerLayoutUiImpl ui = getRunnerLayoutUi(RunContentManagerImpl.getRunContentDescriptorByContent(event.getContent()));
+        if (ui != null) {
+          ui.setLeftToolbarVisible(false);
+          ui.setContentToolbarBefore(false);
+        }
+
         updateToolWindowContent();
         updateDashboard(true);
       }
@@ -240,8 +248,8 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     // but there is a content descriptor for such run configuration.
     // It should be shown in the dashboard tree.
     List<RunConfiguration> storedConfigurations = ContainerUtil.map(configurations, RunnerAndConfigurationSettings::getConfiguration);
-    List<RunContentDescriptor> notStoredDescriptors = filterByContent(executionManager.getDescriptors(settings ->
-      !storedConfigurations.contains(settings.getConfiguration())));
+    List<RunContentDescriptor> notStoredDescriptors = filterByContent(
+      executionManager.getDescriptors(settings -> !storedConfigurations.contains(settings.getConfiguration())));
     notStoredDescriptors.forEach(descriptor -> {
       Set<RunnerAndConfigurationSettings> settings = executionManager.getConfigurations(descriptor);
       settings.forEach(setting -> result.add(Pair.create(setting, descriptor)));
@@ -492,6 +500,14 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
       myToolWindowContent.setIcon(null);
       myToolWindowContent.setCloseable(false);
     }
+  }
+
+  @Nullable
+  static RunnerLayoutUiImpl getRunnerLayoutUi(@Nullable RunContentDescriptor descriptor) {
+    if (descriptor == null) return null;
+
+    RunnerLayoutUi layoutUi = descriptor.getRunnerLayoutUi();
+    return layoutUi instanceof RunnerLayoutUiImpl ? (RunnerLayoutUiImpl)layoutUi : null;
   }
 
   @Nullable
