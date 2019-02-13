@@ -18,7 +18,6 @@ import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.ComponentAdapter;
 import org.picocontainer.PicoContainer;
 
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
@@ -314,8 +313,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
     int totalSize = myAdapters.size() + myLoadedAdapters.size();
     Class<T> extensionClass = getExtensionClass();
-    @SuppressWarnings("unchecked")
-    T[] result = (T[])Array.newInstance(extensionClass, totalSize);
+    T[] result = ArrayUtil.newArray(extensionClass, totalSize);
     if (totalSize == 0) {
       return result;
     }
@@ -444,8 +442,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     T[] oldArray = myExtensionsCacheAsArray;
     // any read access will use supplied list, any write access can lead to unpredictable results - asserted in clearCache
     myExtensionsCache = list;
-    //noinspection unchecked
-    myExtensionsCacheAsArray = list.toArray((T[])Array.newInstance(getExtensionClass(), 0));
+    myExtensionsCacheAsArray = list.toArray(ArrayUtil.newArray(getExtensionClass(), 0));
     POINTS_IN_READONLY_MODE.add(this);
 
     if (oldList != null) {

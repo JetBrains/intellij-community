@@ -599,7 +599,7 @@ public class ContainerUtil extends ContainerUtilRt {
     @Override
     public <T> T[] toArray(@NotNull T[] a) {
       int size = size();
-      T[] result = a.length >= size ? a : ArrayUtil.createArray(ArrayUtil.getComponentType(a), size);
+      T[] result = a.length >= size ? a : ArrayUtil.newArray(ArrayUtil.getComponentType(a), size);
       System.arraycopy(myStore, 0, result, 0, size);
       if (result.length > size) {
         result[size] = null;
@@ -945,7 +945,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T, V> V[] map2Array(@NotNull T[] array, @NotNull Class<V> aClass, @NotNull Function<? super T, ? extends V> mapper) {
-    V[] result = ArrayUtil.createArray(aClass, array.length);
+    V[] result = ArrayUtil.newArray(aClass, array.length);
     for (int i = 0; i < array.length; i++) {
       result[i] = mapper.fun(array[i]);
     }
@@ -955,7 +955,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T, V> V[] map2Array(@NotNull Collection<? extends T> collection, @NotNull Class<V> aClass, @NotNull Function<? super T, ? extends V> mapper) {
-    V[] result = ArrayUtil.createArray(aClass, collection.size());
+    V[] result = ArrayUtil.newArray(aClass, collection.size());
     int i = 0;
     for (T t : collection) {
       result[i++] = mapper.fun(t);
@@ -1053,7 +1053,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <T, V> V[] findAllAsArray(@NotNull T[] collection, @NotNull Class<V> instanceOf) {
     List<V> list = findAll(Arrays.asList(collection), instanceOf);
-    V[] array = ArrayUtil.createArray(instanceOf, list.size());
+    V[] array = ArrayUtil.newArray(instanceOf, list.size());
     return list.toArray(array);
   }
 
@@ -1061,7 +1061,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <T, V> V[] findAllAsArray(@NotNull Collection<? extends T> collection, @NotNull Class<V> instanceOf) {
     List<V> list = findAll(collection, instanceOf);
-    V[] array = ArrayUtil.createArray(instanceOf, list.size());
+    V[] array = ArrayUtil.newArray(instanceOf, list.size());
     return list.toArray(array);
   }
 
@@ -1072,7 +1072,7 @@ public class ContainerUtil extends ContainerUtilRt {
     if (list.size() == collection.length) {
       return collection;
     }
-    T[] array = ArrayUtil.createArray(ArrayUtil.getComponentType(collection), list.size());
+    T[] array = ArrayUtil.newArray(ArrayUtil.getComponentType(collection), list.size());
     return list.toArray(array);
   }
 
@@ -2341,7 +2341,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   public static <K,V> V[] convert(@NotNull K[] from, @NotNull V[] to, @NotNull Function<? super K, ? extends V> fun) {
     if (to.length < from.length) {
-      to = ArrayUtil.createArray(ArrayUtil.getComponentType(to), from.length);
+      to = ArrayUtil.newArray(ArrayUtil.getComponentType(to), from.length);
     }
     for (int i = 0; i < from.length; i++) {
       to[i] = fun.fun(from[i]);

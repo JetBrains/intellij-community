@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ui.*;
@@ -29,7 +30,6 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.dnd.Autoscroll;
 import java.awt.event.*;
-import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Map;
@@ -777,7 +777,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @NotNull
   public <T> T[] getSelectedNodes(Class<T> nodeType, @Nullable NodeFilter<T> filter) {
     TreePath[] paths = getSelectionPaths();
-    if (paths == null) return (T[])Array.newInstance(nodeType, 0);
+    if (paths == null) return ArrayUtil.newArray(nodeType, 0);
 
     ArrayList<T> nodes = new ArrayList<>();
     for (TreePath path : paths) {
@@ -787,7 +787,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         nodes.add((T)last);
       }
     }
-    T[] result = (T[])Array.newInstance(nodeType, nodes.size());
+    T[] result = ArrayUtil.newArray(nodeType, nodes.size());
     nodes.toArray(result);
     return result;
   }

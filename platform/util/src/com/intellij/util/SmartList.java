@@ -5,7 +5,6 @@ import com.intellij.util.containers.EmptyIterator;
 import com.intellij.util.containers.SingletonIteratorBase;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -252,8 +251,7 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
         a[0] = getTheOnlyElem();
       }
       else {
-        //noinspection unchecked
-        T[] r = (T[])Array.newInstance(a.getClass().getComponentType(), 1);
+        T[] r = ArrayUtil.newArray(ArrayUtil.getComponentType(a), 1);
         r[0] = getTheOnlyElem();
         return r;
       }

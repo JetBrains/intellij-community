@@ -19,7 +19,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.List;
 
@@ -97,8 +96,7 @@ public class Queue<T> {
   @NotNull
   public T[] toArray(T[] array) {
     if (array.length < size()) {
-      //noinspection unchecked
-      array = (T[])Array.newInstance(array.getClass().getComponentType(), size());
+      array = ArrayUtil.newArray(ArrayUtil.getComponentType(array), size());
     }
 
     return normalize(array);

@@ -15,13 +15,13 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
@@ -200,7 +200,7 @@ public class SmartHashSet<T> extends THashSet<T> {
     T theElement = (T)this.theElement;
     if (theElement != null) {
       if (a.length == 0) {
-        a = (T[]) Array.newInstance(a.getClass().getComponentType(), 1);
+        a = ArrayUtil.newArray(ArrayUtil.getComponentType(a), 1);
       }
       a[0] = theElement;
       if (a.length > 1) {

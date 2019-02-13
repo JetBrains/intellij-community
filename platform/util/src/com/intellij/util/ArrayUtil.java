@@ -118,7 +118,7 @@ public class ArrayUtil extends ArrayUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> T[] insert(@NotNull T[] array, int index, T value) {
-    T[] result = createArray(getComponentType(array), array.length + 1);
+    T[] result = newArray(getComponentType(array), array.length + 1);
     System.arraycopy(array, 0, result, 0, index);
     result[index] = value;
     System.arraycopy(array, index, result, index + 1, array.length - index);
@@ -164,14 +164,14 @@ public class ArrayUtil extends ArrayUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> T[] toObjectArray(@NotNull Collection<? extends T> collection, @NotNull Class<T> aClass) {
-    T[] array = createArray(aClass, collection.size());
+    T[] array = newArray(aClass, collection.size());
     return collection.toArray(array);
   }
 
   @NotNull
   @Contract(pure=true)
   public static <T> T[] toObjectArray(@NotNull Class<T> aClass, @NotNull Object... source) {
-    T[] array = createArray(aClass, source.length);
+    T[] array = newArray(aClass, source.length);
     //noinspection SuspiciousSystemArraycopy
     System.arraycopy(source, 0, array, 0, array.length);
     return array;
@@ -209,7 +209,7 @@ public class ArrayUtil extends ArrayUtilRt {
     final Class<T> class2 = getComponentType(a2);
     final Class<T> aClass = class1.isAssignableFrom(class2) ? class1 : class2;
 
-    T[] result = createArray(aClass, a1.length + a2.length);
+    T[] result = newArray(aClass, a1.length + a2.length);
     System.arraycopy(a1, 0, result, 0, a1.length);
     System.arraycopy(a2, 0, result, a1.length, a2.length);
     return result;
@@ -345,7 +345,7 @@ public class ArrayUtil extends ArrayUtilRt {
   @Contract(pure=true)
   public static <T> T[] prepend(T element, @NotNull T[] array, @NotNull Class<T> type) {
     int length = array.length;
-    T[] result = createArray(type, length + 1);
+    T[] result = newArray(type, length + 1);
     System.arraycopy(array, 0, result, 1, length);
     result[0] = element;
     return result;
@@ -385,7 +385,7 @@ public class ArrayUtil extends ArrayUtilRt {
   @Contract(pure=true)
   public static <T> T[] append(@NotNull T[] src, @Nullable final T element, @NotNull Class<T> componentType) {
     int length = src.length;
-    T[] result = createArray(componentType, length + 1);
+    T[] result = newArray(componentType, length + 1);
     System.arraycopy(src, 0, result, 0, length);
     result[length] = element;
     return result;
@@ -406,14 +406,14 @@ public class ArrayUtil extends ArrayUtilRt {
       throw new IllegalArgumentException("invalid index: " + idx);
     }
     Class<T> type = getComponentType(src);
-    T[] result = createArray(type, length - 1);
+    T[] result = newArray(type, length - 1);
     System.arraycopy(src, 0, result, 0, idx);
     System.arraycopy(src, idx + 1, result, idx, length - idx - 1);
     return result;
   }
 
   @NotNull
-  public static <T> T[] createArray(@NotNull Class<T> type, int length) {
+  public static <T> T[] newArray(@NotNull Class<T> type, int length) {
     //noinspection unchecked
     return (T[])Array.newInstance(type, length);
   }
@@ -814,7 +814,7 @@ public class ArrayUtil extends ArrayUtilRt {
   @Contract(pure=true)
   public static <E> E[] ensureExactSize(int count, @NotNull E[] sample) {
     if (count == sample.length) return sample;
-    return createArray(getComponentType(sample), count);
+    return newArray(getComponentType(sample), count);
   }
 
   @Nullable
