@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
@@ -232,11 +232,6 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-        // add the current thread
-        if (!addThreads(Collections.singletonList(myThread), null, false)) {
-          return;
-        }
-
         // add paused threads
         List<ThreadReferenceProxyImpl> pausedThreads =
           StreamEx.of(((SuspendManagerImpl)myDebugProcess.getSuspendManager()).getPausedContexts())
