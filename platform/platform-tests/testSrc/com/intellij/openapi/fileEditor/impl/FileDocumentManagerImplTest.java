@@ -316,7 +316,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
 
   private VirtualFile createFile(String name, String content) throws IOException {
     File file = createTempFile(name, content);
-    VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     assertNotNull(virtualFile);
     return virtualFile;
   }
