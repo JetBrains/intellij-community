@@ -219,7 +219,7 @@
     <module old-name="observable" new-name="intellij.android.observable" />
     <module old-name="observable-ui" new-name="intellij.android.observable.ui" />
     <module old-name="openapi" new-name="intellij.java" />
-    <module old-name="perfd-host" new-name="intellij.android.perfdHost" />
+    <module old-name="perfd-host" new-name="intellij.android.transportDatabase" />
     <module old-name="perflib" new-name="android.sdktools.perflib" />
     <module old-name="pixelprobe" new-name="android.sdktools.pixelprobe" />
     <module old-name="platform-api" new-name="intellij.platform.ide" />
@@ -474,7 +474,6 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/naveditor/intellij.android.naveditor.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/naveditor/intellij.android.naveditor.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/observable/intellij.android.observable.iml" filepath="$PROJECT_DIR$/../adt/idea/observable/intellij.android.observable.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/observable-ui/intellij.android.observable.ui.iml" filepath="$PROJECT_DIR$/../adt/idea/observable-ui/intellij.android.observable.ui.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/perfd-host/intellij.android.perfdHost.iml" filepath="$PROJECT_DIR$/../adt/idea/perfd-host/intellij.android.perfdHost.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-plugin/intellij.android.plugin.iml" filepath="$PROJECT_DIR$/../adt/idea/android-plugin/intellij.android.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/profilers/intellij.android.profilers.iml" filepath="$PROJECT_DIR$/../adt/idea/profilers/intellij.android.profilers.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/profilers-atrace/intellij.android.profilers.atrace.iml" filepath="$PROJECT_DIR$/../adt/idea/profilers-atrace/intellij.android.profilers.atrace.iml" />
@@ -493,6 +492,7 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/smali/intellij.android.smali.iml" filepath="$PROJECT_DIR$/../adt/idea/smali/intellij.android.smali.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-test-framework/intellij.android.testFramework.iml" filepath="$PROJECT_DIR$/../adt/idea/android-test-framework/intellij.android.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-transport/intellij.android.transport.iml" filepath="$PROJECT_DIR$/../adt/idea/android-transport/intellij.android.transport.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/transport-database/intellij.android.transportDatabase.iml" filepath="$PROJECT_DIR$/../adt/idea/transport-database/intellij.android.transportDatabase.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/updater-ui/intellij.android.updater.ui.iml" filepath="$PROJECT_DIR$/../adt/idea/updater-ui/intellij.android.updater.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/wizard/intellij.android.wizard.iml" filepath="$PROJECT_DIR$/../adt/idea/wizard/intellij.android.wizard.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/wizard-model/intellij.android.wizard.model.iml" filepath="$PROJECT_DIR$/../adt/idea/wizard-model/intellij.android.wizard.model.iml" />

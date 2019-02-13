@@ -269,7 +269,7 @@ class CommunityRepositoryModules {
       withModule("intellij.android.wizard", "android.jar")
       withModule("intellij.android.wizard.model", "android.jar")
       withModule("intellij.android.profilersAndroid", "android.jar")
-      withModule("intellij.android.perfdHost", "android-profilers.jar")
+      withModule("intellij.android.transportDatabase", "android-profilers.jar")
       withModule("intellij.android.profilers", "android-profilers.jar")
       withModule("intellij.android.profilers.ui", "android-profilers.jar")
       withModule("intellij.android.apkanalyzer", "android.jar")

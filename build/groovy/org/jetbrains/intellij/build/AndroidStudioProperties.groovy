@@ -155,7 +155,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withModule("intellij.android.kotlin.idea", "android-kotlin.jar")
       withModule("intellij.android.kotlin.output.parser", "android-kotlin.jar")
       withModule("intellij.android.kotlin.extensions", "android-extensions-ide.jar")
-      withModule("intellij.android.perfdHost", "android-profilers.jar")
+      withModule("intellij.android.transportDatabase", "android-profilers.jar")
       withModule("intellij.android.profilers", "android-profilers.jar")
       withModule("intellij.android.profilers.ui", "android-profilers.jar")
       withModule("intellij.android.profilers.atrace", "android-profilers.jar")
