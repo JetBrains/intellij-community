@@ -365,6 +365,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     }
 
     @Override
+    @Nullable
     public List<String> get() {
       return mySettings.getRepeatAnnotations();
     }
