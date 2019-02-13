@@ -90,6 +90,7 @@ public class PersistentFsTest extends PlatformTestCase {
     File tmp = createTempDirectory();
     File x = new File(tmp, jarName);
     assertTrue(x.createNewFile());
+    assertNotNull(myLocalFs.refreshAndFindFileByIoFile(x));
 
     JarFileSystem jfs = JarFileSystem.getInstance();
     String path = x.getPath() + "/../" + x.getName() + JarFileSystem.JAR_SEPARATOR;
