@@ -325,6 +325,17 @@
       <val name="to" val="java.lang.Short.MAX_VALUE"/>
     </annotation>
   </item>
+  <item name='java.lang.StackTraceElement java.lang.String getClassName()'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.StackTraceElement java.lang.String getFileName()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.lang.StackTraceElement java.lang.String getMethodName()'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.lang.String String(byte[])'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
