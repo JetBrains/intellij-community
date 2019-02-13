@@ -3,26 +3,22 @@ package de.plushnikov.intellij.plugin.language;
 import com.intellij.lexer.FlexAdapter;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
+import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.ui.JBColor;
 import de.plushnikov.intellij.plugin.language.psi.LombokConfigTypes;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
-
 public class LombokConfigSyntaxHighlighter extends SyntaxHighlighterBase {
-  public static final TextAttributesKey CLEAR = TextAttributesKey.createTextAttributesKey("SIMPLE_CLEAN", DefaultLanguageHighlighterColors.CONSTANT);
-  public static final TextAttributesKey SEPARATOR = TextAttributesKey.createTextAttributesKey("SIMPLE_SEPARATOR", DefaultLanguageHighlighterColors.OPERATION_SIGN);
-  public static final TextAttributesKey KEY = TextAttributesKey.createTextAttributesKey("SIMPLE_KEY", DefaultLanguageHighlighterColors.KEYWORD);
-  public static final TextAttributesKey VALUE = TextAttributesKey.createTextAttributesKey("SIMPLE_VALUE", DefaultLanguageHighlighterColors.STRING);
-  public static final TextAttributesKey COMMENT = TextAttributesKey.createTextAttributesKey("SIMPLE_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT);
+  private static final TextAttributesKey CLEAR = TextAttributesKey.createTextAttributesKey("LOMBOK_CLEAN", DefaultLanguageHighlighterColors.CONSTANT);
+  public static final TextAttributesKey SEPARATOR = TextAttributesKey.createTextAttributesKey("LOMBOK_SEPARATOR", DefaultLanguageHighlighterColors.OPERATION_SIGN);
+  public static final TextAttributesKey KEY = TextAttributesKey.createTextAttributesKey("LOMBOK_KEY", DefaultLanguageHighlighterColors.KEYWORD);
+  public static final TextAttributesKey VALUE = TextAttributesKey.createTextAttributesKey("LOMBOK_VALUE", DefaultLanguageHighlighterColors.STRING);
+  private static final TextAttributesKey COMMENT = TextAttributesKey.createTextAttributesKey("LOMBOK_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT);
 
-  static final TextAttributesKey BAD_CHARACTER = TextAttributesKey.createTextAttributesKey("SIMPLE_BAD_CHARACTER",
-    new TextAttributes(JBColor.RED, null, null, null, Font.BOLD));
+  private static final TextAttributesKey BAD_CHARACTER = TextAttributesKey.createTextAttributesKey("LOMBOK_BAD_CHARACTER", HighlighterColors.BAD_CHARACTER);
 
   private static final TextAttributesKey[] BAD_CHAR_KEYS = new TextAttributesKey[]{BAD_CHARACTER};
   private static final TextAttributesKey[] SEPARATOR_KEYS = new TextAttributesKey[]{SEPARATOR};
