@@ -3,8 +3,6 @@ package org.jetbrains.idea.maven.buildtool;
 
 import com.intellij.build.BuildDescriptor;
 import com.intellij.build.BuildProgressListener;
-import com.intellij.build.BuildViewManager;
-import com.intellij.build.DefaultBuildDescriptor;
 import com.intellij.build.events.impl.OutputBuildEventImpl;
 import com.intellij.build.events.impl.StartBuildEventImpl;
 import com.intellij.build.output.BuildOutputInstantReader;
@@ -16,7 +14,6 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -26,12 +23,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenResumeAction;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLogOutputParser;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenOutputParserProvider;
-import org.jetbrains.idea.maven.model.MavenConstants;
+import org.jetbrains.idea.maven.project.MavenConsoleImpl;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.Collections;
-
-import static com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType.EXECUTE_TASK;
 
 @ApiStatus.Experimental
 public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAcceptor {
@@ -72,7 +67,8 @@ public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAc
 
   public void start(@Nullable ExecutionEnvironment executionEnvironment, @Nullable ProcessHandler processHandler) {
 
-    StartBuildEventImpl startEvent = new StartBuildEventImpl(myDescriptor, "Maven run");
+    StartBuildEventImpl startEvent = new StartBuildEventImpl(myDescriptor, "Maven run")
+      .withExecutionFilters(MavenConsoleImpl.getMavenConsoleFilters(myProject));
     if (executionEnvironment != null && processHandler != null) {
       startEvent
         .withRestartAction(new MavenResumeAction(processHandler, DefaultJavaProgramRunner.getInstance(), executionEnvironment));
