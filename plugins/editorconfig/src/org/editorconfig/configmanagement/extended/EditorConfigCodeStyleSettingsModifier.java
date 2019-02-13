@@ -83,7 +83,7 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
     String ideLangPrefix = EditorConfigIntellijNameUtil.getIdeLangPrefix(mapper);
     boolean isModified = false;
     for (OutPair option : editorConfigOptions) {
-      if (!languageSpecific || option.getKey().startsWith(ideLangPrefix)) {
+      if (!languageSpecific && isGeneric(option.getKey()) || option.getKey().startsWith(ideLangPrefix)) {
         String intellijName = EditorConfigIntellijNameUtil.toIntellijName(mapper, option.getKey());
         if (intellijName != null) {
           CodeStylePropertyAccessor accessor = mapper.getAccessor(intellijName);
@@ -94,6 +94,11 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
       }
     }
     return isModified;
+  }
+
+  private static boolean isGeneric(@NotNull String optionKey) {
+    return !optionKey.startsWith(EditorConfigIntellijNameUtil.IDE_PREFIX) ||
+           optionKey.startsWith(EditorConfigIntellijNameUtil.GENERIC_OPTION_KEY_PREFIX);
   }
 
   private static List<OutPair> getEditorConfigOptions(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull ParserCallback callback)
