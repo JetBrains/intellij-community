@@ -74,7 +74,7 @@ abstract class PrebuiltIndexProviderBase<Value> : Disposable {
           return myPrebuiltIndexStorage!!.get(hashCode)
         }
         catch (e: Exception) {
-          LOG.error("Error reading prebuilt stubs from " + myPrebuiltIndexStorage!!.baseFile.path, e)
+          LOG.error("Error reading prebuilt index from " + myPrebuiltIndexStorage!!.baseFile.path, e)
           myPrebuiltIndexStorage = null
         }
       }
