@@ -12,7 +12,6 @@ import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.*;
 import com.intellij.tasks.impl.BaseRepository;
-import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -43,7 +42,7 @@ import java.util.regex.Pattern;
  * @author Dennis.Ushakov
  */
 @Tag("GitHub")
-public class GithubRepository extends BaseRepositoryImpl {
+public class GithubRepository extends BaseRepository {
   private static final Logger LOG = Logger.getInstance(GithubRepository.class);
 
   private Pattern myPattern = Pattern.compile("($^)");
