@@ -96,7 +96,7 @@ public class SvnMergeInfoCache {
 
   static class CopyRevison {
     private final String myPath;
-    private final long myRevision;
+    private volatile long myRevision;
 
     CopyRevison(final SvnVcs vcs, final String path, @NotNull Url repositoryRoot, @NotNull Url branchUrl, @NotNull Url trunkUrl) {
       myPath = path;
@@ -117,8 +117,11 @@ public class SvnMergeInfoCache {
 
         @Override
         public void onSuccess() {
-          if (myData != null && myData.getCopySourceRevision() != -1) {
-            BackgroundTaskUtil.syncPublisher(vcs.getProject(), SVN_MERGE_INFO_CACHE).copyRevisionUpdated();
+          if (myData != null) {
+            myRevision = myData.getCopySourceRevision();
+            if (myRevision != -1) {
+              BackgroundTaskUtil.syncPublisher(vcs.getProject(), SVN_MERGE_INFO_CACHE).copyRevisionUpdated();
+            }
           }
         }
 
