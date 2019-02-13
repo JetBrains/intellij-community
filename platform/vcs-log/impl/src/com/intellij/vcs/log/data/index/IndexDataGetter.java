@@ -11,8 +11,10 @@ import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BooleanFunction;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
+import com.intellij.util.io.PersistentHashMap;
 import com.intellij.util.io.PersistentMap;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogStorage;
@@ -238,7 +240,7 @@ public class IndexDataGetter {
   private <T> TIntHashSet filter(@NotNull PersistentMap<Integer, T> map, @NotNull Condition<? super T> condition) {
     TIntHashSet result = new TIntHashSet();
     return executeAndCatch(() -> {
-      myIndexStorage.commits.process(commit -> {
+      processKeys(map, commit -> {
         try {
           T value = map.get(commit);
           if (value != null) {
@@ -338,6 +340,15 @@ public class IndexDataGetter {
     return myLogStorage;
   }
 
+  private static <T> void processKeys(@NotNull PersistentMap<Integer, T> map, @NotNull Processor<Integer> processor) throws IOException {
+    if (map instanceof PersistentHashMap) {
+      ((PersistentHashMap<Integer, T>)map).processKeysWithExistingMapping(processor);
+    }
+    else {
+      map.processKeys(processor);
+    }
+  }
+
   @Nullable
   private <T> T executeAndCatch(@NotNull Throwable2Computable<T, IOException, StorageException> computable) {
     return executeAndCatch(computable, null);
@@ -345,7 +356,8 @@ public class IndexDataGetter {
 
   @Contract("_, !null -> !null")
   @Nullable
-  private <T> T executeAndCatch(@NotNull Throwable2Computable<? extends T, IOException, StorageException> computable, @Nullable T defaultValue) {
+  private <T> T executeAndCatch(@NotNull Throwable2Computable<? extends T, IOException, StorageException> computable,
+                                @Nullable T defaultValue) {
     try {
       return computable.compute();
     }
