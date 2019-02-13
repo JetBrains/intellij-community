@@ -111,13 +111,13 @@ def process_command_line(argv):
             # The --qt-support is special because we want to keep backward compatibility:
             # Previously, just passing '--qt-support' meant that we should use the auto-discovery mode
             # whereas now, if --qt-support is passed, it should be passed as --qt-support=<mode>, where
-            # mode can be one of 'auto', 'none', 'pyqt5', 'pyqt4', 'pyside'.
+            # mode can be one of 'auto', 'none', 'pyqt5', 'pyqt4', 'pyside', 'pyside2'.
             if argv[i] == '--qt-support':
                 setup['qt-support'] = 'auto'
 
             elif argv[i].startswith('--qt-support='):
                 qt_support = argv[i][len('--qt-support='):]
-                valid_modes = ('none', 'auto', 'pyqt5', 'pyqt4', 'pyside')
+                valid_modes = ('none', 'auto', 'pyqt5', 'pyqt4', 'pyside', 'pyside2')
                 if qt_support not in valid_modes:
                     raise ValueError("qt-support mode invalid: " + qt_support)
                 if qt_support == 'none':
