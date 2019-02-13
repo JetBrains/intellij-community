@@ -80,6 +80,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     CodeStyleScheme testScheme = createTestScheme();
     final CodeStyleSettings settings = testScheme.getCodeStyleSettings();
     final CommonCodeStyleSettings commonJavaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
+    settings.setSoftMargins(JavaLanguage.INSTANCE, Arrays.asList(11,22));
     commonJavaSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     commonJavaSettings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
     commonJavaSettings.WRAP_ON_TYPING = CommonCodeStyleSettings.WrapOnTyping.WRAP.intValue;

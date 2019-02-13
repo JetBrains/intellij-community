@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class GeneralCodeStylePropertyMapper extends AbstractCodeStylePropertyMapper {
@@ -109,5 +110,10 @@ public class GeneralCodeStylePropertyMapper extends AbstractCodeStylePropertyMap
   public String getPropertyDescription(@NotNull String externalName) {
     String key = "codestyle.property.description." + externalName;
     return OptionsBundle.getBundle().containsKey(key) ? OptionsBundle.message("codestyle.property.description." + externalName) : null;
+  }
+
+  @Override
+  protected void addAdditionalAccessors(@NotNull Map<String, CodeStylePropertyAccessor> accessorMap) {
+    accessorMap.put(VisualGuidesAccessor.VISUAL_GUIDES_PROPERTY_NAME, new VisualGuidesAccessor(getRootSettings(), null));
   }
 }

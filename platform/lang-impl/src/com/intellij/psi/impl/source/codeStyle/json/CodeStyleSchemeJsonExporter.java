@@ -73,6 +73,9 @@ public class CodeStyleSchemeJsonExporter extends SchemeExporter<CodeStyleScheme>
             if (element instanceof String) {
               array.add((String)element);
             }
+            else if (element instanceof Integer) {
+              array.add((Integer)element);
+            }
           }
           o.add(name, array);
         }

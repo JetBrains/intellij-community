@@ -8,6 +8,10 @@
       "formatter_tags_accept_regexp": false,
       "formatter_tags_enabled": false,
       "max_line_length": 120,
+      "visual_guides": [
+        42,
+        62
+      ],
       "wrap_on_typing": false
     },
     "html": {

@@ -257,6 +257,10 @@
       "use_single_class_imports": true,
       "variable_annotation_wrap": "off",
       "visibility": "public",
+      "visual_guides": [
+        11,
+        22
+      ],
       "while_brace_force": "never",
       "while_on_new_line": false,
       "wrap_comments": false,
