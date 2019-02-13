@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.mergeinfo;
 
+import com.intellij.icons.AllIcons;
 import icons.SvnIcons;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
@@ -12,7 +13,7 @@ public enum ListMergeStatus {
   MERGED(SvnIcons.Integrated),
   NOT_MERGED(SvnIcons.Notintegrated),
   ALIEN(null),
-  REFRESHING(SvnIcons.IntegrationStatusUnknown);
+  REFRESHING(AllIcons.Nodes.Unknown);
 
   @Nullable
   private final Icon myIcon;
