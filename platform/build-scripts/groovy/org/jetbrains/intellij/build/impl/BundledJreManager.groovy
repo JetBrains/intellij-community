@@ -244,7 +244,7 @@ class BundledJreManager {
 
   def jreSuffix() {
     def bundledJreVersion = System.getProperty("intellij.build.bundled.jre.version", "8").toInteger()
-    return bundledJreVersion >= 9 ? "-jre${bundledJreVersion}" : ""
+    return bundledJreVersion >= 9 ? "-jbr${bundledJreVersion}" : ""
   }
 
   def is32bitArchSupported() {
