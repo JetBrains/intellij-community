@@ -335,7 +335,7 @@
       <action id="CopyElement" class="com.intellij.ide.actions.CopyElementAction"/>
       <action id="SafeDelete" class="com.intellij.refactoring.actions.SafeDeleteAction"/>
       <separator/>
-      <group id="IntroduceActionsGroup" popup="true">
+      <group id="IntroduceActionsGroup" popup="true" class="com.intellij.ide.actions.NonTrivialActionGroup">
         <action id="IntroduceVariable" class="com.intellij.refactoring.actions.IntroduceVariableAction"/>
         <action id="IntroduceConstant" class="com.intellij.refactoring.actions.IntroduceConstantAction"/>
         <action id="IntroduceField" class="com.intellij.refactoring.actions.IntroduceFieldAction"/>
@@ -467,7 +467,7 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
-    <group id="ProjectViewPopupMenuRefactoringGroup" class="com.intellij.ide.actions.NonTrivialActionGroup">
+    <group id="ProjectViewPopupMenuRefactoringGroup" class="com.intellij.openapi.actionSystem.DefaultCompactActionGroup">
       <reference ref="RefactoringMenu"/>
     </group>
 
