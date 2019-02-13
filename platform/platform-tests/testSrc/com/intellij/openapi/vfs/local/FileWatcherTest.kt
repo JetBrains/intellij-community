@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.local
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -18,7 +18,9 @@ import com.intellij.openapi.vfs.local.FileWatcherTestUtil.NATIVE_PROCESS_DELAY
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.SHORT_PROCESS_DELAY
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.shutdown
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.startup
+import com.intellij.openapi.vfs.local.FileWatcherTestUtil.unwatch
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.wait
+import com.intellij.openapi.vfs.local.FileWatcherTestUtil.watch
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.PlatformTestUtil
@@ -37,7 +39,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
-import java.lang.IllegalStateException
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
@@ -578,7 +579,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   private enum class WatchStatus { CHECK_WATCHED, CHECK_NOT_WATCHED, DO_NOT_CHECK }
 
   private fun watch(file: File, recursive: Boolean = true, checkRoots: WatchStatus = WatchStatus.CHECK_WATCHED): LocalFileSystem.WatchRequest {
-    val request = FileWatcherTestUtil.watch(watcher, file, recursive)
+    val request = watch(watcher, file, recursive)
     @Suppress("NON_EXHAUSTIVE_WHEN")
     when (checkRoots) {
       WatchStatus.CHECK_WATCHED -> assertThat(watcher.manualWatchRoots).doesNotContain(file.path)
@@ -588,7 +589,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   private fun unwatch(request: LocalFileSystem.WatchRequest) {
-    FileWatcherTestUtil.unwatch(watcher, request)
+    unwatch(watcher, request)
     fs.refresh(false)
   }
 
