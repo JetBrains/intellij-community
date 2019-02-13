@@ -321,7 +321,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
     Map<FileEditor, HighlightingPass[]> map = new HashMap<>();
 
-    NonBlockingReadActionImpl.completeAsyncTasks(); // wait for async editor loading
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion(); // wait for async editor loading
     for (TextEditor textEditor : textEditors) {
       TextEditorBackgroundHighlighter highlighter = (TextEditorBackgroundHighlighter)textEditor.getBackgroundHighlighter();
       if (highlighter == null) {
