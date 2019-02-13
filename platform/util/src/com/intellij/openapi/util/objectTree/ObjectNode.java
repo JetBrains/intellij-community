@@ -55,12 +55,11 @@ final class ObjectNode<T> {
     myOwnModification = modification;
   }
 
-  @SuppressWarnings("unchecked")
   @NotNull
   private ObjectNode<T>[] getChildrenArray() {
     List<ObjectNode<T>> children = myChildren;
-    if (children == null || children.isEmpty()) return EMPTY_ARRAY;
-    return children.toArray(new ObjectNode[0]);
+    //noinspection unchecked
+    return children == null || children.isEmpty() ? EMPTY_ARRAY : children.toArray(EMPTY_ARRAY);
   }
 
   void addChild(@NotNull ObjectNode<T> child) {

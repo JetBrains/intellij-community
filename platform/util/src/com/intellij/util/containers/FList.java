@@ -28,7 +28,7 @@ import java.util.NoSuchElementException;
  * @author nik
  */
 public class FList<E> extends AbstractList<E> {
-  @SuppressWarnings("unchecked") private static final FList<?> EMPTY_LIST = new FList(null, null, 0);
+  private static final FList<?> EMPTY_LIST = new FList<>(null, null, 0);
   private final E myHead;
   private final FList<E> myTail;
   private final int mySize;

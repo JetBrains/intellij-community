@@ -246,8 +246,8 @@ public class MultiMap<K, V> implements Serializable {
 
   @NotNull
   public static <K, V> MultiMap<K, V> emptyInstance() {
-    @SuppressWarnings("unchecked") final MultiMap<K, V> empty = EMPTY;
-    return empty;
+    //noinspection unchecked
+    return (MultiMap<K, V>)EMPTY;
   }
 
   /**

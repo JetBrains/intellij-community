@@ -12,7 +12,6 @@ import java.util.*;
  * A List which is optimised for the sizes of 0 and 1,
  * in which cases it would not allocate array at all.
  */
-@SuppressWarnings("unchecked")
 public class SmartList<E> extends AbstractList<E> implements RandomAccess {
   private int mySize;
   private Object myElem; // null if mySize==0, (E)elem if mySize==1, Object[] if mySize>=2
@@ -26,6 +25,7 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
   public SmartList(@NotNull Collection<? extends E> elements) {
     int size = elements.size();
     if (size == 1) {
+      //noinspection unchecked
       E element = elements instanceof List ? (E)((List)elements).get(0) : elements.iterator().next();
       add(element);
     }
@@ -35,6 +35,7 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
     }
   }
 
+  @SafeVarargs
   public SmartList(@NotNull E... elements) {
     if (elements.length == 1) {
       add(elements[0]);
@@ -51,8 +52,9 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
       throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + mySize);
     }
     if (mySize == 1) {
-      return (E)myElem;
+      return getTheOnlyElem();
     }
+    //noinspection unchecked
     return (E)((Object[])myElem)[index];
   }
 
@@ -142,15 +144,21 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
 
     final E oldValue;
     if (mySize == 1) {
-      oldValue = (E)myElem;
+      oldValue = getTheOnlyElem();
       myElem = element;
     }
     else {
       final Object[] array = (Object[])myElem;
+      //noinspection unchecked
       oldValue = (E)array[index];
       array[index] = element;
     }
     return oldValue;
+  }
+
+  private <T> T getTheOnlyElem() {
+    //noinspection unchecked
+    return (T)myElem;
   }
 
   @Override
@@ -161,11 +169,12 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
 
     final E oldValue;
     if (mySize == 1) {
-      oldValue = (E)myElem;
+      oldValue = getTheOnlyElem();
       myElem = null;
     }
     else {
       Object[] array = (Object[])myElem;
+      //noinspection unchecked
       oldValue = (E)array[index];
 
       if (mySize == 2) {
@@ -205,7 +214,7 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
 
     @Override
     protected E getElement() {
-      return (E)myElem;
+      return getTheOnlyElem();
     }
 
     @Override
@@ -222,8 +231,10 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
     }
   }
 
+  @Override
   public void sort(Comparator<? super E> comparator) {
     if (mySize >= 2) {
+      //noinspection unchecked
       Arrays.sort((E[])myElem, 0, mySize, comparator);
     }
   }
@@ -238,15 +249,17 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
     int aLength = a.length;
     if (mySize == 1) {
       if (aLength != 0) {
-        a[0] = (T)myElem;
+        a[0] = getTheOnlyElem();
       }
       else {
+        //noinspection unchecked
         T[] r = (T[])Array.newInstance(a.getClass().getComponentType(), 1);
-        r[0] = (T)myElem;
+        r[0] = getTheOnlyElem();
         return r;
       }
     }
     else if (aLength < mySize) {
+      //noinspection unchecked
       return (T[])Arrays.copyOf((E[])myElem, mySize, a.getClass());
     }
     else if (mySize != 0) {

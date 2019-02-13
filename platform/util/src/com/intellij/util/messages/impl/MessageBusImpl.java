@@ -177,9 +177,9 @@ public class MessageBusImpl implements MessageBus {
 
   @Override
   @NotNull
-  @SuppressWarnings("unchecked")
   public <L> L syncPublisher(@NotNull final Topic<L> topic) {
     checkNotDisposed();
+    //noinspection unchecked
     L publisher = (L)myPublishers.get(topic);
     if (publisher == null) {
       final Class<L> listenerClass = topic.getListenerClass();
@@ -193,8 +193,9 @@ public class MessageBusImpl implements MessageBus {
           return NA;
         }
       };
-      publisher = (L)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, handler);
-      publisher = (L)ConcurrencyUtil.cacheOrGet(myPublishers, topic, publisher);
+      Object newInstance = Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, handler);
+      //noinspection unchecked
+      publisher = (L)ConcurrencyUtil.cacheOrGet(myPublishers, topic, newInstance);
     }
     return publisher;
   }

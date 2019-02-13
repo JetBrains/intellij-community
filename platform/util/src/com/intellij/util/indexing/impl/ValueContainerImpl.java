@@ -71,14 +71,14 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     }
   }
 
-  @SuppressWarnings("unchecked")
   @Nullable
   private THashMap<Value, Object> asMapping() {
+    //noinspection unchecked
     return myInputIdMapping instanceof THashMap ? (THashMap<Value, Object>)myInputIdMapping : null;
   }
 
-  @SuppressWarnings("unchecked")
   private Value nullValue() {
+    //noinspection unchecked
     return (Value)myNullValue;
   }
 

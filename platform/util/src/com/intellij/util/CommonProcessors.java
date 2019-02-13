@@ -191,14 +191,14 @@ public class CommonProcessors {
   private static final Processor TRUE = (Processor<Object>)t -> true;
 
   @NotNull
-  @SuppressWarnings("unchecked")
   public static <T> Processor<T> alwaysFalse() {
+    //noinspection unchecked
     return FALSE;
   }
 
   @NotNull
-  @SuppressWarnings("unchecked")
   public static <T> Processor<T> alwaysTrue() {
+    //noinspection unchecked
     return TRUE;
   }
 }
