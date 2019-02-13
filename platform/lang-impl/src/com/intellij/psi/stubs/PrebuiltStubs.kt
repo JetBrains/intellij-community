@@ -33,6 +33,7 @@ const val EP_NAME: String = "com.intellij.filetype.prebuiltStubsProvider"
 
 object PrebuiltStubsProviders : FileTypeExtension<PrebuiltStubsProvider>(EP_NAME)
 
+@ApiStatus.Experimental
 fun findStub(virtualFile: VirtualFile, project: Project): Stub? {
   return PrebuiltStubsProviders
     .allForFileType(virtualFile.fileType)
@@ -43,6 +44,7 @@ fun findStub(virtualFile: VirtualFile, project: Project): Stub? {
     .firstOrNull()
 }
 
+@ApiStatus.Experimental
 fun findStub(fileContent: FileContent): Stub? {
   val rootStub = PrebuiltStubsProviders
     .allForFileType(fileContent.fileType)
