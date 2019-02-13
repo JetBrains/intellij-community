@@ -577,7 +577,8 @@ public class PluginManagerCore {
     DFSTBuilder<PluginId> builder = new DFSTBuilder<>(graph);
     if (!builder.isAcyclic()) {
       String cyclePresentation;
-      if (ApplicationManager.getApplication().isInternal()) {
+      final Application app = ApplicationManager.getApplication();
+      if (app != null? app.isInternal() : SystemProperties.getBooleanProperty("idea.is.internal", false)) {
         StringBuilder cycles = new StringBuilder();
         for (Collection<PluginId> component : builder.getComponents()) {
           if (cycles.length() > 0) cycles.append(';');
