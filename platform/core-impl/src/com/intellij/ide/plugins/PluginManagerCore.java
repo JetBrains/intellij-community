@@ -54,6 +54,7 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -564,31 +565,18 @@ public class PluginManagerCore {
   @NotNull
   private static String reportCycles(@NotNull DFSTBuilder<PluginId> builder,
                                      @NotNull Map<PluginId, ? extends IdeaPluginDescriptor> idToDescriptorMap) {
-    for (Collection<PluginId> component : builder.getComponents()) {
-      if (component.size() < 2) continue;
-      for (PluginId id : component) {
-        idToDescriptorMap.get(id).setEnabled(false);
-      }
-    }
+    List<Collection<PluginId>> cycles = ContainerUtil.filter(builder.getComponents(), c -> c.size() > 1);
+
+    cycles.stream().flatMap(Collection::stream).forEach(id -> idToDescriptorMap.get(id).setEnabled(false));
 
     String cyclePresentation;
     Application app = ApplicationManager.getApplication();
     if (app != null ? app.isInternal() : SystemProperties.is("idea.is.internal")) {
-      StringBuilder cycles = new StringBuilder();
-      for (Collection<PluginId> component : builder.getComponents()) {
-        if (component.size() < 2) continue;
-        if (cycles.length() > 0) cycles.append(';');
-        for (PluginId id : component) {
-          cycles.append(id.getIdString()).append(' ');
-        }
-      }
-      cyclePresentation = cycles.toString();
+      cyclePresentation = cycles.stream().map(c -> StringUtil.join(c, " ")).collect(Collectors.joining("; "));
     }
     else {
-      Couple<PluginId> circularDependency = builder.getCircularDependency();
-      PluginId id = circularDependency.getFirst();
-      PluginId parentId = circularDependency.getSecond();
-      cyclePresentation = id + "->" + parentId + "->...->" + id;
+      Couple<PluginId> loop = builder.getCircularDependency();
+      cyclePresentation = loop.first + "->" + loop.second + "->...->" + loop.first;
     }
     return IdeBundle.message("error.plugins.should.not.have.cyclic.dependencies") + " " + cyclePresentation;
   }
