@@ -202,6 +202,9 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
       else if (PlatformDataKeys.HELP_ID.is(dataId)) {
         return RunDashboardManager.getInstance(myProject).getToolWindowContextHelpId();
       }
+      else if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)) {
+        return myBuilder.getSelectedElements().toArray();
+      }
       Content content = myContentManager.getSelectedContent();
       if (content != null && content.getComponent() != null) {
         DataProvider dataProvider = DataManagerImpl.getDataProviderEx(content.getComponent());
