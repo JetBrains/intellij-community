@@ -420,9 +420,10 @@ open class GuiTestCase {
   /**
    * Finds JDialog with a specific title (if title is null showing dialog should be only one)
    */
-  private fun findDialog(title: String?, ignoreCaseTitle: Boolean, timeout: Timeout): JDialog =
+  fun findDialog(title: String?, ignoreCaseTitle: Boolean, timeout: Timeout, predicate: FinderPredicate = Predicate.equality): JDialog =
     waitUntilFound(null, JDialog::class.java, timeout) {
-      title?.equals(it.title, ignoreCaseTitle)?.and(it.isShowing && it.isEnabled && it.isVisible) ?: true
+      it.isShowing && it.isEnabled && it.isVisible
+      && if(title != null) predicate(it.title, title) else true
     }
 
   fun exists(fixture: () -> AbstractComponentFixture<*, *, *>): Boolean {
