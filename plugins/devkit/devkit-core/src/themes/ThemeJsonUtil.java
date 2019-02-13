@@ -5,6 +5,7 @@ import com.google.common.collect.Lists;
 import com.intellij.ide.ui.UIThemeMetadata;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -41,7 +42,7 @@ class ThemeJsonUtil {
   }
 
   static boolean isThemeFilename(@NotNull String fileName) {
-    return fileName.endsWith(".theme.json");
+    return StringUtil.endsWithIgnoreCase(fileName, ".theme.json");
   }
 
   @Nullable
