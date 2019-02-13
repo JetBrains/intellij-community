@@ -5,7 +5,9 @@ import com.google.common.collect.Lists;
 import com.intellij.ide.ui.UIThemeMetadata;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.themes.metadata.UIThemeMetadataService;
@@ -15,10 +17,22 @@ import java.util.stream.Collectors;
 
 class ThemeJsonUtil {
 
+  @NonNls
+  private static final String UI_PROPERTY_NAME = "ui";
+
+  static boolean isInsideUiProperty(@NotNull JsonProperty property) {
+    PsiElement parent = property;
+    while ((parent = parent.getParent()) != null) {
+      if (!(parent instanceof JsonProperty)) continue;
+      if (UI_PROPERTY_NAME.equals(((JsonProperty)parent).getName())) return true;
+    }
+    return false;
+  }
+
   static String getParentNames(@NotNull JsonProperty property) {
     List<JsonProperty> parentProperties = PsiTreeUtil.collectParents(property, JsonProperty.class, false, e -> {
       //TODO check that it is TOP-LEVEL 'ui'  property
-      return e instanceof JsonProperty && "ui".equals(((JsonProperty)e).getName());
+      return e instanceof JsonProperty && UI_PROPERTY_NAME.equals(((JsonProperty)e).getName());
     });
 
     return Lists.reverse(parentProperties).stream()
@@ -31,7 +45,7 @@ class ThemeJsonUtil {
   }
 
   @Nullable
-  static Pair<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> findMetadata(JsonProperty property) {
+  static Pair<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> findMetadata(@NotNull JsonProperty property) {
     final String key = property.getName();
     final Pair<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> byName = UIThemeMetadataService.getInstance().findByKey(key);
     if (byName != null) return byName;
