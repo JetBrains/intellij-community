@@ -54,6 +54,7 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -562,34 +563,26 @@ public class PluginManagerCore {
   }
 
   @NotNull
-  private static Comparator<IdeaPluginDescriptor> getPluginDescriptorComparator(@NotNull Map<PluginId, ? extends IdeaPluginDescriptor> idToDescriptorMap,
-                                                                                @NotNull List<? super String> errors) {
-    Graph<PluginId> graph = createPluginIdGraph(idToDescriptorMap);
-    DFSTBuilder<PluginId> builder = new DFSTBuilder<>(graph);
-    if (!builder.isAcyclic()) {
-      String cyclePresentation;
-      final Application app = ApplicationManager.getApplication();
-      if (app != null? app.isInternal() : SystemProperties.getBooleanProperty("idea.is.internal", false)) {
-        StringBuilder cycles = new StringBuilder();
-        for (Collection<PluginId> component : builder.getComponents()) {
-          if (component.size() < 2) continue;
-          if (cycles.length() > 0) cycles.append(';');
-          for (PluginId id : component) {
-            idToDescriptorMap.get(id).setEnabled(false);
-            cycles.append(id.getIdString()).append(' ');
-          }
-        }
-        cyclePresentation = cycles.toString();
-      }
-      else {
-        Couple<PluginId> circularDependency = builder.getCircularDependency();
-        PluginId id = circularDependency.getFirst();
-        PluginId parentId = circularDependency.getSecond();
-        cyclePresentation = id + "->" + parentId + "->...->" + id;
-      }
-      errors.add(IdeBundle.message("error.plugins.should.not.have.cyclic.dependencies") + " " + cyclePresentation);
-    }
+  private static String reportCycles(@NotNull DFSTBuilder<PluginId> builder,
+                                     @NotNull Map<PluginId, ? extends IdeaPluginDescriptor> idToDescriptorMap) {
+    List<Collection<PluginId>> cycles = ContainerUtil.filter(builder.getComponents(), c -> c.size() > 1);
 
+    cycles.stream().flatMap(Collection::stream).forEach(id -> idToDescriptorMap.get(id).setEnabled(false));
+
+    String cyclePresentation;
+    Application app = ApplicationManager.getApplication();
+    if (app != null ? app.isInternal() : SystemProperties.is("idea.is.internal")) {
+      cyclePresentation = cycles.stream().map(c -> StringUtil.join(c, " ")).collect(Collectors.joining("; "));
+    }
+    else {
+      Couple<PluginId> loop = builder.getCircularDependency();
+      cyclePresentation = loop.first + "->" + loop.second + "->...->" + loop.first;
+    }
+    return IdeBundle.message("error.plugins.should.not.have.cyclic.dependencies") + " " + cyclePresentation;
+  }
+
+  @NotNull
+  private static Comparator<IdeaPluginDescriptor> getPluginDescriptorComparator(@NotNull DFSTBuilder<PluginId> builder) {
     Comparator<PluginId> idComparator = builder.comparator();
     return (o1, o2) -> {
       PluginId pluginId1 = o1.getPluginId();
@@ -1214,7 +1207,14 @@ public class PluginManagerCore {
       idToDescriptorMap.put(descriptor.getPluginId(), descriptor);
     }
 
-    Arrays.sort(pluginDescriptors, getPluginDescriptorComparator(idToDescriptorMap, errors));
+    Graph<PluginId> graph = createPluginIdGraph(idToDescriptorMap);
+    DFSTBuilder<PluginId> builder = new DFSTBuilder<>(graph);
+    if (!builder.isAcyclic()) {
+      errors.add(reportCycles(builder, idToDescriptorMap));
+    }
+
+    Arrays.sort(pluginDescriptors, getPluginDescriptorComparator(builder));
+
     return pluginDescriptors;
   }
 
