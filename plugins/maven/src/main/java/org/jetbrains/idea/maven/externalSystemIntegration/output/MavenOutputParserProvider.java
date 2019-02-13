@@ -7,11 +7,13 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputParserProvider;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.events.*;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.List;
 
+@ApiStatus.Experimental
 public class MavenOutputParserProvider implements ExternalSystemOutputParserProvider {
   @Override
   public ProjectSystemId getExternalSystemId() {

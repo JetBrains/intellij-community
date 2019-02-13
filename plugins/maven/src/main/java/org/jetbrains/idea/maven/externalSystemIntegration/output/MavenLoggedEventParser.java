@@ -3,11 +3,13 @@ package org.jetbrains.idea.maven.externalSystemIntegration.output;
 
 import com.intellij.build.events.BuildEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 
+@ApiStatus.Experimental
 public interface MavenLoggedEventParser {
   String COMPILER_MESSAGES_GROUP = "Java compiler";
 
