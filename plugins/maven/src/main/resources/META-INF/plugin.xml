@@ -202,7 +202,7 @@
     <registryKey key="maven.import.compiler.arguments" defaultValue="true"
                  description="Enable importing of the maven compiler plugin arguments"/>
 
-    <registryKey key="maven.build.tool.window.enabled" defaultValue="false"
+    <registryKey key="maven.build.tool.window.enabled" defaultValue="true"
                  description="Enable Maven tasks to use Build Tool Window"/>
   </extensions>
 

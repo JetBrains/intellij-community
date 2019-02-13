@@ -7,10 +7,10 @@ import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.impl.FileMessageEventImpl;
 import com.intellij.build.events.impl.MessageEventImpl;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.LogMessageType;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLogEntryReader;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLoggedEventParser;
 
 import java.io.File;
@@ -28,33 +28,37 @@ public class BuildErrorNotification implements MavenLoggedEventParser {
 
   @Override
   public boolean checkLogLine(@NotNull ExternalSystemTaskId id,
-                              @NotNull String line,
-                              @Nullable LogMessageType type,
+                              @NotNull MavenLogEntryReader.MavenLogEntry logLine,
+                              @NotNull MavenLogEntryReader logEntryReader,
                               @NotNull Consumer<? super BuildEvent> messageConsumer) {
+    String line = logLine.getLine();
     int fileNameIdx = line.indexOf(".java:");
     if (fileNameIdx < 0) {
-      return false;
+      return notifyError(id, line, messageConsumer);
     }
     int fullFileNameIdx = line.indexOf(":", fileNameIdx);
     if (fullFileNameIdx < 0) {
-      return false;
+      return notifyError(id, line, messageConsumer);
     }
     File parsedFile = new File(line.substring(0, fileNameIdx) + ".java");
-    if (LocalFileSystem.getInstance().findFileByIoFile(parsedFile) == null) {
-      messageConsumer.accept(new MessageEventImpl(id, MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP, line, line));
-    }
-    else {
-      int messageIdx = line.indexOf(' ', fullFileNameIdx);
-      FilePosition position = withLineAndColumn(parsedFile, line.substring(fullFileNameIdx, messageIdx), messageIdx, fullFileNameIdx);
-      messageConsumer
-        .accept(new FileMessageEventImpl(id, MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP, line.substring(messageIdx), line,
-                                         position));
-    }
+    int messageIdx = line.indexOf(' ', fullFileNameIdx);
+    FilePosition position = withLineAndColumn(parsedFile, line.substring(fullFileNameIdx, messageIdx), messageIdx, fullFileNameIdx);
+    messageConsumer
+      .accept(new FileMessageEventImpl(id, MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP, line.substring(messageIdx), line,
+                                       position));
+    return true;
+  }
+
+  private static boolean notifyError(ExternalSystemTaskId id,
+                                     String line,
+                                     Consumer<? super BuildEvent> messageConsumer) {
+    messageConsumer
+      .accept(new MessageEventImpl(id, MessageEvent.Kind.ERROR, null, line, line));
     return true;
   }
 
   @NotNull
-  private FilePosition withLineAndColumn(File toTest, String line, int spaceAfterFileIdx, int fullFileNameIdx) {
+  private static FilePosition withLineAndColumn(File toTest, String line, int spaceAfterFileIdx, int fullFileNameIdx) {
     if (spaceAfterFileIdx < 0) return new FilePosition(toTest, 0, 0);
     Matcher matcher = LINE_AND_COLUMN.matcher(line);
     try {
