@@ -226,14 +226,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   private boolean disposeSelf(final boolean checkCanCloseProject) {
     final ProjectManagerEx manager = ProjectManagerEx.getInstanceEx();
-    if (manager == null) {
-      saveSettings(true);
-    }
-    else {
+    SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(this, /* isSaveAppAlso = */ false);
+    if (manager != null) {
       final boolean[] canClose = {true};
       try {
         CommandProcessor.getInstance().executeCommand(null, () -> {
-          saveSettings(true);
           if (!manager.closeAndDisposeAllProjects(checkCanCloseProject)) {
             canClose[0] = false;
           }

@@ -3,9 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.highlighter.WorkspaceFileType
-import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.async.coroutineDispatchingContext
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
@@ -129,7 +127,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
       storageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, workspacePath)
 
       if (isRefreshVfs) {
-        withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+        withContext(storeEdtCoroutineContext) {
           VfsUtil.markDirtyAndRefresh(false, true, false, fs.refreshAndFindFileByPath(filePath), fs.refreshAndFindFileByPath(workspacePath))
         }
       }
@@ -153,7 +151,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
       }
 
       if (isRefreshVfs) {
-        withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+        withContext(storeEdtCoroutineContext) {
           VfsUtil.markDirtyAndRefresh(false, true, true, fs.refreshAndFindFileByPath(configDir))
         }
       }
@@ -369,7 +367,7 @@ private class ProjectWithModulesStoreImpl(project: Project, pathMacroManager: Pa
       return emptyList()
     }
 
-    return withContext(AppUIExecutor.onUiThread().inTransaction(project).coroutineDispatchingContext()) {
+    return withContext(createStoreEdtCoroutineContext(listOf(InTransactionRule(project)))) {
       // do no create with capacity because very rarely a lot of modules will be modified
       val saveSessions: MutableList<SaveSession> = SmartList<SaveSession>()
       // commit components
@@ -401,7 +399,7 @@ private fun composeFileBasedProjectWorkSpacePath(filePath: String) = "${FileUtil
 
 @CalledInAny
 internal suspend fun ensureFilesWritable(project: Project, files: Collection<VirtualFile>): ReadonlyStatusHandler.OperationStatus {
-  return withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+  return withContext(storeEdtCoroutineContext) {
     ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files)
   }
 }

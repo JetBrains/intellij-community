@@ -30,7 +30,7 @@
     <component>
       <interface-class>com.intellij.ide.SaveAndSyncHandler</interface-class>
       <implementation-class>com.intellij.configurationStore.SaveAndSyncHandlerImpl</implementation-class>
-      <headless-implementation-class>com.intellij.configurationStore.SaveAndSyncHandlerStub</headless-implementation-class>
+      <headless-implementation-class>com.intellij.configurationStore.HeadlessSaveAndSyncHandler</headless-implementation-class>
     </component>
 
     <component>

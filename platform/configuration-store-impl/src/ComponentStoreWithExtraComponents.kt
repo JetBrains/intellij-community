@@ -1,8 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.async.coroutineDispatchingContext
 import com.intellij.openapi.components.SettingsSavingComponent
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -53,7 +51,7 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
   internal suspend fun saveSettingsSavingComponentsAndCommitComponents(result: SaveResult, isForceSavingAllSettings: Boolean): SaveSessionProducerManager {
     coroutineScope {
       // expects EDT
-      launch(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+      launch(storeEdtCoroutineContext) {
         @Suppress("Duplicates")
         val errors = SmartList<Throwable>()
         for (settingsSavingComponent in settingsSavingComponents) {

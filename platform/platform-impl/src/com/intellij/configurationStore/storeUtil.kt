@@ -17,9 +17,6 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.text.StringUtil
@@ -81,7 +78,7 @@ class StoreUtil private constructor() {
 }
 
 @CalledInAny
-private suspend fun saveSettings(componentManager: ComponentManager, isForceSavingAllSettings: Boolean = false): Boolean {
+suspend fun saveSettings(componentManager: ComponentManager, isForceSavingAllSettings: Boolean = false): Boolean {
   try {
     componentManager.stateStore.save(isForceSavingAllSettings = isForceSavingAllSettings)
     return true
@@ -169,35 +166,7 @@ private suspend fun saveAllProjects(isForceSavingAllSettings: Boolean) {
   }
 }
 
-@CalledInAwt
-fun saveSettingsUnderModalProgress(componentManager: ComponentManager, isSaveAppAlso: Boolean = false): Boolean {
-  if (!ApplicationManager.getApplication().isDispatchThread) {
-    throw IllegalStateException(
-      "Method intended to be called only in EDT because otherwise wrapping into modal progress task is not required" +
-      " and `saveSettings` should be called directly")
-  }
-
-  var isSavedSuccessfully = true
-  runInSaveOnFrameDeactivationDisabledMode {
-    ProgressManager.getInstance().run(object : Task.Modal(componentManager as? Project, "Save", /* canBeCancelled = */ false) {
-      override fun run(indicator: ProgressIndicator) {
-        runBlocking { doSave() }
-      }
-
-      private suspend fun doSave() {
-        SaveAndSyncHandler.getInstance().waitScheduledSaveAndRemoveProject(myProject)
-
-        isSavedSuccessfully = saveSettings(componentManager, isForceSavingAllSettings = true)
-        if (isSaveAppAlso && componentManager !is Application) {
-          saveSettings(ApplicationManager.getApplication(), isForceSavingAllSettings = true)
-        }
-      }
-    })
-  }
-  return isSavedSuccessfully
-}
-
-internal inline fun runInSaveOnFrameDeactivationDisabledMode(task: () -> Unit) {
+inline fun runInSaveOnFrameDeactivationDisabledMode(task: () -> Unit) {
   val saveAndSyncManager = SaveAndSyncHandler.getInstance()
   saveAndSyncManager.blockSaveOnFrameDeactivation()
   try {

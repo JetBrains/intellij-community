@@ -3,6 +3,7 @@ package com.intellij.ide
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
@@ -55,6 +56,5 @@ abstract class SaveAndSyncHandler {
   }
 
   @ApiStatus.Experimental
-  open fun waitScheduledSaveAndRemoveProject(project: Project?) {
-  }
+  abstract fun saveSettingsUnderModalProgress(componentManager: ComponentManager, isSaveAppAlso: Boolean = false): Boolean
 }

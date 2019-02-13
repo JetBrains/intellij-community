@@ -4,9 +4,7 @@ package com.intellij.configurationStore
 import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEvents
 import com.intellij.diagnostic.PluginException
 import com.intellij.notification.NotificationsManager
-import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.async.coroutineDispatchingContext
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
@@ -136,11 +134,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   internal abstract suspend fun doSave(result: SaveResult, isForceSavingAllSettings: Boolean)
 
   internal suspend fun createSaveSessionManagerAndSaveComponents(saveResult: SaveResult, isForceSavingAllSettings: Boolean): SaveSessionProducerManager {
-    val uiExecutor = AppUIExecutor.onUiThread()
-    storageManager.componentManager?.let {
-      uiExecutor.inTransaction(it)
-    }
-    return withContext(uiExecutor.coroutineDispatchingContext()) {
+    return withContext(createStoreEdtCoroutineContext(listOfNotNull(storageManager.componentManager?.let { InTransactionRule(it) }))) {
       val errors = SmartList<Throwable>()
       val manager = doCreateSaveSessionManagerAndCommitComponents(isForceSavingAllSettings, errors)
       saveResult.addErrors(errors)

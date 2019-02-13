@@ -2,9 +2,9 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.configurationStore.runInSaveOnFrameDeactivationDisabledMode
-import com.intellij.configurationStore.saveSettingsUnderModalProgress
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.GeneralSettings
+import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.project.Project
@@ -48,7 +48,7 @@ open class CloseProjectWindowHelper {
       val app = ApplicationManager.getApplication()
       app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectFrameClosed()
       // app must be not saved as part of project closing because app settings maybe modified as result - e.g. RecentProjectsManager state
-      saveSettingsUnderModalProgress(app, isSaveAppAlso = false)
+      SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(app)
     }
 
     WelcomeFrame.showIfNoProjectOpened()
