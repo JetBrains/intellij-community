@@ -1,8 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.codeinsight.completion.templates
 
+import com.intellij.codeInsight.template.impl.MacroCallNode
 import com.intellij.codeInsight.template.impl.TemplateImpl
 import com.intellij.codeInsight.template.impl.Variable
+import com.intellij.codeInsight.template.macro.CompleteMacro
 import org.editorconfig.language.codeinsight.completion.getSeparatorInFile
 import org.editorconfig.language.psi.EditorConfigSection
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
@@ -57,7 +59,7 @@ class EditorConfigTemplateLineBuildAssistant(
     template.addTextSegment(getSeparatorInFile(section.containingFile))
     template.addVariable(
       EditorConfigTemplateUtil.uniqueId,
-      EditorConfigTemplateCompletionExpression(),
+      MacroCallNode(CompleteMacro()),
       EditorConfigTemplateSingletonExpression("value"),
       true
     )

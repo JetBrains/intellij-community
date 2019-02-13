@@ -2,23 +2,16 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
-import com.intellij.codeInsight.completion.CompletionPhase;
-import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -53,35 +46,6 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     }
 
     return Result.CONTINUE;
-  }
-
-  public static void invokeCompletion(@NotNull CompletionType completionType,
-                                      boolean autopopup,
-                                      Project project, Editor editor, int time, boolean restart) {
-    if (editor.isDisposed()) {
-      CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
-      return;
-    }
-
-    // retrieve the injected file from scratch since our typing might have destroyed the old one completely
-    Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(topLevelEditor.getDocument());
-    if (file == null) {
-      CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
-      return;
-    }
-
-    PsiFile topLevelFile = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
-    if (!PsiDocumentManager.getInstance(project).isCommitted(editor.getDocument())) {
-      LOG.error("Non-committed document");
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-    }
-    Editor newEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(topLevelEditor, topLevelFile);
-    try {
-      CodeCompletionHandlerBase.createHandler(completionType, false, autopopup, false).invokeCompletion(project, newEditor, time, false, restart);
-    }
-    catch (IndexNotReadyException ignored) {
-    }
   }
 
   /**

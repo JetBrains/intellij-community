@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.List;
 
 class List2D {
-  private final List<List<DiffFragment>> myRows = new ArrayList<List<DiffFragment>>();
+  private final List<List<DiffFragment>> myRows = new ArrayList<>();
   private List<DiffFragment> myCurrentRow = null;
 
   public void add(DiffFragment element) {
@@ -32,7 +32,7 @@ class List2D {
 
   private void ensureRowExists() {
     if (myCurrentRow == null) {
-      myCurrentRow = new ArrayList<DiffFragment>();
+      myCurrentRow = new ArrayList<>();
       myRows.add(myCurrentRow);
     }
   }

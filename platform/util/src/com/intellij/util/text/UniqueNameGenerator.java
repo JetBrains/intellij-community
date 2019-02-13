@@ -29,7 +29,7 @@ import java.util.Set;
  * @author peter
  */
 public class UniqueNameGenerator implements Condition<String> {
-  private final Set<String> myExistingNames = new THashSet<String>();
+  private final Set<String> myExistingNames = new THashSet<>();
 
   public <T> UniqueNameGenerator(@NotNull Collection<T> elements, @Nullable Function<T, String> namer) {
     for (T t : elements) {
@@ -60,12 +60,7 @@ public class UniqueNameGenerator implements Condition<String> {
 
   @NotNull
   public static String generateUniqueName(String defaultName, String prefix, String suffix, final Collection<String> existingNames) {
-    return generateUniqueName(defaultName, prefix, suffix, new Condition<String>() {
-      @Override
-      public boolean value(String s) {
-        return !existingNames.contains(s); 
-      }
-    });
+    return generateUniqueName(defaultName, prefix, suffix, s -> !existingNames.contains(s));
   }
 
   @NotNull

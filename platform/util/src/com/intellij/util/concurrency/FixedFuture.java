@@ -36,7 +36,7 @@ public class FixedFuture<T> implements Future<T> {
   }
 
   public static <T> FixedFuture<T> completeExceptionally(@NotNull Throwable throwable) {
-    return new FixedFuture<T>(throwable);
+    return new FixedFuture<>(throwable);
   }
 
   @Override

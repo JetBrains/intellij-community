@@ -354,12 +354,8 @@ public class PagedFileStorage implements Forceable {
 
   private void resizeFile(long newSize) throws IOException {
     mySize = -1;
-    RandomAccessFile raf = new RandomAccessFile(myFile, RW);
-    try {
+    try (RandomAccessFile raf = new RandomAccessFile(myFile, RW)) {
       raf.setLength(newSize);
-    }
-    finally {
-      raf.close();
     }
     mySize = newSize;
   }
@@ -493,7 +489,7 @@ public class PagedFileStorage implements Forceable {
     // todo avoid locking for access
 
     private final ReentrantLock mySegmentsAllocationLock = new ReentrantLock();
-    private final ConcurrentLinkedQueue<ByteBufferWrapper> mySegmentsToRemove = new ConcurrentLinkedQueue<ByteBufferWrapper>();
+    private final ConcurrentLinkedQueue<ByteBufferWrapper> mySegmentsToRemove = new ConcurrentLinkedQueue<>();
     private volatile long mySize;
     private volatile long mySizeLimit;
     private volatile int myMappingChangeCount;
@@ -708,12 +704,7 @@ public class PagedFileStorage implements Forceable {
         for (Map.Entry<Integer, ByteBufferWrapper> entry : mySegments.entrySet()) {
           if ((entry.getKey() & FILE_INDEX_MASK) == index) {
             if (mineBuffers == null) {
-              mineBuffers = new TreeMap<Integer, ByteBufferWrapper>(new Comparator<Integer>() {
-                @Override
-                public int compare(Integer o1, Integer o2) {
-                  return o1 - o2;
-                }
-              });
+              mineBuffers = new TreeMap<>(Comparator.comparingInt(o -> o));
             }
             mineBuffers.put(entry.getKey(), entry.getValue());
           }

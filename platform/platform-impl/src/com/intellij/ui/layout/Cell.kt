@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
 import com.intellij.BundleBase
@@ -12,6 +12,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ClickListener
@@ -28,6 +29,16 @@ import javax.swing.*
 
 @DslMarker
 annotation class CellMarker
+
+interface CellBuilder<T : JComponent> {
+  fun focused(): CellBuilder<T>
+  fun withValidation(callback: (T) -> ValidationInfo?): CellBuilder<T>
+
+  fun withErrorIf(message: String, callback: (T) -> Boolean): CellBuilder<T> {
+    withValidation { if (callback(it)) ValidationInfo(message, it) else null }
+    return this
+  }
+}
 
 // separate class to avoid row related methods in the `cell { } `
 @CellMarker
@@ -166,5 +177,5 @@ abstract class Cell {
     JBScrollPane(component)(*constraints)
   }
 
-  abstract operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int = 0, growPolicy: GrowPolicy? = null, comment: String? = null)
+  abstract operator fun <T : JComponent> T.invoke(vararg constraints: CCFlags, gapLeft: Int = 0, growPolicy: GrowPolicy? = null, comment: String? = null): CellBuilder<T>
 }

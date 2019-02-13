@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="com.android.tools.layoutlib:layoutlib-api" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.android.tools.layoutlib:layoutlib-api:26.3.0" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/android/tools/layoutlib/layoutlib-api/26.3.0/layoutlib-api-26.3.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

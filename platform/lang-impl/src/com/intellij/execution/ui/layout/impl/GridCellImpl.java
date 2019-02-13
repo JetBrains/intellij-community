@@ -59,6 +59,10 @@ public class GridCellImpl implements GridCell {
     myPlaceholder = placeholder;
     myPlaceholder.setContentProvider(() -> getContents());
     myTabs = new JBEditorTabs(myContext.getProject(), myContext.getActionManager(), myContext.getFocusManager(), container) {
+      {
+        myDefaultPainter.setDefaultTabColor(JBColor.namedColor("DebuggerTabs.selectedBackground", new JBColor(0xC6CFDF, 0x424D5F)));
+      }
+
       @Override
       public boolean useSmallLabels() {
         return true;
@@ -72,6 +76,14 @@ public class GridCellImpl implements GridCell {
       @Override
       public int tabMSize() {
         return 12;
+      }
+
+      @Override
+      protected void paintBorder(Graphics2D g2d, ShapeInfo shape, Color borderColor) {
+        if (UIUtil.isUnderDarcula()) {
+          return;
+        }
+        super.paintBorder(g2d, shape, borderColor);
       }
 
       @Override

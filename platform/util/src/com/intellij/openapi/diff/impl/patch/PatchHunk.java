@@ -25,7 +25,7 @@ public class PatchHunk {
   private final int myEndLineBefore;
   private final int myStartLineAfter;
   private final int myEndLineAfter;
-  private final List<PatchLine> myLines = new ArrayList<PatchLine>();
+  private final List<PatchLine> myLines = new ArrayList<>();
 
   public PatchHunk(final int startLineBefore, final int endLineBefore, final int startLineAfter, final int endLineAfter) {
     myStartLineBefore = startLineBefore;

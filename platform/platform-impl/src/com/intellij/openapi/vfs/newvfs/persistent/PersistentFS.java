@@ -118,6 +118,6 @@ public abstract class PersistentFS extends ManagingFS {
     final boolean isSymlink = isSet(attributes, IS_SYMLINK);
     final boolean isHidden = isSet(attributes, IS_HIDDEN);
     final boolean isWritable = !isSet(attributes, IS_READ_ONLY);
-    return new FileAttributes(isDirectory, isSpecial, isSymlink, isHidden, -1, -1, isDirectory || isWritable);
+    return new FileAttributes(isDirectory, isSpecial, isSymlink, isHidden, -1, -1, isWritable);
   }
 }

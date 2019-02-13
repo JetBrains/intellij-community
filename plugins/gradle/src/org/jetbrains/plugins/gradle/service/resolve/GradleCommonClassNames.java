@@ -33,6 +33,7 @@ public final class GradleCommonClassNames {
   @NonNls public static final String GRADLE_API_CONFIGURATION = "org.gradle.api.artifacts.Configuration";
   @NonNls public static final String GRADLE_API_ARTIFACT_HANDLER = "org.gradle.api.artifacts.dsl.ArtifactHandler";
   @NonNls public static final String GRADLE_API_PUBLISH_ARTIFACT = "org.gradle.api.artifacts.PublishArtifact";
+  @NonNls public static final String GRADLE_API_PUBLICATION_CONTAINER = "org.gradle.api.publish.PublicationContainer";
   @NonNls public static final String GRADLE_API_DEPENDENCY_HANDLER = "org.gradle.api.artifacts.dsl.DependencyHandler";
   @NonNls public static final String GRADLE_API_COMPONENT_METADATA_HANDLER = "org.gradle.api.artifacts.dsl.ComponentMetadataHandler";
   @NonNls public static final String GRADLE_API_COMPONENT_MODULE_METADATA_HANDLER = "org.gradle.api.artifacts.dsl.ComponentModuleMetadataHandler";
@@ -43,6 +44,7 @@ public final class GradleCommonClassNames {
   @NonNls public static final String GRADLE_API_ARTIFACTS_DEPENDENCY = "org.gradle.api.artifacts.Dependency";
   @NonNls public static final String GRADLE_API_ARTIFACTS_DEPENDENCY_ARTIFACT = "org.gradle.api.artifacts.DependencyArtifact";
   @NonNls public static final String GRADLE_API_REPOSITORY_HANDLER = "org.gradle.api.artifacts.dsl.RepositoryHandler";
+  @NonNls public static final String GRADLE_API_PUBLISHING_EXTENSION = "org.gradle.api.publish.PublishingExtension";
   @NonNls public static final String GRADLE_API_SOURCE_DIRECTORY_SET = "org.gradle.api.file.SourceDirectorySet";
   @NonNls public static final String GRADLE_API_SOURCE_SET = "org.gradle.api.tasks.SourceSet";
   @NonNls public static final String GRADLE_API_SOURCE_SET_CONTAINER = "org.gradle.api.tasks.SourceSetContainer";

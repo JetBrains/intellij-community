@@ -27,8 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -194,7 +192,7 @@ public class RefreshWorker {
         }
 
         for (NewChildRecord record : newKids) {
-          myHelper.scheduleCreation(dir, record.name, record.path, record.attributes, record.symlinkTarget);
+          myHelper.scheduleCreation(dir, record.name, record.attributes, record.isEmptyDir, record.symlinkTarget);
         }
 
         for (Pair<VirtualFile, FileAttributes> pair : updatedMap) {
@@ -273,7 +271,7 @@ public class RefreshWorker {
         }
 
         for (NewChildRecord record : newKids) {
-          myHelper.scheduleCreation(dir, record.name, record.path, record.attributes, record.symlinkTarget);
+          myHelper.scheduleCreation(dir, record.name, record.attributes, record.isEmptyDir, record.symlinkTarget);
         }
 
         return true;
@@ -285,14 +283,14 @@ public class RefreshWorker {
 
   private static class NewChildRecord {
     final String name;
-    final Path path;
     final FileAttributes attributes;
+    final boolean isEmptyDir;
     final String symlinkTarget;
 
-    NewChildRecord(String name, Path path, FileAttributes attributes, String symlinkTarget) {
+    NewChildRecord(String name, FileAttributes attributes, boolean isEmptyDir, String symlinkTarget) {
       this.name = name;
-      this.path = path;
       this.attributes = attributes;
+      this.isEmptyDir = isEmptyDir;
       this.symlinkTarget = symlinkTarget;
     }
   }
@@ -301,8 +299,9 @@ public class RefreshWorker {
     FakeVirtualFile file = new FakeVirtualFile(dir, name);
     FileAttributes attributes = fs.getAttributes(file);
     if (attributes == null) return null;
+    boolean isEmptyDir = attributes.isDirectory() && !fs.hasChildren(file);
     String symlinkTarget = attributes.isSymLink() ? fs.resolveSymLink(file) : null;
-    return new NewChildRecord(name, Paths.get(dir.getPath() + '/' + name), attributes, symlinkTarget);
+    return new NewChildRecord(name, attributes, isEmptyDir, symlinkTarget);
   }
 
   private static class RefreshCancelledException extends RuntimeException { }
@@ -349,8 +348,9 @@ public class RefreshWorker {
 
     if (currentIsDirectory != upToDateIsDirectory || currentIsSymlink != upToDateIsSymlink || currentIsSpecial != upToDateIsSpecial) {
       myHelper.scheduleDeletion(child);
+      boolean isEmptyDir = upToDateIsDirectory && !fs.hasChildren(child);
       String symlinkTarget = upToDateIsSymlink ? fs.resolveSymLink(child) : null;
-      myHelper.scheduleCreation(parent, child.getName(), Paths.get(parent.getPath() + '/' + child.getName()), childAttributes, symlinkTarget);
+      myHelper.scheduleCreation(parent, child.getName(), childAttributes, isEmptyDir, symlinkTarget);
       return true;
     }
 

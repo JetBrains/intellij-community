@@ -21,6 +21,7 @@ import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.eventLog.EventLogStatisticsService;
 import com.intellij.internal.statistic.persistence.SentUsagesPersistence;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Time;
 
 public class StatisticsUploadAssistant {
@@ -67,7 +68,7 @@ public class StatisticsUploadAssistant {
   }
 
   public static boolean isTestStatisticsEnabled() {
-    return Boolean.getBoolean(ENABLE_LOCAL_STATISTICS_WITHOUT_REPORT);
+    return Boolean.getBoolean(ENABLE_LOCAL_STATISTICS_WITHOUT_REPORT) || StringUtil.isNotEmpty(System.getenv("TEAMCITY_VERSION"));
   }
 
   public static void updateSentTime() {

@@ -28,11 +28,11 @@ public class MutualMap<Key, Value> {
 
   public MutualMap(boolean ordered) {
     if (ordered) {
-      myKey2Value = new LinkedHashMap<Key, Value>();
-      myValue2Key = new LinkedHashMap<Value, Key>();
+      myKey2Value = new LinkedHashMap<>();
+      myValue2Key = new LinkedHashMap<>();
     } else {
-      myKey2Value = new HashMap<Key, Value>();
-      myValue2Key = new HashMap<Value, Key>();
+      myKey2Value = new HashMap<>();
+      myValue2Key = new HashMap<>();
     }
   }
 

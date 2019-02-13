@@ -28,7 +28,7 @@ public class ProjectOpeningTest extends PlatformTestCase {
     File foo = createTempDir("foo");
     Project project = null;
     MyStartupActivity activity = new MyStartupActivity();
-    PlatformTestUtil.registerExtension(POST_STARTUP_ACTIVITY, activity, getTestRootDisposable());
+    POST_STARTUP_ACTIVITY.getPoint(null).registerExtension(activity, getTestRootDisposable());
 
     try {
       ProjectManagerEx manager = ProjectManagerEx.getInstanceEx();

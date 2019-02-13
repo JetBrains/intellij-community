@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="com.android.tools:annotations" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.android.tools:annotations:26.3.0" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/android/tools/annotations/26.3.0/annotations-26.3.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

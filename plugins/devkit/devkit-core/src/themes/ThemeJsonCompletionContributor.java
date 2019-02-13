@@ -31,10 +31,10 @@ public class ThemeJsonCompletionContributor extends CompletionContributor {
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    if (!isThemeJsonFile(parameters.getOriginalFile())) return;
-
     PsiElement position = parameters.getPosition();
     if (!(position instanceof LeafPsiElement)) return;
+
+    if (!isThemeJsonFile(parameters.getOriginalFile())) return;
 
     PsiElement parent = position.getParent();
     if (parent instanceof JsonStringLiteral || parent instanceof JsonReferenceExpression) {
@@ -109,19 +109,20 @@ public class ThemeJsonCompletionContributor extends CompletionContributor {
 
       final String completionKey = mapFunction.apply(key);
 
-      String description = uiKeyMetadata.getDescription();
+      final String description = uiKeyMetadata.getDescription();
+      final boolean deprecated = uiKeyMetadata.isDeprecated();
       final String source = uiKeyMetadata.getSource();
       final String tailText = (StringUtil.isEmpty(description) ? "" : " (" + description + ")") +
                               (StringUtil.isEmpty(source) ? "" : " in " + source);
       final LookupElementBuilder builder =
         LookupElementBuilder.create(completionKey)
           .withPresentableText(key)
-          .withStrikeoutness(uiKeyMetadata.isDeprecated())
+          .withStrikeoutness(deprecated)
           .withTailText(tailText, true)
           .withTypeText("[" + ObjectUtils.chooseNotNull(themeMetadata.getName(), themeMetadata.getPluginId()) + "]")
           .withInsertHandler(shouldSurroundWithQuotes ? MyInsertHandler.SURROUND_WITH_QUOTES : MyInsertHandler.INSTANCE);
 
-      variants.add(builder);
+      variants.add(deprecated ? PrioritizedLookupElement.withPriority(builder, -100) : builder);
       return true;
     };
     UIThemeMetadataService.getInstance().processAllKeys(processor);

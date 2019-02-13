@@ -37,7 +37,7 @@ public class MapInputDataDiffBuilder<Key, Value> extends InputDataDiffBuilder<Ke
 
   public MapInputDataDiffBuilder(int inputId, @Nullable Map<Key, Value> map) {
     super(inputId);
-    myMap = map == null ? Collections.<Key, Value>emptyMap() : map;
+    myMap = map == null ? Collections.emptyMap() : map;
   }
 
   @Override

@@ -11,7 +11,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.folding.LanguageFolding;
-import com.intellij.lang.folding.NamedFoldingDescriptor;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -312,7 +311,7 @@ public class FoldingUpdate {
                        @NotNull FoldingBuilder foldingBuilder) {
       this.descriptor = descriptor;
       element = psiElement;
-      Boolean hardCoded = descriptor instanceof NamedFoldingDescriptor ? ((NamedFoldingDescriptor)descriptor).isCollapsedByDefault() : null;
+      Boolean hardCoded = descriptor.isCollapsedByDefault();
       collapsedByDefault = hardCoded == null ? FoldingPolicy.isCollapsedByDefault(psiElement, foldingBuilder) : hardCoded;
       signature = createSignature(psiElement);
     }

@@ -283,6 +283,16 @@
   <item name="java.lang.Runtime java.lang.Process exec(java.lang.String[]) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
+  <item name='java.lang.Runtime void exit(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val val="&quot;_ -&gt; fail&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Runtime void halt(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val val="&quot;_ -&gt; fail&quot;"/>
+    </annotation>
+  </item>
   <item name="java.lang.RuntimeException RuntimeException(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
@@ -314,6 +324,17 @@
       <val name="from" val="java.lang.Short.MIN_VALUE"/>
       <val name="to" val="java.lang.Short.MAX_VALUE"/>
     </annotation>
+  </item>
+  <item name='java.lang.StackTraceElement java.lang.String getClassName()'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.StackTraceElement java.lang.String getFileName()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.lang.StackTraceElement java.lang.String getMethodName()'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.lang.String String(byte[])'>
     <annotation name='org.jetbrains.annotations.Contract'>

@@ -293,16 +293,10 @@ public class StaticImportInspection extends BaseInspection {
   private class StaticImportVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitJavaFile(PsiJavaFile file) {
-      super.visitJavaFile(file);
-      final PsiImportList importList = file.getImportList();
-      if (importList == null) {
-        return;
-      }
-      for (PsiImportStaticStatement importStatement : importList.getImportStaticStatements()) {
-        if (shouldReportImportStatement(importStatement)) {
-          registerError(importStatement, importStatement);
-        }
+    public void visitImportStaticStatement(PsiImportStaticStatement statement) {
+      super.visitImportStaticStatement(statement);
+      if (shouldReportImportStatement(statement)) {
+        registerError(statement, statement);
       }
     }
 

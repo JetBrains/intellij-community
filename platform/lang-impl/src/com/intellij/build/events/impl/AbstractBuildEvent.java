@@ -71,4 +71,18 @@ public abstract class AbstractBuildEvent implements BuildEvent {
   public void setDescription(@Nullable String description) {
     myDescription = description;
   }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder(getClass().getSimpleName());
+    sb.append("{");
+    sb.append("myEventId=").append(myEventId);
+    sb.append(", myParentId=").append(myParentId);
+    sb.append(", myEventTime=").append(myEventTime);
+    sb.append(", myMessage='").append(myMessage).append('\'');
+    sb.append(", myHint='").append(myHint).append('\'');
+    sb.append(", myDescription='").append(myDescription).append('\'');
+    sb.append('}');
+    return sb.toString();
+  }
 }

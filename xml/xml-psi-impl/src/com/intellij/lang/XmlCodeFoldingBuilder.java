@@ -205,9 +205,7 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
         if (range.getStartOffset() + MIN_TEXT_RANGE_LENGTH < range.getEndOffset() || entity) {
           ASTNode node = elementToFold.getNode();
           String placeholder = getLanguagePlaceholderText(node, range);
-          foldings.add(placeholder != null ?
-                       new NamedFoldingDescriptor(node, range, null, placeholder) :
-                       new FoldingDescriptor(node, range));
+          foldings.add(placeholder != null ? new FoldingDescriptor(node, range, null, placeholder) : new FoldingDescriptor(node, range));
           return true;
         }
       }

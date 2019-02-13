@@ -7,7 +7,6 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ShortcutSet;
@@ -56,7 +55,7 @@ import java.util.List;
 
 import static com.intellij.ui.speedSearch.SpeedSearchSupply.ENTERED_PREFIX_PROPERTY_NAME;
 
-public class RecentLocationsAction extends AnAction {
+public class RecentLocationsAction extends DumbAwareAction {
   private static final String RECENT_LOCATIONS_ACTION_ID = "RecentLocations";
   private static final String LOCATION_SETTINGS_KEY = "recent.locations.popup";
   private static final String SHOW_RECENT_CHANGED_LOCATIONS = "SHOW_RECENT_CHANGED_LOCATIONS";
@@ -163,6 +162,21 @@ public class RecentLocationsAction extends AnAction {
     if (scrollPaneSize == null) {
       scrollPaneSize = new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
     }
+
+    list.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent event) {
+        int clickCount = event.getClickCount();
+        if (clickCount > 1 && clickCount % 2 == 0) {
+          event.consume();
+          final int i = list.locationToIndex(event.getPoint());
+          if (i != -1) {
+            list.setSelectedIndex(i);
+            navigateToSelected(project, list, popup, navigationRef);
+          }
+        }
+      }
+    });
 
     scrollPane.setMinimumSize(new Dimension(MINIMUM_WIDTH, MINIMUM_HEIGHT));
 
@@ -366,11 +380,11 @@ public class RecentLocationsAction extends AnAction {
     for (RecentLocationItem item : selectedValue) {
       if (changed) {
         ContainerUtil.filter(ideDocumentHistory.getChangePlaces(), info -> IdeDocumentHistoryImpl.isSame(info, item.getInfo()))
-          .forEach(info -> ideDocumentHistory.removeChangePlace(project, info));
+          .forEach(info -> ideDocumentHistory.removeChangePlace(info));
       }
       else {
         ContainerUtil.filter(ideDocumentHistory.getBackPlaces(), info -> IdeDocumentHistoryImpl.isSame(info, item.getInfo()))
-          .forEach(info -> ideDocumentHistory.removeBackPlace(project, info));
+          .forEach(info -> ideDocumentHistory.removeBackPlace(info));
       }
     }
 

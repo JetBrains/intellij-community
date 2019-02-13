@@ -107,6 +107,7 @@ public class JsonSchemaReader {
       }
 
       if (currentSchema.getId() != null) myIds.put(currentSchema.getId(), currentSchema);
+      currentSchema.completeInitialization();
     }
     return root;
   }

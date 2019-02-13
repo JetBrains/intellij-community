@@ -196,6 +196,7 @@
     <java.refactoring.chainCallExtractor implementation="com.intellij.refactoring.chainCall.StreamChainCallExtractor"/>
     <java.inspection.bulkMethodInfo implementation="com.intellij.codeInspection.bulkOperation.JdkBulkMethodInfoProvider"/>
     <java.externalAnnotation implementation="com.intellij.codeInsight.externalAnnotation.DeprecationAnnotationProvider"/>
+    <java.externalAnnotation implementation="com.intellij.codeInsight.externalAnnotation.NonNlsAnnotationProvider"/>
     <java.externalAnnotation implementation="com.intellij.codeInsight.externalAnnotation.NotNullAnnotationProvider"/>
     <java.externalAnnotation implementation="com.intellij.codeInsight.externalAnnotation.NullableAnnotationProvider"/>
     <java.externalAnnotation implementation="com.intellij.codeInsight.externalAnnotation.UnmodifiableAnnotationProvider"/>

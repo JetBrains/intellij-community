@@ -33,6 +33,10 @@ public final class UsageDescriptor {
     myData = context != null ? new FeatureUsageData().addFeatureContext(context) : null;
   }
 
+  public UsageDescriptor(@NotNull String key, @Nullable FeatureUsageData data) {
+    this(key, 1, data);
+  }
+
   public UsageDescriptor(@NotNull String key, int value, @Nullable FeatureUsageData data) {
     myKey = ConvertUsagesUtil.ensureProperKey(key);
     myValue = value;

@@ -334,7 +334,7 @@ public class DiffString extends CharArrayCharSequence {
 
     @NotNull
     public DiffString[] execute() {
-      ArrayList<DiffString> lines = new ArrayList<DiffString>();
+      ArrayList<DiffString> lines = new ArrayList<>();
       doExecute(lines);
       return lines.toArray(new DiffString[0]);
     }

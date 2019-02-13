@@ -1,19 +1,21 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
-import com.intellij.openapi.util.Version;
 import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import java.util.HashSet;
+import java.util.TreeSet;
+
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.startsWith;
 import static org.junit.Assert.*;
 
 /**
@@ -143,18 +145,9 @@ public class StringToConstraintsTransformerTest {
 
   @Test
   public void testInvalidRegularExpression() {
-    Version version = getJavaVersion();
-
-    if (version != null && (version.lessThan(8, 0, 181) || version.major == 9)) {
-
-      expectException("'a:x!(", String.format("Invalid regular expression: Unclosed group near index 3%n" +
-                                              "x!(%n" +
-                                              "   ^"));
-    } else {
-      expectException("'a:x!(", String.format("Invalid regular expression: Unclosed group near index 3%n" +
-                                              "x!("));
-
-    }
+    thrown.expect(MalformedPatternException.class);
+    thrown.expectMessage(startsWith(String.format("Invalid regular expression: Unclosed group near index 3%nx!(")));
+    test("'a:x!(");
   }
 
   @Test
@@ -325,31 +318,6 @@ public class StringToConstraintsTransformerTest {
     thrown.expect(MalformedPatternException.class);
     thrown.expectMessage(equalTo(exceptionMessage));
     test(criteria);
-  }
-
-  @Nullable
-  private static Version getJavaVersion() {
-    String version = System.getProperty("java.runtime.version");
-    if (version == null) return null;
-
-    String[] javaVersionElements = version.split("\\.|_|-b|\\+|-");
-
-    if (javaVersionElements.length > 3) {
-      try {
-        if (Integer.parseInt(javaVersionElements[0]) == 1) {
-          return new Version(Integer.parseInt(javaVersionElements[1]),  // Major
-                             Integer.parseInt(javaVersionElements[2]),  // Minor
-                             Integer.parseInt(javaVersionElements[3])); // Update
-        } else { // 9, 10, 11
-          return new Version(Integer.parseInt(javaVersionElements[0]),  // Major
-                             Integer.parseInt(javaVersionElements[1]),  // Minor
-                             Integer.parseInt(javaVersionElements[2])); // Update
-        }
-      } catch (NumberFormatException e) {
-        return null;
-      }
-    }
-    return null;
   }
 
   private void test(@NotNull String criteria) {

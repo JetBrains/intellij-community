@@ -35,18 +35,10 @@ public class ReadWriteMappedBufferWrapper extends MappedBufferWrapper {
 
   @Override
   protected MappedByteBuffer map() throws IOException {
-    final RandomAccessFile file = new RandomAccessFile(myFile, RW);
-    try {
-      final FileChannel channel = file.getChannel();
-      try {
+    try (RandomAccessFile file = new RandomAccessFile(myFile, RW)) {
+      try (FileChannel channel = file.getChannel()) {
         return channel.map(FileChannel.MapMode.READ_WRITE, myPosition, myLength);
       }
-      finally {
-        channel.close();
-      }
-    }
-    finally {
-      file.close();
     }
   }
 }

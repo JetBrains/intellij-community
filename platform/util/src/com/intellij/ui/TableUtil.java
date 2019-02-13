@@ -80,10 +80,10 @@ public class TableUtil {
     }
 
     if (table.getSelectionModel().isSelectionEmpty()) {
-      return new ArrayList<Object[]>(0);
+      return new ArrayList<>(0);
     }
 
-    final List<Object[]> removedItems = new SmartList<Object[]>();
+    final List<Object[]> removedItems = new SmartList<>();
     final ItemRemovable itemRemovable = (ItemRemovable)model;
     final int columnCount = model.getColumnCount();
     doRemoveSelectedItems(table, new ItemRemovable() {

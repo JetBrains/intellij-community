@@ -148,12 +148,7 @@ public abstract class Logger {
     error(String.valueOf(message));
   }
 
-  static final Function<Attachment, String> ATTACHMENT_TO_STRING = new Function<Attachment, String>() {
-    @Override
-    public String fun(Attachment attachment) {
-      return attachment.getPath() + "\n" + attachment.getDisplayText();
-    }
-  };
+  static final Function<Attachment, String> ATTACHMENT_TO_STRING = attachment -> attachment.getPath() + "\n" + attachment.getDisplayText();
 
   public void error(String message, @NotNull Attachment... attachments) {
     error(message, null, attachments);

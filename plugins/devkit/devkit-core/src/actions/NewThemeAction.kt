@@ -14,7 +14,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiDirectory
@@ -120,22 +119,17 @@ class NewThemeAction: AnAction() {
     override fun createCenterPanel(): JComponent? {
       return panel {
         row(DevKitBundle.message("new.theme.dialog.name.text.field.text")) {
-          cell {name(growPolicy = GrowPolicy.MEDIUM_TEXT)}
+          cell {
+            name(growPolicy = GrowPolicy.MEDIUM_TEXT)
+              .focused()
+              //TODO max name length, maybe some other restrictions?
+              .withErrorIf(DevKitBundle.message("new.theme.dialog.name.empty")) { it.text.isBlank() }
+          }
         }
         row("") {
           cell { isDark() }
         }
       }
-    }
-
-    override fun getPreferredFocusedComponent(): JComponent? {
-      return name
-    }
-
-    override fun doValidate(): ValidationInfo? {
-      if (name.text.isBlank()) return ValidationInfo(DevKitBundle.message("new.theme.dialog.name.empty"), name)
-      //TODO max name length, maybe some other restrictions?
-      return null
     }
   }
 }

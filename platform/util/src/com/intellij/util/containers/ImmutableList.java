@@ -94,7 +94,7 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
   @NotNull
   @Override
   public ImmutableList<E> subList(int fromIndex, int toIndex) {
-    return new SubList<E>(this, fromIndex, toIndex);
+    return new SubList<>(this, fromIndex, toIndex);
   }
 
   @Override
@@ -111,7 +111,7 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
     while (e1.hasNext() && e2.hasNext()) {
       E o1 = e1.next();
       Object o2 = e2.next();
-      if (o1 == null ? o2 != null : !o1.equals(o2)) {
+      if (!Objects.equals(o1, o2)) {
         return false;
       }
     }
@@ -247,7 +247,7 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
   @NotNull
   @Contract("_ -> new")
   public static <T> ImmutableList<T> singleton(T element) {
-    return new Singleton<T>(element);
+    return new Singleton<>(element);
   }
   private static class Singleton<E> extends ImmutableList<E> {
     private final E element;

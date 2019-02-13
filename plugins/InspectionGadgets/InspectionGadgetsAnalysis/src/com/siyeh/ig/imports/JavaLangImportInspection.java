@@ -61,30 +61,19 @@ public class JavaLangImportInspection extends BaseInspection implements CleanupL
   private static class JavaLangImportVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitJavaFile(PsiJavaFile file) {
-      super.visitJavaFile(file);
-      final PsiImportList importList = file.getImportList();
-      if (importList == null) {
-        return;
-      }
-      final PsiImportStatement[] importStatements = importList.getImportStatements();
-      for (PsiImportStatement importStatement : importStatements) {
-        checkImportStatement(importStatement, file);
-      }
-    }
-
-    private void checkImportStatement(PsiImportStatement importStatement, PsiJavaFile file) {
-      final PsiJavaCodeReferenceElement reference = importStatement.getImportReference();
+    public void visitImportStatement(PsiImportStatement statement) {
+      super.visitImportStatement(statement);
+      final PsiJavaCodeReferenceElement reference = statement.getImportReference();
       if (reference == null) {
         return;
       }
-      final String text = importStatement.getQualifiedName();
+      final String text = statement.getQualifiedName();
       if (text == null) {
         return;
       }
-      if (importStatement.isOnDemand()) {
+      if (statement.isOnDemand()) {
         if (HardcodedMethodConstants.JAVA_LANG.equals(text)) {
-          registerError(importStatement);
+          registerError(statement);
         }
       }
       else {
@@ -96,10 +85,10 @@ public class JavaLangImportInspection extends BaseInspection implements CleanupL
         if (!HardcodedMethodConstants.JAVA_LANG.equals(parentName)) {
           return;
         }
-        if (ImportUtils.hasOnDemandImportConflict(text, file)) {
+        if (ImportUtils.hasOnDemandImportConflict(text, statement)) {
           return;
         }
-        registerError(importStatement);
+        registerError(statement);
       }
     }
   }

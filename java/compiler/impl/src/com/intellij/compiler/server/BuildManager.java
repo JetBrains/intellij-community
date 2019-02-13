@@ -612,7 +612,7 @@ public class BuildManager implements Disposable {
     return isValidProject(project)? project : null;
   }
 
-  private static boolean hasRunningProcess(Project project) {
+  private static boolean hasRunningProcess(@NotNull Project project) {
     for (ProcessHandler handler : ExecutionManager.getInstance(project).getRunningProcesses()) {
       if (!handler.isProcessTerminated() && !ALLOW_AUTOMAKE.get(handler, Boolean.FALSE)) { // active process
         return true;
@@ -621,7 +621,8 @@ public class BuildManager implements Disposable {
     return false;
   }
 
-  public Collection<TaskFuture> cancelAutoMakeTasks(Project project) {
+  @NotNull
+  public Collection<TaskFuture> cancelAutoMakeTasks(@NotNull Project project) {
     final Collection<TaskFuture> futures = new SmartList<>();
     synchronized (myAutomakeFutures) {
       for (Map.Entry<TaskFuture, Project> entry : myAutomakeFutures.entrySet()) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java;
 
 import com.intellij.codeInsight.daemon.impl.focusMode.FocusModeProvider;
@@ -14,7 +14,7 @@ public class JavaFocusModeProvider implements FocusModeProvider {
   public List<? extends Segment> calcFocusZones(@NotNull PsiFile file) {
     return SyntaxTraverser.psiTraverser(file)
       .postOrderDfsTraversal()
-      .filter(e -> e instanceof PsiClass || e instanceof PsiMethod)
+      .filter(e -> e instanceof PsiClass || e instanceof PsiMethod || e instanceof PsiClassInitializer)
       .filter(e -> {
         PsiElement parent = e.getParent();
         return parent instanceof PsiClass && !(parent instanceof PsiAnonymousClass);

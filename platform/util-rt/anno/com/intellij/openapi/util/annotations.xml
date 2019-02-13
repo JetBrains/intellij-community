@@ -9,5 +9,8 @@
   <item name="com.intellij.openapi.util.Setter">
     <annotation name="java.lang.FunctionalInterface" />
   </item>
+  <item name="com.intellij.openapi.util.ThrowableComputable">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
 </root>
 

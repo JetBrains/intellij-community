@@ -15,8 +15,9 @@ import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.parameterInfo.*;
-import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -819,32 +820,43 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   public void syncUpdateOnCaretMove(@NotNull UpdateParameterInfoContext context) {
     if (!Registry.is("editor.completion.hints.virtual.comma")) return;
 
+    Project project = context.getProject();
     Editor editor = context.getEditor();
+    int inlaysBeforeCaretWithComma = getInlaysBeforeCaretWithComma(editor);
+    if (inlaysBeforeCaretWithComma == 0) return;
+
+    EditorUtil.performBeforeCommandEnd(() -> {
+      if (project.isDisposed() || editor.isDisposed()) return;
+      // repeat the check, just in case
+      int countAgain = getInlaysBeforeCaretWithComma(editor);
+      if (countAgain == 0) return;
+
+      Caret caret = editor.getCaretModel().getCurrentCaret();
+      int caretOffset = caret.getOffset();
+      String textToInsert = StringUtil.repeat(", ", inlaysBeforeCaretWithComma);
+      WriteAction.run(() -> editor.getDocument().insertString(caretOffset, textToInsert));
+      caret.moveToOffset(caretOffset + textToInsert.length());
+
+      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+      PsiElement exprList = context.getParameterOwner();
+      if (!(exprList instanceof PsiExpressionList) || !exprList.isValid()) return;
+      PsiElement call = exprList.getParent();
+      if (call == null || !call.isValid()) return;
+      ParameterHintsPass.syncUpdate(call, editor);
+      int index = ParameterInfoUtils.getCurrentParameterIndex(exprList.getNode(), editor.getCaretModel().getOffset(), JavaTokenType.COMMA);
+      highlightHints(editor, (PsiExpressionList)exprList, index, context.getCustomContext());
+    });
+  }
+
+  private static int getInlaysBeforeCaretWithComma(@NotNull Editor editor) {
     Caret caret = editor.getCaretModel().getCurrentCaret();
     int caretOffset = caret.getOffset();
     ParameterHintsPresentationManager pm = ParameterHintsPresentationManager.getInstance();
     List<Inlay> inlays = pm.getParameterHintsInRange(editor, caretOffset, caretOffset);
-    if (inlays.isEmpty()) return;
+    if (inlays.isEmpty()) return 0;
 
     VisualPosition caretPosition = caret.getVisualPosition();
-    int inlaysBeforeCaretWithComma = ContainerUtil.count(inlays, inlay -> StringUtil.startsWithChar(pm.getHintText(inlay), ',') &&
-                                                                          caretPosition.after(inlay.getVisualPosition()));
-    if (inlaysBeforeCaretWithComma == 0) return;
-
-    Project project = context.getProject();
-    String textToInsert = StringUtil.repeat(", ", inlaysBeforeCaretWithComma);
-    WriteCommandAction.runWriteCommandAction(project, () -> {
-      editor.getDocument().insertString(caretOffset, textToInsert);
-      caret.moveToOffset(caretOffset + textToInsert.length());
-    });
-
-    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-    PsiElement exprList = context.getParameterOwner();
-    if (!(exprList instanceof PsiExpressionList) || !exprList.isValid()) return;
-    PsiElement call = exprList.getParent();
-    if (call == null || !call.isValid()) return;
-    ParameterHintsPass.syncUpdate(call, editor);
-    int index = ParameterInfoUtils.getCurrentParameterIndex(exprList.getNode(), editor.getCaretModel().getOffset(), JavaTokenType.COMMA);
-    highlightHints(editor, (PsiExpressionList)exprList, index, context.getCustomContext());
+    return ContainerUtil.count(inlays, inlay -> StringUtil.startsWithChar(pm.getHintText(inlay), ',') &&
+                                                caretPosition.after(inlay.getVisualPosition()));
   }
 }

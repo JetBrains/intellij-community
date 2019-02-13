@@ -58,6 +58,7 @@ import com.intellij.ui.SideBorder;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.util.Alarm;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -585,12 +586,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private void _addTestOrSuite(@NotNull final SMTestProxy newTestOrSuite) {
 
     final SMTestProxy parentSuite = newTestOrSuite.getParent();
-    assert parentSuite != null;
 
-    final Update update = new Update(parentSuite) {
+    final Update update = new Update(ObjectUtils.notNull(parentSuite, getRoot())) {
       @Override
       public void run() {
-        if (parentSuite.getParent() == null) {
+        if (parentSuite == null || parentSuite.getParent() == null) {
           myUpdateTreeRequests.cancelAllRequests();
           myRequests.clear();
           myTreeBuilder.updateFromRoot();

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ide.projectView.actions.MarkRootActionBase;
@@ -25,7 +11,6 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -211,14 +196,14 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
 
   private void registerLibrary(@NotNull VirtualFile root, @Nullable Condition<VirtualFile> excludePattern) {
     WriteAction.run(() -> ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(
-      () -> PlatformTestUtil.registerExtension(AdditionalLibraryRootsProvider.EP_NAME, new AdditionalLibraryRootsProvider() {
-        @NotNull
-        @Override
-        public Collection<SyntheticLibrary> getAdditionalProjectLibraries(@NotNull Project project) {
-          return myProject == project ? Collections.singletonList(
-            SyntheticLibrary.newImmutableLibrary(Collections.singleton(root), Collections.emptySet(), Collections.emptySet(), excludePattern)
-          ) : Collections.emptyList();
-        }
-      }, getTestRootDisposable()), false, true));
+      () -> AdditionalLibraryRootsProvider.EP_NAME.getPoint(null).registerExtension(new AdditionalLibraryRootsProvider() {
+              @NotNull
+              @Override
+              public Collection<SyntheticLibrary> getAdditionalProjectLibraries(@NotNull Project project) {
+                return myProject == project ? Collections.singletonList(
+                  SyntheticLibrary.newImmutableLibrary(Collections.singleton(root), Collections.emptySet(), Collections.emptySet(), excludePattern)
+                ) : Collections.emptyList();
+              }
+            }, getTestRootDisposable()), false, true));
   }
 }

@@ -8,7 +8,6 @@ import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -30,7 +29,6 @@ import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenConsole;
-import org.jetbrains.idea.maven.project.MavenConsoleImpl;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.tasks.TasksBundle;
@@ -121,7 +119,7 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
         if (!isMavenModule(module.getModule())) {
           return false;
         }
-        for (MavenExecutionEnvironmentProvider environmentProvider: MavenExecutionEnvironmentProvider.EP_NAME.getExtensions()) {
+        for (MavenExecutionEnvironmentProvider environmentProvider : MavenExecutionEnvironmentProvider.EP_NAME.getExtensions()) {
           if (environmentProvider.isApplicable(task)) {
             return true;
           }
@@ -190,9 +188,9 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
         if (mavenProjects.size() > 1) {
           parameters.add("--projects");
           parameters.add(mavenProjects.stream()
-                                      .map(MavenProject::getMavenId)
-                                      .map(mavenId -> mavenId.getGroupId() + ":" + mavenId.getArtifactId())
-                                      .collect(joining(",")));
+                           .map(MavenProject::getMavenId)
+                           .map(mavenId -> mavenId.getGroupId() + ":" + mavenId.getArtifactId())
+                           .collect(joining(",")));
         }
         else {
           parameters.add("--non-recursive");
@@ -216,33 +214,34 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       AtomicInteger errors = new AtomicInteger();
       AtomicInteger warnings = new AtomicInteger();
-      MavenConsole console = new MavenConsoleImpl(title, project) {
+      MavenConsole console = MavenConsole.createGuiMavenConsole(project, title, project.getBasePath());
+      console.addProcessListener(new ProcessAdapter() {
 
         @Override
-        public void attachToProcess(ProcessHandler processHandler) {
-          super.attachToProcess(processHandler);
-          processHandler.addProcessListener(new ProcessAdapter() {
-            @Override
-            public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-              String line = event.getText();
-
-              Matcher errorsMatcher = ERRORS_NUMBER_PATTERN.matcher(line);
-              if (errorsMatcher.matches()) {
-                try {
-                  errors.addAndGet(Integer.parseInt(errorsMatcher.group(1)));
-                }
-                catch (NumberFormatException ignore) {
-                }
-              }
-
-              Matcher warningMatcher = WARNING_PATTERN.matcher(line);
-              if (warningMatcher.find()) {
-                warnings.incrementAndGet();
-              }
-            }
-          });
+        public void processTerminated(@NotNull ProcessEvent event) {
+          super.processTerminated(event);
         }
-      };
+
+        @Override
+        public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+          String line = event.getText();
+
+          Matcher errorsMatcher = ERRORS_NUMBER_PATTERN.matcher(line);
+          if (errorsMatcher.matches()) {
+            try {
+              errors.addAndGet(Integer.parseInt(errorsMatcher.group(1)));
+            }
+            catch (NumberFormatException ignore) {
+            }
+          }
+
+          Matcher warningMatcher = WARNING_PATTERN.matcher(line);
+          if (warningMatcher.find()) {
+            warnings.incrementAndGet();
+          }
+        }
+      });
+
       FileDocumentManager.getInstance().saveAllDocuments();
 
       new Task.Backgroundable(project, TasksBundle.message("maven.tasks.executing"), true) {

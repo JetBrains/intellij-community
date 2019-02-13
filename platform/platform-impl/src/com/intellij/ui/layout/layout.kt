@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
-import com.intellij.ui.components.Panel
+import com.intellij.ui.components.DialogPanel
 import javax.swing.JPanel
 
 /**
@@ -20,7 +20,9 @@ inline fun panel(vararg constraints: LCFlags, title: String? = null, init: Layou
   val builder = createLayoutBuilder(isUseMagic = !constraints.contains(LCFlags.disableMagic))
   builder.init()
 
-  val panel = Panel(title, layout = null)
+  val panel = DialogPanel(title, layout = null)
   builder.builder.build(panel, constraints)
+  panel.preferredFocusedComponent = builder.builder.preferredFocusedComponent
+  panel.validateCallbacks = builder.builder.validateCallbacks
   return panel
 }

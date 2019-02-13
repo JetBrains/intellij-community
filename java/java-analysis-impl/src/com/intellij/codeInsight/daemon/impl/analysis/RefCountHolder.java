@@ -118,23 +118,20 @@ class RefCountHolder {
     boolean isDeadCodeEnabled = deadCodeInspection != null && isUnusedToolEnabled && deadCodeInspection.isGlobalEnabledInEditor();
     if (isDeadCodeEnabled && !inLibrary) {
       return new GlobalUsageHelperBase() {
-        Map<PsiMember, Boolean> myEntryPointCache;
-        {
-          myEntryPointCache = FactoryMap.create((PsiMember member) -> {
-            if (isEntryPoint(member)) return true;
-            if (member instanceof PsiClass) {
-              return !JBTreeTraverser
-                .<PsiMember>from(m -> m instanceof PsiClass
-                                      ? JBIterable.from(PsiTreeUtil.getStubChildrenOfTypeAsList(m, PsiMember.class))
-                                      : JBIterable.empty())
-                .withRoot(member)
-                .traverse()
-                .skip(1)
-                .processEach(m -> !myEntryPointCache.get(m));
-            }
-            return false;
-          });
-        }
+        final Map<PsiMember, Boolean> myEntryPointCache = FactoryMap.create((PsiMember member) -> {
+          if (isEntryPoint(member)) return true;
+          if (member instanceof PsiClass) {
+            return !JBTreeTraverser
+              .<PsiMember>from(m -> m instanceof PsiClass
+                                    ? JBIterable.from(PsiTreeUtil.getStubChildrenOfTypeAsList(m, PsiMember.class))
+                                    : JBIterable.empty())
+              .withRoot(member)
+              .traverse()
+              .skip(1)
+              .processEach(this::shouldCheckUsages);
+          }
+          return false;
+        });
 
         @Override
         public boolean shouldCheckUsages(@NotNull PsiMember member) {
@@ -145,9 +142,8 @@ class RefCountHolder {
           return deadCodeInspection.isEntryPoint(element);
         }
       };
-    } else {
-      return new GlobalUsageHelperBase();
     }
+    return new GlobalUsageHelperBase();
   }
 
   private void clear() {

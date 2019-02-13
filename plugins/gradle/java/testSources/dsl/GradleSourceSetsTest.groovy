@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.dsl
 
 import groovy.transform.CompileStatic
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.gradle.highlighting.GradleHighlightingBaseTest
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
@@ -18,11 +17,24 @@ import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesT
 class GradleSourceSetsTest extends GradleHighlightingBaseTest implements ResolveTest {
 
   @Override
-  void doTest(@NotNull String text, Closure test) {
-    super.doTest("apply plugin: 'java'; $text", test)
+  protected List<String> getParentCalls() {
+    return super.getParentCalls() + 'buildscript'
   }
 
   @Test
+  void sourceSetsTest() {
+    importProject("apply plugin: 'java'")
+    'sourceSets closure delegate'()
+    'source set via unqualified property reference'()
+    'source set via unqualified method call'()
+    'source set closure delegate in unqualified method call'()
+    'source set member via unqualified method call closure delegate'()
+    'source set via qualified property reference'()
+    'source set via qualified method call'()
+    'source set closure delegate in qualified method call'()
+    'source set member via qualified method call closure delegate'()
+  }
+
   void 'sourceSets closure delegate'() {
     doTest('sourceSets { <caret> }') {
       def closure = elementUnderCaret(GrClosableBlock)
@@ -32,7 +44,6 @@ class GradleSourceSetsTest extends GradleHighlightingBaseTest implements Resolve
     }
   }
 
-  @Test
   void 'source set via unqualified property reference'() {
     doTest('sourceSets { <caret>main }') {
       def ref = elementUnderCaret(GrReferenceExpression)
@@ -41,7 +52,6 @@ class GradleSourceSetsTest extends GradleHighlightingBaseTest implements Resolve
     }
   }
 
-  @Test
   void 'source set via unqualified method call'() {
     doTest('sourceSets { <caret>main {} }') {
       def call = elementUnderCaret(GrMethodCall)
@@ -50,7 +60,6 @@ class GradleSourceSetsTest extends GradleHighlightingBaseTest implements Resolve
     }
   }
 
-  @Test
   void 'source set closure delegate in unqualified method call'() {
     doTest('sourceSets { main { <caret> } }') {
       def closure = elementUnderCaret(GrClosableBlock)
@@ -60,7 +69,6 @@ class GradleSourceSetsTest extends GradleHighlightingBaseTest implements Resolve
     }
   }
 
-  @Test
   void 'source set member via unqualified method call closure delegate'() {
     doTest('sourceSets { main { <caret>getJarTaskName() } }') {
       def call = elementUnderCaret(GrMethodCall)
@@ -70,7 +78,6 @@ class GradleSourceSetsTest extends GradleHighlightingBaseTest implements Resolve
     }
   }
 
-  @Test
   void 'source set via qualified property reference'() {
     doTest('sourceSets.<caret>main') {
       def ref = elementUnderCaret(GrReferenceExpression)
@@ -79,7 +86,6 @@ class GradleSourceSetsTest extends GradleHighlightingBaseTest implements Resolve
     }
   }
 
-  @Test
   void 'source set via qualified method call'() {
     doTest('sourceSets.<caret>main {}') {
       def call = elementUnderCaret(GrMethodCall)
@@ -88,7 +94,6 @@ class GradleSourceSetsTest extends GradleHighlightingBaseTest implements Resolve
     }
   }
 
-  @Test
   void 'source set closure delegate in qualified method call'() {
     doTest('sourceSets.main { <caret> }') {
       def closure = elementUnderCaret(GrClosableBlock)
@@ -98,7 +103,6 @@ class GradleSourceSetsTest extends GradleHighlightingBaseTest implements Resolve
     }
   }
 
-  @Test
   void 'source set member via qualified method call closure delegate'() {
     doTest('sourceSets.main { <caret>getJarTaskName() }') {
       def call = elementUnderCaret(GrMethodCall)

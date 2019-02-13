@@ -41,7 +41,7 @@ public class ConcurrentBitSet {
    * Each long word stores next 64 bits part of the set.
    * Therefore the i-th bit of the set is stored in {@code arrays.get(arrayIndex(i)).get(wordIndexInArray(i))} word in the {@code 1L << i} position.
    */
-  private final AtomicReferenceArray<AtomicLongArray> arrays = new AtomicReferenceArray<AtomicLongArray>(32);
+  private final AtomicReferenceArray<AtomicLongArray> arrays = new AtomicReferenceArray<>(32);
   private static int arrayIndex(int bitIndex) {
     int i = (bitIndex >> ADDRESS_BITS_PER_WORD) + 1;
     return 31 - Integer.numberOfLeadingZeros(i);
@@ -80,12 +80,7 @@ public class ConcurrentBitSet {
    * @throws IndexOutOfBoundsException if the specified index is negative
    */
   public boolean flip(final int bitIndex) {
-    long prevWord = changeWord(bitIndex, new TLongFunction() {
-      @Override
-      public long execute(long word) {
-        return word ^ (1L << bitIndex);
-      }
-    });
+    long prevWord = changeWord(bitIndex, word -> word ^ (1L << bitIndex));
     return (prevWord & (1L << bitIndex)) == 0;
   }
 
@@ -98,12 +93,7 @@ public class ConcurrentBitSet {
    */
   public boolean set(final int bitIndex) {
     final long mask = 1L << bitIndex;
-    long prevWord = changeWord(bitIndex, new TLongFunction() {
-      @Override
-      public long execute(long word) {
-        return word | mask;
-      }
-    });
+    long prevWord = changeWord(bitIndex, word -> word | mask);
     return (prevWord & mask) != 0;
   }
 
@@ -149,12 +139,7 @@ public class ConcurrentBitSet {
    * @return previous value
    */
   public boolean clear(final int bitIndex) {
-    long prevWord = changeWord(bitIndex, new TLongFunction() {
-      @Override
-      public long execute(long word) {
-        return word & ~(1L << bitIndex);
-      }
-    });
+    long prevWord = changeWord(bitIndex, word -> word & ~(1L << bitIndex));
     return (prevWord & (1L << bitIndex)) != 0;
   }
 
@@ -440,15 +425,11 @@ public class ConcurrentBitSet {
   }
 
   public void writeTo(@NotNull File file) throws IOException {
-    DataOutputStream bitSetStorage = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
-    try {
+    try (DataOutputStream bitSetStorage = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)))) {
       long[] words = toLongArray();
       for (long word : words) {
         bitSetStorage.writeLong(word);
       }
-    }
-    finally {
-      bitSetStorage.close();
     }
   }
 
@@ -457,17 +438,13 @@ public class ConcurrentBitSet {
     if (!file.exists()) {
       return new ConcurrentBitSet();
     }
-    DataInputStream bitSetStorage = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
-    try {
+    try (DataInputStream bitSetStorage = new DataInputStream(new BufferedInputStream(new FileInputStream(file)))) {
       long length = file.length();
-      long[] words = new long[(int)(length/8)];
-      for (int i=0; i<words.length;i++) {
+      long[] words = new long[(int)(length / 8)];
+      for (int i = 0; i < words.length; i++) {
         words[i] = bitSetStorage.readLong();
       }
       return new ConcurrentBitSet(words);
-    }
-    finally {
-      bitSetStorage.close();
     }
   }
 

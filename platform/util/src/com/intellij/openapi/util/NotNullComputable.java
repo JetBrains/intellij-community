@@ -20,18 +20,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Nikolay Matveev
  */
+@FunctionalInterface
 public interface NotNullComputable<T> extends Computable<T> {
 
   @Override
   @NotNull
   T compute();
 
-  NotNullComputable<Boolean> TRUE = new NotNullComputable<Boolean>() {
-
-    @NotNull
-    @Override
-    public Boolean compute() {
-      return Boolean.TRUE;
-    }
-  };
+  NotNullComputable<Boolean> TRUE = () -> Boolean.TRUE;
 }

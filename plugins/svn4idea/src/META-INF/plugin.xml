@@ -1,8 +1,14 @@
 <idea-plugin>
-  <name>Subversion Integration</name>
+  <name>Subversion</name>
   <id>Subversion</id>
   <category>VCS Integration</category>
-  <description>For Subversion 1.7 and older versions</description>
+  <description>
+    <![CDATA[
+      Provides integration with Subversion VCS.<br/>
+      Supports Subversion 1.7 and above.<br/>
+      Requires command line svn client.
+      ]]>
+  </description>
   <depends>com.intellij.modules.vcs</depends>
   <vendor>JetBrains</vendor>
   <resource-bundle>org.jetbrains.idea.svn.SvnBundle</resource-bundle>

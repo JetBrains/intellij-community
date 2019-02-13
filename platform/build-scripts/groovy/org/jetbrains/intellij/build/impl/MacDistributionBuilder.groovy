@@ -118,7 +118,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
           if (secondJreBuild != null) {
             def jreArchive = "jbsdk${buildContext.bundledJreManager.getSecondJreVersion()}${secondJreBuild}_osx_${JvmArchitecture.x64}.tar.gz"
             File archive = new File(buildContext.bundledJreManager.jreDir(), jreArchive)
-            if (archive.file && archive.exists()) {
+            if (archive.file) {
               MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath, archive.absolutePath)
             }
           }
@@ -276,9 +276,10 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     return buildContext.messages.block("Build zip archive for macOS") {
       def extraBins = customizer.extraExecutables
       def allPaths = [buildContext.paths.distAll, macDistPath]
-      String zipRoot = getZipRoot(buildContext, customizer)
-      String suffix = buildContext.bundledJreManager.jreSuffix()
-      def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${suffix}.mac.zip"
+      def zipRoot = getZipRoot(buildContext, customizer)
+      def suffix = buildContext.bundledJreManager.jreSuffix()
+      def baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
+      def targetPath = "${buildContext.paths.artifacts}/${baseName}${suffix}.mac.zip"
       buildContext.messages.progress("Building zip archive for macOS")
 
       def productJsonDir = new File(buildContext.paths.temp, "mac.dist.product-info.json.zip").absolutePath
@@ -293,12 +294,10 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
             exclude(name: "bin/fsnotifier")
             exclude(name: "bin/restarter")
             exclude(name: "MacOS/*")
-            exclude(name: "build.txt")
-            exclude(name: "NOTICE.txt")
             extraBins.each {
               exclude(name: it)
             }
-            exclude(name: "bin/idea.properties")
+            exclude(name: "*.txt")
           }
         }
 
@@ -315,15 +314,12 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
           }
         }
 
-        allPaths.each {
-          zipfileset(dir: it, prefix: "$zipRoot/Resources") {
-            include(name: "build.txt")
-            include(name: "NOTICE.txt")
-          }
+        // build.txt etc.
+        zipfileset(dir: buildContext.paths.distAll, prefix: "$zipRoot/Resources") {
+          include(name: "*.txt")
         }
-
-        zipfileset(file: "$macDistPath/bin/idea.properties", prefix: "$zipRoot/bin")
       }
+
       new ProductInfoValidator(buildContext).checkInArchive(targetPath, "$zipRoot/Resources")
       return targetPath
     }

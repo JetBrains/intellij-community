@@ -47,6 +47,6 @@ public class NullableLazyKey<T,H extends UserDataHolder> extends Key<T>{
   }
 
   public static <T,H extends UserDataHolder> NullableLazyKey<T,H> create(@NonNls String name, final NullableFunction<? super H, ? extends T> function) {
-    return new NullableLazyKey<T,H>(name, function);
+    return new NullableLazyKey<>(name, function);
   }
 }

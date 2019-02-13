@@ -17,9 +17,8 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -51,20 +50,31 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author Irina.Chernushina on 8/19/2015.
- */
-public class ProjectStartupConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+final class ProjectStartupConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+  final static class ProjectStartupConfigurableProvider extends ConfigurableProvider {
+    private final Project myProject;
+
+    ProjectStartupConfigurableProvider(@NotNull Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public Configurable createConfigurable() {
+      return new ProjectStartupConfigurable(myProject);
+    }
+
+    @Override
+    public boolean canCreateConfigurable() {
+      return !PlatformUtils.isDataGrip();
+    }
+  }
+
   private final Project myProject;
   private JBTable myTable;
   private ToolbarDecorator myDecorator;
   private ProjectStartupTasksTableModel myModel;
 
-  public ProjectStartupConfigurable(Project project) {
-    if (PlatformUtils.isDataGrip()) {
-      throw ExtensionNotApplicableException.INSTANCE;
-    }
-
+  ProjectStartupConfigurable(@NotNull Project project) {
     myProject = project;
   }
 
@@ -80,13 +90,13 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
     return "Startup Tasks";
   }
 
-  @Nullable
+  @NotNull
   @Override
   public String getHelpTopic() {
     return "reference.settings.startup.tasks";
   }
 
-  @Nullable
+  @NotNull
   @Override
   public JComponent createComponent() {
     myModel = new ProjectStartupTasksTableModel();
@@ -313,7 +323,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
   }
 
   @Override
-  public void apply() throws ConfigurationException {
+  public void apply() {
     final List<RunnerAndConfigurationSettings> shared = new ArrayList<>();
     final List<RunnerAndConfigurationSettings> local = new ArrayList<>();
 

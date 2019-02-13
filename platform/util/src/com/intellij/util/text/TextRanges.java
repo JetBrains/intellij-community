@@ -24,18 +24,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class TextRanges implements Iterable<TextRange> {
-  private static final Comparator<TextRange> START_COMP = new Comparator<TextRange>() {
-    @Override
-    public int compare(TextRange o1, TextRange o2) {
-      return Comparing.compare(o1.getStartOffset(), o2.getStartOffset());
-    }
-  };
-  private static final Comparator<TextRange> END_COMP = new Comparator<TextRange>() {
-    @Override
-    public int compare(TextRange o1, TextRange o2) {
-      return Comparing.compare(o1.getEndOffset(), o2.getEndOffset());
-    }
-  };
+  private static final Comparator<TextRange> START_COMP = (o1, o2) -> Comparing.compare(o1.getStartOffset(), o2.getStartOffset());
+  private static final Comparator<TextRange> END_COMP = (o1, o2) -> Comparing.compare(o1.getEndOffset(), o2.getEndOffset());
   private final List<TextRange> myRanges = ContainerUtil.newArrayList();
 
   public TextRanges union(@Nullable TextRange range) {
@@ -62,7 +52,7 @@ public class TextRanges implements Iterable<TextRange> {
 
   @Override
   public Iterator<TextRange> iterator() {
-    return new UnmodifiableIterator<TextRange>(myRanges.iterator());
+    return new UnmodifiableIterator<>(myRanges.iterator());
   }
 
   public Iterator<TextRange> revIterator() {

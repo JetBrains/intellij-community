@@ -99,12 +99,12 @@ public class FilteringIterator<Dom, E extends Dom> implements PeekableIterator<E
   }
 
   public static <T> Iterator<T> skipNulls(Iterator<T> iterator) {
-    return create(iterator, Conditions.<T>notNull());
+    return create(iterator, Conditions.notNull());
   }
 
   public static <Dom, T extends Dom> Iterator<T> create(Iterator<Dom> iterator, Condition<? super Dom> condition) {
     if (condition == Condition.TRUE || condition == Conditions.TRUE) return (Iterator<T>)iterator;
-    return new FilteringIterator<Dom, T>(iterator, condition);
+    return new FilteringIterator<>(iterator, condition);
   }
 
   public static <T> Condition<T> alwaysTrueCondition(Class<T> aClass) {
@@ -112,7 +112,7 @@ public class FilteringIterator<Dom, E extends Dom> implements PeekableIterator<E
   }
 
   public static <T> InstanceOf<T> instanceOf(final Class<T> aClass) {
-    return new InstanceOf<T>(aClass);
+    return new InstanceOf<>(aClass);
   }
 
   public static <T> Iterator<T> createInstanceOf(Iterator<?> iterator, Class<T> aClass) {

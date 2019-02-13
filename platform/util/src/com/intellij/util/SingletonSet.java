@@ -48,7 +48,7 @@ public class SingletonSet<E> implements Set<E> {
   @NotNull
   @Override
   public Iterator<E> iterator() {
-    return new SingletonIterator<E>(theElement);
+    return new SingletonIterator<>(theElement);
   }
 
   @NotNull
@@ -125,7 +125,7 @@ public class SingletonSet<E> implements Set<E> {
 
   @NotNull
   public static <T> Set<T> withCustomStrategy(T o, @NotNull TObjectHashingStrategy<T> strategy) {
-    return new CustomStrategySingletonSet<T>(o, strategy);
+    return new CustomStrategySingletonSet<>(o, strategy);
   }
 
   private static class CustomStrategySingletonSet<E> extends SingletonSet<E> {

@@ -28,7 +28,7 @@ import java.util.List;
  * this class improves on the memory usage by not creating temporary objects inside Disposer.
  */
 public class CompositeDisposable implements Disposable {
-  private final List<Disposable> myDisposables = new ArrayList<Disposable>();
+  private final List<Disposable> myDisposables = new ArrayList<>();
   private boolean disposed;
 
   public void add(@NotNull Disposable disposable) {

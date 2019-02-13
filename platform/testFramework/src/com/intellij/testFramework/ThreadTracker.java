@@ -124,7 +124,7 @@ public class ThreadTracker {
   }
 
   @TestOnly
-  public void checkLeak() throws AssertionError {
+  public void checkLeak(String testName) throws AssertionError {
     ApplicationManager.getApplication().assertIsDispatchThread();
     NettyUtil.awaitQuiescenceOfGlobalEventExecutor(100, TimeUnit.SECONDS);
     ShutDownTracker.getInstance().waitFor(100, TimeUnit.SECONDS);
@@ -148,10 +148,14 @@ public class ThreadTracker {
         //  System.err.println("waiting for " + thread + "\n" + ThreadDumper.dumpThreadsToString());
         //}
         StackTraceElement[] traceBeforeWait = thread.getStackTrace();
+        if (shouldIgnore(thread, traceBeforeWait)) continue;
         int WAIT_SEC = 10;
-        while (!shouldIgnore(thread, thread.getStackTrace()) && System.currentTimeMillis() < start + WAIT_SEC*1_000) {
+        StackTraceElement[] stackTrace = traceBeforeWait;
+        while (System.currentTimeMillis() < start + WAIT_SEC*1_000) {
           UIUtil.dispatchAllInvocationEvents(); // give blocked thread opportunity to die if it's stuck doing invokeAndWait()
           // afters some time the submitted task can finish and the thread become idle pool
+          stackTrace = thread.getStackTrace();
+          if (shouldIgnore(thread, stackTrace)) break;
         }
         //long elapsed = System.currentTimeMillis() - start;
         //if (elapsed > 1_000) {
@@ -159,9 +163,7 @@ public class ThreadTracker {
         //}
 
         // check once more because the thread name may be set via race
-        StackTraceElement[] stackTrace = thread.getStackTrace();
         stackTraces.put(thread, stackTrace);
-
         if (shouldIgnore(thread, stackTrace)) continue;
 
         all.keySet().removeAll(after.keySet());
@@ -170,9 +172,10 @@ public class ThreadTracker {
         String trace = PerformanceWatcher.printStacktrace("", thread, stackTrace);
         String traceBefore = PerformanceWatcher.printStacktrace("", thread, traceBeforeWait);
 
-        Assert.fail("Thread leaked: " +traceBefore + (trace.equals(traceBefore) ? "" : "(its trace after "+WAIT_SEC+" seconds wait:) "+trace)+
-                    "\n\nLeaking threads dump:\n" + dumpThreadsToString(after, stackTraces) +
-                    "\n----\nAll other threads dump:\n" + dumpThreadsToString(all, otherStackTraces));
+        Reporter.ourReports.add("Test name: " + testName +
+                                "\nThread leaked: " + traceBefore + (trace.equals(traceBefore) ? "" : "(its trace after "+WAIT_SEC+" seconds wait:) "+trace) +
+                                "\n\nLeaking threads dump:\n" + dumpThreadsToString(after, stackTraces) +
+                                "\n----\nAll other threads dump:\n" + dumpThreadsToString(all, otherStackTraces));
       }
     }
     finally {
@@ -183,7 +186,7 @@ public class ThreadTracker {
   private static String dumpThreadsToString(Map<String, Thread> after, Map<Thread, StackTraceElement[]> stackTraces) {
     StringBuilder f = new StringBuilder();
     after.forEach((name, thread) -> {
-      f.append("\"" + name + "\" " + " (" + (thread.isAlive() ? "alive" : "dead") + ") " + thread.getState() + "\n");
+      f.append("\"" + name + "\" (" + (thread.isAlive() ? "alive" : "dead") + ") " + thread.getState() + "\n");
       for (StackTraceElement element : stackTraces.get(thread)) {
         f.append("\tat " + element + "\n");
       }
@@ -264,6 +267,21 @@ public class ThreadTracker {
       catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
+    }
+  }
+
+  /**
+   * Separate class to hold reports, so we don't perform ThreadTracker static initialization
+   * if it was actually never called within the suite
+   */
+  public static class Reporter {
+    private static final List<String> ourReports = Collections.synchronizedList(new ArrayList<>());
+    
+    private Reporter() {}
+
+    public static void report() {
+      if (ourReports.isEmpty()) return;
+      Assert.fail("Tests with leaked threads: " + ourReports.size() + "\n" + String.join("\n===============\n", ourReports));
     }
   }
 }

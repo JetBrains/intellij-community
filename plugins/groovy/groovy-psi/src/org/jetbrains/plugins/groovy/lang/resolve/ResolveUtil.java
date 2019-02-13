@@ -101,7 +101,10 @@ public class ResolveUtil {
                                    @NotNull final PsiElement originalPlace,
                                    @NotNull final PsiScopeProcessor processor,
                                    @NotNull final ResolveState state) {
-    final GrClosableBlock maxScope = ResolveUtilKt.processNonCodeMembers(state) ? PsiTreeUtil.getParentOfType(place, GrClosableBlock.class, true, PsiFile.class) : null;
+    PsiElement maxScope = null;
+    if (ResolveUtilKt.processNonCodeMembers(state)) {
+      maxScope = PsiTreeUtil.getParentOfType(place, GrFunctionalExpression.class);
+    }
 
     return PsiTreeUtil.treeWalkUp(place, maxScope, (scope, lastParent) -> {
       ProgressManager.checkCanceled();

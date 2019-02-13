@@ -66,7 +66,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   private static final boolean mySkinny = false;
 
   public WideSelectionTreeUI() {
-    this(true, Conditions.<Integer>alwaysTrue());
+    this(true, Conditions.alwaysTrue());
   }
 
   /**

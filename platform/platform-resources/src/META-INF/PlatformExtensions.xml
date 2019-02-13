@@ -424,7 +424,6 @@
 
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.ProjectStructureUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.FacetTypeUsageCollector"/>
-    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ProductivityUsageCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.plugins.DisabledPluginsUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.plugins.NonBundledPluginsUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.EditorColorSchemesUsagesCollector"/>
@@ -538,7 +537,7 @@
     <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupLocalConfiguration"/>
     <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupSharedConfiguration"/>
     <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupTaskManager"/>
-    <projectConfigurable groupId="tools" instance="com.intellij.execution.startup.ProjectStartupConfigurable"
+    <projectConfigurable groupId="tools" provider="com.intellij.execution.startup.ProjectStartupConfigurable$ProjectStartupConfigurableProvider"
                          displayName="Startup Tasks"
                          id="preferences.startup.tasks" nonDefaultProject="true"/>
     <postStartupActivity implementation="com.intellij.execution.startup.ProjectStartupRunner"/>
@@ -557,10 +556,6 @@
     <credentialStore implementation="com.intellij.credentialStore.LinuxSecretCredentialStoreFactory" os="linux"/>
 
     <projectService serviceImplementation="com.intellij.tasks.context.WorkingContextManager"/>
-
-    <projectService
-        serviceInterface="com.intellij.psi.availability.PsiAvailabilityService"
-        serviceImplementation="com.intellij.psi.availability.PsiAvailabilityServiceImpl"/>
 
     <sdkType implementation="com.intellij.openapi.projectRoots.SimpleJavaSdkType"/>
 

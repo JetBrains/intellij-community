@@ -339,7 +339,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         nodesMap.put(event.getId(), currentNode);
       }
       else {
-        LOG.warn("start event id collision found");
+        LOG.warn("start event id collision found:" + event.getId() + ", was also in node: " + currentNode.getTitle());
         return;
       }
 

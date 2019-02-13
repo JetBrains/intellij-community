@@ -3,6 +3,7 @@ package com.intellij.debugger.settings;
 
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -64,7 +65,8 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   public boolean DISABLE_JIT;
   public boolean SHOW_ALTERNATIVE_SOURCE = true;
   public boolean HOTSWAP_IN_BACKGROUND = true;
-  public boolean ENABLE_MEMORY_AGENT = false;
+  public boolean ENABLE_MEMORY_AGENT =
+    ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode();
   public boolean SKIP_SYNTHETIC_METHODS = true;
   public boolean SKIP_CONSTRUCTORS;
   public boolean SKIP_GETTERS;

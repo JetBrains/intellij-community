@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -33,7 +34,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -317,17 +317,11 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
     UIUtil.dispatchAllInvocationEvents();
 
-    Project project = file.getProject();
     FileStatusMap fileStatusMap = getFileStatusMap();
 
     Map<FileEditor, HighlightingPass[]> map = new HashMap<>();
 
-    try {
-      waitForAllEditorsFinallyLoaded(project, 10, TimeUnit.SECONDS);
-    }
-    catch (TimeoutException e) {
-      throw new RuntimeException("editors have not completed loading in 10 seconds");
-    }
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion(); // wait for async editor loading
     for (TextEditor textEditor : textEditors) {
       TextEditorBackgroundHighlighter highlighter = (TextEditorBackgroundHighlighter)textEditor.getBackgroundHighlighter();
       if (highlighter == null) {
@@ -387,32 +381,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       fileStatusMap.allowDirt(true);
       waitForTermination();
     }
-  }
-
-  @TestOnly
-  public static void waitForAllEditorsFinallyLoaded(@NotNull Project project, long timeout, @NotNull TimeUnit unit) throws TimeoutException {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    long deadline = unit.toMillis(timeout) + System.currentTimeMillis();
-    while (true) {
-      if (System.currentTimeMillis() > deadline) throw new TimeoutException();
-      if (waitABitForEditorLoading(project)) break;
-      UIUtil.dispatchAllInvocationEvents();
-    }
-  }
-
-  @TestOnly
-  private static boolean waitABitForEditorLoading(@NotNull Project project) {
-    for (FileEditor editor : FileEditorManager.getInstance(project).getAllEditors()) {
-      if (editor instanceof TextEditorImpl) {
-        try {
-          ((TextEditorImpl)editor).waitForLoaded(1, TimeUnit.MILLISECONDS);
-        }
-        catch (TimeoutException ignored) {
-          return false;
-        }
-      }
-    }
-    return true;
   }
 
   @TestOnly

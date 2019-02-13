@@ -21,7 +21,6 @@ import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.FoldingBuilderEx;
 import com.intellij.lang.folding.FoldingDescriptor;
-import com.intellij.lang.folding.NamedFoldingDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Comparing;
@@ -51,8 +50,8 @@ public class SuppressWarningsFoldingBuilder extends FoldingBuilderEx {
       @Override
       public void visitAnnotation(PsiAnnotation annotation) {
         if (Comparing.strEqual(annotation.getQualifiedName(), SuppressWarnings.class.getName())) {
-          result.add(new NamedFoldingDescriptor(annotation.getNode(), annotation.getTextRange(), null, placeholderText(annotation), JavaCodeFoldingSettings.getInstance().isCollapseSuppressWarnings(), Collections
-            .emptySet()));
+          result.add(new FoldingDescriptor(annotation.getNode(), annotation.getTextRange(), null, placeholderText(annotation),
+                                           JavaCodeFoldingSettings.getInstance().isCollapseSuppressWarnings(), Collections.emptySet()));
         }
         super.visitAnnotation(annotation);
       }

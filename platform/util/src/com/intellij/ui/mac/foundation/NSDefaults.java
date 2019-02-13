@@ -19,7 +19,7 @@ public class NSDefaults {
   public static final String ourTouchBarShowFnValue = "functionKeys";
 
   private static class Path {
-    private final @NotNull ArrayList<Node> myPath = new ArrayList<Node>();
+    private final @NotNull ArrayList<Node> myPath = new ArrayList<>();
 
     @Override
     public String toString() {
@@ -283,7 +283,7 @@ public class NSDefaults {
 
   // for debug
   private List<String> _listAllKeys() {
-    List<String> res = new ArrayList<String>(100);
+    List<String> res = new ArrayList<>(100);
     final Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
     try {
       final ID defaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults");

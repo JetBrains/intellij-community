@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -14,12 +15,10 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
-import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -50,18 +49,70 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   private final JPanel myWestPanel;
 
   ToolWindowHeader(final ToolWindowImpl toolWindow, @NotNull final Supplier<? extends ActionGroup> gearProducer) {
-    setLayout(new MigLayout("novisualpadding, ins 0, gap 0, fill", "[]push[]"));
     myGearProducer = gearProducer;
-
+    setLayout(new BorderLayout());
     AccessibleContextUtil.setName(this, "Tool Window Header");
 
     myToolWindow = toolWindow;
 
-    myWestPanel = new NonOpaquePanel(new MigLayout("filly, novisualpadding, ins 0, gap 0"));
+    myWestPanel = new NonOpaquePanel() {
+      @Override
+      public void doLayout() {
+        if (getComponentCount() == 1) {
+          Rectangle r = getBounds();
 
-    add(myWestPanel, "grow");
+          Insets insets = getInsets();
 
-    myWestPanel.add(toolWindow.getContentUI().getTabComponent(), "growy");
+          Component c = getComponent(0);
+          Dimension size = c.getPreferredSize();
+          if (size.width < r.width - insets.left - insets.right) {
+            c.setBounds(insets.left, insets.top, size.width, r.height - insets.top - insets.bottom);
+          }
+          else {
+            c.setBounds(insets.left, insets.top, r.width - insets.left - insets.right, r.height - insets.top - insets.bottom);
+          }
+        }
+        else if (getComponentCount() > 1) {
+          Rectangle r = getBounds();
+
+          Component c = getComponent(0);
+
+          Dimension min = c.getMinimumSize();
+          Dimension size = c.getPreferredSize();
+
+          int width2 = getComponentCount() > 1 ? getComponent(1).getMinimumSize().width : 0;
+
+          if (min.width > r.width - width2) {
+            c.setBounds(0, 0, min.width, r.height);
+          }
+          else if (size.width < r.width - width2) {
+            c.setBounds(0, 0, size.width, r.height);
+          }
+          else {
+            c.setBounds(0, 0, r.width - width2, r.height);
+          }
+
+          if (getComponentCount() > 1) {
+            getComponent(1).setBounds(c.getWidth(), 0, getComponent(1).getMinimumSize().width, r.height);
+          }
+        }
+      }
+
+      @Override
+      public Dimension getMinimumSize() {
+        Dimension size = super.getMinimumSize();
+        if (getComponentCount() > 0) {
+          size.width = Math.max(size.width, getComponent(0).getMinimumSize().width +
+                                            (getComponentCount() > 1 ? getComponent(1).getMinimumSize().width : 0));
+        }
+        return size;
+      }
+    };
+
+
+    add(myWestPanel, BorderLayout.CENTER);
+
+    myWestPanel.add(toolWindow.getContentUI().getTabComponent());
     ToolWindowContentUi.initMouseListeners(myWestPanel, toolWindow.getContentUI(), true);
 
     myToolbar = ActionManager.getInstance().createActionToolbar(
@@ -73,9 +124,10 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     myToolbar.setReservePlaceAutoPopupIcon(false);
 
     JComponent component = myToolbar.getComponent();
-    component.setBorder(JBUI.Borders.empty());
+    int padding = JBUI.CurrentTheme.ToolWindow.tabVerticalPadding();
+    component.setBorder(BorderFactory.createEmptyBorder(padding, 0, padding, 0));
     component.setOpaque(false);
-    add(component);
+    add(component, BorderLayout.EAST);
 
     myWestPanel.addMouseListener(new PopupHandler() {
       @Override
@@ -111,7 +163,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     });
 
     setOpaque(true);
-    setBorder(JBUI.CurrentTheme.ToolWindow.tabHeaderBorder());
+    setBorder(JBUI.CurrentTheme.ToolWindow.tabBorder());
 
     new DoubleClickListener() {
       @Override
@@ -142,6 +194,8 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     myToolbarWest.setReservePlaceAutoPopupIcon(false);
 
     JComponent component = myToolbarWest.getComponent();
+    int padding = JBUI.CurrentTheme.ToolWindow.tabVerticalPadding();
+    component.setBorder(BorderFactory.createEmptyBorder(padding, 0, padding, 0));
     component.setOpaque(false);
 
     westPanel.add(component);
@@ -262,18 +316,6 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   protected abstract boolean isActive();
 
   protected abstract void hideToolWindow();
-
-  @Override
-  public Dimension getPreferredSize() {
-    Dimension size = super.getPreferredSize();
-    return new Dimension(size.width, TabsUtil.getTabsHeight(JBUI.CurrentTheme.ToolWindow.tabVerticalPadding()));
-  }
-
-  @Override
-  public Dimension getMinimumSize() {
-    Dimension size = super.getMinimumSize();
-    return new Dimension(size.width, TabsUtil.getTabsHeight(JBUI.CurrentTheme.ToolWindow.tabVerticalPadding()));
-  }
 
   private class ShowOptionsAction extends DumbAwareAction {
     ShowOptionsAction() {

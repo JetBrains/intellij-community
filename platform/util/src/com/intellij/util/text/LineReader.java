@@ -35,7 +35,7 @@ public class LineReader {
 
   public List<byte[]> readLines() throws IOException {
 
-    ArrayList<byte[]> result = new ArrayList<byte[]>();
+    ArrayList<byte[]> result = new ArrayList<>();
     byte[] line;
     while ((line = readLineInternal()) != null) result.add(line);
     return result;

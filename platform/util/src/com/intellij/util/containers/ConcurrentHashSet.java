@@ -140,10 +140,7 @@ public final class ConcurrentHashSet<K> implements Set<K> {
     try {
       return containsAll(c);
     }
-    catch (ClassCastException ignored) {
-      return false;
-    }
-    catch (NullPointerException ignored) {
+    catch (ClassCastException | NullPointerException ignored) {
       return false;
     }
   }

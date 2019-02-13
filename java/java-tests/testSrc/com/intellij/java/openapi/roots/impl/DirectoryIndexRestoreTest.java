@@ -15,7 +15,7 @@ import com.intellij.testFramework.VfsTestUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -58,7 +58,9 @@ public class DirectoryIndexRestoreTest extends IdeaTestCase {
       return !found;
     };
     File topFile = new File(myTempVFile.getPath(), "top");
+    assertTrue(topFile.exists());
     File bakFile = new File(myTempVFile.getPath(), "top.bak");
+    assertFalse(bakFile.exists());
     String topPath = FileUtil.toSystemIndependentName(topFile.getPath());
 
     ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(iterator);
@@ -66,13 +68,14 @@ public class DirectoryIndexRestoreTest extends IdeaTestCase {
 
     FileUtil.rename(topFile, bakFile);
     List<String> events1 = VfsTestUtil.print(VfsTestUtil.getEvents(() -> myTempVFile.refresh(false, true)));
-    assertEquals(Collections.singletonList("D : " + topPath), events1);
+    String bakPath = FileUtil.toSystemIndependentName(bakFile.getPath());
+    assertSameElements(events1, Arrays.asList("C : " + bakPath, "D : " + topPath));
     ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(iterator);
     assertEquals(1, counter.get());
 
     FileUtil.rename(bakFile, topFile);
     List<String> events2 = VfsTestUtil.print(VfsTestUtil.getEvents(() -> myTempVFile.refresh(false, true)));
-    assertEquals(Collections.singletonList("C : " + topPath), events2);
+    assertSameElements(events2, Arrays.asList("D : " + bakPath, "C : " + topPath));
     ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(iterator);
     assertEquals(2, counter.get());
   }

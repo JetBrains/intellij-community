@@ -27,7 +27,7 @@ import java.util.*;
 
 abstract class RefValueHashMap<K,V> implements Map<K,V>{
   private final Map<K,MyReference<K,V>> myMap;
-  private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
+  private final ReferenceQueue<V> myQueue = new ReferenceQueue<>();
 
   @NotNull
   static IncorrectOperationException pointlessContainsKey() {
@@ -45,18 +45,18 @@ abstract class RefValueHashMap<K,V> implements Map<K,V>{
   }
 
   RefValueHashMap() {
-    myMap = new THashMap<K, MyReference<K,V>>();
+    myMap = new THashMap<>();
   }
 
   RefValueHashMap(@NotNull TObjectHashingStrategy<K> strategy) {
-    myMap = new THashMap<K, MyReference<K,V>>(strategy);
+    myMap = new THashMap<>(strategy);
   }
 
   protected abstract MyReference<K,V> createReference(@NotNull K key, V value, @NotNull ReferenceQueue<? super V> queue);
 
   private void processQueue() {
     while (true) {
-      @SuppressWarnings("unchecked")
+      //noinspection unchecked
       MyReference<K,V> ref = (MyReference<K,V>)myQueue.poll();
       if (ref == null) {
         return;
@@ -128,7 +128,7 @@ abstract class RefValueHashMap<K,V> implements Map<K,V>{
   @NotNull
   @Override
   public Collection<V> values() {
-    List<V> result = new ArrayList<V>();
+    List<V> result = new ArrayList<>();
     final Collection<MyReference<K, V>> refs = myMap.values();
     for (MyReference<K, V> ref : refs) {
       final V value = ref.get();

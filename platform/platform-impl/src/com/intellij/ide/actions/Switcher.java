@@ -85,6 +85,8 @@ public class Switcher extends AnAction implements DumbAware {
   private static volatile SwitcherPanel SWITCHER = null;
   private static final Color SEPARATOR_COLOR = JBColor.namedColor("Popup.separatorColor", new JBColor(Gray.xC0, Gray.x4B));
 
+  private static final int MINIMUM_HEIGHT = JBUI.scale(100);
+
   @NonNls private static final String SWITCHER_FEATURE_ID = "switcher";
   private static final Color ON_MOUSE_OVER_BG_COLOR = new JBColor(new Color(231, 242, 249), new Color(77, 80, 84));
   private static int CTRL_KEY;
@@ -528,11 +530,26 @@ public class Switcher extends AnAction implements DumbAware {
       myClickListener.installOn(files);
       ScrollingUtil.ensureSelectionExists(files);
 
+      myShowOnlyEditedFilesCheckBox = new MyCheckBox(actionId, onlyEdited);
+      myTopPanel = createTopPanel(myShowOnlyEditedFilesCheckBox,
+                                  isCheckboxMode() ? IdeBundle.message("title.popup.recent.files") : title,
+                                  pinned);
+      if (isCheckboxMode()) {
+        myShowOnlyEditedFilesCheckBox.addActionListener(e -> setShowOnlyEditedFiles(myShowOnlyEditedFilesCheckBox.isSelected()));
+      }
+      else {
+        myShowOnlyEditedFilesCheckBox.setEnabled(false);
+        myShowOnlyEditedFilesCheckBox.setVisible(false);
+      }
+
+      this.add(myTopPanel, BorderLayout.NORTH);
       this.add(toolWindows, BorderLayout.WEST);
       if (filesModel.getSize() > 0) {
         files.setAlignmentY(1f);
         final JScrollPane pane = ScrollPaneFactory.createScrollPane(files, true);
-        pane.setPreferredSize(new Dimension(files.getPreferredSize().width, 20 * 20));
+        pane.setPreferredSize(new Dimension(Math.max(myTopPanel.getPreferredSize().width - toolWindows.getPreferredSize().width,
+                                                     files.getPreferredSize().width),
+                                            20 * 20));
         this.add(pane, BorderLayout.EAST);
         if (selectionIndex > -1) {
           files.setSelectedIndex(selectionIndex);
@@ -552,26 +569,6 @@ public class Switcher extends AnAction implements DumbAware {
       KeymapUtil.reassignAction(files, getKeyStroke(VK_UP, 0), getKeyStroke(VK_UP, CTRL_DOWN_MASK), WHEN_FOCUSED, false);
       KeymapUtil.reassignAction(files, getKeyStroke(VK_DOWN, 0), getKeyStroke(VK_DOWN, CTRL_DOWN_MASK), WHEN_FOCUSED, false);
 
-      myShowOnlyEditedFilesCheckBox = new MyCheckBox(actionId, onlyEdited);
-
-      myTopPanel = createTopPanel(myShowOnlyEditedFilesCheckBox, isCheckboxMode() ? IdeBundle.message("title.popup.recent.files") : title);
-      this.add(myTopPanel, BorderLayout.NORTH);
-      
-      if (isCheckboxMode()) {
-        myShowOnlyEditedFilesCheckBox.addActionListener(new ActionListener() {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            setShowOnlyEditedFiles(myShowOnlyEditedFilesCheckBox.isSelected());
-          }
-        });
-      }
-      else {
-        myShowOnlyEditedFilesCheckBox.setEnabled(false);
-        myShowOnlyEditedFilesCheckBox.setVisible(false);
-      }
-      
-      
-      
       myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(this, filesModel.getSize() > 0 ? files : toolWindows)
         .setResizable(pinned)
         .setModalContext(false)
@@ -580,6 +577,7 @@ public class Switcher extends AnAction implements DumbAware {
         .setCancelOnWindowDeactivation(true)
         .setCancelOnOtherWindowOpen(true)
         .setMovable(pinned)
+        .setMinSize(new Dimension(myTopPanel.getMinimumSize().width, MINIMUM_HEIGHT))
         .setCancelKeyEnabled(false)
         .setCancelCallback(() -> {
           Container popupFocusAncestor = getPopupFocusAncestor();
@@ -706,7 +704,9 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     @NotNull
-    private static JPanel createTopPanel(JBCheckBox showOnlyEditedFilesCheckBox, @NotNull String title) {
+    private static JPanel createTopPanel(@NotNull JBCheckBox showOnlyEditedFilesCheckBox,
+                                         @NotNull String title,
+                                         boolean isMovable) {
       JPanel topPanel = new CaptionPanel();
       JBLabel titleLabel = new JBLabel(title);
       titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD));
@@ -715,8 +715,17 @@ public class Switcher extends AnAction implements DumbAware {
 
       Dimension size = topPanel.getPreferredSize();
       size.height = JBUI.scale(29);
+      size.width = titleLabel.getPreferredSize().width + showOnlyEditedFilesCheckBox.getPreferredSize().width + JBUI.scale(50);
       topPanel.setPreferredSize(size);
+      topPanel.setMinimumSize(size);
       topPanel.setBorder(JBUI.Borders.empty(5, 8));
+
+      if (isMovable) {
+        WindowMoveListener moveListener = new WindowMoveListener(topPanel);
+        topPanel.addMouseListener(moveListener);
+        topPanel.addMouseMotionListener(moveListener);
+      }
+
       return topPanel;
     }
 
@@ -1280,11 +1289,13 @@ public class Switcher extends AnAction implements DumbAware {
           fBounds.height = h - dBounds.height - headerBounds.height;
           fBounds.width = w - sBounds.width - tBounds.width;
           dBounds.width = w;
+          headerBounds.width = w;
           dBounds.y = h - dBounds.height;
           separator.setBounds(sBounds);
           toolWindows.setBounds(tBounds);
           filesPane.setBounds(fBounds);
           descriptions.setBounds(dBounds);
+          myTopPanel.setBounds(headerBounds);
         }
       }
     }

@@ -11,7 +11,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.*;
@@ -66,7 +65,7 @@ public abstract class VcsVFSListener implements Disposable {
   protected final List<FilePath> myDeletedWithoutConfirmFiles = new ArrayList<>();
   protected final List<MovedFileInfo> myMovedFiles = new ArrayList<>();
   private final FilesProcessor myProjectConfigurationFilesProcessor;
-  private final FilesProcessor myExternalFilesProcessor;
+  protected final FilesProcessor myExternalFilesProcessor;
 
   protected enum VcsDeleteType {SILENT, CONFIRM, IGNORE}
 
@@ -94,10 +93,6 @@ public abstract class VcsVFSListener implements Disposable {
   protected boolean isEventIgnored(@NotNull VirtualFileEvent event) {
     if (event.isFromRefresh()) return true;
     return !isUnderMyVcs(event.getFile());
-  }
-
-  private static boolean isExternalEvent(@NotNull VirtualFileEvent event) {
-    return event.isFromRefresh() && Registry.is("vcs.process.externally.added.files");
   }
 
   private boolean isUnderMyVcs(@NotNull VirtualFile file) {
@@ -247,17 +242,7 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   protected void fileAdded(@NotNull VirtualFileEvent event, @NotNull VirtualFile file) {
-    if (isExternalEvent(event)
-        && !myChangeListManager.isIgnoredFile(file) && VcsUtil.getVcsRootFor(myProject, file) != null) {
-      LOG.debug("Adding external file [", file, "]");
-      if (file.isDirectory()) {
-        processExternalCreatedFiles(ContainerUtil.newArrayList(file));
-      } else {
-        executeAddWithoutIgnores(ContainerUtil.newArrayList(file), Collections.emptyMap(),
-                                 (notIgnoredFiles, copiedFilesMap) -> processExternalCreatedFiles(notIgnoredFiles));
-      }
-    }
-    else if (!isEventIgnored(event) &&
+    if (!isEventIgnored(event) &&
         (isDirectoryVersioningSupported() || !file.isDirectory())) {
       LOG.debug("Adding [", file, "] to added files");
       myAddedFiles.add(file);
@@ -349,7 +334,8 @@ public abstract class VcsVFSListener implements Disposable {
   @SuppressWarnings("unchecked")
   private FilesProcessor createExternalFilesProcessor() {
     return new ExternallyAddedFilesProcessorImpl(myProject,
-                                                 myVcs.getDisplayName(),
+                                                 this,
+                                                 myVcs,
                                                  (files) -> {
                                                    performAdding((Collection<VirtualFile>)files, emptyMap());
                                                    return Unit.INSTANCE;
@@ -359,6 +345,7 @@ public abstract class VcsVFSListener implements Disposable {
   @SuppressWarnings("unchecked")
   private FilesProcessor createProjectConfigurationFilesProcessor() {
     return new ProjectConfigurationFilesProcessorImpl(myProject,
+                                                      this,
                                                       myVcs.getDisplayName(),
                                                       (files) -> {
                                                         performAdding((Collection<VirtualFile>)files, emptyMap());
@@ -391,17 +378,18 @@ public abstract class VcsVFSListener implements Disposable {
     }
 
     @Override
-    public void beforeFileDeletion(@NotNull final VirtualFileEvent event) {
-      final VirtualFile file = event.getFile();
+    public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
+      VirtualFile file = event.getFile();
       if (isEventIgnored(event)) {
         return;
       }
-      if (!myChangeListManager.isIgnoredFile(file)) {
-        addFileToDelete(file);
-        return;
+      // files are checked for being ignored, directories are handled recursively
+      if (!file.isDirectory()) {
+        if (!myChangeListManager.isIgnoredFile(file)) {
+          addFileToDelete(file);
+        }
       }
-      // files are ignored, directories are handled recursively
-      if (event.getFile().isDirectory()) {
+      else {
         final List<VirtualFile> list = new LinkedList<>();
         VcsUtil.collectFiles(file, list, true, isDirectoryVersioningSupported());
         for (VirtualFile child : list) {
@@ -460,20 +448,6 @@ public abstract class VcsVFSListener implements Disposable {
       if (isUnderMyVcs(file)) {
         VcsVFSListener.this.beforeContentsChange(event, file);
       }
-    }
-  }
-
-  private void processExternalCreatedFiles(@NotNull List<VirtualFile> files) {
-    if (myAddOption.getValue() == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) return;
-
-    files = myProjectConfigurationFilesProcessor.processFiles(files);
-    if (files.isEmpty()) return;
-
-    if (myAddOption.getValue() == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
-      performAdding(files, Collections.emptyMap());
-    }
-    else {
-      myExternalFilesProcessor.processFiles(files);
     }
   }
 
