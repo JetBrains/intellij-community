@@ -155,6 +155,7 @@ public class PsiElementRenameHandler implements RenameHandler {
   }
 
   static void showErrorMessage(Project project, @Nullable Editor editor, String message) {
+    IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
     CommonRefactoringUtil.showErrorHint(project, editor, message, RefactoringBundle.message("rename.title"), null);
   }
 
