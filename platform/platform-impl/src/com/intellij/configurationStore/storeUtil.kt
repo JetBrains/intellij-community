@@ -162,7 +162,9 @@ suspend fun saveProjectsAndApp(isForceSavingAllSettings: Boolean, onlyProject: P
 @CalledInAny
 private suspend fun saveAllProjects(isForceSavingAllSettings: Boolean) {
   for (project in ProjectManager.getInstance().openProjects) {
-    saveSettings(project, isForceSavingAllSettings)
+    if (!project.isDisposed) {
+      saveSettings(project, isForceSavingAllSettings)
+    }
   }
 }
 
