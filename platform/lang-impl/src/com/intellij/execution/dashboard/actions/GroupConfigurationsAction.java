@@ -17,36 +17,36 @@ package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
-import com.intellij.execution.dashboard.RunDashboardContent;
 import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import static com.intellij.execution.dashboard.actions.RunDashboardActionUtils.getTargets;
 
 /**
  * @author Konstantin Aleev
  */
-public class GroupConfigurationsAction extends RunConfigurationTreeAction {
-  public GroupConfigurationsAction() {
-    super(ExecutionBundle.message("run.dashboard.group.configurations.action.name"), null, AllIcons.Actions.GroupByPackage);
+public class GroupConfigurationsAction extends AnAction {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(getTargets(e).isNotEmpty());
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+      e.getPresentation().setText(ExecutionBundle.message("run.dashboard.group.configurations.action.name") + "...");
+    }
   }
 
   @Override
-  protected boolean isMultiSelectionAllowed() {
-    return true;
-  }
-
-  @Override
-  protected void doActionPerformed(@NotNull RunDashboardContent content, @NotNull AnActionEvent e, List<RunDashboardRunConfigurationNode> nodes) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return;
 
-    RunDashboardRunConfigurationNode firstNode = ContainerUtil.getFirstItem(nodes);
+    JBIterable<RunDashboardRunConfigurationNode> nodes = getTargets(e);
+    RunDashboardRunConfigurationNode firstNode = nodes.first();
     String initialValue = firstNode != null ? firstNode.getConfigurationSettings().getFolderName() : null;
     String value = Messages.showInputDialog(project, ExecutionBundle.message("run.dashboard.group.configurations.label"),
                                             ExecutionBundle.message("run.dashboard.group.configurations.title"), null, initialValue, null);
