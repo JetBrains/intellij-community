@@ -1,26 +1,14 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Setter;
 import com.intellij.openapi.util.text.StringUtil;
+import kotlin.reflect.KMutableProperty0;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,41 +23,29 @@ import java.util.List;
 public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
   private final T myInstance;
 
-  private abstract static class BeanField<T extends JComponent> {
-    String myFieldName;
-    T myComponent;
+  private abstract static class BeanPropertyAccessor {
+    abstract Object getBeanValue(Object instance);
+    abstract void setBeanValue(Object instance, @NotNull Object value);
+  }
 
-    private BeanField(final String fieldName) {
+  private static class BeanFieldAccessor extends BeanPropertyAccessor {
+    private final String myFieldName;
+    private final Class myValueClass;
+
+    private BeanFieldAccessor(String fieldName, Class valueClass) {
       myFieldName = fieldName;
+      myValueClass = valueClass;
     }
 
-    T getComponent() {
-      if (myComponent == null) {
-        myComponent = createComponent();
+    @NonNls
+    protected String getterName() {
+      if (myValueClass.equals(boolean.class)) {
+        return "is" + StringUtil.capitalize(myFieldName);
       }
-      return myComponent;
+      return "get" + StringUtil.capitalize(myFieldName);
     }
 
-    @NotNull
-    abstract T createComponent();
-
-    boolean isModified(@NotNull Object instance) {
-      final Object componentValue = getComponentValue();
-      final Object beanValue = getBeanValue(instance);
-      return !Comparing.equal(componentValue, beanValue);
-    }
-
-    void apply(@NotNull Object instance) {
-      setBeanValue(instance, getComponentValue());
-    }
-
-    void reset(@NotNull Object instance) {
-      setComponentValue(getBeanValue(instance));
-    }
-
-    abstract Object getComponentValue();
-    abstract void setComponentValue(Object value);
-
+    @Override
     Object getBeanValue(@NotNull Object instance) {
       try {
         Field field = instance.getClass().getField(myFieldName);
@@ -89,19 +65,15 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
       }
     }
 
-    @NonNls
-    protected String getterName() {
-      return "get" + StringUtil.capitalize(myFieldName);
-    }
-
-    void setBeanValue(Object instance, Object value) {
+    @Override
+    void setBeanValue(@NotNull Object instance, @NotNull Object value) {
       try {
         Field field = instance.getClass().getField(myFieldName);
         field.set(instance, value);
       }
       catch (NoSuchFieldException e) {
         try {
-          final Method method = instance.getClass().getMethod("set" + StringUtil.capitalize(myFieldName), getValueClass());
+          final Method method = instance.getClass().getMethod("set" + StringUtil.capitalize(myFieldName), myValueClass);
           method.invoke(instance, value);
         }
         catch (Exception e1) {
@@ -112,15 +84,94 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
         throw new RuntimeException(e);
       }
     }
+  }
 
-    protected abstract Class getValueClass();
+  private static class BeanMethodAccessor<T> extends BeanPropertyAccessor {
+    private final Getter<? extends T> myGetter;
+    private final Setter<? super T> mySetter;
+
+    private BeanMethodAccessor(Getter<? extends T> getter, Setter<? super T> setter) {
+      myGetter = getter;
+      mySetter = setter;
+    }
+
+    @Override
+    Object getBeanValue(Object instance) {
+      return myGetter.get();
+    }
+
+    @Override
+    void setBeanValue(Object instance, @NotNull Object value) {
+      //noinspection unchecked
+      mySetter.set((T) value);
+    }
+  }
+
+  private static class BeanKPropertyAccessor<T> extends BeanPropertyAccessor {
+    private final KMutableProperty0<T> myProperty;
+
+    private BeanKPropertyAccessor(KMutableProperty0<T> property) {
+      myProperty = property;
+    }
+
+    @Override
+    Object getBeanValue(Object instance) {
+      return myProperty.get();
+    }
+
+    @Override
+    void setBeanValue(Object instance, @NotNull Object value) {
+      //noinspection unchecked
+      myProperty.set((T)value);
+    }
+  }
+
+  private abstract static class BeanField<T extends JComponent> {
+    BeanPropertyAccessor myAccessor;
+    T myComponent;
+
+    private BeanField(final BeanPropertyAccessor accessor) {
+      myAccessor = accessor;
+    }
+
+    T getComponent() {
+      if (myComponent == null) {
+        myComponent = createComponent();
+      }
+      return myComponent;
+    }
+
+    @NotNull
+    abstract T createComponent();
+
+    boolean isModified(Object instance) {
+      final Object componentValue = getComponentValue();
+      final Object beanValue = myAccessor.getBeanValue(instance);
+      return !Comparing.equal(componentValue, beanValue);
+    }
+
+    void apply(Object instance) {
+      myAccessor.setBeanValue(instance, getComponentValue());
+    }
+
+    void reset(Object instance) {
+      setComponentValue(myAccessor.getBeanValue(instance));
+    }
+
+    abstract Object getComponentValue();
+    abstract void setComponentValue(Object value);
   }
 
   private static class CheckboxField extends BeanField<JCheckBox> {
     private final String myTitle;
 
     private CheckboxField(final String fieldName, final String title) {
-      super(fieldName);
+      super(new BeanFieldAccessor(fieldName, boolean.class));
+      myTitle = title;
+    }
+
+    private CheckboxField(BeanPropertyAccessor accessor, String title) {
+      super(accessor);
       myTitle = title;
     }
 
@@ -139,16 +190,6 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
     void setComponentValue(final Object value) {
       getComponent().setSelected(((Boolean) value).booleanValue());
     }
-
-    @Override
-    protected String getterName() {
-      return "is" + StringUtil.capitalize(myFieldName);
-    }
-
-    @Override
-    protected Class getValueClass() {
-      return boolean.class;
-    }
   }
 
   private final List<BeanField> myFields = new ArrayList<>();
@@ -157,7 +198,11 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
     myInstance = beanInstance;
   }
 
-  @NotNull
+  protected BeanConfigurable() {
+    myInstance = null;
+  }
+
+  @Nullable
   protected T getInstance() {
     return myInstance;
   }
@@ -176,18 +221,12 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
    * After the apply, the value from the check box is written back to model via {@code setter}.
    */
   protected void checkBox(@NotNull String title, @NotNull Getter<Boolean> getter, @NotNull Setter<Boolean> setter) {
-    CheckboxField field = new CheckboxField("", title) {
-      @Override
-      Object getBeanValue(@NotNull Object instance) {
-        return getter.get();
-      }
-
-      @Override
-      void setBeanValue(Object instance, Object value) {
-        setter.set((Boolean)value);
-      }
-    };
+    CheckboxField field = new CheckboxField(new BeanMethodAccessor<>(getter, setter), title);
     myFields.add(field);
+  }
+
+  protected void checkBox(@NotNull String title, @NotNull KMutableProperty0<Boolean> prop) {
+    myFields.add(new CheckboxField(new BeanKPropertyAccessor<>(prop), title));
   }
 
   /**
@@ -198,7 +237,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
    * E.g. text from the edit box is queried and saved back to model bean.
    */
   protected <V> void component(@NotNull JComponent component, @NotNull Getter<? extends V> beanGetter, @NotNull Setter<? super V> beanSetter, @NotNull Getter<? extends V> componentGetter, @NotNull Setter<? super V> componentSetter) {
-    BeanField<JComponent> field = new BeanField<JComponent>("") {
+    BeanField<JComponent> field = new BeanField<JComponent>(new BeanMethodAccessor<V>(beanGetter, beanSetter)) {
       @NotNull
       @Override
       JComponent createComponent() {
@@ -213,21 +252,6 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
       @Override
       void setComponentValue(Object value) {
         componentSetter.set((V)value);
-      }
-
-      @Override
-      protected Class getValueClass() {
-        return null;
-      }
-
-      @Override
-      Object getBeanValue(@NotNull Object instance) {
-        return beanGetter.get();
-      }
-
-      @Override
-      void setBeanValue(Object instance, Object value) {
-        beanSetter.set((V)value);
       }
     };
     myFields.add(field);
