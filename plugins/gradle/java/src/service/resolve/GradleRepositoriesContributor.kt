@@ -28,10 +28,11 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
  *
  * @author Vladislav.Soroka
  */
-class GradleMavenArtifactRepositoryContributor : GradleMethodContextContributor {
+class GradleRepositoriesContributor : GradleMethodContextContributor {
   companion object {
     val repositoriesClosure: GroovyClosurePattern = groovyClosure().inMethod(or(psiMethod(GRADLE_API_PROJECT, "repositories"),
-                                                                                psiMethod(GRADLE_API_SCRIPT_HANDLER, "repositories")))
+                                                                                psiMethod(GRADLE_API_SCRIPT_HANDLER, "repositories"),
+                                                                                psiMethod(GRADLE_API_PUBLISHING_EXTENSION, "repositories")))
     val repositoryClosure: PsiJavaElementPattern.Capture<PsiElement> = psiElement().andOr(
       groovyClosure().withAncestor(2, repositoriesClosure),
       groovyClosure().inMethod(psiMethod(GRADLE_API_REPOSITORY_HANDLER, "maven")))
