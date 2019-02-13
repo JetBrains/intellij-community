@@ -8,9 +8,8 @@ import com.intellij.build.events.impl.SuccessResultImpl;
 import com.intellij.build.output.BuildOutputInstantReader;
 import com.intellij.build.output.BuildOutputParser;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -51,35 +50,54 @@ public class MavenLogOutputParser implements BuildOutputParser {
   public boolean parse(String line, BuildOutputInstantReader reader, Consumer<? super BuildEvent> messageConsumer) {
     if (myCompleted) return false;
 
-    Pair<LogMessageType, String> logLine = nextLine(line);
-    if (logLine == null) {
+    MavenLogEntryReader.MavenLogEntry logLine = nextLine(line);
+    if (logLine == null || StringUtil.isEmptyOrSpaces(logLine.myLine)) {
       return false;
     }
 
-
+    MavenLogEntryReader mavenLogReader = wrapReader(reader);
     for (MavenLoggedEventParser event : myRegisteredEvents) {
-      if (!event.supportsType(logLine.first)) {
+      if (!event.supportsType(logLine.myType)) {
         continue;
       }
-      if (event.checkLogLine(myTaskId, logLine.second, logLine.first, messageConsumer)) {
+      if (event.checkLogLine(myTaskId, logLine, mavenLogReader, messageConsumer)) {
         return true;
       }
     }
 
-    if (checkComplete(messageConsumer, logLine)) return true;
+    if (checkComplete(messageConsumer, logLine, mavenLogReader)) return true;
     return false;
   }
 
-  private boolean checkComplete(Consumer<? super BuildEvent> messageConsumer, Pair<LogMessageType, String> logLine) {
-    if (logLine.second.equals("BUILD FAILURE")) {
+  private static MavenLogEntryReader wrapReader(BuildOutputInstantReader reader) {
+    return new MavenLogEntryReader() {
+      @Override
+      public void pushBack() {
+        reader.pushBack();
+      }
+
+      @Nullable
+      @Override
+      public MavenLogEntry readLine() {
+        return nextLine(reader.readLine());
+      }
+    };
+  }
+
+  private boolean checkComplete(Consumer<? super BuildEvent> messageConsumer,
+                                MavenLogEntryReader.MavenLogEntry logLine,
+                                MavenLogEntryReader mavenLogReader) {
+    if (logLine.myLine.equals("BUILD FAILURE")) {
+      MavenLogEntryReader.MavenLogEntry errorDesc = mavenLogReader.findFirst(s -> s.getType() == LogMessageType.ERROR);
       completeParsers(messageConsumer);
       messageConsumer
         .accept(new FinishBuildEventImpl(myTaskId, null, System.currentTimeMillis(), "Maven run",
-                                         new FailureResultImpl(new Exception())));
+                                         new FailureResultImpl(errorDesc == null ? "Failed" : errorDesc.myLine,
+                                                               null)));
       myCompleted = true;
       return true;
     }
-    if (logLine.second.equals("BUILD SUCCESS")) {
+    if (logLine.myLine.equals("BUILD SUCCESS")) {
       completeParsers(messageConsumer);
       messageConsumer
         .accept(new FinishBuildEventImpl(myTaskId, null, System.currentTimeMillis(), "Maven run", new SuccessResultImpl()));
@@ -90,25 +108,10 @@ public class MavenLogOutputParser implements BuildOutputParser {
   }
 
   @Nullable
-  private static Pair<LogMessageType, String> nextLine(String line) {
+  private static MavenLogEntryReader.MavenLogEntry nextLine(String line) {
     if (line == null) {
       return null;
-
     }
-    line = clearProgressCarriageReturns(line);
-    LogMessageType type = LogMessageType.determine(line);
-    return Pair.create(type, clearLine(type, line));
-  }
-
-  @NotNull
-  private static String clearProgressCarriageReturns(@NotNull String line) {
-    int i = line.lastIndexOf("\r");
-    if (i == -1) return line;
-    return line.substring(i + 1);
-  }
-
-  @NotNull
-  private static String clearLine(@Nullable LogMessageType type, @NotNull String line) {
-    return type == null ? line : type.clearLine(line);
+    return new MavenLogEntryReader.MavenLogEntry(line);
   }
 }
