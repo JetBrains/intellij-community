@@ -5,6 +5,7 @@ import com.google.common.hash.HashCode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.stubs.FileContentHashing
@@ -40,6 +41,8 @@ abstract class PrebuiltIndexProviderBase<Value> : Disposable {
   init {
     init()
   }
+
+  abstract val fileTypes: Set<FileType>
 
   internal fun init() {
     var indexesRoot = findPrebuiltIndicesRoot()
