@@ -407,7 +407,10 @@ public class DiffUtil {
 
   @NotNull
   public static String getSettingsConfigurablePath() {
-    return "Settings | Tools | Diff";
+    if (SystemInfo.isMac) {
+      return "Preferences | Tools | Diff & Merge";
+    }
+    return "Settings | Tools | Diff & Merge";
   }
 
   @NotNull

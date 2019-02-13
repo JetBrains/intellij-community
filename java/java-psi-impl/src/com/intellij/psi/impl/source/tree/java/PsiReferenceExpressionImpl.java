@@ -273,10 +273,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       }
 
       if (result.length == 0 && variable == null) {
-        String qualifiedName = getCachedNormalizedText();
-        if (qualifiedName != null) {
-          result = PsiJavaCodeReferenceElementImpl.tryClassResult(qualifiedName, this);
-        }
+        result = PsiJavaCodeReferenceElementImpl.tryClassResult(getCachedNormalizedText(), this);
       }
 
       return result.length == 0 && variable != null ? variable : result;
@@ -866,6 +863,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return getCanonicalText();
   }
 
+  @NotNull
   private String getCachedNormalizedText() {
     String whiteSpaceAndComments = myCachedNormalizedText;
     if (whiteSpaceAndComments == null) {

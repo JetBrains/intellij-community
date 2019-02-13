@@ -208,7 +208,7 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
   }
 
   @TestOnly
-  public static void completeAsyncTasks() {
+  public static void waitForAsyncTaskCompletion() {
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
     for (CancellablePromise<?> task : ourTasks) {
       waitForTask(task);

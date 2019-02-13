@@ -507,7 +507,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
     return surviveOnExternalChange
            ? new PersistentRangeMarker(this, startOffset, endOffset, true)
-           : new RangeMarkerImpl(this, startOffset, endOffset, true);
+           : new RangeMarkerImpl(this, startOffset, endOffset, true, false);
   }
 
   @Override

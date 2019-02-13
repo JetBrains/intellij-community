@@ -103,7 +103,7 @@ public class ResolveUtil {
                                    @NotNull final ResolveState state) {
     PsiElement maxScope = null;
     if (ResolveUtilKt.processNonCodeMembers(state)) {
-      maxScope = PsiTreeUtil.findFirstParent(place, it -> it instanceof GrFunctionalExpression);
+      maxScope = PsiTreeUtil.getParentOfType(place, GrFunctionalExpression.class);
     }
 
     return PsiTreeUtil.treeWalkUp(place, maxScope, (scope, lastParent) -> {

@@ -301,8 +301,8 @@ public class ReflectionUtil {
   public static <T> T getField(@NotNull Class objectClass, @Nullable Object object, @Nullable("null means any type") Class<T> fieldType, @NotNull @NonNls String fieldName) {
     try {
       final Field field = findAssignableField(objectClass, fieldType, fieldName);
-      @SuppressWarnings("unchecked") T t = (T)field.get(object);
-      return t;
+      //noinspection unchecked
+      return (T)field.get(object);
     }
     catch (NoSuchFieldException | IllegalAccessException e) {
       LOG.debug(e);
@@ -316,8 +316,8 @@ public class ReflectionUtil {
       if (!Modifier.isStatic(field.getModifiers())) {
         throw new IllegalArgumentException("Field " + objectClass + "." + fieldName + " is not static");
       }
-      @SuppressWarnings("unchecked") T t = (T)field.get(null);
-      return t;
+      //noinspection unchecked
+      return (T)field.get(null);
     }
     catch (NoSuchFieldException | IllegalAccessException e) {
       LOG.debug(e);

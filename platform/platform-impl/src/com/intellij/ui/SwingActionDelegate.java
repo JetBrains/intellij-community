@@ -2,6 +2,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.Action;
@@ -15,7 +16,7 @@ import static com.intellij.util.ui.UIUtil.getParentOfType;
 /**
  * @author Sergey.Malenkov
  */
-public class SwingActionDelegate extends AnAction {
+public class SwingActionDelegate extends AnAction implements DumbAware {
   private final String mySwingActionId;
 
   protected SwingActionDelegate(String actionId) {

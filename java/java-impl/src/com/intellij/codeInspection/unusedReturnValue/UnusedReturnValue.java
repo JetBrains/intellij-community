@@ -19,6 +19,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.deadCode.UnreferencedFilter;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.unusedSymbol.VisibilityModifierChooser;
@@ -57,25 +58,26 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
     if (refEntity instanceof RefMethod) {
       final RefMethod refMethod = (RefMethod)refEntity;
 
-      if (VisibilityUtil.compare(refMethod.getAccessModifier(), highestModifier) < 0) return null;
-      if (refMethod.isConstructor()) return null;
-      if (!refMethod.getSuperMethods().isEmpty()) return null;
-      if (refMethod.getInReferences().size() == 0) return null;
-      if (refMethod.isEntry()) return null;
-
-      if (!refMethod.isReturnValueUsed()) {
-        final PsiMethod psiMethod = (PsiMethod)refMethod.getUastElement().getJavaPsi();
-        if (psiMethod == null) return null;
-        if (IGNORE_BUILDER_PATTERN && PropertyUtilBase.isSimplePropertySetter(psiMethod)) return null;
-
-        final boolean isNative = psiMethod.hasModifierProperty(PsiModifier.NATIVE);
-        if (refMethod.isExternalOverride() && !isNative) return null;
-        if (RefUtil.isImplicitRead(psiMethod)) return null;
-        if (canIgnoreReturnValue(psiMethod)) return null;
-        return new ProblemDescriptor[]{createProblemDescriptor(psiMethod, manager, processor, isNative, false)};
+      if (VisibilityUtil.compare(refMethod.getAccessModifier(), highestModifier) < 0 ||
+          refMethod.isConstructor() ||
+          !refMethod.getSuperMethods().isEmpty() ||
+          refMethod.getInReferences().isEmpty() ||
+          refMethod.isEntry() ||
+          refMethod.isReturnValueUsed() ||
+          UnreferencedFilter.isExternallyReferenced(refMethod)) {
+        return null;
       }
-    }
 
+      final PsiMethod psiMethod = (PsiMethod)refMethod.getUastElement().getJavaPsi();
+      if (psiMethod == null) return null;
+      if (IGNORE_BUILDER_PATTERN && PropertyUtilBase.isSimplePropertySetter(psiMethod)) return null;
+
+      final boolean isNative = psiMethod.hasModifierProperty(PsiModifier.NATIVE);
+      if (refMethod.isExternalOverride() && !isNative) return null;
+      if (RefUtil.isImplicitRead(psiMethod)) return null;
+      if (canIgnoreReturnValue(psiMethod)) return null;
+      return new ProblemDescriptor[]{createProblemDescriptor(psiMethod, manager, processor, isNative, false)};
+    }
     return null;
   }
 
@@ -106,7 +108,8 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
   }
 
   @Override
-  protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager, @NotNull final GlobalJavaInspectionContext globalContext,
+  protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager,
+                                                @NotNull final GlobalJavaInspectionContext globalContext,
                                                 @NotNull final ProblemDescriptionsProcessor processor) {
     manager.iterate(new RefJavaVisitor() {
       @Override public void visitElement(@NotNull RefEntity refEntity) {

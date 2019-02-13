@@ -8,8 +8,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Comparator;
 import java.util.List;
@@ -105,14 +103,11 @@ public class ObjectUtils {
     // java.lang.reflect.Proxy.ProxyClassFactory fails if the class is not available via the classloader.
     // We must use interface own classloader because classes from plugins are not available via ObjectUtils' classloader.
     //noinspection unchecked
-    return (T)Proxy.newProxyInstance(ofInterface.getClassLoader(), new Class[]{ofInterface}, new InvocationHandler() {
-      @Override
-      public Object invoke(Object proxy, Method method, Object[] args) {
-        if ("toString".equals(method.getName()) && args.length == 0) {
-          return name;
-        }
-        throw new AbstractMethodError();
+    return (T)Proxy.newProxyInstance(ofInterface.getClassLoader(), new Class[]{ofInterface}, (proxy, method, args) -> {
+      if ("toString".equals(method.getName()) && args.length == 0) {
+        return name;
       }
+      throw new AbstractMethodError();
     });
   }
 
@@ -195,9 +190,11 @@ public class ObjectUtils {
     return obj == null ? null : function.fun(obj);
   }
 
-  @SuppressWarnings("unchecked")
   public static <T> void consumeIfCast(@Nullable Object obj, @NotNull Class<T> clazz, final Consumer<? super T> consumer) {
-    if (clazz.isInstance(obj)) consumer.consume((T)obj);
+    if (clazz.isInstance(obj)) {
+      //noinspection unchecked
+      consumer.consume((T)obj);
+    }
   }
 
   @Nullable

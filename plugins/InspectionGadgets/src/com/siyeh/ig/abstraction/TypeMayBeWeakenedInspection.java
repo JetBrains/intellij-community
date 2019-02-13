@@ -43,7 +43,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
@@ -438,14 +437,18 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
           if (parent instanceof PsiForeachStatement) {
             final PsiForeachStatement foreachStatement = (PsiForeachStatement)parent;
             final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
-            if (!(iteratedValue instanceof PsiNewExpression) && !(iteratedValue instanceof PsiTypeCastExpression)) {
+            if (!(iteratedValue instanceof PsiNewExpression ||
+                  iteratedValue instanceof PsiTypeCastExpression ||
+                  iteratedValue instanceof PsiMethodCallExpression)) {
               return;
             }
           }
         }
         else {
           final PsiExpression initializer = variable.getInitializer();
-          if (!(initializer instanceof PsiNewExpression) && !(initializer instanceof PsiTypeCastExpression)) {
+          if (!(initializer instanceof PsiNewExpression ||
+                initializer instanceof PsiTypeCastExpression ||
+                initializer instanceof PsiMethodCallExpression)) {
             return;
           }
         }

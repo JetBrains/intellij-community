@@ -257,7 +257,7 @@ public class JBUI {
         }
       }
       else if (Registry.is("ide.ui.scale.override")) {
-        return Float.valueOf((float)Registry.get("ide.ui.scale").asDouble());
+        return (float)Registry.get("ide.ui.scale").asDouble();
       }
       return null;
     }
@@ -556,8 +556,8 @@ public class JBUI {
   }
 
   @NotNull
-  @SuppressWarnings("unchecked")
   public static <T extends JBIcon> T scale(@NotNull T icon) {
+    //noinspection unchecked
     return (T)icon.withIconPreScaled(false);
   }
 
@@ -936,13 +936,7 @@ public class JBUI {
 
     @Override
     public int hashCode() {
-      return hash(usrScale.value) * 31 + hash(objScale.value);
-    }
-
-    private static int hash(double value) {
-      // todo replace with Double.hashCode(double) when language level goes up to 8
-      long bits = Double.doubleToLongBits(value);
-      return (int)(bits ^ (bits >>> 32));
+      return Double.hashCode(usrScale.value) * 31 + Double.hashCode(objScale.value);
     }
 
     /**
@@ -1239,7 +1233,7 @@ public class JBUI {
 
     @Override
     public int hashCode() {
-      return Double.valueOf(sysScale.value).hashCode() * 100 + super.hashCode();
+      return Double.hashCode(sysScale.value) * 31 + super.hashCode();
     }
 
     @Override

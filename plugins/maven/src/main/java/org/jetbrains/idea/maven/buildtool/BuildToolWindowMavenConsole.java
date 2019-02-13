@@ -2,15 +2,14 @@
 package org.jetbrains.idea.maven.buildtool;
 
 import com.intellij.build.*;
-import com.intellij.execution.process.*;
-import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenConsole;
-import org.jetbrains.idea.maven.project.MavenConsoleImpl;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -30,9 +29,9 @@ public class BuildToolWindowMavenConsole extends MavenConsole {
     ExternalSystemTaskId taskId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, EXECUTE_TASK, project);
     DefaultBuildDescriptor descriptor =
       new DefaultBuildDescriptor(taskId, "Run Maven task", project.getBasePath(), System.currentTimeMillis());
-    ConsoleView console = MavenConsoleImpl.createConsoleBuilder(project).getConsole();
+    BuildViewManager buildViewManager = ServiceManager.getService(project, BuildViewManager.class);
     myEventParser =
-      new MavenBuildEventProcessor(project, project.getBasePath(), createBuildView(project, console, descriptor), descriptor, taskId);
+      new MavenBuildEventProcessor(project, project.getBasePath(), buildViewManager, descriptor, taskId);
   }
 
   private static MavenGeneralSettings getSettings(Project project) {
