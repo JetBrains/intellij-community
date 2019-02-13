@@ -9,7 +9,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.*;
@@ -600,8 +599,7 @@ public class ContainerUtil extends ContainerUtilRt {
     @Override
     public <T> T[] toArray(@NotNull T[] a) {
       int size = size();
-      //noinspection unchecked
-      T[] result = a.length >= size ? a : (T[])Array.newInstance(a.getClass().getComponentType(), size);
+      T[] result = a.length >= size ? a : ArrayUtil.createArray(ArrayUtil.getComponentType(a), size);
       System.arraycopy(myStore, 0, result, 0, size);
       if (result.length > size) {
         result[size] = null;
@@ -946,8 +944,8 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T, V> V[] map2Array(@NotNull T[] array, @NotNull Class<? super V> aClass, @NotNull Function<? super T, ? extends V> mapper) {
-    @SuppressWarnings("unchecked") V[] result = (V[])Array.newInstance(aClass, array.length);
+  public static <T, V> V[] map2Array(@NotNull T[] array, @NotNull Class<V> aClass, @NotNull Function<? super T, ? extends V> mapper) {
+    V[] result = ArrayUtil.createArray(aClass, array.length);
     for (int i = 0; i < array.length; i++) {
       result[i] = mapper.fun(array[i]);
     }
@@ -956,8 +954,8 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T, V> V[] map2Array(@NotNull Collection<? extends T> collection, @NotNull Class<? super V> aClass, @NotNull Function<? super T, ? extends V> mapper) {
-    @SuppressWarnings("unchecked") V[] result = (V[])Array.newInstance(aClass, collection.size());
+  public static <T, V> V[] map2Array(@NotNull Collection<? extends T> collection, @NotNull Class<V> aClass, @NotNull Function<? super T, ? extends V> mapper) {
+    V[] result = ArrayUtil.createArray(aClass, collection.size());
     int i = 0;
     for (T t : collection) {
       result[i++] = mapper.fun(t);
@@ -1055,7 +1053,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <T, V> V[] findAllAsArray(@NotNull T[] collection, @NotNull Class<V> instanceOf) {
     List<V> list = findAll(Arrays.asList(collection), instanceOf);
-    @SuppressWarnings("unchecked") V[] array = (V[])Array.newInstance(instanceOf, list.size());
+    V[] array = ArrayUtil.createArray(instanceOf, list.size());
     return list.toArray(array);
   }
 
@@ -1063,7 +1061,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <T, V> V[] findAllAsArray(@NotNull Collection<? extends T> collection, @NotNull Class<V> instanceOf) {
     List<V> list = findAll(collection, instanceOf);
-    @SuppressWarnings("unchecked") V[] array = (V[])Array.newInstance(instanceOf, list.size());
+    V[] array = ArrayUtil.createArray(instanceOf, list.size());
     return list.toArray(array);
   }
 
@@ -1074,7 +1072,7 @@ public class ContainerUtil extends ContainerUtilRt {
     if (list.size() == collection.length) {
       return collection;
     }
-    @SuppressWarnings("unchecked") T[] array = (T[])Array.newInstance(collection.getClass().getComponentType(), list.size());
+    T[] array = ArrayUtil.createArray(ArrayUtil.getComponentType(collection), list.size());
     return list.toArray(array);
   }
 
@@ -1084,8 +1082,8 @@ public class ContainerUtil extends ContainerUtilRt {
     final List<V> result = new SmartList<>();
     for (final T t : collection) {
       if (instanceOf.isInstance(t)) {
-        @SuppressWarnings("unchecked") V v = (V)t;
-        result.add(v);
+        //noinspection unchecked
+        result.add((V)t);
       }
     }
     return result;
@@ -1252,8 +1250,8 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   public static <T> List<T> collect(@NotNull Iterator<?> iterator, @NotNull FilteringIterator.InstanceOf<T> instanceOf) {
-    @SuppressWarnings("unchecked") List<T> list = collect(FilteringIterator.create((Iterator<T>)iterator, instanceOf));
-    return list;
+    //noinspection unchecked
+    return collect(FilteringIterator.create((Iterator<T>)iterator, instanceOf));
   }
 
   public static <T> void addAll(@NotNull Collection<? super T> collection, @NotNull Enumeration<? extends T> enumeration) {
@@ -1457,13 +1455,13 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <T> Iterable<T> concat(@NotNull final T[]... iterables) {
     return () -> {
-      Iterator[] iterators = new Iterator[iterables.length];
+      //noinspection unchecked
+      Iterator<T>[] iterators = new Iterator[iterables.length];
       for (int i = 0; i < iterables.length; i++) {
         T[] iterable = iterables[i];
         iterators[i] = iterate(iterable);
       }
-      @SuppressWarnings("unchecked") Iterator<T> i = concatIterators(iterators);
-      return i;
+      return concatIterators(iterators);
     };
   }
 
@@ -1511,8 +1509,8 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> List<T> concat(@NotNull final List<List<? extends T>> lists) {
-    @SuppressWarnings("unchecked") List<? extends T>[] array = lists.toArray(new List[0]);
-    return concat(array);
+    //noinspection unchecked
+    return concat(lists.toArray(new List[0]));
   }
 
   /**
@@ -2343,8 +2341,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   public static <K,V> V[] convert(@NotNull K[] from, @NotNull V[] to, @NotNull Function<? super K, ? extends V> fun) {
     if (to.length < from.length) {
-      @SuppressWarnings("unchecked") V[] array = (V[])Array.newInstance(to.getClass().getComponentType(), from.length);
-      to = array;
+      to = ArrayUtil.createArray(ArrayUtil.getComponentType(to), from.length);
     }
     for (int i = 0; i < from.length; i++) {
       to[i] = fun.fun(from[i]);

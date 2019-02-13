@@ -118,7 +118,7 @@ public class ArrayUtil extends ArrayUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> T[] insert(@NotNull T[] array, int index, T value) {
-    T[] result = createArray(array.getClass().getComponentType(), array.length + 1);
+    T[] result = createArray(getComponentType(array), array.length + 1);
     System.arraycopy(array, 0, result, 0, index);
     result[index] = value;
     System.arraycopy(array, index, result, index + 1, array.length - index);
@@ -205,9 +205,9 @@ public class ArrayUtil extends ArrayUtilRt {
       return a1;
     }
 
-    final Class<?> class1 = a1.getClass().getComponentType();
-    final Class<?> class2 = a2.getClass().getComponentType();
-    final Class<?> aClass = class1.isAssignableFrom(class2) ? class1 : class2;
+    final Class<T> class1 = getComponentType(a1);
+    final Class<T> class2 = getComponentType(a2);
+    final Class<T> aClass = class1.isAssignableFrom(class2) ? class1 : class2;
 
     T[] result = createArray(aClass, a1.length + a2.length);
     System.arraycopy(a1, 0, result, 0, a1.length);
@@ -304,7 +304,8 @@ public class ArrayUtil extends ArrayUtilRt {
 
     final T[] array2;
     try {
-      array2 = collection.toArray(factory.create(collection.size()));
+      T[] a = factory.create(collection.size());
+      array2 = collection.toArray(a);
     }
     catch (ArrayStoreException e) {
       throw new RuntimeException("Bad elements in collection: " + collection, e);
@@ -331,15 +332,13 @@ public class ArrayUtil extends ArrayUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> T[] append(@NotNull final T[] src, @Nullable final T element) {
-    //noinspection unchecked
-    return append(src, element, (Class<T>)src.getClass().getComponentType());
+    return append(src, element, getComponentType(src));
   }
 
   @NotNull
   @Contract(pure=true)
   public static <T> T[] prepend(final T element, @NotNull final T[] array) {
-    //noinspection unchecked
-    return prepend(element, array, (Class<T>)array.getClass().getComponentType());
+    return prepend(element, array, getComponentType(array));
   }
 
   @NotNull
@@ -406,14 +405,15 @@ public class ArrayUtil extends ArrayUtilRt {
     if (idx < 0 || idx >= length) {
       throw new IllegalArgumentException("invalid index: " + idx);
     }
-    T[] result = createArray(src.getClass().getComponentType(), length - 1);
+    Class<T> type = getComponentType(src);
+    T[] result = createArray(type, length - 1);
     System.arraycopy(src, 0, result, 0, idx);
     System.arraycopy(src, idx + 1, result, idx, length - idx - 1);
     return result;
   }
 
   @NotNull
-  private static <T> T[] createArray(@NotNull Class<?> type, int length) {
+  public static <T> T[] createArray(@NotNull Class<T> type, int length) {
     //noinspection unchecked
     return (T[])Array.newInstance(type, length);
   }
@@ -775,6 +775,7 @@ public class ArrayUtil extends ArrayUtilRt {
     return -1;
   }
 
+  @SafeVarargs
   @Contract(pure=true)
   public static <T> boolean contains(@Nullable final T o, @NotNull T... objects) {
     return indexOf(objects, o) >= 0;
@@ -813,7 +814,7 @@ public class ArrayUtil extends ArrayUtilRt {
   @Contract(pure=true)
   public static <E> E[] ensureExactSize(int count, @NotNull E[] sample) {
     if (count == sample.length) return sample;
-    return createArray(sample.getClass().getComponentType(), count);
+    return createArray(getComponentType(sample), count);
   }
 
   @Nullable
@@ -972,5 +973,11 @@ public class ArrayUtil extends ArrayUtilRt {
     }
 
     return o == newSize ? r : Arrays.copyOf(r, o);
+  }
+
+  @NotNull
+  public static <T> Class<T> getComponentType(@NotNull T[] collection) {
+    //noinspection unchecked
+    return (Class<T>)collection.getClass().getComponentType();
   }
 }
