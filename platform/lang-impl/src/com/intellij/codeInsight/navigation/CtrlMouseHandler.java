@@ -873,13 +873,19 @@ public class CtrlMouseHandler {
                 updating.set(false);
                 return null;
               }
-              DocInfo newDocInfo = info.getInfo();
-              return new Continuation(() -> {
-                updating.set(false);
-                if (newDocInfo.text != null && !oldText.equals(newDocInfo.text)) {
-                  updateText(newDocInfo.text, textConsumer, hint, editor);
-                }
-              });
+              try {
+                DocInfo newDocInfo = info.getInfo();
+                return new Continuation(() -> {
+                  updating.set(false);
+                  if (newDocInfo.text != null && !oldText.equals(newDocInfo.text)) {
+                    updateText(newDocInfo.text, textConsumer, hint, editor);
+                  }
+                });
+              }
+              catch (IndexNotReadyException e) {
+                showDumbModeNotification(myProject);
+                return createDisposalContinuation();
+              }
             }
 
             @Override
