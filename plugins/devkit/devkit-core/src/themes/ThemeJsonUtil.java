@@ -2,9 +2,13 @@
 package org.jetbrains.idea.devkit.themes;
 
 import com.google.common.collect.Lists;
+import com.intellij.ide.ui.UIThemeMetadata;
 import com.intellij.json.psi.JsonProperty;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.themes.metadata.UIThemeMetadataService;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,5 +28,14 @@ class ThemeJsonUtil {
 
   static boolean isThemeFilename(@NotNull String fileName) {
     return fileName.endsWith(".theme.json");
+  }
+
+  @Nullable
+  static Pair<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> findMetadata(JsonProperty property) {
+    final String key = property.getName();
+    final Pair<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> byName = UIThemeMetadataService.getInstance().findByKey(key);
+    if (byName != null) return byName;
+
+    return UIThemeMetadataService.getInstance().findByKey(getParentNames(property) + "." + key);
   }
 }
