@@ -45,8 +45,8 @@ public class FoldingDescriptor {
   @Nullable private final FoldingGroup myGroup;
   private final Set<Object> myDependencies;
   private final boolean myNeverExpands;
-  private final String myPlaceholderText;
   private final Boolean myCollapsedByDefault;
+  private String myPlaceholderText;
   private boolean myCanBeRemovedWhenCollapsed;
 
   /**
@@ -109,7 +109,7 @@ public class FoldingDescriptor {
                            @Nullable FoldingGroup group,
                            Set<Object> dependencies,
                            boolean neverExpands) {
-    this(node, range, group, dependencies, neverExpands, calcPlaceholderText(node, range), null);
+    this(node, range, group, dependencies, neverExpands, null, null);
   }
 
   /**
@@ -183,7 +183,7 @@ public class FoldingDescriptor {
                            @Nullable FoldingGroup group,
                            @NotNull Set<Object> dependencies,
                            boolean neverExpands,
-                           @Nullable("null means default placeholder will be used") String placeholderText,
+                           @Nullable("null means FoldingBuilder.getPlaceholderText will be used") String placeholderText,
                            @Nullable("null means FoldingBuilder.isCollapsedByDefault will be used") Boolean collapsedByDefault) {
     assert range.getLength() > 0 : range + ", text: " + node.getText() + ", language = " + node.getPsi().getLanguage();
     myElement = node;
@@ -220,17 +220,21 @@ public class FoldingDescriptor {
 
   @Nullable
   public String getPlaceholderText() {
-    return myPlaceholderText;
+    return myPlaceholderText == null ? calcPlaceholderText() : myPlaceholderText;
   }
 
-  private static String calcPlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
-    PsiElement psiElement = node.getPsi();
+  public void setPlaceholderText(@Nullable("null means FoldingBuilder.getPlaceholderText will be used") String placeholderText) {
+    myPlaceholderText = placeholderText;
+  }
+
+  private String calcPlaceholderText() {
+    PsiElement psiElement = myElement.getPsi();
     if (psiElement == null) return null;
     FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(psiElement.getLanguage());
     if (foldingBuilder == null) return null;
     return foldingBuilder instanceof FoldingBuilderEx
-           ? ((FoldingBuilderEx)foldingBuilder).getPlaceholderText(node, range)
-           : foldingBuilder.getPlaceholderText(node);
+           ? ((FoldingBuilderEx)foldingBuilder).getPlaceholderText(myElement, myRange)
+           : foldingBuilder.getPlaceholderText(myElement);
   }
 
   @NotNull
