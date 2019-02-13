@@ -13,14 +13,14 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -65,7 +65,6 @@ public class LombokElementFinderTest {
 
     final PsiClass psiBuilderClass = mock(PsiClass.class);
     when(psiBaseClass.findInnerClassByName(eq(SOME_CLASS_BUILDER.substring(1)), anyBoolean())).thenReturn(psiBuilderClass);
-    when(psiBuilderClass.getName()).thenReturn(SOME_CLASS_BUILDER.substring(1));
 
     final PsiClass psiClass = elementFinder.findClass(BASE_CLASS + SOME_CLASS_BUILDER, scope);
     assertNotNull(psiClass);

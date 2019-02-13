@@ -10,7 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,7 +19,7 @@ import java.util.Collections;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -55,7 +55,6 @@ public class ConfigDiscoveryTest {
     when(psiFile.getVirtualFile()).thenReturn(virtualFile);
     when(virtualFile.getParent()).thenReturn(parentVirtualFile);
 
-    when(virtualFile.getCanonicalPath()).thenReturn("/a/b/c/d/e/f/x.java");
     when(parentVirtualFile.getCanonicalPath()).thenReturn("/a/b/c/d/e/f");
   }
 
@@ -91,8 +90,6 @@ public class ConfigDiscoveryTest {
   @Test
   public void testStringConfigPropertySubDirectoryStopBubling() {
     final ConfigKey configKey = ConfigKey.ACCESSORS_CHAIN;
-    when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c/d/e", configKey.getConfigKey()), globalSearchScope))
-      .thenReturn(Collections.singletonList(EXPECTED_VALUE));
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c/d/e/f", ConfigKey.CONFIG_STOP_BUBBLING.getConfigKey()), globalSearchScope))
       .thenReturn(Collections.singletonList("true"));
 
@@ -125,10 +122,6 @@ public class ConfigDiscoveryTest {
   @Test
   public void testMultipleStringConfigPropertyWithStopBubbling() {
     final ConfigKey configKey = ConfigKey.ACCESSORS_PREFIX;
-    when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c", configKey.getConfigKey()), globalSearchScope))
-      .thenReturn(Collections.singletonList("+a;+b"));
-    when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c/d", configKey.getConfigKey()), globalSearchScope))
-      .thenReturn(Collections.singletonList("-a;+cc"));
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c/d/e", ConfigKey.CONFIG_STOP_BUBBLING.getConfigKey()), globalSearchScope))
       .thenReturn(Collections.singletonList("true"));
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c/d/e/f", configKey.getConfigKey()), globalSearchScope))
