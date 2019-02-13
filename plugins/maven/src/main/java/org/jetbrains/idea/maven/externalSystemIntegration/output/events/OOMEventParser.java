@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.LogMessageType;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLogEntryReader;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLoggedEventParser;
 
 import java.util.function.Consumer;
@@ -20,9 +21,10 @@ public class OOMEventParser implements MavenLoggedEventParser {
 
   @Override
   public boolean checkLogLine(@NotNull ExternalSystemTaskId id,
-                              @NotNull String line,
-                              @Nullable LogMessageType type,
+                              @NotNull MavenLogEntryReader.MavenLogEntry logLine,
+                              @NotNull MavenLogEntryReader logEntryReader,
                               @NotNull Consumer<? super BuildEvent> messageConsumer) {
+    String line = logLine.getLine();
     if (line.endsWith("java.lang.OutOfMemoryError")) {
       messageConsumer.accept(new MessageEventImpl(id, MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP,
                                                   "Out of memory.", line));

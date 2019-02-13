@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.externalSystemIntegration.output;
 
 import com.intellij.build.events.*;
+import com.intellij.build.output.BuildOutputInstantReader;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -13,6 +14,7 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.SelfDescribing;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
@@ -75,8 +77,10 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
       MavenLogOutputParser parser =
         new MavenLogOutputParser(ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, EXECUTE_TASK, "project"), myParsers);
 
-      for (String line : myLines) {
-        parser.parse(line, null, collectConsumer);
+      StubBuildOutputReader reader = new StubBuildOutputReader(myLines);
+      String line;
+      while ((line = reader.readLine()) != null) {
+        parser.parse(line, reader, collectConsumer);
       }
 
       parser.finish(collectConsumer);
@@ -177,7 +181,7 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
     @Override
     public boolean matches(Object item) {
       return item instanceof MessageEvent
-             && ((MessageEvent)item).getMessage().equals(myMessage)
+             && StringUtil.equalsTrimWhitespaces(myMessage, ((MessageEvent)item).getDescription())
              && ((MessageEvent)item).getKind() == WARNING;
     }
 
@@ -212,6 +216,66 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
     @Override
     public void describeTo(@NotNull Description description) {
       description.appendText("Expected FileEvent " + myMessage + "at " + myFileName + ":" + myLine + ":" + myColumn);
+    }
+  }
+
+  private class StubBuildOutputReader implements BuildOutputInstantReader {
+    private List<String> myLines;
+    private int myPosition = -1;
+
+    public StubBuildOutputReader(List<String> lines) {
+      myLines = lines;
+    }
+
+    @Override
+    public Object getBuildId() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Nullable
+    @Override
+    public String readLine() {
+      myPosition++;
+      return getCurrentLine();
+    }
+
+    @Override
+    public void pushBack() {
+
+    }
+
+    @Override
+    public void pushBack(int numberOfLines) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getCurrentLine() {
+      if (myPosition >= myLines.size() || myPosition < 0) {
+        return null;
+      }
+      return myLines.get(myPosition);
+    }
+
+
+    @Override
+    public BuildOutputInstantReader append(CharSequence csq) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public BuildOutputInstantReader append(CharSequence csq, int start, int end) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public BuildOutputInstantReader append(char c) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void close() {
+
     }
   }
 }
