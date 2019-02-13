@@ -25,10 +25,10 @@ if [ -n "$LOGIN_SHELL" ]; then
       fi
     fi
   fi
-fi
-
-if [ -f ~/.bashrc ]; then
-  source ~/.bashrc
+else
+  if [ -f ~/.bashrc ]; then
+    source ~/.bashrc
+  fi
 fi
 
 function override_jb_variables {
