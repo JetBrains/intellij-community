@@ -251,7 +251,9 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String,
         checkDownloadingDialog()
       }
     }
-    waitAMoment()
+    ideFrame {
+      this.waitForBackgroundTasksToFinish()
+    }
   }
 }
 
@@ -536,7 +538,6 @@ fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogModel.Grou
     }
     ideFrame {
       this.waitForBackgroundTasksToFinish()
-      waitAMoment()
     }
   }
 }
