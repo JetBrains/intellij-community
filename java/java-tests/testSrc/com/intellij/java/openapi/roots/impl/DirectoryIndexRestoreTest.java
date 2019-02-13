@@ -69,13 +69,13 @@ public class DirectoryIndexRestoreTest extends IdeaTestCase {
     FileUtil.rename(topFile, bakFile);
     List<String> events1 = VfsTestUtil.print(VfsTestUtil.getEvents(() -> myTempVFile.refresh(false, true)));
     String bakPath = FileUtil.toSystemIndependentName(bakFile.getPath());
-    assertSameElements(Arrays.asList("C : " + bakPath, "D : " + topPath), events1);
+    assertSameElements(events1, Arrays.asList("C : " + bakPath, "D : " + topPath));
     ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(iterator);
     assertEquals(1, counter.get());
 
     FileUtil.rename(bakFile, topFile);
     List<String> events2 = VfsTestUtil.print(VfsTestUtil.getEvents(() -> myTempVFile.refresh(false, true)));
-    assertSameElements(Arrays.asList("D : " + bakPath, "C : " + topPath), events2);
+    assertSameElements(events2, Arrays.asList("D : " + bakPath, "C : " + topPath));
     ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(iterator);
     assertEquals(2, counter.get());
   }
