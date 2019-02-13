@@ -1,6 +1,8 @@
 #!/bin/bash
 
-function load_login_configs {
+if [ -n "$LOGIN_SHELL" ]; then
+  unset LOGIN_SHELL
+
   #       When bash is invoked as an interactive login shell, or as a  non-interac-
   #       tive  shell with the --login option, it first reads and executes commands
   #       from the file /etc/profile, if that  file  exists.   After  reading  that
@@ -13,23 +15,21 @@ function load_login_configs {
   fi
 
   if [ -f ~/.bash_profile ]; then
-     source ~/.bash_profile
+    source ~/.bash_profile
   else
-     if [ -f ~/.bash_login ]; then
-        source ~/.bash_login
-     else
-        if [ -f ~/.profile ]; then
-           source ~/.profile
-        fi
-     fi
+    if [ -f ~/.bash_login ]; then
+      source ~/.bash_login
+    else
+      if [ -f ~/.profile ]; then
+        source ~/.profile
+      fi
+    fi
   fi
-}
+fi
 
-function load_interactive_configs {
-  if [ -f ~/.bashrc ]; then
-       source ~/.bashrc
-  fi
-}
+if [ -f ~/.bashrc ]; then
+  source ~/.bashrc
+fi
 
 function override_jb_variables {
   env | while IFS="=" read NAME VALUE
@@ -44,13 +44,6 @@ function override_jb_variables {
     fi
   done
 }
-
-if [ -n "$LOGIN_SHELL" ]; then
-  load_login_configs
-  unset LOGIN_SHELL
-fi
-
-load_interactive_configs
 
 override_jb_variables
 
