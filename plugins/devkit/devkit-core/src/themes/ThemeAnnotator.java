@@ -1,0 +1,30 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.idea.devkit.themes;
+
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.ide.ui.UIThemeMetadata;
+import com.intellij.json.psi.JsonProperty;
+import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
+
+public class ThemeAnnotator implements Annotator {
+
+  @Override
+  public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+    if (!(element instanceof JsonProperty)) return;
+    if (!ThemeJsonUtil.isThemeFilename(holder.getCurrentAnnotationSession().getFile().getName())) return;
+
+    final Pair<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> pair = ThemeJsonUtil.findMetadata((JsonProperty)element);
+    if (pair == null) return;
+
+    if (pair.second.isDeprecated()) {
+      holder.createAnnotation(HighlightSeverity.WARNING, element.getTextRange(),
+                              "Deprecated key '" + pair.second.getKey() + "'")
+        .setHighlightType(ProblemHighlightType.LIKE_DEPRECATED);
+    }
+  }
+}
