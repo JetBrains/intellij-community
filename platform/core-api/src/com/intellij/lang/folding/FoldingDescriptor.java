@@ -55,7 +55,7 @@ public class FoldingDescriptor {
    * @param node  The node to which the folding region is related. The node is then passed to
    *              {@link FoldingBuilder#getPlaceholderText(ASTNode)} and
    *              {@link FoldingBuilder#isCollapsedByDefault(ASTNode)}.
-   * @param range The folded text range.
+   * @param range The folded text range in file
    */
   public FoldingDescriptor(@NotNull ASTNode node, @NotNull TextRange range) {
     this(node, range, null);
@@ -71,7 +71,7 @@ public class FoldingDescriptor {
    * @param node  The node to which the folding region is related. The node is then passed to
    *              {@link FoldingBuilder#getPlaceholderText(ASTNode)} and
    *              {@link FoldingBuilder#isCollapsedByDefault(ASTNode)}.
-   * @param range The folded text range.
+   * @param range The folded text range in file
    * @param group Regions with the same group instance expand and collapse together.
    */
   public FoldingDescriptor(@NotNull ASTNode node, @NotNull TextRange range, @Nullable FoldingGroup group) {
@@ -84,7 +84,7 @@ public class FoldingDescriptor {
    * @param node  The node to which the folding region is related. The node is then passed to
    *              {@link FoldingBuilder#getPlaceholderText(ASTNode)} and
    *              {@link FoldingBuilder#isCollapsedByDefault(ASTNode)}.
-   * @param range The folded text range.
+   * @param range The folded text range in file
    * @param group Regions with the same group instance expand and collapse together.
    * @param dependencies folding dependencies: other files or elements that could change
    * folding description, see <a href="#Dependencies">Dependencies</a>
@@ -99,7 +99,7 @@ public class FoldingDescriptor {
    * @param node  The node to which the folding region is related. The node is then passed to
    *              {@link FoldingBuilder#getPlaceholderText(ASTNode)} and
    *              {@link FoldingBuilder#isCollapsedByDefault(ASTNode)}.
-   * @param range The folded text range.
+   * @param range The folded text range in file
    * @param group Regions with the same group instance expand and collapse together.
    * @param dependencies folding dependencies: other files or elements that could change, see <a href="#Dependencies">Dependencies</a>
    * @param neverExpands shall be true for fold regions that must not be ever expanded.
@@ -116,8 +116,8 @@ public class FoldingDescriptor {
    * Creates a folding region related to the specified AST node and covering the specified
    * text range.
    * @param e  PSI element to which the folding region is related.
-   * @param start Folded text range's start offset
-   * @param end Folded text range's end offset
+   * @param start Folded text range's start offset in file
+   * @param end Folded text range's end offset in file
    * @param group Regions with the same group instance expand and collapse together.
    * @param placeholderText Text displayed instead of folded text, when the region is collapsed
    */
@@ -134,7 +134,7 @@ public class FoldingDescriptor {
    * text range.
    * @param node  The node to which the folding region is related. The node is then passed to
    *              {@link FoldingBuilder#isCollapsedByDefault(ASTNode)}.
-   * @param range The folded text range.
+   * @param range The folded text range in file
    * @param group Regions with the same group instance expand and collapse together.
    * @param placeholderText Text displayed instead of folded text, when the region is collapsed
    */
@@ -150,7 +150,7 @@ public class FoldingDescriptor {
    * text range.
    * @param node  The node to which the folding region is related. The node is then passed to
    *              {@link FoldingBuilder#isCollapsedByDefault(ASTNode)}.
-   * @param range The folded text range.
+   * @param range The folded text range in file
    * @param group Regions with the same group instance expand and collapse together.
    * @param placeholderText Text displayed instead of folded text, when the region is collapsed
    * @param collapsedByDefault Whether the region should be collapsed for newly opened files
@@ -171,7 +171,7 @@ public class FoldingDescriptor {
    * @param node  The node to which the folding region is related. The node is then passed to
    *              {@link FoldingBuilder#getPlaceholderText(ASTNode)} and
    *              {@link FoldingBuilder#isCollapsedByDefault(ASTNode)}.
-   * @param range The folded text range.
+   * @param range The folded text range in file
    * @param group Regions with the same group instance expand and collapse together.
    * @param dependencies folding dependencies: other files or elements that could change, see <a href="#Dependencies">Dependencies</a>
    * @param neverExpands shall be true for fold regions that must not be ever expanded.
