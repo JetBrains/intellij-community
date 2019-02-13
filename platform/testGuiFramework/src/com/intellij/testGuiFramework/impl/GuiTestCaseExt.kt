@@ -408,3 +408,11 @@ fun GuiTestCase.createJdk(jdkPath: String, jdkName: String = ""): String{
     return@step installedJdkName
   }
 }
+
+fun <T1, T2, R> combine(first: Iterable<T1>,
+                        second: Iterable<T2>,
+                        combiner: (T1, T2) -> R): List<R> = first.flatMap { firstItem ->
+  second.map { secondItem ->
+    combiner(firstItem, secondItem)
+  }
+}
