@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.editor
 
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder
@@ -30,7 +30,7 @@ class ChainDiffVirtualFile(name: String?, private val chain: DiffRequestChain) :
     override fun getRequests(): List<DiffRequestProducer> = delegate.requests
     override fun <T> getUserData(key: Key<T>): T? = delegate.getUserData(key)
     override fun <T> putUserData(key: Key<T>, value: T?) = delegate.putUserData(key, value)
-    override fun createGoToChangeAction(onSelected: Consumer<Int>): AnAction? =
+    override fun createGoToChangeAction(onSelected: Consumer<in Int>): AnAction? =
       (delegate as? GoToChangePopupBuilder.Chain)?.createGoToChangeAction(onSelected)
   }
 }
