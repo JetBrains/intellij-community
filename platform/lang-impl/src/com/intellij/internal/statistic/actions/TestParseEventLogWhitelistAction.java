@@ -23,9 +23,6 @@ public class TestParseEventLogWhitelistAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     boolean enabled = isEnabled(e.getProject());
     e.getPresentation().setEnabledAndVisible(enabled);
-    if (enabled && e.getData(CommonDataKeys.EDITOR) == null) {
-      e.getPresentation().setEnabled(false);
-    }
   }
 
   private static boolean isEnabled(@Nullable Project project) {
