@@ -29,6 +29,11 @@ class DuplicateExpressionsTest : LightCodeInsightFixtureTestCase() {
   fun testVariableNotModified() = doTest(50)
   fun testCompositeQualifier() = doTest(40)
   fun testMethodCallWithSideEffect() = doTest(70)
+  fun testMathSin() = doTest(40)
+  fun testMathMax() = doTest(60)
+  fun testMathRandom() = doTest(1)
+  fun testVariable() = doTest(1)
+  fun testLambda() = doTest(20)
 
   private fun doTest(threshold: Int = 50) {
     val oldThreshold = inspection.complexityThreshold

@@ -92,7 +92,7 @@ class SideEffectCalculator {
       return true;
     }
     PsiElement resolved = ref.resolve();
-    if (resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) {
+    if (resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter || resolved instanceof PsiClass) {
       return false;
     }
     if (resolved instanceof PsiField) {

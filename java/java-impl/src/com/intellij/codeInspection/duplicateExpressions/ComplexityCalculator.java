@@ -172,12 +172,13 @@ class ComplexityCalculator {
   /**
    * Quick check to filter out the obvious things early
    */
-  static boolean isDefinitelySimple(@Nullable PsiExpression expression, int threshold) {
+  static boolean isDefinitelySimple(@Nullable PsiExpression expression) {
     if (expression instanceof PsiLiteral) {
-      return CONSTANT < threshold;
+      return true;
     }
     if (expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).getQualifierExpression() == null) {
-      return REFERENCE < threshold;
+      PsiElement resolved = ((PsiReferenceExpression)expression).resolve();
+      return resolved instanceof PsiVariable || resolved instanceof PsiClass;
     }
     return false;
   }
