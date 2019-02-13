@@ -66,6 +66,8 @@ public class PyCompatibilityInspection extends PyInspection {
     .add("typing")
     .build();
 
+  public static final List<String> COMPATIBILITY_LIBS = Collections.singletonList("six");
+
   public static final int LATEST_INSPECTION_VERSION = 3;
 
   @NotNull
@@ -151,7 +153,8 @@ public class PyCompatibilityInspection extends PyInspection {
 
   private static class Visitor extends CompatibilityVisitor {
     private final ProblemsHolder myHolder;
-    private final Set<String> myUsedImports = Collections.synchronizedSet(new HashSet<String>());
+    private final Set<String> myUsedImports = Collections.synchronizedSet(new HashSet<>());
+    private final Set<String> fromCompatibilityLibs = Collections.synchronizedSet(new HashSet<>());
 
     Visitor(ProblemsHolder holder, List<LanguageLevel> versionsToProcess) {
       super(versionsToProcess);
@@ -180,6 +183,9 @@ public class PyCompatibilityInspection extends PyInspection {
     @Override
     public void visitPyCallExpression(PyCallExpression node) {
       super.visitPyCallExpression(node);
+      if (node.getCallee() != null && importedFromCompatibilityLibs(node.getCallee())) {
+        return;
+      }
 
       final PsiElement resolvedCallee = Optional
         .ofNullable(node.getCallee())
@@ -249,6 +255,9 @@ public class PyCompatibilityInspection extends PyInspection {
 
       final QualifiedName qName = getImportedFullyQName(importElement);
       if (qName != null && !qName.matches("builtins") && !qName.matches("__builtin__")) {
+        if (COMPATIBILITY_LIBS.contains(qName.getFirstComponent())) {
+          fromCompatibilityLibs.add(qName.getLastComponent());
+        }
         final String moduleName = qName.toString();
 
         registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.MODULES.get(level).contains(moduleName) && !BACKPORTED_PACKAGES.contains(moduleName),
@@ -375,6 +384,14 @@ public class PyCompatibilityInspection extends PyInspection {
                                        nameIdentifier,
                                        new PyRenameElementQuickFix(nameIdentifierOwner));
       }
+    }
+
+    private boolean importedFromCompatibilityLibs(@NotNull PyExpression callee) {
+      if (callee instanceof PyQualifiedExpression) {
+        QualifiedName qualifiedName = ((PyQualifiedExpression) callee).asQualifiedName();
+        return qualifiedName != null && fromCompatibilityLibs.contains(qualifiedName.getFirstComponent());
+      }
+      return fromCompatibilityLibs.contains(callee.getName());
     }
   }
 }
