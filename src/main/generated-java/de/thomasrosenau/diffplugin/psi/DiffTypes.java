@@ -8,13 +8,16 @@ import de.thomasrosenau.diffplugin.psi.impl.*;
 
 public interface DiffTypes {
 
-  IElementType LINE = new DiffElementType("LINE");
+  IElementType CHANGED = new DiffElementType("CHANGED");
+  IElementType INFO = new DiffElementType("INFO");
+  IElementType PLAIN = new DiffElementType("PLAIN");
 
   IElementType ADDED = new DiffTokenType("ADDED");
   IElementType COMMAND = new DiffTokenType("COMMAND");
   IElementType DELETED = new DiffTokenType("DELETED");
   IElementType EOLHINT = new DiffTokenType("EOLHINT");
   IElementType FILE = new DiffTokenType("FILE");
+  IElementType GIT_HEAD = new DiffTokenType("GIT_HEAD");
   IElementType HUNK_HEAD = new DiffTokenType("HUNK_HEAD");
   IElementType MODIFIED = new DiffTokenType("MODIFIED");
   IElementType OTHER = new DiffTokenType("OTHER");
@@ -23,8 +26,14 @@ public interface DiffTypes {
   class Factory {
     public static PsiElement createElement(ASTNode node) {
       IElementType type = node.getElementType();
-      if (type == LINE) {
-        return new DiffLineImpl(node);
+      if (type == CHANGED) {
+        return new DiffChangedImpl(node);
+      }
+      else if (type == INFO) {
+        return new DiffInfoImpl(node);
+      }
+      else if (type == PLAIN) {
+        return new DiffPlainImpl(node);
       }
       throw new AssertionError("Unknown element type: " + type);
     }

@@ -21,6 +21,8 @@ Now, there are two run configurations, *run in IDE* and *build plugin*.
 
 * *run in IDE* allows you to launch an IntelliJ Community Edition with the plugin enabled.
 * *build plugin* will generate `build/distributions/intellij-diff-plugin-*.zip`, which you can install in your JetBrains IDE.
+  Make sure to adjust `intellij/version` in `build.gradle`. Find valid version numbers here:
+  [stable](https://www.jetbrains.com/intellij-repository/releases) | [snapshots](https://www.jetbrains.com/intellij-repository/snapshots/) | [previous](https://www.jetbrains.com/idea/download/previous.html)
 
 To find out more about plugin development, please refer to the excellent official documentation:
 http://www.jetbrains.org/intellij/sdk/docs/

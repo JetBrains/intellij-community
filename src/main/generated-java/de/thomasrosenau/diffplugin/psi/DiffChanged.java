@@ -5,6 +5,6 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface DiffLine extends PsiElement {
+public interface DiffChanged extends PsiElement {
 
 }

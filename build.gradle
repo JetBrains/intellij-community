@@ -38,7 +38,7 @@ dependencies {
 }
 
 intellij {
-    version = '2018.3.4'
+    version = 'LATEST-EAP-SNAPSHOT'
 }
 
 File genSrc = file('src/main/generated-java')

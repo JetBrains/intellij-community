@@ -29,6 +29,8 @@
   tokenTypeClass="de.thomasrosenau.diffplugin.psi.DiffTokenType"
 }
 
-diffFile ::= line*
+diffFile ::= (info | changed | plain)*
 
-line ::= COMMAND | FILE | ADDED | DELETED | MODIFIED | SEPARATOR | HUNK_HEAD | EOLHINT | OTHER
+info ::= COMMAND | FILE | SEPARATOR | HUNK_HEAD | EOLHINT | GIT_HEAD
+changed ::=  ADDED | DELETED | MODIFIED
+plain ::= OTHER

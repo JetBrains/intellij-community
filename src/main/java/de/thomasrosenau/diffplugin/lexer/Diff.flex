@@ -31,6 +31,7 @@ import static de.thomasrosenau.diffplugin.psi.DiffTypes.*;
 %function advance
 %type IElementType
 %unicode
+%state GitHead, DEFAULT
 
 Newline = [\r\n]
 InputCharacter = [^\r\n]
@@ -39,32 +40,39 @@ Digits = [0-9]+
 Range = {Digits} "," {Digits}
 
 %%
-<YYINITIAL> {
-  ^ "diff " {InputCharacters} $ { return COMMAND; }
 
-  ^ {Range} $ { return HUNK_HEAD; }
-  ^ "--- " {Range} " ----" $ { return HUNK_HEAD; }
-  ^ "*** " {Range} " ****" $ { return HUNK_HEAD; }
-  ^ "@@" {InputCharacters} $ { return HUNK_HEAD; }
+<YYINITIAL> ^ "From "  {InputCharacters} $ { yybegin(GitHead); return GIT_HEAD; }
 
-  ^ "*** " {InputCharacters} $ { return FILE; }
-  ^ "--- " {InputCharacters} $ { return FILE; } // TODO: find out if first or second file (-u vs. -c)
-  ^ "+++ " {InputCharacters} $ { return FILE; }
-
-  ^ "--" ("-" | " ")? {Newline} { return SEPARATOR; }
-  ^ "***************" {Newline} { return SEPARATOR; }
-
-  // TODO: handle EOF
-  ^ [+>] {InputCharacters}? {Newline} { return ADDED; }
-  ^ [-<] {InputCharacters}? {Newline} { return DELETED; }
-  ^ "!" {InputCharacters} {Newline} { return MODIFIED; } // TODO: find out if added or deleted
-
-  ^ "\\" {InputCharacters} $ { return EOLHINT; } // TODO: find out if added or deleted
-
-  ^ {InputCharacters} $ { return OTHER; }
-
-  {Newline} { return WHITE_SPACE; }
-
+<GitHead> {
+  ^ "diff " {InputCharacters} $ { yybegin(DEFAULT); return COMMAND; }
+  ^ "---" {Newline} { return SEPARATOR; }
+  // TODO detect email address etc
+  ^ {InputCharacters} $ { return GIT_HEAD; }
 }
 
-[^] { return BAD_CHARACTER; }
+{Newline} { return WHITE_SPACE; }
+
+^ "diff " {InputCharacters} $ { yybegin(DEFAULT); return COMMAND; }
+
+^ {Range} $ { yybegin(DEFAULT); return HUNK_HEAD; }
+^ "--- " {Range} " ----" $ { yybegin(DEFAULT); return HUNK_HEAD; }
+^ "*** " {Range} " ****" $ { yybegin(DEFAULT); return HUNK_HEAD; }
+^ "@@" {InputCharacters} $ { yybegin(DEFAULT); return HUNK_HEAD; }
+
+^ "*** " {InputCharacters} $ { yybegin(DEFAULT); return FILE; }
+^ "--- " {InputCharacters} $ { yybegin(DEFAULT); return FILE; } // TODO: find out if first or second file (-u vs. -c)
+^ "+++ " {InputCharacters} $ { yybegin(DEFAULT); return FILE; }
+
+^ "--" ("-" | " ")? {Newline} { yybegin(DEFAULT); return SEPARATOR; }
+^ "***************" {Newline} { yybegin(DEFAULT); return SEPARATOR; }
+
+// TODO: handle EOF
+^ [+>] {InputCharacters}? {Newline} { yybegin(DEFAULT); return ADDED; }
+^ [-<] {InputCharacters}? {Newline} { yybegin(DEFAULT); return DELETED; }
+^ "!" {InputCharacters} {Newline} { yybegin(DEFAULT); return MODIFIED; } // TODO: find out if added or deleted
+
+^ "\\" {InputCharacters} $ { yybegin(DEFAULT); return EOLHINT; } // TODO: find out if added or deleted
+
+^ {InputCharacters} $ { yybegin(DEFAULT); return OTHER; }
+
+[^] { return BAD_CHARACTER; } // this should never happen; debugging only

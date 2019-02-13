@@ -49,6 +49,8 @@ public class DiffSyntaxHighlighter extends SyntaxHighlighterBase {
             DefaultLanguageHighlighterColors.DOC_COMMENT);
     public static final TextAttributesKey TEXT = createTextAttributesKey("PATCH_TEXT",
             HighlighterColors.TEXT);
+    public static final TextAttributesKey GIT_HEAD = createTextAttributesKey("PATCH_GIT_HEAD",
+            DefaultLanguageHighlighterColors.BLOCK_COMMENT);
 
     @NotNull
     @Override
@@ -75,6 +77,8 @@ public class DiffSyntaxHighlighter extends SyntaxHighlighterBase {
             return pack(SEPARATOR);
         } else if (tokenType.equals(DiffTypes.EOLHINT)) {
             return pack(EOLHINT);
+        } else if (tokenType.equals(DiffTypes.GIT_HEAD)) {
+            return pack(GIT_HEAD);
         } else {
             return pack(TEXT);
         }

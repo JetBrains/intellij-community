@@ -10,8 +10,8 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value="generateDiffLexer" />
           <option value="generateDiffParser" />
+          <option value="generateDiffLexer" />
           <option value="buildPlugin" />
           <option value="verifyPlugin" />
         </list>

@@ -7,7 +7,15 @@ import com.intellij.psi.PsiElement;
 
 public class DiffVisitor extends PsiElementVisitor {
 
-  public void visitLine(@NotNull DiffLine o) {
+  public void visitChanged(@NotNull DiffChanged o) {
+    visitPsiElement(o);
+  }
+
+  public void visitInfo(@NotNull DiffInfo o) {
+    visitPsiElement(o);
+  }
+
+  public void visitPlain(@NotNull DiffPlain o) {
     visitPsiElement(o);
   }
 
