@@ -56,7 +56,7 @@ public class ThemeJsonCompletionContributor extends CompletionContributor {
                                          @NotNull CompletionParameters parameters,
                                          @NotNull CompletionResultSet result) {
     if (parameters.getCompletionType() != CompletionType.BASIC) return;
-    if (!isInsideUiProperty(property)) return;
+    if (!ThemeJsonUtil.isInsideUiProperty(property)) return;
     if (!isPropertyKey(element)) return;
 
     String presentNamePart = ThemeJsonUtil.getParentNames(property);
@@ -64,15 +64,6 @@ public class ThemeJsonCompletionContributor extends CompletionContributor {
     boolean shouldSurroundWithQuotes = !element.getText().startsWith("\"");
     Iterable<LookupElement> lookupElements = getLookupElements(presentNamePart, shouldSurroundWithQuotes);
     result.addAllElements(lookupElements);
-  }
-
-  private static boolean isInsideUiProperty(@NotNull JsonProperty property) {
-    PsiElement parent = property;
-    while ((parent = parent.getParent()) != null) {
-      if (!(parent instanceof JsonProperty)) continue;
-      if ("ui".equals(((JsonProperty)parent).getName())) return true;
-    }
-    return false;
   }
 
   private static boolean isPropertyKey(@NotNull PsiElement element) {
