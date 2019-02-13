@@ -67,8 +67,8 @@ import static com.intellij.util.ui.UIUtil.CONTRAST_BORDER_COLOR;
 public class RunDashboardContent extends JPanel implements TreeContent, Disposable {
   public static final DataKey<RunDashboardContent> KEY = DataKey.create("runDashboardContent");
   @NonNls private static final String PLACE_TOOLBAR = "RunDashboardContent#Toolbar";
-  @NonNls private static final String RUN_DASHBOARD_CONTENT_TOOLBAR = "RunDashboardContentToolbar";
-  @NonNls private static final String RUN_DASHBOARD_TREE_TOOLBAR = "RunDashboardTreeToolbar";
+  @NonNls static final String RUN_DASHBOARD_CONTENT_TOOLBAR = "RunDashboardContentToolbar";
+  @NonNls static final String RUN_DASHBOARD_TREE_TOOLBAR = "RunDashboardTreeToolbar";
   @NonNls private static final String RUN_DASHBOARD_POPUP = "RunDashboardPopup";
   @NonNls private static final String RUN_DASHBOARD_STOP_ACTION_ID = "RunDashboard.Stop";
 

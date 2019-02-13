@@ -4,10 +4,12 @@ package com.intellij.execution.dashboard;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.dashboard.tree.RunConfigurationNode;
 import com.intellij.execution.dashboard.tree.RunDashboardGrouper;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.services.ServiceViewManager;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.execution.ui.RunnerLayoutUi;
@@ -23,6 +25,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -76,8 +79,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     myProject = project;
 
     ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
-    ContentUI contentUI = new PanelContentUI();
-    myContentManager = contentFactory.createContentManager(contentUI, false, project);
+    myContentManager = contentFactory.createContentManager(new PanelContentUI(), false, project);
     myContentManagerListener = new DashboardContentManagerListener();
     myContentManager.addContentManagerListener(myContentManagerListener);
     myReuseCondition = this::canReuseContent;
@@ -156,14 +158,29 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     myContentManager.addContentManagerListener(new ContentManagerAdapter() {
       @Override
       public void selectionChanged(@NotNull ContentManagerEvent event) {
-        RunnerLayoutUiImpl ui = getRunnerLayoutUi(RunContentManagerImpl.getRunContentDescriptorByContent(event.getContent()));
-        if (ui != null) {
-          ui.setLeftToolbarVisible(false);
-          ui.setContentToolbarBefore(false);
+        boolean onAdd = event.getOperation() == ContentManagerEvent.ContentOperation.add;
+        if (onAdd) {
+          RunnerLayoutUiImpl ui = getRunnerLayoutUi(RunContentManagerImpl.getRunContentDescriptorByContent(event.getContent()));
+          if (ui != null) {
+            ui.setLeftToolbarVisible(false);
+            ui.setContentToolbarBefore(false);
+          }
         }
 
         updateToolWindowContent();
         updateDashboard(true);
+
+        if (Registry.is("ide.service.view") && onAdd) {
+          RunContentDescriptor contentDescriptor = RunContentManagerImpl.getRunContentDescriptorByContent(event.getContent());
+          Set<RunnerAndConfigurationSettings> configurationsSettings =
+            ExecutionManagerImpl.getInstance(myProject).getConfigurations(contentDescriptor);
+          RunnerAndConfigurationSettings configurationSettings = ContainerUtil.getFirstItem(configurationsSettings);
+          if (configurationSettings != null) {
+            RunConfigurationNode node = new RunConfigurationNode(myProject, Pair.create(configurationSettings, contentDescriptor),
+                                                                 getContributor(configurationSettings.getType()));
+            ServiceViewManager.getInstance(myProject).selectNode(node);
+          }
+        }
       }
 
       @Override
@@ -182,7 +199,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
 
   @Override
   public String getToolWindowId() {
-    return ToolWindowId.RUN_DASHBOARD;
+    return Registry.is("ide.service.view") ? ToolWindowId.SERVICES : ToolWindowId.RUN_DASHBOARD;
   }
 
   @Override
@@ -356,6 +373,10 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
 
   @Override
   public void updateDashboard(final boolean withStructure) {
+    if (Registry.is("ide.service.view")) {
+      ServiceViewManager.getInstance(myProject).contentChanged(withStructure);
+    }
+
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
     if (toolWindowManager == null) return;
 
@@ -365,10 +386,11 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
       }
 
       if (withStructure) {
-        boolean available = hasContent();
+        boolean canCreate = !Registry.is("ide.service.view");
+        boolean available = hasContent() && canCreate;
         ToolWindow toolWindow = toolWindowManager.getToolWindow(getToolWindowId());
         if (toolWindow == null) {
-          if (!myState.configurationTypes.isEmpty() || available) {
+          if (canCreate && (!myState.configurationTypes.isEmpty() || available)) {
             toolWindow = createToolWindow(toolWindowManager, available);
           }
           if (available) {
@@ -377,10 +399,12 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
           return;
         }
 
-        boolean doShow = !toolWindow.isAvailable() && available;
-        toolWindow.setAvailable(available, null);
-        if (doShow) {
-          toolWindow.show(null);
+        if (canCreate) {
+          boolean doShow = !toolWindow.isAvailable() && available;
+          toolWindow.setAvailable(available, null);
+          if (doShow) {
+            toolWindow.show(null);
+          }
         }
       }
 

@@ -1153,6 +1153,16 @@
               use-shortcut-of="$Delete"/>
     </group>
 
+    <group id="ServiceViewTreeToolbar"/>
+    <group id="ServiceViewNodeToolbar">
+      <group class="com.intellij.execution.services.ServiceView$ItemToolbarActionGroup"/>
+      <separator/>
+    </group>
+    <group id="ServiceViewNodePopup">
+      <group class="com.intellij.execution.services.ServiceView$ItemPopupActionGroup"/>
+      <separator/>
+    </group>
+
     <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction">
       <add-to-group group-id="EditorTabPopupMenuEx" anchor="after" relative-to-action="AddAllToFavorites"/>
     </action>
