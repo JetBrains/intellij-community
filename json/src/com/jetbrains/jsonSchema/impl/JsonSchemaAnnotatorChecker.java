@@ -41,6 +41,7 @@ class JsonSchemaAnnotatorChecker {
   private final JsonComplianceCheckerOptions myOptions;
   private boolean myHadTypeError;
   private static final String ENUM_MISMATCH_PREFIX = "Value should be one of: ";
+  private static final String ACTUAL_PREFIX = "Actual: ";
 
   protected JsonSchemaAnnotatorChecker(JsonComplianceCheckerOptions options) {
     myOptions = options;
@@ -125,26 +126,25 @@ class JsonSchemaAnnotatorChecker {
     myErrors.put(holder, new JsonValidationError(error, fixableIssueKind, data, priority));
   }
 
-  private void typeError(final @NotNull PsiElement value, final @NotNull JsonSchemaType... allowedTypes) {
-    if (allowedTypes.length > 0) {
-      if (allowedTypes.length == 1) {
-        error(String.format("Type is not allowed. Expected: %s.", allowedTypes[0].getName()), value,
-              JsonValidationError.FixableIssueKind.ProhibitedType,
-              new JsonValidationError.TypeMismatchIssueData(allowedTypes),
-              JsonErrorPriority.TYPE_MISMATCH);
-      } else {
-        final String typesText = Arrays.stream(allowedTypes)
-                                       .map(JsonSchemaType::getName)
-                                       .distinct()
-                                       .sorted(Comparator.naturalOrder())
-                                       .collect(Collectors.joining(", "));
-        error(String.format("Type is not allowed. Expected one of: %s.", typesText), value,
-              JsonValidationError.FixableIssueKind.ProhibitedType,
-              new JsonValidationError.TypeMismatchIssueData(allowedTypes),
-              JsonErrorPriority.TYPE_MISMATCH);
-      }
+  private void typeError(final @NotNull PsiElement value, @Nullable JsonSchemaType currentType, final @NotNull JsonSchemaType... allowedTypes) {
+    if (allowedTypes.length == 0) return;
+    String currentTypeDesc = currentType == null ? "" : (" " + ACTUAL_PREFIX + currentType.getName() + ".");
+    String prefix = "Incompatible types.\n";
+    if (allowedTypes.length == 1) {
+      error(String.format(prefix + " Required: %s.%s", allowedTypes[0].getName(), currentTypeDesc), value,
+            JsonValidationError.FixableIssueKind.ProhibitedType,
+            new JsonValidationError.TypeMismatchIssueData(allowedTypes),
+            JsonErrorPriority.TYPE_MISMATCH);
     } else {
-      error("Type is not allowed", value, JsonErrorPriority.TYPE_MISMATCH);
+      final String typesText = Arrays.stream(allowedTypes)
+                                     .map(JsonSchemaType::getName)
+                                     .distinct()
+                                     .sorted(Comparator.naturalOrder())
+                                     .collect(Collectors.joining(", "));
+      error(String.format(prefix + " Required one of: %s.%s", typesText, currentTypeDesc), value,
+            JsonValidationError.FixableIssueKind.ProhibitedType,
+            new JsonValidationError.TypeMismatchIssueData(allowedTypes),
+            JsonErrorPriority.TYPE_MISMATCH);
     }
     myHadTypeError = true;
   }
@@ -159,7 +159,7 @@ class JsonSchemaAnnotatorChecker {
     if (type != null) {
       JsonSchemaType schemaType = getMatchingSchemaType(schema, type);
       if (schemaType != null && !schemaType.equals(type)) {
-        typeError(value.getDelegate(), schemaType);
+        typeError(value.getDelegate(), type, schemaType);
       }
       else {
         if (JsonSchemaType._string_number.equals(type)) {
@@ -574,7 +574,7 @@ class JsonSchemaAnnotatorChecker {
     final JsonSchemaType type = JsonSchemaType.getType(value);
     JsonSchemaObject selected = null;
     if (type == null) {
-      if (!value.isShouldBeIgnored()) checker.typeError(value.getDelegate(), getExpectedTypes(collection));
+      if (!value.isShouldBeIgnored()) checker.typeError(value.getDelegate(), null, getExpectedTypes(collection));
     }
     else {
       final List<JsonSchemaObject> filtered = ContainerUtil.newArrayListWithCapacity(collection.size());
@@ -582,7 +582,7 @@ class JsonSchemaAnnotatorChecker {
         if (!areSchemaTypesCompatible(schema, type)) continue;
         filtered.add(schema);
       }
-      if (filtered.isEmpty()) checker.typeError(value.getDelegate(), getExpectedTypes(collection));
+      if (filtered.isEmpty()) checker.typeError(value.getDelegate(), type, getExpectedTypes(collection));
       else if (filtered.size() == 1) {
         selected = filtered.get(0);
         checker.checkByScheme(value, selected);
@@ -1126,13 +1126,22 @@ class JsonSchemaAnnotatorChecker {
 
       if (allTypes.size() == 1) return errors.iterator().next();
 
-      String commonTypeMessage = "Type is not allowed. Expected one of: " + allTypes.stream().map(t -> t.getDescription()).sorted().collect(Collectors.joining(", ")) + ".";
+      List<String> actualInfos = errors.stream().map(e -> e.getMessage()).map(JsonSchemaAnnotatorChecker::fetchActual).distinct().collect(Collectors.toList());
+      String actualInfo = actualInfos.size() == 1 ? (" " + ACTUAL_PREFIX + actualInfos.get(0) + ".") : "";
+      String commonTypeMessage = "Incompatible types.\n Required one of: " + allTypes.stream().map(t -> t.getDescription()).sorted().collect(Collectors.joining(", ")) + "." + actualInfo;
       return new JsonValidationError(commonTypeMessage, JsonValidationError.FixableIssueKind.TypeMismatch,
                                      new JsonValidationError.TypeMismatchIssueData(ContainerUtil.toArray(allTypes, JsonSchemaType[]::new)),
                                      errors.iterator().next().getPriority());
     }
 
     return null;
+  }
+
+  private static String fetchActual(String message) {
+    int actual = message.indexOf(ACTUAL_PREFIX);
+    if (actual == -1) return null;
+    String substring = message.substring(actual + ACTUAL_PREFIX.length());
+    return StringUtil.trimEnd(substring, ".");
   }
 
   public boolean isCorrect() {
