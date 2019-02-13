@@ -70,6 +70,7 @@ OUT="$(get_absolute_path "$OUT")"
 DIST="$(get_absolute_path "$DIST")"
 
 ANT="java -jar lib/ant/lib/ant-launcher.jar -f build.xml"
+BAZEL="../base/bazel/bazel"
 
 echo "## Building android-studio ##"
 echo "## Dist dir : $DIST"
@@ -90,9 +91,15 @@ echo "## JAVA_HOME: $JAVA_HOME"
 
 export PATH=$JDK_18_x64/bin:$PATH
 
+echo "## BAZEL: $BAZEL"
+readonly BAZEL_BIN="$($BAZEL info "bazel-bin")"
+echo "## BAZEL_BIN: $BAZEL_BIN"
+
 $ANT "-Dintellij.build.output.root=$OUT" "-Dbuild.number=$BNUM" "$ASWB_PROPERTY" "-Dbundle.ui.tests=$UITESTS" -Dbundle.gradle.release.plugin=true build
 
 $ANT "-Dintellij.build.output.root=$OUT/updater" fullupdater
+
+$BAZEL build //tools/idea/updater:updater_deploy.jar
 
 echo "## Copying android-studio distribution files"
 mkdir -p "$DIST"
@@ -101,7 +108,7 @@ if [ "$ASWB" = true ]; then
 else
   cp -Rfv "$OUT"/artifacts/android-studio* "$DIST"
 
-  cp -Rfv "$OUT"/updater/artifacts/updater-full.jar "$DIST"/android-studio-updater.jar
+  cp -Rfv "${BAZEL_BIN}"/tools/idea/updater/updater_deploy.jar "$DIST"/android-studio-updater.jar
   cp -Rfv "$OUT"/updater/artifacts/sdk-patcher.zip "$DIST"/sdk-patcher.zip
 
   # write the version number into the windows installer dir
@@ -110,7 +117,7 @@ else
 fi
 
 # execute a bunch of sanity checks on the final artifacts
-../base/bazel/bazel test \
+$BAZEL test \
     //tools/idea:test_studio \
     --test_output=streamed \
     --test_arg=--out="$OUT" \
