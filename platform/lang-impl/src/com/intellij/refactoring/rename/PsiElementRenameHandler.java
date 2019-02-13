@@ -3,6 +3,7 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.scratch.ScratchFileType;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
