@@ -63,7 +63,7 @@ public class AsyncHighlighterUpdater {
 
   @TestOnly
   public static void completeAsyncTasks() {
-    NonBlockingReadActionImpl.completeAsyncTasks();
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
   }
 
 }
