@@ -26,9 +26,11 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="4a4ba" class="javax.swing.JEditorPane" binding="myResultPane">
+              <component id="29cce" class="javax.swing.JEditorPane" binding="myEventLogPanel">
                 <constraints/>
-                <properties/>
+                <properties>
+                  <text value="Add event log to filter here, one event per line"/>
+                </properties>
               </component>
             </children>
           </scrollpane>
@@ -38,7 +40,7 @@
             </constraints>
             <properties>
               <continuousLayout value="true"/>
-              <dividerLocation value="200"/>
+              <dividerLocation value="230"/>
               <dividerSize value="2"/>
             </properties>
             <border type="empty"/>
@@ -66,12 +68,13 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <component id="29cce" class="javax.swing.JEditorPane" binding="myEventLogPanel">
+                  <grid id="c548d" binding="myResultPanel" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                    <margin top="0" left="0" bottom="0" right="0"/>
                     <constraints/>
-                    <properties>
-                      <text value="Add event log to filter here"/>
-                    </properties>
-                  </component>
+                    <properties/>
+                    <border type="none"/>
+                    <children/>
+                  </grid>
                 </children>
               </scrollpane>
             </children>
