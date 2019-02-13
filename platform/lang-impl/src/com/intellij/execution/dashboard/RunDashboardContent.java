@@ -19,9 +19,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.actions.StopAction;
 import com.intellij.execution.dashboard.tree.*;
 import com.intellij.execution.runners.FakeRerunAction;
-import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManagerImpl;
-import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
@@ -59,6 +57,7 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
+import static com.intellij.execution.dashboard.RunDashboardManagerImpl.getRunnerLayoutUi;
 import static com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus.*;
 import static com.intellij.util.ui.UIUtil.CONTRAST_BORDER_COLOR;
 
@@ -198,7 +197,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     });
     putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, (DataProvider)dataId -> {
       if (KEY.getName().equals(dataId)) {
-        return RunDashboardContent.this;
+        return this;
       }
       else if (PlatformDataKeys.HELP_ID.is(dataId)) {
         return RunDashboardManager.getInstance(myProject).getToolWindowContextHelpId();
@@ -320,18 +319,10 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   }
 
   private void onContentAdded(Content content) {
-    RunContentDescriptor descriptor = RunContentManagerImpl.getRunContentDescriptorByContent(content);
-    if (descriptor == null) {
-      return;
-    }
-    RunnerLayoutUi layoutUi = descriptor.getRunnerLayoutUi();
-    if (!(layoutUi instanceof RunnerLayoutUiImpl)) {
-      return;
-    }
-    RunnerLayoutUiImpl layoutUiImpl = (RunnerLayoutUiImpl)layoutUi;
-    layoutUiImpl.setLeftToolbarVisible(false);
-    layoutUiImpl.setContentToolbarBefore(false);
-    List<AnAction> leftToolbarActions = layoutUiImpl.getActions();
+    RunnerLayoutUiImpl ui = getRunnerLayoutUi(RunContentManagerImpl.getRunContentDescriptorByContent(content));
+    if (ui == null) return;
+
+    List<AnAction> leftToolbarActions = ui.getActions();
     myContentActions.put(content, leftToolbarActions);
     updateContentToolbar(content);
   }
