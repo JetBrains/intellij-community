@@ -15,10 +15,14 @@
  */
 package com.jetbrains.python.psi.impl.stubs;
 
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.stubs.PrebuiltStubsProviderBase;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyFileElementType;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * @author traff
@@ -36,5 +40,11 @@ public class PyPrebuiltStubsProvider extends PrebuiltStubsProviderBase {
   @Override
   protected String getDirName() {
     return NAME;
+  }
+
+  @NotNull
+  @Override
+  public Set<FileType> getFileTypes() {
+    return Collections.singleton(PythonFileType.INSTANCE);
   }
 }

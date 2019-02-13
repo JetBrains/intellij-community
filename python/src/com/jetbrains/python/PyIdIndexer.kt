@@ -3,17 +3,22 @@ package com.jetbrains.python
 
 import com.intellij.index.PrebuiltIndexAwareIdIndexer
 import com.intellij.lexer.Lexer
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.psi.impl.cache.impl.OccurrenceConsumer
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
 import com.intellij.psi.impl.cache.impl.id.LexerBasedIdIndexer
 import com.intellij.util.indexing.FileContent
 import com.jetbrains.python.lexer.PythonLexer
 import com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider
+import java.util.*
 
 /**
  * @author traff
  */
 class PyIdIndexer : PrebuiltIndexAwareIdIndexer() {
+  override val fileTypes: Set<FileType>
+    get() = setOf(PythonFileType.INSTANCE)
+
   private val myIndexer = MyPyIdIndexer()
 
   override val dirName: String get() = PyPrebuiltStubsProvider.NAME
