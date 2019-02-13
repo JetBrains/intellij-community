@@ -52,6 +52,7 @@ import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
 import gnu.trove.THashSet;
 import icons.MavenIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
@@ -87,6 +88,7 @@ import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.util.xml.NanoXmlBuilder.stop;
 
 public class MavenUtil {
+  @ApiStatus.Experimental
   public static final ProjectSystemId SYSTEM_ID = new ProjectSystemId("MAVEN");
   public static final String MAVEN_NOTIFICATION_GROUP = "Maven";
   public static final String SETTINGS_XML = "settings.xml";

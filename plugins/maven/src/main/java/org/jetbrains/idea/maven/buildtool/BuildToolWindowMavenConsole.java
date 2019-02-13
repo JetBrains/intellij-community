@@ -7,6 +7,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.project.MavenConsoleImpl;
@@ -19,6 +20,7 @@ import static com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskT
 /**
  * implementation of maven console which sends data to build tool window.
  */
+@ApiStatus.Experimental
 public class BuildToolWindowMavenConsole extends MavenConsole {
   private final MavenBuildEventProcessor myEventParser;
 

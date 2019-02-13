@@ -20,6 +20,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenResumeAction;
@@ -32,6 +33,7 @@ import java.util.Collections;
 
 import static com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType.EXECUTE_TASK;
 
+@ApiStatus.Experimental
 public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAcceptor {
   @NotNull private final BuildProgressListener myBuildProgressListener;
   @NotNull private final Project myProject;
