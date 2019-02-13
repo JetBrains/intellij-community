@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.language;
 
-import com.intellij.lexer.FlexAdapter;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -31,7 +30,7 @@ public class LombokConfigSyntaxHighlighter extends SyntaxHighlighterBase {
   @NotNull
   @Override
   public Lexer getHighlightingLexer() {
-    return new FlexAdapter(new LombokConfigLexer(null));
+    return new LombokConfigLexerAdapter();
   }
 
   @NotNull

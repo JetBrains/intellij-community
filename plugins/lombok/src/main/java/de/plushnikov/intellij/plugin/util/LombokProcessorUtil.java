@@ -46,7 +46,7 @@ public class LombokProcessorUtil {
   }
 
   @Nullable
-  public static String getLevelVisibility(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter) {
+  private static String getLevelVisibility(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter) {
     return convertAccessLevelToJavaModifier(PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, parameter));
   }
 

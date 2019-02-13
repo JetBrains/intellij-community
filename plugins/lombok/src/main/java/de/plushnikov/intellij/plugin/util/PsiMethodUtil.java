@@ -90,7 +90,7 @@ public class PsiMethodUtil {
     return false;
   }
 
-  public static boolean isSimilarMethod(@NotNull PsiMethod classMethod, @NotNull String methodName, int methodArgCount) {
+  private static boolean isSimilarMethod(@NotNull PsiMethod classMethod, @NotNull String methodName, int methodArgCount) {
     boolean equalNames = methodName.equalsIgnoreCase(classMethod.getName());
 
     int parametersCount = classMethod.getParameterList().getParametersCount();

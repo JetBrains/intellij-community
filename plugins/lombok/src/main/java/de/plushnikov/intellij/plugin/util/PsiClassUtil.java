@@ -54,7 +54,7 @@ public class PsiClassUtil {
    * @return all inner classes of the class
    */
   @NotNull
-  public static Collection<PsiClass> collectInnerClassesIntern(@NotNull PsiClass psiClass) {
+  private static Collection<PsiClass> collectInnerClassesIntern(@NotNull PsiClass psiClass) {
     if (psiClass instanceof PsiExtensibleClass) {
       return ((PsiExtensibleClass) psiClass).getOwnInnerClasses();
     } else {
