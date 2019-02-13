@@ -11,7 +11,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -40,7 +39,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -133,7 +131,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     this(searchContext, replace, false);
   }
 
-  public StructuralSearchDialog(SearchContext searchContext, boolean replace, boolean editConfigOnly) {
+  public StructuralSearchDialog(@NotNull SearchContext searchContext, boolean replace, boolean editConfigOnly) {
     super(searchContext.getProject(), true);
 
     if (!editConfigOnly) {
@@ -242,32 +240,6 @@ public class StructuralSearchDialog extends DialogWrapper {
       return compiledPattern != null;
     } catch (MalformedPatternException e) {
       return false;
-    }
-  }
-
-  private void detectFileType() {
-    myFileType = StructuralSearchUtil.getDefaultFileType();
-    final PsiFile file = mySearchContext.getFile();
-    PsiElement context = file;
-
-    final Editor editor = mySearchContext.getEditor();
-    if (editor != null && context != null) {
-      final int offset = editor.getCaretModel().getOffset();
-      context = InjectedLanguageManager.getInstance(getProject()).findInjectedElementAt(file, offset);
-      if (context == null) {
-        context = file.findElementAt(offset);
-      }
-      if (context != null) {
-        context = context.getParent();
-      }
-    }
-    if (context != null) {
-      final Language language = context.getLanguage();
-      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language);
-      if (profile != null) {
-        final FileType fileType = profile.detectFileType(context);
-        myFileType = fileType != null ? fileType : language.getAssociatedFileType();
-      }
     }
   }
 
@@ -492,7 +464,7 @@ public class StructuralSearchDialog extends DialogWrapper {
       }
     }
     Collections.sort(types, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
-    detectFileType();
+    myFileType = UIUtil.detectFileType(mySearchContext);
     myFileTypesComboBox = new FileTypeSelector(types);
     myFileTypesComboBox.setMinimumAndPreferredWidth(200);
     myFileTypesComboBox.setSelectedItem(myFileType, myDialect, myContext);

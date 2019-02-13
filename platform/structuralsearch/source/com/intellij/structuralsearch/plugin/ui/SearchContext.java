@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -23,9 +23,7 @@ public final class SearchContext {
   private final Editor myEditor;
 
   public SearchContext(@NotNull Project project) {
-    myProject = project;
-    myFile = null;
-    myEditor = null;
+    this(project, null, null);
   }
 
   public SearchContext(DataContext context) {
@@ -37,6 +35,12 @@ public final class SearchContext {
     }
     myFile = file;
     myEditor = CommonDataKeys.EDITOR.getData(context);
+  }
+
+  SearchContext(@NotNull Project project, PsiFile file, Editor editor) {
+    myProject = project;
+    myFile = file;
+    myEditor = editor;
   }
 
   @Nullable
