@@ -45,7 +45,7 @@ public class CachedValueImpl<T> extends CachedValueBase<T> implements CachedValu
   }
 
   @Override
-  public boolean isFromMyProject(Project project) {
+  public boolean isFromMyProject(@NotNull Project project) {
     return true;
   }
 }

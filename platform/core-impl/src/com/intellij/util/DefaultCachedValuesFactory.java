@@ -41,13 +41,13 @@ public class DefaultCachedValuesFactory implements CachedValuesFactory {
       }
 
       @Override
-      public boolean isFromMyProject(Project project) {
+      public boolean isFromMyProject(@NotNull Project project) {
         return myProject == project;
       }
     } : new CachedValueImpl<T>(provider) {
 
       @Override
-      public boolean isFromMyProject(Project project) {
+      public boolean isFromMyProject(@NotNull Project project) {
         return myProject == project;
       }
     };
@@ -58,7 +58,7 @@ public class DefaultCachedValuesFactory implements CachedValuesFactory {
                                                                               boolean trackValue) {
     return trackValue ? new ParameterizedCachedValueImpl<T, P>(provider) {
       @Override
-      public boolean isFromMyProject(Project project) {
+      public boolean isFromMyProject(@NotNull Project project) {
         return myProject == project;
       }
 
@@ -68,7 +68,7 @@ public class DefaultCachedValuesFactory implements CachedValuesFactory {
       }
     } : new ParameterizedCachedValueImpl<T, P>(provider) {
       @Override
-      public boolean isFromMyProject(Project project) {
+      public boolean isFromMyProject(@NotNull Project project) {
         return myProject == project;
       }
     };

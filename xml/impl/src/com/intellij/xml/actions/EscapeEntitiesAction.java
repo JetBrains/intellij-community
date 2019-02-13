@@ -45,7 +45,7 @@ public class EscapeEntitiesAction extends BaseCodeInsightAction implements CodeI
       return new CachedValueProvider.Result<>(result, ModificationTracker.NEVER_CHANGED);
     }) {
     @Override
-    public boolean isFromMyProject(Project project) {
+    public boolean isFromMyProject(@NotNull Project project) {
       return true;
     }
   };

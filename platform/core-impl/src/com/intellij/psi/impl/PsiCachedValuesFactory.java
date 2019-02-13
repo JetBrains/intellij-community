@@ -53,7 +53,7 @@ public class PsiCachedValuesFactory implements CachedValuesFactory {
                                                                               boolean trackValue) {
     return trackValue ? new PsiParameterizedCachedValue<T, P>(myManager, provider) {
       @Override
-      public boolean isFromMyProject(Project project) {
+      public boolean isFromMyProject(@NotNull Project project) {
         return myProject == project;
       }
 
@@ -63,7 +63,7 @@ public class PsiCachedValuesFactory implements CachedValuesFactory {
       }
     } : new PsiParameterizedCachedValue<T, P>(myManager, provider) {
       @Override
-      public boolean isFromMyProject(Project project) {
+      public boolean isFromMyProject(@NotNull Project project) {
         return myProject == project;
       }
     };

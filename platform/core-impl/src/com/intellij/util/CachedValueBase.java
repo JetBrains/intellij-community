@@ -25,6 +25,7 @@ public abstract class CachedValueBase<T> {
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("cachedValue");
   private volatile SoftReference<Data<T>> myData;
 
+  @NotNull
   private Data<T> computeData(@Nullable CachedValueProvider.Result<T> result) {
     T value = result == null ? null : result.getValue();
     Object[] dependencies = getDependencies(result);
@@ -32,8 +33,8 @@ public abstract class CachedValueBase<T> {
     Object[] inferredDependencies;
     long[] inferredTimeStamps;
     if (dependencies == null) {
-      inferredDependencies = null;
-      inferredTimeStamps = null;
+      inferredDependencies = ArrayUtil.EMPTY_OBJECT_ARRAY;
+      inferredTimeStamps = ArrayUtil.EMPTY_LONG_ARRAY;
     }
     else {
       TLongArrayList timeStamps = new TLongArrayList(dependencies.length);
@@ -115,18 +116,15 @@ public abstract class CachedValueBase<T> {
   }
 
   protected boolean isUpToDate(@NotNull Data data) {
-    if (data.myTimeStamps == null) return true;
-
     for (int i = 0; i < data.myDependencies.length; i++) {
       Object dependency = data.myDependencies[i];
-      if (dependency == null) continue;
       if (isDependencyOutOfDate(dependency, data.myTimeStamps[i])) return false;
     }
 
     return true;
   }
 
-  protected boolean isDependencyOutOfDate(Object dependency, long oldTimeStamp) {
+  protected boolean isDependencyOutOfDate(@NotNull Object dependency, long oldTimeStamp) {
     if (dependency instanceof CachedValueBase) {
       return !((CachedValueBase)dependency).hasUpToDateValue();
     }
@@ -134,9 +132,9 @@ public abstract class CachedValueBase<T> {
     return timeStamp < 0 || timeStamp != oldTimeStamp;
   }
 
-  private void collectDependencies(TLongArrayList timeStamps, List<Object> resultingDeps, Object[] dependencies) {
+  private void collectDependencies(@NotNull TLongArrayList timeStamps, @NotNull List<Object> resultingDeps, @NotNull Object[] dependencies) {
     for (Object dependency : dependencies) {
-      if (dependency == null || dependency == ObjectUtils.NULL) continue;
+      if (dependency == ObjectUtils.NULL) continue;
       if (dependency instanceof Object[]) {
         collectDependencies(timeStamps, resultingDeps, (Object[])dependency);
       }
@@ -147,7 +145,7 @@ public abstract class CachedValueBase<T> {
     }
   }
 
-  protected long getTimeStamp(Object dependency) {
+  protected long getTimeStamp(@NotNull Object dependency) {
     if (dependency instanceof ModificationTracker) {
       return ((ModificationTracker)dependency).getModificationCount();
     }
@@ -174,23 +172,25 @@ public abstract class CachedValueBase<T> {
     }
   }
 
-  public T setValue(final CachedValueProvider.Result<T> result) {
+  public T setValue(@NotNull CachedValueProvider.Result<T> result) {
     Data<T> data = computeData(result);
     setData(data);
     valueUpdated(result.getDependencyItems());
     return data.getValue();
   }
 
-  protected void valueUpdated(@Nullable Object[] dependencies) {}
+  protected void valueUpdated(@NotNull Object[] dependencies) {}
 
-  public abstract boolean isFromMyProject(Project project);
+  public abstract boolean isFromMyProject(@NotNull Project project);
 
   protected static class Data<T> implements Getter<T> {
     private final T myValue;
+    @NotNull
     private final Object[] myDependencies;
+    @NotNull
     private final long[] myTimeStamps;
 
-    Data(final T value, final Object[] dependencies, final long[] timeStamps) {
+    Data(final T value, @NotNull Object[] dependencies, @NotNull long[] timeStamps) {
       myValue = value;
       myDependencies = dependencies;
       myTimeStamps = timeStamps;
@@ -210,8 +210,8 @@ public abstract class CachedValueBase<T> {
     @NotNull private final ProfilingInfo myProfilingInfo;
 
     private ProfilingData(T value,
-                          Object[] dependencies,
-                          long[] timeStamps,
+                          @NotNull Object[] dependencies,
+                          @NotNull long[] timeStamps,
                           @NotNull ProfilingInfo profilingInfo) {
       super(value, dependencies, timeStamps);
       myProfilingInfo = profilingInfo;
