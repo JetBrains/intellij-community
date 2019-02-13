@@ -20,6 +20,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.vcs.log.VcsLogDataKeys;
+import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
@@ -40,8 +42,9 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
     }
     VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
     VcsLogManager logManager = e.getData(VcsLogInternalDataKeys.LOG_MANAGER);
+    VcsLogUi logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI);
     // only for main log (it is a question, how and where we want to open tabs for external logs)
-    e.getPresentation().setEnabledAndVisible(logManager != null && projectLog.getLogManager() == logManager);
+    e.getPresentation().setEnabledAndVisible(logManager != null && projectLog.getLogManager() == logManager && logUi != null);
   }
 
   @Override
@@ -49,6 +52,8 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VcsProjectLog.getInstance(project).getTabsManager().openAnotherLogTab(e.getRequiredData(VcsLogInternalDataKeys.LOG_MANAGER));
+    VcsLogManager logManager = e.getRequiredData(VcsLogInternalDataKeys.LOG_MANAGER);
+    VcsLogUi logUi = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
+    VcsProjectLog.getInstance(project).getTabsManager().openAnotherLogTab(logManager, logUi.getFilterUi().getFilters());
   }
 }

@@ -56,10 +56,6 @@ public class VcsLogTabsManager {
     return myUiProperties.getTabs();
   }
 
-  public void openAnotherLogTab(@NotNull VcsLogManager manager) {
-    openAnotherLogTab(manager, null);
-  }
-
   @NotNull
   public VcsLogUiImpl openAnotherLogTab(@NotNull VcsLogManager manager, @Nullable VcsLogFilterCollection filters) {
     return openLogTab(manager, VcsLogContentUtil.generateTabId(myProject), true, filters);
