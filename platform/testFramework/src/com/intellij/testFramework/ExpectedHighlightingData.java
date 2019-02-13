@@ -666,7 +666,7 @@ public class ExpectedHighlightingData {
         boolean matched;
         if (value.contains("{0")) {
           parse = new MessageFormat(value).parse(info.getDescription(), position);
-          matched = parse != null && position.getIndex() == info.getDescription().length() && position.getErrorIndex() == -1;
+          matched = parse != null && info.getDescription() != null && position.getIndex() == info.getDescription().length() && position.getErrorIndex() == -1;
         }
         else {
           parse = ArrayUtil.EMPTY_OBJECT_ARRAY;
