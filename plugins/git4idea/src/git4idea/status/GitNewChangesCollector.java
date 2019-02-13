@@ -231,7 +231,7 @@ class GitNewChangesCollector extends GitChangesCollector {
           String oldFilename = split[pos];
 
           if (yStatus == 'D') {
-            reportDeleted(filepath, head);
+            reportDeleted(oldFilename, head);
           } else if (yStatus == ' ' || yStatus == 'M' || yStatus == 'T') {
             reportRename(filepath, oldFilename, head);
           } else {
