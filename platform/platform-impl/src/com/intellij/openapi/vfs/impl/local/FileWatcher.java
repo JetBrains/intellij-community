@@ -97,14 +97,13 @@ public class FileWatcher {
   private final ExecutorService myFileWatcherExecutor = Registry.is("vfs.filewatcher.works.in.async.way") ?
                                                         AppExecutorUtil.createBoundedApplicationPoolExecutor("File Watcher", 1) :
                                                         MoreExecutors.newDirectExecutorService();
-  private final Future<?> myWatcherInitialization;
 
   FileWatcher(@NotNull ManagingFS managingFS) {
     myManagingFS = managingFS;
     myNotificationSink = new MyFileWatcherNotificationSink();
     myWatchers = PluggableFileWatcher.EP_NAME.getExtensions();
 
-    myWatcherInitialization = myFileWatcherExecutor.submit(() -> {
+    myFileWatcherExecutor.submit(() -> {
       for (PluggableFileWatcher watcher : myWatchers) {
         watcher.initialize(myManagingFS, myNotificationSink);
       }
@@ -120,7 +119,6 @@ public class FileWatcher {
   }
 
   public boolean isOperational() {
-    waitForFuture(myWatcherInitialization);
     for (PluggableFileWatcher watcher : myWatchers) {
       if (watcher.isOperational()) return true;
     }
