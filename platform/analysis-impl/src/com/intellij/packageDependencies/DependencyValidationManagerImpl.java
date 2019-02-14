@@ -62,7 +62,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     super(project);
 
     myNamedScopeManager = namedScopeManager;
-    namedScopeManager.addScopeListener(() -> reloadScopes());
+    namedScopeManager.addScopeListener(() -> reloadScopes(), project);
   }
 
   @Override

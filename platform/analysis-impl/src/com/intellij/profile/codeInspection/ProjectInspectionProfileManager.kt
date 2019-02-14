@@ -46,11 +46,7 @@ private val defaultSchemeDigest = JDOMUtil.load("""<component name="InspectionPr
 </component>""").digest()
 
 @State(name = "InspectionProjectProfileManager", storages = [(Storage(value = "inspectionProfiles/profiles_settings.xml", exclusive = true))])
-class ProjectInspectionProfileManager(val project: Project,
-                                      private val applicationProfileManager: InspectionProfileManager,
-                                      private val scopeManager: DependencyValidationManager,
-                                      private val localScopesHolder: NamedScopeManager,
-                                      schemeManagerFactory: SchemeManagerFactory) : BaseInspectionProfileManager(project.messageBus), PersistentStateComponent<Element> {
+class ProjectInspectionProfileManager(val project: Project, schemeManagerFactory: SchemeManagerFactory) : BaseInspectionProfileManager(project.messageBus), PersistentStateComponent<Element> {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): ProjectInspectionProfileManager {
@@ -175,11 +171,9 @@ class ProjectInspectionProfileManager(val project: Project,
           }
         }
 
-        scopeManager.addScopeListener(scopeListener!!)
-        localScopesHolder.addScopeListener(scopeListener!!)
+        scopesManager.addScopeListener(scopeListener!!, project)
+        NamedScopeManager.getInstance(project).addScopeListener(scopeListener!!, project)
         Disposer.register(project, Disposable {
-          scopeManager.removeScopeListener(scopeListener!!)
-          localScopesHolder.removeScopeListener(scopeListener!!)
           (initialLoadSchemesFuture as? AsyncPromise<*>)?.cancel()
         })
       }
@@ -246,7 +240,7 @@ class ProjectInspectionProfileManager(val project: Project,
     }
   }
 
-  override fun getScopesManager() = scopeManager
+  override fun getScopesManager() = DependencyValidationManager.getInstance(project)
 
   @Synchronized override fun getProfiles(): Collection<InspectionProfileImpl> {
     currentProfile
@@ -280,6 +274,7 @@ class ProjectInspectionProfileManager(val project: Project,
 
   @Synchronized override fun getCurrentProfile(): InspectionProfileImpl {
     if (!state.useProjectProfile) {
+      val applicationProfileManager = InspectionProfileManager.getInstance()
       return (state.projectProfile?.let {
         applicationProfileManager.getProfile(it, false)
       } ?: applicationProfileManager.currentProfile)
@@ -290,7 +285,7 @@ class ProjectInspectionProfileManager(val project: Project,
       currentScheme = schemeManager.allSchemes.firstOrNull()
       if (currentScheme == null) {
         currentScheme = InspectionProfileImpl(PROJECT_DEFAULT_PROFILE_NAME, InspectionToolRegistrar.getInstance(), this)
-        currentScheme.copyFrom(applicationProfileManager.currentProfile)
+        currentScheme.copyFrom(InspectionProfileManager.getInstance().currentProfile)
         currentScheme.isProjectLevel = true
         currentScheme.name = PROJECT_DEFAULT_PROFILE_NAME
         schemeManager.addScheme(currentScheme)
@@ -314,7 +309,7 @@ class ProjectInspectionProfileManager(val project: Project,
 
   @Synchronized override fun getProfile(name: String, returnRootProfileIfNamedIsAbsent: Boolean): InspectionProfileImpl? {
     val profile = schemeManager.findSchemeByName(name)
-    return profile ?: applicationProfileManager.getProfile(name, returnRootProfileIfNamedIsAbsent)
+    return profile ?: InspectionProfileManager.getInstance().getProfile(name, returnRootProfileIfNamedIsAbsent)
   }
 
   fun fireProfileChanged() {
