@@ -520,5 +520,9 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("Maven Embedder"),
     jetbrainsLibrary("precompiled_jshell-frontend"),
     jetbrainsLibrary("tcServiceMessages"),
+    jetbrainsLibrary("rd-core"),
+    jetbrainsLibrary("rd-framework"),
+    jetbrainsLibrary("rd-text"),
+    jetbrainsLibrary("rd-swing"),
   ] as List<LibraryLicense>
 }
