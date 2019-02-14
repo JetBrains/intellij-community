@@ -24,6 +24,7 @@ import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.util.VcsLogUtil;
@@ -300,6 +301,18 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     TextFilterModel(@NotNull NotNullComputable<? extends VcsLogDataPack> dataPackProvider, @NotNull MainVcsLogUiProperties properties,
                     @Nullable VcsLogFilterCollection filters) {
       super(VcsLogFilterCollection.TEXT_FILTER, VcsLogFilterCollection.HASH_FILTER, dataPackProvider, properties, filters);
+      properties.addChangeListener(new VcsLogUiProperties.PropertiesChangeListener() {
+        @Override
+        public <T> void onPropertyChanged(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
+          if (MainVcsLogUiProperties.TEXT_FILTER_REGEX.equals(property) ||
+              MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE.equals(property)) {
+            if (getFilter1() != null) {
+              myFilter = getFilterFromProperties();
+              notifyFiltersChanged();
+            }
+          }
+        }
+      });
     }
 
     @Nullable

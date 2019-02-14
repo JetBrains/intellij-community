@@ -229,10 +229,6 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
       else if (MainVcsLogUiProperties.BEK_SORT_TYPE.equals(property)) {
         myRefresher.onSortTypeChange(myUiProperties.get(MainVcsLogUiProperties.BEK_SORT_TYPE));
       }
-      else if (MainVcsLogUiProperties.TEXT_FILTER_REGEX.equals(property) ||
-               MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE.equals(property)) {
-        applyFiltersAndUpdateUi(myMainFrame.getFilterUi().getFilters());
-      }
       else if (CommonUiProperties.COLUMN_ORDER.equals(property)) {
         myMainFrame.getGraphTable().onColumnOrderSettingChanged();
       }
