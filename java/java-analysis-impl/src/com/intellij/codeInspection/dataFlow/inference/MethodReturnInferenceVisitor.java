@@ -65,15 +65,15 @@ class MethodReturnInferenceVisitor {
   private ReturnValue getExpressionValue(@Nullable LighterASTNode expr) {
     expr = skipParenthesesCastsDown(tree, expr);
     if (expr == null) {
-      return ReturnValue.explicit(Nullability.UNKNOWN);
+      return ReturnValue.UNKNOWN;
     }
     IElementType type = expr.getTokenType();
     if (isNullLiteral(expr)) {
-      return ReturnValue.explicit(Nullability.NULLABLE);
+      return ReturnValue.NULLABLE;
     }
     if (type == LAMBDA_EXPRESSION || type == NEW_EXPRESSION || type == METHOD_REF_EXPRESSION ||
              type == LITERAL_EXPRESSION || type == BINARY_EXPRESSION || type == POLYADIC_EXPRESSION) {
-      return ReturnValue.explicit(Nullability.NOT_NULL);
+      return ReturnValue.NOT_NULL;
     }
     if (type == METHOD_CALL_EXPRESSION) {
       String calledMethod = getNameIdentifierText(tree, tree.getChildren(expr).get(0));
@@ -95,7 +95,7 @@ class MethodReturnInferenceVisitor {
         return findVariableValue(expr, target);
       }
     }
-    return ReturnValue.explicit(Nullability.UNKNOWN);
+    return ReturnValue.UNKNOWN;
   }
 
   @NotNull
@@ -104,7 +104,7 @@ class MethodReturnInferenceVisitor {
     while (true) {
       parent = tree.getParent(expr);
       if (parent == null) {
-        return ReturnValue.explicit(Nullability.UNKNOWN);
+        return ReturnValue.UNKNOWN;
       }
       IElementType type = parent.getTokenType();
       if (!ElementType.EXPRESSION_BIT_SET.contains(type)) break;
@@ -114,7 +114,7 @@ class MethodReturnInferenceVisitor {
           LighterASTNode condition = operands.get(0);
           if (expr.equals(operands.get(1)) && isNullCheck(condition, target, false) ||
               expr.equals(operands.get(2)) && isNullCheck(condition, target, true)) {
-            return ReturnValue.explicit(Nullability.NOT_NULL);
+            return ReturnValue.NOT_NULL;
           }
         }
       }
@@ -122,15 +122,15 @@ class MethodReturnInferenceVisitor {
     }
     if (ElementType.JAVA_STATEMENT_BIT_SET.contains(parent.getTokenType())) {
       ReturnValue value = findValueBeforeStatement(parent, target);
-      if (value.myNullability == Nullability.NULLABLE && !myParameters.isEmpty()) {
+      if (!myParameters.isEmpty()) {
         // For now disable NULLABLE inference (except delegation case), because contract inference 
         // is not so smart one and we may infer NULLABLE where contract is possible producing noise
         // nullability warnings
-        value = value.dropNullability();
+        value = value.dropNullable();
       }
       return value;
     }
-    return ReturnValue.explicit(Nullability.UNKNOWN);
+    return ReturnValue.UNKNOWN;
   }
 
   @NotNull
@@ -159,7 +159,7 @@ class MethodReturnInferenceVisitor {
       List<LighterASTNode> branches = getChildrenOfType(tree, parent, ElementType.JAVA_STATEMENT_BIT_SET);
       int index = branches.indexOf(statement);
       if (index == 0 && isNullCheck(condition, target, false) || index == 1 && isNullCheck(condition, target, true)) {
-        return ReturnValue.explicit(Nullability.NOT_NULL);
+        return ReturnValue.NOT_NULL;
       }
       ReturnValue value = findValueInExpression(condition, target);
       if (value != null) {
@@ -170,7 +170,7 @@ class MethodReturnInferenceVisitor {
     if (parent.getTokenType() == WHILE_STATEMENT) {
       LighterASTNode condition = findExpressionChild(tree, parent);
       if (isNullCheck(condition, target, false)) {
-        return ReturnValue.explicit(Nullability.NOT_NULL);
+        return ReturnValue.NOT_NULL;
       }
       // Could be reassigned later in loop, do not analyze this now
       return ReturnValue.UNKNOWN;
@@ -242,10 +242,10 @@ class MethodReturnInferenceVisitor {
     ReturnValue thenValue = findValueInStatement(thenBranch, target);
     ReturnValue elseValue = findValueInStatement(elseBranch, target);
     if (elseValue == null && thenBreaks && !elseBreaks && isNullCheck(condition, target, true)) {
-      elseValue = ReturnValue.explicit(Nullability.NOT_NULL);
+      elseValue = ReturnValue.NOT_NULL;
     }
     if (thenValue == null && elseBreaks && !thenBreaks && isNullCheck(condition, target, false)) {
-      thenValue = ReturnValue.explicit(Nullability.NOT_NULL);
+      thenValue = ReturnValue.NOT_NULL;
     }
     if (thenBreaks && !elseBreaks) {
       thenValue = elseValue;
@@ -256,11 +256,11 @@ class MethodReturnInferenceVisitor {
 
     if (thenValue == null) {
       thenValue =
-        isNullCheck(condition, target, false) ? ReturnValue.explicit(Nullability.NOT_NULL) : findValueInExpression(condition, target);
+        isNullCheck(condition, target, false) ? ReturnValue.NOT_NULL : findValueInExpression(condition, target);
     }
     if (elseValue == null) {
       elseValue =
-        isNullCheck(condition, target, true) ? ReturnValue.explicit(Nullability.NOT_NULL) : findValueInExpression(condition, target);
+        isNullCheck(condition, target, true) ? ReturnValue.NOT_NULL : findValueInExpression(condition, target);
     }
 
     if (thenValue == null || elseValue == null) {
@@ -278,7 +278,7 @@ class MethodReturnInferenceVisitor {
       if (children.size() == 2 && isReferenceToLocal(children.get(0), target)) {
         if (firstChildOfType(tree, expression, JavaTokenType.EQ) == null) {
           // compound assignment always produces non-null
-          return ReturnValue.explicit(Nullability.NOT_NULL);
+          return ReturnValue.NOT_NULL;
         }
         return getExpressionValue(children.get(1));
       }
@@ -287,7 +287,7 @@ class MethodReturnInferenceVisitor {
       return ReturnValue.UNKNOWN;
     }
     if (isDereferencedInside(expression, target)) {
-      return ReturnValue.explicit(Nullability.NOT_NULL);
+      return ReturnValue.NOT_NULL;
     }
     return null;
   }
@@ -392,38 +392,42 @@ class MethodReturnInferenceVisitor {
 
   @Nullable
   MethodReturnInferenceResult getResult() {
-    if (hasErrors || hasSystemExit) {
+    List<ExpressionRange> delegateCalls = myReturnValue.myCalledMethod == null ? null : myReturnValue.myRanges;
+    boolean hasNulls = myReturnValue.myNullability.contains(Nullability.NULLABLE);
+    boolean hasNotNulls = myReturnValue.myNullability.contains(Nullability.NOT_NULL);
+    boolean hasUnknowns = myReturnValue.myNullability.contains(Nullability.UNKNOWN);
+    if (hasNulls) {
+      if (hasSystemExit) {
+        return new MethodReturnInferenceResult.Predefined(Nullability.UNKNOWN);
+      }
+      return delegateCalls == null || hasNotNulls || hasErrors || hasUnknowns
+             ? new MethodReturnInferenceResult.Predefined(Nullability.NULLABLE)
+             : new MethodReturnInferenceResult.FromDelegate(Nullability.NULLABLE, delegateCalls);
+    }
+    if (hasErrors || hasUnknowns) {
       return null;
     }
-
-    Nullability nullability = myReturnValue.myNullability;
-    if (nullability == Nullability.UNKNOWN && myReturnValue.myCalledMethod != null) return null;
-    if (nullability == null) {
-      nullability = Nullability.UNKNOWN;
-    }
-    if (myReturnValue.myCalledMethod == null) {
-      return new MethodReturnInferenceResult.Predefined(nullability);
+    if (delegateCalls != null) {
+      return new MethodReturnInferenceResult.FromDelegate(hasNotNulls ? Nullability.NOT_NULL : Nullability.UNKNOWN, delegateCalls);
     }
 
-    if (myReturnValue.myCalledMethod.isEmpty()) {
-      return nullability == Nullability.NULLABLE ? new MethodReturnInferenceResult.Predefined(nullability) :
-             null;
+    if (hasNotNulls) {
+      return new MethodReturnInferenceResult.Predefined(Nullability.NOT_NULL);
     }
-
-    assert !myReturnValue.myRanges.isEmpty();
-
-    return new MethodReturnInferenceResult.FromDelegate(nullability, myReturnValue.myRanges);
+    return null;
   }
 
   private static class ReturnValue {
-    static final ReturnValue TOP = new ReturnValue(null, null, Collections.emptyList());
-    static final ReturnValue UNKNOWN = explicit(Nullability.UNKNOWN);
+    static final ReturnValue TOP = new ReturnValue(EnumSet.noneOf(Nullability.class), null, Collections.emptyList());
+    static final ReturnValue UNKNOWN = new ReturnValue(EnumSet.of(Nullability.UNKNOWN), null, Collections.emptyList());
+    static final ReturnValue NULLABLE = new ReturnValue(EnumSet.of(Nullability.NULLABLE), null, Collections.emptyList());
+    static final ReturnValue NOT_NULL = new ReturnValue(EnumSet.of(Nullability.NOT_NULL), null, Collections.emptyList());
 
-    final @Nullable Nullability myNullability; // null = top
+    final @NotNull EnumSet<Nullability> myNullability; // empty = top
     final @Nullable String myCalledMethod; // null = top; empty = bottom
     final @NotNull List<ExpressionRange> myRanges;
 
-    private ReturnValue(@Nullable Nullability nullability,
+    private ReturnValue(@NotNull EnumSet<Nullability> nullability,
                         @Nullable String method,
                         @NotNull List<ExpressionRange> ranges) {
       myNullability = nullability;
@@ -431,32 +435,21 @@ class MethodReturnInferenceVisitor {
       myRanges = ranges;
     }
 
-    public ReturnValue dropNullability() {
-      return new ReturnValue(Nullability.UNKNOWN, myCalledMethod, myRanges);
-    }
-
-    static ReturnValue explicit(@NotNull Nullability nullability) {
-      return new ReturnValue(nullability, null, Collections.emptyList());
+    public ReturnValue dropNullable() {
+      if (!myNullability.contains(Nullability.NULLABLE)) return this;
+      EnumSet<Nullability> copy = EnumSet.copyOf(myNullability);
+      copy.remove(Nullability.NULLABLE);
+      copy.add(Nullability.UNKNOWN);
+      return new ReturnValue(copy, myCalledMethod, myRanges);
     }
 
     static ReturnValue delegate(@NotNull String method, @NotNull ExpressionRange range) {
-      return new ReturnValue(null, method, Collections.singletonList(range));
+      return new ReturnValue(EnumSet.noneOf(Nullability.class), method, Collections.singletonList(range));
     }
 
     static ReturnValue merge(@NotNull ReturnValue left, @NotNull ReturnValue right) {
-      Nullability nullability;
-      if (left.myNullability == null || left.myNullability == Nullability.NOT_NULL) {
-        nullability = right.myNullability;
-      }
-      else if (right.myNullability == null || right.myNullability == Nullability.NOT_NULL) {
-        nullability = left.myNullability;
-      }
-      else if (left.myNullability == Nullability.NULLABLE || right.myNullability == Nullability.NULLABLE) {
-        nullability = Nullability.NULLABLE;
-      }
-      else {
-        nullability = Nullability.UNKNOWN;
-      }
+      EnumSet<Nullability> nullability = EnumSet.copyOf(left.myNullability);
+      nullability.addAll(right.myNullability);
       String calledMethod;
       List<ExpressionRange> range;
       if (left.myCalledMethod == null) {
@@ -474,6 +467,7 @@ class MethodReturnInferenceVisitor {
       else {
         calledMethod = "";
         range = Collections.emptyList();
+        nullability.add(Nullability.UNKNOWN);
       }
       return new ReturnValue(nullability, calledMethod, range);
     }
