@@ -4546,10 +4546,14 @@ public class UIUtil {
     return UIManager.getColor("List.background");
   }
 
+  private static final JBValue SELECTED_ITEM_ALPHA = new JBValue.UIInteger("List.selectedItemAlpha", 75);
+
   @NotNull
   public static Color getListSelectionBackground(boolean focused) {
     if (!focused) return UnfocusedSelection.LIST_BACKGROUND;
-    return UIManager.getColor("List.selectionBackground");
+    Color color = UIManager.getColor("List.selectionBackground");
+    double alpha = SELECTED_ITEM_ALPHA.get() / 100.0;
+    return isUnderDefaultMacTheme() && alpha <= 1.0 ? ColorUtil.withAlpha(color, alpha) : color;
   }
 
   @NotNull
