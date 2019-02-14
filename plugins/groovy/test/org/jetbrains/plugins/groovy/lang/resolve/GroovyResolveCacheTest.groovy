@@ -11,6 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExp
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport
 import org.jetbrains.plugins.groovy.util.GroovyLatestTest
+import org.junit.Ignore
 import org.junit.Test
 
 import static com.intellij.codeInsight.AnnotationUtil.findAnnotationInHierarchy
@@ -42,6 +43,7 @@ class GroovyResolveCacheTest extends GroovyLatestTest {
     assert counter == 2
   }
 
+  @Ignore
   @Test
   void 'test do not drop caches on code block change'() {
     int counter = 0
