@@ -4,8 +4,11 @@ package com.intellij.internal.statistic.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,7 +18,11 @@ public class TestParseEventLogWhitelistAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project != null) {
-      new TestParseEventLogWhitelistDialog(project, e.getData(CommonDataKeys.EDITOR)).show();
+      final PsiFile fileType = e.getData(CommonDataKeys.PSI_FILE);
+      final Editor editor =
+        fileType != null && StringUtil.equalsIgnoreCase(fileType.getFileType().getName(), "json") ?
+        e.getData(CommonDataKeys.EDITOR) : null;
+      new TestParseEventLogWhitelistDialog(project, editor).show();
     }
   }
 
