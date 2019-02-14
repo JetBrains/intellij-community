@@ -301,6 +301,13 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     TextFilterModel(@NotNull NotNullComputable<? extends VcsLogDataPack> dataPackProvider, @NotNull MainVcsLogUiProperties properties,
                     @Nullable VcsLogFilterCollection filters) {
       super(VcsLogFilterCollection.TEXT_FILTER, VcsLogFilterCollection.HASH_FILTER, dataPackProvider, properties, filters);
+      if (filters != null) {
+        VcsLogTextFilter textFilter = filters.get(VcsLogFilterCollection.TEXT_FILTER);
+        if (textFilter != null) {
+          myUiProperties.set(MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE, textFilter.matchesCase());
+          myUiProperties.set(MainVcsLogUiProperties.TEXT_FILTER_REGEX, textFilter.isRegex());
+        }
+      }
       properties.addChangeListener(new VcsLogUiProperties.PropertiesChangeListener() {
         @Override
         public <T> void onPropertyChanged(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
@@ -313,15 +320,6 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
           }
         }
       });
-    }
-
-    @Override
-    protected void saveFilterToProperties(@Nullable FilterPair<VcsLogTextFilter, VcsLogHashFilter> filter) {
-      if (filter != null && filter.getFilter1() != null) {
-        myUiProperties.set(MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE, filter.getFilter1().matchesCase());
-        myUiProperties.set(MainVcsLogUiProperties.TEXT_FILTER_REGEX, filter.getFilter1().isRegex());
-      }
-      super.saveFilterToProperties(filter);
     }
 
     @Nullable
