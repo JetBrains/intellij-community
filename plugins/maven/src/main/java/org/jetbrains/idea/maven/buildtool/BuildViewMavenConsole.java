@@ -22,6 +22,8 @@ import icons.MavenIcons;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.execution.MavenRunConfiguration;
+import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.project.MavenConsoleImpl;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
@@ -34,10 +36,14 @@ import java.awt.*;
 import static com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType.EXECUTE_TASK;
 
 /**
- * implementation of maven console which sends data to build tool window.
+ * Implementation of maven console which uses {@link BuildView} and can be displayed at:
+ * <ul>
+ * <li>`Build` tool window - for IDE build actions when the delegated mode is enabled
+ * <li>`Run` tool window - for execution of {@link MavenRunConfiguration}s and other maven runs via {@link MavenRunner} e.g. `Run Anything`
+ * </ul>
  */
 @ApiStatus.Experimental
-public class BuildToolWindowMavenConsole extends MavenConsole {
+public class BuildViewMavenConsole extends MavenConsole {
   private final MavenBuildEventProcessor myEventParser;
   @NotNull
   private final Project myProject;
@@ -46,10 +52,10 @@ public class BuildToolWindowMavenConsole extends MavenConsole {
   @NotNull
   private final String myTitle;
 
-  public BuildToolWindowMavenConsole(@NotNull Project project,
-                                     @NotNull String title,
-                                     @NotNull String workingDir,
-                                     @NotNull String toolWindowId) {
+  public BuildViewMavenConsole(@NotNull Project project,
+                               @NotNull String title,
+                               @NotNull String workingDir,
+                               @NotNull String toolWindowId) {
     super(getSettings(project).getOutputLevel(), getSettings(project).isPrintErrorStackTraces());
     myProject = project;
     myTitle = title;
@@ -104,6 +110,22 @@ public class BuildToolWindowMavenConsole extends MavenConsole {
 
   }
 
+  @Override
+  public void finish() {
+    myEventParser.finish();
+  }
+
+  @Override
+  public void printException(Throwable throwable) {
+    super.printException(throwable);
+    myEventParser.notifyException(throwable);
+  }
+
+  @Override
+  protected void doPrint(String text, OutputType type) {
+    myEventParser.onTextAvailable(text, type == OutputType.ERROR);
+  }
+
   private static JComponent createConsolePanel(ConsoleView view, ActionGroup actions) {
     JPanel panel = new JPanel();
     panel.setLayout(new BorderLayout());
@@ -130,34 +152,17 @@ public class BuildToolWindowMavenConsole extends MavenConsole {
                                           @NotNull ExecutionConsole console,
                                           @NotNull BuildDescriptor descriptor) {
 
-   return new BuildView(project, console, descriptor, "build.toolwindow.run.selection.state",
-                                        new ViewManager() {
-                                          @Override
-                                          public boolean isConsoleEnabledByDefault() {
-                                            return true;
-                                          }
+    return new BuildView(project, console, descriptor, "build.toolwindow.run.selection.state",
+                         new ViewManager() {
+                           @Override
+                           public boolean isConsoleEnabledByDefault() {
+                             return true;
+                           }
 
-                                          @Override
-                                          public boolean isBuildContentView() {
-                                            return true;
-                                          }
-                                        });
+                           @Override
+                           public boolean isBuildContentView() {
+                             return true;
+                           }
+                         });
   }
-
-  @Override
-  public void finish() {
-    myEventParser.finish();
-  }
-
-  @Override
-  public void printException(Throwable throwable) {
-    super.printException(throwable);
-    myEventParser.notifyException(throwable);
-  }
-
-  @Override
-  protected void doPrint(String text, OutputType type) {
-    myEventParser.onTextAvailable(text, type == OutputType.ERROR);
-  }
-
 }

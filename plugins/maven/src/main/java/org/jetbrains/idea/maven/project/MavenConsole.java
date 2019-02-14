@@ -23,7 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.buildtool.BuildToolWindowMavenConsole;
+import org.jetbrains.idea.maven.buildtool.BuildViewMavenConsole;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
 import org.jetbrains.idea.maven.server.MavenServerConsole;
@@ -41,7 +41,7 @@ public abstract class MavenConsole {
                                                    @NotNull String workingDir,
                                                    @NotNull String toolWindowId) {
     if (Registry.is("maven.build.tool.window.enabled")) {
-      return new BuildToolWindowMavenConsole(project, title, workingDir, toolWindowId);
+      return new BuildViewMavenConsole(project, title, workingDir, toolWindowId);
     } else {
       return new MavenConsoleImpl(title, project);
     }

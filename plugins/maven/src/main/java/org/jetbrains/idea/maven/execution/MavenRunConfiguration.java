@@ -34,7 +34,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.buildtool.BuildToolConsoleProcessAdapter;
-import org.jetbrains.idea.maven.buildtool.BuildToolWindowMavenConsole;
+import org.jetbrains.idea.maven.buildtool.BuildViewMavenConsole;
 import org.jetbrains.idea.maven.buildtool.MavenBuildEventProcessor;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
@@ -335,7 +335,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
         DefaultBuildDescriptor descriptor =
           new DefaultBuildDescriptor(taskId, "Run Maven task", getEnvironment().getProject().getBasePath(), System.currentTimeMillis());
 
-        BuildView buildView = BuildToolWindowMavenConsole.createBuildView(getProject(), console, descriptor);
+        BuildView buildView = BuildViewMavenConsole.createBuildView(getProject(), console, descriptor);
 
         MavenBuildEventProcessor eventProcessor =
           new MavenBuildEventProcessor(getProject(), getProject().getBasePath(), buildView, descriptor, taskId);
