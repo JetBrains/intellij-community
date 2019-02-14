@@ -20,6 +20,11 @@ class NotRoamableUiSettings : PersistentStateComponent<NotRoamableUiOptions> {
 
     state.fontSize = UISettings.restoreFontSize(state.fontSize, state.fontScale)
     state.fontScale = UISettings.defFontScale
+    fixFontSettings()
+  }
+
+  internal fun fixFontSettings() {
+    val state = state
     state.initDefFont()
 
     // 1. Sometimes system font cannot display standard ASCII symbols. If so we have
@@ -90,12 +95,5 @@ private class FontFilter : SerializationFilter {
   }
 }
 
-internal val systemFontFaceAndSize: Pair<String, Int>
-  get() {
-    val fontData = UIUtil.getSystemFontData()
-    if (fontData != null) {
-      return fontData
-    }
-
-    return Pair.create("Dialog", 12)
-  }
+private val systemFontFaceAndSize: Pair<String, Int>
+  get() = UIUtil.getSystemFontData() ?: Pair.create("Dialog", 12)
