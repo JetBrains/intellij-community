@@ -1196,6 +1196,8 @@
 
     <!-- must be first because TextEditorProvider.getInstance search by instance of -->
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider" order="first"/>
+
+    <prebuiltFileBasedIndexProviderGenerator implementation="org.jetbrains.index.actions.ExternalPrebuiltIndexGenerator"/>
   </extensions>
 </idea-plugin>
 
