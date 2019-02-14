@@ -181,6 +181,11 @@ class BundledJreManager {
     new File(dependenciesDir, 'build/jbre')
   }
 
+  /**
+   * Update this method together with:
+   *  `build/dependencies/setupJbre.gradle`
+   *  `build/dependencies/setupJdk.gradle`
+   */
   static def jreArchiveSuffix(String jreBuild, JvmArchitecture arch, String osName) {
     def (update, build) = ['', jreBuild]
     def split = jreBuild.split('b')

@@ -17,6 +17,11 @@ def jdkDir = System.getProperty('intellij.build.jdks.target.dir')?.with {
 
 project.ext.jdkOutputDir = System.getProperty("intellij.jdk.output.dir", "$jdkDir/${jdkVersion < 9 ? "1.$jdkVersion" : jdkVersion}")
 
+/**
+ * Update this method together with:
+ *  `setupJbre.gradle` 
+ *  `org/jetbrains/intellij/build/impl/BundledJreManager.groovy`
+ */
 static def splitJdkBuild(jreBuild) {
   def split = jreBuild.toString().split('b')
   if (split.length > 2) {

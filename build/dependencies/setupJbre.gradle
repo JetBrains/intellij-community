@@ -15,6 +15,11 @@ if (System.getProperty('intellij.build.bundle.second.jre', 'false').toBoolean())
   createJbreTasks(secondJreBuild, secondJreVersion, targetOs)
 }
 
+/**
+ * Update this method together with:
+ *  `setupJdk.gradle` 
+ *  `org/jetbrains/intellij/build/impl/BundledJreManager.groovy`
+ */
 static def splitJreBuild(jreBuild) {
   def split = jreBuild.toString().split('b')
   if (split.length > 2) {
