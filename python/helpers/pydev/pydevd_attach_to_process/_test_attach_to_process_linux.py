@@ -58,8 +58,8 @@ if __name__ == '__main__':
         
     cmd.extend([
         "--eval-command='call dlopen(\"/home/fabioz/Desktop/dev/PyDev.Debugger/pydevd_attach_to_process/linux/attach_linux.so\", 2)'",
-        "--eval-command='call DoAttach(1, \"print(\\\"check11111check\\\")\", 0)'",
-        #"--eval-command='call SetSysTraceFunc(1, 0)'", -- never call this way, always use "--command='...gdb_threads_settrace.py'",
+        "--eval-command='call (int)DoAttach(1, \"print(\\\"check11111check\\\")\", 0)'",
+        #"--eval-command='call (int)SetSysTraceFunc(1, 0)'", -- never call this way, always use "--command='...gdb_threads_settrace.py'",
         #So that threads are all stopped!
         "--command='/home/fabioz/Desktop/dev/PyDev.Debugger/pydevd_attach_to_process/linux/gdb_threads_settrace.py'",
     ])
