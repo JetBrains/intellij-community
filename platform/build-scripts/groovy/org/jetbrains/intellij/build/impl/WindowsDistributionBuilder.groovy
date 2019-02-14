@@ -77,6 +77,8 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   @Override
   void buildArtifacts(String winDistPath) {
     def arch = customizer.bundledJreArchitecture
+    //do not include win32 launcher into winzip with 9+ jbr bundled
+    def List<String> excludeList = ["bin/${buildContext.productProperties.baseFileName}.exe", "bin/${buildContext.productProperties.baseFileName}.exe.vmoptions"]
     def jreDirectoryPath64 = arch != null ? buildContext.bundledJreManager.extractWinJre(arch) : null
     List<String> jreDirectoryPaths = [jreDirectoryPath64]
 
@@ -100,7 +102,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     if (customizer.buildZipArchive) {
       buildWinZip(jreDirectoryPaths.findAll { it != null }, "${jreSuffix}.win", winDistPath)
       if (secondJreDirectoryPath != null) {
-        buildWinZip([secondJreDirectoryPath], "-jbr${buildContext.bundledJreManager.getSecondJreVersion()}.win", winDistPath)
+        buildWinZip([secondJreDirectoryPath], "-jbr${buildContext.bundledJreManager.getSecondJreVersion()}.win", winDistPath, excludeList)
       }
     }
 
@@ -258,7 +260,7 @@ IDS_VM_OPTIONS=$vmOptions
     return patchedFile
   }
 
-  private void buildWinZip(List<String> jreDirectoryPaths, String zipNameSuffix, String winDistPath) {
+  private void buildWinZip(List<String> jreDirectoryPaths, String zipNameSuffix, String winDistPath, List<String> excludeList = [] ) {
     buildContext.messages.block("Build Windows ${zipNameSuffix}.zip distribution") {
       def baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
       def targetPath = "${buildContext.paths.artifacts}/${baseName}${zipNameSuffix}.zip"
@@ -270,7 +272,13 @@ IDS_VM_OPTIONS=$vmOptions
       dirs += [productJsonDir]
       buildContext.ant.zip(zipfile: targetPath) {
         dirs.each {
-          zipfileset(dir: it, prefix: zipPrefix)
+          zipfileset(dir: it, prefix: zipPrefix) {
+            if (!excludeList.isEmpty()) {
+              excludeList.each {
+                exclude(name: it)
+              }
+            }
+          }
         }
       }
 
