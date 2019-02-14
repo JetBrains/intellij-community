@@ -805,6 +805,7 @@ public class PlatformTestUtil {
   }
 
   public static void withEncoding(@NotNull String encoding, @NotNull ThrowableRunnable r) {
+    Charset.forName(encoding); // check the encoding exists
     try {
       Charset oldCharset = Charset.defaultCharset();
       try {
