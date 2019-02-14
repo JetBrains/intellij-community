@@ -369,7 +369,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
           }
         }
 
-        registerError(info.getElementToHighlight(), GroovyBundle.message("method.call.is.ambiguous"));
+        registerError(info.getElementToHighlight(), ProblemHighlightType.GENERIC_ERROR, GroovyBundle.message("method.call.is.ambiguous"));
       }
     }
     else if (info.getInvokedExpression() != null) { //it checks in visitRefExpr(...)
