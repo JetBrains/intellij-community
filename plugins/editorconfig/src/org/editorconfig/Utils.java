@@ -55,9 +55,7 @@ public class Utils {
   }
 
   public static boolean isFullIntellijSettingsSupport() {
-    return
-      ourIsFullSettingsSupportEnabledInTest ||
-      Registry.is(FULL_SETTINGS_SUPPORT_REG_KEY) && !EditorConfigRegistry.shouldSupportCSharp();
+    return ourIsFullSettingsSupportEnabledInTest;
   }
 
   @TestOnly
