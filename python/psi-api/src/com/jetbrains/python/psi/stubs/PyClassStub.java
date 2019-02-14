@@ -66,4 +66,14 @@ public interface PyClassStub extends NamedStub<PyClass> {
   default List<String> getSuperClassesText() {
     return Collections.emptyList();
   }
+
+  /**
+   * @deprecated It is our internal API, try to avoid using it.
+   * It is planned to be removed sooner or later, so please don't rely on this method.
+   */
+  @Deprecated
+  @Nullable
+  default <T> T getCustomStub(@NotNull Class<T> stubClass) {
+    return null;
+  }
 }
