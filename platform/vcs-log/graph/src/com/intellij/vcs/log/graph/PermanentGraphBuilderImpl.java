@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
+@Deprecated
 public class PermanentGraphBuilderImpl<CommitId> implements PermanentGraphBuilder<CommitId> {
 
   private final GraphColorManager<CommitId> STUB_COLOR_MANAGER = new GraphColorManager<CommitId>() {
