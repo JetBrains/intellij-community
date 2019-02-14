@@ -558,7 +558,6 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("5.1+")
   public void testSharedSourceFolders() throws Exception {
     createProjectSubFile("settings.gradle", "include 'app1', 'app2'");
     createProjectSubFile("shared/resources/resource.txt");
@@ -583,8 +582,14 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     importProject("");
 
     assertModules("project", "project.app1", "project.app2");
-    assertResources("project.app1", getProjectPath() + "/shared/resources");
-    assertResources("project.app2" );
+
+    if (isGradleOlderThen_3_4()) {
+      assertResources("project.app1");
+      assertResources("project.app2", getProjectPath() + "/shared/resources");
+    } else {
+      assertResources("project.app1", getProjectPath() + "/shared/resources");
+      assertResources("project.app2");
+    }
   }
 
   protected void assertDefaultGradleJavaProjectFolders(@NotNull String mainModuleName) {
