@@ -770,11 +770,15 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static void assertSize(int expectedSize, @NotNull Object[] array) {
-    assertEquals(toString(Arrays.asList(array)), expectedSize, array.length);
+    if (array.length != expectedSize) {
+      assertEquals(toString(Arrays.asList(array)), expectedSize, array.length);
+    }
   }
 
   public static void assertSize(int expectedSize, @NotNull Collection<?> c) {
-    assertEquals(toString(c), expectedSize, c.size());
+    if (c.size() != expectedSize) {
+      assertEquals(toString(c), expectedSize, c.size());
+    }
   }
 
   @NotNull
