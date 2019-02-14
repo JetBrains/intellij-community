@@ -2,6 +2,7 @@
 package com.intellij.notebook.editor;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * File that is created on top of another file and contains its content transformed in some predictable way.
@@ -11,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
  *
  * This is a temporary interface that may be removed in the future.
  */
+@ApiStatus.Experimental
 public interface BackedVirtualFile {
   /**
    * Returns the {@link VirtualFile} with the original content.
