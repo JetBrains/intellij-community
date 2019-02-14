@@ -1,3 +1,4 @@
+# encoding: utf-8
 import atexit
 import hashlib
 import zipfile

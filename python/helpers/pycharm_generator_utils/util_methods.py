@@ -746,7 +746,8 @@ def isidentifier(s):
 def ignored_os_errors(*errno):
     try:
         yield
-    except OSError as e:
+    # Since Python 3.3 IOError and OSError were merged into OSError
+    except EnvironmentError as e:
         if e.errno not in errno:
             raise
 
@@ -754,7 +755,7 @@ def ignored_os_errors(*errno):
 def mkdir(path):
     try:
         os.makedirs(path)
-    except OSError as e:
+    except EnvironmentError as e:
         if e.errno != errno.EEXIST or not os.path.isdir(path):
             raise
 
