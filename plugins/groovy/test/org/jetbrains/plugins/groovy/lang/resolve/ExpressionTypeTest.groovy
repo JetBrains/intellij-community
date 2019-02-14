@@ -7,9 +7,15 @@ import org.jetbrains.plugins.groovy.util.TypingTest
 import org.junit.Test
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_CHARACTER
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
 
 @CompileStatic
 class ExpressionTypeTest extends GroovyLatestTest implements TypingTest {
+
+  @Test
+  void 'untyped parameter reference @CS'() {
+    typingTest '@groovy.transform.CompileStatic def usage(a) { <caret>a }', JAVA_LANG_OBJECT
+  }
 
   @Test
   void 'ternary with primitive types'() {

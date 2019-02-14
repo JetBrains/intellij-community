@@ -94,7 +94,6 @@ def a() {
   void testCastArgument() { doTest() }
   void testCastSeveralArgumentError() { doTest() }
   void testSeveralSignatures() { doTest() }
-  void testSeveralSignaturesError() { doTest() }
   void testFromStringWithNonFqnOptionsNoError() {
     addBigInteger()
     myFixture.addClass '''

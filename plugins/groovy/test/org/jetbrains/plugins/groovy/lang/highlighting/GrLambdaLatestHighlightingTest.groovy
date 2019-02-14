@@ -148,7 +148,7 @@ def <T> void foo(T t, Closure<T> cl) {}
 @CompileStatic
 def m() {
   foo(1, (it)-> { 
-    println <warning descr="Method call is ambiguous">it</warning> 
+    println it 
     1
   })
 }
