@@ -369,7 +369,10 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     RangeHighlighter myCurrentHighlighter;
 
     boolean isEnabled(@NotNull EditorMouseEvent e) {
-      if (e.getArea() != EditorMouseEventArea.LINE_NUMBERS_AREA || e.getEditor().getProject() != myProject) {
+      Editor editor = e.getEditor();
+      if (e.getArea() != EditorMouseEventArea.LINE_NUMBERS_AREA ||
+          editor.getProject() != myProject ||
+          !EditorUtil.isRealFileEditor(editor)) {
         return false;
       }
       XDebugSessionImpl session = getCurrentSession();
