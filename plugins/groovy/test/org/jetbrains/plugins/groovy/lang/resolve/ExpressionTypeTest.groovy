@@ -13,6 +13,11 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
 class ExpressionTypeTest extends GroovyLatestTest implements TypingTest {
 
   @Test
+  void 'untyped local variable reference @CS'() {
+    typingTest '@groovy.transform.CompileStatic def usage() { def a; <caret>a }', JAVA_LANG_OBJECT
+  }
+
+  @Test
   void 'untyped parameter reference @CS'() {
     typingTest '@groovy.transform.CompileStatic def usage(a) { <caret>a }', JAVA_LANG_OBJECT
   }
