@@ -27,19 +27,22 @@ class ReprocessContentRootDataActivity : StartupActivity, DumbAware {
       if (!haveModulesToProcess) {
         return@runWhenInitialized
       }
-      var modifiableModelsProvider: IdeModifiableModelsProviderImpl? = null
+
+      val modifiableModelsProvider = lazy { IdeModifiableModelsProviderImpl(project) }
+
       try {
-        modifiableModelsProvider = IdeModifiableModelsProviderImpl(project)
         ExternalSystemApiUtil.getAllManagers()
           .flatMap { dataManager.getExternalProjectsData(project, it.getSystemId()) }
           .mapNotNull { it.externalProjectStructure }
           .map { ExternalSystemApiUtil.findAllRecursively(it, CONTENT_ROOT) }
           .forEach {
-            service.importData(it, null, project, modifiableModelsProvider)
+            service.importData(it, null, project, modifiableModelsProvider.value)
           }
       }
       finally {
-        ExternalSystemApiUtil.doWriteAction { modifiableModelsProvider?.commit() }
+        if (modifiableModelsProvider.isInitialized()) {
+          ExternalSystemApiUtil.doWriteAction { modifiableModelsProvider.value.commit() }
+        }
       }
     }
   }
