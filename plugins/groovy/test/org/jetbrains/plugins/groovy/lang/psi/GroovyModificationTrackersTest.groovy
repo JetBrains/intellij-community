@@ -5,8 +5,10 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiModificationTracker
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.util.GroovyLatestTest
+import org.junit.Ignore
 import org.junit.Test
 
+@Ignore
 @CompileStatic
 class GroovyModificationTrackersTest extends GroovyLatestTest {
 
