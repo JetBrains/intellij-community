@@ -3,14 +3,13 @@ gradlew
 gradlew.bat
 .gradle/
 gradle/
-*.jar
-idea-flex.skeleton
 build/
 out/
 .idea/**
 !.idea/compiler.xml
 !.idea/encodings.xml
 !.idea/externalDependencies.xml
+!.idea/gradle.xml
 !.idea/icon.png
 !.idea/icon_dark.png
 !.idea/misc.xml
