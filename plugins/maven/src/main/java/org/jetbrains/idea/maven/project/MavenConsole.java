@@ -19,7 +19,6 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
-import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.SmartList;
@@ -37,9 +36,12 @@ public abstract class MavenConsole {
   private List<ProcessListener> myProcessListeners = new SmartList<>();
 
 
-  public static MavenConsole createGuiMavenConsole(@NotNull Project project, @NotNull String title, @NotNull String workingDir) {
+  public static MavenConsole createGuiMavenConsole(@NotNull Project project,
+                                                   @NotNull String title,
+                                                   @NotNull String workingDir,
+                                                   @NotNull String toolWindowId) {
     if (Registry.is("maven.build.tool.window.enabled")) {
-      return new BuildToolWindowMavenConsole(project, title, workingDir);
+      return new BuildToolWindowMavenConsole(project, title, workingDir, toolWindowId);
     } else {
       return new MavenConsoleImpl(title, project);
     }

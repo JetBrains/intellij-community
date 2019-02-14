@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactProperties;
 import com.intellij.packaging.artifacts.ArtifactPropertiesProvider;
@@ -223,7 +224,7 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       AtomicInteger errors = new AtomicInteger();
       AtomicInteger warnings = new AtomicInteger();
-      MavenConsole console = MavenConsole.createGuiMavenConsole(project, title, project.getBasePath());
+      MavenConsole console = MavenConsole.createGuiMavenConsole(project, title, project.getBasePath(), ToolWindowId.BUILD);
       console.addProcessListener(new ProcessAdapter() {
 
         @Override
