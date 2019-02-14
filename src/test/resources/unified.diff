@@ -1,10 +1,19 @@
---- y/a	2019-02-10 05:29:03.000000000 +0100
-+++ z/a	2019-02-10 05:28:44.000000000 +0100
-@@ -1,5 +1,5 @@
- foo
--bar
-+qux
- baz
-+hello
- world
--end
+--- lao	2019-02-14 07:15:57.000000000 +0100
++++ tzu	2019-02-13 22:05:33.000000000 +0100
+@@ -1,7 +1,6 @@
+-The Way that can be told of is not the eternal Way;
+-The name that can be named is not the eternal name.
+ The Nameless is the origin of Heaven and Earth;
+-The Named is the mother of all things.
++The named is the mother of all things.
++
+ Therefore let there always be non-being,
+   so we may see their subtlety,
+ And let there always be being,
+@@ -9,3 +8,6 @@
+ The two are the same,
+ But after they are produced,
+   they have different names.
++They both may be called deep and profound.
++Deeper and more profound,
++The door of all subtleties!

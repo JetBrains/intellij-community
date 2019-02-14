@@ -22,7 +22,7 @@ index e15deaf..6396fbd 100644
 +    LoremPicsum: require('./providers/LoremPicsum'),
      FakeImg: require('./providers/FakeImg')
    },
- 
+
 diff --git a/image/providers/UnsplashIt.js b/image/providers/LoremPicsum.js
 similarity index 57%
 rename from image/providers/UnsplashIt.js
@@ -31,14 +31,14 @@ index f549aae..0393bca 100644
 --- a/image/providers/UnsplashIt.js
 +++ b/image/providers/LoremPicsum.js
 @@ -4,6 +4,6 @@ module.exports = {
- 
+
      var pieces = size.split('x');
- 
+
 -    return 'https://unsplash.it/' + pieces[0] + '/' + pieces[1];
 +    return 'https://picsum.photos/' + pieces[0] + '/' + pieces[1] + '/?random';
    }
  };
 \ No newline at end of file
--- 
+--
 2.20.1
 

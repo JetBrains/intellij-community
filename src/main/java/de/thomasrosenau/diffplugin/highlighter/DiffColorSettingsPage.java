@@ -57,6 +57,7 @@ public class DiffColorSettingsPage implements ColorSettingsPage {
     @NotNull
     @Override
     public String getDemoText() {
+        // TODO: provide better example for multiple formats
         return "From 4c763966942c5a7376c6cd299d2ef7e617a0957b Mon Sep 17 00:00:00 2001\n" +
                 "From: John Doe <john.doe@example.com>\n" +
                 "Date: Wed, 21 Mar 2018 10:49:11 +0000\n" +
