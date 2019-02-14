@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiClass
@@ -70,7 +71,8 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
 
   protected fun GradleTestRunConfigurationProducer.setTestTasksChooser(testTasksFilter: (TestName) -> Boolean) {
     testTasksChooser = object : TestTasksChooser() {
-      override fun chooseTestTasks(context: DataContext,
+      override fun chooseTestTasks(project: Project,
+                                   context: DataContext,
                                    testTasks: Map<TestName, Map<SourcePath, TasksToRun>>,
                                    perform: Consumer<List<Map<SourcePath, TestTasks>>>) {
         perform.accept(testTasks.filterKeys(testTasksFilter).values.toList())
