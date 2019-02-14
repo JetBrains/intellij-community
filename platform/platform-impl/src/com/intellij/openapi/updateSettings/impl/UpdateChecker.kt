@@ -40,6 +40,7 @@ import gnu.trove.THashMap
 import org.jdom.JDOMException
 import java.io.File
 import java.io.IOException
+import java.net.UnknownHostException
 import java.util.*
 import kotlin.collections.HashSet
 import kotlin.collections.set
@@ -204,10 +205,15 @@ object UpdateChecker {
         try {
           UpdatesInfo(JDOMUtil.load(it.reader))
         }
-        catch (e: JDOMException) {
-          // corrupted content, don't bother telling user
-          LOG.info(e)
-          null
+        catch (e: Exception) {
+          when(e) {
+            is JDOMException, is UnknownHostException -> {
+              // corrupted content or resolve problems, don't bother telling user
+              LOG.info(e)
+              null
+            }
+            else -> throw e
+          }
         }
       }
   }
