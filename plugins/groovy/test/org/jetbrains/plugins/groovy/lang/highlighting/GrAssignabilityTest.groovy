@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -544,10 +544,10 @@ class X {
 X i() { new X() }
 
 print i()[1]
-print <warning descr="Method call is ambiguous">i()<warning descr="'getAt' in 'X' cannot be applied to '([java.lang.Integer, java.lang.Integer])'">[1, 2]</warning></warning>
-print <warning descr="Method call is ambiguous">i()<warning descr="'getAt' in 'X' cannot be applied to '([java.lang.Integer..java.lang.Integer])'">[1..2]</warning></warning>
+print <weak_warning descr="Cannot infer argument types">i()<warning descr="'getAt' in 'X' cannot be applied to '([java.lang.Integer, java.lang.Integer])'">[1, 2]</warning></weak_warning>
+print <weak_warning descr="Cannot infer argument types">i()<warning descr="'getAt' in 'X' cannot be applied to '([java.lang.Integer..java.lang.Integer])'">[1..2]</warning></weak_warning>
 print i()['a']
-print <warning descr="Method call is ambiguous">i()<warning descr="'getAt' in 'X' cannot be applied to '([java.lang.String, java.lang.String])'">['a', 'b']</warning></warning>
+print <weak_warning descr="Cannot infer argument types">i()<warning descr="'getAt' in 'X' cannot be applied to '([java.lang.String, java.lang.String])'">['a', 'b']</warning></weak_warning>
 ''')
   }
 
@@ -560,10 +560,10 @@ class X {
 X i = new X()
 
 print i[1]
-print <warning descr="Method call is ambiguous">i<warning descr="'getAt' in 'X' cannot be applied to '([java.lang.Integer, java.lang.Integer])'">[1, 2]</warning></warning>
-print <warning descr="Method call is ambiguous">i<warning descr="'getAt' in 'X' cannot be applied to '([java.lang.Integer..java.lang.Integer])'">[1..2]</warning></warning>
+print <weak_warning descr="Cannot infer argument types">i<warning descr="'getAt' in 'X' cannot be applied to '([java.lang.Integer, java.lang.Integer])'">[1, 2]</warning></weak_warning>
+print <weak_warning descr="Cannot infer argument types">i<warning descr="'getAt' in 'X' cannot be applied to '([java.lang.Integer..java.lang.Integer])'">[1..2]</warning></weak_warning>
 print i['a']
-print <warning descr="Method call is ambiguous">i<warning descr="'getAt' in 'X' cannot be applied to '([java.lang.String, java.lang.String])'">['a', 'b']</warning></warning>
+print <weak_warning descr="Cannot infer argument types">i<warning descr="'getAt' in 'X' cannot be applied to '([java.lang.String, java.lang.String])'">['a', 'b']</warning></weak_warning>
 ''')
   }
 
@@ -769,7 +769,7 @@ void bug(Collection<String> foo, Collection<String> bar) {
     testHighlighting('''\
 print 1 + 2
 
-print <warning descr="Method call is ambiguous">4 <warning descr="'plus' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.util.ArrayList)'">+</warning> new ArrayList()</warning>
+print <weak_warning descr="Cannot infer argument types">4 <warning descr="'plus' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.util.ArrayList)'">+</warning> new ArrayList()</weak_warning>
 ''')
   }
 
