@@ -147,7 +147,7 @@ class ProjectInspectionProfileManager(val project: Project, schemeManagerFactory
     schemeManager.loadSchemes()
   }
 
-  fun isCurrentProfileInitialized(): Boolean = currentProfile.wasInitialized()
+  fun isCurrentProfileInitialized() = !initialLoadSchemesFuture.isPending && currentProfile.wasInitialized()
 
   override fun schemeRemoved(scheme: InspectionProfileImpl) {
     scheme.cleanup(project)
@@ -242,24 +242,28 @@ class ProjectInspectionProfileManager(val project: Project, schemeManagerFactory
 
   override fun getScopesManager() = DependencyValidationManager.getInstance(project)
 
-  @Synchronized override fun getProfiles(): Collection<InspectionProfileImpl> {
+  @Synchronized
+  override fun getProfiles(): Collection<InspectionProfileImpl> {
     currentProfile
     return schemeManager.allSchemes
   }
 
-  @Synchronized fun getAvailableProfileNames() = schemeManager.allSchemeNames.toTypedArray()
+  @Synchronized
+  fun getAvailableProfileNames() = schemeManager.allSchemeNames.toTypedArray()
 
   val projectProfile: String?
     get() = schemeManager.currentSchemeName
 
-  @Synchronized override fun setRootProfile(name: String?) {
+  @Synchronized
+  override fun setRootProfile(name: String?) {
     if (name != schemeManager.currentSchemeName) {
       schemeManager.currentSchemeName = name
       state.useProjectProfile = name != null
     }
   }
 
-  @Synchronized fun useApplicationProfile(name: String) {
+  @Synchronized
+  fun useApplicationProfile(name: String) {
     schemeManager.currentSchemeName = null
     state.useProjectProfile = false
     // yes, we reuse the same field - useProjectProfile field will be used to distinguish - is it app or project level
@@ -267,12 +271,14 @@ class ProjectInspectionProfileManager(val project: Project, schemeManagerFactory
     state.projectProfile = name
   }
 
-  @Synchronized fun setCurrentProfile(profile: InspectionProfileImpl?) {
+  @Synchronized
+  fun setCurrentProfile(profile: InspectionProfileImpl?) {
     schemeManager.setCurrent(profile)
     state.useProjectProfile = profile != null
   }
 
-  @Synchronized override fun getCurrentProfile(): InspectionProfileImpl {
+  @Synchronized
+  override fun getCurrentProfile(): InspectionProfileImpl {
     if (!state.useProjectProfile) {
       val applicationProfileManager = InspectionProfileManager.getInstance()
       return (state.projectProfile?.let {
@@ -307,7 +313,8 @@ class ProjectInspectionProfileManager(val project: Project, schemeManagerFactory
     }
   }
 
-  @Synchronized override fun getProfile(name: String, returnRootProfileIfNamedIsAbsent: Boolean): InspectionProfileImpl? {
+  @Synchronized
+  override fun getProfile(name: String, returnRootProfileIfNamedIsAbsent: Boolean): InspectionProfileImpl? {
     val profile = schemeManager.findSchemeByName(name)
     return profile ?: InspectionProfileManager.getInstance().getProfile(name, returnRootProfileIfNamedIsAbsent)
   }
