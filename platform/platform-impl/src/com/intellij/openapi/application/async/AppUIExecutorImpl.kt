@@ -12,24 +12,26 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Runnable
+import org.jetbrains.concurrency.CancellablePromise
+import java.util.concurrent.Callable
+import java.util.concurrent.Executor
+import java.util.function.BooleanSupplier
+import kotlin.LazyThreadSafetyMode.PUBLICATION
+import kotlin.coroutines.CoroutineContext
 
 /**
  * @author peter
  * @author eldar
  */
 internal class AppUIExecutorImpl private constructor(private val modality: ModalityState,
-                                                     dispatchers: Array<CoroutineDispatcher>,
+                                                     constraints: Array<ContextConstraint>,
                                                      expirableHandles: Set<Expiration>)
-  : ExpirableConstrainedExecution<AppUIExecutorEx>(dispatchers, expirableHandles), AppUIExecutorEx {
+  : ExpirableConstrainedExecution<AppUIExecutorEx>(constraints, expirableHandles), AppUIExecutorEx {
 
-  override fun composeDispatchers() = dispatchers.singleOrNull() ?: RescheduleAttemptLimitAwareDispatcher(dispatchers, ::dispatchLater)
+  val taskExecutor: ConstrainedTaskExecutor by lazy(PUBLICATION) { ConstrainedTaskExecutor(this) }
+  override val coroutineContext: CoroutineContext by lazy(PUBLICATION) { ConstrainedCoroutineSupport(this).coroutineContext }
 
-  override fun dispatchLater(block: Runnable) =
-    ApplicationManager.getApplication().invokeLater(block, modality)
-
-  constructor(modality: ModalityState) : this(modality, arrayOf(/* fallback */ SimpleConstraintDispatcher(object : ContextConstraint {
+  constructor(modality: ModalityState) : this(modality, arrayOf(/* fallback */ object : ContextConstraint {
     override val isCorrectContext: Boolean
       get() = ApplicationManager.getApplication().isDispatchThread && !ModalityState.current().dominates(modality)
 
@@ -38,23 +40,31 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
     }
 
     override fun toString() = "onUiThread($modality)"
-  })), emptySet<Expiration>())
+  }), emptySet<Expiration>())
 
-  override fun cloneWith(dispatchers: Array<CoroutineDispatcher>, expirationSet: Set<Expiration>): AppUIExecutorEx =
-    AppUIExecutorImpl(modality, dispatchers, expirationSet)
+  override fun cloneWith(constraints: Array<ContextConstraint>, expirationSet: Set<Expiration>): AppUIExecutorEx =
+    AppUIExecutorImpl(modality, constraints, expirationSet)
+
+  override fun dispatchLaterUnconstrained(runnable: Runnable) =
+    ApplicationManager.getApplication().invokeLater(runnable, modality)
+
+  override fun rawConstraintsExecutor(condition: BooleanSupplier?): Executor =
+    RescheduleAttemptLimitAwareDispatcher(constraints, condition)
+
+  override fun execute(command: Runnable): Unit = taskExecutor.execute(command)
+  override fun submit(task: Runnable): CancellablePromise<*> = taskExecutor.submit(task)
+  override fun <T : Any?> submit(task: Callable<T>): CancellablePromise<T> = taskExecutor.submit(task)
 
   override fun later(): AppUIExecutor {
     val edtEventCount = if (ApplicationManager.getApplication().isDispatchThread) IdeEventQueue.getInstance().eventCount else -1
     return withConstraint(object : ContextConstraint {
       @Volatile
-      var usedOnce = false
+      var usedOnce: Boolean = false
 
-      override val isCorrectContext: Boolean
-        get() {
-          return when (edtEventCount) {
-            -1 -> ApplicationManager.getApplication().isDispatchThread
-            else -> usedOnce || edtEventCount != IdeEventQueue.getInstance().eventCount
-          }
+      override val isCorrectContext: Boolean get() =
+        when (edtEventCount) {
+          -1 -> ApplicationManager.getApplication().isDispatchThread
+          else -> usedOnce || edtEventCount != IdeEventQueue.getInstance().eventCount
         }
 
       override fun schedule(runnable: Runnable) {

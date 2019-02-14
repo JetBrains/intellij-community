@@ -2,19 +2,11 @@
 package com.intellij.openapi.application.async
 
 import com.intellij.openapi.Disposable
-import kotlinx.coroutines.*
-import kotlin.coroutines.ContinuationInterceptor
-import kotlin.coroutines.CoroutineContext
 
 /**
  * @author eldar
  */
 interface ConstrainedExecution<E : ConstrainedExecution<E>> {
-  /**
-   * A [context][CoroutineContext] to be used with the standard [launch], [async], [withContext] coroutine builders.
-   * Contains: [ContinuationInterceptor] + [CoroutineExceptionHandler] + [CoroutineName].
-   */
-  fun coroutineDispatchingContext(): CoroutineContext
   /**
    * The [constraint] MUST guarantee to execute a runnable passed to its [ContextConstraint.schedule] method at some point.
    * For dispatchers that may refuse to run the task based on some condition consider the [withConstraint] overload
@@ -34,9 +26,14 @@ interface ConstrainedExecution<E : ConstrainedExecution<E>> {
 
   fun expireWith(parentDisposable: Disposable): E
 
+  /**
+   * Execution context is defined using a list of [ContextConstraint]s, with each constraint called to ensure the current context
+   * [is correct][isCorrectContext]. Whenever there's a constraint in the list that isn't satisfied, its [schedule] method is called
+   * to reschedule another attempt to traverse the list of constraints.
+   */
   interface ContextConstraint {
     val isCorrectContext: Boolean
-    fun schedule(runnable: java.lang.Runnable)
+    fun schedule(runnable: Runnable)
     override fun toString(): String
   }
 }

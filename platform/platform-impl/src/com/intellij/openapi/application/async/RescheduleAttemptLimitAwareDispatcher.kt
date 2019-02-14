@@ -1,57 +1,43 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.async
 
-import kotlinx.coroutines.CoroutineDispatcher
+import com.intellij.openapi.application.async.ConstrainedExecution.ContextConstraint
 import kotlinx.coroutines.Runnable
-import kotlinx.coroutines.cancel
 import java.util.*
-import kotlin.coroutines.CoroutineContext
+import java.util.function.BooleanSupplier
 
-// must be the ContinuationInterceptor in order to work properly
-internal class RescheduleAttemptLimitAwareDispatcher(dispatchers: Array<CoroutineDispatcher>,
-                                                     private val dispatchLater: (Runnable) -> Unit,
+internal class RescheduleAttemptLimitAwareDispatcher(constraints: Array<ContextConstraint>,
+                                                     condition: BooleanSupplier?,
                                                      private val myLimit: Int = 3000)
-  : BaseConstrainedExecution.CompositeDispatcher(dispatchers) {
+  : BaseConstrainedExecution.ConstraintsExecutor(constraints, condition) {
   private var myAttemptCount: Int = 0
 
   private val myLogLimit: Int = 30
-  private val myLastDispatchers: Deque<CoroutineDispatcher> = ArrayDeque(myLogLimit)
+  private val myLastConstraints: Deque<ContextConstraint> = ArrayDeque(myLogLimit)
 
-  override fun dispatch(context: CoroutineContext, block: Runnable) {
+  override fun execute(runnable: Runnable) {
     resetAttemptCount()
-    super.dispatch(context, block)
+    super.execute(runnable)
   }
 
-  override fun retryDispatch(context: CoroutineContext,
-                             block: Runnable,
-                             causeDispatcher: CoroutineDispatcher) {
-    if (checkHaveMoreRescheduleAttempts(causeDispatcher)) {
-      super.dispatch(context, block)
+  override fun retrySchedule(runnable: Runnable, causeConstraint: ContextConstraint) {
+    if (checkHaveMoreRescheduleAttempts(causeConstraint)) {
+      super.execute(runnable)
     }
-    else BaseConstrainedExecution.run {
-      try {
-        processUncaughtException(TooManyRescheduleAttemptsException(myLastDispatchers))
-      }
-      finally {
-        context.cancel()
-
-        // The continuation block MUST be invoked at some point in order to give the coroutine a chance
-        // to handle the cancellation exception and exit gracefully.
-        // At this point we can only provide a guarantee to resume it on EDT with a proper modality state.
-        dispatchLater(block)
-      }
+    else {
+      BaseConstrainedExecution.LOG.error(TooManyRescheduleAttemptsException(myLastConstraints))
     }
   }
 
   private fun resetAttemptCount() {
-    myLastDispatchers.clear()
+    myLastConstraints.clear()
     myAttemptCount = 0
   }
 
-  private fun checkHaveMoreRescheduleAttempts(dispatcher: CoroutineDispatcher): Boolean {
-    with(myLastDispatchers) {
+  private fun checkHaveMoreRescheduleAttempts(constraint: ContextConstraint): Boolean {
+    with(myLastConstraints) {
       if (isNotEmpty() && size >= myLogLimit) removeFirst()
-      addLast(dispatcher)
+      addLast(constraint)
     }
     return ++myAttemptCount < myLimit
   }
@@ -62,6 +48,6 @@ internal class RescheduleAttemptLimitAwareDispatcher(dispatchers: Array<Coroutin
    * WARNING: The exception thrown is handled in a fallback context as a last resort,
    *          The fallback context is EDT with a proper modality state, no other guarantee is made.
    */
-  internal class TooManyRescheduleAttemptsException internal constructor(lastConstraints: Collection<CoroutineDispatcher>)
+  internal class TooManyRescheduleAttemptsException internal constructor(lastConstraints: Deque<ContextConstraint>)
     : Exception("Too many reschedule requests, probably constraints can't be satisfied all together: " + lastConstraints.joinToString())
 }
