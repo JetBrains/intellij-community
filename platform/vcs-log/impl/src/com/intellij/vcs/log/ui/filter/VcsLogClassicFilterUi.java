@@ -302,6 +302,15 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       super(VcsLogFilterCollection.TEXT_FILTER, VcsLogFilterCollection.HASH_FILTER, dataPackProvider, properties, filters);
     }
 
+    @Override
+    protected void saveFilterToProperties(@Nullable FilterPair<VcsLogTextFilter, VcsLogHashFilter> filter) {
+      if (filter != null && filter.getFilter1() != null) {
+        myUiProperties.set(MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE, filter.getFilter1().matchesCase());
+        myUiProperties.set(MainVcsLogUiProperties.TEXT_FILTER_REGEX, filter.getFilter1().isRegex());
+      }
+      super.saveFilterToProperties(filter);
+    }
+
     @Nullable
     @Override
     protected FilterPair<VcsLogTextFilter, VcsLogHashFilter> getFilterFromProperties() {
