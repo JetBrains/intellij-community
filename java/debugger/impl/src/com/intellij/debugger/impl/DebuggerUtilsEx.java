@@ -925,6 +925,15 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return method != null && isLambdaName(method.name());
   }
 
+  public static boolean isProxyClassName(@Nullable String name) {
+    return !StringUtil.isEmpty(name) && StringUtil.getShortName(name).startsWith("$Proxy");
+  }
+
+  public static boolean isProxyClass(@Nullable ReferenceType type) {
+    // it may be better to call java.lang.reflect.Proxy#isProxyClass but it is much slower
+    return type instanceof ClassType && isProxyClassName(type.name());
+  }
+
   public static final Comparator<Method> LAMBDA_ORDINAL_COMPARATOR = Comparator.comparingInt(m -> getLambdaOrdinal(m.name()));
 
   public static int getLambdaOrdinal(@NotNull String name) {
