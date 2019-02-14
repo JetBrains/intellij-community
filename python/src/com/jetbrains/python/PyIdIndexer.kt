@@ -15,13 +15,11 @@ import java.util.*
 /**
  * @author traff
  */
-class PyIdIndexer : PrebuiltIndexAwareIdIndexer() {
+class PyIdIndexer : PrebuiltIndexAwareIdIndexer(PyPrebuiltStubsProvider.NAME) {
   override val fileTypes: Set<FileType>
     get() = setOf(PythonFileType.INSTANCE)
 
   private val myIndexer = MyPyIdIndexer()
-
-  override val dirName: String get() = PyPrebuiltStubsProvider.NAME
 
   companion object {
     fun createIndexingLexer(consumer: OccurrenceConsumer): Lexer {

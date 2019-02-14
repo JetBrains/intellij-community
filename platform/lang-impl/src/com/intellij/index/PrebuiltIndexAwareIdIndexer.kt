@@ -6,17 +6,11 @@ import com.intellij.openapi.extensions.AbstractExtensionPointBean
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
-import com.intellij.psi.impl.cache.impl.id.LexingIdIndexer
 import com.intellij.util.indexing.DataIndexer
 import com.intellij.util.indexing.FileBasedIndexExtension
 import com.intellij.util.indexing.FileContent
 import com.intellij.util.indexing.ID
-import com.intellij.util.io.DataExternalizer
-import com.intellij.util.io.DataInputOutputUtil
-import com.intellij.util.io.MapDataExternalizer
 import com.intellij.util.xmlb.annotations.Attribute
-import java.io.DataInput
-import java.io.DataOutput
 
 /**
  * @author traff
@@ -61,22 +55,7 @@ interface PrebuiltFileBasedIndexProviderGenerator {
   fun <K, V> generateProvider(id: ID<K, V>): PrebuiltFileBasedIndexProvider<K, V>?
 }
 
-abstract class PrebuiltFileBasedIndexProvider<K, V>(val id: ID<K, V>) : PrebuiltIndexProviderBase<Map<K, V>>() {
-  companion object {
-    @JvmField
-    val EXTENSION_POINT_NAME: ExtensionPointName<PrebuiltFileBasedIndexProvider<*, *>> = ExtensionPointName.create(
-      "com.intellij.prebuiltFileBasedIndexProvider")
-  }
-
-  @Suppress("UNCHECKED_CAST")
-  private val indexExtension = FileBasedIndexExtension.EXTENSION_POINT_NAME.getExtensionList().first { it.name == id } as FileBasedIndexExtension<K, V>
-
-  override val indexExternalizer get() = MapDataExternalizer(indexExtension.keyDescriptor, indexExtension.valueExternalizer)
-
-  override val indexName get() = indexExtension.name.name
-}
-
-abstract class PrebuiltIndexAwareIdIndexer : PrebuiltFileBasedIndexProvider<IdIndexEntry, Int>(IdIndex.NAME) {
+abstract class PrebuiltIndexAwareIdIndexer(override val dirName: String) : PrebuiltFileBasedIndexProvider<IdIndexEntry, Int>(IdIndex.NAME, dirName) {
   companion object {
     internal val LOG = Logger.getInstance("#com.intellij.index.PrebuiltIndexAwareIdIndexer")
     const val ID_INDEX_FILE_NAME: String = "id-index"
