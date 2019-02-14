@@ -130,9 +130,6 @@ public class FoldRegionImpl extends RangeMarkerWithGetterImpl implements FoldReg
     if (isValid()) {
       alignToSurrogateBoundaries();
     }
-    else {
-      myEditor.getFoldingModel().removeRegionFromGroup(this);
-    }
   }
 
   @Override
