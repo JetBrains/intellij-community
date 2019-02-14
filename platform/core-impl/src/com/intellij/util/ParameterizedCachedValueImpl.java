@@ -16,21 +16,32 @@
 
 package com.intellij.util;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class ParameterizedCachedValueImpl<T,P> extends CachedValueBase<T> implements ParameterizedCachedValue<T,P> {
+public class ParameterizedCachedValueImpl<T,P> extends CachedValueBase<T> implements ParameterizedCachedValue<T,P> {
+  @NotNull private final Project myProject;
   private final ParameterizedCachedValueProvider<T,P> myProvider;
 
-  public ParameterizedCachedValueImpl(@NotNull ParameterizedCachedValueProvider<T,P> provider) {
+  ParameterizedCachedValueImpl(@NotNull Project project,
+                               @NotNull ParameterizedCachedValueProvider<T, P> provider,
+                               boolean trackValue) {
+    super(trackValue);
+    myProject = project;
     myProvider = provider;
   }
 
   @Override
   public T getValue(P param) {
     return getValueWithLock(param);
+  }
+
+  @Override
+  public boolean isFromMyProject(@NotNull Project project) {
+    return myProject == project;
   }
 
   @Override

@@ -23,29 +23,29 @@ import java.util.List;
 public abstract class CachedValueBase<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.CachedValueImpl");
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("cachedValue");
+  private final boolean myTrackValue;
   private volatile SoftReference<Data<T>> myData;
+
+  protected CachedValueBase(boolean trackValue) {
+    myTrackValue = trackValue;
+  }
 
   @NotNull
   private Data<T> computeData(@Nullable CachedValueProvider.Result<T> result) {
-    T value = result == null ? null : result.getValue();
+    if (result == null) {
+      return new Data<>(null, ArrayUtil.EMPTY_OBJECT_ARRAY, ArrayUtil.EMPTY_LONG_ARRAY);
+    }
+    T value = result.getValue();
     Object[] dependencies = getDependencies(result);
 
-    Object[] inferredDependencies;
-    long[] inferredTimeStamps;
-    if (dependencies == null) {
-      inferredDependencies = ArrayUtil.EMPTY_OBJECT_ARRAY;
-      inferredTimeStamps = ArrayUtil.EMPTY_LONG_ARRAY;
-    }
-    else {
-      TLongArrayList timeStamps = new TLongArrayList(dependencies.length);
-      List<Object> deps = new NotNullList<>(dependencies.length);
-      collectDependencies(timeStamps, deps, dependencies);
+    TLongArrayList timeStamps = new TLongArrayList(dependencies.length);
+    List<Object> deps = new NotNullList<>(dependencies.length);
+    collectDependencies(timeStamps, deps, dependencies);
 
-      inferredDependencies = ArrayUtil.toObjectArray(deps);
-      inferredTimeStamps = timeStamps.toNativeArray();
-    }
+    Object[] inferredDependencies = ArrayUtil.toObjectArray(deps);
+    long[] inferredTimeStamps = timeStamps.toNativeArray();
 
-    if (result != null && CachedValueProfiler.canProfile()) {
+    if (CachedValueProfiler.canProfile()) {
       ProfilingInfo profilingInfo = CachedValueProfiler.getInstance().getTemporaryInfo(result);
       if (profilingInfo != null) {
         return new ProfilingData<>(value, inferredDependencies, inferredTimeStamps, profilingInfo);
@@ -60,31 +60,21 @@ public abstract class CachedValueBase<T> {
     if (expected != getRawData()) return null;
 
     if (updatedValue != null) {
-      myData = new SoftReference<>(updatedValue);
+      setData(updatedValue);
       return updatedValue;
     }
     return expected;
   }
 
   private synchronized void setData(@Nullable Data<T> data) {
-    myData = new SoftReference<>(data);
+    myData = data == null ? null : new SoftReference<>(data);
   }
 
-  @Nullable
-  protected Object[] getDependencies(CachedValueProvider.Result<T> result) {
-    return result == null ? null : result.getDependencyItems();
-  }
-
-  @Nullable
-  protected Object[] getDependenciesPlusValue(CachedValueProvider.Result<? extends T> result) {
-    if (result == null) {
-      return null;
-    }
-    else {
-      Object[] items = result.getDependencyItems();
-      T value = result.getValue();
-      return value == null ? items : ArrayUtil.append(items, value);
-    }
+  @NotNull
+  private Object[] getDependencies(@NotNull CachedValueProvider.Result<T> result) {
+    Object[] items = result.getDependencyItems();
+    T value = result.getValue();
+    return myTrackValue && value != null ? ArrayUtil.append(items, value) : items;
   }
 
   public void clear() {

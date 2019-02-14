@@ -34,7 +34,8 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
   private final PsiManager myManager;
   private volatile long myLastPsiTimeStamp = -1;
 
-  PsiCachedValue(@NotNull PsiManager manager) {
+  PsiCachedValue(@NotNull PsiManager manager, boolean trackValue) {
+    super(trackValue);
     myManager = manager;
   }
 
