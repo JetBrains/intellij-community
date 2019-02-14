@@ -327,24 +327,31 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     protected FilterPair<VcsLogTextFilter, VcsLogHashFilter> getFilterFromProperties() {
       FilterPair<VcsLogTextFilter, VcsLogHashFilter> filterPair = super.getFilterFromProperties();
       if (filterPair == null) return null;
+
+      VcsLogTextFilter textFilter = filterPair.getFilter1();
+      VcsLogHashFilter hashFilter = filterPair.getFilter2();
+
       // check filters correctness
-      if (filterPair.getFilter1() != null && !StringUtil.isEmptyOrSpaces(filterPair.getFilter1().getText())) {
-        VcsLogHashFilter hashFilterFromText = VcsLogFilterObject.fromHash(filterPair.getFilter1().getText());
-        if (!Objects.equals(filterPair.getFilter2(), hashFilterFromText)) {
-          LOG.warn("Set hash filter " + filterPair.getFilter2() + " is inconsistent with text filter." +
+      if (textFilter != null && StringUtil.isEmptyOrSpaces(textFilter.getText())) {
+        LOG.warn("Saved text filter is empty. Removing.");
+        textFilter = null;
+      }
+
+      if (textFilter != null) {
+        VcsLogHashFilter hashFilterFromText = VcsLogFilterObject.fromHash(textFilter.getText());
+        if (!Objects.equals(hashFilter, hashFilterFromText)) {
+          LOG.warn("Saved hash filter " + hashFilter + " is inconsistent with text filter." +
                    " Replacing with " + hashFilterFromText);
-          return new FilterPair<>(filterPair.getFilter1(), hashFilterFromText);
+          hashFilter = hashFilterFromText;
         }
       }
-      else if (filterPair.getFilter2() != null && !filterPair.getFilter2().getHashes().isEmpty()) {
-        VcsLogTextFilter textFilterFromHashes = createTextFilter(StringUtil.join(filterPair.getFilter2().getHashes(), " "));
-        LOG.warn("Set hash filter " +
-                 filterPair.getFilter2() +
-                 " is inconsistent with empty text filter. Using text filter " +
-                 textFilterFromHashes);
-        return new FilterPair<>(textFilterFromHashes, filterPair.getFilter2());
+      else if (hashFilter != null && !hashFilter.getHashes().isEmpty()) {
+        textFilter = createTextFilter(StringUtil.join(hashFilter.getHashes(), " "));
+        LOG.warn("Saved hash filter " + hashFilter +
+                 " is inconsistent with empty text filter. Using text filter " + textFilter);
       }
-      return filterPair;
+
+      return new FilterPair<>(textFilter, hashFilter);
     }
 
     @NotNull
