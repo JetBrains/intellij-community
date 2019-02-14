@@ -8,6 +8,7 @@ import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.junit.InheritorChooser;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -131,7 +132,9 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
                                                    @NotNull Runnable performRunnable,
                                                    @NotNull PsiMethod psiMethod,
                                                    @NotNull PsiClass... classes) {
-    getTestTasksChooser().chooseTestTasks(context, classes, tasks -> {
+    String locationName = (classes.length == 1 ? classes[0].getName() + "." : "") + psiMethod.getName();
+    DataContext dataContext = TestTasksChooser.contextWithLocationName(context.getDataContext(), locationName);
+    getTestTasksChooser().chooseTestTasks(context.getProject(), dataContext, classes, tasks -> {
         ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
         ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
         Function1<PsiClass, String> createFilter = (psiClass) -> createTestFilter(context.getLocation(), psiClass, psiMethod);
@@ -140,7 +143,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
           performRunnable.run();
           return;
         }
-        configuration.setName((classes.length == 1 ? classes[0].getName() + "." : "") + psiMethod.getName());
+        configuration.setName(locationName);
         performRunnable.run();
     });
   }

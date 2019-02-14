@@ -1,18 +1,34 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.test.runner
 
-import com.intellij.execution.actions.ConfigurationContext
+import com.intellij.execution.ExecutionBundle
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import com.intellij.psi.search.scope.TestsScope
+import com.intellij.ui.FileColorManager
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.util.FunctionUtil
+import com.intellij.util.ui.JBUI
+import icons.ExternalSystemIcons
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducer.findAllTestsTaskToRun
 import org.jetbrains.plugins.gradle.util.TasksToRun
+import java.awt.Component
+import java.awt.MouseInfo
 import java.util.function.Consumer
 import javax.swing.DefaultListCellRenderer
+import javax.swing.JList
+import javax.swing.border.EmptyBorder
 
 typealias SourcePath = String
 typealias TestName = String
@@ -25,33 +41,35 @@ open class TestTasksChooser {
   private fun error(message: String): Nothing = LOG.error(message) as Nothing
 
   fun chooseTestTasks(
-    context: ConfigurationContext,
+    project: Project,
+    context: DataContext,
     elements: Iterable<PsiElement>,
     perform: Consumer<List<Map<SourcePath, TestTasks>>>
   ) {
     val sources = elements.map { getSourceFile(it) ?: error("Can not find source file for $it") }
-    chooseTestTasks(context.dataContext, sources, context.project, perform)
+    chooseTestTasks(project, context, sources, perform)
   }
 
   fun chooseTestTasks(
-    context: ConfigurationContext,
+    project: Project,
+    context: DataContext,
     vararg elements: PsiElement,
     perform: Consumer<List<Map<SourcePath, TestTasks>>>
   ) {
-    chooseTestTasks(context, elements.asIterable(), perform)
+    chooseTestTasks(project, context, elements.asIterable(), perform)
   }
 
   private fun chooseTestTasks(
+    project: Project,
     context: DataContext,
     sources: List<VirtualFile>,
-    project: Project,
     perform: Consumer<List<Map<SourcePath, TestTasks>>>
   ) {
     val testTasks = findAllTestsTaskToRun(sources, project)
     when {
-      testTasks.isEmpty() -> showWarningTooltip(context)
+      testTasks.isEmpty() -> showTestsNotFoundWarning(project, context)
       testTasks.size == 1 -> perform.accept(testTasks.values.toList())
-      else -> chooseTestTasks(context, testTasks, perform)
+      else -> chooseTestTasks(project, context, testTasks, perform)
     }
   }
 
@@ -66,37 +84,101 @@ open class TestTasksChooser {
   }
 
   protected open fun chooseTestTasks(
+    project: Project,
     context: DataContext,
     testTasks: Map<TestName, Map<SourcePath, TasksToRun>>,
     perform: Consumer<List<Map<SourcePath, TestTasks>>>
   ) {
     assert(!ApplicationManager.getApplication().isCommandLine)
+    val sortedTestTasksNames = testTasks.keys.toList().sortedByDescending { it == TEST_TASK_NAME }
+    val testTaskRenderer = TestTaskListCellRenderer(project)
     JBPopupFactory.getInstance()
-      .createPopupChooserBuilder(testTasks.keys.toList())
-      .setRenderer(DefaultListCellRenderer())
-      .setTitle("Choose Tasks to Run")
-      .setMovable(false)
+      .createPopupChooserBuilder(sortedTestTasksNames)
+      .setRenderer(testTaskRenderer)
+      .setTitle(suggestPopupTitle(context))
+      .setAutoselectOnMouseMove(false)
+      .setNamerForFiltering(FunctionUtil.id())
+      .setMovable(true)
+      .setAdText(ExecutionBundle.message("tests.tasks.choosing.popup.hint"))
       .setResizable(false)
       .setRequestFocus(true)
+      .setMinSize(JBUI.size(250, -1))
       .setItemsChosenCallback {
         val choosesTestTasks = it.mapNotNull(testTasks::get)
         when {
-          choosesTestTasks.isEmpty() -> showWarningTooltip(context)
+          choosesTestTasks.isEmpty() -> showTestsNotFoundWarning(project, context)
           else -> perform.accept(choosesTestTasks)
         }
       }
       .createPopup()
-      .showInBestPositionFor(context)
+      .show(getPreferredPopupPosition(context))
   }
 
-  protected open fun showWarningTooltip(context: DataContext) {
+  protected open fun showTestsNotFoundWarning(project: Project, context: DataContext) {
     assert(!ApplicationManager.getApplication().isCommandLine)
-    JBPopupFactory.getInstance()
-      .createMessage("No tasks available")
-      .showInBestPositionFor(context)
+    val notification = Notification(
+      "Test tasks chooser",
+      ExecutionBundle.message("tests.tasks.choosing.warning.text"),
+      "",
+      NotificationType.WARNING)
+    Notifications.Bus.notify(notification, project)
+  }
+
+  private fun suggestPopupTitle(context: DataContext): String {
+    val locationName = context.getData(LOCATION)
+    return when (locationName) {
+      null -> ExecutionBundle.message("tests.tasks.choosing.popup.title.common")
+      else -> ExecutionBundle.message("tests.tasks.choosing.popup.title", locationName)
+    }
+  }
+
+  private fun getPreferredPopupPosition(context: DataContext): RelativePoint {
+    return when (context.getData(PlatformDataKeys.CONTEXT_COMPONENT)) {
+      is EditorGutterComponentEx -> RelativePoint(MouseInfo.getPointerInfo().location)
+      else -> JBPopupFactory.getInstance().guessBestPopupLocation(context)
+    }
+  }
+
+  private class TestTaskListCellRenderer(project: Project) : DefaultListCellRenderer() {
+    private val cellInsets = JBUI.insets(1, 5)
+    private val colorManager = FileColorManager.getInstance(project)
+
+    override fun getListCellRendererComponent(
+      list: JList<*>?,
+      value: Any?,
+      index: Int,
+      isSelected: Boolean,
+      cellHasFocus: Boolean
+    ): Component {
+      super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+      text = value.toString()
+      icon = ExternalSystemIcons.Task
+      iconTextGap = cellInsets.left
+      border = EmptyBorder(cellInsets)
+      if (!isSelected) {
+        background = colorManager.getScopeColor(TestsScope.NAME)
+      }
+      return this
+    }
   }
 
   companion object {
+    private const val TEST_TASK_NAME = "test"
+
+    @JvmField
+    val LOCATION = DataKey.create<String?>("org.jetbrains.plugins.gradle.execution.test.runner.TestTasksChooser.LOCATION")
+
+    @JvmStatic
+    fun contextWithLocationName(context: DataContext, locationName: String?): DataContext {
+      if (locationName == null) return context
+      return DataContext {
+        when {
+          LOCATION.`is`(it) -> locationName
+          else -> context.getData(it)
+        }
+      }
+    }
+
     private fun <K, V, R> Map<K, V>.mapNotNullValues(transform: (Map.Entry<K, V>) -> R?): Map<K, R> =
       mapNotNull { entry -> transform(entry)?.let { entry.key to it } }.toMap()
   }
