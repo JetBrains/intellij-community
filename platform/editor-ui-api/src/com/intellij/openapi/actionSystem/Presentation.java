@@ -176,7 +176,8 @@ public final class Presentation implements Cloneable {
       myText = null;
     }
 
-    if (UISettings.getInstance().getDisableMnemonicsInControls()) {
+    final UISettings uiSettings = UISettings.getInstanceOrNull();
+    if (uiSettings != null && uiSettings.getDisableMnemonicsInControls()) {
       myMnemonic = 0;
       myDisplayedMnemonicIndex = -1;
     }
