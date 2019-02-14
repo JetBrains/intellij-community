@@ -17,24 +17,22 @@ package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.stubs.IndexSink;
-import com.intellij.psi.stubs.StubInputStream;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.IOException;
 
 /**
  * @author yole
  */
-public abstract class CustomTargetExpressionStubType<T extends CustomTargetExpressionStub> {
-  public static final ExtensionPointName<CustomTargetExpressionStubType> EP_NAME = ExtensionPointName.create("Pythonid.customTargetExpressionStubType");
+public abstract class CustomTargetExpressionStubType<T extends CustomTargetExpressionStub>
+  implements PyCustomStubType<PyTargetExpression, T> {
 
-  @Nullable
-  public abstract T createStub(PyTargetExpression psi);
-
-  @Nullable
-  public abstract T deserializeStub(StubInputStream stream) throws IOException;
+  /**
+   * @deprecated It is our internal API, try to avoid using it.
+   * It is planned to be removed sooner or later, so please don't rely on this EP.
+   */
+  @Deprecated
+  public static final ExtensionPointName<CustomTargetExpressionStubType<? extends CustomTargetExpressionStub>> EP_NAME =
+    ExtensionPointName.create("Pythonid.customTargetExpressionStubType");
 
   public void indexStub(PyTargetExpressionStub stub, IndexSink sink) {
   }
