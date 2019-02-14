@@ -168,7 +168,7 @@ def method(Box<A> box) {
     testHighlighting '''
 def <T> void foo(T t, Closure cl) {}
 
-foo(1) { println <warning descr="Method call is ambiguous">it</warning> }
+foo(1) { println <weak_warning descr="Cannot infer argument types">it</weak_warning> }
 '''
   }
 

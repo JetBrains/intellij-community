@@ -20,6 +20,7 @@ import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentUtilKt;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
@@ -28,7 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
-import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
@@ -59,6 +59,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.intellij.psi.util.PsiUtil.extractIterableTypeParameter;
 import static org.jetbrains.plugins.groovy.codeInspection.type.GroovyTypeCheckVisitorHelper.*;
@@ -356,13 +357,15 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
         }
       }
       else if (results.length > 0) {
+        PsiType[] argumentTypes = info.getArgumentTypes();
+        boolean checkUnknownArgs = argumentTypes == null || ContainerUtil.or(argumentTypes, Objects::isNull);
         for (GroovyResolveResult result : results) {
           PsiElement current = result.getElement();
           if (current instanceof PsiMethod && !result.isInvokedOnProperty()) {
-            if (!checkMethodApplicability(result, false, info)) return;
+            if (!checkMethodApplicability(result, checkUnknownArgs, info)) return;
           }
           else {
-            if (!checkCallApplicability(referenceExpression.getType(), false, info)) return;
+            if (!checkCallApplicability(referenceExpression.getType(), checkUnknownArgs, info)) return;
           }
         }
 
