@@ -65,7 +65,7 @@ public class MavenLogOutputParser implements BuildOutputParser {
       }
     }
 
-    if (checkComplete(messageConsumer, logLine)) return true;
+    if (checkComplete(messageConsumer, logLine, mavenLogReader)) return true;
     return false;
   }
 
@@ -84,12 +84,16 @@ public class MavenLogOutputParser implements BuildOutputParser {
     };
   }
 
-  private boolean checkComplete(Consumer<? super BuildEvent> messageConsumer, MavenLogEntryReader.MavenLogEntry logLine) {
+  private boolean checkComplete(Consumer<? super BuildEvent> messageConsumer,
+                                MavenLogEntryReader.MavenLogEntry logLine,
+                                MavenLogEntryReader mavenLogReader) {
     if (logLine.myLine.equals("BUILD FAILURE")) {
+      MavenLogEntryReader.MavenLogEntry errorDesc = mavenLogReader.findFirst(s -> s.getType() == LogMessageType.ERROR);
       completeParsers(messageConsumer);
       messageConsumer
         .accept(new FinishBuildEventImpl(myTaskId, null, System.currentTimeMillis(), "Maven run",
-                                         new FailureResultImpl(new Exception())));
+                                         new FailureResultImpl(errorDesc == null ? "Failed" : errorDesc.myLine,
+                                                               null)));
       myCompleted = true;
       return true;
     }

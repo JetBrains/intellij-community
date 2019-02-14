@@ -35,7 +35,7 @@ public class WarningNotifier implements MavenLoggedEventParser {
     String line = logLine.getLine();
 
     if (warnings.add(line)) {
-      List<MavenLogEntryReader.MavenLogEntry> toConcat = logEntryReader.readUntil(l -> l.getType() == LogMessageType.WARNING);
+      List<MavenLogEntryReader.MavenLogEntry> toConcat = logEntryReader.readWhile(l -> l.getType() == LogMessageType.WARNING);
       String contatenated = line + "\n" + StringUtil.join(toConcat, MavenLogEntryReader.MavenLogEntry::getLine, "\n");
       messageConsumer.accept(new MessageEventImpl(id, MessageEvent.Kind.WARNING, "Warning", line, contatenated));
       return true;
