@@ -28,7 +28,7 @@ public class CatchBlockMover extends LineMover {
     }
     else {
       startOffset = document.getLineStartOffset(info.toMove.startLine);
-      endOffset = document.getLineStartOffset(info.toMove.endLine);
+      endOffset = getLineStartSafeOffset(document, info.toMove.endLine);
     }
     final PsiElement element = file.findElementAt(startOffset);
     if (element == null) return false;
@@ -38,7 +38,9 @@ public class CatchBlockMover extends LineMover {
     PsiCatchSection lastToMove = null;
     for (PsiCatchSection catchSection : tryStatement.getCatchSections()) {
       final int offset = catchSection.getTextOffset();
-      if (offset >= startOffset && offset < endOffset || catchSection.getFirstChild().getTextRange().contains(startOffset)) {
+      final PsiElement child = catchSection.getFirstChild();
+      if (!(child instanceof PsiKeyword)) return info.prohibitMove();
+      if (offset >= startOffset && offset < endOffset || child.getTextRange().contains(startOffset)) {
         if (firstToMove == null) firstToMove = catchSection;
         lastToMove = catchSection;
       }
