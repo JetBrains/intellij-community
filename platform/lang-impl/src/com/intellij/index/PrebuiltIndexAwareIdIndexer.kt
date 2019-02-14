@@ -62,7 +62,19 @@ class PrebuiltFileBasedIndexProviderEP : AbstractExtensionPointBean() {
   val instance: PrebuiltFileBasedIndexProvider<*, *> by lazy { providerClass.newInstance() as PrebuiltFileBasedIndexProvider<*, *> }
 }
 
+interface PrebuiltFileBasedIndexProviderGenerator {
+  companion object {
+    val EXTENSION_POINT_NAME: ExtensionPointName<FileBasedIndexExtension<*, *>> = ExtensionPointName.create("com.intellij.prebuiltFileBasedIndexProviderGenerator")
+  }
+
+  fun <K, V> generateProvider(id: ID<K, V>): PrebuiltFileBasedIndexProvider<K, V>
+}
+
 abstract class PrebuiltFileBasedIndexProvider<K, V>(id: ID<K, V>) : PrebuiltIndexProviderBase<Map<K, V>>() {
+  companion object {
+    val EXTENSION_POINT_NAME: ExtensionPointName<FileBasedIndexExtension<*, *>> = ExtensionPointName.create("com.intellij.prebuiltFileBasedIndexProvider")
+  }
+
   @Suppress("UNCHECKED_CAST")
   private val indexExtension = FileBasedIndexExtension.EXTENSION_POINT_NAME.getExtensionList().first { it.name == id } as FileBasedIndexExtension<K, V>
 
