@@ -14,12 +14,17 @@ public final class XsltDebuggerIcons {
     return IconLoader.getIcon(path, XsltDebuggerIcons.class);
   }
 
-  /**
-   * 16x16
-   */
-  public static final Icon FilterWhitespace = load("/icons/filterWhitespace.png");
+  private static Icon load(String path, Class<?> clazz) {
+    return IconLoader.getIcon(path, clazz);
+  }
+
   /**
    * 16x16
    */
   public static final Icon XmlComment = load("/icons/xmlComment.svg");
+
+  /** @deprecated to be removed in IDEA 2020 - use AllIcons.ObjectBrowser.FlattenPackages */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public static final Icon FilterWhitespace = load("/objectBrowser/flattenPackages.svg", com.intellij.icons.AllIcons.class);
 }
