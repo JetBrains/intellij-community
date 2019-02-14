@@ -128,7 +128,8 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       MultiMap<String, InspectionToolWrapper> shortName2Wrapper = new MultiMap<>();
       if (singleTool != null) {
         shortName2Wrapper.put(singleTool, getWrappersForAllScopes(singleTool));
-      } else {
+      }
+      else {
         InspectionTreeModel model = myView.getTree().getInspectionTreeModel();
         model
           .traverse(model.getRoot())
@@ -145,6 +146,9 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       }
 
       writeProfileName(outputDirectoryName);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Exception e) {
       LOG.error(e);
