@@ -173,8 +173,9 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
     }
 
     boolean clean = moduleBuildTasks.stream().anyMatch(task -> !(task instanceof ModuleFilesBuildTask) && !task.isIncrementalBuild());
+    boolean compileOnly = moduleBuildTasks.stream().allMatch(task -> task instanceof ModuleFilesBuildTask);
     boolean includeDependentModules = moduleBuildTasks.stream().anyMatch(ModuleBuildTask::isIncludeDependentModules);
-    String goal = buildOnlyResources ? "resources:resources" : "install";
+    String goal = getGoal(buildOnlyResources, compileOnly);
     List<MavenRunnerParameters> commands = new ArrayList<>();
     for (Map.Entry<MavenProject, List<MavenProject>> entry : rootProjectsToModules.entrySet()) {
       ParametersList parameters = new ParametersList();
@@ -207,6 +208,14 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
     }
 
     runBatch(project, mavenRunner, "Maven Build", commands, callback);
+  }
+
+  @NotNull
+  private static String getGoal(boolean buildOnlyResources, boolean compileOnly) {
+    if (buildOnlyResources) {
+      return "resources:resources";
+    }
+    return compileOnly ? "compile" : "package";
   }
 
   public static void runBatch(@NotNull Project project, @NotNull MavenRunner mavenRunner, @NotNull String title,
