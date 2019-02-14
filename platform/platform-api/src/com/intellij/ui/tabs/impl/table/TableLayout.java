@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl.table;
 
 import com.intellij.ui.tabs.TabInfo;
@@ -56,8 +42,8 @@ public class TableLayout extends TabLayout {
         eachX = data.toFitRec.x;
       }
       myTabs.layout(eachLabel, eachX, 0, size.width, 1);
-      eachX += size.width + myTabs.getTabHGap();
-      data.requiredWidth += size.width + myTabs.getTabHGap();
+      eachX += size.width + myTabs.getInterTabSpaceLength();
+      data.requiredWidth += size.width + myTabs.getInterTabSpaceLength();
     }
 
     int selectedRow = -1;
@@ -84,7 +70,7 @@ public class TableLayout extends TabLayout {
         if (myTabs.getSelectedInfo() == eachInfo) {
           selectedRow = eachRow;
         }
-        eachX += size.width + myTabs.getTabHGap();
+        eachX += size.width + myTabs.getInterTabSpaceLength();
       }
       else {
         eachTableRow = new TableRow(data);
@@ -130,7 +116,9 @@ public class TableLayout extends TabLayout {
     final Insets insets = myTabs.getLayoutInsets();
     int eachY = insets.top;
     int eachX;
-
+    int row = 0;
+    final int tabUnderlineFix = myTabs.isEditorTabs() ? myTabs.getActiveTabUnderlineHeight() : 0;
+    
     for (TableRow eachRow : data.table) {
       eachX = insets.left;
 
@@ -155,13 +143,15 @@ public class TableLayout extends TabLayout {
           width = data.toFitRec.width + insets.left - eachX;
         }
 
-        myTabs.layout(label, eachX, eachY, width, myTabs.myHeaderFitSize.height);
+        myTabs.layout(label, eachX, eachY, width, row < data.table.size() - 1 ? myTabs.myHeaderFitSize.height - tabUnderlineFix :  myTabs.myHeaderFitSize.height);
         label.setAlignmentToCenter(deltaToFit > 0);
 
         boolean lastCell = i == eachRow.myColumns.size() - 1;
-        eachX += width + (lastCell ? 0 : myTabs.getTabHGap());
+        eachX += width + (lastCell ? 0 : myTabs.getInterTabSpaceLength());
       }
-      eachY += myTabs.myHeaderFitSize.height;
+      eachY += myTabs.myHeaderFitSize.height - 1 + myTabs.getInterTabSpaceLength() - (row < data.table.size() - 1 ? tabUnderlineFix : 0);
+      
+      row++;
     }
 
     if (myTabs.getSelectedInfo() != null) {

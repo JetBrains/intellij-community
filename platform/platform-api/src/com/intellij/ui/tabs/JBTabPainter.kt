@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs
 
-import com.intellij.ui.tabs.impl.JBDefaultTabPainter
-import com.intellij.ui.tabs.impl.JBEditorTabPainter
+import com.intellij.ui.tabs.newImpl.JBDefaultTabPainter
+import com.intellij.ui.tabs.newImpl.JBEditorTabPainter
 import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.Point

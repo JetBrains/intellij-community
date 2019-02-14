@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl.singleRow;
 
 import com.intellij.ui.tabs.JBTabsPosition;
@@ -42,6 +28,17 @@ public class SingleRowLayout extends TabLayout {
     @Nullable
     protected Rectangle getIconRec() {
       return myLastSingRowLayout != null ? myLastSingRowLayout.moreRect : null;
+    }
+
+    @Override
+    protected int getIconY(Rectangle iconRec) {
+      final int shift;
+      switch (myTabs.getTabsPosition()) {
+        case bottom: shift = myTabs.getActiveTabUnderlineHeight(); break;
+        case top: shift = -(myTabs.getActiveTabUnderlineHeight() / 2); break;
+        default: shift = 0;
+      }
+      return super.getIconY(iconRec) + shift;
     }
   };
   public JPopupMenu myMorePopup;
@@ -199,7 +196,7 @@ public class SingleRowLayout extends TabLayout {
     data.toFitLength = getStrategy().getToFitLength(data);
 
     if (myTabs.isGhostsAlwaysVisible()) {
-      data.toFitLength -= myTabs.getGhostTabLength() * 2 + (myTabs.getTabHGap() * 2);
+      data.toFitLength -= myTabs.getGhostTabLength() * 2 + (myTabs.getInterTabSpaceLength() * 2);
     }
   }
 
@@ -218,7 +215,7 @@ public class SingleRowLayout extends TabLayout {
     if (data.firstGhostVisible || myTabs.isGhostsAlwaysVisible()) {
       data.firstGhost = getStrategy().getLayoutRect(data, data.position, myTabs.getGhostTabLength());
       myTabs.layout(myLeftGhost, data.firstGhost);
-      data.position += getStrategy().getLengthIncrement(data.firstGhost.getSize()) + myTabs.getTabHGap();
+      data.position += getStrategy().getLengthIncrement(data.firstGhost.getSize()) + myTabs.getInterTabSpaceLength();
     }
 
     int deltaToFit = 0;
@@ -255,9 +252,9 @@ public class SingleRowLayout extends TabLayout {
       boolean continueLayout = applyTabLayout(data, label, length, deltaToFit);
 
       data.position = getStrategy().getMaxPosition(label.getBounds());
-      data.position += myTabs.getTabHGap();
+      data.position += myTabs.getInterTabSpaceLength();
 
-      totalLength = getStrategy().getMaxPosition(label.getBounds()) - positionStart + myTabs.getTabHGap();
+      totalLength = getStrategy().getMaxPosition(label.getBounds()) - positionStart + myTabs.getInterTabSpaceLength();
       if (!continueLayout) {
         layoutStopped = true;
       }
@@ -346,7 +343,7 @@ public class SingleRowLayout extends TabLayout {
   protected int getRequiredLength(TabInfo eachInfo) {
     TabLabel label = myTabs.myInfo2Label.get(eachInfo);
     return getStrategy().getLengthIncrement(label != null ? label.getPreferredSize() : new Dimension())
-                                      + (myTabs.isEditorTabs() ? myTabs.getTabHGap() : 0);
+                                      + (myTabs.isEditorTabs() ? myTabs.getInterTabSpaceLength() : 0);
   }
 
 

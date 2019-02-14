@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
 import com.intellij.openapi.actionSystem.ActionManager
@@ -8,7 +8,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.components.dialog
 import com.intellij.ui.tabs.TabInfo
-import com.intellij.ui.tabs.impl.JBEditorTabs
+import com.intellij.ui.tabs.newImpl.JBEditorTabs
 
 // not easy to replicate the same LaF outside of IDEA app, so, to be sure, showcase available as an IDE action
 internal class ShowcaseUiDslAction : DumbAwareAction() {
