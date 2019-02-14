@@ -8,5 +8,5 @@ def m1(Double o, @ClosureParams(value=SimpleType.class, options="java.lang.Doubl
 @CompileStatic
 def m() {
   def a;
-  m1<warning descr="Method call is ambiguous">(a, (double d) -> println(d))</warning>
+  m1<error descr="'m1' in 'SeveralSignatures' cannot be applied to '(java.lang.Object, groovy.lang.Closure<java.lang.Void>)'">(a, (double d) -> println(d))</error>
 }
