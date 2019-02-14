@@ -24,6 +24,8 @@ _test_data_root_dir = os.path.join(_test_dir, 'data')
 
 
 class GeneratorTestCase(TestCase):
+    longMessage = True
+
     def setUp(self):
         self.temp_dir = tempfile.mkdtemp()
         os.environ[TEST_MODE_FLAG] = 'True'
@@ -64,8 +66,8 @@ class GeneratorTestCase(TestCase):
                     actual_child_content = f.read()
                 with open(expected_child) as f:
                     expected_child_content = f.read()
-                self.assertEquals(expected_child_content, actual_child_content,
-                                  'Different content at %r' % actual_child)
+                self.assertMultiLineEqual(expected_child_content, actual_child_content,
+                                          'Different content at {!r}'.format(actual_child))
             else:
                 raise AssertionError(
                     '%r != %r' % (actual_child, expected_child))
