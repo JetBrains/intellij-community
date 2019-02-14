@@ -686,7 +686,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
         return;
       }
       final PsiElement element = PsiTreeUtil.getParentOfType(expression, PsiCodeBlock.class, PsiIfStatement.class, PsiLoopStatement.class);
-      if (!myParent.equals(element)) {
+      if (myParent != element) {
         myReplaceable = false;
         return;
       }
