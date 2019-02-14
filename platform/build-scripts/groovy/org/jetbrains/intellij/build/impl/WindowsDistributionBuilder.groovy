@@ -273,10 +273,8 @@ IDS_VM_OPTIONS=$vmOptions
       buildContext.ant.zip(zipfile: targetPath) {
         dirs.each {
           zipfileset(dir: it, prefix: zipPrefix) {
-            if (!excludeList.isEmpty()) {
-              excludeList.each {
-                exclude(name: it)
-              }
+            excludeList.each {
+              exclude(name: it)
             }
           }
         }
