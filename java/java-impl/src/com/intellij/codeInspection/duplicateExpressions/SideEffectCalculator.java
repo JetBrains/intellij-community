@@ -145,16 +145,16 @@ class SideEffectCalculator {
     PsiClass psiClass = method.getContainingClass();
     if (psiClass == null) return true;
 
-    if (ClassUtils.isImmutableClass(psiClass) ||
-        MethodUtils.isEquals(method) ||
+    String className = psiClass.getQualifiedName();
+    if (MethodUtils.isEquals(method) ||
         MethodUtils.isHashCode(method) ||
         MethodUtils.isToString(method) ||
         MethodUtils.isCompareTo(method) ||
-        MethodUtils.isComparatorCompare(method)) {
+        MethodUtils.isComparatorCompare(method) ||
+        ClassUtils.isImmutableClass(psiClass) && !JAVA_IO_FILE.equals(className)) { // methods of File have or are sensitive to side effects
       return false;
     }
 
-    String className = psiClass.getQualifiedName();
     if (JAVA_UTIL_OBJECTS.equals(className)) {
       return false;
     }
