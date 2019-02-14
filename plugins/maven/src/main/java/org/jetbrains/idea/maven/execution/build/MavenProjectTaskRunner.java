@@ -215,7 +215,7 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
     if (buildOnlyResources) {
       return "resources:resources";
     }
-    return compileOnly ? "compile" : "package";
+    return compileOnly ? "compile" : "install";
   }
 
   public static void runBatch(@NotNull Project project, @NotNull MavenRunner mavenRunner, @NotNull String title,
