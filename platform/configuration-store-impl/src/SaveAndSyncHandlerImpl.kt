@@ -39,7 +39,9 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
-internal class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : BaseSaveAndSyncHandler(), Disposable, BaseComponent {
+private const val LISTEN_DELAY = 15
+
+internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable, BaseComponent {
   private val refreshDelayAlarm = SingleAlarm(Runnable { this.doScheduledRefresh() }, delay = 300, parentDisposable = this)
   private val blockSaveOnFrameDeactivationCount = AtomicInteger()
   private val blockSyncOnFrameActivationCount = AtomicInteger()
@@ -72,10 +74,12 @@ internal class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : B
     // add listeners after some delay - doesn't make sense to listen earlier
     JobScheduler.getScheduler().schedule(Runnable {
       ApplicationManager.getApplication().invokeLater { addListeners() }
-    }, 30, TimeUnit.SECONDS)
+    }, LISTEN_DELAY.toLong(), TimeUnit.SECONDS)
   }
 
+  @CalledInAwt
   private fun addListeners() {
+    val settings = GeneralSettings.getInstance()
     val idleListener = Runnable {
       if (settings.isAutoSaveIfInactive && canSyncOrSave()) {
         submitTransaction {
@@ -92,15 +96,15 @@ internal class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : B
       Disposer.register(this, disposable!!)
     }
 
-    val generalSettingsListener = PropertyChangeListener { e ->
-      if (e.propertyName == GeneralSettings.PROP_INACTIVE_TIMEOUT) {
-        disposable?.let { Disposer.dispose(it) }
-        addIdleListener()
-      }
-    }
+    settings.addPropertyChangeListener(GeneralSettings.PROP_INACTIVE_TIMEOUT, this, PropertyChangeListener {
+      disposable?.let { Disposer.dispose(it) }
+      addIdleListener()
+    })
 
-    settings.addPropertyChangeListener(generalSettingsListener)
-    Disposer.register(this, Disposable { settings.removePropertyChangeListener(generalSettingsListener) })
+    addIdleListener()
+    if (LISTEN_DELAY >= (settings.inactiveTimeout * 1000)) {
+      idleListener.run()
+    }
 
     val busConnection = ApplicationManager.getApplication().messageBus.connect(this)
     busConnection.subscribe(FrameStateListener.TOPIC, object : FrameStateListener {
@@ -235,7 +239,7 @@ internal class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : B
   }
 
   override fun maybeRefresh(modalityState: ModalityState) {
-    if (blockSyncOnFrameActivationCount.get() == 0 && settings.isSyncOnFrameActivation) {
+    if (blockSyncOnFrameActivationCount.get() == 0 && GeneralSettings.getInstance().isSyncOnFrameActivation) {
       val queue = RefreshQueue.getInstance()
       queue.cancelSession(refreshSessionId)
 
@@ -246,7 +250,7 @@ internal class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : B
       LOG.debug("vfs refreshed")
     }
     else {
-      LOG.debug { "vfs refresh rejected, blocked: ${blockSyncOnFrameActivationCount.get() != 0}, isSyncOnFrameActivation: ${settings.isSyncOnFrameActivation}" }
+      LOG.debug { "vfs refresh rejected, blocked: ${blockSyncOnFrameActivationCount.get() != 0}, isSyncOnFrameActivation: ${GeneralSettings.getInstance().isSyncOnFrameActivation}" }
     }
   }
 
