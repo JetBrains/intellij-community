@@ -50,8 +50,9 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <postStartupActivity implementation="org.jetbrains.plugins.gradle.service.project.GradleStartupActivity"/>
-    <projectOpenProcessor id="gradle" implementation="org.jetbrains.plugins.gradle.service.project.GradleProjectOpenProcessor"/>
+    <!--<postStartupActivity implementation="org.jetbrains.plugins.gradle.service.project.GradleStartupActivity"/>-->
+    <!--<projectOpenProcessor id="gradle" implementation="org.jetbrains.plugins.gradle.service.project.GradleProjectOpenProcessor"/>-->
+
     <orderEnumerationHandlerFactory implementation="org.jetbrains.plugins.gradle.execution.GradleOrderEnumeratorHandler$FactoryImpl"/>
     <consoleFilterProvider implementation="org.jetbrains.plugins.gradle.execution.GradleConsoleFilterProvider"/>
     <stacktrace.fold substring="at org.gradle."/>
@@ -63,10 +64,13 @@
     <externalSystemExecutionConsoleManager implementation="org.jetbrains.plugins.gradle.execution.GradleExecutionConsoleManager"
                                            id="gradle"/>
 
+<!--
     <externalSystemWorkspaceContributor implementation="org.jetbrains.plugins.gradle.service.project.GradleWorkspaceContributor"/>
     <externalSystemConfigurationHandler implementation="org.jetbrains.plugins.gradle.service.project.GradleTaskTriggersImporter"/>
     <externalSystemConfigurationHandler implementation="org.jetbrains.plugins.gradle.service.project.ActionDelegateConfigImporter"/>
     <externalSystem.beforeRunTaskImporter implementation="org.jetbrains.plugins.gradle.service.project.GradleBeforeRunTaskImporter"/>
+-->
+
     <internalFileTemplate name="Gradle Build Script"/>
     <internalFileTemplate name="Gradle Build Script with wrapper"/>
     <projectConfigurable groupId="build.tools" groupWeight="110" id="reference.settingsdialog.project.gradle"

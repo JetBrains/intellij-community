@@ -43,7 +43,7 @@ public class GradleJvmStartupActivity implements StartupActivity {
   @Override
   public void runActivity(@NotNull final Project project) {
     configureBuildClasspath(project);
-    showNotificationForUnlinkedGradleProject(project);
+    //showNotificationForUnlinkedGradleProject(project);
     final GradleResourceCompilerConfigurationGenerator
       buildConfigurationGenerator = new GradleResourceCompilerConfigurationGenerator(project);
     CompilerManager.getInstance(project).addBeforeTask(new CompileTask() {
