@@ -6,7 +6,8 @@ import java.awt.*
 
 class JBEditorTabsBackgroundAndBorder(tabs: JBTabsImpl) : JBBaseTabsBackgroundAndBorder(tabs) {
 
-  override fun getEffectiveBorder(): Insets = Insets(thickness, 0, 0, 0)
+  override val effectiveBorder: Insets
+    get() = Insets(thickness, 0, 0, 0)
 
   override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
     if(tabs.isEmptyVisible) return

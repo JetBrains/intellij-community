@@ -177,7 +177,7 @@ public class JBTabsImpl extends JComponent
   protected final JBTabPainter tabPainter = createTabPainter();
 
   protected JBTabPainter createTabPainter() {
-    return JBTabPainter.defaultPainter;
+    return JBTabPainter.Companion.getDEFAULT();
   }
 
   protected JBTabsBackgroundAndBorder createTabBorder() {

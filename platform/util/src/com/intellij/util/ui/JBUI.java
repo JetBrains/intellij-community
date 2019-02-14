@@ -1567,6 +1567,12 @@ public class JBUI {
         return JBColor.namedColor("DefaultTabs.underlineColor", new JBColor(0x4083C9, 0x4A88C7));
       }
 
+
+      @NotNull
+      public static int underlineThickness() {
+        return getInt("DefaultTabs.underlineThickness", scale(2));
+      }
+
       @NotNull
       public static Color inactiveUnderlineColor() {
         return JBColor.namedColor("DefaultTabs.inactiveUnderlineColor", new JBColor(0xABABAB, 0x7A7A7A));
@@ -1578,8 +1584,8 @@ public class JBUI {
       }
 
       @NotNull
-      public static Color backgroundColor() {
-        return JBColor.namedColor("DefaultTabs.backgroundColor", ToolWindow.headerBackground());
+      public static Color background() {
+        return JBColor.namedColor("DefaultTabs.background", ToolWindow.headerBackground());
       }
 
       @NotNull
@@ -1590,18 +1596,31 @@ public class JBUI {
       }
 
       @NotNull
+      public static Color hoverColor() {
+        return JBColor.namedColor("DefaultTabs.hoverColor",
+                                  new JBColor(0xD9D9D9,
+                                              0x2E3133));
+      }
+
+      @NotNull
       public static Color unselectedOverlayColor() {
         return JBColor.namedColor("DefaultTabs.unselectedOverlayColor",
                                   new JBColor(ColorUtil.withAlpha(Color.BLACK, .07),
                                               ColorUtil.withAlpha(Color.BLACK, .13)));
 
       }
+
     }
 
     public static class EditorTabs {
       @NotNull
       public static Color underlineColor() {
         return JBColor.namedColor("EditorTabs.underlineColor", DefaultTabs.underlineColor());
+      }
+
+      @NotNull
+      public static int underlineThickness() {
+        return getInt("EditorTabs.underlineThickness", scale(3));
       }
 
       @NotNull
@@ -1614,14 +1633,22 @@ public class JBUI {
         return JBColor.namedColor("EditorTabs.borderColor", DefaultTabs.borderColor());
       }
 
+      //TODO background
       @NotNull
-      public static Color backgroundColor() {
-        return JBColor.namedColor("EditorTabs.backgroundColor", DefaultTabs.backgroundColor());
+      public static Color background() {
+        return JBColor.namedColor("EditorTabs.background", DefaultTabs.background());
       }
 
+      //TODO mask
       @NotNull
       public static Color hoverOverlayColor() {
         return JBColor.namedColor("EditorTabs.hoverOverlayColor", DefaultTabs.hoverOverlayColor());
+      }
+
+      @NotNull
+      public static Color hoverColor() {
+        return JBColor.namedColor("EditorTabs.hoverColor",
+                                  DefaultTabs.hoverColor());
       }
 
       @NotNull
@@ -1632,6 +1659,7 @@ public class JBUI {
     }
 
     public static class ToolWindow {
+
       @NotNull
       public static Color tabSelectedBackground() {
         return Registry.is("toolwindow.active.tab.use.contrast.background")
@@ -1688,6 +1716,12 @@ public class JBUI {
       public static Border tabHeaderBorder() {
         return getBorder("ToolWindow.tabHeaderBorder", Borders.empty(1, 0));
       }
+
+      @NotNull
+      public static int underlineThickness() {
+        return getInt("ToolWindow.underlineThickness", scale(3));
+      }
+
 
       @NotNull
       public static Font headerFont() {

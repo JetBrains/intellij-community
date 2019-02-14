@@ -5,18 +5,13 @@ import com.intellij.ui.tabs.JBTabsBackgroundAndBorder
 import com.intellij.util.ui.JBUI
 import java.awt.*
 
-open abstract class JBBaseTabsBackgroundAndBorder(val tabs: JBTabsImpl) : JBTabsBackgroundAndBorder {
-  private var thickness: Int = 1
-
-  override fun setThickness(value: Int) {
-    thickness = value
-  }
-
-  override fun getThickness(): Int = thickness
+abstract class JBBaseTabsBackgroundAndBorder(val tabs: JBTabsImpl) : JBTabsBackgroundAndBorder {
+  override var thickness: Int = 1
 
   override fun getBorderInsets(c: Component?): Insets = JBUI.emptyInsets()
 
-  override fun getEffectiveBorder(): Insets = JBUI.emptyInsets()
+  override val effectiveBorder: Insets
+    get() = JBUI.emptyInsets()
 
   protected fun paintBackground(g: Graphics2D, rect: Rectangle) {
     tabs.getTabPainter().fillBackground(g, rect)

@@ -7,7 +7,7 @@ import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.Rectangle
 
-class JBEditorTabPainter(theme: TabTheme = TabTheme.EDITOR_TAB) : JBDefaultTabPainter(theme) {
+class JBEditorTabPainter(theme: TabTheme = TabTheme.EDITOR) : JBDefaultTabPainter(theme) {
   override fun paintTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, borderThickness: Int, tabColor: Color?, hovered: Boolean) {
     when (position) {
       JBTabsPosition.top -> rect.height -= borderThickness

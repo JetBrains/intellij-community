@@ -36,8 +36,6 @@ import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.*;
-import com.intellij.ui.tabs.JBTabPainter;
-import com.intellij.ui.tabs.JBTabsBackgroundAndBorder;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
@@ -95,7 +93,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
       @Override
       protected JBEditorTabPainter createTabPainter() {
-        return JBTabPainter.editorPainter;
+        return JBTabPainter.Companion.getEDITOR();
       }
 
       @Override

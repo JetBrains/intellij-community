@@ -265,7 +265,7 @@ class TabContentLayout extends ContentLayout {
     }
   }
 
-  private JBTabPainter tabPainter = JBTabPainter.toolWindowPainter;
+  private JBTabPainter tabPainter = JBTabPainter.Companion.getTOOL_WINDOW();
 
   @Override
   public void paintComponent(Graphics g) {

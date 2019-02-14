@@ -11,7 +11,7 @@ import java.awt.Graphics2D
 import java.awt.Point
 import java.awt.Rectangle
 
-open class JBDefaultTabPainter(val theme : TabTheme = TabTheme.DEFAULT_TAB) : JBTabPainter {
+open class JBDefaultTabPainter(val theme : TabTheme = TabTheme()) : JBTabPainter {
 
   override fun getBackgroundColor(): Color = theme.background ?: theme.borderColor
 
@@ -27,7 +27,7 @@ open class JBDefaultTabPainter(val theme : TabTheme = TabTheme.DEFAULT_TAB) : JB
     }
 
     if(hovered) {
-      g.color = theme.hoverOverlayColor
+      g.color = if(tabColor != null) theme.hoverOverlayColor else theme.borderColor
       g.fillRect(rect)
       return
     }
@@ -49,7 +49,7 @@ open class JBDefaultTabPainter(val theme : TabTheme = TabTheme.DEFAULT_TAB) : JB
     }
 
     if(hovered) {
-      g.color = theme.hoverOverlayColor
+      g.color = if(tabColor != null) theme.hoverOverlayColor else theme.borderColor
       g.fillRect(rect)
     }
 
