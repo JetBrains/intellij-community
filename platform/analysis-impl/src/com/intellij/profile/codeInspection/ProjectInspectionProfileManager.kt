@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.configurationStore.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -28,7 +29,6 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.getAttributeBooleanValue
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters
-import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.util.xmlb.annotations.OptionTag
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
@@ -110,8 +110,13 @@ class ProjectInspectionProfileManager(val project: Project,
     }
   }, schemeNameToFileName = OLD_NAME_CONVERTER, streamProvider = schemeManagerIprProvider)
 
-  private data class State(@field:OptionTag("PROJECT_PROFILE") var projectProfile: String? = PROJECT_DEFAULT_PROFILE_NAME,
-                           @field:OptionTag("USE_PROJECT_PROFILE") var useProjectProfile: Boolean = true)
+  private class State : BaseState() {
+    @get:OptionTag("PROJECT_PROFILE")
+    var projectProfile by string(PROJECT_DEFAULT_PROFILE_NAME)
+
+    @get:OptionTag("USE_PROJECT_PROFILE")
+    var useProjectProfile by property(true)
+  }
 
   init {
     val app = ApplicationManager.getApplication()
@@ -196,7 +201,7 @@ class ProjectInspectionProfileManager(val project: Project,
       state.projectProfile = schemeManager.currentSchemeName
     }
 
-    XmlSerializer.serializeInto(state, result, skipDefaultsSerializationFilter)
+    serializeObjectInto(state, result, skipDefaultsSerializationFilter)
     if (!result.children.isEmpty()) {
       result.addContent(Element("version").setAttribute("value", VERSION))
     }
@@ -220,7 +225,7 @@ class ProjectInspectionProfileManager(val project: Project,
         LOG.error(e)
       }
 
-      XmlSerializer.deserializeInto(newState, it)
+      it.deserializeInto(newState)
     }
 
     this.state = newState
@@ -241,14 +246,14 @@ class ProjectInspectionProfileManager(val project: Project,
     }
   }
 
-  override fun getScopesManager(): DependencyValidationManager = scopeManager
+  override fun getScopesManager() = scopeManager
 
   @Synchronized override fun getProfiles(): Collection<InspectionProfileImpl> {
     currentProfile
     return schemeManager.allSchemes
   }
 
-  @Synchronized fun getAvailableProfileNames(): Array<String> = schemeManager.allSchemeNames.toTypedArray()
+  @Synchronized fun getAvailableProfileNames() = schemeManager.allSchemeNames.toTypedArray()
 
   val projectProfile: String?
     get() = schemeManager.currentSchemeName
