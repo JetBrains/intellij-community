@@ -398,4 +398,18 @@ public class FoldingTest extends AbstractEditorTest {
     FoldRegion region = addFoldRegion(0, 0, ".");
     assertNull(region);
   }
+
+  public void testRegionBecomingInvalidIsRemovedFromGroup() {
+    FoldingGroup group = FoldingGroup.newGroup("test");
+
+    myEditor.getFoldingModel().runBatchFoldingOperation(
+      () -> myModel.createFoldRegion(0, 10, "...", group, false)
+    );
+    addCollapsedFoldRegion(1, 10, "...");
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> myEditor.getDocument().deleteString(0, 1));
+
+    List<FoldRegion> regions = myModel.getGroupedRegions(group);
+    assertEmpty(regions);
+  }
 }
