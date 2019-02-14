@@ -38,6 +38,9 @@ public class ObjectUtils {
    * <br/>
    * Returned value should never be presented to clients of structure B,
    * and it must be &quot;unwrapped&quot; back with {@link #nullize(Object)}.
+   * <br/>
+   * Casting the value to anything but {@link Object} will result in {@link ClassCastException},
+   * this means the value cannot be used anywhere where {@link T} is a specific type different from {@link Object}.
    *
    * @return {@code null} wrapper if value is {@code null}, otherwise original value
    * @see #nullize(Object)
