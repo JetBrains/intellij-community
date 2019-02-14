@@ -50,7 +50,7 @@ fun parseDataclassParameters(cls: PyClass, context: TypeEvalContext): PyDataclas
     val stub = cls.stub
 
     if (it.maySwitchToAST(cls)) {
-      parseDataclassParametersFromAST(cls, it, decoratorAndTypeAndMarkedCallee(cls.project))
+      parseDataclassParametersFromAST(cls, it)
     }
     else {
       val dataclassStub = if (stub == null) PyDataclassStubImpl.create(cls) else stub.getCustomStub(PyDataclassStub::class.java)
@@ -58,6 +58,14 @@ fun parseDataclassParameters(cls: PyClass, context: TypeEvalContext): PyDataclas
     }
   }
 }
+
+/**
+ * This method MUST be used only while building stub for dataclass.
+ *
+ * @see parseStdDataclassParameters
+ * @see parseDataclassParameters
+ */
+fun parseDataclassParametersForStub(cls: PyClass): PyDataclassParameters? = parseDataclassParametersFromAST(cls, null)
 
 fun resolvesToOmittedDefault(expression: PyExpression, type: PyDataclassParameters.Type): Boolean {
   if (expression is PyReferenceExpression) {
@@ -93,17 +101,21 @@ private fun decoratorAndTypeAndMarkedCallee(project: Project): List<Triple<PyKno
   }
 }
 
-private fun parseDataclassParametersFromAST(cls: PyClass,
-                                            context: TypeEvalContext,
-                                            types: List<Triple<PyKnownDecoratorUtil.KnownDecorator, PyDataclassParameters.Type, List<PyCallableParameter>>>): PyDataclassParameters? {
+private fun parseDataclassParametersFromAST(cls: PyClass, context: TypeEvalContext?): PyDataclassParameters? {
   val decorators = cls.decoratorList ?: return null
 
   for (decorator in decorators.decorators) {
     val callee = (decorator.callee as? PyReferenceExpression) ?: continue
 
     for (decoratorQualifiedName in PyResolveUtil.resolveImportedElementQNameLocally(callee)) {
+      val types = decoratorAndTypeAndMarkedCallee(cls.project)
       val decoratorAndTypeAndMarkedCallee = types.firstOrNull { it.first.qualifiedName == decoratorQualifiedName } ?: continue
-      val mapping = PyCallExpressionHelper.mapArguments(decorator, toMarkedCallee(decoratorAndTypeAndMarkedCallee.third), context)
+
+      val mapping = PyCallExpressionHelper.mapArguments(
+        decorator,
+        toMarkedCallee(decoratorAndTypeAndMarkedCallee.third),
+        context ?: TypeEvalContext.codeInsightFallback(cls.project)
+      )
 
       if (mapping.unmappedArguments.isEmpty() && mapping.unmappedParameters.isEmpty()) {
         val builder = PyDataclassParametersBuilder(decoratorAndTypeAndMarkedCallee.second, decoratorAndTypeAndMarkedCallee.first, cls)

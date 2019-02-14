@@ -3,10 +3,9 @@ package com.jetbrains.python.psi.impl.stubs
 
 import com.intellij.psi.stubs.StubInputStream
 import com.intellij.psi.stubs.StubOutputStream
-import com.jetbrains.python.codeInsight.stdlib.parseDataclassParameters
+import com.jetbrains.python.codeInsight.stdlib.parseDataclassParametersForStub
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.stubs.PyDataclassStub
-import com.jetbrains.python.psi.types.TypeEvalContext
 import java.io.IOException
 
 class PyDataclassStubType : PyCustomClassStubType<PyDataclassStub>() {
@@ -32,9 +31,7 @@ class PyDataclassStubImpl private constructor(private val type: String,
   companion object {
 
     fun create(cls: PyClass): PyDataclassStub? {
-      val context = TypeEvalContext.codeAnalysis(cls.project, cls.containingFile)
-
-      return parseDataclassParameters(cls, context)?.let {
+      return parseDataclassParametersForStub(cls)?.let {
         PyDataclassStubImpl(it.type.toString(), it.init, it.repr, it.eq, it.order, it.unsafeHash, it.frozen)
       }
     }
