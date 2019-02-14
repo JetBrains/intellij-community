@@ -5,7 +5,6 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
@@ -51,7 +50,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
@@ -283,7 +281,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     Disposer.register(parent, () -> mustWaitForSmartMode = old);
   }
 
-  @NotNull
   @TestOnly
   public void runPasses(@NotNull PsiFile file,
                         @NotNull Document document,
@@ -781,10 +778,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
         // we'll restart when the write action finish
         return;
       }
-      final PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)dca.myPsiDocumentManager;
-      if (documentManager.hasUncommitedDocuments()) {
+      if (dca.myPsiDocumentManager.hasUncommitedDocuments()) {
         // restart when everything committed
-        AutoPopupController.runTransactionWithEverythingCommitted(myProject, this);
+        dca.myPsiDocumentManager.performLaterWhenAllCommitted(this);
         return;
       }
       if (RefResolveService.ENABLED &&

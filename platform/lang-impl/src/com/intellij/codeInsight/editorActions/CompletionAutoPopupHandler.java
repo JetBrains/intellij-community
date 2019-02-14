@@ -49,8 +49,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
   }
 
   /**
-   * @deprecated
-   * @see AutoPopupController#runTransactionWithEverythingCommitted(Project, Runnable)
+   * @deprecated can be emulated with {@link com.intellij.openapi.application.AppUIExecutor}
    */
   @Deprecated
   public static void runLaterWithCommitted(@NotNull final Project project, final Document document, @NotNull final Runnable runnable) {
