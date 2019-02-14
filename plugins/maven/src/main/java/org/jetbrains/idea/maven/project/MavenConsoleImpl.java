@@ -15,10 +15,7 @@
  */
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.execution.filters.HyperlinkInfo;
-import com.intellij.execution.filters.RegexpFilter;
-import com.intellij.execution.filters.TextConsoleBuilder;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.filters.*;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -82,35 +79,39 @@ public class MavenConsoleImpl extends MavenConsole {
     return createConsoleBuilder(myProject).getConsole();
   }
 
+  public static Filter[] getMavenConsoleFilters(@NotNull Project project) {
+    return new Filter[]{
+      new RegexpFilter(project, CONSOLE_FILTER_REGEXP) {
+        @Nullable
+        @Override
+        protected HyperlinkInfo createOpenFileHyperlink(String fileName, int line, int column) {
+          HyperlinkInfo res = super.createOpenFileHyperlink(fileName, line, column);
+          if (res == null && fileName.startsWith("\\") && SystemInfo.isWindows) {
+            // Maven cut prefix 'C:\' from paths on Windows
+            VirtualFile[] roots = ProjectRootManager.getInstance(project).getContentRoots();
+            if (roots.length > 0) {
+              String projectPath = roots[0].getPath();
+              if (projectPath.matches("[A-Z]:[\\\\/].+")) {
+                res = super.createOpenFileHyperlink(projectPath.charAt(0) + ":" + fileName, line, column);
+              }
+            }
+          }
+
+          return res;
+        }
+      },
+      new MavenGroovyConsoleFilter(project),
+      new MavenScalaConsoleFilter(project),
+      new MavenTestConsoleFilter()
+    };
+  }
+
   /**
    * to be refactored
    */
   public static TextConsoleBuilder createConsoleBuilder(final Project project) {
     TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
-    builder.addFilter(new RegexpFilter(project, CONSOLE_FILTER_REGEXP) {
-      @Nullable
-      @Override
-      protected HyperlinkInfo createOpenFileHyperlink(String fileName, int line, int column) {
-        HyperlinkInfo res = super.createOpenFileHyperlink(fileName, line, column);
-        if (res == null && fileName.startsWith("\\") && SystemInfo.isWindows) {
-          // Maven cut prefix 'C:\' from paths on Windows
-          VirtualFile[] roots = ProjectRootManager.getInstance(project).getContentRoots();
-          if (roots.length > 0) {
-            String projectPath = roots[0].getPath();
-            if (projectPath.matches("[A-Z]:[\\\\/].+")) {
-              res = super.createOpenFileHyperlink(projectPath.charAt(0) + ":" + fileName, line, column);
-            }
-          }
-
-        }
-
-        return res;
-      }
-    });
-
-    builder.addFilter(new MavenGroovyConsoleFilter(project));
-    builder.addFilter(new MavenScalaConsoleFilter(project));
-    builder.addFilter(new MavenTestConsoleFilter());
+    builder.filters(getMavenConsoleFilters(project));
     return builder;
   }
 

@@ -71,8 +71,9 @@ public class DarculaButtonPainter implements Border, UIResource {
       } else if (!paintComboFocus) {
         Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
         border.append(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc), false);
-        border.append(new RoundRectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2, arc - lw, arc - lw),
-                      false);
+
+        arc = arc > lw ? arc - lw : 0.0f;
+        border.append(new RoundRectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2, arc, arc), false);
 
         g2.fill(border);
       }
@@ -88,7 +89,6 @@ public class DarculaButtonPainter implements Border, UIResource {
     JBInsets.removeFrom(r, b.getInsets());
     boolean defButton = isDefaultButton(b);
 
-    //noinspection UnregisteredNamedColor
     return button.isEnabled() ? borderColor != null ? borderColor :
                                 button.hasFocus() ?
                                 JBColor.namedColor(defButton ? "Button.default.focusedBorderColor" : "Button.focusedBorderColor",

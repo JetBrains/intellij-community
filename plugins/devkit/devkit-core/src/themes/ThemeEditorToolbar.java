@@ -32,7 +32,7 @@ public final class ThemeEditorToolbar extends EditorNotifications.Provider<Edito
   @Nullable
   @Override
   public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
-    if (StringUtil.endsWithIgnoreCase(file.getName(), ".theme.json")) {
+    if (ThemeJsonUtil.isThemeFilename(file.getName())) {
       EditorNotificationPanel panel = new EditorNotificationPanel(JBColor.PanelBackground);
       panel.removeAll();
       DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction("DevKit.ThemeEditorToolbar");

@@ -7,6 +7,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Runnable
+import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 
 @JvmOverloads
@@ -26,14 +27,19 @@ inline fun runInAllowSaveMode(isSaveAllowed: Boolean = true, task: () -> Unit) {
   }
 }
 
+// internal use only
+@ApiStatus.Experimental
+val coroutineExceptionHandler = CoroutineExceptionHandler { _, throwable ->
+  Logger.getInstance("#com.intellij.application.impl.ApplicationImpl").error(throwable)
+}
+
 /**
  * Execute coroutine on pooled thread. Uncaught error will be logged.
  *
  * @see com.intellij.openapi.application.Application.executeOnPooledThread
  */
-val pooledThreadContext: CoroutineContext = ApplicationThreadPoolDispatcher() + CoroutineExceptionHandler { _, throwable ->
-  Logger.getInstance("#com.intellij.application.impl.ApplicationImpl").error(throwable)
-}
+@ApiStatus.Experimental
+val pooledThreadContext: CoroutineContext = ApplicationThreadPoolDispatcher() + coroutineExceptionHandler
 
 // no need to implement isDispatchNeeded - Kotlin correctly uses the same thread if coroutines executes sequentially,
 // and if launch/async is used, it is correct and expected that coroutine will be dispatched to another pooled thread.

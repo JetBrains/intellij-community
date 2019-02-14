@@ -59,8 +59,7 @@ class BundledJreManager {
       buildContext.messages.info("JRE is already extracted to $targetDir")
       return targetDir
     }
-
-    def jreArchive = "jbsdk${getSecondJreVersion()}${secondJreBuild}_${osName}_${JvmArchitecture.x64}.tar.gz"
+    def jreArchive = "jbrsdk-${getSecondJreVersion()}${jreArchiveSuffix(secondJreBuild, JvmArchitecture.x64, osName)}"
     File archive = new File(jreDir(), jreArchive)
     if (!archive.file || !archive.exists()) {
       def errorMessage = "Cannot extract $osName JRE: file $jreArchive is not found"
@@ -182,11 +181,25 @@ class BundledJreManager {
     new File(dependenciesDir, 'build/jbre')
   }
 
+  static def jreArchiveSuffix(String jreBuild, JvmArchitecture arch, String osName) {
+    def (update, build) = ['', jreBuild]
+    def split = jreBuild.split('b')
+    if (split.length > 2) {
+      throw new IllegalArgumentException(
+        "$jreBuild is expected in format <update>b<build_number>. Examples: u202b1483.24, _0_2b140, b96"
+      )
+    }
+    if (split.length == 2) {
+      (update, build) = [split[0], "b${split[1]}"]
+    }
+    "${update}-${osName}-${arch == JvmArchitecture.x32 ? 'i586' : 'x64'}-${build}.tar.gz"
+  }
+
   private File findJreArchive(String osName, JvmArchitecture arch = JvmArchitecture.x64, JreVendor vendor = JreVendor.JetBrains) {
     def jreDir = jreDir()
-    def jreVersion = getExpectedJreVersion(osName)
+    def jreBuild = getExpectedJreBuild(osName)
 
-    String suffix = "${jreVersion}_$osName${arch == JvmArchitecture.x32 ? '_x86' : '_x64'}.tar.gz"
+    String suffix = jreArchiveSuffix(jreBuild, arch, osName)
     String prefix = buildContext.isBundledJreModular() ? vendor.modularJreNamePrefix :
                     buildContext.productProperties.toolsJarRequired ? vendor.jreWithToolsJarNamePrefix : vendor.jreNamePrefix
     def jreArchive = new File(jreDir, "$prefix$suffix")
@@ -221,14 +234,14 @@ class BundledJreManager {
     }
   }
 
-  private String getExpectedJreVersion(String osName) {
+  private String getExpectedJreBuild(String osName) {
     loadDependencyVersions()
     return dependencyVersions.get("jreBuild_${osName}" as String, buildContext.options.bundledJreBuild ?: dependencyVersions.get("jdkBuild", ""))
   }
 
   private enum JreVendor {
     Oracle("jre8", "jdk8", "jre"),
-    JetBrains("jbre8", "jbrex8", "jbsdk")
+    JetBrains("jbr-8", "jbrx-8", "jbrsdk-")
 
     final String jreNamePrefix
     final String jreWithToolsJarNamePrefix

@@ -4,15 +4,12 @@ package com.intellij.configurationStore
 import com.intellij.diagnostic.IdeErrorsDialog
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.SaveAndSyncHandler
-import com.intellij.ide.SaveAndSyncHandlerImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.async.coroutineDispatchingContext
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.PersistentStateComponent
@@ -20,12 +17,9 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.text.StringUtil
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
@@ -46,7 +40,7 @@ class StoreUtil private constructor() {
     @CalledInAny
     fun saveSettings(componentManager: ComponentManager, isForceSavingAllSettings: Boolean = false) {
       if (componentManager is Application) {
-        cancelScheduledSave()
+        SaveAndSyncHandler.getInstance().cancelScheduledSave()
       }
       runBlocking {
         com.intellij.configurationStore.saveSettings(componentManager, isForceSavingAllSettings)
@@ -73,7 +67,7 @@ class StoreUtil private constructor() {
     @CalledInAwt
     @JvmStatic
     fun saveDocumentsAndProjectsAndApp(isForceSavingAllSettings: Boolean) {
-      cancelScheduledSave()
+      SaveAndSyncHandler.getInstance().cancelScheduledSave()
 
       FileDocumentManager.getInstance().saveAllDocuments()
       runBlocking {
@@ -83,14 +77,11 @@ class StoreUtil private constructor() {
   }
 }
 
-private fun cancelScheduledSave() {
-  (SaveAndSyncHandler.getInstance() as? SaveAndSyncHandlerImpl)?.cancelScheduledSave()
-}
-
 @CalledInAny
-private suspend fun saveSettings(componentManager: ComponentManager, isForceSavingAllSettings: Boolean = false) {
+suspend fun saveSettings(componentManager: ComponentManager, isForceSavingAllSettings: Boolean = false): Boolean {
   try {
     componentManager.stateStore.save(isForceSavingAllSettings = isForceSavingAllSettings)
+    return true
   }
   catch (e: UnresolvedReadOnlyFilesException) {
     LOG.info(e)
@@ -119,6 +110,7 @@ private suspend fun saveSettings(componentManager: ComponentManager, isForceSavi
     }
     notification.notify(componentManager as? Project)
   }
+  return false
 }
 
 fun <T> getStateSpec(persistentStateComponent: PersistentStateComponent<T>): State {
@@ -151,7 +143,7 @@ interface ConfigurationStorageReloader {
  * @param isForceSavingAllSettings Whether to force save non-roamable component configuration.
  */
 @CalledInAny
-private suspend fun saveProjectsAndApp(isForceSavingAllSettings: Boolean, onlyProject: Project? = null) {
+suspend fun saveProjectsAndApp(isForceSavingAllSettings: Boolean, onlyProject: Project? = null) {
   (ProjectManager.getInstance() as? ConfigurationStorageReloader)?.reloadChangedStorageFiles()
 
   val start = System.currentTimeMillis()
@@ -170,20 +162,19 @@ private suspend fun saveProjectsAndApp(isForceSavingAllSettings: Boolean, onlyPr
 @CalledInAny
 private suspend fun saveAllProjects(isForceSavingAllSettings: Boolean) {
   for (project in ProjectManager.getInstance().openProjects) {
-    saveSettings(project, isForceSavingAllSettings)
+    if (!project.isDisposed) {
+      saveSettings(project, isForceSavingAllSettings)
+    }
   }
 }
 
-@CalledInAny
-internal suspend fun saveDocumentsAndProjectsAndApp(onlyProject: Project? = null,
-                                                    isForceSavingAllSettings: Boolean = false,
-                                                    isDocumentsSavingExplicit: Boolean = true) {
-  coroutineScope {
-    launch(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
-      (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(isDocumentsSavingExplicit)
-    }
-    launch {
-      saveProjectsAndApp(isForceSavingAllSettings = isForceSavingAllSettings, onlyProject = onlyProject)
-    }
+inline fun runInSaveOnFrameDeactivationDisabledMode(task: () -> Unit) {
+  val saveAndSyncManager = SaveAndSyncHandler.getInstance()
+  saveAndSyncManager.blockSaveOnFrameDeactivation()
+  try {
+    task()
+  }
+  finally {
+    saveAndSyncManager.unblockSaveOnFrameDeactivation()
   }
 }

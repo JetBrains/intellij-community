@@ -111,20 +111,19 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
       Object op = b.getClientProperty("JComponent.outline");
       boolean hasFocus = op == null && b.hasFocus();
       Icon icon = LafIconLookup.getIcon(iconName, selected || isIndeterminate(b), hasFocus, b.isEnabled());
+      icon.paintIcon(b, g2, iconRect.x, iconRect.y);
 
       if (op != null) {
         DarculaUIUtil.Outline.valueOf(op.toString()).setGraphicsColor(g2, b.hasFocus());
         Path2D outline = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-        outline.append(new RoundRectangle2D.Float(scale(1), 0, scale(18), scale(18), scale(6), scale(6)), false);
-        outline.append(new RoundRectangle2D.Float(scale(3), scale(2), scale(14), scale(14), scale(4), scale(4)), false);
+        outline.append(new RoundRectangle2D.Float(iconRect.x + scale(1), iconRect.y, scale(18), scale(18), scale(6), scale(6)), false);
+        outline.append(new RoundRectangle2D.Float(iconRect.x + scale(4), iconRect.x + scale(3), scale(12), scale(12), scale(3), scale(3)), false);
 
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
                             MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
         g2.fill(outline);
       }
-
-      icon.paintIcon(b, g2, iconRect.x, iconRect.y);
     } finally {
       g2.dispose();
     }

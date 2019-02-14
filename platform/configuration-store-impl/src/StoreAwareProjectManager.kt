@@ -4,10 +4,8 @@ package com.intellij.configurationStore
 import com.intellij.configurationStore.schemeManager.SchemeChangeApplicator
 import com.intellij.configurationStore.schemeManager.SchemeChangeEvent
 import com.intellij.configurationStore.schemeManager.useSchemeLoader
-import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.async.coroutineDispatchingContext
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.ComponentManager
@@ -162,7 +160,7 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
 
   override suspend fun reloadChangedStorageFiles() {
     val unfinishedRequest = changedFilesAlarm.getUnfinishedRequest() ?: return
-    withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+    withContext(storeEdtCoroutineContext) {
       unfinishedRequest.run()
       // just to be sure
       changedFilesAlarm.getUnfinishedRequest()?.run()

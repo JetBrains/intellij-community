@@ -9,11 +9,11 @@ import kotlin.test.assertTrue
 
 class FeatureStatisticsWhitelistTest {
 
-  fun doTest(content: String, build: String, vararg expected: String) {
+  private fun doTest(content: String, build: String, vararg expected: String) {
     val actual = FUStatisticsWhiteListGroupsService.parseApprovedGroups(content, BuildNumber.fromString(build))
     assertEquals(expected.size, actual.size)
     for (e in expected) {
-      assertTrue(actual.contains(e))
+      assertTrue(actual.accepts(e, 4))
     }
   }
 

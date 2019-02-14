@@ -4,6 +4,7 @@ package com.intellij.testGuiFramework.util.scenarios
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
+import com.intellij.testGuiFramework.impl.FirstStart.Utils.exists
 import com.intellij.testGuiFramework.util.*
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonFinish
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonNext
@@ -171,7 +172,7 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     override fun toString() = title
   }
 
-  class LibraryOrFramework(vararg val mainPath: String) : Serializable {
+  class LibraryOrFramework(vararg val mainPath: String, val options: Map<String, String> = emptyMap()) : Serializable {
 
     override fun equals(other: Any?): Boolean {
       if (other == null) return false
@@ -250,7 +251,9 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String,
         checkDownloadingDialog()
       }
     }
-    waitAMoment()
+    ideFrame {
+      this.waitForBackgroundTasksToFinish()
+    }
   }
 }
 
@@ -522,6 +525,7 @@ fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogModel.Grou
     fileSystemUtils.assertProjectPathExists(projectPath)
     with(connectDialog()) {
       selectProjectGroup(group)
+      selectSdk(projectSdk)
       if (libs.isSetNotEmpty()) setLibrariesAndFrameworks(libs)
       button(buttonNext).click()
       typeProjectNameAndLocation(projectPath)
@@ -534,7 +538,6 @@ fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogModel.Grou
     }
     ideFrame {
       this.waitForBackgroundTasksToFinish()
-      waitAMoment()
     }
   }
 }
@@ -564,6 +567,22 @@ fun NewProjectDialogModel.setLibrariesAndFrameworks(libs: LibrariesSet) {
           pathStrings = *lib.mainPath,
           predicate = Predicate.withVersion
         ).check()
+        if(lib.options.isNotEmpty()){
+          for((option, value) in lib.options)
+            step("Set option '$option' to value '$value' ")innerStep@{
+              when {
+                exists {checkbox(option, Timeouts.seconds05)} -> {
+                  val component = checkbox(option, Timeouts.noTimeout)
+                  if(component.isSelected != value.toBoolean())
+                    component.click()
+                }
+                exists { combobox(option, Timeouts.seconds05) } -> combobox(option, Timeouts.noTimeout).selectItem(value)
+                exists { radioButton(option, Timeouts.seconds05) } -> radioButton(option, Timeouts.noTimeout).select()
+                else -> throw IllegalStateException("Unsupported kind of option '$option' - not checkbox, radiobutton or combobox")
+              }
+              return@innerStep
+            }
+        }
       }
     }
   }

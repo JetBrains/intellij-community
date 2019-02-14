@@ -14,7 +14,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.themes.metadata.UIThemeMetadataService;
 
 import java.util.function.Supplier;
 
@@ -86,11 +85,6 @@ public class ThemeJsonDocumentationProvider extends AbstractDocumentationProvide
     if (!(element instanceof JsonProperty)) return null;
     if (!ThemeJsonUtil.isThemeFilename(element.getContainingFile().getName())) return null;
 
-    JsonProperty property = (JsonProperty)element;
-    final String key = property.getName();
-    final Pair<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> byName = UIThemeMetadataService.getInstance().findByKey(key);
-    if (byName != null) return byName;
-
-    return UIThemeMetadataService.getInstance().findByKey(ThemeJsonUtil.getParentNames(property) + "." + key);
+    return ThemeJsonUtil.findMetadata((JsonProperty)element);
   }
 }

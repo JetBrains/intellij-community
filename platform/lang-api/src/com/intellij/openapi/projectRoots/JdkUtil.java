@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.execution.CantRunException;
@@ -11,18 +11,22 @@ import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
+import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.lang.UrlClassLoader;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -84,6 +88,18 @@ public class JdkUtil {
     }
 
     return null;
+  }
+
+  @Nullable
+  public static String suggestJdkName(@Nullable String versionString) {
+    JavaVersion version = JavaVersion.tryParse(versionString);
+    if (version == null) return null;
+
+    StringBuilder suggested = new StringBuilder();
+    if (version.feature < 9) suggested.append("1.");
+    suggested.append(version.feature);
+    if (version.ea) suggested.append("-ea");
+    return suggested.toString();
   }
 
   public static boolean checkForJdk(@NotNull String homePath) {
@@ -337,8 +353,17 @@ public class JdkUtil {
       classpath.add(PathUtil.getJarPathForClass(commandLineWrapper));
       if (isUrlClassloader(vmParameters)) {
         classpath.add(PathUtil.getJarPathForClass(UrlClassLoader.class));
+        classpath.add(PathUtil.getJarPathForClass(PathManager.class));
         classpath.add(PathUtil.getJarPathForClass(StringUtilRt.class));
         classpath.add(PathUtil.getJarPathForClass(THashMap.class));
+        //explicitly enumerate jdk classes as UrlClassLoader doesn't delegate to parent classloader when loading resources
+        //which leads to exceptions when coverage instrumentation tries to instrument loader class and its dependencies
+        Sdk jdk = javaParameters.getJdk();
+        if (jdk != null) {
+          for (VirtualFile file : jdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
+            classpath.add(PathUtil.getLocalPath(file));
+          }
+        }
       }
       commandLine.addParameter("-classpath");
       commandLine.addParameter(StringUtil.join(classpath, File.pathSeparator));

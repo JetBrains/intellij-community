@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
 import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -23,12 +22,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -83,14 +80,13 @@ public class FileWatcher {
   private final ExecutorService myFileWatcherExecutor = Registry.is("vfs.filewatcher.works.in.async.way") ?
                                                         AppExecutorUtil.createBoundedApplicationPoolExecutor("File Watcher", 1) :
                                                         MoreExecutors.newDirectExecutorService();
-  private final Future<?> myWatcherInitialization;
 
   FileWatcher(@NotNull ManagingFS managingFS) {
     myManagingFS = managingFS;
     myNotificationSink = new MyFileWatcherNotificationSink();
     myWatchers = PluggableFileWatcher.EP_NAME.getExtensions();
 
-    myWatcherInitialization = myFileWatcherExecutor.submit(() -> {
+    myFileWatcherExecutor.submit(() -> {
       for (PluggableFileWatcher watcher : myWatchers) {
         watcher.initialize(myManagingFS, myNotificationSink);
       }
@@ -106,7 +102,6 @@ public class FileWatcher {
   }
 
   public boolean isOperational() {
-    waitForFuture(myWatcherInitialization);
     for (PluggableFileWatcher watcher : myWatchers) {
       if (watcher.isOperational()) return true;
     }
@@ -308,43 +303,25 @@ public class FileWatcher {
   }
 
   @TestOnly
-  public void startup(@Nullable Consumer<String> notifier) throws IOException {
+  public void startup(@Nullable Consumer<String> notifier) throws Exception {
     myTestNotifier = notifier;
-
-    try {
-      myFileWatcherExecutor.submit(wrapInCallable(() -> {
-        for (PluggableFileWatcher watcher : myWatchers) {
-          watcher.startup();
-        }
-      })).get();
-    }
-    catch (InterruptedException | ExecutionException e) {
-      Throwable cause = e.getCause();
-      if (cause instanceof IOException) throw (IOException)cause;
-    }
-  }
-
-  @NotNull
-  private <T extends Exception> Callable<Object> wrapInCallable(ThrowableRunnable<T> action) {
-    return ()-> {action.run(); return null;};
+    myFileWatcherExecutor.submit(() -> {
+      for (PluggableFileWatcher watcher : myWatchers) {
+        watcher.startup();
+      }
+      return null;
+    }).get();
   }
 
   @TestOnly
-  public void shutdown() throws InterruptedException {
-
-    try {
-      myFileWatcherExecutor.submit(wrapInCallable(() -> {
-        for (PluggableFileWatcher watcher : myWatchers) {
-          watcher.shutdown();
-        }
-      })).get();
-    }
-    catch (ExecutionException e) {
-      Throwable cause = e.getCause();
-      if (cause instanceof InterruptedException) throw (InterruptedException)cause;
-    }
-
-    myTestNotifier = null;
+  public void shutdown() throws Exception {
+    myFileWatcherExecutor.submit(() -> {
+      for (PluggableFileWatcher watcher : myWatchers) {
+        watcher.shutdown();
+      }
+      myTestNotifier = null;
+      return null;
+    }).get();
   }
   //</editor-fold>
 }

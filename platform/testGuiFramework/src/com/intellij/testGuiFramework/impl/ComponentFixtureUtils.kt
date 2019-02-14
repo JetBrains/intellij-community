@@ -75,9 +75,34 @@ fun <C : Container> ContainerFixture<C>.button(name: String, timeout: Timeout = 
 }
 
 /**
+ * Finds a list of JButton component in hierarchy of context component by name of its icon
+  * and returns ExtendedButtonFixture.
+ * There can be cases when there are several the same named components and it's OK
+ *
+ * @param icon specifies name with extension of an icon file, e.g. "ellipsis.svg"
+ * @throws ComponentLookupException if no component has not been found or timeout exceeded
+ * @return list of JButton components sorted by locationOnScreen (left to right, top to down)
+  */
+fun <C : Container> ContainerFixture<C>.buttonsByIcon(icon: String, timeout: Timeout = defaultTimeout): List<ExtendedButtonFixture> {
+  return step("search buttons with icon '$icon'") {
+    val jButtons = waitUntilFoundList(target() as Container, JButton::class.java, timeout) {
+      it.isShowing && it.isVisible && it.icon?.toString()?.endsWith(icon) ?: false
+    }
+    return@step jButtons
+      .sortByLocationOnScreen()
+      .map { ExtendedButtonFixture(GuiRobotHolder.robot, it) }
+  }
+}
+
+fun <C: JComponent> List<C>.sortByLocationOnScreen() : List<C> = this
+  .sortedBy { it.locationOnScreen.x }
+  .sortedBy { it.locationOnScreen.y }
+
+/**
  * Finds a list of JButton component in hierarchy of context component with a name and returns ExtendedButtonFixture.
  * There can be cases when there are several the same named components and it's OK
  *
+ * @param name visible full title of the searched buttons
  * @throws ComponentLookupException if no component has not been found or timeout exceeded
  * @return list of JButton components sorted by locationOnScreen (left to right, top to down)
  */
@@ -87,9 +112,8 @@ fun <C : Container> ContainerFixture<C>.buttons(name: String, timeout: Timeout =
       it.isShowing && it.isVisible && it.text == name
     }
     return@step jButtons
+      .sortByLocationOnScreen()
       .map { ExtendedButtonFixture(GuiRobotHolder.robot, it) }
-      .sortedBy { it.target().locationOnScreen.x }
-      .sortedBy { it.target().locationOnScreen.y }
   }
 }
 
@@ -107,8 +131,10 @@ inline fun <reified V: JComponent> ContainerFixture<*>.containsChildComponent(no
   robot().finder().findAll(target(), GuiTestUtilKt.typeMatcher(V::class.java, predicate)).size == 1
 
 fun <C : Container> ContainerFixture<C>.treeTable(timeout: Timeout = defaultTimeout): TreeTableFixture {
-  val table: TreeTable = findComponentWithTimeout(timeout)
-  return TreeTableFixture(robot(), table)
+  return step("search table") {
+    val table: TreeTable = findComponentWithTimeout(timeout)
+    return@step TreeTableFixture(robot(), table)
+  }
 }
 
 fun <C : Container> ContainerFixture<C>.spinner(boundedLabelText: String, timeout: Timeout = defaultTimeout): JSpinnerFixture {
