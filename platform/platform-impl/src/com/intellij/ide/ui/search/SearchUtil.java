@@ -276,20 +276,18 @@ public class SearchUtil {
     rootComponent.putClientProperty(HIGHLIGHT_WITH_BORDER, null);
 
     if (option == null || option.trim().length() == 0) return false;
-    boolean highlight = false;
-
     String label = getLabelFromComponent(rootComponent);
     if (label != null) {
       if (isComponentHighlighted(label, option, force, configurable)) {
-        highlight = true;
         highlightComponent(rootComponent, option);
+        return true; // do not visit children of highlighted component
       }
     }
     else if (rootComponent instanceof JComboBox) {
       List<String> labels = getItemsFromComboBox(((JComboBox)rootComponent));
       if (ContainerUtil.exists(labels, it -> isComponentHighlighted(it, option, force, configurable))) {
-        highlight = true;
         highlightComponent(rootComponent, option);
+        return true; // do not visit children of highlighted component
       }
     }
     else if (rootComponent instanceof JTabbedPane) {
@@ -315,27 +313,19 @@ public class SearchUtil {
       }
     }
 
-    final Component[] components = rootComponent.getComponents();
-    for (Component component : components) {
-      if (component instanceof JComponent) {
-        final boolean innerHighlight = traverseComponentsTree(configurable, (JComponent)component, option, force);
-
-        if (!highlight && !innerHighlight) {
-          final Border border = rootComponent.getBorder();
-          if (border instanceof TitledBorder) {
-            final String title = ((TitledBorder)border).getTitle();
-            if (isComponentHighlighted(title, option, force, configurable)) {
-              highlight = true;
-              highlightComponent(rootComponent, option);
-              rootComponent.putClientProperty(HIGHLIGHT_WITH_BORDER, Boolean.TRUE);
-            }
-          }
-        }
-
-
-        if (innerHighlight) {
-          highlight = true;
-        }
+    Border border = rootComponent.getBorder();
+    if (border instanceof TitledBorder) {
+      String title = ((TitledBorder)border).getTitle();
+      if (isComponentHighlighted(title, option, force, configurable)) {
+        highlightComponent(rootComponent, option);
+        rootComponent.putClientProperty(HIGHLIGHT_WITH_BORDER, Boolean.TRUE);
+        return true; // do not visit children of highlighted component
+      }
+    }
+    boolean highlight = false;
+    for (Component component : rootComponent.getComponents()) {
+      if (component instanceof JComponent && traverseComponentsTree(configurable, (JComponent)component, option, force)) {
+        highlight = true;
       }
     }
     return highlight;
