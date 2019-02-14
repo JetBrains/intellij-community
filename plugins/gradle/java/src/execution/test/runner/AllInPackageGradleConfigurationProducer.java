@@ -6,6 +6,7 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.junit.JavaRuntimeConfigurationProducerBase;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -16,7 +17,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,11 +86,13 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
       performRunnable.run();
       return;
     }
-    getTestTasksChooser().chooseTestTasks(context, ContainerUtil.newArrayList(configurationData.sourceElement), tasks -> {
+    String locationName = String.format("'%s'", extractLocationName(configurationData.psiPackage, configurationData.module));
+    DataContext dataContext = TestTasksChooser.contextWithLocationName(context.getDataContext(), locationName);
+    PsiElement[] sourceElements = ArrayUtil.toObjectArray(PsiElement.class, configurationData.sourceElement);
+    getTestTasksChooser().chooseTestTasks(context.getProject(), dataContext, sourceElements, tasks -> {
         ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
         ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
         Function1<PsiElement, String> createFilter = (e) -> createTestFilterFrom(configurationData.psiPackage, /*hasSuffix=*/false);
-        PsiElement[] sourceElements = ArrayUtil.toObjectArray(PsiElement.class, configurationData.sourceElement);
         if (!applyTestConfiguration(settings, context.getModule(), tasks, sourceElements, createFilter)) {
           LOG.warn("Cannot apply package test configuration, uses raw run configuration");
           performRunnable.run();
@@ -140,10 +142,12 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
     return sourceDirs[0];
   }
 
+  private static String extractLocationName(@NotNull PsiPackage aPackage, @NotNull Module module) {
+    return aPackage.getQualifiedName().isEmpty() ? module.getName() : aPackage.getQualifiedName();
+  }
+
   private static String suggestName(@NotNull PsiPackage aPackage, @NotNull Module module) {
-    return aPackage.getQualifiedName().isEmpty()
-           ? ExecutionBundle.message("test.in.scope.presentable.text", module.getName())
-           : ExecutionBundle.message("test.in.scope.presentable.text", aPackage.getQualifiedName());
+    return ExecutionBundle.message("test.in.scope.presentable.text", extractLocationName(aPackage, module));
   }
 
   private static class ConfigurationData {
