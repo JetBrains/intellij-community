@@ -78,6 +78,9 @@ public class IntellijConfigOptionDescriptorProvider implements EditorConfigOptio
     else if (accessor instanceof ExternalStringAccessor) {
       return new EditorConfigStringDescriptor(null, null);
     }
+    else if (accessor instanceof VisualGuidesAccessor) {
+      return new EditorConfigListDescriptor(0, true, Collections.singletonList(new EditorConfigNumberDescriptor(null, null)), null,  null);
+    }
     return null;
   }
 
