@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.ex
 
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.SchemeState
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.rules.InMemoryFsRule
@@ -34,7 +33,7 @@ class InspectionSchemeTest {
     "</inspections>""".trimIndent()
     schemeFile.write(schemeData)
     val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
-    val profileManager = ApplicationInspectionProfileManager(InspectionToolRegistrar.getInstance(), schemeManagerFactory, ApplicationManager.getApplication().messageBus)
+    val profileManager = ApplicationInspectionProfileManager(schemeManagerFactory)
     profileManager.forceInitProfiles(true)
     profileManager.initProfiles()
 
