@@ -116,8 +116,8 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
       if (op != null) {
         DarculaUIUtil.Outline.valueOf(op.toString()).setGraphicsColor(g2, b.hasFocus());
         Path2D outline = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-        outline.append(new RoundRectangle2D.Float(iconRect.x + scale(1), iconRect.y, scale(18), scale(18), scale(6), scale(6)), false);
-        outline.append(new RoundRectangle2D.Float(iconRect.x + scale(4), iconRect.x + scale(3), scale(12), scale(12), scale(3), scale(3)), false);
+        outline.append(new RoundRectangle2D.Float(iconRect.x + scale(1), iconRect.y, scale(18), scale(18), scale(8), scale(8)), false);
+        outline.append(new RoundRectangle2D.Float(iconRect.x + scale(4), iconRect.y + scale(3), scale(12), scale(12), scale(3), scale(3)), false);
 
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
