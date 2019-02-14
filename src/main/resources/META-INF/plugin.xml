@@ -16,37 +16,8 @@
 
 <idea-plugin>
   <id>de.thomasrosenau.diffplugin</id>
-  <version>0.0.0-setByGradle</version>
   <name>Diff / Patch File Support</name>
   <vendor email="thomasr@fantasymail.de" url="https://github.com/ThomasR/">Thomas Rosenau</vendor>
-
-  <description><![CDATA[
-    <h1>Syntax highlighting for .diff files and .patch files</h1>
-    <p>Supports the common formats: normal, contextual, unified (git patch).</p>
-    <p>Does not support the formats: side-by-side, ed, RCS.</p>
-    <br/>
-    <hr/>
-    <p>Copyright 2019 Thomas Rosenau</p>
-    <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this software except in
-       compliance with the License. You may obtain a copy of the License at</p>
-    <br/>
-    <p><a href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a></p>
-    <br/>
-    <p>Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
-       on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for
-       the specific language governing permissions and limitations under the License.</p>
-    <hr/>
-    <br/>
-    ]]></description>
-
-  <change-notes><![CDATA[
-    <h5>1.1.0</h5>
-    <ul>
-    <li>Support highlighting of file names, separators, EOL hints, and modified lines</li>
-    <li>Color settings page</li>
-    <li>Icon changed</li>
-    </ul>
-    ]]></change-notes>
 
   <depends>com.intellij.modules.lang</depends>
 
