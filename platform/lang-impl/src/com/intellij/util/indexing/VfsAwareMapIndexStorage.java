@@ -150,13 +150,24 @@ public final class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<K
     l.lock();
     try {
       myCache.clear(); // this will ensure that all new keys are made into the map
+
       if (myBuildKeyHashToVirtualFileMapping && idFilter != null) {
         TIntHashSet hashMaskSet = null;
         long l = System.currentTimeMillis();
+        GlobalSearchScope effectiveFilteringScope = scope;
+        Project project = scope.getProject();
 
-        File fileWithCaches = getSavedProjectFileValueIds(myLastScannedId, scope);
+        if (project != null) {
+          if(idFilter == IdFilter.getProjectIdFilter(project, true)) {
+            effectiveFilteringScope = GlobalSearchScope.allScope(project);
+          } else if (idFilter == IdFilter.getProjectIdFilter(project, false)) {
+            effectiveFilteringScope = GlobalSearchScope.projectScope(project);
+          }
+        }
+
+        File fileWithCaches = getSavedProjectFileValueIds(myLastScannedId, effectiveFilteringScope);
         final boolean useCachedHashIds = ENABLE_CACHED_HASH_IDS &&
-                                         (scope instanceof ProjectScopeImpl || scope instanceof ProjectAndLibrariesScope) &&
+                                         (effectiveFilteringScope instanceof ProjectScopeImpl || effectiveFilteringScope instanceof ProjectAndLibrariesScope) &&
                                          fileWithCaches != null;
         int id = myKeyHashToVirtualFileMapping.getCurrentLength();
 
@@ -190,7 +201,7 @@ public final class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<K
           });
 
           if (useCachedHashIds) {
-            saveHashedIds(hashMaskSet, id, scope);
+            saveHashedIds(hashMaskSet, id, effectiveFilteringScope);
           }
         }
 
