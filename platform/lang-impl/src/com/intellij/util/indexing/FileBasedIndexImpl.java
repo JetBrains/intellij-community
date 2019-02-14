@@ -7,6 +7,9 @@ import com.intellij.AppTopics;
 import com.intellij.history.LocalHistory;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.ServiceNotReadyException;
+import com.intellij.index.PrebuiltFileBasedIndexProvider;
+import com.intellij.index.PrebuiltFileBasedIndexProviderGenerator;
+import com.intellij.index.PrebuiltIndexAwareIdIndexerKt;
 import com.intellij.lang.ASTNode;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
@@ -470,10 +473,25 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       index = (VfsAwareMapReduceIndex<K, V, FileContent>)custom;
     }
     else {
-      index = new VfsAwareMapReduceIndex<>(extension, storage);
+      index = new VfsAwareMapReduceIndex<>(extension, createIndexerWithPrebuiltData(extension), storage);
     }
-
     return index;
+  }
+
+  private static <K, V> DataIndexer<K, V, FileContent> createIndexerWithPrebuiltData(@NotNull FileBasedIndexExtension<K, V> indexExtension) {
+    Stream<PrebuiltFileBasedIndexProvider<?, ?>> providers = PrebuiltFileBasedIndexProvider
+      .EXTENSION_POINT_NAME
+      .extensions()
+      .filter(p -> p.getId().equals(indexExtension.getName()));
+    Stream<PrebuiltFileBasedIndexProvider<K, V>> generatedProviders = PrebuiltFileBasedIndexProviderGenerator
+      .EXTENSION_POINT_NAME
+      .extensions()
+      .map(p -> p.generateProvider(indexExtension.getName()))
+      .filter(Objects::nonNull);
+    @SuppressWarnings("unchecked")
+    PrebuiltFileBasedIndexProvider<K, V>[] providerArray = Stream.concat(providers, generatedProviders).toArray(PrebuiltFileBasedIndexProvider[]::new);
+    if (providerArray.length == 0) return indexExtension.getIndexer();
+    return PrebuiltIndexAwareIdIndexerKt.wrapIndexerWithPrebuilt(indexExtension, providerArray);
   }
 
   @Override

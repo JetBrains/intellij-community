@@ -22,20 +22,10 @@ import java.io.DataOutput
  * @author traff
  */
 
-fun <K, V> wrapIndexerWithPrebuilt(ex: FileBasedIndexExtension<K, V>): DataIndexer<K, V, FileContent> {
-  val provider = EP_NAME
-                   .extensions()
-                   .filter { ex.name.name == it.indexName }
-                   .findFirst()
-                   .map { it.instance }
-                   .orElse(null)
-                 ?: return ex.indexer
-  @Suppress("UNCHECKED_CAST")
-  provider as PrebuiltFileBasedIndexProvider<K, V>
-
+fun <K, V> wrapIndexerWithPrebuilt(ex: FileBasedIndexExtension<K, V>, providers: Array<PrebuiltFileBasedIndexProvider<K, V>>): DataIndexer<K, V, FileContent> {
   return object : DataIndexer<K, V, FileContent> {
     override fun map(inputData: FileContent): Map<K, V> {
-      val result = provider.get(inputData)
+      val result = providers.mapNotNull { it.get(inputData) }.firstOrNull()
       if (result == null) {
         return ex.indexer.map(inputData)
       } else if (PrebuiltIndexProviderBase.DEBUG_PREBUILT_INDICES) {
@@ -64,15 +54,18 @@ class PrebuiltFileBasedIndexProviderEP : AbstractExtensionPointBean() {
 
 interface PrebuiltFileBasedIndexProviderGenerator {
   companion object {
-    val EXTENSION_POINT_NAME: ExtensionPointName<FileBasedIndexExtension<*, *>> = ExtensionPointName.create("com.intellij.prebuiltFileBasedIndexProviderGenerator")
+    @JvmField
+    val EXTENSION_POINT_NAME: ExtensionPointName<PrebuiltFileBasedIndexProviderGenerator> = ExtensionPointName.create("com.intellij.prebuiltFileBasedIndexProviderGenerator")
   }
 
-  fun <K, V> generateProvider(id: ID<K, V>): PrebuiltFileBasedIndexProvider<K, V>
+  fun <K, V> generateProvider(id: ID<K, V>): PrebuiltFileBasedIndexProvider<K, V>?
 }
 
-abstract class PrebuiltFileBasedIndexProvider<K, V>(id: ID<K, V>) : PrebuiltIndexProviderBase<Map<K, V>>() {
+abstract class PrebuiltFileBasedIndexProvider<K, V>(val id: ID<K, V>) : PrebuiltIndexProviderBase<Map<K, V>>() {
   companion object {
-    val EXTENSION_POINT_NAME: ExtensionPointName<FileBasedIndexExtension<*, *>> = ExtensionPointName.create("com.intellij.prebuiltFileBasedIndexProvider")
+    @JvmField
+    val EXTENSION_POINT_NAME: ExtensionPointName<PrebuiltFileBasedIndexProvider<*, *>> = ExtensionPointName.create(
+      "com.intellij.prebuiltFileBasedIndexProvider")
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -83,28 +76,11 @@ abstract class PrebuiltFileBasedIndexProvider<K, V>(id: ID<K, V>) : PrebuiltInde
   override val indexName get() = indexExtension.name.name
 }
 
-abstract class PrebuiltIndexAwareIdIndexer : PrebuiltFileBasedIndexProvider<IdIndexEntry, Int>(IdIndex.NAME), LexingIdIndexer {
+abstract class PrebuiltIndexAwareIdIndexer : PrebuiltFileBasedIndexProvider<IdIndexEntry, Int>(IdIndex.NAME) {
   companion object {
     internal val LOG = Logger.getInstance("#com.intellij.index.PrebuiltIndexAwareIdIndexer")
     const val ID_INDEX_FILE_NAME: String = "id-index"
   }
 
   override val indexName: String get() = ID_INDEX_FILE_NAME
-
-  override fun map(inputData: FileContent): Map<IdIndexEntry, Int> {
-    val map = get(inputData)
-    return if (map != null) {
-      if (DEBUG_PREBUILT_INDICES) {
-        if (map != idIndexMap(inputData)) {
-          LOG.error("Prebuilt id index differs from actual value for ${inputData.file.path}")
-        }
-      }
-      map
-    }
-    else {
-      idIndexMap(inputData)
-    }
-  }
-
-  abstract fun idIndexMap(inputData: FileContent): Map<IdIndexEntry, Int>
 }

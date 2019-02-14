@@ -23,10 +23,6 @@ class PyIdIndexer : PrebuiltIndexAwareIdIndexer() {
 
   override val dirName: String get() = PyPrebuiltStubsProvider.NAME
 
-  override fun idIndexMap(inputData: FileContent): Map<IdIndexEntry, Int> {
-    return myIndexer.map(inputData)
-  }
-
   companion object {
     fun createIndexingLexer(consumer: OccurrenceConsumer): Lexer {
       return PyFilterLexer(PythonLexer(), consumer)

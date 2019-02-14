@@ -413,6 +413,8 @@
     <extensionPoint name="indexedRootsProvider" interface="com.intellij.util.indexing.IndexableSetContributor"/>
     <extensionPoint name="include.provider" interface="com.intellij.psi.impl.include.FileIncludeProvider"/>
     <extensionPoint name="globalIndexFilter" interface="com.intellij.util.indexing.GlobalIndexFilter"/>
+    <extensionPoint name="prebuiltFileBasedIndexProvider" interface="com.intellij.index.PrebuiltFileBasedIndexProvider"/>
+    <extensionPoint name="prebuiltFileBasedIndexProviderGenerator" interface="com.intellij.index.PrebuiltFileBasedIndexProviderGenerator"/>
 
     <extensionPoint name="refactoring.copyHandler" interface="com.intellij.refactoring.copy.CopyHandlerDelegate"/>
     <extensionPoint name="refactoring.moveHandler" interface="com.intellij.refactoring.move.MoveHandlerDelegate"/>

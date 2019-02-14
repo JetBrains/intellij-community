@@ -44,20 +44,22 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
   private final SnapshotInputMappings<Key, Value, Input> mySnapshotInputMappings;
 
   public VfsAwareMapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
+                                @NotNull DataIndexer<Key, Value, Input> indexer,
                                 @NotNull IndexStorage<Key, Value> storage) throws IOException {
-    this(extension, storage, getForwardIndex(extension));
+    this(extension, indexer, storage, getForwardIndex(extension));
     if (!(myIndexId instanceof ID<?, ?>)) {
       throw new IllegalArgumentException("myIndexId should be instance of com.intellij.util.indexing.ID");
     }
   }
 
   public VfsAwareMapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
+                                @NotNull DataIndexer<Key, Value, Input> indexer,
                                 @NotNull IndexStorage<Key, Value> storage,
                                 @Nullable ForwardIndex<Key, Value> forwardIndex) throws IOException {
-    super(extension, storage, forwardIndex);
+    super(extension, indexer, storage, forwardIndex);
     SharedIndicesData.registerIndex((ID<Key, Value>)myIndexId, extension);
     mySnapshotInputMappings = myForwardIndex == null && hasSnapshotMapping(extension)?
-                              new SnapshotInputMappings<>(extension) :
+                              new SnapshotInputMappings<>(extension, indexer) :
                               null;
     installMemoryModeListener();
   }

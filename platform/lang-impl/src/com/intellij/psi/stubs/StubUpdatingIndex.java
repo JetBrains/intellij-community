@@ -415,7 +415,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
     MyIndex(@NotNull FileBasedIndexExtension<Integer, SerializedStubTree> extension, @NotNull IndexStorage<Integer, SerializedStubTree> storage)
       throws StorageException, IOException {
-      super(extension, storage);
+      super(extension, extension.getIndexer(), storage);
       checkNameStorage();
     }
 

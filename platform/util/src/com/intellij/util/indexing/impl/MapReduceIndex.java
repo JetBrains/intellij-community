@@ -77,9 +77,16 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
                            @NotNull IndexStorage<Key, Value> storage,
                            @Nullable ForwardIndex<Key, Value> forwardIndex) {
+    this(extension, extension.getIndexer(), storage, forwardIndex);
+  }
+
+  protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
+                           @NotNull DataIndexer<Key, Value, Input> indexer,
+                           @NotNull IndexStorage<Key, Value> storage,
+                           @Nullable ForwardIndex<Key, Value> forwardIndex) {
     myIndexId = extension.getName();
     myExtension = extension;
-    myIndexer = myExtension.getIndexer();
+    myIndexer = indexer;
     myStorage = storage;
     myValueExternalizer = extension.getValueExternalizer();
     myForwardIndex = forwardIndex;

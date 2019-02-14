@@ -57,11 +57,11 @@ class SnapshotInputMappings<Key, Value, Input> {
 
   private final boolean myIsPsiBackedIndex;
 
-  SnapshotInputMappings(IndexExtension<Key, Value, Input> indexExtension) throws IOException {
+  SnapshotInputMappings(IndexExtension<Key, Value, Input> indexExtension, DataIndexer<Key, Value, Input> indexer) throws IOException {
     myIndexId = (ID<Key, Value>)indexExtension.getName();
     myIsPsiBackedIndex = indexExtension instanceof PsiDependentIndex;
     myMapExternalizer = new VfsAwareMapReduceIndex.MapDataExternalizer<>(indexExtension);
-    myIndexer = indexExtension.getIndexer();
+    myIndexer = indexer;
     createMaps();
   }
 

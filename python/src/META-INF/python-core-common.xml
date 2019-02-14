@@ -135,7 +135,7 @@
     <fileBasedIndex implementation="com.jetbrains.python.psi.stubs.PyModuleNameIndex"/>
     <fileBasedIndex implementation="com.jetbrains.python.psi.stubs.PySetuptoolsNamespaceIndex"/>
 
-    <idIndexer filetype="Python" implementationClass="com.jetbrains.python.PyIdIndexer"/>
+    <prebuiltFileBasedIndexProvider implementation="com.jetbrains.python.PyIdIndexer"/>
     <todoIndexer filetype="Python" implementationClass="com.jetbrains.python.PyTodoIndexer" />
     <indexPatternBuilder implementation="com.jetbrains.python.PyIndexPatternBuilder" />
 
