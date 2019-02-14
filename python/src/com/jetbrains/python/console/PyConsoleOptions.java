@@ -46,7 +46,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
   }
 
   public boolean isShowVariableByDefault() {
-    return myState.myShowVariablesByDefault;
+    return true; //Forcred
   }
 
   public void setShowVariablesByDefault(boolean showVariableByDefault) {

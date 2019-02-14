@@ -38,11 +38,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.JBSplitter;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.xdebugger.impl.frame.XStandaloneVariablesView;
 import com.jetbrains.python.PythonLanguage;
@@ -58,6 +63,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.testing.PyTestsSharedKt;
+import icons.PythonIcons.Python.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,6 +76,7 @@ import java.util.concurrent.TimeUnit;
  * @author traff
  */
 public class PythonConsoleView extends LanguageConsoleImpl implements ObservableConsoleView, PyCodeExecutor {
+  private static final String VARIABLES_WINDOW_ID = "Variables";
   static Key<Boolean> CONSOLE_KEY = new Key<>("PYDEV_CONSOLE_KEY");
   private static final Logger LOG = Logger.getInstance(PythonConsoleView.class);
   private final ConsolePromptDecorator myPromptView;
@@ -82,7 +89,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private final EditorColorsScheme myScheme;
   private boolean myHyperlink;
 
-  private XStandaloneVariablesView mySplitView;
+  // private XStandaloneVariablesView mySplitView;
   private final ActionCallback myInitialized = new ActionCallback();
   private boolean isShowVars;
 
@@ -200,7 +207,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   }
 
   @Override
-  public void executeCode(final @Nullable String code, @Nullable final Editor editor) {
+  public void executeCode(@Nullable final String code, @Nullable final Editor editor) {
     myInitialized.doWhenDone(
       () -> {
         if (code != null) {
@@ -241,9 +248,9 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
         if (psiFile != null) {
           CommandProcessor.getInstance().runUndoTransparentAction(() ->
                                                                     CodeStyleManager.getInstance(getProject())
-                                                                                    .adjustLineIndent(psiFile,
-                                                                                                      new TextRange(0, psiFile
-                                                                                                        .getTextLength())));
+                                                                      .adjustLineIndent(psiFile,
+                                                                                        new TextRange(0, psiFile
+                                                                                          .getTextLength())));
         }
         int oldOffset = getConsoleEditor().getCaretModel().getOffset();
         getConsoleEditor().getCaretModel().moveToOffset(document.getTextLength());
@@ -372,12 +379,12 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     getFile().putCopyableUserData(PydevConsoleRunner.CONSOLE_SDK, sdk);
   }
 
-  public void showVariables(PydevConsoleCommunication consoleCommunication) {
-    PyStackFrame stackFrame = new PyStackFrame(getProject(), consoleCommunication, new PyStackFrameInfo("", "", "", null), null);
+  private void showVariables(@NotNull final PydevConsoleCommunication consoleCommunication) {
+    final PyStackFrame stackFrame = new PyStackFrame(getProject(), consoleCommunication, new PyStackFrameInfo("", "", "", null), null);
     final XStandaloneVariablesView view = new XStandaloneVariablesView(getProject(), new PyDebuggerEditorsProvider(), stackFrame);
     consoleCommunication.addCommunicationListener(new ConsoleCommunicationListener() {
       @Override
-      public void commandExecuted(boolean more) {
+      public void commandExecuted(final boolean more) {
         view.rebuildView();
       }
 
@@ -385,9 +392,14 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
       public void inputRequested() {
       }
     });
-    mySplitView = view;
+
+    final ToolWindow window =
+      ToolWindowManager.getInstance(getProject()).registerToolWindow(VARIABLES_WINDOW_ID, false, ToolWindowAnchor.RIGHT);
+    window.setIcon(Debug.SpecialVar);
+    final Content content = new ContentImpl(view.getPanel(), "", true);
+    window.getContentManager().addContent(content);
     Disposer.register(this, view);
-    splitWindow();
+    window.activate(null);
   }
 
   protected final void doAddPromptToHistory(boolean isMainPrompt) {
@@ -395,8 +407,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     EditorEx viewer = getHistoryViewer();
     DocumentEx document = viewer.getDocument();
     RangeHighlighter highlighter = getHistoryViewer().getMarkupModel()
-                                                     .addRangeHighlighter(document.getTextLength(), document.getTextLength(), 0, null,
-                                                                          HighlighterTargetArea.EXACT_RANGE);
+      .addRangeHighlighter(document.getTextLength(), document.getTextLength(), 0, null,
+                           HighlighterTargetArea.EXACT_RANGE);
     final String prompt;
     if (isMainPrompt) {
       prompt = myPromptView.getMainPrompt();
@@ -466,7 +478,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     removeAll();
     JBSplitter p = new JBSplitter(false, 2f / 3);
     p.setFirstComponent((JComponent)console);
-    p.setSecondComponent(mySplitView.getPanel());
+    //    p.setSecondComponent(mySplitView.getPanel());
     p.setShowDividerControls(true);
     p.setHonorComponentsMinimumSize(true);
 
@@ -475,18 +487,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     repaint();
   }
 
-  public void restoreWindow() {
-    Component component = getComponent(0);
-    if (mySplitView != null && component instanceof JBSplitter) {
-      JBSplitter pane = (JBSplitter)component;
-      removeAll();
-      Disposer.dispose(mySplitView);
-      mySplitView = null;
-      add(pane.getFirstComponent(), BorderLayout.CENTER);
-      validate();
-      repaint();
-    }
-  }
 
   @Nullable
   @Override
