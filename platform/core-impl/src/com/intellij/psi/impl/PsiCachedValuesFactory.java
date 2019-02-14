@@ -34,14 +34,16 @@ public class PsiCachedValuesFactory implements CachedValuesFactory {
     myManager = manager;
   }
 
+  @NotNull
   @Override
   public <T> CachedValue<T> createCachedValue(@NotNull CachedValueProvider<T> provider, boolean trackValue) {
-    return new PsiCachedValueImpl<T>(myManager, provider, trackValue);
+    return new PsiCachedValueImpl<>(myManager, provider, trackValue);
   }
 
+  @NotNull
   @Override
   public <T, P> ParameterizedCachedValue<T, P> createParameterizedCachedValue(@NotNull ParameterizedCachedValueProvider<T, P> provider,
                                                                               boolean trackValue) {
-    return new PsiParameterizedCachedValue<T, P>(myManager, provider, trackValue);
+    return new PsiParameterizedCachedValue<>(myManager, provider, trackValue);
   }
 }

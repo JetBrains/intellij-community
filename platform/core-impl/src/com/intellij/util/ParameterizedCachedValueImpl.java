@@ -45,6 +45,7 @@ public class ParameterizedCachedValueImpl<T,P> extends CachedValueBase<T> implem
   }
 
   @Override
+  @NotNull
   public ParameterizedCachedValueProvider<T,P> getValueProvider() {
     return myProvider;
   }
