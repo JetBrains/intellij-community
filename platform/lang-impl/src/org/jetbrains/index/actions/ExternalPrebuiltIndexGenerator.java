@@ -21,7 +21,7 @@ public class ExternalPrebuiltIndexGenerator implements PrebuiltFileBasedIndexPro
     if (!dir.isDirectory()) {
       return null;
     }
-    if (Arrays.stream(Objects.requireNonNull(dir.listFiles())).noneMatch(f -> f.getName().equals(id.getName()))) return null;
+    if (Arrays.stream(Objects.requireNonNull(dir.listFiles())).noneMatch(f -> f.getName().startsWith(id.getName()))) return null;
 
     return new PrebuiltFileBasedIndexProvider<>(id, EXTERNAL_PREBUILT_INDEX_PATH);
   }

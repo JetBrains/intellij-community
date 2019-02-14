@@ -489,7 +489,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       .map(p -> p.generateProvider(indexExtension.getName()))
       .filter(Objects::nonNull);
     @SuppressWarnings("unchecked")
-    PrebuiltFileBasedIndexProvider<K, V>[] providerArray = Stream.concat(providers, generatedProviders).toArray(PrebuiltFileBasedIndexProvider[]::new);
+    PrebuiltFileBasedIndexProvider<K, V>[] providerArray = Stream.concat(providers, generatedProviders).peek(p -> p.init()).filter(p -> p.isPropertyInitialized()).toArray(PrebuiltFileBasedIndexProvider[]::new);
     if (providerArray.length == 0) return indexExtension.getIndexer();
     return PrebuiltIndexAwareIdIndexerKt.wrapIndexerWithPrebuilt(indexExtension, providerArray);
   }

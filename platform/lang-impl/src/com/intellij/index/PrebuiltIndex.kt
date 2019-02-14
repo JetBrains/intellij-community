@@ -26,6 +26,10 @@ import java.io.IOException
 abstract class PrebuiltIndexProviderBase<Value> : Disposable {
   private val myFileContentHashing = FileContentHashing()
   private var myPrebuiltIndexStorage: PersistentHashMap<HashCode, Value>? = null
+  @Volatile
+  var isInitialized: Boolean = false
+  @Volatile
+  var isPropertyInitialized: Boolean = false
 
   protected abstract val dirName: String
   protected abstract val indexName: String
@@ -38,13 +42,11 @@ abstract class PrebuiltIndexProviderBase<Value> : Disposable {
     val DEBUG_PREBUILT_INDICES: Boolean = SystemProperties.getBooleanProperty("debug.prebuilt.indices", false)
   }
 
-  init {
-    init()
-  }
-
   abstract val fileTypes: Set<FileType>
 
-  internal fun init() {
+  fun init() {
+    if (isInitialized) return
+    isInitialized = true
     var indexesRoot = findPrebuiltIndicesRoot()
     try {
       if (indexesRoot != null && indexesRoot.exists()) {
@@ -64,6 +66,7 @@ abstract class PrebuiltIndexProviderBase<Value> : Disposable {
       myPrebuiltIndexStorage = null
       LOG.warn("Prebuilt indices can't be loaded at " + indexesRoot!!, e)
     }
+    isPropertyInitialized = myPrebuiltIndexStorage != null
   }
 
   fun get(fileContent: FileContent): Value? {

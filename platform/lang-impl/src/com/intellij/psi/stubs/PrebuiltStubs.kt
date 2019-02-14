@@ -38,9 +38,11 @@ fun findStub(virtualFile: VirtualFile, project: Project): Stub? {
   return PrebuiltStubsProviders
     .allForFileType(virtualFile.fileType)
     .filter { it.isEnabled(project) }
-    .mapNotNull { it.findStub(FileContentImpl(virtualFile, virtualFile.contentsToByteArray()).also { c ->
-      c.putUserData(IndexingDataKeys.PROJECT, project)
-    }) }
+    .mapNotNull {
+      it.findStub(FileContentImpl(virtualFile, virtualFile.contentsToByteArray()).also { c ->
+        c.putUserData(IndexingDataKeys.PROJECT, project)
+      })
+    }
     .firstOrNull()
 }
 
@@ -110,6 +112,9 @@ class StubTreeExternalizer : DataExternalizer<SerializedStubTree> {
 }
 
 abstract class PrebuiltStubsProviderBase : PrebuiltIndexProviderBase<SerializedStubTree>(), PrebuiltStubsProvider {
+  init {
+    init()
+  }
   private var mySerializationManager: SerializationManagerImpl? = null
 
   protected abstract val stubVersion: Int
