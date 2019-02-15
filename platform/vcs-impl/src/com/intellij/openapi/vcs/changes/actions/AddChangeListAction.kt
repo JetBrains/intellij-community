@@ -1,59 +1,53 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package com.intellij.openapi.vcs.changes.actions;
+package com.intellij.openapi.vcs.changes.actions
 
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.ui.NewChangelistDialog;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.vcs.VcsDataKeys
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.ui.NewChangelistDialog
 
-public class AddChangeListAction extends AnAction implements DumbAware {
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
-    NewChangelistDialog dlg = new NewChangelistDialog(project);
-    dlg.show();
-    if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-      String name = dlg.getName();
-      if (name.length() == 0) {
-        name = getUniqueName(project);
+class AddChangeListAction : AnAction(), DumbAware {
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = e.getData(CommonDataKeys.PROJECT)
+    val dlg = NewChangelistDialog(project)
+    dlg.show()
+    if (dlg.exitCode == DialogWrapper.OK_EXIT_CODE) {
+      var name = dlg.name
+      if (name.length == 0) {
+        name = getUniqueName(project)
       }
 
-      final LocalChangeList list = ChangeListManager.getInstance(project).addChangeList(name, dlg.getDescription());
-      if (dlg.isNewChangelistActive()) {
-        ChangeListManager.getInstance(project).setDefaultChangeList(list);
+      val list = ChangeListManager.getInstance(project!!).addChangeList(name, dlg.description)
+      if (dlg.isNewChangelistActive) {
+        ChangeListManager.getInstance(project).defaultChangeList = list
       }
-      dlg.getPanel().changelistCreatedOrChanged(list);
+      dlg.panel.changelistCreatedOrChanged(list)
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static String getUniqueName(final Project project) {
-    int unnamedcount = 0;
-    for (ChangeList list : ChangeListManagerImpl.getInstanceImpl(project).getChangeListsCopy()) {
-      if (list.getName().startsWith("Unnamed")) {
-        unnamedcount++;
+  private fun getUniqueName(project: Project?): String {
+    var unnamedcount = 0
+    for (list in ChangeListManagerImpl.getInstanceImpl(project).changeListsCopy) {
+      if (list.name.startsWith("Unnamed")) {
+        unnamedcount++
       }
     }
 
-    return unnamedcount == 0 ? "Unnamed" : "Unnamed (" + unnamedcount + ")";
+    return if (unnamedcount == 0) "Unnamed" else "Unnamed ($unnamedcount)"
   }
 
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP)) {
-      ChangeList[] lists = e.getData(VcsDataKeys.CHANGE_LISTS);
-      e.getPresentation().setVisible(lists != null && lists.length > 0);
+  override fun update(e: AnActionEvent) {
+    if (e.place == ActionPlaces.CHANGES_VIEW_POPUP) {
+      val lists = e.getData(VcsDataKeys.CHANGE_LISTS)
+      e.presentation.isVisible = lists != null && lists.size > 0
     }
   }
 }
