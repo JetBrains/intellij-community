@@ -41,9 +41,10 @@ final class PlatformProjectConfigurator implements DirectoryProjectConfigurator 
         VirtualFile[] contentRoots = model.getContentRoots();
         if (contentRoots.length == 0) {
           model.addContentEntry(baseDir);
+          LOG.debug("content root " + baseDir + " is added");
         }
         else {
-          LOG.info("PlatformProjectConfigurator did not add content entry because content roots are already configured " +
+          LOG.info("content root " + baseDir + " is not added because content roots are already configured " +
                    "(content root count: " + contentRoots.length + ")");
         }
         model.inheritSdk();
