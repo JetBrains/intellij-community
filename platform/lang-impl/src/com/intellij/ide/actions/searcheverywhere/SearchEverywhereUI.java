@@ -1004,7 +1004,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
 
   public static class SearchListModel extends AbstractListModel<Object> {
 
-    private static final Object MORE_ELEMENT = new Object();
+    static final Object MORE_ELEMENT = new Object();
 
     private final List<SESearcher.ElementInfo> listElements = new ArrayList<>();
 
@@ -1053,6 +1053,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
         List<SESearcher.ElementInfo> list = itemsMap.computeIfAbsent(info.getContributor(), contributor -> new ArrayList<>());
         list.add(info);
       });
+      itemsMap.forEach((contributor, list) -> Collections.sort(list, Comparator.comparingInt(SESearcher.ElementInfo::getPriority).reversed()));
 
       if (resultsExpired) {
         retainContributors(itemsMap.keySet());
@@ -1074,10 +1075,16 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       }
       else {
         itemsMap.forEach((contributor, list) -> {
-          int startIndex = getInsertionPoint(contributor);
-          int endIndex = startIndex + list.size() - 1;
-          listElements.addAll(startIndex, list);
-          fireIntervalAdded(this, startIndex, endIndex);
+          int startIndex = contributors().indexOf(contributor);
+          if (startIndex >= 0) {
+            addElementsWithPriority(contributor, startIndex, list);
+          }
+          else {
+            startIndex = getInsertionPoint(contributor);
+            int endIndex = startIndex + list.size() - 1;
+            listElements.addAll(startIndex, list);
+            fireIntervalAdded(this, startIndex, endIndex);
+          }
         });
       }
     }
@@ -1105,6 +1112,26 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
 
       if (startInterval <= endInterval) {
         fireIntervalRemoved(this, startInterval, endInterval);
+      }
+    }
+
+    private void addElementsWithPriority(SearchEverywhereContributor<?> contributor, int index, List<SESearcher.ElementInfo> newElements) {
+      for (SESearcher.ElementInfo newElementInfo : newElements) {
+        if (index < listElements.size()) {
+          SESearcher.ElementInfo existingElementInfo = listElements.get(index);
+          while (existingElementInfo.getContributor() == contributor
+                 && existingElementInfo.getPriority() >= newElementInfo.getPriority()
+                 && existingElementInfo.getElement() != MORE_ELEMENT) {
+            index++;
+            if (index >= listElements.size()) break;
+            existingElementInfo = listElements.get(index);
+          }
+          listElements.add(index, newElementInfo);
+          index++;
+        }
+        else {
+          listElements.add(newElementInfo);
+        }
       }
     }
 
