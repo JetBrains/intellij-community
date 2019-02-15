@@ -181,6 +181,9 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
                                       @NotNull PsiExpression expression,
                                       @Nullable TextRange range,
                                       @NotNull DfaMemoryState memState) {
+    if (!expression.isPhysical()) {
+      LOG.error("Non-physical expression is passed" + expression);
+    }
     expression.accept(new ExpressionVisitor(value, memState));
     if (range == null) {
       reportConstantExpressionValue(value, memState, expression);
