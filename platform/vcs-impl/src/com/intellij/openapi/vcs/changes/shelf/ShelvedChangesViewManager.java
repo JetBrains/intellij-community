@@ -166,18 +166,16 @@ public class ShelvedChangesViewManager implements Disposable {
     editSourceAction.registerCustomShortcutSet(editSourceAction.getShortcutSet(), myTree);
 
     PopupHandler.installPopupHandler(myTree, "ShelvedChangesPopupMenu", SHELF_CONTEXT_MENU);
-    myTree.setDoubleClickHandler(() -> {
-      DataContext dc = DataManager.getInstance().getDataContext(myTree);
-      if (!getShelvedLists(dc).isEmpty()) {
-        DiffShelvedChangesActionProvider.showShelvedChangesDiff(dc);
-      }
-    });
     myTree.addSelectionListener(() -> mySplitterComponent.updatePreview(false));
     if (startupManager == null) {
       LOG.error("Couldn't start loading shelved changes");
       return;
     }
     startupManager.registerPostStartupActivity((DumbAwareRunnable)() -> myUpdateQueue.queue(new MyContentUpdater()));
+  }
+
+  private boolean hasExactlySelectedChanges() {
+    return !VcsTreeModelData.exactlySelected(myTree).userObjects(ShelvedWrapper.class).isEmpty();
   }
 
   @CalledInAwt
@@ -351,6 +349,23 @@ public class ShelvedChangesViewManager implements Disposable {
     @Override
     protected ChangesGroupingSupport installGroupingSupport() {
       return new ChangesGroupingSupport(myProject, this, false);
+    }
+
+    @Override
+    public int getToggleClickCount() {
+      return 2;
+    }
+
+    @Override
+    protected void installDoubleClickHandler() {
+      new DoubleClickListener() {
+        @Override
+        protected boolean onDoubleClick(MouseEvent e) {
+          if (!hasExactlySelectedChanges()) return false;
+          DiffShelvedChangesActionProvider.showShelvedChangesDiff(DataManager.getInstance().getDataContext(myTree));
+          return true;
+        }
+      }.installOn(this);
     }
 
     @Override
