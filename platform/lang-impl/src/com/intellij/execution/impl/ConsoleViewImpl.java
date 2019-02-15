@@ -1182,11 +1182,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      boolean enabled = e.getData(LangDataKeys.CONSOLE_VIEW) != null;
-      Editor editor = e.getData(CommonDataKeys.EDITOR);
-      if (editor != null && editor.getDocument().getTextLength() == 0) {
-        enabled = false;
-      }
+      ConsoleView data = e.getData(LangDataKeys.CONSOLE_VIEW);
+      boolean enabled = data != null && data.getContentSize() > 0;
       e.getPresentation().setEnabled(enabled);
     }
 
