@@ -249,4 +249,5 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testFlatMapSideEffect() { doTest(); }
   public void testOptionalValueTracking() { doTest(); }
   public void testClearZeroesSize() { doTest(); }
+  public void testLambdaInlineReassignReturnWithDeeperEquality() { doTest(); }
 }
