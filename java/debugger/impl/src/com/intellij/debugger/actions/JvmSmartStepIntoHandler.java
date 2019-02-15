@@ -52,12 +52,12 @@ public abstract class JvmSmartStepIntoHandler {
     if (!targets.isEmpty()) {
       SmartStepTarget firstTarget = targets.get(0);
       if (targets.size() == 1) {
-        doStepInto(session, Registry.is("debugger.single.smart.step.force"), firstTarget);
+        doStepInto(session, Registry.is("debugger.single.smart.step.force"), firstTarget, false);
       }
       else {
         Editor editor = fileEditor.getEditor();
         PsiMethodListPopupStep popupStep =
-          new PsiMethodListPopupStep(editor, targets, chosenTarget -> doStepInto(session, true, chosenTarget));
+          new PsiMethodListPopupStep(editor, targets, chosenTarget -> doStepInto(session, true, chosenTarget, true));
         ListPopupImpl popup = new ListPopupImpl(popupStep);
         DebuggerUIUtil.registerExtraHandleShortcuts(popup, XDebuggerActions.STEP_INTO, XDebuggerActions.SMART_STEP_INTO);
         popup.setAdText(DebuggerUIUtil.getSelectionShortcutsAdText(XDebuggerActions.STEP_INTO, XDebuggerActions.SMART_STEP_INTO));
@@ -86,7 +86,11 @@ public abstract class JvmSmartStepIntoHandler {
     return false;
   }
 
-  protected void doStepInto(DebuggerSession session, boolean force, SmartStepTarget target) {
+  protected void doStepInto(DebuggerSession session, boolean force, SmartStepTarget target, boolean userChoice) {
+    if (!userChoice && Registry.is("debugger.smart.step.always")) { // emulate regular step into
+      force = false;
+      target = null;
+    }
     JvmSmartStepIntoActionHandler.doStepInto(session, force, createMethodFilter(target));
   }
 
