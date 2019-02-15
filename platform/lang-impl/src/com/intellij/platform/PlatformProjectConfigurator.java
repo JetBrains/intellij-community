@@ -29,19 +29,31 @@ final class PlatformProjectConfigurator implements DirectoryProjectConfigurator 
       return;
     }
 
+    // correct module name when opening root of drive as project (RUBY-5181)
+    String moduleName = baseDir.getName().replace(":", "");
+    String imlName = baseDir.getPath() + "/.idea/" + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION;
+    ModuleTypeManager moduleTypeManager = ModuleTypeManager.getInstance();
+
     ApplicationManager.getApplication().runWriteAction(() -> {
-      String moduleName = baseDir.getName().replace(":", "");     // correct module name when opening root of drive as project (RUBY-5181)
-      String imlName = baseDir.getPath() + "/.idea/" + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION;
-      ModuleTypeManager instance = ModuleTypeManager.getInstance();
-      String id = instance == null ? "unknown" : instance.getDefaultModuleType().getId();
-      final Module module = moduleManager.newModule(imlName, id);
-      ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-      ModifiableRootModel rootModel = rootManager.getModifiableModel();
-      if (rootModel.getContentRoots().length == 0) {
-        rootModel.addContentEntry(baseDir);
+      Module module = moduleManager.newModule(imlName, moduleTypeManager == null ? "unknown" : moduleTypeManager.getDefaultModuleType().getId());
+      ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+      try {
+        VirtualFile[] contentRoots = model.getContentRoots();
+        if (contentRoots.length == 0) {
+          model.addContentEntry(baseDir);
+        }
+        else {
+          LOG.info("PlatformProjectConfigurator did not add content entry because content roots are already configured " +
+                   "(content root count: " + contentRoots.length + ")");
+        }
+        model.inheritSdk();
+        model.commit();
       }
-      rootModel.inheritSdk();
-      rootModel.commit();
+      finally {
+        if (!model.isDisposed()) {
+          model.dispose();
+        }
+      }
       moduleRef.set(module);
     });
   }
