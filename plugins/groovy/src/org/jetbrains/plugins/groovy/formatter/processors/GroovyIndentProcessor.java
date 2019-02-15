@@ -23,8 +23,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.GrArrayInitializer;
-import org.jetbrains.plugins.groovy.lang.psi.api.GrTryResourceList;
+import org.jetbrains.plugins.groovy.lang.psi.api.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.*;
@@ -116,6 +115,29 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
     if (myChildType != GroovyTokenTypes.mLBRACK && myChildType != GroovyTokenTypes.mRBRACK) {
       myResult = getContinuationWithoutFirstIndent();
     }
+  }
+
+  @Override
+  public void visitLambdaExpression(@NotNull GrLambdaExpression expression) {
+    if (myChildType == BLOCK_LAMBDA_BODY) {
+      myResult = getBlockIndent(getGroovySettings().LAMBDA_BRACE_STYLE);
+      return;
+    }
+    myResult = getContinuationWithoutFirstIndent();
+  }
+
+  @Override
+  public void visitBlockLambdaBody(@NotNull GrBlockLambdaBody body) {
+    if (myChildType == GroovyTokenTypes.mLCURLY || myChildType == GroovyTokenTypes.mRCURLY) {
+      myResult = getNoneIndent();
+      return;
+    }
+    myResult = getIndentInBlock(getGroovySettings().LAMBDA_BRACE_STYLE);
+  }
+
+  @Override
+  public void visitExpressionLambdaBody(@NotNull GrExpressionLambdaBody body) {
+    myResult = getNoneIndent();
   }
 
   @Override
