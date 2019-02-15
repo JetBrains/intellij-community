@@ -41,6 +41,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 
 public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProvider {
@@ -252,8 +253,11 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
       return;
     }
     final String name = content.getDisplayName();
-    final DumbUnawareHider dumbUnawareHider = (DumbUnawareHider)content.getComponent();
-    final HierarchyBrowserBase hierarchyBrowserBase = (HierarchyBrowserBase)dumbUnawareHider.getContent();
+    JComponent component = content.getComponent();
+    if (component instanceof DumbUnawareHider) {
+      component = ((DumbUnawareHider)component).getContent();
+    }
+    final HierarchyBrowserBase hierarchyBrowserBase = (HierarchyBrowserBase)component;
     final PsiElement[] elements = hierarchyBrowserBase.getAvailableElements();
     if (elements.length > 0) {
       result.add(new LocalSearchScope(elements, "Hierarchy '" + name + "' (visible nodes only)"));
