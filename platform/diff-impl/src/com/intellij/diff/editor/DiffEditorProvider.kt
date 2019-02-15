@@ -18,11 +18,12 @@ package com.intellij.diff.editor
 import com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 
-class DiffEditorProvider : AsyncFileEditorProvider {
+class DiffEditorProvider : AsyncFileEditorProvider, DumbAware {
   override fun accept(project: Project, file: VirtualFile): Boolean {
     return file is DiffVirtualFile
   }
