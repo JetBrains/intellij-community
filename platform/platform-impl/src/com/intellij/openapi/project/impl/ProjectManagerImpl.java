@@ -680,7 +680,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
       if (isSaveProject) {
         FileDocumentManager.getInstance().saveAllDocuments();
-        SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(app, isSaveApp);
+        SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(project, isSaveApp);
       }
 
       if (checkCanClose && !ensureCouldCloseIfUnableToSave(project)) {
