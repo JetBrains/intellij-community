@@ -2,9 +2,6 @@
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageUtil;
-import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.CaretState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -16,18 +13,17 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.FontUtil;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -178,26 +174,7 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
 
   @Nullable
   private static Icon fetchIcon(@NotNull Project project, @NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo) {
-    Icon icon = null;
-    PsiFile file = PsiManager.getInstance(project).findFile(placeInfo.getFile());
-    if (file != null) {
-      ItemPresentation presentation = file.getPresentation();
-      if (presentation != null) {
-        icon = presentation.getIcon(false);
-      }
-    }
-
-    if (icon == null) {
-      Language language = LanguageUtil.getFileLanguage(placeInfo.getFile());
-      if (language != null) {
-        final LanguageFileType fileType = language.getAssociatedFileType();
-        if (fileType != null) {
-          icon = fileType.getIcon();
-        }
-      }
-    }
-
-    return icon;
+    return IconUtil.getIcon(placeInfo.getFile(), Iconable.ICON_FLAG_READ_STATUS, project);
   }
 
   @NotNull
