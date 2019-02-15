@@ -126,7 +126,13 @@ class SwitchBootRuntimeAction : AnAction(), DumbAware {
 
     myRuntimeUrlField.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: com.intellij.openapi.editor.event.DocumentEvent) {
-        bundles.firstOrNull { it.toString() == myRuntimeUrlField.text }?.let { match -> controller.runtimeSelected(match)}
+        val runtime = bundles.firstOrNull { it.toString() == myRuntimeUrlField.text }
+        if (runtime == null) {
+          myRuntimeUrlField.font = combobox.font.deriveFont(Font.PLAIN)
+          controller.noRuntimeSelected()
+        } else {
+          controller.runtimeSelected(runtime)
+        }
       }
     })
 

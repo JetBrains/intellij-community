@@ -11,9 +11,9 @@ import com.intellij.bootRuntime.command.CommandFactory.Type.*
 import com.intellij.bootRuntime.command.CommandFactory.produce
 import com.intellij.bootRuntime.command.UseDefault
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBOptionButton
+import com.intellij.util.ui.UIUtil
 import java.awt.GridBagConstraints
 import java.awt.Insets
 import javax.swing.Action
@@ -86,5 +86,9 @@ class Controller(val project: Project, val actionPanel:ActionPanel, val model: M
                                  SwingUtilities.getWindowAncestor(actionPanel).dispose()
                                  ApplicationManagerEx.getApplicationEx().restart()
                                })
+  }
+
+  fun noRuntimeSelected() {
+    UIUtil.uiTraverser(actionPanel).filter(JButton::class.java).forEach{b -> b.isEnabled = false}
   }
 }
