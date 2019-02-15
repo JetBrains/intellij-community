@@ -18,7 +18,7 @@ fun getPluginInfo(clazz: Class<*>): PluginInfo {
     return platformPlugin
   }
 
-  val pluginId = PluginManagerCore.getPluginByClassName(className, true) ?: return unknownPlugin
+  val pluginId = PluginManagerCore.getPluginOrPlatformByClassName(className) ?: return unknownPlugin
   if (PluginManagerCore.CORE_PLUGIN_ID == pluginId.idString) {
     return platformPlugin
   }
