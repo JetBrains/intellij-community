@@ -142,6 +142,9 @@ public abstract class SwingWorker {
 
   public SwingWorker() {
     myModalityState = ModalityState.current();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Created SwingWorker " + this + "with modality state " + myModalityState);
+    }
 
     final Runnable doFinished = () -> finished();
 
@@ -151,7 +154,7 @@ public abstract class SwingWorker {
         try{
           setValue(construct());
           if (LOG.isDebugEnabled()) {
-            LOG.debug("construct() terminated");
+            LOG.debug("construct() terminated for " + SwingWorker.this);
           }
         }
         catch (Throwable e) {
@@ -163,7 +166,7 @@ public abstract class SwingWorker {
           myThreadVar.clear();
         }
         if (LOG.isDebugEnabled()) {
-          LOG.debug("invoking 'finished' action");
+          LOG.debug("invoking 'finished' action for " + SwingWorker.this);
         }
         ApplicationManager.getApplication().invokeLater(doFinished, myModalityState);
       }

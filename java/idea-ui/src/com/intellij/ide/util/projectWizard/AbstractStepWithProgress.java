@@ -18,6 +18,7 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -41,7 +42,7 @@ import static java.awt.GridBagConstraints.*;
  * @author nik
  */
 public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep {
-  
+  private static final Logger LOG = Logger.getInstance(AbstractStepWithProgress.class);
   @NonNls private static final String PROGRESS_PANEL = "progress_panel";
   @NonNls private static final String RESULTS_PANEL = "results_panel";
   private JPanel myPanel;
@@ -150,15 +151,19 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
     UiNotifyConnector.doWhenFirstShown(myPanel, () -> new SwingWorker() {
       @Override
       public Object construct() {
+        LOG.debug("Start calculation in " + AbstractStepWithProgress.this + " using worker " + toString());
         final Ref<Result> result = Ref.create(null);
         ProgressManager.getInstance().runProcess(() -> result.set(calculate()), progress);
+        LOG.debug("Finish calculation in " + AbstractStepWithProgress.this + " using worker " + toString());
         return result.get();
       }
 
       @Override
       public void finished() {
+        LOG.debug("Schedule showing results for " + AbstractStepWithProgress.this + " using worker " + toString());
         myProgressIndicator = null;
         ApplicationManager.getApplication().invokeLater(() -> {
+          LOG.debug("Show results for " + AbstractStepWithProgress.this);
           final Result result = (Result)get();
           onFinished(result, progress.isCanceled());
           showCard(RESULTS_PANEL);
