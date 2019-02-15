@@ -36,9 +36,11 @@ public class CliResult {
     return new LightDoneFuture(0, null);
   }
   
-  public static final class LightDoneFuture extends CliResult implements Future<CliResult> {
+  private static final class LightDoneFuture implements Future<CliResult> {
+    private final CliResult myResult;
+
     private LightDoneFuture(int returnCode, @Nullable String message) {
-      super(returnCode, message);
+      myResult = new CliResult(returnCode, message);
     }
 
     @Override
@@ -58,12 +60,12 @@ public class CliResult {
 
     @Override
     public CliResult get() {
-      return this;
+      return myResult;
     }
 
     @Override
     public CliResult get(long timeout, @NotNull TimeUnit unit) {
-      return this;
+      return myResult;
     }
   }
 }
