@@ -9,10 +9,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ObjectUtils;
-import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.JavaPsiMathUtil;
-import com.siyeh.ig.psiutils.StreamApiUtil;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,7 +119,7 @@ public class OptionalRefactoringUtil {
             }
           }
           String flatMapOperationName = StreamRefactoringUtil.getFlatMapOperationName(var.getType(), elementType);
-          if(flatMapOperationName != null) {
+          if(flatMapOperationName != null && !SideEffectChecker.mayHaveSideEffects(trueExpression)) {
             return qualifier + ".stream()."+flatMapOperationName+"(" + LambdaUtil.createLambda(var, trueExpression) + ")";
           }
         }
