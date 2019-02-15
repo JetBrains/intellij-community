@@ -279,7 +279,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
 
   @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     final JButton button = new JButton(presentation.getText());
     Icon icon = presentation.getIcon();
     if (icon == null) {
@@ -293,7 +293,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
         final ActionToolbar toolbar = UIUtil.getParentOfType(ActionToolbar.class, button);
         actionPerformed(AnActionEvent.createFromAnAction(QuickFixAction.this,
                                                          event,
-                                                         ActionPlaces.UNKNOWN,
+                                                         place,
                                                          toolbar == null ? DataManager.getInstance().getDataContext(button) : toolbar.getToolbarDataContext()));
         return true;
       }

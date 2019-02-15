@@ -23,7 +23,7 @@ public class DefaultCustomComponentAction extends AnAction implements CustomComp
 
   @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     return myProducer.produce();
   }
 }

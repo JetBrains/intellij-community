@@ -436,8 +436,8 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
 
     @NotNull
     @Override
-    public JComponent createCustomComponent(@NotNull Presentation presentation) {
-      final JComponent component = super.createCustomComponent(presentation);
+    public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+      final JComponent component = super.createCustomComponent(presentation, place);
       final JPanel panel = new JPanel(new BorderLayout());
       panel.setOpaque(false);
       panel.add(component, BorderLayout.CENTER);

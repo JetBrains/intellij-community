@@ -162,7 +162,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
     @NotNull
     @Override
-    public JComponent createCustomComponent(@NotNull Presentation presentation) {
+    public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
       return myComponentCreator.compute();
     }
 

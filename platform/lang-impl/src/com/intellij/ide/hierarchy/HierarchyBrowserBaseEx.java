@@ -756,11 +756,11 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
     @NotNull
     @Override
-    public final JComponent createCustomComponent(@NotNull final Presentation presentation) {
+    public final JComponent createCustomComponent(@NotNull final Presentation presentation, @NotNull String place) {
       final JPanel panel = new JPanel(new GridBagLayout());
       panel.add(new JLabel(IdeBundle.message("label.scope")),
                 new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.BOTH, JBUI.insetsLeft(5), 0, 0));
-      panel.add(super.createCustomComponent(presentation),
+      panel.add(super.createCustomComponent(presentation, place),
                 new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0));
       return panel;
     }

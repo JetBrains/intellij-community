@@ -23,11 +23,11 @@ public abstract class LabeledComboBoxAction extends ComboBoxAction {
 
   @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     JPanel panel = new JPanel(new BorderLayout());
 
     panel.add(new JLabel(myLabel), BorderLayout.WEST);
-    panel.add(super.createCustomComponent(presentation), BorderLayout.CENTER);
+    panel.add(super.createCustomComponent(presentation, place), BorderLayout.CENTER);
     UIUtil.addInsets(panel, JBUI.insets(0, 6, 0, 0));
 
     return panel;
