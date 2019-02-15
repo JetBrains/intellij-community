@@ -380,7 +380,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
     if (!toReport.isEmpty()) {
       String notificationMessage = prepareMessageAndLogWarnings(toReport);
       if (notificationMessage != null) {
-        showNotificationsPopup(project, toReport, notificationMessage);
+        showNotificationsPopup(project, toReport.size(), notificationMessage);
       }
     }
   }
@@ -403,13 +403,14 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
   }
 
   private static void showNotificationsPopup(@NotNull Project project,
-                                             @NotNull Map<String, DuplicateModuleReport> toReport,
+                                             @NotNull int reportsCount,
                                              @NotNull String notificationMessage) {
-    int count = toReport.size() - 1;
-    if (count > 0) {
-      notificationMessage += "<br>Also " + count + " more "
-                             + StringUtil.pluralize("path", count)
-                             + " was deduplicated. See idea log for details";
+    int extraReportsCount = reportsCount - 1;
+    if (extraReportsCount > 0) {
+      notificationMessage += "<br>Also " + extraReportsCount + " more "
+                             + StringUtil.pluralize("path", extraReportsCount)
+                             + " " + (extraReportsCount == 1 ? "was" : "were") +
+                             " deduplicated. See idea log for details";
     }
 
     Notification notification = new Notification("Content root duplicates",
