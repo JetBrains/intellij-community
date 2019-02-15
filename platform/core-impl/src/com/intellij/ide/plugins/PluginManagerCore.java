@@ -356,6 +356,11 @@ public class PluginManagerCore {
 
   @Nullable
   public static PluginId getPluginByClassName(@NotNull String className) {
+    return getPluginByClassName(className, false);
+  }
+
+  @Nullable
+  public static PluginId getPluginByClassName(@NotNull String className, boolean withPlatformPlugin) {
     if (className.startsWith("java.") || className.startsWith("javax.") || className.startsWith("kotlin.") || className.startsWith("groovy.")) {
       return null;
     }
@@ -363,7 +368,7 @@ public class PluginManagerCore {
     for (IdeaPluginDescriptor descriptor : getPlugins()) {
       if (hasLoadedClass(className, descriptor.getPluginClassLoader())) {
         PluginId id = descriptor.getPluginId();
-        return CORE_PLUGIN_ID.equals(id.getIdString()) ? null : id;
+        return !withPlatformPlugin && CORE_PLUGIN_ID.equals(id.getIdString()) ? null : id;
       }
     }
     return null;
