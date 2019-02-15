@@ -41,6 +41,8 @@ fun logProcessStart() {
         kind = StudioPatchUpdaterEvent.Kind.START
       }.build()
     })
+  // Ensure all events are flushed to disk before process exit.
+  Runtime.getRuntime().addShutdownHook(Thread(UsageTracker::deinitialize))
 }
 
 fun logProcessSuccess() {
