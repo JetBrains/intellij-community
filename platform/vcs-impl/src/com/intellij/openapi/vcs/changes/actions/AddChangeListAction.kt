@@ -3,33 +3,32 @@
 package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ui.NewChangelistDialog
 
-class AddChangeListAction : AnAction(), DumbAware {
+class AddChangeListAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getData(CommonDataKeys.PROJECT)
-    val dlg = NewChangelistDialog(project)
-    dlg.show()
-    if (dlg.exitCode == DialogWrapper.OK_EXIT_CODE) {
-      val list = ChangeListManager.getInstance(project!!).addChangeList(dlg.name, dlg.description)
-      if (dlg.isNewChangelistActive) {
-        ChangeListManager.getInstance(project).defaultChangeList = list
+    val project = e.project!!
+    val dialog = NewChangelistDialog(project)
+
+    if (dialog.showAndGet()) {
+      val changeListManager = ChangeListManager.getInstance(project)
+      val changeList = changeListManager.addChangeList(dialog.name, dialog.description)
+
+      if (dialog.isNewChangelistActive) {
+        changeListManager.defaultChangeList = changeList
       }
-      dlg.panel.changelistCreatedOrChanged(list)
+      dialog.panel.changelistCreatedOrChanged(changeList)
     }
   }
 
   override fun update(e: AnActionEvent) {
     if (e.place == ActionPlaces.CHANGES_VIEW_POPUP) {
-      val lists = e.getData(VcsDataKeys.CHANGE_LISTS)
-      e.presentation.isVisible = lists != null && lists.size > 0
+      val changeLists = e.getData(VcsDataKeys.CHANGE_LISTS)
+      e.presentation.isVisible = !changeLists.isNullOrEmpty()
     }
   }
 }
