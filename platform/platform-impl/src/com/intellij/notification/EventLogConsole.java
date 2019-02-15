@@ -127,8 +127,8 @@ class EventLogConsole {
 
       @Override
       public int getConsoleFontSize() {
-        Pair<String, Integer> data = NotificationsUtil.getFontData();
-        return data == null ? super.getConsoleFontSize() : data.second;
+        Integer size = NotificationsUtil.getFontSize();
+        return size == null ? super.getConsoleFontSize() : size;
       }
 
       @Override

@@ -21,7 +21,6 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.UIUtil;
@@ -127,18 +126,23 @@ public class NotificationsUtil {
   }
 
   @Nullable
-  public static Pair<String, Integer> getFontData() {
+  public static Integer getFontSize() {
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.getOverrideLafFonts()) {
-      return Pair.create(uiSettings.getFontFace(), uiSettings.getFontSize());
+      return uiSettings.getFontSize();
     }
-    return UIUtil.getSystemFontData();
+    Font font = UIUtil.getLabelFont();
+    return font == null ? null : font.getSize();
   }
 
   @Nullable
   public static String getFontName() {
-    Pair<String, Integer> data = getFontData();
-    return Pair.getFirst(data);
+    UISettings uiSettings = UISettings.getInstance();
+    if (uiSettings.getOverrideLafFonts()) {
+      return uiSettings.getFontFace();
+    }
+    Font font = UIUtil.getLabelFont();
+    return font == null ? null : font.getName();
   }
 
   @Nullable
