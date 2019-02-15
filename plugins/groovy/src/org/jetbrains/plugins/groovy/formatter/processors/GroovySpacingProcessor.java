@@ -33,9 +33,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.GrArrayInitializer;
-import org.jetbrains.plugins.groovy.lang.psi.api.GrDoWhileStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.GrTryResourceList;
+import org.jetbrains.plugins.groovy.lang.psi.api.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
@@ -222,6 +220,37 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     else {
       createSpaceInCode(isSpace);
     }
+  }
+
+  @Override
+  public void visitLambdaExpression(@NotNull GrLambdaExpression expression) {
+    boolean spaceAroundArrow = mySettings.SPACE_AROUND_LAMBDA_ARROW;
+
+    if (myType2 == T_ARROW) {
+      createSpaceProperty(spaceAroundArrow, mySettings.KEEP_LINE_BREAKS, keepBlankLines());
+    }
+    if (myType2 == BLOCK_LAMBDA_BODY) {
+      createSpaceBeforeLBrace(spaceAroundArrow, mySettings.LAMBDA_BRACE_STYLE, null, mySettings.KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE);
+    }
+    if (myType2 == EXPRESSION_LAMBDA_BODY) {
+      createSpaceProperty(spaceAroundArrow, mySettings.KEEP_LINE_BREAKS, keepBlankLines());
+    }
+  }
+
+  @Override
+  public void visitBlockLambdaBody(@NotNull GrBlockLambdaBody body) {
+    if (myType2 == GroovyTokenTypes.mLCURLY) {
+      myResult = Spacing.createSpacing(0, 0, 0, false, 0);
+    }
+    if (myType1 == GroovyTokenTypes.mLCURLY || myType2 == GroovyTokenTypes.mRCURLY) {
+      boolean simpleLambda = shouldHandleAsSimpleLambda(body);
+      int spaces = simpleLambda && mySettings.SPACE_WITHIN_BRACES ? 1 : 0;
+      myResult = Spacing.createSpacing(spaces, spaces, simpleLambda ? 0 : 1, mySettings.KEEP_LINE_BREAKS, keepBlankLines());
+    }
+  }
+
+  private boolean shouldHandleAsSimpleLambda(GrBlockLambdaBody lambda) {
+    return mySettings.KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE && !lambda.textContains('\n');
   }
 
   @Override
