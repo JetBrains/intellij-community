@@ -27,7 +27,6 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -236,16 +235,25 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       public PsiJavaCodeReferenceElement compute() {
         PsiJavaCodeReferenceElement result = myCache.get();
         if (result == null) {
-          myCache = new WeakReference<>(result = getParentTypeElement().getReferenceElement());
+          myCache = new WeakReference<>(result = restoreReference());
         }
         return result;
       }
 
       @NotNull
-      private PsiTypeElementImpl getParentTypeElement() {
+      private PsiJavaCodeReferenceElement restoreReference() {
         PsiTypeElement typeElement = parent instanceof PsiMethod ? ((PsiMethod)parent).getReturnTypeElement()
                                                                  : ((PsiVariable)parent).getTypeElement();
-        return (PsiTypeElementImpl)ObjectUtils.assertNotNull(typeElement);
+        if (typeElement == null) {
+          PsiUtilCore.ensureValid(parent);
+          throw new IllegalStateException("No type for " + parent.getClass());
+        }
+        PsiJavaCodeReferenceElement result = ((PsiTypeElementImpl)typeElement).getReferenceElement();
+        if (result == null) {
+          PsiUtilCore.ensureValid(typeElement);
+          throw new IllegalStateException("No reference in " + typeElement.getClass());
+        }
+        return result;
       }
 
       @Override

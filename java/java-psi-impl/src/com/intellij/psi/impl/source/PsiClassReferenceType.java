@@ -24,7 +24,6 @@ import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -265,6 +264,8 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
 
   @NotNull
   public PsiJavaCodeReferenceElement getReference() {
-    return ObjectUtils.assertNotNull(myReference.compute());
+    PsiJavaCodeReferenceElement ref = myReference.compute();
+    if (ref == null) throw new IllegalStateException("No reference returned from " + myReference);
+    return ref;
   }
 }
