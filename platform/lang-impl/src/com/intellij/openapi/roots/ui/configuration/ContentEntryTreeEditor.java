@@ -276,8 +276,8 @@ public class ContentEntryTreeEditor {
 
     @NotNull
     @Override
-    public JComponent createCustomComponent(@NotNull Presentation presentation) {
-      return IconWithTextAction.createCustomComponentImpl(this, presentation);
+    public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+      return IconWithTextAction.createCustomComponentImpl(this, presentation, place);
     }
   }
 

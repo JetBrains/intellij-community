@@ -49,7 +49,7 @@ public abstract class TextFieldAction extends AnAction implements CustomComponen
 
   @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     // honestly borrowed from SearchTextField
 
     final JPanel panel = new JPanel(new BorderLayout());

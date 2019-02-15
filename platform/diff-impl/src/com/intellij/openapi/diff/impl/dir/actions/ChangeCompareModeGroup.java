@@ -50,10 +50,10 @@ public class ChangeCompareModeGroup extends ComboBoxAction implements ShortcutPr
 
   @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     final JLabel label = new JLabel("Compare by:");
     label.setDisplayedMnemonicIndex(0);
-    myButton = (JButton)super.createCustomComponent(presentation).getComponent(0);
+    myButton = (JButton)super.createCustomComponent(presentation, place).getComponent(0);
     return JBUI.Panels.simplePanel(myButton)
       .addToLeft(label)
       .withBorder(JBUI.Borders.empty(2, 6, 2, 0));
