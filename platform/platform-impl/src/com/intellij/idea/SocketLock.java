@@ -201,7 +201,7 @@ public final class SocketLock {
         socket.setSoTimeout(5000);
 
         DataInputStream in = new DataInputStream(socket.getInputStream());
-        final List<String> stringList = readStringRequence(in);
+        final List<String> stringList = readStringSequence(in);
         // Backward compatibility: it required at least one path to match
         boolean result = ContainerUtil.intersects(paths, stringList);
 
@@ -212,7 +212,7 @@ public final class SocketLock {
             out.writeUTF(ACTIVATE_COMMAND + token + "\0" + new File(".").getAbsolutePath() + "\0" + StringUtil.join(args, "\0"));
             out.flush();
             
-            List<String> response = readStringRequence(in);
+            List<String> response = readStringSequence(in);
             log("read: response=%s", StringUtil.join(response, ";"));
             if (OK_RESPONSE.equals(ContainerUtil.getFirstItem(response))) {
               if (isShutdownCommand()) {
@@ -391,7 +391,7 @@ public final class SocketLock {
   }
   
   @NotNull
-  private static List<String> readStringRequence(DataInputStream in) {
+  private static List<String> readStringSequence(DataInputStream in) {
     List<String> result = new ArrayList<>();
     while (true) {
       try {
