@@ -780,7 +780,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
       renderer.append(fileName, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, myShelvedChange.getFileStatus().getColor()));
       if (myAdditionalText != null) {
-        renderer.append(myAdditionalText, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        renderer.append(spaceAndThinSpace() + myAdditionalText, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
       if (renderer.isShowFlatten()) {
         renderer.append(spaceAndThinSpace() + FileUtil.toSystemDependentName(directory), SimpleTextAttributes.GRAYED_ATTRIBUTES);
