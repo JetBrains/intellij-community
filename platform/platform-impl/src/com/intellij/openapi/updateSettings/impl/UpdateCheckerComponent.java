@@ -176,7 +176,7 @@ public class UpdateCheckerComponent implements Disposable, BaseComponent {
           updatesInfo = UpdateChecker.getUpdatesInfo(UpdateSettings.getInstance());
         }
         catch (IOException | JDOMException e) {
-          LOG.error(e);
+          LOG.warn(e);
         }
 
         String blogPost = null;
