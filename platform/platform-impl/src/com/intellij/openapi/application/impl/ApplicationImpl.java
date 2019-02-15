@@ -392,9 +392,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void load(@Nullable final String configPath) {
-    AccessToken token = HeavyProcessLatch.INSTANCE.processStarted(StartUpMeasurer.Phases.LOAD_APP_COMPONENTS);
+    AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
-      StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(StartUpMeasurer.Phases.INIT_APP_COMPONENTS);
       ProgressIndicator indicator = mySplash == null ? null : new EmptyProgressIndicator() {
         @Override
         public void setFraction(double fraction) {
@@ -428,7 +427,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           }
         }
       }, true);
-      measureToken.end("component count: " + getComponentConfigCount());
     }
     finally {
       token.finish();

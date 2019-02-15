@@ -82,6 +82,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   protected final void init(@Nullable ProgressIndicator indicator, @Nullable Runnable componentsRegistered, boolean isNeededToMeasure) {
+    StartUpMeasurer.MeasureToken totalMeasureToken = isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix() + StartUpMeasurer.Phases.INITIALIZE_COMPONENTS_SUFFIX) : null;
     List<ComponentConfig> componentConfigs = getComponentConfigs(indicator);
 
     String measureTokenNamePrefix = StringUtil.notNullize(measureTokenNamePrefix());
@@ -104,6 +105,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       measureToken.end();
     }
     myComponentsCreated = true;
+    if (isNeededToMeasure) {
+      totalMeasureToken.end("component count: " + getComponentConfigCount());
+    }
   }
 
   protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {

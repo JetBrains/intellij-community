@@ -16,12 +16,10 @@ public final class StartUpMeasurer {
     // this phase name is not fully clear - it is time from `IdeaApplication.initApplication` to `IdeaApplication.run`
     public static final String INIT_APP = "application initialization";
 
-    public static final String LOAD_APP_COMPONENTS = "application components loading";
-    public static final String INIT_APP_COMPONENTS = "application components initialization";
-
     public static final String LOAD_PLUGIN_DESCRIPTORS = "plugin descriptors loading";
     public static final String INIT_PLUGINS = "plugins initialization";
 
+    public static final String INITIALIZE_COMPONENTS_SUFFIX = "components initialization";
     public static final String REGISTER_COMPONENTS_SUFFIX = "components registration";
     public static final String CREATE_COMPONENTS_SUFFIX = "components creation";
   }

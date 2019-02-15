@@ -15,8 +15,9 @@
     }
   </style>
 
-  <script src="https://cdn.jsdelivr.net/npm/vis@4.21.0/dist/vis.min.js" integrity="sha256-+cKvpuQ3tJVt13OSUkYj9ijINIawqhazZB6bGa1NEvQ=" crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vis@4.21.0/dist/vis.min.css" integrity="sha256-iq5ygGJ7021Pi7H5S+QAUXCPUfaBzfqeplbg/KlEssg=" crossorigin="anonymous">
+  <!-- https://www.jsdelivr.com/package/gh/develar/vis?path=dist -->
+  <script src="https://cdn.jsdelivr.net/gh/develar/vis@4.22.0-rc.1/dist/vis-timeline-graph2d.min.js" integrity="sha256-mkIbNWZ05n+SwdvDA++5WZNTa8LzICy1ZerL+wsY7Qo=" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/develar/vis@4.22.0-rc.1/dist/vis-timeline-graph2d.min.css" integrity="sha256-Utsidc/oVhKGTdj4DX0WZ+Ml3ddz8CTAnD8cCppa4Qw=" crossorigin="anonymous">
 </head>
 <body>
 <!--suppress CheckTagEmptyBody -->
@@ -71,7 +72,7 @@
   })
 
   function computeTitle(item) {
-    return item.name + (item.description == null ? "" : `<br/>${item.description}`) + `<br/>${item.duration}ms`
+    return item.name + (item.description == null ? "" : `<br/>${item.description}`) + `<br/>${item.duration} ms`
   }
 
   function transformIjToVisJsFormat(input, isCreateGroups) {
