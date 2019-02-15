@@ -7,11 +7,9 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.ui.NewChangelistDialog
 
 class AddChangeListAction : AnAction(), DumbAware {
@@ -20,28 +18,12 @@ class AddChangeListAction : AnAction(), DumbAware {
     val dlg = NewChangelistDialog(project)
     dlg.show()
     if (dlg.exitCode == DialogWrapper.OK_EXIT_CODE) {
-      var name = dlg.name
-      if (name.length == 0) {
-        name = getUniqueName(project)
-      }
-
-      val list = ChangeListManager.getInstance(project!!).addChangeList(name, dlg.description)
+      val list = ChangeListManager.getInstance(project!!).addChangeList(dlg.name, dlg.description)
       if (dlg.isNewChangelistActive) {
         ChangeListManager.getInstance(project).defaultChangeList = list
       }
       dlg.panel.changelistCreatedOrChanged(list)
     }
-  }
-
-  private fun getUniqueName(project: Project?): String {
-    var unnamedcount = 0
-    for (list in ChangeListManagerImpl.getInstanceImpl(project).changeListsCopy) {
-      if (list.name.startsWith("Unnamed")) {
-        unnamedcount++
-      }
-    }
-
-    return if (unnamedcount == 0) "Unnamed" else "Unnamed ($unnamedcount)"
   }
 
   override fun update(e: AnActionEvent) {
