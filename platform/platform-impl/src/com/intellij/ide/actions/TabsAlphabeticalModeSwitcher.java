@@ -21,7 +21,7 @@ public class TabsAlphabeticalModeSwitcher extends ToggleAction {
 
   @Override
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
-    JBEditorTabs.setAlphabeticalMode(state);
+    JBEditorTabs.setEditorTabsAlphabeticalMode(state);
   }
 
   @Override

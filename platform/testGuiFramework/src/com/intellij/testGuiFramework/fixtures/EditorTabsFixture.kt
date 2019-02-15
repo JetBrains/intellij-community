@@ -7,7 +7,7 @@ import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.findAllWithBFS
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.SimpleColoredComponent
-import com.intellij.ui.tabs.newImpl.JBEditorTabs
+import com.intellij.ui.tabs.JBEditorTabsBase
 import com.intellij.ui.tabs.newImpl.TabLabel
 import org.fest.swing.core.Robot
 import org.fest.swing.timing.Timeout
@@ -25,7 +25,7 @@ class EditorTabsFixture(val robot: Robot, val ideFrameFixture: IdeFrameFixture) 
       && it.isShowing
       && it.isVisible
       && it.isEnabled
-      && it.parent is JBEditorTabs
+      && it.parent is JBEditorTabsBase
     }
       .filterIsInstance(TabLabel::class.java)
       .firstOrNull { findAllWithBFS(it as Container, SimpleColoredComponent::class.java).firstOrNull()?.getText() == tabName }

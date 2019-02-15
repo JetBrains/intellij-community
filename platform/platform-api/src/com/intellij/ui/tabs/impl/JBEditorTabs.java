@@ -11,7 +11,9 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.tabs.JBEditorTabsBase;
 import com.intellij.ui.tabs.JBTabsPosition;
+import com.intellij.ui.tabs.JBTabsPresentation;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.singleRow.CompressibleSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
@@ -23,13 +25,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * @author pegov
  */
-public class JBEditorTabs extends JBTabsImpl {
+public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
   public static final String TABS_ALPHABETICAL_KEY = "tabs.alphabetical";
   protected JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter(this);
+  private boolean myAlphabeticalModeChanged = false;
+  @Nullable
+  private Supplier<Color> myEmptySpaceColorCallback;
 
   public JBEditorTabs(@Nullable Project project, @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
     super(project, actionManager, focusManager, parent);
@@ -43,6 +49,7 @@ public class JBEditorTabs extends JBTabsImpl {
         });
       }
     }, parent);
+    setSupportsCompression(true);
   }
 
   @Override
@@ -54,11 +61,6 @@ public class JBEditorTabs extends JBTabsImpl {
       return new ScrollableSingleRowLayout(this);
     }
     return super.createSingleRowLayout();
-  }
-
-  @Override
-  public boolean supportsCompression() {
-    return true;
   }
 
   @Nullable
@@ -156,10 +158,24 @@ public class JBEditorTabs extends JBTabsImpl {
 
   @Override
   public boolean isAlphabeticalMode() {
+    if (myAlphabeticalModeChanged) {
+      return super.isAlphabeticalMode();
+    }
     return Registry.is(TABS_ALPHABETICAL_KEY);
   }
 
-  public static void setAlphabeticalMode(boolean on) {
+  @Override
+  public JBTabsPresentation setAlphabeticalMode(boolean alphabeticalMode) {
+    myAlphabeticalModeChanged = true;
+    return super.setAlphabeticalMode(alphabeticalMode);
+  }
+
+  @Override
+  public void setEmptySpaceColorCallback(@NotNull Supplier<Color> callback) {
+    myEmptySpaceColorCallback = callback;
+  }
+
+  public static void setEditorTabsAlphabeticalMode(boolean on) {
     Registry.get(TABS_ALPHABETICAL_KEY).setValue(on);
   }
 
@@ -223,6 +239,9 @@ public class JBEditorTabs extends JBTabsImpl {
   }
 
   protected Color getEmptySpaceColor() {
+    if (myEmptySpaceColorCallback != null) {
+      return myEmptySpaceColorCallback.get();
+    }
     return getPainter().getEmptySpaceColor();
   }
 

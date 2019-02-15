@@ -7,13 +7,13 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.tabs.JBTabsBackgroundAndBorder;
-import com.intellij.ui.tabs.JBTabsFactory;
 import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.newImpl.JBBaseTabsBackgroundAndBorder;
-import com.intellij.ui.tabs.newImpl.JBEditorTabs;
-import com.intellij.ui.tabs.newImpl.JBTabsImpl;
-import com.intellij.ui.tabs.newImpl.TabLabel;
+import com.intellij.ui.tabs.UiDecorator;
+import com.intellij.ui.tabs.impl.JBEditorTabs;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.ui.tabs.impl.TabLabel;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,39 +24,10 @@ import java.util.Map;
 /**
  * @author Dennis.Ushakov
  */
-public class JBRunnerTabs extends JBEditorTabs implements JBRunnerTabsBase {
-  public static JBRunnerTabsBase create(@Nullable Project project, @NotNull Disposable parentDisposable) {
-    IdeFocusManager focusManager = project != null ? IdeFocusManager.getInstance(project) : null;
-    return JBTabsFactory.getUseNewTabs()
-           ? new JBRunnerTabs(project, ActionManager.getInstance(), focusManager, parentDisposable)
-           : new JBRunnerTabsOld(project, ActionManager.getInstance(), focusManager, parentDisposable);
-  }
+public class JBRunnerTabsOld extends JBEditorTabs implements JBRunnerTabsBase {
 
-
-  public JBRunnerTabs(@Nullable Project project, @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
+  public JBRunnerTabsOld(@Nullable Project project, @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
     super(project, actionManager, focusManager, parent);
-  }
-
-  @Override
-  protected JBTabsBackgroundAndBorder createTabBorder() {
-    return new JBBaseTabsBackgroundAndBorder(this) {
-      @NotNull
-      @Override
-      public Insets getEffectiveBorder() {
-        return new Insets(getBorderThickness(), getBorderThickness(), 0, 0);
-      }
-
-      @Override
-      public void paintBorder(@NotNull Component c, @NotNull Graphics g, int x, int y, int width, int height) {
-        if (isEmptyVisible()) return;
-        paintBackground((Graphics2D)g, new Rectangle(x, y, width, height));
-
-        getTabPainter().paintBorderLine((Graphics2D)g, getBorderThickness(), new Point(x, y), new Point(x, y + height));
-        getTabPainter()
-          .paintBorderLine((Graphics2D)g, getBorderThickness(), new Point(x, y + myHeaderFitSize.height),
-                           new Point(x + width, y + myHeaderFitSize.height));
-      }
-    };
   }
 
   @Override
@@ -67,6 +38,11 @@ public class JBRunnerTabs extends JBEditorTabs implements JBRunnerTabsBase {
   @Override
   public int getToolbarInset() {
     return 0;
+  }
+
+  @Override
+  public int tabMSize() {
+    return 8;
   }
 
   @Override
@@ -103,6 +79,11 @@ public class JBRunnerTabs extends JBEditorTabs implements JBRunnerTabsBase {
   }
 
   @Override
+  protected Color getEmptySpaceColor() {
+    return UIUtil.getBgFillColor(getParent());
+  }
+
+  @Override
   protected TabLabel createTabLabel(TabInfo info) {
     return new MyTabLabel(this, info);
   }
@@ -110,6 +91,11 @@ public class JBRunnerTabs extends JBEditorTabs implements JBRunnerTabsBase {
   private static class MyTabLabel extends TabLabel {
     MyTabLabel(JBTabsImpl tabs, final TabInfo info) {
       super(tabs, info);
+    }
+
+    @Override
+    public void apply(UiDecorator.UiDecoration decoration) {
+      setBorder(JBUI.Borders.empty(4));
     }
 
     @Override

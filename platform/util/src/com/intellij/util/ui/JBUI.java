@@ -1689,6 +1689,16 @@ public class JBUI {
       }
 
       @NotNull
+      public static Color tabSelectedBackground(boolean active) {
+        return active ? tabSelectedActiveBackground() : tabSelectedBackground();
+      }
+
+      @NotNull
+      public static Color tabHoveredBackground(boolean active) {
+        return active ? tabHoveredActiveBackground() : tabHoveredBackground();
+      }
+
+      @NotNull
       public static Color headerBackground(boolean active) {
         return active ? headerActiveBackground() : headerBackground();
       }
@@ -1706,6 +1716,10 @@ public class JBUI {
       @NotNull
       public static Color headerActiveBackground() {
         return JBColor.namedColor("ToolWindow.Header.background", JBColor.namedColor("ToolWindow.header.active.background", 0xE2E6EC));
+      }
+
+      public static int tabVerticalPaddingOld() {
+        return getInt("ToolWindow.tab.verticalPadding.old", 0);
       }
 
       public static int tabVerticalPadding() {

@@ -241,7 +241,7 @@ class DragHelper extends MouseDragHelper {
                                                        "Off", "On",
                                                        Messages.getQuestionIcon());
         if (answer == Messages.OK) {
-          JBEditorTabs.setAlphabeticalMode(false);
+          JBEditorTabs.setEditorTabsAlphabeticalMode(false);
           myTabs.relayout(true, false);
           myTabs.revalidate();
         }

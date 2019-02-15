@@ -54,7 +54,7 @@ import static com.intellij.ui.tabs.newImpl.UtilsKt.getTabLabelUnderMouse;
 import static com.jetbrains.rdclient.util.idea.DisposableExKt.createLifetime;
 
 public class JBTabsImpl extends JComponent
-  implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation, Queryable,
+  implements JBTabsEx, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation, Queryable,
              UISettingsListener, QuickActionProvider, Accessible {
 
   public static final DataKey<JBTabsImpl> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
@@ -175,6 +175,9 @@ public class JBTabsImpl extends JComponent
   private int myFirstTabOffset;
 
   protected final JBTabPainter tabPainter = createTabPainter();
+  private boolean myAlphabeticalMode = false;
+  private boolean mySupportsCompression = false;
+  private String myEmptyText = null;
 
   protected JBTabPainter createTabPainter() {
     return JBTabPainter.Companion.getDEFAULT();
@@ -394,7 +397,7 @@ public class JBTabsImpl extends JComponent
   }
 
   public boolean supportsCompression() {
-    return false;
+    return mySupportsCompression;
   }
 
   @Override
@@ -569,8 +572,15 @@ public class JBTabsImpl extends JComponent
     return myFirstTabOffset;
   }
 
+  @Override
   public void setFirstTabOffset(int firstTabOffset) {
     myFirstTabOffset = firstTabOffset;
+  }
+
+  @Override
+  public JBTabsPresentation setEmptyText(@Nullable String text) {
+    myEmptyText = text;
+    return this;
   }
 
   public int tabMSize() {
@@ -635,6 +645,7 @@ public class JBTabsImpl extends JComponent
     updateTabActions(false);
   }
 
+  @Override
   public void updateTabActions(final boolean validateNow) {
     final Ref<Boolean> changed = new Ref<>(Boolean.FALSE);
     for (final TabInfo eachInfo : myInfo2Label.keySet()) {
@@ -757,6 +768,7 @@ public class JBTabsImpl extends JComponent
     return addTab(info, index, false, true);
   }
 
+  @Override
   public TabInfo addTabSilently(TabInfo info, int index) {
     return addTab(info, index, false, false);
   }
@@ -820,6 +832,7 @@ public class JBTabsImpl extends JComponent
     return addTab(info, -1);
   }
 
+  @Override
   public TabLabel getTabLabel(TabInfo info) {
     return myInfo2Label.get(info);
   }
@@ -839,6 +852,7 @@ public class JBTabsImpl extends JComponent
     return setPopupGroup(() -> popupGroup, place, addNavigationGroup);
   }
 
+  @Override
   @NotNull
   public JBTabs setPopupGroup(@NotNull final Getter<? extends ActionGroup> popupGroup,
                               @NotNull final String place,
@@ -1261,6 +1275,7 @@ public class JBTabsImpl extends JComponent
     return mySelectedInfo != null ? mySelectedInfo : !myVisibleInfos.isEmpty() ? myVisibleInfos.get(0) : null;
   }
 
+  @Override
   @Nullable
   public TabInfo getToSelectOnRemoveOf(TabInfo info) {
     if (!myVisibleInfos.contains(info)) return null;
@@ -1302,7 +1317,7 @@ public class JBTabsImpl extends JComponent
   }
 
   public boolean isAlphabeticalMode() {
-    return false;
+    return myAlphabeticalMode;
   }
 
   @Nullable
@@ -1334,6 +1349,7 @@ public class JBTabsImpl extends JComponent
     return getTabs().get(tabIndex);
   }
 
+  @Override
   @NotNull
   public List<TabInfo> getTabs() {
     if (myAllTabs != null) return myAllTabs;
@@ -1657,10 +1673,16 @@ public class JBTabsImpl extends JComponent
   protected void paintComponent(final Graphics g) {
     super.paintComponent(g);
 
-    if (myVisibleInfos.isEmpty()) return;
-
-    if (!isStealthModeEffective() && !isHideTabs()) {
-      myLastPaintedSelection = getSelectedInfo();
+    if (myVisibleInfos.isEmpty()) {
+      if (myEmptyText != null) {
+        UISettings.setupAntialiasing(g);
+        UIUtil.drawCenteredString((Graphics2D)g, getBounds(), myEmptyText);
+      }
+    }
+    else {
+      if (!isStealthModeEffective() && !isHideTabs()) {
+        myLastPaintedSelection = getSelectedInfo();
+      }
     }
   }
 
@@ -1887,6 +1909,7 @@ public class JBTabsImpl extends JComponent
     return removeTab(info, null, true);
   }
 
+  @Override
   @NotNull
   public ActionCallback removeTab(final TabInfo info, @Nullable TabInfo forcedSelectionTransfer, boolean transferFocus) {
     return removeTab(info, forcedSelectionTransfer, transferFocus, false);
@@ -2513,6 +2536,7 @@ public class JBTabsImpl extends JComponent
     }
   }
 
+  @Override
   public void sortTabs(Comparator<? super TabInfo> comparator) {
     Collections.sort(myVisibleInfos, comparator);
 
@@ -2567,6 +2591,7 @@ public class JBTabsImpl extends JComponent
     return myDataProvider;
   }
 
+  @Override
   public JBTabsImpl setDataProvider(@NotNull final DataProvider dataProvider) {
     myDataProvider = dataProvider;
     return this;
@@ -2666,6 +2691,18 @@ public class JBTabsImpl extends JComponent
     return this;
   }
 
+  @Override
+  public JBTabsPresentation setAlphabeticalMode(boolean alphabeticalMode) {
+    myAlphabeticalMode = alphabeticalMode;
+    return this;
+  }
+
+  @Override
+  public JBTabsPresentation setSupportsCompression(boolean supportsCompression) {
+    mySupportsCompression = supportsCompression;
+    return this;
+  }
+
   public boolean isTabDraggingEnabled() {
     return myTabDraggingEnabled && !mySplitter.isDragging();
   }
@@ -2745,10 +2782,12 @@ public class JBTabsImpl extends JComponent
     }
   }
 
+  @Override
   public int getDropInfoIndex() {
     return myDropInfoIndex;
   }
 
+  @Override
   public boolean isEmptyVisible() {
     return myVisibleInfos.isEmpty();
   }

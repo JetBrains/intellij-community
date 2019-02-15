@@ -2,6 +2,7 @@
 package com.jetbrains.python.debugger.containerview;
 
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.ui.layout.impl.JBRunnerTabs;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -10,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowType;
@@ -40,6 +42,7 @@ public class PyDataView implements DumbAware {
   public static final String AUTO_RESIZE = "python.debugger.dataview.autoresize";
   public static final String EMPTY_TAB_NAME = "empty";
   private static final Logger LOG = Logger.getInstance(PyDataView.class);
+  private static final String HELP_ID = "reference.toolWindows.PyDataView";
 
   @NotNull private final Project myProject;
   private JBEditorTabs myTabs;
@@ -154,7 +157,14 @@ public class PyDataView implements DumbAware {
   }
 
   public void init(@NotNull ToolWindow toolWindow) {
-    myTabs = new PyDataViewTabs(myProject);
+    myTabs = new JBRunnerTabs(myProject, ActionManager.getInstance(), IdeFocusManager.getInstance(myProject), myProject);
+    myTabs.setDataProvider(dataId -> {
+      if (PlatformDataKeys.HELP_ID.is(dataId)) {
+        return HELP_ID;
+      }
+      return null;
+    });
+    myTabs.getPresentation().setEmptyText("Run console or debugger to view available data");
     myTabs.setPopupGroup(new DefaultActionGroup(new ColoredAction()), ActionPlaces.UNKNOWN, true);
     myTabs.setTabDraggingEnabled(true);
     final Content content = ContentFactory.SERVICE.getInstance().createContent(myTabs, "Data", false);

@@ -2,12 +2,8 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.tabs.*;
-import com.intellij.ui.tabs.newImpl.JBEditorTabs;
-import com.intellij.ui.tabs.newImpl.JBTabsImpl;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,22 +16,16 @@ import java.awt.event.MouseListener;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public class JBTabsPaneImpl implements TabbedPane {
-  private final JBTabsImpl myTabs;
+  private final JBEditorTabsBase myTabs;
   private final CopyOnWriteArraySet<ChangeListener> myListeners = new CopyOnWriteArraySet<>();
 
   public JBTabsPaneImpl(@Nullable Project project, int tabPlacement, @NotNull Disposable parent) {
-    myTabs = new JBEditorTabs(project, ActionManager.getInstance(), project == null ? null : IdeFocusManager.getInstance(project), parent) {
-      @Override
-      public boolean isAlphabeticalMode() {
-        return false;
-      }
-
-      @Override
-      public boolean supportsCompression() {
-        return false;
-      }
-    };
-    myTabs.setFirstTabOffset(10);
+    myTabs = JBTabsFactory.createEditorTabs(project, parent);
+    myTabs.getPresentation()
+      .setAlphabeticalMode(false)
+      .setSupportsCompression(false)
+      .setFirstTabOffset(10);
+    myTabs.setEmptySpaceColorCallback(() -> UIUtil.getBgFillColor(myTabs.getComponent().getParent()));
 
     myTabs.addListener(new TabsListener() {
       @Override

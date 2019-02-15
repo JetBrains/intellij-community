@@ -84,7 +84,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   private final Wrapper myToolbar = new Wrapper();
   final MyDragOutDelegate myDragOutDelegate = new MyDragOutDelegate();
 
-  JBRunnerTabs myTabs;
+  JBRunnerTabsBase myTabs;
   private final Comparator<TabInfo> myTabsComparator = (o1, o2) -> {
     TabImpl tab1 = getTabFor(o1);
     TabImpl tab2 = getTabFor(o2);
@@ -206,7 +206,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   public void initUi() {
     if (myTabs != null) return;
 
-    myTabs = (JBRunnerTabs)new JBRunnerTabs(myProject, myActionManager, myFocusManager, this).setDataProvider(dataId -> {
+    myTabs = JBRunnerTabs.create(myProject, this);
+    myTabs.setDataProvider(dataId -> {
       if (ViewContext.CONTENT_KEY.is(dataId)) {
         TabInfo info = myTabs.getTargetInfo();
         if (info != null) {
@@ -217,8 +218,10 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         return RunnerContentUi.this;
       }
       return null;
-    }).setTabLabelActionsAutoHide(false).setInnerInsets(JBUI.emptyInsets())
-      .setToDrawBorderIfTabsHidden(false).setTabDraggingEnabled(isMoveToGridActionEnabled()).setUiDecorator(null).getJBTabs();
+    });
+    myTabs.getPresentation()
+      .setTabLabelActionsAutoHide(false).setInnerInsets(JBUI.emptyInsets())
+      .setToDrawBorderIfTabsHidden(false).setTabDraggingEnabled(isMoveToGridActionEnabled()).setUiDecorator(null);
     rebuildTabPopup();
 
     myTabs.getPresentation().setPaintFocus(false).setRequestFocusOnLastFocusedComponent(true);
@@ -779,7 +782,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     return StreamEx.of(manager.getContents()).has(content);
   }
 
-  private static void moveFollowingTabs(int index, final JBRunnerTabs tabs) {
+  private static void moveFollowingTabs(int index, final JBTabs tabs) {
     for (TabInfo info : tabs.getTabs()) {
       TabImpl tab = getTabFor(info);
       if (tab != null) {
@@ -971,7 +974,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     doSaveUiState();
   }
 
-  private static int updateTabsIndices(final JBRunnerTabs tabs, int offset) {
+  private static int updateTabsIndices(final JBTabs tabs, int offset) {
     for (TabInfo each : tabs.getTabs()) {
       final int index = tabs.getIndexOf(each);
       final TabImpl tab = getTabFor(each);

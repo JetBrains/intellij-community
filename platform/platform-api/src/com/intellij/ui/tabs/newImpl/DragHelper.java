@@ -240,7 +240,7 @@ class DragHelper extends MouseDragHelper {
                                                        IdeBundle.message("title.warning"),
                                                        Messages.getQuestionIcon());
         if (answer == Messages.OK) {
-          JBEditorTabs.setAlphabeticalMode(false);
+          JBEditorTabs.setEditorTabsAlphabeticalMode(false);
           myTabs.relayout(true, false);
           myTabs.revalidate();
         }

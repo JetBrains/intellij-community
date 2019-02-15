@@ -3,16 +3,15 @@
 package com.intellij.ui.debugger;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.JBTabsFactory;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.UiDecorator;
-import com.intellij.ui.tabs.newImpl.JBTabsImpl;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +31,7 @@ public class UiDebugger extends JPanel implements Disposable {
   public UiDebugger() {
     Disposer.register(Disposer.get("ui"), this);
 
-    myTabs = new JBTabsImpl(null, ActionManager.getInstance(), null, this);
+    myTabs = JBTabsFactory.createTabs(null, this);
     myTabs.getPresentation().setInnerInsets(new Insets(4, 0, 0, 0)).setPaintBorder(1, 0, 0, 0).setActiveTabFillIn(JBColor.GRAY).setUiDecorator(new UiDecorator() {
       @Override
       @NotNull
