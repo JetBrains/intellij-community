@@ -44,32 +44,32 @@ open class TestTasksChooser {
     project: Project,
     context: DataContext,
     elements: Iterable<PsiElement>,
-    perform: Consumer<List<Map<SourcePath, TestTasks>>>
+    consumer: Consumer<List<Map<SourcePath, TestTasks>>>
   ) {
     val sources = elements.map { getSourceFile(it) ?: error("Can not find source file for $it") }
-    chooseTestTasks(project, context, sources, perform)
+    chooseTestTasks(project, context, sources, consumer)
   }
 
   fun chooseTestTasks(
     project: Project,
     context: DataContext,
     vararg elements: PsiElement,
-    perform: Consumer<List<Map<SourcePath, TestTasks>>>
+    consumer: Consumer<List<Map<SourcePath, TestTasks>>>
   ) {
-    chooseTestTasks(project, context, elements.asIterable(), perform)
+    chooseTestTasks(project, context, elements.asIterable(), consumer)
   }
 
   private fun chooseTestTasks(
     project: Project,
     context: DataContext,
     sources: List<VirtualFile>,
-    perform: Consumer<List<Map<SourcePath, TestTasks>>>
+    consumer: Consumer<List<Map<SourcePath, TestTasks>>>
   ) {
     val testTasks = findAllTestsTaskToRun(sources, project)
     when {
       testTasks.isEmpty() -> showTestsNotFoundWarning(project, context)
-      testTasks.size == 1 -> perform.accept(testTasks.values.toList())
-      else -> chooseTestTasks(project, context, testTasks, perform)
+      testTasks.size == 1 -> consumer.accept(testTasks.values.toList())
+      else -> chooseTestTasks(project, context, testTasks, consumer)
     }
   }
 
@@ -87,7 +87,7 @@ open class TestTasksChooser {
     project: Project,
     context: DataContext,
     testTasks: Map<TestName, Map<SourcePath, TasksToRun>>,
-    perform: Consumer<List<Map<SourcePath, TestTasks>>>
+    consumer: Consumer<List<Map<SourcePath, TestTasks>>>
   ) {
     assert(!ApplicationManager.getApplication().isCommandLine)
     val sortedTestTasksNames = testTasks.keys.toList().sortedByDescending { it == TEST_TASK_NAME }
@@ -107,7 +107,7 @@ open class TestTasksChooser {
         val choosesTestTasks = it.mapNotNull(testTasks::get)
         when {
           choosesTestTasks.isEmpty() -> showTestsNotFoundWarning(project, context)
-          else -> perform.accept(choosesTestTasks)
+          else -> consumer.accept(choosesTestTasks)
         }
       }
       .createPopup()
