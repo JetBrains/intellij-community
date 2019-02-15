@@ -26,11 +26,26 @@ import org.jetbrains.annotations.NotNull;
  * @author Rustam Vishnyakov
  */
 public interface IndentStrategy {
+  /**
+   * Checks if an element can be indented.
+   * @param indentationStartOffset The start offset of the whole indentation.
+   * @param indentationEndOffset The end offset of the whole indentation.
+   * @param element The element to check.
+   * @return True if the element can change its indentation, false if the indentation must be preserved.
+   * @deprecated use {@link #canIndent(int, int, PsiElement)}
+   */
+  default boolean canIndent(@NotNull PsiElement element) {
+    return true;
+  }
 
   /**
    * Checks if an element can be indented.
+   * @param indentationStartOffset The start offset of the whole indentation.
+   * @param indentationEndOffset The end offset of the whole indentation.
    * @param element The element to check.
    * @return True if the element can change its indentation, false if the indentation must be preserved.
    */
-  boolean canIndent(@NotNull PsiElement element);
+  default boolean canIndent(int indentationStartOffset, int indentationEndOffset, @NotNull PsiElement element) {
+    return canIndent(element);
+  }
 }
