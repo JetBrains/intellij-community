@@ -3,27 +3,29 @@
 package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.LocalChangeList
 
-class SetDefaultChangeListAction : AnAction(), DumbAware {
+class SetDefaultChangeListAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
-    val lists = e.getData(VcsDataKeys.CHANGE_LISTS)
-    val visible = lists != null && lists.size == 1 && lists[0] is LocalChangeList && !(lists[0] as LocalChangeList).isDefault
-    e.presentation.isEnabled = visible
+    val changeList = getTargetChangeList(e)
+    val enabled = changeList != null && !changeList.isDefault
+
+    e.presentation.isEnabled = enabled
     if (e.place == ActionPlaces.CHANGES_VIEW_POPUP) {
-      e.presentation.isVisible = visible
+      e.presentation.isVisible = enabled
     }
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getData(CommonDataKeys.PROJECT)
-    val lists = e.getData(VcsDataKeys.CHANGE_LISTS)!!
-    ChangeListManager.getInstance(project!!).defaultChangeList = lists[0] as LocalChangeList
+    val project = e.project!!
+    val changeList = getTargetChangeList(e)!!
+
+    ChangeListManager.getInstance(project).defaultChangeList = changeList
   }
+
+  private fun getTargetChangeList(e: AnActionEvent) = e.getData(VcsDataKeys.CHANGE_LISTS)?.singleOrNull() as? LocalChangeList
 }
