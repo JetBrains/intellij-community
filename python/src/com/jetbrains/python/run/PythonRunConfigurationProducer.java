@@ -15,6 +15,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +74,8 @@ public final class PythonRunConfigurationProducer extends LazyRunConfigurationPr
   }
 
   private static boolean isAvailable(@NotNull final Location location, @Nullable final PsiFile script) {
-    if (script == null || script.getFileType() != PythonFileType.INSTANCE) {
+    if (script == null || script.getFileType() != PythonFileType.INSTANCE ||
+        !script.getViewProvider().getBaseLanguage().isKindOf(PythonLanguage.INSTANCE)) {
       return false;
     }
     final Module module = ModuleUtilCore.findModuleForPsiElement(script);
