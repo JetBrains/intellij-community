@@ -32,6 +32,16 @@
   <item name="java.lang.CharSequence java.lang.String toString()">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.lang.CharSequence java.util.stream.IntStream chars()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.CharSequence java.util.stream.IntStream codePoints()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.lang.Character java.lang.Character valueOf(char)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -509,6 +519,10 @@
   </item>
   <item name="java.lang.String char[] toCharArray()">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;-&gt; new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name="java.lang.String int compareTo(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -669,12 +683,18 @@
   </item>
   <item name="java.lang.String java.lang.String valueOf(char[])">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name="java.lang.String java.lang.String valueOf(char[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.lang.String java.lang.String valueOf(char[], int, int)">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name="java.lang.String java.lang.String valueOf(char[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -720,6 +740,18 @@
   </item>
   <item name="java.lang.String java.lang.String[] split(java.lang.String, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+    <item name='java.lang.String java.util.stream.IntStream chars()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+  <item name='java.lang.String java.util.stream.IntStream codePoints()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name="java.lang.String void getBytes(int, int, byte[], int) 2">
     <annotation name="org.jetbrains.annotations.NotNull" />
