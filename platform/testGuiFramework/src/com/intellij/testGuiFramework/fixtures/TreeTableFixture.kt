@@ -10,6 +10,7 @@ import org.fest.swing.core.MouseButton
 import org.fest.swing.core.Robot
 import org.fest.swing.driver.ComponentPreconditions
 import org.fest.swing.driver.JTreeLocation
+import org.fest.swing.exception.ComponentLookupException
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.Rectangle
@@ -32,6 +33,17 @@ class TreeTableFixture(robot: Robot, target: TreeTable) :
       val value = GuiTestUtilKt.computeOnEdt { target().model.getValueAt(row, 0) }
       logInfo("getCheckboxState: found $value")
       return@step value as Boolean
+    }
+  }
+
+  fun isPathPresent(vararg pathStrings: String): Boolean {
+    return try {
+      val tree = target().tree
+      ExtendedJTreePathFinder(tree).findMatchingPath(pathStrings.toList())
+      true
+    }
+    catch (notFound: ComponentLookupException) {
+      false
     }
   }
 
