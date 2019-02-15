@@ -15,6 +15,7 @@ import org.jdom.Element
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
 
@@ -42,9 +43,12 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
       it.resolveDefaultCompiler(project, mavenProject, nativeMavenProject, embedder, context)
     }
 
+    val autoDetectCompiler = MavenProjectsManager.getInstance(project).importingSettings.isAutoDetectCompiler
+    MavenLog.LOG.debug("maven compiler autodetect = ", autoDetectCompiler);
+
     val backendCompiler = compilerExtension?.getCompiler(project) ?: return
     val ideCompilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
-    if (ideCompilerConfiguration.defaultCompiler != backendCompiler) {
+    if (ideCompilerConfiguration.defaultCompiler != backendCompiler && autoDetectCompiler) {
       if (ideCompilerConfiguration.registeredJavaCompilers.contains(backendCompiler)) {
         ideCompilerConfiguration.defaultCompiler = backendCompiler
         project.putUserData(DEFAULT_COMPILER_IS_RESOLVED, true)
@@ -103,7 +107,9 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
           modifiableModelsProvider.getUserData(DEFAULT_COMPILER_IS_SET) == null &&
           defaultCompilerId == compilerExtension.mavenCompilerId) {
         val backendCompiler = compilerExtension.getCompiler(project)
-        if (backendCompiler != null && ideCompilerConfiguration.defaultCompiler != backendCompiler) {
+        val autoDetectCompiler = MavenProjectsManager.getInstance(project).importingSettings.isAutoDetectCompiler
+        MavenLog.LOG.debug("maven compiler autodetect = ", autoDetectCompiler);
+        if (backendCompiler != null && ideCompilerConfiguration.defaultCompiler != backendCompiler && autoDetectCompiler) {
           if (ideCompilerConfiguration.registeredJavaCompilers.contains(backendCompiler)) {
             ideCompilerConfiguration.defaultCompiler = backendCompiler
           }

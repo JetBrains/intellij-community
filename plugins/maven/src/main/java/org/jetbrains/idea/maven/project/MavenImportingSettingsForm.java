@@ -14,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.ProjectFormatPanel;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBTextField;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +51,8 @@ public class MavenImportingSettingsForm {
   private JCheckBox myStoreProjectFilesExternally;
   private JBTextField myVMOptionsForImporter;
   private ExternalSystemJdkComboBox myJdkForImporterComboBox;
+  private JCheckBox myAutoDetectCompilerCheckBox;
+  private JBCheckBox myJBCheckBox1;
 
   public MavenImportingSettingsForm(boolean isImportStep, boolean isCreatingNewProject) {
     mySearchRecursivelyCheckBox.setVisible(isImportStep);
@@ -81,6 +84,7 @@ public class MavenImportingSettingsForm {
 
     LabelTextReplacingUtil.replaceText(myPanel);
     myDownloadAnnotationsCheckBox.setVisible(Registry.is("external.system.import.resolve.annotations"));
+    myAutoDetectCompilerCheckBox.setVisible(Registry.is("maven.import.compiler.arguments", true));
   }
 
   private void createUIComponents() {
@@ -122,6 +126,7 @@ public class MavenImportingSettingsForm {
     data.setDownloadSourcesAutomatically(myDownloadSourcesCheckBox.isSelected());
     data.setDownloadDocsAutomatically(myDownloadDocsCheckBox.isSelected());
     data.setDownloadAnnotationsAutomatically(myDownloadAnnotationsCheckBox.isSelected());
+    data.setAutoDetectCompiler(myAutoDetectCompilerCheckBox.isSelected());
 
     data.setVmOptionsForImporter(myVMOptionsForImporter.getText());
     data.setJdkForImporter(myJdkForImporterComboBox.getSelectedValue());
@@ -157,6 +162,7 @@ public class MavenImportingSettingsForm {
     myDownloadSourcesCheckBox.setSelected(data.isDownloadSourcesAutomatically());
     myDownloadDocsCheckBox.setSelected(data.isDownloadDocsAutomatically());
     myDownloadAnnotationsCheckBox.setSelected(data.isDownloadAnnotationsAutomatically());
+    myAutoDetectCompilerCheckBox.setSelected(data.isAutoDetectCompiler());
 
     myDependencyTypes.setText(data.getDependencyTypes());
 
