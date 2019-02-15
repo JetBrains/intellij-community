@@ -38,11 +38,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.BooleanRunnable;
+import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ConcurrentList;
@@ -51,6 +56,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.Reference;
 import java.util.Arrays;
 import java.util.List;
 
@@ -321,9 +327,8 @@ public class InjectedLanguageUtil {
     return viewProvider.findElementAt(offset, baseLanguage);
   }
 
-  private static final InjectedPsiCachedValueProvider INJECTED_PSI_PROVIDER = new InjectedPsiCachedValueProvider();
   // list of injected fragments injected into this psi element (can be several if some crazy injector calls startInjecting()/doneInjecting()/startInjecting()/doneInjecting())
-  private static final Key<ParameterizedCachedValue<InjectionResult, PsiElement>> INJECTED_PSI = Key.create("INJECTED_PSI");
+  private static final Key<Reference<InjectionResult>> INJECTED_PSI = Key.create("INJECTED_PSI");
 
   private static void probeElementsUp(@NotNull PsiElement element,
                                       @NotNull PsiFile hostPsiFile,
@@ -333,13 +338,13 @@ public class InjectedLanguageUtil {
     final Project project = psiManager.getProject();
     InjectedLanguageManagerImpl injectedManager = InjectedLanguageManagerImpl.getInstanceImpl(project);
     InjectionResult result = null;
-    PsiElement current = element;
+    PsiElement current;
 
-    while (current != null && current != hostPsiFile && !(current instanceof PsiDirectory)) {
+    for (current = element; current != null && current != hostPsiFile && !(current instanceof PsiDirectory); ) {
       ProgressManager.checkCanceled();
       if ("EL".equals(current.getLanguage().getID())) break;
-      ParameterizedCachedValue<InjectionResult, PsiElement> data = current.getUserData(INJECTED_PSI);
-      if (data == null || (result = data.getValue(current)) == null || !result.isValid()) {
+      result = SoftReference.dereference(current.getUserData(INJECTED_PSI));
+      if (result == null || !result.isModCountUpToDate() || !result.isValid()) {
         result = injectedManager.processInPlaceInjectorsFor(hostPsiFile, current);
       }
 
@@ -380,20 +385,10 @@ public class InjectedLanguageUtil {
     }
 
     // cache
-    PsiParameterizedCachedValue<InjectionResult, PsiElement> cachedValue;
-    if (result == null) {
-      cachedValue = null;
-    }
-    else {
-      cachedValue = (PsiParameterizedCachedValue<InjectionResult, PsiElement>)
-        CachedValuesManager.getManager(project).createParameterizedCachedValue(INJECTED_PSI_PROVIDER, false);
-
-      CachedValueProvider.Result<InjectionResult> cachedResult = CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT, result);
-      cachedValue.setValue(cachedResult);
-    }
+    Reference<InjectionResult> cachedRef = result == null ? null : new SoftReference<>(result);
     for (PsiElement e = element; e != current && e != null && e != hostPsiFile; e = e.getParent()) {
       ProgressManager.checkCanceled();
-      e.putUserData(INJECTED_PSI, cachedValue);
+      e.putUserData(INJECTED_PSI, cachedRef);
       if (!probeUp) break;
     }
   }
