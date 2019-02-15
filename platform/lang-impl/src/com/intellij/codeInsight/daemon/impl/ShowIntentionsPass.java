@@ -262,10 +262,8 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
                                           @NotNull final IntentionsInfo intentions,
                                           int passIdToShowIntentionsFor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    int offset = hostEditor.getCaretModel().getOffset();
-    for (IntentionMenuContributor extension : IntentionMenuContributor.SYNC_EP_NAME.getExtensionList()) {
-      extension.collectActions(hostEditor, hostFile, intentions, passIdToShowIntentionsFor, offset);
-    }
+    new EditorNotificationActions().collectActions(hostEditor, hostFile, intentions, passIdToShowIntentionsFor,
+                                                   hostEditor.getCaretModel().getOffset());
     intentions.filterActions(hostFile);
   }
 

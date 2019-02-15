@@ -13,11 +13,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface IntentionMenuContributor {
   ExtensionPointName<IntentionMenuContributor> EP_NAME = ExtensionPointName.create("com.intellij.intentionMenuContributor");
-  /**
-   * Contributors that should be invoked in EDT should be registered via this extension point. It should be used only if corresponding
-   * contributor cannot work in a background thread.
-   */
-  ExtensionPointName<IntentionMenuContributor> SYNC_EP_NAME = ExtensionPointName.create("com.intellij.intentionMenuContributorSync");
 
   void collectActions(@NotNull Editor hostEditor, @NotNull PsiFile hostFile, @NotNull final ShowIntentionsPass.IntentionsInfo intentions,
                       int passIdToShowIntentionsFor, int offset);
