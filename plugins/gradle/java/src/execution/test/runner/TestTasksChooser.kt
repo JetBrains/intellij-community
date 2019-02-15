@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.test.runner
 
-import com.intellij.execution.ExecutionBundle
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -22,6 +21,7 @@ import com.intellij.util.FunctionUtil
 import com.intellij.util.ui.JBUI
 import icons.ExternalSystemIcons
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducer.findAllTestsTaskToRun
+import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.TasksToRun
 import java.awt.Component
 import java.awt.MouseInfo
@@ -99,7 +99,7 @@ open class TestTasksChooser {
       .setAutoselectOnMouseMove(false)
       .setNamerForFiltering(FunctionUtil.id())
       .setMovable(true)
-      .setAdText(ExecutionBundle.message("tests.tasks.choosing.popup.hint"))
+      .setAdText(GradleBundle.message("gradle.tests.tasks.choosing.popup.hint"))
       .setResizable(false)
       .setRequestFocus(true)
       .setMinSize(JBUI.size(250, -1))
@@ -118,7 +118,7 @@ open class TestTasksChooser {
     assert(!ApplicationManager.getApplication().isCommandLine)
     val notification = Notification(
       "Test tasks chooser",
-      ExecutionBundle.message("tests.tasks.choosing.warning.text"),
+      GradleBundle.message("gradle.tests.tasks.choosing.warning.text"),
       "",
       NotificationType.WARNING)
     Notifications.Bus.notify(notification, project)
@@ -127,8 +127,8 @@ open class TestTasksChooser {
   private fun suggestPopupTitle(context: DataContext): String {
     val locationName = context.getData(LOCATION)
     return when (locationName) {
-      null -> ExecutionBundle.message("tests.tasks.choosing.popup.title.common")
-      else -> ExecutionBundle.message("tests.tasks.choosing.popup.title", locationName)
+      null -> GradleBundle.message("gradle.tests.tasks.choosing.popup.title.common")
+      else -> GradleBundle.message("gradle.tests.tasks.choosing.popup.title", locationName)
     }
   }
 
