@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +24,7 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 
 public abstract class UndoRedoAction extends DumbAwareAction {
+  public static final Key<Boolean> IGNORE_SWING_UNDO_MANAGER = new Key<>("IGNORE_SWING_UNDO_MANAGER");
   private static final Logger LOG = Logger.getInstance(UndoRedoAction.class);
 
   private boolean myActionInProgress;
@@ -67,7 +69,7 @@ public abstract class UndoRedoAction extends DumbAwareAction {
   private UndoManager getUndoManager(FileEditor editor, DataContext dataContext) {
     Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     Editor e = dataContext.getData(CommonDataKeys.EDITOR);
-    if (component instanceof JTextComponent && (e == null || component != e.getContentComponent())) {
+    if (component instanceof JTextComponent && (e == null || component != e.getContentComponent()) && !ignoreSwingUndoManager(component)) {
       return SwingUndoManagerWrapper.fromContext(dataContext);
     }
     JRootPane rootPane = null;
@@ -89,6 +91,14 @@ public abstract class UndoRedoAction extends DumbAwareAction {
 
     Project project = getProject(editor, dataContext);
     return project != null ? UndoManager.getInstance(project) : UndoManager.getGlobalInstance();
+  }
+
+  private static boolean ignoreSwingUndoManager(@Nullable Component component) {
+    if (!(component instanceof JComponent)) {
+      return false;
+    }
+    JComponent jComponent = (JComponent)component;
+    return jComponent.getClientProperty(IGNORE_SWING_UNDO_MANAGER) == Boolean.TRUE;
   }
 
   private static Project getProject(FileEditor editor, DataContext dataContext) {
