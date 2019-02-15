@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
@@ -21,10 +21,10 @@ public class VcsLogTabsManager {
   @NotNull private final VcsLogProjectTabsProperties myUiProperties;
   private boolean myIsLogDisposing = false;
 
-  public VcsLogTabsManager(@NotNull Project project,
-                           @NotNull MessageBus messageBus,
-                           @NotNull VcsLogProjectTabsProperties uiProperties,
-                           @NotNull Disposable parent) {
+  VcsLogTabsManager(@NotNull Project project,
+                    @NotNull MessageBus messageBus,
+                    @NotNull VcsLogProjectTabsProperties uiProperties,
+                    @NotNull Disposable parent) {
     myProject = project;
     myUiProperties = uiProperties;
 
