@@ -24,6 +24,7 @@
       "disabledText": "#E0861F",
       "inactiveForeground": "#E0861F",
 
+<<<<<<< HEAD
       "acceleratorForeground": "#E6E6E6",
       "acceleratorSelectionForeground": "#E6E6E6",
 
@@ -35,6 +36,12 @@
       "focusedBorderColor": "#1AEBFF",
 
       "separatorColor": "#B3B3B3"
+=======
+      "errorForeground": "#FA3232",
+
+      "uidesigner.canvas.background": "#000000",
+      "uidesigner.panel.background": "#000000"
+>>>>>>> 745eb2874d54... IDEA-207424 Add color constants for uidesigner.
     },
 
     "ActionButton": {
