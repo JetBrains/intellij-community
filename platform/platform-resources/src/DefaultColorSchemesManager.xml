@@ -1568,8 +1568,7 @@
       </option>
       <option name="DEFAULT_KEYWORD">
         <value>
-          <option name="FOREGROUND" value="cc7832" deuteranopia="5c7ab8" protanopia="5c7ab8"/>
-          <option name="FONT_TYPE" value="1" />
+          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
         </value>
       </option>
       <option name="DEFAULT_BLOCK_COMMENT">
@@ -1601,7 +1600,7 @@
       </option>
       <option name="DEFAULT_SEMICOLON">
         <value>
-          <option name="FOREGROUND" value="cc7832" deuteranopia="5c7ab8" protanopia="5c7ab8"/>
+          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
         </value>
       </option>
       <option name="DEFAULT_STATIC_FIELD">
@@ -1624,7 +1623,7 @@
       </option>
       <option name="DEFAULT_VALID_STRING_ESCAPE">
         <value>
-          <option name="FOREGROUND" value="cc7832" deuteranopia="5c7ab8" protanopia="5c7ab8"/>
+          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
         </value>
       </option>
       <option name="DEFAULT_REASSIGNED_PARAMETER">
