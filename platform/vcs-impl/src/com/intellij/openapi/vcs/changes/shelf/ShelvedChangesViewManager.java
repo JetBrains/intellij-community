@@ -68,6 +68,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
@@ -92,6 +93,7 @@ public class ShelvedChangesViewManager implements Disposable {
   private final ShelveChangesManager myShelveChangesManager;
   private final Project myProject;
   final ShelfTree myTree;
+  @NotNull private final PropertyChangeListener myGroupingChangeListener;
   private MyShelfContent myContent = null;
   final DeleteProvider myDeleteProvider = new MyShelveDeleteProvider();
   private final MergingUpdateQueue myUpdateQueue;
@@ -128,6 +130,12 @@ public class ShelvedChangesViewManager implements Disposable {
     myTree = new ShelfTree(myProject);
     myTree.setEditable(true);
     myTree.setDragEnabled(true);
+    myTree.getGroupingSupport().setGroupingKeysOrSkip(myShelveChangesManager.getGrouping());
+    myGroupingChangeListener = e -> {
+      myShelveChangesManager.setGrouping(myTree.getGroupingSupport().getGroupingKeys());
+      myTree.rebuildTree();
+    };
+    myTree.addGroupingChangeListener(myGroupingChangeListener);
     DefaultTreeCellEditor treeCellEditor = new DefaultTreeCellEditor(myTree, null) {
       @Override
       public boolean isCellEditable(EventObject event) {
@@ -306,6 +314,7 @@ public class ShelvedChangesViewManager implements Disposable {
   @Override
   public void dispose() {
     myUpdateQueue.cancelAllUpdates();
+    myTree.removeGroupingChangeListener(myGroupingChangeListener);
   }
 
   public void updateOnVcsMappingsChanged() {
@@ -336,6 +345,12 @@ public class ShelvedChangesViewManager implements Disposable {
     @Override
     public boolean isPathEditable(TreePath path) {
       return isEditable() && myTree.getSelectionCount() == 1 && path.getLastPathComponent() instanceof ShelvedListNode;
+    }
+
+    @NotNull
+    @Override
+    protected ChangesGroupingSupport installGroupingSupport() {
+      return new ChangesGroupingSupport(myProject, this, false);
     }
 
     @Override
