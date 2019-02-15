@@ -403,7 +403,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
   }
 
   private static void showNotificationsPopup(@NotNull Project project,
-                                             @NotNull int reportsCount,
+                                             int reportsCount,
                                              @NotNull String notificationMessage) {
     int extraReportsCount = reportsCount - 1;
     if (extraReportsCount > 0) {
