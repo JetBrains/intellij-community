@@ -120,9 +120,9 @@ class EventLogConsole {
       }
 
       @Override
-      @Nullable
       public String getConsoleFontName() {
-        return NotificationsUtil.getFontName();
+        String name = NotificationsUtil.getFontName();
+        return name == null ? super.getConsoleFontName() : name;
       }
 
       @Override
