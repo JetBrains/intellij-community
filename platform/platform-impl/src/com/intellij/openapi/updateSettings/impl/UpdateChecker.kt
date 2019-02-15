@@ -40,7 +40,6 @@ import gnu.trove.THashMap
 import org.jdom.JDOMException
 import java.io.File
 import java.io.IOException
-import java.net.UnknownHostException
 import java.util.*
 import kotlin.collections.HashSet
 import kotlin.collections.set
@@ -194,27 +193,14 @@ object UpdateChecker {
   }
 
   @JvmStatic
-  @Throws(IOException::class)
+  @Throws(IOException::class, JDOMException::class)
   fun getUpdatesInfo(settings: UpdateSettings): UpdatesInfo? {
     val updateUrl = Urls.newFromEncoded(updateUrl)
-    LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl)
 
     return HttpRequests.request(updateUrl)
       .forceHttps(settings.canUseSecureConnection())
       .connect {
-        try {
-          UpdatesInfo(JDOMUtil.load(it.reader))
-        }
-        catch (e: Exception) {
-          when(e) {
-            is JDOMException, is UnknownHostException -> {
-              // corrupted content or resolve problems, don't bother telling user
-              LOG.info(e)
-              null
-            }
-            else -> throw e
-          }
-        }
+        UpdatesInfo(JDOMUtil.load(it.reader))
       }
   }
 

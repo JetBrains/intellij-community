@@ -25,6 +25,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -174,7 +175,7 @@ public class UpdateCheckerComponent implements Disposable, BaseComponent {
         try {
           updatesInfo = UpdateChecker.getUpdatesInfo(UpdateSettings.getInstance());
         }
-        catch (IOException e) {
+        catch (IOException | JDOMException e) {
           LOG.error(e);
         }
 
