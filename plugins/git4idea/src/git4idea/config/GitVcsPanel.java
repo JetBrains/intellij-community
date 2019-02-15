@@ -20,11 +20,13 @@ import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UI.PanelFactory;
 import com.intellij.util.ui.UIUtil;
 import git4idea.branch.GitBranchIncomingOutgoingManager;
 import git4idea.i18n.GitBundle;
@@ -42,6 +44,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.util.containers.ContainerUtil.sorted;
+import static java.awt.GridBagConstraints.*;
 
 /**
  * Git VCS configuration panel
@@ -65,7 +68,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
   private JCheckBox myWarnAboutDetachedHead;
   private JTextField myProtectedBranchesField;
   private JBLabel myProtectedBranchesLabel;
-  private JComboBox myUpdateMethodComboBox;
+  private JComboBox<UpdateMethod> myUpdateMethodComboBox;
   private JCheckBox myUpdateBranchInfoCheckBox;
   private JFormattedTextField myBranchUpdateTimeField;
   private JPanel myBranchTimePanel;
@@ -78,6 +81,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
   public GitVcsPanel(@NotNull Project project, @NotNull GitExecutableManager executableManager) {
     myProject = project;
     myExecutableManager = executableManager;
+    initUIComponents();
     myTestButton.addActionListener(e -> testExecutable());
     myGitField.addBrowseFolderListener(GitBundle.getString("find.git.title"), GitBundle.getString("find.git.description"), project,
                                        FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
@@ -312,24 +316,144 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     return ParametersListUtil.COLON_LINE_PARSER.fun(myProtectedBranchesField.getText());
   }
 
-  private void createUIComponents() {
+
+  private JPanel getGitPathPanel() {
+    JPanel gitPathPanel = new JBPanel(new GridBagLayout());
+    JPanel pathFieldPanel = new JBPanel(new GridBagLayout());
     JBTextField textField = new JBTextField();
     textField.getEmptyText().setText("Auto-detected: " + myExecutableManager.getDetectedExecutable());
     myGitField = new TextFieldWithBrowseButton(textField);
-    myProtectedBranchesField = new ExpandableTextField(ParametersListUtil.COLON_LINE_PARSER, ParametersListUtil.COLON_LINE_JOINER);
-    myUpdateMethodComboBox = new ComboBox(new EnumComboBoxModel<>(UpdateMethod.class));
+    pathFieldPanel.add(myGitField, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, WEST, HORIZONTAL,
+                                                          JBUI.emptyInsets(), 0, 0));
+    myTestButton = new JButton(GitBundle.message("git.vcs.config.test"));
+    pathFieldPanel.add(myTestButton, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, WEST, NONE,
+                                                            JBUI.insets(0, 10, 0, 0), 0, 0));
+
+    myProjectGitPathCheckBox = new JBCheckBox(DvcsBundle.message("executable.path.project.override"));
+
+    gitPathPanel.add(new JBLabel(GitBundle.message("git.vcs.config.path.label")), new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, WEST, NONE,
+                                                                                                         JBUI.insets(0, 7, 0, 0), 0, 0));
+    gitPathPanel.add(pathFieldPanel, new GridBagConstraints(1, 0, REMAINDER, 1, 1.0, 0.0, WEST, HORIZONTAL,
+                                                            JBUI.insets(0, 10, 0, 0), 0, 0));
+    gitPathPanel.add(myProjectGitPathCheckBox, new GridBagConstraints(1, 1, REMAINDER, REMAINDER, 0.0, 0.0, WEST, NONE,
+                                                                      JBUI.insets(5, 10, 0, 0), 0, 0));
+    return gitPathPanel;
+  }
+
+  private void initIncomingOutgoingSettingPanel() {
+    myIncomingOutgoingSettingPanel = new JBPanel(new GridBagLayout());
+    JPanel myIncomingOutgoingSettingHelperPanel = new JBPanel(new BorderLayout());
+    myUpdateBranchInfoCheckBox = new JBCheckBox("Mark branches that have incoming/outgoing commits in the Branches popup. ");
+    myIncomingOutgoingSettingHelperPanel.add(myUpdateBranchInfoCheckBox, BorderLayout.WEST);
+
+    myBranchTimePanel = new JBPanel(new BorderLayout());
+    myBranchTimePanel.add(new JBLabel(" Refresh every "), BorderLayout.WEST);
+    NumberFormatter numberFormatter = new NumberFormatter(NumberFormat.getIntegerInstance());
+    numberFormatter.setMinimum(1);
+    numberFormatter.setAllowsInvalid(true);
+    myBranchUpdateTimeField = new JFormattedTextField(numberFormatter);
+    myBranchUpdateTimeField.setColumns(4);
+    myBranchTimePanel.add(myBranchUpdateTimeField, BorderLayout.CENTER);
+    myBranchTimePanel.add(new JBLabel(" minutes "), BorderLayout.EAST);
+    myIncomingOutgoingSettingHelperPanel.add(myBranchTimePanel, BorderLayout.CENTER);
+
+    mySupportedBranchUpLabel = new JBLabel("Supported from Git 2.9+");
+    mySupportedBranchUpLabel.setBorder(JBUI.Borders.emptyLeft(2));
+
+    myIncomingOutgoingSettingPanel.add(myIncomingOutgoingSettingHelperPanel, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, WEST, NONE,
+                                                                                                    JBUI.emptyInsets(), 0, 0));
+    myIncomingOutgoingSettingPanel.add(mySupportedBranchUpLabel, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, WEST, NONE,
+                                                                                        JBUI.insets(0, 20, 0, 0), 0, 0));
+  }
+
+  @NotNull
+  private JPanel getUpdateMethodPanel() {
+    JPanel updateMethodPanel = new JBPanel(new GridBagLayout());
+    updateMethodPanel.add(new JBLabel("Update method:"), new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, WEST, NONE,
+                                                                                JBUI.emptyInsets(), 0, 0));
+
+    myUpdateMethodComboBox = new ComboBox<>(new EnumComboBoxModel<>(UpdateMethod.class));
     myUpdateMethodComboBox.setRenderer(new ListCellRendererWrapper<UpdateMethod>() {
       @Override
       public void customize(JList list, UpdateMethod value, int index, boolean selected, boolean hasFocus) {
         setText(StringUtil.capitalize(StringUtil.toLowerCase(value.name().replace('_', ' '))));
       }
     });
-    myIncomingOutgoingSettingPanel = new JPanel(new BorderLayout());
-    NumberFormatter numberFormatter = new NumberFormatter(NumberFormat.getIntegerInstance());
-    numberFormatter.setMinimum(1);
-    numberFormatter.setAllowsInvalid(true);
-    myBranchUpdateTimeField = new JFormattedTextField(numberFormatter);
-    mySupportedBranchUpLabel = new JBLabel("Supported from Git 2.9+");
-    mySupportedBranchUpLabel.setBorder(JBUI.Borders.emptyLeft(2));
+    updateMethodPanel.add(myUpdateMethodComboBox, new GridBagConstraints(1, 0, 1, 1, 1.0, 1.0, WEST, NONE,
+                                                                         JBUI.insets(0, 40, 0, 0), 0, 0));
+    return updateMethodPanel;
+  }
+
+  @NotNull
+  private JPanel getProtectedBranchesPanel() {
+    JPanel protectedBranchesPanel = new JBPanel(new GridBagLayout());
+    myProtectedBranchesLabel = new JBLabel("Protected branches:");
+    myProtectedBranchesField = new ExpandableTextField(ParametersListUtil.COLON_LINE_PARSER, ParametersListUtil.COLON_LINE_JOINER);
+
+    protectedBranchesPanel.add(myProtectedBranchesLabel, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, WEST, NONE,
+                                                                                JBUI.emptyInsets(), 0, 0));
+    protectedBranchesPanel.add(myProtectedBranchesField, new GridBagConstraints(1, 0, 1, 1, 1.0, 1.0, WEST, HORIZONTAL,
+                                                                                JBUI.insets(0, 10, 0, 0), 0, 0));
+    return protectedBranchesPanel;
+  }
+
+  @NotNull
+  private JPanel getMainSettingsPanel() {
+    JPanel mainSettingsPanel = new JPanel(new GridBagLayout());
+    GridBagConstraints c = new GridBagConstraints();
+    c.insets = JBUI.insets(3, 0, 3, 0);
+    c.gridx = 0;
+    c.gridy = RELATIVE;
+    c.gridwidth = REMAINDER;
+    c.anchor = WEST;
+    c.fill = HORIZONTAL;
+    c.weightx = 1.0;
+
+    mySyncControl = new JBCheckBox(DvcsBundle.message("sync.setting"));
+    mySyncControl.setAlignmentX(Component.LEFT_ALIGNMENT);
+    mainSettingsPanel.add(mySyncControl, c);
+
+    myAutoCommitOnCherryPick = new JBCheckBox("Commit automatically on cherry-pick");
+    mainSettingsPanel.add(myAutoCommitOnCherryPick, c);
+
+    myAddCherryPickSuffix = new JBCheckBox("Add the 'cherry-picked from <hash>' suffix when picking commits pushed to protected branches");
+    mainSettingsPanel.add(myAddCherryPickSuffix, c);
+
+    myWarnAboutCrlf = new JBCheckBox("Warn if " + UIUtil.MNEMONIC + "CRLF line separators are about to be committed");
+    mainSettingsPanel.add(myWarnAboutCrlf, c);
+
+    myWarnAboutDetachedHead = new JBCheckBox("Warn when committing in detached HEAD or during rebase");
+    mainSettingsPanel.add(myWarnAboutDetachedHead, c);
+
+    initIncomingOutgoingSettingPanel();
+    mainSettingsPanel.add(myIncomingOutgoingSettingPanel, c);
+
+    c.insets = JBUI.insets(2, 7, 2, 0);
+    mainSettingsPanel.add(getUpdateMethodPanel(), c);
+    c.insets = JBUI.insets(2, 0, 2, 0);
+
+    myAutoUpdateIfPushRejected = new JBCheckBox("Auto-update if " + UIUtil.MNEMONIC + "push of the current branch was rejected");
+    mainSettingsPanel.add(myAutoUpdateIfPushRejected, c);
+
+    myPreviewPushOnCommitAndPush = new JBCheckBox("Show Push dialog for Commit and Push");
+    mainSettingsPanel.add(myPreviewPushOnCommitAndPush, c);
+
+    myPreviewPushProtectedOnlyBorder = new JBPanel(new BorderLayout());
+    myPreviewPushProtectedOnly = new JBCheckBox("Show Push dialog only when committing to protected branches");
+    myPreviewPushProtectedOnlyBorder.add(myPreviewPushProtectedOnly);
+    mainSettingsPanel.add(myPreviewPushProtectedOnlyBorder, c);
+
+    c.insets = JBUI.insets(2, 7, 2, 0);
+    mainSettingsPanel.add(getProtectedBranchesPanel(), c);
+    c.insets = JBUI.insets(2, 0, 2, 0);
+
+    return mainSettingsPanel;
+  }
+
+  private void initUIComponents() {
+    myRootPanel = PanelFactory.grid()
+      .add(PanelFactory.panel(getGitPathPanel()))
+      .add(PanelFactory.panel(getMainSettingsPanel()))
+      .createPanel();
   }
 }
