@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -622,7 +623,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   protected String extractRootPath(@NotNull String path) {
     if (path.isEmpty()) {
       try {
-        return extractRootPath(new File("").getCanonicalPath());
+        path = new File("").getCanonicalPath();
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -750,7 +751,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public boolean hasChildren(@NotNull VirtualFile file) {
-    return file.getParent() == null || hasChildren(Paths.get(file.getPath()));
+    try {
+      return file.getParent() == null || hasChildren(Paths.get(file.getPath()));
+    }
+    catch (InvalidPathException e) {
+      return true;
+    }
   }
 
   /**
