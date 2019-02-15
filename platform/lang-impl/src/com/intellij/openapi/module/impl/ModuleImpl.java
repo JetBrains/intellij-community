@@ -78,7 +78,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
       if (beforeComponentCreation != null) {
         beforeComponentCreation.run();
       }
-    });
+    }, false /* do not measure because there are a lot of modules and no need to measure each one (currently measurer is not suitable for it) */);
   }
 
   @Nullable

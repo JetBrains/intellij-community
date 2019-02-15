@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.ExtensionPoints;
@@ -32,6 +32,7 @@ import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.Splash;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.StartUpMeasurer;
 import net.miginfocom.layout.PlatformDefaults;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,10 +68,13 @@ public class IdeaApplication {
 
   @SuppressWarnings("SSBasedInspection")
   public static void initApplication(String[] args) {
+    StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(StartUpMeasurer.Phases.INIT_APP);
     IdeaApplication app = new IdeaApplication(args);
     // this invokeLater() call is needed to place the app starting code on a freshly minted IdeEventQueue instance
     SwingUtilities.invokeLater(() -> {
       PluginManager.installExceptionHandler();
+      measureToken.end();
+      // this run is blocking, while app is running
       app.run();
     });
   }

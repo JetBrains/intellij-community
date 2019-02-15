@@ -1167,7 +1167,7 @@ public class PluginManagerCore {
 
     List<IdeaPluginDescriptorImpl> result = new ArrayList<>();
 
-    long start = System.currentTimeMillis();
+    StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(StartUpMeasurer.Phases.LOAD_PLUGIN_DESCRIPTORS);
     LinkedHashMap<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(PluginManagerCore.class.getClassLoader(), urlsFromClassPath);
 
@@ -1192,8 +1192,7 @@ public class PluginManagerCore {
       ExceptionUtilRt.rethrow(e);
     }
 
-    long duration = System.currentTimeMillis() - start;
-    getLogger().info("load plugin descriptors took " + duration + " ms");
+    measureToken.end();
 
     return topoSortPlugins(result, errors);
   }
@@ -1560,7 +1559,7 @@ public class PluginManagerCore {
   }
 
   private static void initPlugins(@Nullable StartupProgress progress) {
-    long start = System.currentTimeMillis();
+    StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(StartUpMeasurer.Phases.INIT_PLUGINS);
     try {
       initializePlugins(progress);
     }
@@ -1571,7 +1570,7 @@ public class PluginManagerCore {
       getLogger().error(e);
       throw e;
     }
-    getLogger().info(ourPlugins.length + " plugins initialized in " + (System.currentTimeMillis() - start) + " ms");
+    measureToken.end("plugin count: " + ourPlugins.length);
     logPlugins();
     ClassUtilCore.clearJarURLCache();
   }

@@ -263,7 +263,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
     ProgressIndicator progressIndicator = isDefault() ? null : ProgressIndicatorProvider.getGlobalProgressIndicator();
     init(progressIndicator,
-         () -> application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this));
+         () -> application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this), true);
 
     long time = System.currentTimeMillis() - start;
     String message = getComponentConfigCount() + " project components initialized in " + time + " ms";
@@ -384,5 +384,11 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @Override
   protected boolean logSlowComponents() {
     return super.logSlowComponents() || ApplicationInfoImpl.getShadowInstance().isEAP();
+  }
+
+  @Nullable
+  @Override
+  protected String measureTokenNamePrefix() {
+    return "project ";
   }
 }

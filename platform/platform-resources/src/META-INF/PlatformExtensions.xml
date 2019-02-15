@@ -643,5 +643,7 @@
         <component>FUSProjectUsageTrigger</component>
       </components>
     </stalledStorage>
+
+    <postStartupActivity implementation="com.intellij.ide.StartUpPerformanceReporter" order="last"/>
   </extensions>
 </idea-plugin>

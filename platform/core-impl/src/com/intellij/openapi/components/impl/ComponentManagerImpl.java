@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.StartUpMeasurer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
@@ -75,17 +76,33 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     bootstrapPicoContainer(name);
   }
 
-  protected final void init(@Nullable ProgressIndicator indicator, @Nullable Runnable componentsRegistered) {
+  @Nullable
+  protected String measureTokenNamePrefix() {
+    return null;
+  }
+
+  protected final void init(@Nullable ProgressIndicator indicator, @Nullable Runnable componentsRegistered, boolean isNeededToMeasure) {
     List<ComponentConfig> componentConfigs = getComponentConfigs(indicator);
+
+    String measureTokenNamePrefix = StringUtil.notNullize(measureTokenNamePrefix());
+    StartUpMeasurer.MeasureToken measureToken = isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix + StartUpMeasurer.Phases.REGISTER_COMPONENTS_SUFFIX) : null;
     for (ComponentConfig config : componentConfigs) {
       registerComponents(config);
+    }
+    if (isNeededToMeasure) {
+      measureToken.end();
     }
     myComponentConfigCount = componentConfigs.size();
 
     if (componentsRegistered != null) {
       componentsRegistered.run();
     }
+
+    measureToken = isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix + StartUpMeasurer.Phases.CREATE_COMPONENTS_SUFFIX) : null;
     createComponents(indicator);
+    if (isNeededToMeasure) {
+      measureToken.end();
+    }
     myComponentsCreated = true;
   }
 
@@ -280,7 +297,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @NotNull
-  private List<ComponentConfig> getComponentConfigs(final ProgressIndicator indicator) {
+  private List<ComponentConfig> getComponentConfigs(@Nullable ProgressIndicator indicator) {
     boolean isDefaultProject = this instanceof Project && ((Project)this).isDefault();
     boolean headless = ApplicationManager.getApplication().isHeadlessEnvironment();
     StartupProgress startupProgress = null;
