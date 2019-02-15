@@ -16,6 +16,7 @@
 package com.intellij.remote;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,12 +68,13 @@ public class VagrantBasedCredentialsHolder {
   }
 
   public void load(Element element) {
-    setVagrantFolder(StringUtil.notNullize(element.getAttributeValue(VAGRANT_FOLDER)));
+    final String folder = StringUtil.notNullize(element.getAttributeValue(VAGRANT_FOLDER));
+    setVagrantFolder(PathUtil.toSystemDependentName(folder));
     setMachineName(element.getAttributeValue(MACHINE_NAME));
   }
 
   public void save(Element element) {
-    element.setAttribute(VAGRANT_FOLDER, getVagrantFolder());
+    element.setAttribute(VAGRANT_FOLDER, PathUtil.toSystemIndependentName(getVagrantFolder()));
     if (StringUtil.isNotEmpty(getMachineName())) {
       element.setAttribute(MACHINE_NAME, getMachineName());
     }
