@@ -94,8 +94,12 @@ public class EditorNotificationsImpl extends EditorNotifications {
         prev.cancel();
       }
 
+      List<FileEditor> editors = ContainerUtil.filter(FileEditorManager.getInstance(myProject).getAllEditors(file),
+                                                      editor -> !(editor instanceof TextEditor)
+                                                                || AsyncEditorLoader.isEditorLoaded(((TextEditor)editor).getEditor()));
+
       CancellablePromise<List<Runnable>> promise = ReadAction.
-        nonBlocking(() -> calcNotificationUpdates(file)).
+        nonBlocking(() -> calcNotificationUpdates(file, editors)).
         expireWhen(() -> !file.isValid() || myProject.isDisposed()).
         finishOnUiThread(ModalityState.any(), updates -> {
           for (Runnable update : updates) {
@@ -109,9 +113,7 @@ public class EditorNotificationsImpl extends EditorNotifications {
   }
 
   @NotNull
-  private List<Runnable> calcNotificationUpdates(@NotNull VirtualFile file) {
-    List<FileEditor> editors = ContainerUtil.filter(FileEditorManager.getInstance(myProject).getAllEditors(file),
-                                                    editor -> !(editor instanceof TextEditor) || AsyncEditorLoader.isEditorLoaded(((TextEditor)editor).getEditor()));
+  private List<Runnable> calcNotificationUpdates(@NotNull VirtualFile file, @NotNull List<FileEditor> editors) {
     List<Provider> providers = ContainerUtil.concat(DumbService.getInstance(myProject).filterByDumbAwareness(EP_APP.getExtensionList()),
                                                     DumbService.getDumbAwareExtensions(myProject, EP_PROJECT));
     List<Runnable> updates = new SmartList<>();
