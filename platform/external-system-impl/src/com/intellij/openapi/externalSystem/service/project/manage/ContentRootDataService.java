@@ -353,7 +353,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
 
   private static void filterAndReportDuplicatingContentRoots(@NotNull MultiMap<DataNode<ModuleData>, DataNode<ContentRootData>> moduleNodeToRootNodes,
                                                              @NotNull Project project) {
-    Map<String, DuplicateModuleReport> filter = ContainerUtil.newHashMap();
+    Map<String, DuplicateModuleReport> filter = ContainerUtil.newLinkedHashMap();
 
     for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> entry : moduleNodeToRootNodes.entrySet()) {
       ModuleData moduleData = entry.getKey().getData();
@@ -372,7 +372,10 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
 
     Map<String, DuplicateModuleReport> toReport = filter.entrySet().stream()
       .filter(e -> e.getValue().hasDuplicates())
-      .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+      .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (r1, r2) -> {
+        LOG.warn("Unexpected duplicates in keys while collecting filtered reports");
+        return r2;
+      }, LinkedHashMap::new));
 
     if (!toReport.isEmpty()) {
       String notificationMessage = prepareMessageAndLogWarnings(toReport);
