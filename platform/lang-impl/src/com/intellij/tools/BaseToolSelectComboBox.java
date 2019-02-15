@@ -25,8 +25,32 @@ public abstract class BaseToolSelectComboBox<T extends Tool> extends ComboboxWit
 
   public BaseToolSelectComboBox() {
     final JComboBox comboBox = getComboBox();
-    comboBox.setModel(new CollectionComboBoxModel(getComboBoxElements(), null));
-    comboBox.setRenderer(new ListCellRendererWrapper<Object>() {
+
+    //noinspection unchecked
+    comboBox.setModel(new CollectionComboBoxModel(getComboBoxElements(), null) {
+      @Override
+      public void setSelectedItem(@Nullable Object item) {
+        if (item instanceof ToolsGroup) {
+          return;
+        }
+        super.setSelectedItem(item);
+      }
+    });
+
+
+    comboBox.setRenderer(new ColoredListCellRenderer<Object>() {
+      @Override
+      public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean selected, boolean hasFocus) {
+        if (value instanceof ToolsGroup) {
+          SeparatorWithText separator = new SeparatorWithText();
+          separator.setCaption(StringUtil.notNullize(((ToolsGroup)value).getName(), ToolsBundle.message("tools.unnamed.group")));
+          separator.setCaptionCentered(false);
+          return separator;
+        } else {
+          return super.getListCellRendererComponent(list, value, index, selected, hasFocus);
+        }
+      }
+
       @Override
       protected void customizeCellRenderer(@NotNull JList<?> list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof ToolsGroup) {
