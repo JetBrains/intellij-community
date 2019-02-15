@@ -10,10 +10,6 @@ import org.intellij.lang.annotations.Language;
  */
 public class CommunityDetectFileTypeTest extends DetectFileTypeTestCase {
 
-  public void testDetectJSP() {
-    doTest(StdFileTypes.HTML, "<html><head><title>Hello <caret>Wrold</title></head></html>", "jsp");
-  }
-
   public void testDetectHtml() {
     doTest(StdFileTypes.HTML, "<html><head><title>Hello <caret>Wrold</title></head></html>");
   }
@@ -25,18 +21,4 @@ public class CommunityDetectFileTypeTest extends DetectFileTypeTestCase {
   public void testDetectJava() {
     doTest(StdFileTypes.JAVA, "class X {{  System.out.println<caret>();}}");
   }
-
-  public void testDetectInjectedXML() {
-    MyTestInjector testInjector = new MyTestInjector(getPsiManager());
-    testInjector.injectAll(getTestRootDisposable());
-    doTest(StdFileTypes.XML,
-           "import org.intellij.lang.annotations.Language;" +
-           "class X {" +
-           "  private static final String xml = \"<a><caret>asdf</a>\";" +
-           "}",
-           "java");
-  }
-
-  @Language("XML")
-  private static final String xml = "<a>asdf</a>";
 }
