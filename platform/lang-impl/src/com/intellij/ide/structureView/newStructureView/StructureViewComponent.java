@@ -350,9 +350,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       }
     }
 
-    result.add(new ExpandAllAction(getTree()));
-    result.add(new CollapseAllAction(getTree()));
-
     if (showScrollToFromSourceActions()) {
       result.addSeparator();
 
