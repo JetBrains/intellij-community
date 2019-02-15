@@ -82,7 +82,7 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessor {
   }
 
   @Override
-  public boolean canOpenProject(VirtualFile file) {
+  public boolean canOpenProject(@NotNull VirtualFile file) {
     if (file.isDirectory()) {
       return Arrays.stream(file.getChildren()).anyMatch(GradleProjectOpenProcessor::canOpenFile);
     }
