@@ -3,17 +3,22 @@ package com.intellij.tools;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ComboboxWithBrowseButton;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SeparatorWithText;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
+
+import static com.intellij.ui.SimpleTextAttributes.GRAYED_ATTRIBUTES;
+import static com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES;
 
 public abstract class BaseToolSelectComboBox<T extends Tool> extends ComboboxWithBrowseButton {
   public static final Object NONE_TOOL = ObjectUtils.sentinel("NONE_TOOL");
@@ -21,17 +26,30 @@ public abstract class BaseToolSelectComboBox<T extends Tool> extends ComboboxWit
   public BaseToolSelectComboBox() {
     final JComboBox comboBox = getComboBox();
     comboBox.setModel(new CollectionComboBoxModel(getComboBoxElements(), null));
-    comboBox.setRenderer(new ListCellRendererWrapper<Object>() {
+
+    comboBox.setRenderer(new ColoredListCellRenderer<Object>() {
       @Override
-      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof ToolsGroup) {
-          setText(StringUtil.notNullize(((ToolsGroup)value).getName(), ToolsBundle.message("tools.unnamed.group")));
+          SeparatorWithText separator = new SeparatorWithText();
+          separator.setCaption(StringUtil.notNullize(((ToolsGroup)value).getName(), ToolsBundle.message("tools.unnamed.group")));
+          separator.setCaptionCentered(false);
+          return separator;
+        } else {
+          return super.getListCellRendererComponent(list, value, index, selected, hasFocus);
+        }
+      }
+
+      @Override
+      protected void customizeCellRenderer(@NotNull JList<?> list, Object value, int index, boolean selected, boolean hasFocus) {
+        if (value instanceof ToolsGroup) {
+          // do nothing - see getListCellRendererComponent()
         }
         else if (value instanceof Tool) {
-          setText("  " + StringUtil.notNullize(((Tool)value).getName()));
+          append(StringUtil.notNullize(((Tool)value).getName()), ((Tool)value).isEnabled() ? REGULAR_ATTRIBUTES : GRAYED_ATTRIBUTES);
         }
         else {
-          setText(ToolsBundle.message("tools.list.item.none"));
+          append(ToolsBundle.message("tools.list.item.none"));
         }
       }
     });
