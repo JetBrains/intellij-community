@@ -194,24 +194,28 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
       @Override
       public void fileTypesChanged(@NotNull final FileTypeEvent event) {
-        final Map<FileType, Set<String>> oldExtensions = myTypeToExtensionMap;
+        final Map<FileType, Set<String>> oldTypeToExtensionsMap = myTypeToExtensionMap;
         myTypeToExtensionMap = null;
-        if (oldExtensions != null) {
-          final Map<FileType, Set<String>> newExtensions = new THashMap<>();
+        if (oldTypeToExtensionsMap != null) {
+          final Map<FileType, Set<String>> newTypeToExtensionsMap = new THashMap<>();
           for (FileType type : myFileTypeManager.getRegisteredFileTypes()) {
-            newExtensions.put(type, getExtensions(type));
+            newTypeToExtensionsMap.put(type, getExtensions(type));
           }
           // we are interested only in extension changes or removals.
           // addition of an extension is handled separately by RootsChanged event
-          if (!newExtensions.keySet().containsAll(oldExtensions.keySet())) {
-            rebuildAllIndices();
+          if (!newTypeToExtensionsMap.keySet().containsAll(oldTypeToExtensionsMap.keySet())) {
+            Set<FileType> removedFileTypes = new HashSet<>(oldTypeToExtensionsMap.keySet());
+            removedFileTypes.removeAll(newTypeToExtensionsMap.keySet());
+            rebuildAllIndices("The following file types were removed/are no longer associated: " + removedFileTypes);
             return;
           }
-          for (Map.Entry<FileType, Set<String>> entry : oldExtensions.entrySet()) {
+          for (Map.Entry<FileType, Set<String>> entry : oldTypeToExtensionsMap.entrySet()) {
             FileType fileType = entry.getKey();
             Set<String> strings = entry.getValue();
-            if (!newExtensions.get(fileType).containsAll(strings)) {
-              rebuildAllIndices();
+            if (!newTypeToExtensionsMap.get(fileType).containsAll(strings)) {
+              Set<String> removedExtensions = new HashSet<>(strings);
+              removedExtensions.removeAll(newTypeToExtensionsMap.get(fileType));
+              rebuildAllIndices(fileType.getName() + " is no longer associated with extension(s) " + String.join(",", removedExtensions));
               return;
             }
           }
@@ -227,9 +231,9 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
         return set;
       }
 
-      private void rebuildAllIndices() {
+      private void rebuildAllIndices(@NotNull String reason) {
         doClearIndices();
-        scheduleIndexRebuild("File type change");
+        scheduleIndexRebuild("File type change" + ", " + reason);
       }
     });
 
