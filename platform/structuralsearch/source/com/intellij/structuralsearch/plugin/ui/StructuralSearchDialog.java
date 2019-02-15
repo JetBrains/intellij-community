@@ -215,11 +215,15 @@ public class StructuralSearchDialog extends DialogWrapper {
       try {
         final boolean valid = isValid();
         final boolean compiled = isCompiled();
+        final JRootPane component = getRootPane();
+        if (component == null) {
+          return;
+        }
         ApplicationManager.getApplication().invokeLater(() -> {
           myFilterButtonEnabled = compiled;
           setSearchTargets(myConfiguration.getMatchOptions());
           getOKAction().setEnabled(valid);
-        }, ModalityState.stateForComponent(getRootPane()));
+        }, ModalityState.stateForComponent(component));
       }
       catch (ProcessCanceledException e) {
         throw e;
