@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
@@ -33,6 +34,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -51,6 +53,7 @@ import java.util.List;
 import java.util.*;
 
 import static com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus.*;
+import static com.intellij.execution.services.ServiceViewManager.SERVICE_VIEW_MASTER_COMPONENT;
 import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
 import static com.intellij.util.ui.UIUtil.CONTRAST_BORDER_COLOR;
 
@@ -145,6 +148,7 @@ class ServiceView extends JPanel implements Disposable {
     myTree.setLineStyleAngled();
     myTree.setCellRenderer(new MyTreeCellRenderer());
     UIUtil.putClientProperty(myTree, ANIMATION_IN_RENDERER_ALLOWED, true);
+    UIUtil.putClientProperty(myTree, SERVICE_VIEW_MASTER_COMPONENT, Boolean.TRUE);
 
     // listeners
     myTree.addTreeSelectionListener(e -> onSelectionChanged());
@@ -525,10 +529,22 @@ class ServiceView extends JPanel implements Disposable {
   }
 
   public static class ItemToolbarActionGroup extends ActionGroup {
+    private final static AnAction[] FAKE_GROUP = new AnAction[] { new DumbAwareAction(null, null, EmptyIcon.ICON_16) {
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(false);
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+      }
+    }};
+
     @NotNull
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
-      return doGetActions(e, true);
+      AnAction[] actions = doGetActions(e, true);
+      return actions.length != 0 ? actions : FAKE_GROUP;
     }
   }
 
