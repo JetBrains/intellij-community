@@ -171,9 +171,18 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
     List<PsiMethod> methods = Arrays.stream(aClass.getMethods())
       .filter(method -> methodExternalName.equals(PsiFormatUtil.getExternalName(method, false, Integer.MAX_VALUE)))
       .collect(Collectors.toList());
+    if (methods.isEmpty()) {
+      // Sometimes the method is overridden in later JDK versions, and inferred contract is not satisfactory,
+      // thus having explicit subclass contract is desired. Thus we don't fail if the annotated method exists 
+      // in superclass only
+      methods = Arrays.stream(aClass.getAllMethods())
+        .filter(method -> (method.getContainingClass().getQualifiedName()+" "+methodSignature)
+          .equals(PsiFormatUtil.getExternalName(method, false, Integer.MAX_VALUE)))
+        .collect(Collectors.toList());
+    }
     boolean found = !methods.isEmpty();
     if (!found) {
-      List<String> candidates = ContainerUtil.map(aClass.findMethodsByName(methodName, false), method ->
+      List<String> candidates = ContainerUtil.map(aClass.findMethodsByName(methodName, true), method ->
         XmlUtil.escape(PsiFormatUtil.getExternalName(method, false, Integer.MAX_VALUE)));
       String additionalMsg = candidates.isEmpty() ? "" : "\nMaybe you have meant one of these methods instead:\n"+StringUtil.join(candidates, "\n")+"\n";
       fail("This method was not found in class '"+aClass.getQualifiedName()+"':\n"+"'"+methodSignature+"'"+additionalMsg, psiFile, externalName);
