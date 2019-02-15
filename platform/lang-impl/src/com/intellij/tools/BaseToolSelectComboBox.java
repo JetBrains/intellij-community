@@ -25,7 +25,18 @@ public abstract class BaseToolSelectComboBox<T extends Tool> extends ComboboxWit
 
   public BaseToolSelectComboBox() {
     final JComboBox comboBox = getComboBox();
-    comboBox.setModel(new CollectionComboBoxModel(getComboBoxElements(), null));
+
+    //noinspection unchecked
+    comboBox.setModel(new CollectionComboBoxModel(getComboBoxElements(), null) {
+      @Override
+      public void setSelectedItem(@Nullable Object item) {
+        if (item instanceof ToolsGroup) {
+          return;
+        }
+        super.setSelectedItem(item);
+      }
+    });
+
 
     comboBox.setRenderer(new ColoredListCellRenderer<Object>() {
       @Override
