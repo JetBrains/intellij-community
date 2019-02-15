@@ -74,8 +74,8 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
       override fun chooseTestTasks(project: Project,
                                    context: DataContext,
                                    testTasks: Map<TestName, Map<SourcePath, TasksToRun>>,
-                                   perform: Consumer<List<Map<SourcePath, TestTasks>>>) {
-        perform.accept(testTasks.filterKeys(testTasksFilter).values.toList())
+                                   consumer: Consumer<List<Map<SourcePath, TestTasks>>>) {
+        consumer.accept(testTasks.filterKeys(testTasksFilter).values.toList())
       }
     }
   }
