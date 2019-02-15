@@ -596,6 +596,7 @@ bool LoadJVMLibrary()
   // ensure we can find msvcr100.dll which is located in jre/bin directory; jvm.dll depends on it.
   GetCurrentDirectory(sizeof(currentDir),currentDir);
   SetCurrentDirectoryA(binDir.c_str());
+  SetDllDirectoryA(binDir.c_str());
   hJVM = LoadLibraryA(dllName.c_str());
   if (hJVM)
   {
