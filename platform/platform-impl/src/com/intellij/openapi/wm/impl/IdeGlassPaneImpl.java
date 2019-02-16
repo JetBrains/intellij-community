@@ -146,8 +146,9 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
       final boolean pureMouse1Event = (me.getModifiersEx() | button1) == button1;
       if (pureMouse1Event && me.getClickCount() <= 1 && !me.isPopupTrigger()) {
         final Point point = SwingUtilities.convertPoint(meComponent, me.getPoint(), myRootPane.getContentPane());
-        JMenuBar menuBar = myRootPane.getJMenuBar();
-        point.y += menuBar != null ? menuBar.getHeight() : 0;
+        final JMenuBar menuBar = myRootPane.getJMenuBar();
+        if (menuBar != null && menuBar.isVisible())
+          point.y += menuBar.getHeight();
 
         final Component target =
           SwingUtilities.getDeepestComponentAt(myRootPane.getContentPane().getParent(), point.x, point.y);
