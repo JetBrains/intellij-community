@@ -1,13 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.properties;
 
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.containers.BidirectionalMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
 import java.util.List;
 
 class WrappingAccessor extends ExternalStringAccessor<Integer> implements CodeStyleChoiceList {
@@ -18,7 +18,8 @@ class WrappingAccessor extends ExternalStringAccessor<Integer> implements CodeSt
   public static final String VALUE_ON_EVERY_ITEM = "on_every_item";
   public static final String VALUE_SPLIT_INTO_LINES = "split_into_lines";
 
-  public final static List<String> ALL_VALUES = Arrays.asList(VALUE_OFF, VALUE_NORMAL, VALUE_ON_EVERY_ITEM, VALUE_SPLIT_INTO_LINES);
+  public final static List<String> ALL_VALUES =
+    ContainerUtil.immutableList(VALUE_OFF, VALUE_NORMAL, VALUE_ON_EVERY_ITEM, VALUE_SPLIT_INTO_LINES);
 
   static {
     WRAPPING_MAP.put(CommonCodeStyleSettings.DO_NOT_WRAP, VALUE_OFF);
