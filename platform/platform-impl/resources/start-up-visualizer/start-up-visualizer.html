@@ -1,0 +1,47 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Start-up Timeline</title>
+
+  <style type="text/css">
+    body, html {
+      font-family: sans-serif;
+    }
+
+    /*noinspection CssUnusedSymbol*/
+    .vis-item .vis-item-overflow {
+       /* http://visjs.org/examples/timeline/items/rangeOverflowItem.html */
+      overflow: visible !important;
+    }
+  </style>
+
+  <!-- https://www.jsdelivr.com/package/gh/develar/vis?path=dist -->
+  <script src="https://cdn.jsdelivr.net/gh/develar/vis@4.22.0-rc.1/dist/vis-timeline-graph2d.min.js" integrity="sha256-mkIbNWZ05n+SwdvDA++5WZNTa8LzICy1ZerL+wsY7Qo=" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/develar/vis@4.22.0-rc.1/dist/vis-timeline-graph2d.min.css" integrity="sha256-Utsidc/oVhKGTdj4DX0WZ+Ml3ddz8CTAnD8cCppa4Qw=" crossorigin="anonymous">
+</head>
+<body>
+<div>
+  <!--suppress CheckTagEmptyBody -->
+  <textarea id="ijInput" placeholder="Enter the IntelliJ Platform start-up timeline..." autocomplete="off" autofocus="autofocus" cols="64" rows="4"></textarea>
+  <br/>
+  <input id="isUseRealTime" type="checkbox">
+  <label for="isUseRealTime" title="Whether start time is relative to wall-clock time or to zero (00s:00ms)?">Relative to wall-clock time</label>
+  <br/>
+  <br/>
+</div>
+
+<div id="visualization"></div>
+<div id="componentsVisualization"></div>
+
+<script src="input.js"></script>
+<script src="timeline.js"></script>
+<script src="components.js"></script>
+<script type="text/javascript">
+  "use strict"
+
+  const dataListeners = configureInput(document.getElementById("ijInput"))
+  configureTimeline(document.getElementById("visualization"), dataListeners)
+  configureSlowComponentChart(document.getElementById("componentsVisualization"), dataListeners)
+</script>
+</body>
+</html>

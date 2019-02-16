@@ -24,12 +24,14 @@ public final class StartUpMeasurer {
     public static final String CREATE_COMPONENTS_SUFFIX = "components creation";
   }
 
-  private static final long start = System.currentTimeMillis();
+  public static final String COMPONENT_INITIALIZED_INTERNAL_NAME = "_component initialized";
+
+  private static final long startTime = System.currentTimeMillis();
 
   private static final ConcurrentLinkedQueue<Item> items = new ConcurrentLinkedQueue<>();
 
-  public static long getStart() {
-    return start;
+  public static long getStartTime() {
+    return startTime;
   }
 
   @NotNull
@@ -40,6 +42,10 @@ public final class StartUpMeasurer {
   @NotNull
   public static MeasureToken start(@NotNull String name) {
     return new Item(name, null);
+  }
+
+  public static void reportComponentInitialized(@NotNull Class<?> componentClass, long startTime, long endTime) {
+    new Item(COMPONENT_INITIALIZED_INTERNAL_NAME, componentClass.getName(), startTime).end(endTime);
   }
 
   @NotNull
@@ -60,12 +66,17 @@ public final class StartUpMeasurer {
     private final String name;
     private String description;
 
-    private final long start = System.currentTimeMillis();
-    long end;
+    private final long start;
+    private long end;
 
-    private Item(@NotNull String name, @Nullable String description) {
+    private Item(@Nullable String name, @Nullable String description) {
+      this(name, description, System.currentTimeMillis());
+    }
+
+    private Item(@Nullable String name, @Nullable String description, long start) {
       this.name = name;
       this.description = StringUtil.nullize(description);
+      this.start = start;
     }
 
     @NotNull
@@ -92,6 +103,11 @@ public final class StartUpMeasurer {
         this.description = description;
       }
       end = System.currentTimeMillis();
+      items.add(this);
+    }
+
+    void end(long end) {
+      this.end = end;
       items.add(this);
     }
 

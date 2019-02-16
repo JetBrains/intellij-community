@@ -1457,11 +1457,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return Restarter.isSupported();
   }
 
-  @Override
-  protected boolean logSlowComponents() {
-    return super.logSlowComponents() || ApplicationInfoImpl.getShadowInstance().isEAP();
-  }
-
   @TestOnly
   public void setDisposeInProgress(boolean disposeInProgress) {
     myDisposeInProgress = disposeInProgress;

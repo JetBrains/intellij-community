@@ -8,7 +8,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ExtensionAreas;
@@ -369,11 +368,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
                          : isDefault() ? "" : " '" + getPresentableUrl() + "'") +
            (isDefault() ? " (Default)" : "") +
            " " + getName();
-  }
-
-  @Override
-  protected boolean logSlowComponents() {
-    return super.logSlowComponents() || ApplicationInfoImpl.getShadowInstance().isEAP();
   }
 
   @Nullable

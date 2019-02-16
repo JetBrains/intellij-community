@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
@@ -382,10 +383,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return component.getClass().getName();
   }
 
-  protected boolean logSlowComponents() {
-    return LOG.isDebugEnabled();
-  }
-
   private void registerComponents(@NotNull ComponentConfig config) {
     ClassLoader loader = config.getClassLoader();
     try {
@@ -478,7 +475,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
             return instance;
           }
 
-          long startTime = System.nanoTime();
+          long startTime = System.currentTimeMillis();
 
           instance = super.getComponentInstance(picoContainer);
 
@@ -507,9 +504,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
               ((BaseComponent)instance).initComponent();
             }
 
-            long ms = (System.nanoTime() - startTime) / 1000000;
-            if (ms > 10 && logSlowComponents()) {
-              LOG.info(instance.getClass().getName() + " initialized in " + ms + " ms");
+            long endTime = System.currentTimeMillis();
+            if ((endTime - startTime) > 10 && (LOG.isDebugEnabled() || ApplicationInfoImpl.getShadowInstance().isEAP())) {
+              StartUpMeasurer.reportComponentInitialized(instance.getClass(), startTime, endTime);
             }
           }
           finally {
