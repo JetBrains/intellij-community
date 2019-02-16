@@ -288,8 +288,6 @@ class CommunityRepositoryModules {
       withModule("android.sdktools.analyzer", "sdk-tools.jar")
       withModule("android.sdktools.dvlib", "sdk-tools.jar")
       withModule("android.sdktools.draw9patch", "sdk-tools.jar")
-      withModule("android.sdktools.instant-run-client", "sdk-tools.jar")
-      withModule("android.sdktools.instant-run-common", "sdk-tools.jar")
       withModule("android.sdktools.ninepatch", "sdk-tools.jar")
       withModule("android.sdktools.perflib", "sdk-tools.jar")
       withModule("android.sdktools.layoutinspector", "sdk-tools.jar")
