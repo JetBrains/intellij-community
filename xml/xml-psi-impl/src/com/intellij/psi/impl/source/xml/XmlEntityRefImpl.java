@@ -128,6 +128,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
               final String declName = entityDecl.getName();
               if (StringUtil.equals(declName, entityName)) {
                 result[0] = entityDecl;
+                deps.add(entityDecl.getContainingFile());
                 return false;
               }
             }

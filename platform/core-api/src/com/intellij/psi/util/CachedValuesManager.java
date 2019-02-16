@@ -58,12 +58,11 @@ public abstract class CachedValuesManager {
   public abstract <T,P> ParameterizedCachedValue<T,P> createParameterizedCachedValue(@NotNull ParameterizedCachedValueProvider<T,P> provider, boolean trackValue);
 
   /**
-   * Rarely needed because it tracks the return value as a dependency.
-   * @return a CachedValue like in {@link #createCachedValue(CachedValueProvider, boolean)}, with trackable return value.
+   * Creates a new CachedValue instance with the given provider.
    */
   @NotNull
   public <T> CachedValue<T> createCachedValue(@NotNull CachedValueProvider<T> provider) {
-    return createCachedValue(provider, true);
+    return createCachedValue(provider, false);
   }
 
   public <T, P> T getParameterizedCachedValue(@NotNull UserDataHolder dataHolder,
