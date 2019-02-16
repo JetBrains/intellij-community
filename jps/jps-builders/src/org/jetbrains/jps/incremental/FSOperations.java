@@ -254,6 +254,21 @@ public class FSOperations {
 
     Files.walkFileTree(file.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
       @Override
+      public FileVisitResult visitFileFailed(Path file, IOException e) throws IOException {
+        if (e instanceof FileSystemLoopException) {
+          LOG.info(e);
+          // in some cases (e.g. Google Drive File Stream) loop detection for directories works incorrectly
+          // fallback: try to traverse in the old IO-way
+          final boolean marked = traverseRecursivelyIO(context, rd, round, file.toFile(), tsStorage, forceDirty, currentFiles, filter);
+          if (!marked) {
+            allFilesMarked.set(Boolean.FALSE);
+          }
+          return FileVisitResult.SKIP_SUBTREE;
+        }
+        return super.visitFileFailed(file, e);
+      }
+
+      @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
         return rootIndex.isDirectoryAccepted(dir.toFile(), rd)? FileVisitResult.CONTINUE : FileVisitResult.SKIP_SUBTREE;
       }
@@ -271,7 +286,7 @@ public class FSOperations {
           boolean markDirty = forceDirty;
           if (!markDirty) {
             // for symlinks the attr structure reflects the symlink's timestamp and not symlink's target timestamp
-            markDirty = tsStorage.getStamp(_file, rd.getTarget()) != attrs.lastModifiedTime().toMillis();
+            markDirty = tsStorage.getStamp(_file, rd.getTarget()) != (attrs.isRegularFile()? attrs.lastModifiedTime().toMillis() : lastModified(f));;
           }
           if (markDirty) {
             // if it is full project rebuild, all storages are already completely cleared;
@@ -292,6 +307,49 @@ public class FSOperations {
     });
 
     return allFilesMarked.get();
+  }
+
+  private static boolean traverseRecursivelyIO(CompileContext context,
+                                             final BuildRootDescriptor rd,
+                                             final CompilationRound round,
+                                             final File file,
+                                             @NotNull final Timestamps tsStorage,
+                                             final boolean forceDirty,
+                                             @Nullable Set<File> currentFiles, @Nullable FileFilter filter) throws IOException {
+    BuildRootIndex rootIndex = context.getProjectDescriptor().getBuildRootIndex();
+    final File[] children = file.listFiles();
+    if (children != null) { // is directory
+      boolean allMarkedDirty = true;
+      if (children.length > 0 && rootIndex.isDirectoryAccepted(file, rd)) {
+        for (File child : children) {
+          allMarkedDirty &= traverseRecursivelyIO(context, rd, round, child, tsStorage, forceDirty, currentFiles, filter);
+        }
+      }
+      return allMarkedDirty;
+    }
+    // is file
+
+    if (!rootIndex.isFileAccepted(file, rd)) {
+      return true;
+    }
+    if (filter != null && !filter.accept(file)) {
+      return false;
+    }
+
+    boolean markDirty = forceDirty;
+    if (!markDirty) {
+      markDirty = tsStorage.getStamp(file, rd.getTarget()) != lastModified(file);
+    }
+    if (markDirty) {
+      // if it is full project rebuild, all storages are already completely cleared;
+      // so passing null because there is no need to access the storage to clear non-existing data
+      final Timestamps marker = context.isProjectRebuild() ? null : tsStorage;
+      context.getProjectDescriptor().fsState.markDirty(context, round, file, rd, marker, false);
+    }
+    if (currentFiles != null) {
+      currentFiles.add(file);
+    }
+    return markDirty;
   }
 
   public static void pruneEmptyDirs(CompileContext context, @Nullable final Set<File> dirsToDelete) {
