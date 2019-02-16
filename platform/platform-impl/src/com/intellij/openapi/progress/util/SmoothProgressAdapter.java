@@ -72,6 +72,9 @@ public class SmoothProgressAdapter extends AbstractProgressIndicatorExBase imple
       setModalityProgress(this);
     }
     ProgressManager.assertNotCircular(original);
+    if (original.isRunning() || original.isCanceled()) {
+      throw new IllegalArgumentException("Original indicator must be not started and not cancelled: "+original);
+    }
   }
 
   @NotNull
@@ -137,26 +140,24 @@ public class SmoothProgressAdapter extends AbstractProgressIndicatorExBase imple
   @Override
   public synchronized void stop() {
     if (myOriginal.isRunning()) {
+      myOriginalStarted = true;
       myOriginal.stop();
     }
-    else {
-      myStartupAlarm.cancel(false);
+    myStartupAlarm.cancel(false);
 
-      if (!myOriginalStarted && myOriginal instanceof Disposable) {
-        // dispose original because start & stop were not called so original progress might not have released its resources 
-        Disposer.dispose(((Disposable)myOriginal));
-      }
-    }
-
-    // needed only for correct assertion of !progress.isRunning() in ApplicationImpl.runProcessWithProgressSynchroniously
+    // needed only for correct assertion of !progress.isRunning() in ApplicationImpl.runProcessWithProgressSynchronously
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
 
     SwingUtilities.invokeLater(
       () -> {
+        if (!myOriginalStarted && myOriginal instanceof Disposable) {
+          // dispose original because start & stop were not called so original progress might not have released its resources
+          Disposer.dispose((Disposable)myOriginal);
+        }
+
         semaphore.waitFor();
         if (myDialog != null){
-          //System.out.println("myDialog.destroyProcess()");
           myDialog.close(DialogWrapper.OK_EXIT_CODE);
           myDialog = null;
         }
