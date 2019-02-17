@@ -173,14 +173,11 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable, Ba
       }, ModalityState.any())
 
       if (saveAlarm.isEmpty) {
-        break
+        return
       }
 
       Thread.sleep(5)
     }
-
-    // just to be sure
-    saveAlarm.waitForAllExecuted(10, TimeUnit.SECONDS)
   }
 
   @CalledInAwt
