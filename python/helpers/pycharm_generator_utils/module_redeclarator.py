@@ -1,3 +1,4 @@
+import generator3
 from pycharm_generator_utils.util_methods import *
 from pycharm_generator_utils.util_methods import copy
 
@@ -69,7 +70,7 @@ class ModuleRedeclarator(object):
         @param sdk_dir: path to interpreter specific skeletons directory
         @param indent_size: amount of space characters per indent
         """
-        self.test_mode = TEST_MODE_FLAG in os.environ
+        self.test_mode = ENV_TEST_MODE_FLAG in os.environ
         self.module = module
         self.qname = mod_qname
         self.cache_dir = cache_dir
@@ -797,7 +798,7 @@ class ModuleRedeclarator(object):
             filename = getattr(self.module, "__file__", BUILT_IN_HEADER)
         if not self.test_mode:
             out(0, "# from %s" % filename)  # line 3
-        out(0, "# by generator %s" % (VERSION if not self.test_mode else 'test'))  # line 4
+        out(0, "# by generator %s" % generator3.version())  # line 4
         if p_name == BUILTIN_MOD_NAME and version[0] == 2 and version[1] >= 6:
             out(0, "from __future__ import print_function")
         out_doc_attr(out, self.module, 0)
