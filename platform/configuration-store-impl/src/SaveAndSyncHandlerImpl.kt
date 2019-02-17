@@ -187,13 +187,13 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable, Ba
   override fun saveSettingsUnderModalProgress(componentManager: ComponentManager, isSaveAppAlso: Boolean): Boolean {
     if (!ApplicationManager.getApplication().isDispatchThread) {
       throw IllegalStateException(
-        "Method intended to be called only in EDT because otherwise wrapping into modal progress task is not required" +
+        "saveSettingsUnderModalProgress is intended to be called only in EDT because otherwise wrapping into modal progress task is not required" +
         " and `saveSettings` should be called directly")
     }
 
     var isSavedSuccessfully = true
     runInSaveOnFrameDeactivationDisabledMode {
-      ProgressManager.getInstance().run(object : Task.Modal(componentManager as? Project, "Saving" + (if (componentManager is Application) "Application" else "Project"), /* canBeCancelled = */ false) {
+      ProgressManager.getInstance().run(object : Task.Modal(componentManager as? Project, "Saving " + (if (componentManager is Application) "Application" else "Project"), /* canBeCancelled = */ false) {
         override fun run(indicator: ProgressIndicator) {
           if (project != null) {
             synchronized(saveQueue) {
