@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout.migLayout
 
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.ui.components.noteComponent
@@ -13,7 +14,6 @@ import java.awt.Component
 import java.awt.Container
 import javax.swing.ButtonGroup
 import javax.swing.JComponent
-import javax.swing.JDialog
 import javax.swing.JLabel
 
 internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagic: Boolean = true) : LayoutBuilderImpl {
@@ -110,18 +110,12 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
       override fun layoutContainer(parent: Container) {
         if (!isLayoutInsetsAdjusted) {
           isLayoutInsetsAdjusted = true
-
-          var topParent = parent.parent
-          while (topParent != null) {
-            if (topParent is JDialog) {
-              val topBottom = createUnitValue(spacing.dialogTopBottom, false)
-              val leftRight = createUnitValue(spacing.dialogLeftRight, true)
-              // since we compensate visual padding, child components should be not clipped, so, we do not use content pane DialogWrapper border (returns null),
-              // but instead set insets to our content panel (so, child components are not clipped)
-              lc.insets = arrayOf(topBottom, leftRight, topBottom, leftRight)
-              break
-            }
-            topParent = topParent.parent
+          if (container.getClientProperty(DialogWrapper.DIALOG_CONTENT_PANEL_PROPERTY) != null) {
+            val topBottom = createUnitValue(spacing.dialogTopBottom, false)
+            val leftRight = createUnitValue(spacing.dialogLeftRight, true)
+            // since we compensate visual padding, child components should be not clipped, so, we do not use content pane DialogWrapper border (returns null),
+            // but instead set insets to our content panel (so, child components are not clipped)
+            lc.insets = arrayOf(topBottom, leftRight, topBottom, leftRight)
           }
         }
 
