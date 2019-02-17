@@ -9,9 +9,9 @@ from contextlib import contextmanager
 from unittest import TestCase
 
 import generator3
-from generator3 import (
-    CONTENT_INDEPENDENT_HASHES_FLAG,
+from pycharm_generator_utils.constants import (
     TEST_MODE_FLAG,
+    CONTENT_INDEPENDENT_HASHES_FLAG,
 )
 from pycharm_generator_utils.util_methods import (
     copy,

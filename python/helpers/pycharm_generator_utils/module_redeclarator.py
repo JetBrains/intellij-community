@@ -69,7 +69,7 @@ class ModuleRedeclarator(object):
         @param sdk_dir: path to interpreter specific skeletons directory
         @param indent_size: amount of space characters per indent
         """
-        self.test_mode = 'GENERATOR3_TEST_MODE' in os.environ
+        self.test_mode = TEST_MODE_FLAG in os.environ
         self.module = module
         self.qname = mod_qname
         self.cache_dir = cache_dir
@@ -307,7 +307,7 @@ class ModuleRedeclarator(object):
                             import traceback
                             traceback.print_exc(file=sys.stderr)
                             return
-                        if 'GENERATOR3_TEST_MODE' not in os.environ:
+                        if not self.test_mode:
                             real_value = cleanup(representation)
                         else:
                             # Don't rely on repr() output in tests, as it may contain memory layout dependent id
