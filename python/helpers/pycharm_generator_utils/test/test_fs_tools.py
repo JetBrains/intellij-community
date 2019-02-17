@@ -1,4 +1,5 @@
 import errno
+import logging
 import os
 import shutil
 import subprocess
@@ -10,8 +11,10 @@ from unittest import TestCase
 
 import generator3
 from pycharm_generator_utils.constants import (
-    TEST_MODE_FLAG,
-    CONTENT_INDEPENDENT_HASHES_FLAG,
+    ENV_TEST_MODE_FLAG,
+    ENV_CONTENT_INDEPENDENT_HASHES_FLAG,
+    ENV_VERSION,
+    ENV_REQUIRED_GEN_VERSION_FILE,
 )
 from pycharm_generator_utils.util_methods import (
     copy,
@@ -21,9 +24,13 @@ from pycharm_generator_utils.util_methods import (
     mkdir,
 )
 
+logging.basicConfig(level=logging.DEBUG)
+
 _test_dir = os.path.dirname(__file__)
 _test_data_root_dir = os.path.join(_test_dir, 'data')
-_override_test_data = True
+_override_test_data = False
+_run_generator_in_separate_process = False
+_log = logging.getLogger(__name__)
 
 
 class GeneratorTestCase(TestCase):
@@ -31,10 +38,8 @@ class GeneratorTestCase(TestCase):
 
     def setUp(self):
         self.temp_dir = tempfile.mkdtemp()
-        os.environ[TEST_MODE_FLAG] = 'True'
 
     def tearDown(self):
-        del os.environ[TEST_MODE_FLAG]
         shutil.rmtree(self.temp_dir)
 
     @property
@@ -168,31 +173,50 @@ class SkeletonCachingTest(GeneratorTestCase):
     def find_binary_subdir(self, subdir):
         return os.path.join(self.binaries_dir, subdir)
 
-    def run_generator(self, mod_qname, mod_path=None, fake_hashes=False, extra_syspath_entry=None):
+    def run_generator(self, mod_qname, mod_path=None,
+                      fake_hashes=False,
+                      extra_syspath_entry=None,
+                      gen_version=None,
+                      required_gen_version_file_path=None):
         output_dir = os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR, self.SDK_SKELETONS_DIR)
         if extra_syspath_entry is None:
             extra_syspath_entry = self.test_data_dir
 
-        args = [
-            sys.executable,
-            os.path.abspath(generator3.__file__),
-            '-d', output_dir,
-            '-s', extra_syspath_entry,
-            mod_qname
-        ]
-
         if mod_path is None:
             mod_path = self.imported_module_path(mod_qname, extra_syspath_entry)
-        if mod_path:
-            args.append(mod_path)
 
         env = {
-            TEST_MODE_FLAG: 'True',
+            ENV_TEST_MODE_FLAG: 'True',
+            ENV_VERSION: gen_version or 'test',
         }
         if fake_hashes:
-            env[CONTENT_INDEPENDENT_HASHES_FLAG] = 'True'
+            env[ENV_CONTENT_INDEPENDENT_HASHES_FLAG] = 'True'
+        if required_gen_version_file_path:
+            env[ENV_REQUIRED_GEN_VERSION_FILE] = required_gen_version_file_path
 
-        subprocess.call(args, env=env)
+        if _run_generator_in_separate_process:
+            args = [
+                sys.executable,
+                os.path.abspath(generator3.__file__),
+                '-d', output_dir,
+                '-s', extra_syspath_entry,
+                mod_qname
+            ]
+            if mod_path:
+                args.append(mod_path)
+
+            _log.info('Launching generator3 as: ' + ' '.join(args))
+            subprocess.call(args, env=env)
+        else:
+            os.environ.update(env)
+            sys.path.append(extra_syspath_entry)
+            try:
+                generator3.process_one(mod_qname, mod_path, mod_qname in sys.builtin_module_names, output_dir)
+            finally:
+                sys.path.pop()
+                for name in env:
+                    del os.environ[name]
+
         return mod_path
 
     @staticmethod
@@ -228,12 +252,22 @@ class SkeletonCachingTest(GeneratorTestCase):
             mod.py
         """.format(hash=generator3.module_hash('mod', path)))
 
-    def test_outdated_stub_invalidation(self):
+    def test_skeleton_regenerated_for_changed_module(self):
         self.check_generator_output('mod', mod_location=self.find_binary_subdir('versions/v2'))
 
-    def check_generator_output(self, mod_name, mod_path=None, mod_location=None):
+    def test_skeleton_regenerated_for_updated_generator_version(self):
+        self.check_generator_output('mod', mod_location=self.binaries_dir, gen_version='0.2', custom_required_gen=True)
+
+    def test_skeleton_not_regenerated_for_updated_generator_version(self):
+        pass
+
+    def check_generator_output(self, mod_name, mod_location=None, custom_required_gen=False, **kwargs):
+        kwargs.setdefault('fake_hashes', 'True')
+        if custom_required_gen:
+            kwargs['required_gen_version_file_path'] = os.path.join(self.test_data_dir, 'required_gen_version')
+
         with self.comparing_dirs(tmp_subdir=self.PYTHON_STUBS_DIR):
-            self.run_generator(mod_name, mod_path, fake_hashes=True, extra_syspath_entry=mod_location)
+            self.run_generator(mod_name, extra_syspath_entry=mod_location, **kwargs)
 
     def assertDirLayoutEquals(self, dir_path, expected_layout):
         def format_dir(dir_path, indent=''):

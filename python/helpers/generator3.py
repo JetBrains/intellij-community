@@ -12,6 +12,17 @@ from pycharm_generator_utils.util_methods import *
 debug_mode = True
 quiet = False
 
+
+# TODO move to property of Generator3 as soon as tests finished
+def version():
+    return os.environ.get(ENV_VERSION, VERSION)
+
+
+# TODO move to property of Generator3 as soon as tests finished
+def required_gen_version_file_path():
+    return os.environ.get(ENV_REQUIRED_GEN_VERSION_FILE, os.path.join(_helpers_dir, 'required_gen_version'))
+
+
 _helpers_dir = os.path.dirname(__file__)
 
 
@@ -307,7 +318,7 @@ def build_cache_dir_path(subdir, mod_qname, mod_path):
 def module_hash(mod_qname, mod_path):
     # Hash the content of a physical module
     if mod_path:
-        if os.environ.get(CONTENT_INDEPENDENT_HASHES_FLAG) == 'True':
+        if os.environ.get(ENV_CONTENT_INDEPENDENT_HASHES_FLAG) == 'True':
             prefix = 'sha256:' + mod_qname
             version = getattr(__import__(mod_qname), '__version__', None)
             if version:
@@ -346,6 +357,10 @@ def should_update_skeleton(base_dir, mod_qname):
     mod_cache_pkg = os.path.join(mod_cache_base, '__init__.py')
     mod_cache_file = mod_cache_base + '.py'
     required_version = read_required_version(mod_qname)
+    # Assume that we can't specify not-yet-existing version of the generator in required_gen_version file
+    # cur_version = version()
+    # if cur_version != 'test':
+    #     assert version_to_tuple(cur_version) >= required_version
     for path in (mod_cache_pkg, mod_cache_file):
         with ignored_os_errors(errno.ENOENT):
             with fopen(path, 'r') as f:
@@ -357,7 +372,7 @@ def should_update_skeleton(base_dir, mod_qname):
 
 def read_required_gen_version_file():
     result = {}
-    with fopen(os.path.join(_helpers_dir, 'required_gen_version'), 'r') as f:
+    with fopen(required_gen_version_file_path(), 'r') as f:
         for line in f:
             if not line or line.startswith('#'):
                 continue
@@ -548,7 +563,7 @@ if __name__ == "__main__":
         if len(args) > 0:
             report("Expected no args with -L, got %d args", len(args))
             sys.exit(1)
-        say(VERSION)
+        say(version())
         results = list(list_binaries(sys.path))
         results.sort()
         for name, path, size, last_modified in results:
@@ -559,7 +574,7 @@ if __name__ == "__main__":
         if len(args) > 0:
             report("Expected no args with -S, got %d args", len(args))
             sys.exit(1)
-        say(VERSION)
+        say(version())
         list_sources(sys.path)
         sys.exit(0)
 
