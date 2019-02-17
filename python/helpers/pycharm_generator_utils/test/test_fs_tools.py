@@ -1,6 +1,5 @@
 import errno
 import os
-import re
 import shutil
 import subprocess
 import sys
@@ -10,17 +9,21 @@ from contextlib import contextmanager
 from unittest import TestCase
 
 import generator3
-from generator3 import TEST_MODE_FLAG, CONTENT_INDEPENDENT_HASHES_FLAG
+from generator3 import (
+    CONTENT_INDEPENDENT_HASHES_FLAG,
+    TEST_MODE_FLAG,
+)
 from pycharm_generator_utils.util_methods import (
+    copy,
     copy_merging_packages,
+    copy_skeletons,
     delete,
     mkdir,
-    copy_skeletons,
-    copy,
 )
 
 _test_dir = os.path.dirname(__file__)
 _test_data_root_dir = os.path.join(_test_dir, 'data')
+_override_test_data = True
 
 
 class GeneratorTestCase(TestCase):
@@ -66,8 +69,14 @@ class GeneratorTestCase(TestCase):
                     actual_child_content = f.read()
                 with open(expected_child) as f:
                     expected_child_content = f.read()
-                self.assertMultiLineEqual(expected_child_content, actual_child_content,
-                                          'Different content at {!r}'.format(actual_child))
+                try:
+                    self.assertMultiLineEqual(expected_child_content, actual_child_content,
+                                              'Different content at {!r}'.format(actual_child))
+                except AssertionError:
+                    if _override_test_data:
+                        with open(expected_child, 'w') as f:
+                            f.write(actual_child_content)
+                    raise
             else:
                 raise AssertionError(
                     '%r != %r' % (actual_child, expected_child))
