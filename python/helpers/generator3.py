@@ -7,9 +7,6 @@ from pycharm_generator_utils.clr_tools import *
 from pycharm_generator_utils.module_redeclarator import *
 from pycharm_generator_utils.util_methods import *
 
-TEST_MODE_FLAG = 'GENERATOR3_TEST_MODE'
-CONTENT_INDEPENDENT_HASHES_FLAG = 'GENERATOR3_CONTENT_INDEPENDENT_HASHES'
-
 # TODO: Move all CLR-specific functions to clr_tools
 
 debug_mode = True
