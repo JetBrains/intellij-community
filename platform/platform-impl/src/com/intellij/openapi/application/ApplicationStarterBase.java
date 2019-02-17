@@ -79,8 +79,14 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
 
   @Override
   public void main(String[] args) {
+    int exitCode = 0;
     try {
-      processCommand(args, null);
+      Future<? extends CliResult> commandFuture = processCommand(args, null);
+      CliResult result = commandFuture.get();
+      if (result.getMessage() != null) {
+        System.out.println(result.getMessage());
+      }
+      exitCode = result.getReturnCode();
     }
     catch (Exception e) {
       e.printStackTrace();
@@ -94,7 +100,7 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
       saveAll();
     }
 
-    System.exit(0);
+    System.exit(exitCode);
   }
 
   @Override
