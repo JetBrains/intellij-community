@@ -838,7 +838,7 @@ int CallCommandLineProcessor(const std::wstring& curDir, const std::wstring& arg
   jclass processorClass = env->FindClass(processorClassName.c_str());
   if (processorClass)
   {
-    jmethodID processMethodID = env->GetStaticMethodID(processorClass, "processWindowsLauncherCommandLine", "(Ljava/lang/String;[Ljava/lang/String;)V");
+    jmethodID processMethodID = env->GetStaticMethodID(processorClass, "processWindowsLauncherCommandLine", "(Ljava/lang/String;[Ljava/lang/String;)I");
     if (processMethodID)
     {
       jstring jCurDir = env->NewString((const jchar *)curDir.c_str(), curDir.size());
@@ -871,12 +871,12 @@ DWORD WINAPI SingleInstanceThread(LPVOID args)
     {
       int second_pos = command.find('\n', pos + 1);
       std::wstring curDir = command.substr(0, pos);
-      std::wstring args = command.substr(pos + 1, second_pos);
+      std::wstring args = command.substr(pos + 1, second_pos - pos - 1);
       std::wstring response_id = command.substr(second_pos + 1);
 
       int exitCode = CallCommandLineProcessor(curDir, args);
       
-      std::string message = std::to_string(exitCode);
+      std::string message = std::to_string(static_cast<long long>(exitCode));
       std::string resultFileName = std::string("IntelliJLauncherResultMapping.") + std::string(response_id.begin(), response_id.end());
       HANDLE hResultFileMapping = OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, resultFileName.c_str());
       if (hResultFileMapping)
@@ -906,7 +906,7 @@ void SendCommandLineToFirstInstance(int response_id)
 {
   wchar_t curDir[_MAX_PATH];
   GetCurrentDirectoryW(_MAX_PATH - 1, curDir);
-  std::string resultFileName = std::string("IntelliJLauncherResultMapping.") + std::to_string(response_id);
+  std::string resultFileName = std::to_string(static_cast<long long>(response_id));
   
   std::wstring command(curDir);
   command += _T("\n");
@@ -955,7 +955,7 @@ int CheckSingleInstance()
     while (true)
     {
       response_id = rand();
-      resultFileName = std::string("IntelliJLauncherResultMapping.") + std::to_string(response_id);
+      resultFileName = std::string("IntelliJLauncherResultMapping.") + std::to_string(static_cast<long long>(response_id));
       
       if (!OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, resultFileName.c_str()))
         break;
@@ -969,7 +969,7 @@ int CheckSingleInstance()
     CloseHandle(hEvent);
     
     // Lock wait for the response
-    std::string responseEventName = std::string("IntelliJLauncherEvent.") + std::to_string(response_id);
+    std::string responseEventName = std::string("IntelliJLauncherEvent.") + std::to_string(static_cast<long long>(response_id));
     HANDLE hResponseEvent = CreateEventA(NULL, FALSE, FALSE, responseEventName.c_str());
     WaitForSingleObject(hResponseEvent, INFINITE);
     CloseHandle(hResponseEvent);
