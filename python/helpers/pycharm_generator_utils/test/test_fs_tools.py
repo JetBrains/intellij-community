@@ -209,14 +209,14 @@ class SkeletonCachingTest(GeneratorTestCase):
         return None
 
     def test_basic_layout_for_builtin_module(self):
-        self.run_generator(mod_qname='sys')
+        self.run_generator(mod_qname='_ast')
         self.assertDirLayoutEquals(os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR), """
         cache/
             {hash}/
-                sys.py
+                _ast.py
         sdk_skeletons/
-            sys.py
-        """.format(hash=generator3.module_hash('sys', None)))
+            _ast.py
+        """.format(hash=generator3.module_hash('_ast', None)))
 
     def test_basic_layout_for_physical_binary_module(self):
         path = self.run_generator(mod_qname='mod', extra_syspath_entry=self.binaries_dir)
