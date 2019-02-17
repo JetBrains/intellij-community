@@ -38,12 +38,12 @@ class StoreUtil private constructor() {
     @JvmOverloads
     @JvmStatic
     @CalledInAny
-    fun saveSettings(componentManager: ComponentManager, isForceSavingAllSettings: Boolean = false) {
+    fun saveSettings(componentManager: ComponentManager, forceSavingAllSettings: Boolean = false) {
       if (componentManager is Application) {
         SaveAndSyncHandler.getInstance().cancelScheduledSave()
       }
       runBlocking {
-        com.intellij.configurationStore.saveSettings(componentManager, isForceSavingAllSettings)
+        com.intellij.configurationStore.saveSettings(componentManager, forceSavingAllSettings)
       }
     }
 
@@ -62,25 +62,25 @@ class StoreUtil private constructor() {
      * Save all unsaved documents, project and application settings. Must be called from EDT.
      * Use with care because it blocks EDT. Any new usage should be reviewed.
      *
-     * @param isForceSavingAllSettings Whether to force save non-roamable component configuration.
+     * @param forceSavingAllSettings Whether to force save non-roamable component configuration.
      */
     @CalledInAwt
     @JvmStatic
-    fun saveDocumentsAndProjectsAndApp(isForceSavingAllSettings: Boolean) {
+    fun saveDocumentsAndProjectsAndApp(forceSavingAllSettings: Boolean) {
       SaveAndSyncHandler.getInstance().cancelScheduledSave()
 
       FileDocumentManager.getInstance().saveAllDocuments()
       runBlocking {
-        saveProjectsAndApp(isForceSavingAllSettings)
+        saveProjectsAndApp(forceSavingAllSettings)
       }
     }
   }
 }
 
 @CalledInAny
-suspend fun saveSettings(componentManager: ComponentManager, isForceSavingAllSettings: Boolean = false): Boolean {
+suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSettings: Boolean = false): Boolean {
   try {
-    componentManager.stateStore.save(isForceSavingAllSettings = isForceSavingAllSettings)
+    componentManager.stateStore.save(forceSavingAllSettings = forceSavingAllSettings)
     return true
   }
   catch (e: UnresolvedReadOnlyFilesException) {
@@ -140,19 +140,19 @@ interface ConfigurationStorageReloader {
 }
 
 /**
- * @param isForceSavingAllSettings Whether to force save non-roamable component configuration.
+ * @param forceSavingAllSettings Whether to force save non-roamable component configuration.
  */
 @CalledInAny
-suspend fun saveProjectsAndApp(isForceSavingAllSettings: Boolean, onlyProject: Project? = null) {
+suspend fun saveProjectsAndApp(forceSavingAllSettings: Boolean, onlyProject: Project? = null) {
   (ProjectManager.getInstance() as? ConfigurationStorageReloader)?.reloadChangedStorageFiles()
 
   val start = System.currentTimeMillis()
-  saveSettings(ApplicationManager.getApplication(), isForceSavingAllSettings)
+  saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings)
   if (onlyProject == null) {
-    saveAllProjects(isForceSavingAllSettings)
+    saveAllProjects(forceSavingAllSettings)
   }
   else {
-    saveSettings(onlyProject, isForceSavingAllSettings = true)
+    saveSettings(onlyProject, forceSavingAllSettings = true)
   }
 
   val duration = System.currentTimeMillis() - start
@@ -160,10 +160,10 @@ suspend fun saveProjectsAndApp(isForceSavingAllSettings: Boolean, onlyProject: P
 }
 
 @CalledInAny
-private suspend fun saveAllProjects(isForceSavingAllSettings: Boolean) {
+private suspend fun saveAllProjects(forceSavingAllSettings: Boolean) {
   for (project in ProjectManager.getInstance().openProjects) {
     if (!project.isDisposed) {
-      saveSettings(project, isForceSavingAllSettings)
+      saveSettings(project, forceSavingAllSettings)
     }
   }
 }

@@ -50,9 +50,9 @@ interface StorageCreator {
  * Intended for Java clients only. Do not use in Kotlin.
  */
 @JvmOverloads
-fun saveComponentManager(componentManager: ComponentManager, isForceSavingAllSettings: Boolean = false) {
+fun saveComponentManager(componentManager: ComponentManager, forceSavingAllSettings: Boolean = false) {
   runBlocking {
-    componentManager.stateStore.save(isForceSavingAllSettings = isForceSavingAllSettings)
+    componentManager.stateStore.save(forceSavingAllSettings = forceSavingAllSettings)
   }
 }
 

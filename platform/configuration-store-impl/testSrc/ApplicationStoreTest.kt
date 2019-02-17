@@ -421,8 +421,8 @@ internal class ApplicationStoreTest {
       storageManager.addMacro(ROOT_CONFIG, path)
     }
 
-    override suspend fun doSave(result: SaveResult, isForceSavingAllSettings: Boolean) {
-      childlessSaveImplementation(result, isForceSavingAllSettings)
+    override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) {
+      childlessSaveImplementation(result, forceSavingAllSettings)
     }
   }
 

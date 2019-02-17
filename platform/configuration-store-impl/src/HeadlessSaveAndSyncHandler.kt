@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
  * Trivial implementation used in tests and in the headless mode.
  */
 internal class HeadlessSaveAndSyncHandler : BaseSaveAndSyncHandler() {
-  override fun scheduleSaveDocumentsAndProjectsAndApp(onlyProject: Project?, isForceSavingAllSettings: Boolean, isNeedToExecuteNow: Boolean) {}
+  override fun scheduleSaveDocumentsAndProjectsAndApp(onlyProject: Project?, forceSavingAllSettings: Boolean, forceExecuteImmediately: Boolean) {}
 
   override fun scheduleRefresh() {}
 
@@ -24,9 +24,9 @@ internal class HeadlessSaveAndSyncHandler : BaseSaveAndSyncHandler() {
   override fun unblockSyncOnFrameActivation() {}
 
   override fun saveSettingsUnderModalProgress(componentManager: ComponentManager, isSaveAppAlso: Boolean): Boolean {
-    StoreUtil.saveSettings(componentManager, isForceSavingAllSettings = true)
+    StoreUtil.saveSettings(componentManager, forceSavingAllSettings = true)
     if (isSaveAppAlso && componentManager !== ApplicationManager.getApplication()) {
-      StoreUtil.saveSettings(ApplicationManager.getApplication(), isForceSavingAllSettings = true)
+      StoreUtil.saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings = true)
     }
     return true
   }

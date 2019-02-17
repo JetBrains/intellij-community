@@ -125,18 +125,18 @@ abstract class ComponentStoreImpl : IComponentStore {
     return componentName
   }
 
-  override suspend fun save(isForceSavingAllSettings: Boolean) {
+  override suspend fun save(forceSavingAllSettings: Boolean) {
     val result = SaveResult()
-    doSave(result, isForceSavingAllSettings)
+    doSave(result, forceSavingAllSettings)
     result.throwIfErrored()
   }
 
-  internal abstract suspend fun doSave(result: SaveResult, isForceSavingAllSettings: Boolean)
+  internal abstract suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean)
 
-  internal suspend fun createSaveSessionManagerAndSaveComponents(saveResult: SaveResult, isForceSavingAllSettings: Boolean): SaveSessionProducerManager {
+  internal suspend fun createSaveSessionManagerAndSaveComponents(saveResult: SaveResult, forceSavingAllSettings: Boolean): SaveSessionProducerManager {
     return withContext(createStoreEdtCoroutineContext(listOfNotNull(storageManager.componentManager?.let { InTransactionRule(it) }))) {
       val errors = SmartList<Throwable>()
-      val manager = doCreateSaveSessionManagerAndCommitComponents(isForceSavingAllSettings, errors)
+      val manager = doCreateSaveSessionManagerAndCommitComponents(forceSavingAllSettings, errors)
       saveResult.addErrors(errors)
       manager
     }
@@ -582,13 +582,13 @@ private fun notifyUnknownMacros(store: IComponentStore, project: Project, compon
 // to make sure that ApplicationStore or ProjectStore will not call incomplete doSave implementation
 // (because these stores combine several calls for better control/async instead of simple sequential delegation)
 abstract class ChildlessComponentStore : ComponentStoreImpl() {
-  override suspend fun doSave(result: SaveResult, isForceSavingAllSettings: Boolean) {
-    childlessSaveImplementation(result, isForceSavingAllSettings)
+  override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) {
+    childlessSaveImplementation(result, forceSavingAllSettings)
   }
 }
 
-internal suspend fun ComponentStoreImpl.childlessSaveImplementation(result: SaveResult, isForceSavingAllSettings: Boolean) {
-  createSaveSessionManagerAndSaveComponents(result, isForceSavingAllSettings)
+internal suspend fun ComponentStoreImpl.childlessSaveImplementation(result: SaveResult, forceSavingAllSettings: Boolean) {
+  createSaveSessionManagerAndSaveComponents(result, forceSavingAllSettings)
     .save()
     .appendTo(result)
 }

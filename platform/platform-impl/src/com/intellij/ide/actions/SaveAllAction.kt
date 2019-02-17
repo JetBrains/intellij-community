@@ -16,7 +16,7 @@ open class SaveAllAction : AnAction(), DumbAware {
     CommonDataKeys.EDITOR.getData(e.dataContext)?.let(::stripSpacesFromCaretLines)
 
     val project = CommonDataKeys.PROJECT.getData(e.dataContext)
-    (SaveAndSyncHandler.getInstance()).scheduleSaveDocumentsAndProjectsAndApp(onlyProject = project, isForceSavingAllSettings = true, isNeedToExecuteNow = true)
+    (SaveAndSyncHandler.getInstance()).scheduleSaveDocumentsAndProjectsAndApp(onlyProject = project, forceSavingAllSettings = true, forceExecuteImmediately = true)
   }
 }
 

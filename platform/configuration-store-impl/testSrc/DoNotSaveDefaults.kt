@@ -92,7 +92,7 @@ internal class DoNotSaveDefaultsTest {
     val useModCountOldValue = System.getProperty("store.save.use.modificationCount")
     try {
       System.setProperty("store.save.use.modificationCount", "false")
-      componentManager.stateStore.save(isForceSavingAllSettings = true)
+      componentManager.stateStore.save(forceSavingAllSettings = true)
     }
     finally {
       System.setProperty("store.save.use.modificationCount", useModCountOldValue ?: "false")

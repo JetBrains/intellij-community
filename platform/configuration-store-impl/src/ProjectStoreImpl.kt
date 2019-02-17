@@ -320,15 +320,15 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
     }
   }
 
-  final override suspend fun doSave(result: SaveResult, isForceSavingAllSettings: Boolean) {
+  final override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) {
     coroutineScope {
       launch {
         // save modules before project
         val errors = SmartList<Throwable>()
-        val moduleSaveSessions = saveModules(errors, isForceSavingAllSettings)
+        val moduleSaveSessions = saveModules(errors, forceSavingAllSettings)
         result.addErrors(errors)
 
-        (saveSettingsSavingComponentsAndCommitComponents(result, isForceSavingAllSettings) as ProjectSaveSessionProducerManager)
+        (saveSettingsSavingComponentsAndCommitComponents(result, forceSavingAllSettings) as ProjectSaveSessionProducerManager)
           .saveWithAdditionalSaveSessions(moduleSaveSessions)
           .appendTo(result)
       }

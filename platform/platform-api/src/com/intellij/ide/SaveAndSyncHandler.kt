@@ -22,11 +22,11 @@ abstract class SaveAndSyncHandler {
    * Save is not performed immediately and not finished on method call return.
    */
   fun scheduleSaveDocumentsAndProjectsAndApp(onlyProject: Project?) {
-    scheduleSaveDocumentsAndProjectsAndApp(onlyProject, isForceSavingAllSettings = false, isNeedToExecuteNow = false)
+    scheduleSaveDocumentsAndProjectsAndApp(onlyProject, forceSavingAllSettings = false, forceExecuteImmediately = false)
   }
 
   @ApiStatus.Experimental
-  abstract fun scheduleSaveDocumentsAndProjectsAndApp(onlyProject: Project?, isForceSavingAllSettings: Boolean, isNeedToExecuteNow: Boolean)
+  abstract fun scheduleSaveDocumentsAndProjectsAndApp(onlyProject: Project?, forceSavingAllSettings: Boolean, forceExecuteImmediately: Boolean)
 
   @Deprecated("", ReplaceWith("FileDocumentManager.getInstance().saveAllDocuments()", "com.intellij.openapi.fileEditor.FileDocumentManager"))
   fun saveProjectsAndDocuments() {

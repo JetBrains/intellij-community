@@ -132,21 +132,21 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable, Ba
     })
   }
 
-  override fun scheduleSaveDocumentsAndProjectsAndApp(onlyProject: Project?, isForceSavingAllSettings: Boolean, isNeedToExecuteNow: Boolean) {
+  override fun scheduleSaveDocumentsAndProjectsAndApp(onlyProject: Project?, forceSavingAllSettings: Boolean, forceExecuteImmediately: Boolean) {
     val task = when {
-      onlyProject == null && !isForceSavingAllSettings -> saveAppTask
-      else -> SaveTask(onlyProject, isForceSavingAllSettings)
+      onlyProject == null && !forceSavingAllSettings -> saveAppTask
+      else -> SaveTask(onlyProject, forceSavingAllSettings)
     }
 
-    if (addToSaveQueue(task) || isNeedToExecuteNow) {
-      saveAlarm.cancelAndRequest(forceRun = isNeedToExecuteNow)
+    if (addToSaveQueue(task) || forceExecuteImmediately) {
+      saveAlarm.cancelAndRequest(forceRun = forceExecuteImmediately)
     }
   }
 
   private fun addToSaveQueue(task: SaveTask): Boolean {
     synchronized(saveQueue) {
       if (task === saveAppTask) {
-        saveQueue.removeAll { it.onlyProject != null && !it.isForceSavingAllSettings }
+        saveQueue.removeAll { it.onlyProject != null && !it.forceSavingAllSettings }
       }
 
       if (saveQueue.contains(task)) {
@@ -204,9 +204,9 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable, Ba
           waitScheduledSave()
 
           runBlocking {
-            isSavedSuccessfully = saveSettings(componentManager, isForceSavingAllSettings = true)
+            isSavedSuccessfully = saveSettings(componentManager, forceSavingAllSettings = true)
             if (isSaveAppAlso && componentManager !is Application) {
-              saveSettings(ApplicationManager.getApplication(), isForceSavingAllSettings = true)
+              saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings = true)
             }
           }
         }
@@ -295,9 +295,9 @@ internal abstract class BaseSaveAndSyncHandler : SaveAndSyncHandler() {
   internal val edtPoolDispatcherManager = EdtPoolDispatcherManager()
 }
 
-private val saveAppTask = SaveTask(onlyProject = null, isForceSavingAllSettings = false)
+private val saveAppTask = SaveTask(onlyProject = null, forceSavingAllSettings = false)
 
-private data class SaveTask(val onlyProject: Project?, val isForceSavingAllSettings: Boolean) {
+private data class SaveTask(val onlyProject: Project?, val forceSavingAllSettings: Boolean) {
   suspend fun save() {
     if (onlyProject?.isDisposed == true) {
       return
@@ -305,12 +305,12 @@ private data class SaveTask(val onlyProject: Project?, val isForceSavingAllSetti
 
     coroutineScope {
       launch(storeEdtCoroutineContext) {
-        // isForceSavingAllSettings is set to true currently only if save triggered explicitly (or on close app/project), so, pass equal isDocumentsSavingExplicit
+        // forceSavingAllSettings is set to true currently only if save triggered explicitly (or on close app/project), so, pass equal isDocumentsSavingExplicit
         // in any case flag isDocumentsSavingExplicit is not really important
-        (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(isForceSavingAllSettings)
+        (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(forceSavingAllSettings)
       }
       launch {
-        saveProjectsAndApp(isForceSavingAllSettings = isForceSavingAllSettings, onlyProject = onlyProject)
+        saveProjectsAndApp(forceSavingAllSettings = forceSavingAllSettings, onlyProject = onlyProject)
       }
     }
   }

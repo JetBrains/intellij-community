@@ -22,14 +22,14 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
   // todo do we really need this?
   private val isSaveSettingsInProgress = AtomicBoolean()
 
-  override suspend fun save(isForceSavingAllSettings: Boolean) {
+  override suspend fun save(forceSavingAllSettings: Boolean) {
     if (!isSaveSettingsInProgress.compareAndSet(false, true)) {
       LOG.warn("save call is ignored because another save in progress", Throwable())
       return
     }
 
     try {
-      super.save(isForceSavingAllSettings)
+      super.save(forceSavingAllSettings)
     }
     finally {
       isSaveSettingsInProgress.set(false)
@@ -48,7 +48,7 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
     super.initComponent(component, isService)
   }
 
-  internal suspend fun saveSettingsSavingComponentsAndCommitComponents(result: SaveResult, isForceSavingAllSettings: Boolean): SaveSessionProducerManager {
+  internal suspend fun saveSettingsSavingComponentsAndCommitComponents(result: SaveResult, forceSavingAllSettings: Boolean): SaveSessionProducerManager {
     coroutineScope {
       // expects EDT
       launch(storeEdtCoroutineContext) {
@@ -75,7 +75,7 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
 
     // SchemeManager (old settingsSavingComponent) must be saved before saving components (component state uses scheme manager in an ipr project, so, we must save it before)
     // so, call sequentially it, not inside coroutineScope
-    return createSaveSessionManagerAndSaveComponents(result, isForceSavingAllSettings)
+    return createSaveSessionManagerAndSaveComponents(result, forceSavingAllSettings)
   }
 
   override fun commitComponents(isForce: Boolean, session: SaveSessionProducerManager, errors: MutableList<Throwable>) {
