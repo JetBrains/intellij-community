@@ -28,11 +28,13 @@ import com.intellij.pom.tree.events.impl.ChangeInfoImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.ExternalFormatProcessor;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
+import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
 import com.intellij.psi.impl.source.codeStyle.IndentHelperImpl;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.Function;
@@ -740,9 +742,16 @@ public class PostprocessReformattingAspect implements PomModelAspect {
 
     @Override
     public void execute(@NotNull FileViewProvider viewProvider) {
-      final CodeFormatterFacade codeFormatter = getFormatterFacade(viewProvider);
-      codeFormatter.setReformatContext(true);
-      codeFormatter.processText(viewProvider.getPsi(viewProvider.getBaseLanguage()), myRanges.ensureNonEmpty(), false);
+      final PsiFile file = viewProvider.getPsi(viewProvider.getBaseLanguage());
+      final FormatTextRanges textRanges = myRanges.ensureNonEmpty();
+      if (!ExternalFormatProcessor.useExternalFormatter(file)) {
+        final CodeFormatterFacade codeFormatter = getFormatterFacade(viewProvider);
+        codeFormatter.setReformatContext(true);
+        codeFormatter.processText(file, textRanges, false);
+      }
+      else {
+        CodeStyleManagerImpl.formatRanges(file, myRanges, null);
+      }
     }
 
     @Override
