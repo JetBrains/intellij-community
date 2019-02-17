@@ -69,6 +69,7 @@ class ModuleRedeclarator(object):
         @param sdk_dir: path to interpreter specific skeletons directory
         @param indent_size: amount of space characters per indent
         """
+        self.test_mode = 'GENERATOR3_TEST_MODE' in os.environ
         self.module = module
         self.qname = mod_qname
         self.cache_dir = cache_dir
@@ -794,10 +795,9 @@ class ModuleRedeclarator(object):
             filename = BUILT_IN_HEADER
         else:
             filename = getattr(self.module, "__file__", BUILT_IN_HEADER)
-        test_mode = 'GENERATOR3_TEST_MODE' in os.environ
-        if not test_mode:
+        if not self.test_mode:
             out(0, "# from %s" % filename)  # line 3
-        out(0, "# by generator %s" % (VERSION if not test_mode else 'test')) # line 4
+        out(0, "# by generator %s" % (VERSION if not self.test_mode else 'test'))  # line 4
         if p_name == BUILTIN_MOD_NAME and version[0] == 2 and version[1] >= 6:
             out(0, "from __future__ import print_function")
         out_doc_attr(out, self.module, 0)
@@ -814,6 +814,8 @@ class ModuleRedeclarator(object):
                 self.add_import_header_if_needed()
                 ref_notice = getattr(item, "__file__", str(item))
                 if hasattr(item, "__name__"):
+                    if self.test_mode and item_name.name in ('builtins', '__builtin__'):
+                        continue
                     self.imports_buf.out(0, "import ", item.__name__, " as ", item_name, " # ", ref_notice)
                 else:
                     self.imports_buf.out(0, item_name, " = None # ??? name unknown; ", ref_notice)
@@ -861,6 +863,8 @@ class ModuleRedeclarator(object):
             if item_name in (
                 "__dict__", "__doc__", "__module__", "__file__", "__name__", "__builtins__", "__package__"):
                 continue # handled otherwise
+            if self.test_mode and item_name in ('__loader__', '__spec__'):
+                continue
             try:
                 item = getattr(self.module, item_name) # let getters do the magic
             except AttributeError:
