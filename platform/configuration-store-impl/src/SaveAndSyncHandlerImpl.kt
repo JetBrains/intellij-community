@@ -162,7 +162,7 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable, Ba
     saveAlarm.cancel()
   }
 
-  private fun waitScheduledSave() {
+  private fun waitForScheduledSave() {
     if (saveAlarm.isEmpty) {
       return
     }
@@ -201,7 +201,7 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable, Ba
             }
           }
 
-          waitScheduledSave()
+          waitForScheduledSave()
 
           runBlocking {
             isSavedSuccessfully = saveSettings(componentManager, forceSavingAllSettings = true)
