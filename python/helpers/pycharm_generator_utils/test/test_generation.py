@@ -112,11 +112,14 @@ class SkeletonCachingTest(GeneratorTestCase):
     def test_skeleton_regenerated_for_changed_module(self):
         self.check_generator_output('mod', mod_location=self.find_binary_subdir('versions/v2'))
 
-    def test_skeleton_regenerated_for_updated_generator_version(self):
+    def test_skeleton_regenerated_for_upgraded_generator_with_explicit_update_stamp(self):
         self.check_generator_output('mod', mod_location=self.binaries_dir, gen_version='0.2', custom_required_gen=True)
 
-    def test_skeleton_not_regenerated_for_updated_generator_version(self):
-        pass
+    def test_skeleton_not_regenerated_for_upgraded_generator_without_explicit_version_stamp(self):
+        self.check_generator_output('mod', mod_location=self.binaries_dir, gen_version='0.2', custom_required_gen=True)
+
+    def test_skeleton_not_regenerated_for_upgraded_generator_with_earlier_update_stamp(self):
+        self.check_generator_output('mod', mod_location=self.binaries_dir, gen_version='0.2', custom_required_gen=True)
 
     def check_generator_output(self, mod_name, mod_location=None, custom_required_gen=False, **kwargs):
         kwargs.setdefault('fake_hashes', 'True')
