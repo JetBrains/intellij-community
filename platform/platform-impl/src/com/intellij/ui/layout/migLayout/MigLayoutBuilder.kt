@@ -56,6 +56,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
 
   override var preferredFocusedComponent: JComponent? = null
   override var validateCallbacks: MutableList<() -> ValidationInfo?> = mutableListOf()
+  override var applyCallbacks: MutableList<() -> Unit> = mutableListOf()
 
   val defaultComponentConstraintCreator = DefaultComponentConstraintCreator(spacing)
 
