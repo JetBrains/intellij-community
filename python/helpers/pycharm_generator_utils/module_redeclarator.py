@@ -154,9 +154,6 @@ class ModuleRedeclarator(object):
 
                 self.footer_buf.flush(mod)
 
-        if self.sdk_dir:
-            copy_skeletons(self.cache_dir, self.sdk_dir)
-
     # Some builtin classes effectively change __init__ signature without overriding it.
     # This callable serves as a placeholder to be replaced via REDEFINED_BUILTIN_SIGS
     def fake_builtin_init(self):

@@ -7,8 +7,10 @@ from pycharm_generator_utils.clr_tools import *
 from pycharm_generator_utils.module_redeclarator import *
 from pycharm_generator_utils.util_methods import *
 
-# TODO: Move all CLR-specific functions to clr_tools
+FAILED_VERSION_STAMP = '.failed'
 
+
+# TODO: Move all CLR-specific functions to clr_tools
 debug_mode = True
 quiet = False
 
@@ -417,7 +419,7 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
         if should_update_skeleton(mod_cache_dir, name):
             note('Updating cache for %s at %r', name, mod_cache_dir)
             delete(mod_cache_dir)
-            os.makedirs(mod_cache_dir)
+            mkdir(mod_cache_dir)
 
             old_modules = list(sys.modules.keys())
             imported_module_names = set()
@@ -436,40 +438,46 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
             else:
                 imported_module_names = None
 
-            action("importing")
-            __import__(name)  # sys.modules will fill up with what we want
+            failed_version_stamp = os.path.join(mod_cache_dir, FAILED_VERSION_STAMP)
+            with fopen(failed_version_stamp, 'w') as f:
+                f.write(version())
 
-            if my_finder:
-                sys.meta_path.remove(my_finder)
-            if imported_module_names is None:
-                imported_module_names = set(sys.modules.keys()) - set(old_modules)
+            try:
+                action("importing")
+                __import__(name)  # sys.modules will fill up with what we want
 
-            redo_module(name, mod_file_name, doing_builtins, mod_cache_dir, sdk_skeletons_dir)
-            # The C library may have called Py_InitModule() multiple times to define several modules (gtk._gtk and gtk.gdk);
-            # restore all of them
-            path = name.split(".")
-            redo_imports = not ".".join(path[:-1]) in MODULES_INSPECT_DIR
-            if imported_module_names and redo_imports:
-                for m in sys.modules.keys():
-                    if m.startswith("pycharm_generator_utils"): continue
-                    action("looking at possible submodule %r", m)
-                    # if module has __file__ defined, it has Python source code and doesn't need a skeleton
-                    if (m not in old_modules and
-                            m not in imported_module_names and
-                            m != name and
-                            not hasattr(sys.modules[m], '__file__') and
-                            m not in sys.builtin_module_names):
-                        if not quiet:
-                            say(m)
-                            sys.stdout.flush()
-                        action("opening %r", mod_cache_dir)
-                        try:
-                            redo_module(m, mod_file_name, doing_builtins, cache_dir=mod_cache_dir, sdk_dir=sdk_skeletons_dir)
-                        finally:
-                            action("closing %r", mod_cache_dir)
-        elif should_update_skeleton(sdk_skeletons_dir, name):
-            note('Copying cached skeletons for %s from %r to %r', name, mod_cache_dir, sdk_skeletons_dir)
-            copy_skeletons(mod_cache_dir, sdk_skeletons_dir)
+                if my_finder:
+                    sys.meta_path.remove(my_finder)
+                if imported_module_names is None:
+                    imported_module_names = set(sys.modules.keys()) - set(old_modules)
+
+                redo_module(name, mod_file_name, doing_builtins, mod_cache_dir, sdk_skeletons_dir)
+                # The C library may have called Py_InitModule() multiple times to define several modules (gtk._gtk and gtk.gdk);
+                # restore all of them
+                path = name.split(".")
+                redo_imports = not ".".join(path[:-1]) in MODULES_INSPECT_DIR
+                if imported_module_names and redo_imports:
+                    for m in sys.modules.keys():
+                        if m.startswith("pycharm_generator_utils"): continue
+                        action("looking at possible submodule %r", m)
+                        # if module has __file__ defined, it has Python source code and doesn't need a skeleton
+                        if (m not in old_modules and
+                                m not in imported_module_names and
+                                m != name and
+                                not hasattr(sys.modules[m], '__file__') and
+                                m not in sys.builtin_module_names):
+                            if not quiet:
+                                say(m)
+                                sys.stdout.flush()
+                            action("opening %r", mod_cache_dir)
+                            try:
+                                redo_module(m, mod_file_name, doing_builtins, cache_dir=mod_cache_dir, sdk_dir=sdk_skeletons_dir)
+                            finally:
+                                action("closing %r", mod_cache_dir)
+            finally:
+                delete(failed_version_stamp)
+        note('Copying cached skeletons for %s from %r to %r', name, mod_cache_dir, sdk_skeletons_dir)
+        copy_skeletons(mod_cache_dir, sdk_skeletons_dir)
 
     except:
         exctype, value = sys.exc_info()[:2]

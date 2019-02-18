@@ -15,7 +15,7 @@ from pycharm_generator_utils.test import GeneratorTestCase
 
 logging.basicConfig(level=logging.DEBUG)
 
-_run_generator_in_separate_process = False
+_run_generator_in_separate_process = True
 _log = logging.getLogger(__name__)
 
 
@@ -36,10 +36,11 @@ class SkeletonCachingTest(GeneratorTestCase):
                       gen_version=None,
                       required_gen_version_file_path=None):
         output_dir = os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR, self.SDK_SKELETONS_DIR)
-        if extra_syspath_entry is None:
+
+        if not extra_syspath_entry:
             extra_syspath_entry = self.test_data_dir
 
-        if mod_path is None:
+        if not mod_path:
             mod_path = self.imported_module_path(mod_qname, extra_syspath_entry)
 
         env = {
@@ -121,13 +122,29 @@ class SkeletonCachingTest(GeneratorTestCase):
     def test_skeleton_not_regenerated_for_upgraded_generator_with_earlier_update_stamp(self):
         self.check_generator_output('mod', mod_location=self.binaries_dir, gen_version='0.2', custom_required_gen=True)
 
-    def check_generator_output(self, mod_name, mod_location=None, custom_required_gen=False, **kwargs):
+    def test_version_stamp_put_in_cache_directory_for_failed_module(self):
+        # We can't import this module before actual generation begins as "fake_hashes" requires
+        self.check_generator_output('sigsegv', mod_path='sigsegv.py', gen_version='0.1', fake_hashes=False)
+
+    def test_skeleton_regenerated_for_failed_module_on_generator_upgrade(self):
+        self.fail()
+
+    def test_skeleton_not_regenerated_for_failed_module_on_same_generator_version(self):
+        self.fail()
+
+    def check_generator_output(self, mod_name, mod_path=None, mod_location=None, custom_required_gen=False, **kwargs):
         kwargs.setdefault('fake_hashes', 'True')
         if custom_required_gen:
             kwargs['required_gen_version_file_path'] = os.path.join(self.test_data_dir, 'required_gen_version')
 
+        if not mod_location:
+            mod_location = self.test_data_dir
+
+        if mod_path:
+            mod_path = os.path.join(mod_location, mod_path)
+
         with self.comparing_dirs(tmp_subdir=self.PYTHON_STUBS_DIR):
-            self.run_generator(mod_name, extra_syspath_entry=mod_location, **kwargs)
+            self.run_generator(mod_name, mod_path=mod_path, extra_syspath_entry=mod_location, **kwargs)
 
     def assertDirLayoutEquals(self, dir_path, expected_layout):
         def format_dir(dir_path, indent=''):
