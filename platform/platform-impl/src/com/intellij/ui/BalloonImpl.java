@@ -658,6 +658,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     Dimension size = myContent.getPreferredSize();
     if (myShadowBorderProvider == null) {
       JBInsets.addTo(size, position.createBorder(this).getBorderInsets());
+      JBInsets.addTo(size, getShadowBorderInsets());
     }
     return size;
   }
