@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.ext.spock
 import com.intellij.codeInspection.LocalInspectionTool
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyPointlessBooleanInspection
 import org.jetbrains.plugins.groovy.util.HighlightingTest
 import org.junit.Test
 
@@ -12,7 +13,7 @@ class SpockHighlightingTest extends SpockTestBase implements HighlightingTest {
 
   @Override
   Collection<? extends Class<? extends LocalInspectionTool>> getInspections() {
-    return [GroovyAssignabilityCheckInspection]
+    return [GroovyAssignabilityCheckInspection, GroovyPointlessBooleanInspection]
   }
 
   @Test
@@ -33,6 +34,26 @@ class FooSpec extends spock.lang.Specification {
     1 | _
     and:
     2 | _
+  }
+}
+'''
+  }
+
+  @Test
+  void 'double pipe column separator'() {
+    highlightingTest '''\
+class FooSpec extends spock.lang.Specification {
+  
+  def feature() {
+    where:
+    a    || false
+    "hi" || false
+  }
+  
+  def feature2() {
+    where:
+    a    || b
+    true || false
   }
 }
 '''
