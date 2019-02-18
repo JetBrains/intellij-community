@@ -25,7 +25,10 @@ import java.awt.Component
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.MouseEvent
+import java.util.function.Consumer
+import java.util.function.Supplier
 import javax.swing.*
+import kotlin.reflect.KMutableProperty0
 
 @DslMarker
 annotation class CellMarker
@@ -33,6 +36,7 @@ annotation class CellMarker
 interface CellBuilder<T : JComponent> {
   fun focused(): CellBuilder<T>
   fun withValidation(callback: (T) -> ValidationInfo?): CellBuilder<T>
+  fun onApply(callback: () -> Unit): CellBuilder<T>
 
   fun withErrorIf(message: String, callback: (T) -> Boolean): CellBuilder<T> {
     withValidation { if (callback(it)) ValidationInfo(message, it) else null }
@@ -123,6 +127,24 @@ abstract class Cell {
       component.renderer = renderer
     }
     component(growPolicy = growPolicy)
+  }
+
+  fun textField(prop: KMutableProperty0<String>, columns: Int? = null): CellBuilder<JTextField> {
+    val component = JTextField(prop.get(),columns ?: 0)
+    val builder = component()
+    builder.onApply { prop.set(component.text) }
+    return builder
+  }
+
+  fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null): CellBuilder<JTextField> {
+    return textField(Supplier { prop.get().toString() }, Consumer { value -> value.toIntOrNull()?.let { prop.set(it) } }, columns)
+  }
+
+  fun textField(getter: Supplier<String>, setter: Consumer<String>, columns: Int? = null): CellBuilder<JTextField> {
+    val component = JTextField(getter.get(),columns ?: 0)
+    val builder = component()
+    builder.onApply { setter.accept(component.text) }
+    return builder
   }
 
   fun textFieldWithHistoryWithBrowseButton(browseDialogTitle: String,
