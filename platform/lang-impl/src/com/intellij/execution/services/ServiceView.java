@@ -37,6 +37,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
@@ -402,47 +403,59 @@ class ServiceView extends JPanel implements Disposable {
 
     @Override
     public boolean isLeaf(Object object) {
-      return object != myRoot && !mySubtrees.containsKey(object);
+      return object != myRoot && !(object instanceof GroupNode) && !mySubtrees.containsKey(object);
     }
 
     @Override
     public List<?> getChildren(Object parent) {
-      List<Object> result;
       if (parent == myRoot) {
-        result = new ArrayList<>();
-        for (@SuppressWarnings("unchecked") ServiceViewContributor<Object, Object, Object> contributor : EP_NAME.getExtensions()) {
-          for (Object node : contributor.getNodes(myProject)) {
-            if (node instanceof NodeDescriptor) {
-              ((NodeDescriptor)node).update();
-            }
-            myViewDescriptors.put(node, contributor.getNodeDescriptor(node));
-            mySubtrees.put(node, contributor.getNodeSubtree(node));
-            myContributors.put(node, contributor);
-            List<Object> groups = contributor.getGroups(node);
-            for (Object group : groups) {
-              myViewDescriptors.put(group, contributor.getGroupDescriptor(group));
-            }
-            result.add(node);
-          }
-        }
+        return getRootChildren();
       }
-      else {
-        //noinspection unchecked
-        ServiceViewContributor.SubtreeDescriptor<Object> subtree = mySubtrees.get(parent);
-        if (subtree != null) {
-          result = new SmartList<>();
-          for (Object item : subtree.getItems()) {
-            myViewDescriptors.put(item, subtree.getItemDescriptor(item));
-            mySubtrees.put(item, subtree.getNodeSubtree(item));
-            myContributors.put(item, myContributors.get(parent));
-            result.add(item);
-          }
-        }
-        else {
-          result = Collections.emptyList();
-        }
+      if (parent instanceof GroupNode) {
+        return new ArrayList<>(((GroupNode)parent).children);
+      }
+
+      //noinspection unchecked
+      ServiceViewContributor.SubtreeDescriptor<Object> subtree = mySubtrees.get(parent);
+      if (subtree == null) return Collections.emptyList();
+
+      List<Object> result = new SmartList<>();
+      for (Object item : subtree.getItems()) {
+        myViewDescriptors.put(item, subtree.getItemDescriptor(item));
+        mySubtrees.put(item, subtree.getNodeSubtree(item));
+        myContributors.put(item, myContributors.get(parent));
+        result.add(item);
       }
       return result;
+    }
+
+    @NotNull
+    private List<?> getRootChildren() {
+      Set<Object> rootChildren = new LinkedHashSet<>();
+      Map<TreePath, GroupNode> groupNodes = FactoryMap.create(GroupNode::new);
+      for (@SuppressWarnings("unchecked") ServiceViewContributor<Object, Object, Object> contributor : EP_NAME.getExtensions()) {
+        for (Object node : contributor.getNodes(myProject)) {
+          if (node instanceof NodeDescriptor) {
+            ((NodeDescriptor)node).update();
+          }
+          myViewDescriptors.put(node, contributor.getNodeDescriptor(node));
+          mySubtrees.put(node, contributor.getNodeSubtree(node));
+          myContributors.put(node, contributor);
+          List<Object> groups = contributor.getGroups(node);
+          Object child = node;
+          TreePath path = new TreePath(groups.toArray()).pathByAddingChild(node);
+          while (path.getParentPath() != null) {
+            GroupNode groupNode = groupNodes.get(path.getParentPath());
+            myViewDescriptors.put(groupNode, contributor.getGroupDescriptor(groupNode.path.getLastPathComponent()));
+            myContributors.put(groupNode, contributor);
+            groupNode.children.add(child);
+            child = groupNode;
+            path = path.getParentPath();
+          }
+          rootChildren.add(child);
+        }
+      }
+      return new ArrayList<>(rootChildren);
     }
 
     @Override
@@ -485,11 +498,36 @@ class ServiceView extends JPanel implements Disposable {
         renderer = ObjectUtils.notNull(contributor.getViewDescriptorRenderer(), myNodeRenderer);
         myRenderers.put(contributor, renderer);
       }
+      if (value instanceof GroupNode) {
+        value = ((GroupNode)value).path.getLastPathComponent();
+      }
       Component component = renderer.getRendererComponent(myTree, value, nodeDescriptor, selected, hasFocus);
       if (component == null) {
         component = myNodeRenderer.getRendererComponent(myTree, value, nodeDescriptor, selected, hasFocus);
       }
       return component;
+    }
+  }
+
+  private static class GroupNode {
+    final TreePath path;
+    final Set<Object> children = new LinkedHashSet<>();
+
+    GroupNode(TreePath path) {
+      this.path = path;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      GroupNode node = (GroupNode)o;
+      return Objects.equals(path, node.path);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(path);
     }
   }
 
@@ -524,7 +562,7 @@ class ServiceView extends JPanel implements Disposable {
   }
 
   public static class ItemToolbarActionGroup extends ActionGroup {
-    private final static AnAction[] FAKE_GROUP = new AnAction[] { new DumbAwareAction(null, null, EmptyIcon.ICON_16) {
+    private final static AnAction[] FAKE_GROUP = new AnAction[]{new DumbAwareAction(null, null, EmptyIcon.ICON_16) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(false);
