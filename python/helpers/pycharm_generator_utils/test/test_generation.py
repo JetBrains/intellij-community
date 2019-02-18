@@ -16,6 +16,9 @@ from pycharm_generator_utils.test import GeneratorTestCase
 
 logging.basicConfig(level=logging.DEBUG)
 
+# Such version implies that skeletons are always regenerated
+TEST_GENERATOR_VERSION = '1000.0'
+
 _run_generator_in_separate_process = True
 _log = logging.getLogger(__name__)
 
@@ -46,7 +49,7 @@ class SkeletonCachingTest(GeneratorTestCase):
 
         env = {
             ENV_TEST_MODE_FLAG: 'True',
-            ENV_VERSION: gen_version or 'test',
+            ENV_VERSION: gen_version or TEST_GENERATOR_VERSION,
         }
         if fake_hashes:
             env[ENV_CONTENT_INDEPENDENT_HASHES_FLAG] = 'True'
