@@ -186,7 +186,7 @@ class BundledJreManager {
    *  `build/dependencies/setupJbre.gradle`
    *  `build/dependencies/setupJdk.gradle`
   */
-  static def jreArchiveSuffix(String jreBuild, version, JvmArchitecture arch, String osName) {
+  static def jreArchiveSuffix(String jreBuild, String version, JvmArchitecture arch, String osName) {
     String update, build
     def split = jreBuild.split('b')
     if (split.length > 2) {
@@ -195,13 +195,14 @@ class BundledJreManager {
       )
     }
     if (split.length == 2) {
-      update = split[0] - version.toString()
+      update = split[0]
+      if (update.startsWith(version)) update -= version
       // [11_0_2, b140] or [8u202, b1483.24]
       (update, build) = ["$version$update", "b${split[1]}"]
     }
     else {
       // [11, b96]
-      (update, build) = [version.toString(), jreBuild]
+      (update, build) = [version, jreBuild]
     }
     "${update}-${osName}-${arch == JvmArchitecture.x32 ? 'i586' : 'x64'}-${build}.tar.gz"
   }
@@ -210,7 +211,7 @@ class BundledJreManager {
     def jreDir = jreDir()
     def jreBuild = getExpectedJreBuild(osName)
 
-    String suffix = jreArchiveSuffix(jreBuild, buildContext.options.bundledJreVersion, arch, osName)
+    String suffix = jreArchiveSuffix(jreBuild, buildContext.options.bundledJreVersion.toString(), arch, osName)
     String prefix = buildContext.isBundledJreModular() ? vendor.modularJreNamePrefix :
                     buildContext.productProperties.toolsJarRequired ? vendor.jreWithToolsJarNamePrefix : vendor.jreNamePrefix
     def jreArchive = new File(jreDir, "$prefix$suffix")
