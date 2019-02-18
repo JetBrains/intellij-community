@@ -230,23 +230,3 @@ class ParensUsage {
     System.out.println((s).firstKey());
   }
 }
-
-class MethodCallAsInitializer {
-  void testIterable() {
-    List<String> <warning descr="Type of variable 'lines' may be weakened to 'java.lang.Iterable'">lines</warning> = getLines();
-    processIterable(lines);
-  }
-
-  void testCollection() {
-    List<String> <warning descr="Type of variable 'lines' may be weakened to 'java.util.Collection'">lines</warning> = getLines();
-    processCollection(lines);
-  }
-
-  private void processIterable(Iterable<String> lines) {}
-
-  private void processCollection(Collection<String> lines) {}
-
-  private List<String> getLines() {
-    return null;
-  }
-}
