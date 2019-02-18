@@ -44,33 +44,6 @@ private fun findWhereBlockStart(statements: Queue<GrStatement>): GrStatement? {
   return null
 }
 
-/**
- * foo:
- * bar:
- * where:
- * a << 1
- *
- * Such structure is parsed as `(foo: (bar: (where: (a << 1)))`.
- * We have to go deep and find `a << 1` statement.
- */
-private fun findWhereLabeledStatement(top: GrLabeledStatement): GrStatement? {
-  var current = top
-  while (true) {
-    val labeledStatement = current.statement
-    when {
-      "where" == current.name -> {
-        return labeledStatement
-      }
-      labeledStatement is GrLabeledStatement -> {
-        current = labeledStatement
-      }
-      else -> {
-        return null
-      }
-    }
-  }
-}
-
 private fun extractVariablesFromStatement(current: GrStatement,
                                           statements: Queue<GrStatement>,
                                           consumer: (SpockVariableDescriptor) -> Unit) {
@@ -184,9 +157,4 @@ private fun addInitializers(variables: List<SpockVariableDescriptor?>, initializ
 
 private fun GrBinaryExpression.isLeftShift(): Boolean {
   return operationTokenType === GroovyElementTypes.LEFT_SHIFT_SIGN
-}
-
-private fun GrBinaryExpression.isOr(): Boolean {
-  val type = operationTokenType
-  return type === GroovyElementTypes.T_BOR || type === GroovyElementTypes.T_LOR
 }
