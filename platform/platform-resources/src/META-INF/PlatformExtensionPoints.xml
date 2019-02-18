@@ -48,7 +48,7 @@
                     interface="com.intellij.openapi.fileTypes.FileTypeFactory"/>
 
     <extensionPoint name="fileTypeUsageSchemaDescriptor"
-                    beanClass="com.intellij.util.KeyedLazyInstanceEP">
+                    beanClass="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector$FileTypeUsageSchemaDescriptorEP">
       <with attribute="implementationClass" implements="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageSchemaDescriptor"/>
     </extensionPoint>
 
