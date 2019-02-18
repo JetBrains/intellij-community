@@ -3,6 +3,7 @@ import os
 import subprocess
 import sys
 import textwrap
+import unittest
 
 import generator3
 from pycharm_generator_utils.constants import (
@@ -70,7 +71,11 @@ class SkeletonCachingTest(GeneratorTestCase):
             sys.path.append(extra_syspath_entry)
             try:
                 generator3.process_one(mod_qname, mod_path, mod_qname in sys.builtin_module_names, output_dir)
+            except:
+                _log.error('Raised inside generator', exc_info=True)
             finally:
+                if mod_qname != 'sys':
+                    sys.modules.pop(mod_qname, None)
                 sys.path.pop()
                 for name in env:
                     del os.environ[name]
@@ -123,13 +128,17 @@ class SkeletonCachingTest(GeneratorTestCase):
         self.check_generator_output('mod', mod_location=self.binaries_dir, gen_version='0.2', custom_required_gen=True)
 
     def test_version_stamp_put_in_cache_directory_for_failed_module(self):
-        # We can't import this module before actual generation begins as "fake_hashes" requires
-        self.check_generator_output('sigsegv', mod_path='sigsegv.py', gen_version='0.1', fake_hashes=False)
+        self.check_generator_output('failing', mod_path='failing.py', gen_version='0.1', fake_hashes=False)
 
     def test_skeleton_regenerated_for_failed_module_on_generator_upgrade(self):
-        self.check_generator_output('sigsegv', mod_path='sigsegv.py', gen_version='0.2', fake_hashes=False)
+        self.check_generator_output('failing', mod_path='failing.py', gen_version='0.2', fake_hashes=False)
 
     def test_skeleton_not_regenerated_for_failed_module_on_same_generator_version(self):
+        self.check_generator_output('failing', mod_path='failing.py', gen_version='0.1', fake_hashes=False)
+
+    @unittest.skipIf(not _run_generator_in_separate_process,
+                     'Importing module causing SIGSEGV cannot be done in the same interpreter')
+    def test_segmentation_fault_handling(self):
         self.check_generator_output('sigsegv', mod_path='sigsegv.py', gen_version='0.1', fake_hashes=False)
 
     def check_generator_output(self, mod_name, mod_path=None, mod_location=None, custom_required_gen=False, **kwargs):
