@@ -2,7 +2,9 @@ package circlet.auth
 
 import circlet.client.api.*
 import circlet.common.oauth.*
+import circlet.utils.*
 import circlet.workspaces.*
+import circlet.workspaces.Authenticator
 import io.ktor.application.*
 import io.ktor.request.*
 import io.ktor.response.*
@@ -18,9 +20,9 @@ import java.net.*
 import java.util.concurrent.*
 import kotlin.coroutines.*
 
-val log = logger<IdeaInteractiveFlowHost>()
+val log = logger<IdeaAuthenticator>()
 
-class IdeaInteractiveFlowHost(val lifetime: Lifetime, val config: WorkspaceConfiguration)  {
+class IdeaAuthenticator(val lifetime: Lifetime, val config: WorkspaceConfiguration) : Authenticator {
 
     suspend fun authToken(): OAuthTokenResponse {
 
@@ -61,7 +63,9 @@ class IdeaInteractiveFlowHost(val lifetime: Lifetime, val config: WorkspaceConfi
         return codeFlowToken(config.server, config.clientId, redirectUri, config.clientSecret, code)
     }
 
-    suspend fun tokenByRefreshToken(refreshToken: String): OAuthTokenResponse {
+    override suspend fun localAuthToken(): OAuthTokenResponse {
+        val refreshToken = IdeaPasswordSafePersistence.get("refresh_token") ?: return OAuthTokenResponse.Error("", "")
+
         return refreshTokenFlow(
             circletURL = config.server,
             clientId = config.clientId,

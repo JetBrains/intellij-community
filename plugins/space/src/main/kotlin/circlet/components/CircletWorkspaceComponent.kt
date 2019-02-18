@@ -25,12 +25,6 @@ class CircletWorkspaceComponent : ApplicationComponent, LifetimedComponent by Si
                         is ConnectionStatus.Connected -> {
                             notifyConnected(ltlt)
                         }
-                        is ConnectionStatus.Connecting -> {
-
-                        }
-                        is ConnectionStatus.AuthFailed -> {
-                            notifyAuthFailed(ltlt)
-                        }
                     }
                 }
             }
@@ -42,23 +36,9 @@ class CircletWorkspaceComponent : ApplicationComponent, LifetimedComponent by Si
             val workspaceLifetime = lt.nested()
             workspace.value = null
             if (state.server.isNotBlank() && state.enabled) {
-                launch(workspaceLifetime, Ui) {
-                    val wsConfig = ideaConfig(state.server)
-                    val host = IdeaInteractiveFlowHost(workspaceLifetime, wsConfig)
-                    val refreshToken = IdeaPasswordSafePersistence.get("refresh_token")
-                    if (refreshToken != null) {
-                        val authToken = host.tokenByRefreshToken(refreshToken)
-                        if (authToken is OAuthTokenResponse.Success) {
-                            workspace.value = Workspace(workspaceLifetime, wsConfig, authToken, IdeaPasswordSafePersistence)
-                        }
-                        else {
-                            authCheckFailedNotification(lt)
-                        }
-                    }
-                    else {
-                        authCheckFailedNotification(lt)
-                    }
-                }
+                val wsConfig = ideaConfig(state.server)
+                val authenticator = IdeaAuthenticator(workspaceLifetime, wsConfig)
+                workspace.value = Workspace(workspaceLifetime, wsConfig, authenticator, IdeaPasswordSafePersistence)
             }
             else {
                 notifyDisconnected(workspaceLifetime)

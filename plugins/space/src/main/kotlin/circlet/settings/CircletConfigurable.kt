@@ -7,7 +7,6 @@ import circlet.common.oauth.*
 import circlet.components.*
 import circlet.messages.*
 import circlet.platform.client.*
-import circlet.utils.*
 import circlet.workspaces.*
 import com.intellij.openapi.options.*
 import com.intellij.openapi.ui.*
@@ -106,7 +105,7 @@ class CircletConfigurable : SearchableConfigurable {
         }
     }
 
-    private fun connect(servername: String, getToken: suspend (host: IdeaInteractiveFlowHost) -> OAuthTokenResponse, expectErrorToken: Boolean) {
+    private fun connect(servername: String, getToken: suspend (host: IdeaAuthenticator) -> OAuthTokenResponse, expectErrorToken: Boolean) {
         launch(uiLifetime, Ui) {
             val connectLt = uiLifetime.nested()
             try {
@@ -114,15 +113,24 @@ class CircletConfigurable : SearchableConfigurable {
                     state.value = LoginState.Connecting(servername, connectLt)
 
                     val wsConfig = ideaConfig(servername)
-                    val host = IdeaInteractiveFlowHost(connectLt, wsConfig)
+                    val host = IdeaAuthenticator(connectLt, wsConfig)
                     val ps = InMemoryPersistence()
+
                     val accessToken = getToken(host)
 
                     when (accessToken) {
                         is OAuthTokenResponse.Success -> {
-                            val ws = Workspace(connectLt, wsConfig, accessToken, ps)
-                            val profile = ws.client.me.info().profile.resolve()
-                            state.value = LoginState.Connected(servername, WorkspaceState(accessToken.refreshToken, profile))
+                            connectLt.using { probleLt ->
+                                val localAuthenticator = object : Authenticator {
+                                    override suspend fun localAuthToken(): OAuthTokenResponse {
+                                        return accessToken
+                                    }
+                                }
+                                val ws = Workspace(probleLt, wsConfig, localAuthenticator, ps)
+                                val profile = ws.client.me.info().profile.resolve()
+                                state.value = LoginState.Connected(servername, WorkspaceState(accessToken.refreshToken, profile))
+                            }
+
                         }
                         is OAuthTokenResponse.Error -> {
                             if (expectErrorToken) {
@@ -177,7 +185,7 @@ class CircletConfigurable : SearchableConfigurable {
     override fun reset() {
         val st = circletSettings.settings.value
         if (st.enabled) {
-            connect(st.server, { it.tokenByRefreshToken(IdeaPasswordSafePersistence.get("refresh_token") ?: "") }, true)
+            connect(st.server, { it.localAuthToken() }, true)
         }
         else {
             state.value = LoginState.Disconnected(st.server, null)
