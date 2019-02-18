@@ -160,7 +160,4 @@ class SkeletonCachingTest(GeneratorTestCase):
         formatted_dir_tree = '\n'.join(format_dir(dir_path))
         expected = textwrap.dedent(expected_layout).strip()
         actual = formatted_dir_tree.strip()
-        try:
-            self.assertMultiLineEqual(expected, actual)
-        except AttributeError:
-            self.assertEquals(expected, actual)
+        self.assertMultiLineEqual(expected, actual)

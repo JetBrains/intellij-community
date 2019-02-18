@@ -41,7 +41,7 @@ class FileSystemUtilTest(GeneratorTestCase):
     def test_mkdir_with_exiting_file(self):
         with self.assertRaises(OSError) as cm:
             self.check_mkdir('existing')
-        self.assertEquals(errno.EEXIST, cm.exception.errno)
+        self.assertEqual(errno.EEXIST, cm.exception.errno)
 
     def test_delete_with_absent_file(self):
         self.check_delete('absent')
