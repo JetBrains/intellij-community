@@ -97,12 +97,6 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
     myForbid = forbid;
   }
 
-  @TestOnly
-  public void flushDirt() {
-    myDirtReporter.run();
-    waitForAsyncTaskCompletion();
-  }
-
   @Override
   public void dispose() {
     synchronized (myLock) {
@@ -116,7 +110,7 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
   }
 
   @TestOnly
-  private void waitForAsyncTaskCompletion() {
+  void waitForAsyncTaskCompletion() {
     myZipperUpdater.waitForAllExecuted(10, TimeUnit.SECONDS);
   }
 
