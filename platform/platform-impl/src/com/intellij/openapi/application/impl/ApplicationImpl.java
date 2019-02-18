@@ -1482,6 +1482,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Nullable
   @Override
   protected String measureTokenNamePrefix() {
-    return "application ";
+    return "app ";
   }
 }

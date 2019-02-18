@@ -21,10 +21,17 @@ public final class StartUpMeasurer {
 
     public static final String INITIALIZE_COMPONENTS_SUFFIX = "components initialization";
     public static final String REGISTER_COMPONENTS_SUFFIX = "components registration";
+    public static final String COMPONENTS_REGISTERED_CALLBACK_SUFFIX = "components registered callback";
     public static final String CREATE_COMPONENTS_SUFFIX = "components creation";
+
+    public static final String PROJECT_PRE_STARTUP = "project pre-startup";
+    public static final String PROJECT_STARTUP = "project startup";
+
+    public static final String PROJECT_DUMB_POST_STARTUP = "project dumb post-startup";
   }
 
   public static final String COMPONENT_INITIALIZED_INTERNAL_NAME = "_component initialized";
+  public static final String PRELOAD_ACTIVITY_FINISHED = "_preload activity finished";
 
   private static final long startTime = System.currentTimeMillis();
 

@@ -1,0 +1,15 @@
+{
+  "name": "start-up-visualizer",
+  "private": true,
+  "main": "out/index.js",
+  "devDependencies": {
+    "@types/vis": "^4.21.11",
+    "typescript": "^3.3.3"
+  },
+  "dependencies": {
+    "@amcharts/amcharts4": "^4.1.8"
+  },
+  "scripts": {
+    "compile": "tsc"
+  }
+}

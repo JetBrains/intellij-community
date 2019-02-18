@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.StartUpMeasurer;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -53,7 +54,7 @@ public class Preloader implements Disposable, BaseComponent {
     }
 
     ProgressManager progressManager = ProgressManager.getInstance();
-    for (final PreloadingActivity activity : PreloadingActivity.EP_NAME.getExtensions()) {
+    for (final PreloadingActivity activity : PreloadingActivity.EP_NAME.getExtensionList()) {
       myExecutor.execute(() -> {
         if (myIndicator.isCanceled()) return;
 
@@ -61,14 +62,17 @@ public class Preloader implements Disposable, BaseComponent {
         if (myIndicator.isCanceled()) return;
 
         progressManager.runProcess(() -> {
-          long startTime = System.nanoTime();
+          StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(StartUpMeasurer.PRELOAD_ACTIVITY_FINISHED, activity.getClass().getName());
           try {
             activity.preload(myWrappingIndicator);
           }
           catch (ProcessCanceledException ignore) {
+            return;
           }
-          long ms = (System.nanoTime() - startTime) / 1000000;
-          LOG.info(activity.getClass().getName() + " took " + ms + " ms");
+          measureToken.end();
+          if (LOG.isDebugEnabled()) {
+            LOG.debug(activity.getClass().getName() + " finished");
+          }
         }, myIndicator);
       });
     }

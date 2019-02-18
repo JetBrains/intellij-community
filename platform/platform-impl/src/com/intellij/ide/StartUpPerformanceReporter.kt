@@ -8,6 +8,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.util.StartUpMeasurer
+import gnu.trove.THashMap
 import java.io.StringWriter
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -70,10 +71,12 @@ internal class StartUpPerformanceReporter : StartupActivity, DumbAware {
     writer.name("items")
     writer.beginArray()
     var totalDuration = if (activationNumber == 0) writeUnknown(writer, StartUpMeasurer.getStartTime(), items.get(0).start) else 0
-    val slowComponents = mutableListOf<StartUpMeasurer.Item>()
+    val activities = THashMap<String, MutableList<StartUpMeasurer.Item>>()
+    val activityDescriptors = listOf(ActivityDescriptor(StartUpMeasurer.COMPONENT_INITIALIZED_INTERNAL_NAME, "components"),
+                                     ActivityDescriptor(StartUpMeasurer.PRELOAD_ACTIVITY_FINISHED, "preloadActivities"))
     for ((index, item) in items.withIndex()) {
-      if (item.name === StartUpMeasurer.COMPONENT_INITIALIZED_INTERNAL_NAME) {
-        slowComponents.add(item)
+      if (activityDescriptors.any { it.itemName === item.name }) {
+        activities.getOrPut(item.name) { mutableListOf() }.add(item)
         continue
       }
 
@@ -99,7 +102,10 @@ internal class StartUpPerformanceReporter : StartupActivity, DumbAware {
     totalDuration += writeUnknown(writer, items.last().end, end)
     writer.endArray()
 
-    writeComponents(slowComponents, writer)
+    for (activityDescriptor in activityDescriptors) {
+      val list = activities.get(activityDescriptor.itemName) ?: continue
+      writeActivities(list, writer, activityDescriptor.jsonFieldName)
+    }
 
     writer.name("totalDurationComputed").value(totalDuration)
     writer.name("totalDurationActual").value(end - items.first().start)
@@ -108,16 +114,16 @@ internal class StartUpPerformanceReporter : StartupActivity, DumbAware {
     var string = stringWriter.toString()
     // to make output more compact (quite a lot slow components) - should we write own JSON encoder? well, for now potentially slow RegExp is ok
     string = string.replace(Regex(",\\s+(\"start\"|\"end\"|\\{)"), ", $1")
-    log.info(string)
+    log.info("=== Start: StartUp Measurement ===\n$string\n=== Stop: StartUp Measurement ===")
   }
 
-  private fun writeComponents(slowComponents: List<StartUpMeasurer.Item>, writer: JsonWriter) {
+  private fun writeActivities(slowComponents: List<StartUpMeasurer.Item>, writer: JsonWriter, fieldName: String) {
     if (slowComponents.isEmpty()) {
       return
     }
 
     // actually here not all components, but only slow (>10ms - as it was before)
-    writer.name("components")
+    writer.name(fieldName)
     writer.beginArray()
 
     for (item in slowComponents) {
@@ -162,3 +168,5 @@ internal class StartUpPerformanceReporter : StartupActivity, DumbAware {
     return duration
   }
 }
+
+private data class ActivityDescriptor(val itemName: String, val jsonFieldName: String)

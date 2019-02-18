@@ -34,6 +34,7 @@ import com.intellij.project.ProjectKt;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.StartUpMeasurer;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
@@ -112,7 +113,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     ApplicationManager.getApplication().runReadAction(() -> {
       AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Running Startup Activities");
       try {
-        runActivities(myPreStartupActivities);
+        runActivities(myPreStartupActivities, StartUpMeasurer.Phases.PROJECT_PRE_STARTUP);
 
         // to avoid atomicity issues if runWhenProjectIsInitialized() is run at the same time
         synchronized (this) {
@@ -120,7 +121,7 @@ public class StartupManagerImpl extends StartupManagerEx {
           myStartupActivitiesRunning = true;
         }
 
-        runActivities(myStartupActivities);
+        runActivities(myStartupActivities, StartUpMeasurer.Phases.PROJECT_STARTUP);
 
         synchronized (this) {
           myStartupActivitiesRunning = false;
@@ -178,7 +179,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       checkProjectRoots();
     }
 
-    runActivities(myDumbAwarePostStartupActivities);
+    runActivities(myDumbAwarePostStartupActivities, StartUpMeasurer.Phases.PROJECT_DUMB_POST_STARTUP);
 
     DumbService dumbService = DumbService.getInstance(myProject);
     dumbService.runWhenSmart(new Runnable() {
@@ -187,7 +188,7 @@ public class StartupManagerImpl extends StartupManagerEx {
         app.assertIsDispatchThread();
 
         // myDumbAwarePostStartupActivities might be non-empty if new activities were registered during dumb mode
-        runActivities(myDumbAwarePostStartupActivities);
+        runActivities(myDumbAwarePostStartupActivities, StartUpMeasurer.Phases.PROJECT_DUMB_POST_STARTUP);
 
         while (true) {
           List<Runnable> dumbUnaware = takeDumbUnawareStartupActivities();
@@ -348,10 +349,12 @@ public class StartupManagerImpl extends StartupManagerEx {
     }
   }
 
-  private static void runActivities(@NotNull List<? extends Runnable> activities) {
+  private static void runActivities(@NotNull List<? extends Runnable> activities, @NotNull String phaseName) {
+    StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(phaseName);
     while (!activities.isEmpty()) {
       runActivity(activities.remove(0));
     }
+    measureToken.end();
   }
 
   public static void runActivity(Runnable runnable) {
