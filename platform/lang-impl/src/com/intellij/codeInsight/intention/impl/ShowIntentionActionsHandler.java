@@ -83,8 +83,6 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     editor.getScrollingModel().runActionOnScrollingFinished(() -> showIntentionHint(project, finalEditor, finalFile, intentions));
   }
 
-  // added for override into Rider
-  @SuppressWarnings("WeakerAccess")
   protected void showIntentionHint(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
     if (!intentions.isEmpty()) {
       CachedIntentions cachedIntentions = CachedIntentions.createAndUpdateActions(project, file, editor, intentions);
