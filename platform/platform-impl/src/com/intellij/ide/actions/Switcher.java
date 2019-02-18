@@ -352,45 +352,6 @@ public class Switcher extends AnAction implements DumbAware {
         .orElse(-1);
     }
 
-    private class MyToolWindowsListFocusListener extends FocusAdapter {
-      @Override
-      public void focusGained(FocusEvent e) {
-        exchangeSelectionState(toolWindows);
-      }
-    }
-
-    private class MyFilesListFocusListener extends FocusAdapter {
-      @Override
-      public void focusGained(FocusEvent e) {
-        exchangeSelectionState(files);
-      }
-    }
-
-    private class MyAdsListFocusListener extends FocusAdapter {
-      @Override
-      public void focusGained(FocusEvent e) {
-        exchangeSelectionState(actionAds);
-      }
-    }
-
-    final ClickListener myClickListener = new ClickListener() {
-      @Override
-      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-        if (myPinned && (e.isControlDown() || e.isMetaDown() || e.isShiftDown())) return false;
-        final Object source = e.getSource();
-        if (source instanceof JList) {
-          JList jList = (JList)source;
-          if (jList.getSelectedIndex() == -1 && jList.getAnchorSelectionIndex() != -1) {
-            jList.setSelectedIndex(jList.getAnchorSelectionIndex());
-          }
-          if (jList.getSelectedIndex() != -1) {
-            navigate(e);
-          }
-        }
-        return true;
-      }
-    };
-
     @SuppressWarnings({"ConstantConditions"})
     SwitcherPanel(@NotNull final Project project, @NotNull String title, @NotNull String actionId, boolean onlyEdited, boolean pinned) {
       setLayout(new SwitcherLayouter());
@@ -419,7 +380,7 @@ public class Switcher extends AnAction implements DumbAware {
       descriptions.setBorder(new CustomLineBorder(JBUI.CurrentTheme.Advertiser.borderColor(), JBUI.insetsTop(1)));
       descriptions.add(pathLabel, BorderLayout.CENTER);
       twManager = ToolWindowManager.getInstance(project);
-      CollectionListModel<ToolWindow> twModel = new CollectionListModel<ToolWindow>();
+      CollectionListModel<ToolWindow> twModel = new CollectionListModel<>();
       List<ActivateToolWindowAction> actions = ToolWindowsGroup.getToolWindowActions(project, true);
       List<ToolWindow> windows = ContainerUtil.newArrayList();
       for (ActivateToolWindowAction action : actions) {
@@ -435,16 +396,12 @@ public class Switcher extends AnAction implements DumbAware {
         twModel.add(window);
       }
 
-      toolWindows = new JBList(twModel);
-      toolWindows.addFocusListener(new MyToolWindowsListFocusListener());
-      if (pinned) {
-        new NameFilteringListModel<>(toolWindows, ToolWindow::getStripeTitle, s -> !mySpeedSearch.isPopupActive()
-                                                                                             || StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix())
-                                                                                             || mySpeedSearch.getComparator().matchingFragments(mySpeedSearch.getEnteredPrefix(), s) != null, mySpeedSearch);
-      }
+      final ShortcutSet shortcutSet = ActionManager.getInstance().getAction(IdeActions.ACTION_SWITCHER).getShortcutSet();
+      final int modifiers = getModifiers(shortcutSet);
+      final boolean isAlt = (modifiers & Event.ALT_MASK) != 0;
+      CTRL_KEY = isAlt ? VK_ALT : VK_CONTROL;
 
-      toolWindows.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
-      toolWindows.setCellRenderer(new SwitcherToolWindowsListRenderer(mySpeedSearch, map, myPinned) {
+      toolWindows = createSwitcherList(twModel, new SwitcherToolWindowsListRenderer(mySpeedSearch, map, myPinned) {
         @NotNull
         @Override
         public Component getListCellRendererComponent(@NotNull JList list,
@@ -460,58 +417,24 @@ public class Switcher extends AnAction implements DumbAware {
           UIUtil.changeBackGround(renderer, bgColor);
           return renderer;
         }
-      });
-      toolWindows.addKeyListener(this);
-      toolWindows.addMouseListener(this);
-      toolWindows.addMouseMotionListener(this);
-      ScrollingUtil.ensureSelectionExists(toolWindows);
-      myClickListener.installOn(toolWindows);
-      toolWindows.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-        @Override
-        public void valueChanged(@NotNull ListSelectionEvent e) {
-          if (!toolWindows.isSelectionEmpty()) {
-            files.getSelectionModel().clearSelection();
-            actionAds.getSelectionModel().clearSelection();
-          }
-        }
-      });
+      }, ToolWindow::getStripeTitle);
 
       boolean actionAdvertisementEnabled = Experiments.isFeatureEnabled("advertise.recent.locations");
-      actionAds = new JBList<>(new CollectionListModel<>(actionAdvertisementEnabled ? getActionsForAdvertisement() : AnAction.EMPTY_ARRAY));
+      actionAds = createSwitcherList(new CollectionListModel<>(actionAdvertisementEnabled ? getActionsForAdvertisement() : AnAction.EMPTY_ARRAY),
+                                     new ActionsCellListRenderer(this) {
+                                       @Override
+                                       public Component getListCellRendererComponent(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+                                         final JComponent renderer = (JComponent)super.getListCellRendererComponent(list, value, index, selected, selected);
+                                         if (selected) {
+                                           return renderer;
+                                         }
+                                         final Color bgColor = list == mouseMoveSrc && index == mouseMoveListIndex ? ON_MOUSE_OVER_BG_COLOR : list.getBackground();
+                                         UIUtil.changeBackGround(renderer, bgColor);
+                                         return renderer;
+                                       }
+                                     }, AnAction::getTemplateText);
       actionAds.setEmptyText("");
-      actionAds.addFocusListener(new MyAdsListFocusListener());
-      if (pinned) {
-        new NameFilteringListModel<>(actionAds, AnAction::getTemplateText, s -> !mySpeedSearch.isPopupActive()
-                                                                                        || StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix())
-                                                                                        || mySpeedSearch.getComparator().matchingFragments(mySpeedSearch.getEnteredPrefix(), s) != null, mySpeedSearch);
-      }
-      actionAds.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
-      actionAds.setCellRenderer(new ActionsCellListRenderer(this) {
-        @Override
-        public Component getListCellRendererComponent(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-          final JComponent renderer = (JComponent)super.getListCellRendererComponent(list, value, index, selected, selected);
-          if (selected) {
-            return renderer;
-          }
-          final Color bgColor = list == mouseMoveSrc && index == mouseMoveListIndex ? ON_MOUSE_OVER_BG_COLOR : list.getBackground();
-          UIUtil.changeBackGround(renderer, bgColor);
-          return renderer;
-        }
-      });
-      actionAds.addKeyListener(this);
-      actionAds.addMouseListener(this);
-      actionAds.addMouseMotionListener(this);
-      ScrollingUtil.ensureSelectionExists(actionAds);
-      myClickListener.installOn(actionAds);
-      actionAds.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-        @Override
-        public void valueChanged(@NotNull ListSelectionEvent e) {
-          if (!actionAds.isSelectionEmpty()) {
-            files.getSelectionModel().clearSelection();
-            toolWindows.getSelectionModel().clearSelection();
-          }
-        }
-      });
+
       JPanel leftPanel = new JBPanel<>(new VerticalFlowLayout()).withBorder(JBUI.Borders.empty(5, 5, 5, 20));
       leftPanel.add(toolWindows);
       adsSeparator = new JBPanel<>()
@@ -532,7 +455,7 @@ public class Switcher extends AnAction implements DumbAware {
       final Pair<List<FileInfo>, Integer> filesAndSelection = getFilesToShowAndSelectionIndex(project, collectFiles(project, onlyEdited),
                                                                                               toolWindows.getModel().getSize(), pinned);
       final int selectionIndex = filesAndSelection.getSecond();
-      final CollectionListModel<FileInfo> filesModel = new CollectionListModel<FileInfo>();
+      final CollectionListModel<FileInfo> filesModel = new CollectionListModel<>();
       for (FileInfo editor : filesAndSelection.getFirst()) {
         filesModel.add(editor);
       }
@@ -615,32 +538,10 @@ public class Switcher extends AnAction implements DumbAware {
         }
       };
 
-      files = new JBList(filesModel);
-      if (pinned) {
-        new NameFilteringListModel<FileInfo>(files, FileInfo::getNameForRendering, s -> !mySpeedSearch.isPopupActive()
-                                                                                        || StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix())
-                                                                                        || mySpeedSearch.getComparator().matchingFragments(mySpeedSearch.getEnteredPrefix(), s) != null, mySpeedSearch);
-      }
-
-      files.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
-      files.getSelectionModel().addListSelectionListener(e -> {
-        if (!files.isSelectionEmpty()) {
-          toolWindows.getSelectionModel().clearSelection();
-          actionAds.getSelectionModel().clearSelection();
-        }
-      });
-
+      files = createSwitcherList(filesModel, filesRenderer, FileInfo::getNameForRendering);
       files.getSelectionModel().addListSelectionListener(filesSelectionListener);
-
-      files.setCellRenderer(filesRenderer);
       files.setBorder(JBUI.Borders.empty(5));
-      files.addKeyListener(this);
       ScrollingUtil.installActions(files);
-      files.addMouseListener(this);
-      files.addMouseMotionListener(this);
-      files.addFocusListener(new MyFilesListFocusListener());
-      myClickListener.installOn(files);
-      ScrollingUtil.ensureSelectionExists(files);
 
       myShowOnlyEditedFilesCheckBox = new MyCheckBox(actionId, onlyEdited);
       myTopPanel = createTopPanel(myShowOnlyEditedFilesCheckBox,
@@ -669,21 +570,6 @@ public class Switcher extends AnAction implements DumbAware {
         this.add(separator, BorderLayout.CENTER);
       }
       this.add(descriptions, BorderLayout.SOUTH);
-
-      final ShortcutSet shortcutSet = ActionManager.getInstance().getAction(IdeActions.ACTION_SWITCHER).getShortcutSet();
-      final int modifiers = getModifiers(shortcutSet);
-      final boolean isAlt = (modifiers & Event.ALT_MASK) != 0;
-      CTRL_KEY = isAlt ? VK_ALT : VK_CONTROL;
-      files.addKeyListener(ArrayUtil.getLastElement(getKeyListeners()));
-      toolWindows.addKeyListener(ArrayUtil.getLastElement(getKeyListeners()));
-      actionAds.addKeyListener(ArrayUtil.getLastElement(getKeyListeners()));
-      KeymapUtil.reassignAction(toolWindows, getKeyStroke(VK_UP, 0), getKeyStroke(VK_UP, CTRL_DOWN_MASK), WHEN_FOCUSED, false);
-      KeymapUtil.reassignAction(toolWindows, getKeyStroke(VK_DOWN, 0), getKeyStroke(VK_DOWN, CTRL_DOWN_MASK), WHEN_FOCUSED, false);
-      KeymapUtil.reassignAction(files, getKeyStroke(VK_UP, 0), getKeyStroke(VK_UP, CTRL_DOWN_MASK), WHEN_FOCUSED, false);
-      KeymapUtil.reassignAction(files, getKeyStroke(VK_DOWN, 0), getKeyStroke(VK_DOWN, CTRL_DOWN_MASK), WHEN_FOCUSED, false);
-      KeymapUtil.reassignAction(actionAds, getKeyStroke(VK_UP, 0), getKeyStroke(VK_UP, CTRL_DOWN_MASK), WHEN_FOCUSED, false);
-      KeymapUtil.reassignAction(actionAds, getKeyStroke(VK_DOWN, 0), getKeyStroke(VK_DOWN, CTRL_DOWN_MASK), WHEN_FOCUSED, false);
-
 
       myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(this, filesModel.getSize() > 0 ? files : toolWindows)
         .setResizable(pinned)
@@ -741,6 +627,64 @@ public class Switcher extends AnAction implements DumbAware {
       addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, "LEFT");
       addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, "control RIGHT");
       addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, "control LEFT");
+    }
+
+    private <T> JBList<T> createSwitcherList(@NotNull CollectionListModel<T> model,
+                                             @NotNull ColoredListCellRenderer<T> cellRenderer,
+                                             @NotNull Function<? super T, String> filteringNamer) {
+      JBList list = new JBList(model);
+      list.addFocusListener(new FocusAdapter() {
+        @Override
+        public void focusGained(FocusEvent e) {
+          super.focusGained(e);
+          exchangeSelectionState(list);
+        }
+      });
+
+      if (isPinnedMode()) {
+        new NameFilteringListModel<>(list, filteringNamer,
+                                     s -> !mySpeedSearch.isPopupActive()
+                                          || StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix())
+                                          || mySpeedSearch.getComparator().matchingFragments(mySpeedSearch.getEnteredPrefix(), s) != null,
+                                     mySpeedSearch);
+      }
+
+      list.setSelectionMode(isPinnedMode() ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
+      list.setCellRenderer(cellRenderer);
+      list.addKeyListener(this);
+      list.addMouseListener(this);
+      list.addMouseMotionListener(this);
+      ScrollingUtil.ensureSelectionExists(list);
+
+      new ClickListener() {
+        @Override
+        public boolean onClick(@NotNull MouseEvent e, int clickCount) {
+          if (isPinnedMode() && (e.isControlDown() || e.isMetaDown() || e.isShiftDown())) return false;
+          final Object source = e.getSource();
+          if (source instanceof JList) {
+            JList jList = (JList)source;
+            if (jList.getSelectedIndex() == -1 && jList.getAnchorSelectionIndex() != -1) {
+              jList.setSelectedIndex(jList.getAnchorSelectionIndex());
+            }
+            if (jList.getSelectedIndex() != -1) {
+              navigate(e);
+            }
+          }
+          return true;
+        }
+      }.installOn(list);
+      list.getSelectionModel().addListSelectionListener(e -> {
+        if (!list.isSelectionEmpty()) {
+          getListsInOrder().stream()
+            .filter(other -> list != other)
+            .forEach(other -> other.getSelectionModel().clearSelection());
+        }
+      });
+
+      list.addKeyListener(ArrayUtil.getLastElement(getKeyListeners()));
+      KeymapUtil.reassignAction(list, getKeyStroke(VK_UP, 0), getKeyStroke(VK_UP, CTRL_DOWN_MASK), WHEN_FOCUSED, false);
+      KeymapUtil.reassignAction(list, getKeyStroke(VK_DOWN, 0), getKeyStroke(VK_DOWN, CTRL_DOWN_MASK), WHEN_FOCUSED, false);
+      return list;
     }
 
     private void bindLists(@NotNull JBList topList, @NotNull JBList bottomList) {
@@ -1395,7 +1339,7 @@ public class Switcher extends AnAction implements DumbAware {
         List<JBList> lists = getListsInOrder();
         return lists.stream()
           .map(JList::getModel)
-          .flatMap(model -> IntStream.range(0, model.getSize()).mapToObj(i -> model.getElementAt(i)))
+          .flatMap(model -> IntStream.range(0, model.getSize()).mapToObj(model::getElementAt))
           .toArray();
       }
 
