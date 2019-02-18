@@ -1,3 +1,4 @@
+<option>SPACE_IN_NAMED_ARGUMENT=false</option>
 groovy.swing.SwingBuilder.build {
   frame(id: 'f', title: 'Groovy Blogs', visible: true, () -> {
     scrollPane ()->{
