@@ -63,12 +63,13 @@ public class ExpandLogicalBracketsIntention extends ExpandBracketsBaseIntention 
     if (innerExpr == null) return null;
 
     final PsiPolyadicExpression polyadicExpression = ObjectUtils.tryCast(innerExpr, PsiPolyadicExpression.class);
-    if (polyadicExpression == null || polyadicExpression.getOperationTokenType().equals(JavaTokenType.ANDAND)) {
+    if (polyadicExpression == null) return null;
+
+    if (polyadicExpression.getOperationTokenType().equals(JavaTokenType.ANDAND)) {
       return Stream.of(getOperandText(innerExpr, false));
     }
 
-    final PsiExpression[] operands = polyadicExpression.getOperands();
-    return Arrays.stream(operands)
+    return Arrays.stream(polyadicExpression.getOperands())
       .map(operand -> processPrefixed(operand, ExpandLogicalBracketsIntention::getOperandText, JavaTokenType.EXCL));
   }
 

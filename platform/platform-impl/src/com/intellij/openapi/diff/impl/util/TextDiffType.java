@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.util;
 
 import com.intellij.openapi.diff.DiffBundle;
@@ -7,11 +7,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Arrays;
 import java.util.List;
 
 public class TextDiffType {
@@ -22,8 +22,8 @@ public class TextDiffType {
 
   public static final TextDiffType NONE = new TextDiffType(TextDiffTypeEnum.NONE, DiffBundle.message("diff.type.none.name"), null);
 
-  public static final List<TextDiffType> DIFF_TYPES = Arrays.asList(DELETED, CHANGED, INSERT);
-  public static final List<TextDiffType> MERGE_TYPES = Arrays.asList(DELETED, CHANGED, INSERT, CONFLICT);
+  public static final List<TextDiffType> DIFF_TYPES = ContainerUtil.immutableList(DELETED, CHANGED, INSERT);
+  public static final List<TextDiffType> MERGE_TYPES = ContainerUtil.immutableList(DELETED, CHANGED, INSERT, CONFLICT);
 
   private final TextDiffTypeEnum myType;
   private final TextAttributesKey myAttributesKey;

@@ -21,7 +21,7 @@ import com.intellij.conversion.ComponentManagerSettings;
 import com.intellij.conversion.ModuleSettings;
 import com.intellij.facet.FacetManagerImpl;
 import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.openapi.module.impl.ModuleImpl;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.impl.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.util.JDOMUtil;
@@ -62,7 +62,7 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
   @Override
   @Nullable
   public String getModuleType() {
-    return getRootElement().getAttributeValue(ModuleImpl.ELEMENT_TYPE);
+    return getRootElement().getAttributeValue(Module.ELEMENT_TYPE);
   }
 
   @Override
@@ -110,7 +110,7 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
 
   @Override
   public void setModuleType(@NotNull String moduleType) {
-    getRootElement().setAttribute(ModuleImpl.ELEMENT_TYPE, moduleType);
+    getRootElement().setAttribute(Module.ELEMENT_TYPE, moduleType);
   }
 
   @Override

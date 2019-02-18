@@ -101,7 +101,7 @@ public class PyTargetExpressionStubImpl extends StubBase<PyTargetExpression> imp
 
   @Nullable
   @Override
-  public <T extends CustomTargetExpressionStub> T getCustomStub(Class<T> stubClass) {
+  public <T> T getCustomStub(Class<T> stubClass) {
     if (stubClass.isInstance(myCustomStub)) {
       return stubClass.cast(myCustomStub);
     }

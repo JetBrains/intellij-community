@@ -13,10 +13,6 @@ public class ExpandLogicalBracketsIntentionTest extends IPPTestCase {
     doTest();
   }
 
-  public void testUnary() {
-    doTest();
-  }
-
   public void testUnknownPrefix() {
     doTest();
   }

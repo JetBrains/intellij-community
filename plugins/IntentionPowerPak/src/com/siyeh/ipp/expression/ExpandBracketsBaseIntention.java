@@ -13,6 +13,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -137,6 +138,8 @@ public abstract class ExpandBracketsBaseIntention extends Intention {
     if (!(element instanceof PsiJavaToken)) return possibleExpressions;
 
     while ((element = PsiTreeUtil.getParentOfType(element, PsiParenthesizedExpression.class)) != null) {
+      if (!ParenthesesUtils.areParenthesesNeeded((PsiParenthesizedExpression)element, false)) continue;
+
       final PsiElement parent = getFirstNonPrefixedParent(element);
       if (parent == null) continue;
 

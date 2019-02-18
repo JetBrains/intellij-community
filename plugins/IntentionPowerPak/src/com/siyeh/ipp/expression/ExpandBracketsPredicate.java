@@ -34,13 +34,6 @@ public class ExpandBracketsPredicate implements PsiElementPredicate {
   private boolean isSupportedInnerExpression(@Nullable PsiExpression expression) {
     expression = ParenthesesUtils.stripParentheses(expression);
 
-    if (expression instanceof PsiPrefixExpression ||
-        expression instanceof PsiTypeCastExpression ||
-        expression instanceof PsiLiteralExpression ||
-        expression instanceof PsiReferenceExpression) {
-      return true;
-    }
-
     if (expression instanceof PsiPolyadicExpression) {
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
       final IElementType tokenType = polyadicExpression.getOperationTokenType();
@@ -52,17 +45,18 @@ public class ExpandBracketsPredicate implements PsiElementPredicate {
     return false;
   }
 
-  private boolean isSupportedOuterExpression(@NotNull PsiExpression expression) {
-    while (expression.getParent() instanceof PsiPrefixExpression) {
-      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression.getParent();
-      if (!ArrayUtil.contains(prefixExpression.getOperationTokenType(), prefixes)) {
-        return false;
-      }
+  private boolean isSupportedOuterExpression(@NotNull PsiParenthesizedExpression expression) {
+    if (!ParenthesesUtils.areParenthesesNeeded(expression, false)) return false;
 
-      expression = prefixExpression;
+    PsiExpression innerExpr = expression;
+    while (innerExpr.getParent() instanceof PsiPrefixExpression) {
+      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)innerExpr.getParent();
+      if (!ArrayUtil.contains(prefixExpression.getOperationTokenType(), prefixes)) return false;
+
+      innerExpr = prefixExpression;
     }
 
-    final PsiElement parent = expression.getParent();
+    final PsiElement parent = innerExpr.getParent();
     if (parent instanceof PsiTypeCastExpression) return false;
 
     final PsiPolyadicExpression polyadicExpression = ObjectUtils.tryCast(parent, PsiPolyadicExpression.class);
