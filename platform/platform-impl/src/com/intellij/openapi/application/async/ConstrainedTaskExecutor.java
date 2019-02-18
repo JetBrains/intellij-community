@@ -7,6 +7,7 @@ import org.jetbrains.concurrency.CancellablePromise;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
+import java.util.function.BooleanSupplier;
 
 /**
  * @author eldar
@@ -20,7 +21,8 @@ public class ConstrainedTaskExecutor {
 
   public void execute(@NotNull Runnable command) {
     final Expiration expiration = myConstraintExecution.composeExpiration();
-    final Executor executor = myConstraintExecution.createConstraintSchedulingExecutor(() -> expiration == null || !expiration.isExpired());
+    final BooleanSupplier condition = (expiration == null) ? null : () -> !expiration.isExpired();
+    final Executor executor = myConstraintExecution.createConstraintSchedulingExecutor(condition);
     executor.execute(command);
   }
 
