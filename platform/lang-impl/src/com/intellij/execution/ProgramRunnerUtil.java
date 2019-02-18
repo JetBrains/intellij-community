@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -104,14 +104,14 @@ public class ProgramRunnerUtil {
     String name = configuration != null ? configuration.getName() : environment.getRunProfile().getName();
     String windowId = ExecutionManager.getInstance(project).getContentManager().getToolWindowIdByEnvironment(environment);
     if (configuration instanceof ConfigurationWithCommandLineShortener && ExecutionUtil.isProcessNotCreated(e)) {
-      handelProcessNotStartedError((ConfigurationWithCommandLineShortener)configuration, (ProcessNotCreatedException)e, name, windowId);
+      handleProcessNotStartedError((ConfigurationWithCommandLineShortener)configuration, (ProcessNotCreatedException)e, name, windowId);
     }
     else {
       ExecutionUtil.handleExecutionError(project, windowId, name, e);
     }
   }
 
-  private static void handelProcessNotStartedError(ConfigurationWithCommandLineShortener configuration,
+  private static void handleProcessNotStartedError(ConfigurationWithCommandLineShortener configuration,
                                                    ExecutionException e,
                                                    String name,
                                                    String windowId) {
