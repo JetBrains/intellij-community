@@ -27,13 +27,16 @@ import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanelWithEmptyText;
+import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.BaseTreeModel;
+import com.intellij.ui.tree.Searchable;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.Invoker;
+import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
@@ -41,10 +44,10 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
-import javax.swing.event.TreeExpansionEvent;
-import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
@@ -79,8 +82,8 @@ class ServiceView extends JPanel implements Disposable {
   private final Map<Object, ServiceViewContributor.SubtreeDescriptor> mySubtrees = new HashMap<>();
 
   private final MyTreeModel myTreeModel;
+  private final AsyncTreeModel myAsyncTreeModel;
   private Object myLastSelection;
-  private final Set<Object> myCollapsedTreeNodeValues = new HashSet<>();
   private final List<? extends RunDashboardGrouper> myGroupers;
   private final RunDashboardStatusFilter myStatusFilter = new RunDashboardStatusFilter();
 
@@ -95,7 +98,8 @@ class ServiceView extends JPanel implements Disposable {
 
     myTree = new Tree();
     myTreeModel = new MyTreeModel();
-    myTree.setModel(myTreeModel);
+    myAsyncTreeModel = new AsyncTreeModel(myTreeModel, this);
+    myTree.setModel(myAsyncTreeModel);
     initTree();
     myTreeModel.refreshAll();
 
@@ -152,43 +156,10 @@ class ServiceView extends JPanel implements Disposable {
 
     // listeners
     myTree.addTreeSelectionListener(e -> onSelectionChanged());
-    myTree.addTreeExpansionListener(new TreeExpansionListener() {
-      @Override
-      public void treeExpanded(TreeExpansionEvent event) {
-        Object value = TreeUtil.getLastUserObject(event.getPath());
-        if (value != null) {
-          myCollapsedTreeNodeValues.remove(value);
-        }
-      }
-
-      @Override
-      public void treeCollapsed(TreeExpansionEvent event) {
-        Object value = TreeUtil.getLastUserObject(event.getPath());
-        if (value != null) {
-          myCollapsedTreeNodeValues.add(value);
-        }
-      }
-    });
     new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true);
     RunDashboardTreeMouseListener mouseListener = new RunDashboardTreeMouseListener(myTree);
     mouseListener.installOn(myTree);
 
-    myTreeModel.addTreeModelListener(new TreeModelAdapter() {
-      @Override
-      public void treeStructureChanged(TreeModelEvent event) {
-        TreeUtil.promiseVisit(myTree, new TreeVisitor() {
-          @NotNull
-          @Override
-          public Action visit(@NotNull TreePath path) {
-            Object node = TreeUtil.getLastUserObject(path);
-            if (node instanceof NodeDescriptor) {
-              ((NodeDescriptor)node).update();
-            }
-            return Action.CONTINUE;
-          }
-        });
-      }
-    });
     //RowsDnDSupport.install(myTree, myTreeModel);
     //new DoubleClickListener() {
     //  @Override
@@ -282,7 +253,7 @@ class ServiceView extends JPanel implements Disposable {
     myTreeModel.refreshAll();
   }
 
-  public void selectNode(Object node) {
+  void selectNode(Object node) {
     TreeUtil.select(myTree, new NodeSelectionVisitor(node), path -> {
     });
   }
@@ -296,14 +267,14 @@ class ServiceView extends JPanel implements Disposable {
   }
 
   private class MyTreeExpander extends DefaultTreeExpander {
-    private boolean myFlat;
+    private volatile boolean myFlat;
 
     MyTreeExpander() {
       super(myTree);
       myTreeModel.addTreeModelListener(new TreeModelAdapter() {
         @Override
         public void treeStructureChanged(TreeModelEvent e) {
-          myFlat = isFlat();
+          isFlat();
         }
       });
     }
@@ -318,14 +289,25 @@ class ServiceView extends JPanel implements Disposable {
       return super.canCollapse() && !myFlat;
     }
 
-    private boolean isFlat() {
-      Object root = myTreeModel.getRoot();
-      for (Object child : myTreeModel.getChildren(root)) {
-        if (myTreeModel.getChildCount(child) > 0) {
-          return false;
+    private void isFlat() {
+      myFlat = true;
+      myAsyncTreeModel.accept(new TreeVisitor() {
+        @NotNull
+        @Override
+        public Action visit(@NotNull TreePath path) {
+          if (path.getPathCount() == 1) {
+            return Action.CONTINUE;
+          }
+          if (path.getPathCount() == 2) {
+            if (myAsyncTreeModel.getChildCount(path.getLastPathComponent()) > 0) {
+              myFlat = false;
+              return Action.INTERRUPT;
+            }
+            return Action.SKIP_CHILDREN;
+          }
+          return Action.INTERRUPT;
         }
-      }
-      return true;
+      });
     }
   }
 
@@ -402,21 +384,37 @@ class ServiceView extends JPanel implements Disposable {
   }
 
 
-  private class MyTreeModel extends BaseTreeModel<Object> {
+  private class MyTreeModel extends BaseTreeModel<Object> implements InvokerSupplier, Searchable {
     final Object myRoot = ObjectUtils.sentinel("services root");
-    Map<Object, List<Object>> myCachedChildren = FactoryMap.create(this::doGetChildren);
+    final Invoker myInvoker = new Invoker.BackgroundThread(this);
+
+    @NotNull
+    @Override
+    public Invoker getInvoker() {
+      return myInvoker;
+    }
+
+    @NotNull
+    @Override
+    public Promise<TreePath> getTreePath(Object object) {
+      return Promises.resolvedPromise(new TreePath(myRoot)); // TODO [konstantin.aleev]
+    }
+
+    @Override
+    public boolean isLeaf(Object object) {
+      return object != myRoot && !mySubtrees.containsKey(object);
+    }
 
     @Override
     public List<?> getChildren(Object parent) {
-      return myCachedChildren.get(parent);
-    }
-
-    List<Object> doGetChildren(Object parent) {
       List<Object> result;
       if (parent == myRoot) {
         result = new ArrayList<>();
         for (@SuppressWarnings("unchecked") ServiceViewContributor<Object, Object, Object> contributor : EP_NAME.getExtensions()) {
           for (Object node : contributor.getNodes(myProject)) {
+            if (node instanceof NodeDescriptor) {
+              ((NodeDescriptor)node).update();
+            }
             myViewDescriptors.put(node, contributor.getNodeDescriptor(node));
             mySubtrees.put(node, contributor.getNodeSubtree(node));
             myContributors.put(node, contributor);
@@ -453,10 +451,7 @@ class ServiceView extends JPanel implements Disposable {
     }
 
     void refreshAll() {
-      List<Object> selected = TreeUtil.collectSelectedUserObjects(myTree);
-      myCachedChildren.clear();
-      treeStructureChanged(new TreePath(myRoot), null, null);
-      TreeUtil.promiseSelect(myTree, selected.stream().map(NodeSelectionVisitor::new));
+      treeStructureChanged(null, null, null);
     }
   }
 
@@ -480,7 +475,7 @@ class ServiceView extends JPanel implements Disposable {
                                                   boolean leaf,
                                                   int row,
                                                   boolean hasFocus) {
-      if (value == myTreeModel.getRoot()) {
+      if (value == myTreeModel.getRoot() || value instanceof LoadingNode) {
         return myColoredRender;
       }
       ServiceViewContributor.ViewDescriptor nodeDescriptor = myViewDescriptors.get(value);
