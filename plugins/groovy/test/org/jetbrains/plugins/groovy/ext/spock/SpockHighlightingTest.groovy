@@ -6,6 +6,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyPointlessArithmeticInspection
 import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyPointlessBooleanInspection
+import org.jetbrains.plugins.groovy.codeInspection.style.JavaStylePropertiesInvocationInspection
 import org.jetbrains.plugins.groovy.util.HighlightingTest
 import org.junit.Test
 
@@ -66,9 +67,11 @@ class FooSpec extends spock.lang.Specification {
 
   @Test
   void 'interactions'() {
+    enableInspectionAsWarning(new JavaStylePropertiesInvocationInspection())
     highlightingTest '''\
 interface Subscriber {
   def receive(String event)
+  void setIncludeFollowUp(o)
 }
 
 class FooSpec extends spock.lang.Specification {
@@ -77,10 +80,11 @@ class FooSpec extends spock.lang.Specification {
 
   def feature() {
     when:
-    sub1.receive("hi")
+    sub.receive("hi")
 
     then:
-    1 * sub1.receive(_)
+    1 * sub.receive(_)
+    0 * sub.setIncludeFollowUp(1)
   }
 }
 '''
