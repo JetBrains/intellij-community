@@ -6,6 +6,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.util.*
+import com.intellij.xml.util.*
 import runtime.reactive.*
 
 val application: Application
@@ -15,14 +16,6 @@ interface LifetimedComponent : Lifetimed, BaseComponent
 
 class SimpleLifetimedComponent : SimpleLifetimed(), LifetimedComponent {
     override fun disposeComponent() {
-        terminateLifetimeSource()
-    }
-}
-
-interface LifetimedDisposable : Lifetimed, Disposable
-
-class SimpleLifetimedDisposable : SimpleLifetimed(), LifetimedDisposable {
-    override fun dispose() {
         terminateLifetimeSource()
     }
 }
@@ -67,4 +60,12 @@ inline fun <T : Any, C : ComponentManager> C.computeSafe(crossinline compute: C.
         if (isDisposed) null else compute()
     })
 
-fun <T : Any> isSameBy(selector: (T) -> Any): (T, T) -> Boolean = { t1, t2 -> selector(t1) == selector(t2) }
+fun notify(lifetime: Lifetime, text: String, handler: (() -> Unit)? = null) {
+    Notification(
+        "Circlet",
+        "Circlet",
+        XmlStringUtil.wrapInHtml(text),
+        NotificationType.INFORMATION,
+        handler?.let { NotificationListener { _, _ -> it() } }
+    ).notify(lifetime, null)
+}

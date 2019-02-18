@@ -18,13 +18,13 @@
     <depends>com.intellij.modules.platform</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <projectService serviceImplementation="circlet.settings.ProjectSettings"/>
-        <projectService serviceImplementation="circlet.components.RepositoryComponent"/>
 
-        <applicationConfigurable id="circlet.settings.global" groupId="tools"
-                                 instance="circlet.settings.GlobalConfigurable"/>
-        <projectConfigurable id="circlet.settings.connection" groupId="tools" parentId="circlet.settings.global"
-                             instance="circlet.settings.ConnectionConfigurable"/>
+        <applicationConfigurable
+            groupId="tools"
+            groupWeight="239"
+            displayName="Circlet"
+            instance="circlet.settings.CircletConfigurable"
+        />
 
         <toolWindow id="Circlet" anchor="bottom" canCloseContents="true"
                     factoryClass="circlet.tools.CircletToolWindowFactory"/>
@@ -36,16 +36,16 @@
         <component>
             <implementation-class>circlet.components.CircletApplicationComponent</implementation-class>
         </component>
+
         <component>
-            <implementation-class>circlet.components.ConnectionsComponent</implementation-class>
+            <implementation-class>circlet.components.CircletWorkspaceComponent</implementation-class>
+        </component>
+        <component>
+            <implementation-class>circlet.components.CircletSettingsComponent</implementation-class>
         </component>
     </application-components>
 
     <project-components>
-        <component>
-            <implementation-class>circlet.components.ConnectionComponent</implementation-class>
-        </component>
-
         <component>
             <implementation-class>circlet.tools.CircletToolWindowManager</implementation-class>
         </component>
@@ -57,14 +57,6 @@
         <action class="circlet.actions.TestCircletAction" text="Test Circlet..." id="Circlet.TestCircletAction"/>
 
 
-        <!--<action id="Circlet.CloneRepoIntent" text="Clone Circlet repository" class="circlet.actions.CloneCircletRepositoryAction">-->
-            <!--<add-to-group group-id="WelcomeScreen.QuickStart.IDEA" anchor="last" />-->
-        <!--</action>-->
-
-        <group text="Circlet" id="Circlet.Welcome">
-            <add-to-group group-id="WelcomeScreen.Configure" anchor="first" />
-            <action class="circlet.actions.CloneCircletRepositoryAction" text="Clone circlet repository" id="Circlet.CloneRepository" />
-        </group>
 
         <group text="Circlet" id="CircletGroup" popup="true">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
@@ -72,10 +64,6 @@
             <reference id="Circlet.TestCircletActionRef" ref="Circlet.TestCircletAction"/>
         </group>
 
-        <!--<action id="Circlet.CloneRepository" class="circlet.actions.CloneCircletRepositoryAction"-->
-                <!--text="Clone circlet repository" description="Here it goes">-->
-            <!--<add-to-group group-id="WelcomeScreen.QuickStart.Platform" anchor="last"/>-->
-        <!--</action>-->
     </actions>
 
 </idea-plugin>

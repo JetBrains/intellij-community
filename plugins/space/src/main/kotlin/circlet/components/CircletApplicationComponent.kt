@@ -11,7 +11,7 @@ import runtime.*
 
 class CircletApplicationComponent : ApplicationComponent {
     init {
-        KLoggerStaticFactory.customFactory = ErrorToWarningKLoggers
+        KLoggerStaticFactory.customFactory = KLoggerFactoryIdea
 
         mutableUiDispatch = ApplicationUiDispatch
 

@@ -4,7 +4,7 @@ import com.intellij.openapi.diagnostic.*
 import klogging.impl.*
 import kotlin.reflect.*
 
-abstract class ApplicationKLoggers : KLoggerFactory {
+object KLoggerFactoryIdea : KLoggerFactory {
     override fun logger(owner: KClass<*>): KLogger = wrapLogger(Logger.getInstance(owner.java))
 
     override fun logger(owner: Any): KLogger = logger(owner.javaClass.kotlin)
@@ -13,5 +13,5 @@ abstract class ApplicationKLoggers : KLoggerFactory {
 
     private fun wrapLogger(logger: Logger) = KLogger(wrapWithApplicationLogger(logger))
 
-    protected abstract fun wrapWithApplicationLogger(logger: Logger): ApplicationLogger
+    fun wrapWithApplicationLogger(logger: Logger): ApplicationLogger = ApplicationLogger(logger)
 }
