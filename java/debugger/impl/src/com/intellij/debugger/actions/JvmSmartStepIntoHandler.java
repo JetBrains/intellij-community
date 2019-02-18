@@ -27,6 +27,11 @@ public abstract class JvmSmartStepIntoHandler {
     return Promises.resolvedPromise(findSmartStepTargets(position));
   }
 
+  @NotNull
+  public Promise<List<SmartStepTarget>> findStepIntoTargets(SourcePosition position, DebuggerSession session) {
+    return Promises.rejectedPromise();
+  }
+
   public abstract boolean isAvailable(SourcePosition position);
 
   /**

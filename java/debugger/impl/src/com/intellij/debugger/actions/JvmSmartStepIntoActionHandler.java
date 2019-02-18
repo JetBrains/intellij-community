@@ -5,7 +5,6 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -30,22 +29,24 @@ public class JvmSmartStepIntoActionHandler extends XSmartStepIntoHandler<JvmSmar
 
   @NotNull
   @Override
-  public Promise<List<JvmSmartStepIntoVariant>> computeSmartStepVariantsAsync(@NotNull XSourcePosition xPosition) {
-    SourcePosition position = DebuggerUtilsEx.toSourcePosition(xPosition, mySession.getProject());
-    for (JvmSmartStepIntoHandler handler : JvmSmartStepIntoHandler.EP_NAME.getExtensionList()) {
-      if (handler.isAvailable(position)) {
-        return handler.findSmartStepTargetsAsync(position, mySession)
-          .then(results -> ContainerUtil.map(results, target -> new JvmSmartStepIntoVariant(target, handler)));
-      }
-    }
-    return Promises.rejectedPromise();
+  public Promise<List<JvmSmartStepIntoVariant>> computeSmartStepVariantsAsync(@NotNull XSourcePosition position) {
+    return findVariants(position, true);
   }
 
   @NotNull
   @Override
   public Promise<List<JvmSmartStepIntoVariant>> computeStepIntoVariants(@NotNull XSourcePosition position) {
-    if (Registry.is("debugger.smart.step.always")) {
-      return computeSmartStepVariantsAsync(position);
+    return findVariants(position, false);
+  }
+
+  private Promise<List<JvmSmartStepIntoVariant>> findVariants(@NotNull XSourcePosition xPosition, boolean smart) {
+    SourcePosition position = DebuggerUtilsEx.toSourcePosition(xPosition, mySession.getProject());
+    for (JvmSmartStepIntoHandler handler : JvmSmartStepIntoHandler.EP_NAME.getExtensionList()) {
+      if (handler.isAvailable(position)) {
+        Promise<List<SmartStepTarget>> targets =
+          smart ? handler.findSmartStepTargetsAsync(position, mySession) : handler.findStepIntoTargets(position, mySession);
+        return targets.then(results -> ContainerUtil.map(results, target -> new JvmSmartStepIntoVariant(target, handler)));
+      }
     }
     return Promises.rejectedPromise();
   }

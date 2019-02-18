@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.DocumentUtil;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 import org.jetbrains.org.objectweb.asm.Label;
 import org.jetbrains.org.objectweb.asm.MethodVisitor;
 import org.jetbrains.org.objectweb.asm.Opcodes;
@@ -65,6 +67,15 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       }
     });
     return res;
+  }
+
+  @NotNull
+  @Override
+  public Promise<List<SmartStepTarget>> findStepIntoTargets(SourcePosition position, DebuggerSession session) {
+    if (Registry.is("debugger.smart.step.always")) {
+      return findSmartStepTargetsAsync(position, session);
+    }
+    return Promises.rejectedPromise();
   }
 
   @NotNull
