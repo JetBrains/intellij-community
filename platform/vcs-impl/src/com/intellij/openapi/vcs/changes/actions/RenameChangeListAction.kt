@@ -3,54 +3,40 @@
 package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.ui.EditChangelistDialog
-import com.intellij.util.ArrayUtil
 
-class RenameChangeListAction : AnAction(), DumbAware {
-
+class RenameChangeListAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
-    val target = getTargetChangeList(e)
-    val visible = target != null && !target.isReadOnly
-    e.presentation.isEnabled = visible
+    val changeList = getTargetChangeList(e)
+    val enabled = changeList != null && !changeList.isReadOnly
+
+    e.presentation.isEnabled = enabled
     if (e.place == ActionPlaces.CHANGES_VIEW_POPUP) {
-      e.presentation.isVisible = visible
+      e.presentation.isVisible = enabled
     }
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getData(CommonDataKeys.PROJECT)
-    val target = getTargetChangeList(e)
-    if (target != null) {
-      EditChangelistDialog(project, target).show()
+    val project = e.project!!
+    val changeList = getTargetChangeList(e)
+
+    if (changeList != null) {
+      EditChangelistDialog(project, changeList).show()
     }
   }
 
   private fun getTargetChangeList(e: AnActionEvent): LocalChangeList? {
-    val project = e.project ?: return null
-    val lists = e.getData(VcsDataKeys.CHANGE_LISTS)
-    if (!ArrayUtil.isEmpty(lists)) {
-      return if (lists!!.size == 1) {
-        ChangeListManager.getInstance(project).findChangeList(lists[0].name)
-      }
-      else null
-    }
-    val changes = e.getData(VcsDataKeys.CHANGES) ?: return null
+    val changeListManager = ChangeListManager.getInstance(e.project ?: return null)
 
-    var result: LocalChangeList? = null
-    for (change in changes) {
-      val cl = ChangeListManager.getInstance(project).getChangeList(change)
-      if (result == null)
-        result = cl
-      else if (cl != null && cl != result)
-        return null
-    }
-    return result
+    val changeLists = e.getData(VcsDataKeys.CHANGE_LISTS)
+    if (!changeLists.isNullOrEmpty()) return changeLists.singleOrNull()?.let { changeListManager.findChangeList(it.name) }
+
+    val changes = e.getData(VcsDataKeys.CHANGES) ?: return null
+    return changes.asSequence().mapNotNull { changeListManager.getChangeList(it) }.distinct().singleOrNull()
   }
 }
