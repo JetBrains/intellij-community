@@ -356,13 +356,17 @@ def read_generator_version(skeleton_file):
 
 def should_update_skeleton(base_dir, mod_qname):
     mod_cache_base = os.path.join(base_dir, *mod_qname.split('.'))
+    cur_version = version()
+
+    with ignored_os_errors(errno.ENOENT):
+        with fopen(os.path.join(base_dir, FAILED_VERSION_STAMP), 'r') as f:
+            stamp_content = f.read().strip()
+            if cur_version != 'test':
+                return version_to_tuple(stamp_content) != cur_version
+
     mod_cache_pkg = os.path.join(mod_cache_base, '__init__.py')
     mod_cache_file = mod_cache_base + '.py'
     required_version = read_required_version(mod_qname)
-    # Assume that we can't specify not-yet-existing version of the generator in required_gen_version file
-    # cur_version = version()
-    # if cur_version != 'test':
-    #     assert version_to_tuple(cur_version) >= required_version
     for path in (mod_cache_pkg, mod_cache_file):
         with ignored_os_errors(errno.ENOENT):
             with fopen(path, 'r') as f:

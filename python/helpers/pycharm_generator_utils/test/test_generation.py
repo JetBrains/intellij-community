@@ -127,10 +127,10 @@ class SkeletonCachingTest(GeneratorTestCase):
         self.check_generator_output('sigsegv', mod_path='sigsegv.py', gen_version='0.1', fake_hashes=False)
 
     def test_skeleton_regenerated_for_failed_module_on_generator_upgrade(self):
-        self.fail()
+        self.check_generator_output('sigsegv', mod_path='sigsegv.py', gen_version='0.2', fake_hashes=False)
 
     def test_skeleton_not_regenerated_for_failed_module_on_same_generator_version(self):
-        self.fail()
+        self.check_generator_output('sigsegv', mod_path='sigsegv.py', gen_version='0.1', fake_hashes=False)
 
     def check_generator_output(self, mod_name, mod_path=None, mod_location=None, custom_required_gen=False, **kwargs):
         kwargs.setdefault('fake_hashes', 'True')
