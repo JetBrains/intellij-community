@@ -1,3 +1,4 @@
+<option>KEEP_LINE_BREAKS=false</option>
 a.
                 toSet().
                 findAllXxx( (it)->

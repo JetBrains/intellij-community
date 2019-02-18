@@ -1,73 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.formatter
 
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
-import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
-import org.jetbrains.plugins.groovy.util.TestUtils
 
-import java.lang.reflect.Field
-import java.util.regex.Matcher
-import java.util.regex.Pattern
+import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author peter
  */
 class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
-  private static final String OPTION_START = "<option>"
-  private static final String OPTION_END = "</option>"
-  private static final Pattern PATTERN = ~"$OPTION_START(\\w+=(true|false+|\\d|\\w+))$OPTION_END\n"
 
   final String basePath = TestUtils.testDataPath + "groovy/codeStyle/"
-
-  private void doTest() throws Throwable {
-    final List<String> data = TestUtils.readInput(testDataPath + getTestName(true) + ".test")
-    String input = data[0]
-    while (true) {
-      def (String name, String value, Integer matcherEnd) = parseOption(input)
-      if (!name || !value) break
-
-      def (Field field, Object settingObj) = findSettings(name)
-      field.set(settingObj, evaluateValue(value))
-      input = input.substring(matcherEnd)
-    }
-
-    checkFormatting(input, data[1])
-  }
-
-  @NotNull
-  static List parseOption(String input) {
-    final Matcher matcher = PATTERN.matcher(input)
-    if (!matcher.find()) return [null, null, null]
-    final String[] strings = matcher.group(1).split("=")
-    return [strings[0], strings[1], matcher.end()]
-  }
-
-  private List findSettings(String name) {
-    return findField(CommonCodeStyleSettings, name)?.with { [it, getGroovySettings()] }
-      ?: findField(GroovyCodeStyleSettings, name)?.with { [it, getGroovyCustomSettings()] }
-      ?: findField(CommonCodeStyleSettings.IndentOptions, name)?.with { [it, getGroovySettings().getIndentOptions()] }
-  }
-
-  private static Field findField(Class<?> clazz, String name) {
-    return clazz.fields.find { it.name == name }
-  }
-
-  @Nullable
-  private static Object evaluateValue(String value) {
-    if (value == "true" || value == "false") {
-      return Boolean.parseBoolean(value)
-    }
-    else {
-      try {
-        return Integer.parseInt(value)
-      }
-      catch (NumberFormatException ignored) {
-        return CommonCodeStyleSettings.getField(value).get(value)
-      }
-    }
-  }
 
   void testClass_decl1() throws Throwable { doTest() }
 
@@ -188,4 +130,8 @@ class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
   void testLabelIndentRelativeReverse() { doTest() }
 
   void testBlankLinesInCode() { doTest() }
+
+  private doTest() {
+    doTest(getTestName(true) + ".test")
+  }
 }
