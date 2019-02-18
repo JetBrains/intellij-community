@@ -6,6 +6,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.util.BaseTest
 import org.junit.Test
 
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER
 import static com.intellij.testFramework.UsefulTestCase.assertContainsElements
 
 @CompileStatic
@@ -79,5 +80,17 @@ bar | baz | bad
 and:
 foo = bar * baz
 ''', 'bar', 'baz', 'bad', 'foo'
+  }
+
+  @Test
+  void 'and label inside table'() {
+    def variables = variableMap '''\
+where:
+bar | _
+and:
+1   | _
+'''
+    assert variables.size() == 1
+    assert variables.values().first().type.equalsToText(JAVA_LANG_INTEGER)
   }
 }

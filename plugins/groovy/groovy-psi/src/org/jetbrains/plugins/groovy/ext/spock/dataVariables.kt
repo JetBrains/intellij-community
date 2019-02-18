@@ -144,6 +144,10 @@ private fun addInitializersFromTableRow(variables: List<SpockVariableDescriptor?
     addInitializers(variables, extractColumns(row))
     return true
   }
+  else if (row is GrLabeledStatement && row.name == "and") {
+    val labeledStatement = row.statement
+    return labeledStatement != null && addInitializersFromTableRow(variables, labeledStatement)
+  }
   else {
     return false
   }
