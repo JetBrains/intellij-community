@@ -31,48 +31,54 @@ import static de.thomasrosenau.diffplugin.psi.DiffTypes.*;
 %function advance
 %type IElementType
 %unicode
-%state GitHead, DEFAULT
+%state CONTEXT, UNIFIED, NORMAL
 
 Newline = [\r\n]
 InputCharacter = [^\r\n]
 InputCharacters = {InputCharacter}+
 Digits = [0-9]+
-Range = {Digits} "," {Digits}
+Range = {Digits} ("," {Digits})?
 
 %%
 
-<YYINITIAL> ^ "From "  {InputCharacters} $ { yybegin(GitHead); return GIT_HEAD; }
-
-<GitHead> {
-  ^ "diff " {InputCharacters} $ { yybegin(DEFAULT); return COMMAND; }
-  ^ "---" {Newline} { return SEPARATOR; }
-  // TODO detect email address etc
-  ^ {InputCharacters} $ { return GIT_HEAD; }
-}
-
 {Newline} { return WHITE_SPACE; }
 
-^ "diff " {InputCharacters} $ { yybegin(DEFAULT); return COMMAND; }
+<YYINITIAL> ^ "*** " {InputCharacters} $ { yybegin(CONTEXT); return CONTEXT_FROM_LABEL; }
+<CONTEXT> {
+  ^ "***************" $ { return CONTEXT_HUNK_SEPERATOR; }
+  ^ "*** " {Range} " ****" $ { return CONTEXT_FROM_LINE_NUMBERS; }
+  ^ "--- " {Range} " ----" $ { return CONTEXT_TO_LINE_NUMBERS; }
+  ^ "--- " {InputCharacters} $ { return CONTEXT_TO_LABEL; }
+  ^ "!" (" " {InputCharacters})? {Newline} { return CONTEXT_CHANGED_LINE; }
+  ^ "+" (" " {InputCharacters})? {Newline} { return CONTEXT_INSERTED_LINE; }
+  ^ "-" (" " {InputCharacters})? {Newline} { return CONTEXT_DELETED_LINE; }
+  ^ "  " {InputCharacters} {Newline} { return CONTEXT_COMMON_LINE; }
+}
 
-^ {Range} $ { yybegin(DEFAULT); return HUNK_HEAD; }
-^ "--- " {Range} " ----" $ { yybegin(DEFAULT); return HUNK_HEAD; }
-^ "*** " {Range} " ****" $ { yybegin(DEFAULT); return HUNK_HEAD; }
-^ "@@" {InputCharacters} $ { yybegin(DEFAULT); return HUNK_HEAD; }
+<YYINITIAL,UNIFIED> ^ "--- " {InputCharacters} $ { yybegin(UNIFIED); return UNIFIED_FROM_LABEL; }
+<UNIFIED> {
+  ^ "+++ " {InputCharacters} $ { return UNIFIED_TO_LABEL; }
+  ^ "@@ " {InputCharacters} " @@" (" " .+)? $ { return UNIFIED_LINE_NUMBERS; }
+  ^ "+" {InputCharacters}? {Newline} { return UNIFIED_INSERTED_LINE; }
+  ^ "-" {InputCharacters}? {Newline} { return UNIFIED_DELETED_LINE; }
+  ^ " " {InputCharacters}? {Newline} { return UNIFIED_COMMON_LINE; }
+}
 
-^ "*** " {InputCharacters} $ { yybegin(DEFAULT); return FILE; }
-^ "--- " {InputCharacters} $ { yybegin(DEFAULT); return FILE; } // TODO: find out if first or second file (-u vs. -c)
-^ "+++ " {InputCharacters} $ { yybegin(DEFAULT); return FILE; }
+<YYINITIAL,NORMAL> {
+  ^ {Digits} "a" {Range} $ { yybegin(NORMAL); return NORMAL_ADD_COMMAND; }
+  ^ {Range} "c" {Range} $ { yybegin(NORMAL); return NORMAL_CHANGE_COMMAND; }
+  ^ {Range} "d" {Digits} $ { yybegin(NORMAL); return NORMAL_DELETE_COMMAND; }
+}
+<NORMAL> {
+  ^ ">" {InputCharacters}? {Newline} { return NORMAL_TO_LINE; }
+  ^ "<" {InputCharacters}? {Newline} { return NORMAL_FROM_LINE; }
+  ^ "---" $ { return NORMAL_SEPARATOR; }
+}
 
-^ "--" ("-" | " ")? {Newline} { yybegin(DEFAULT); return SEPARATOR; }
-^ "***************" {Newline} { yybegin(DEFAULT); return SEPARATOR; }
+^ "diff " {InputCharacters} $ { yybegin(YYINITIAL); return COMMAND; }
 
-// TODO: handle EOF
-^ [+>] {InputCharacters}? {Newline} { yybegin(DEFAULT); return ADDED; }
-^ [-<] {InputCharacters}? {Newline} { yybegin(DEFAULT); return DELETED; }
-^ "!" {InputCharacters} {Newline} { yybegin(DEFAULT); return MODIFIED; } // TODO: find out if added or deleted
+^ "\\" {InputCharacters} $ { return EOLHINT; }
 
-^ "\\" {InputCharacters} $ { yybegin(DEFAULT); return EOLHINT; } // TODO: find out if added or deleted
-
-^ {InputCharacters} $ { yybegin(DEFAULT); return OTHER; }
+^ {InputCharacters} $ { return OTHER; }
 
 [^] { return BAD_CHARACTER; } // this should never happen; debugging only

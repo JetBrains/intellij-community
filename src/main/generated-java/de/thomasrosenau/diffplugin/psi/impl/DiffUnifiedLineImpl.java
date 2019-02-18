@@ -11,14 +11,14 @@ import static de.thomasrosenau.diffplugin.psi.DiffTypes.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import de.thomasrosenau.diffplugin.psi.*;
 
-public class DiffChangedImpl extends ASTWrapperPsiElement implements DiffChanged {
+public class DiffUnifiedLineImpl extends ASTWrapperPsiElement implements DiffUnifiedLine {
 
-  public DiffChangedImpl(@NotNull ASTNode node) {
+  public DiffUnifiedLineImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull DiffVisitor visitor) {
-    visitor.visitChanged(this);
+    visitor.visitUnifiedLine(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

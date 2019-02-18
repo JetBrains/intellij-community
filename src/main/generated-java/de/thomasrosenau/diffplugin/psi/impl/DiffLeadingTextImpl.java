@@ -11,19 +11,31 @@ import static de.thomasrosenau.diffplugin.psi.DiffTypes.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import de.thomasrosenau.diffplugin.psi.*;
 
-public class DiffPlainImpl extends ASTWrapperPsiElement implements DiffPlain {
+public class DiffLeadingTextImpl extends ASTWrapperPsiElement implements DiffLeadingText {
 
-  public DiffPlainImpl(@NotNull ASTNode node) {
+  public DiffLeadingTextImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull DiffVisitor visitor) {
-    visitor.visitPlain(this);
+    visitor.visitLeadingText(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof DiffVisitor) accept((DiffVisitor)visitor);
     else super.accept(visitor);
+  }
+
+  @Override
+  @NotNull
+  public List<DiffAnyLine> getAnyLineList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, DiffAnyLine.class);
+  }
+
+  @Override
+  @Nullable
+  public DiffConsoleCommand getConsoleCommand() {
+    return findChildByClass(DiffConsoleCommand.class);
   }
 
 }

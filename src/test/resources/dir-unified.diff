@@ -1,3 +1,4 @@
+Only in lao: preamble
 diff -r -u lao/quote tzu/quote
 --- lao/quote	2019-02-14 07:11:32.000000000 +0100
 +++ tzu/quote	2019-02-14 07:10:13.000000000 +0100
@@ -19,3 +20,5 @@ diff -r -u lao/quote tzu/quote
 +They both may be called deep and profound.
 +Deeper and more profound,
 +The door of all subtleties!
+Only in tzu: unquote
+

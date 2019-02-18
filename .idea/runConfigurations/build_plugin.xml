@@ -10,8 +10,6 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value="generateDiffParser" />
-          <option value="generateDiffLexer" />
           <option value="buildPlugin" />
           <option value="verifyPlugin" />
         </list>
@@ -19,6 +17,8 @@
       <option name="vmOptions" value="" />
     </ExternalSystemSettings>
     <GradleScriptDebugEnabled>true</GradleScriptDebugEnabled>
-    <method v="2" />
+    <method v="2">
+      <option name="RunConfigurationTask" enabled="true" run_configuration_name="generateSources" run_configuration_type="GradleRunConfiguration" />
+    </method>
   </configuration>
 </component>

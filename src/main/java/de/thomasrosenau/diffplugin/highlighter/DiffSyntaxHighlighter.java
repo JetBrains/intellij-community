@@ -30,16 +30,17 @@ import de.thomasrosenau.diffplugin.lexer.DiffLexerAdapter;
 import de.thomasrosenau.diffplugin.psi.DiffTypes;
 import org.jetbrains.annotations.NotNull;
 
+// TODO: add tests
 public class DiffSyntaxHighlighter extends SyntaxHighlighterBase {
     public static final TextAttributesKey COMMAND = createTextAttributesKey("PATCH_COMMAND",
             ConsoleViewContentType.USER_INPUT_KEY);
     public static final TextAttributesKey FILE = createTextAttributesKey("PATCH_FILEINFO",
-            DefaultLanguageHighlighterColors.LINE_COMMENT);
-    public static final TextAttributesKey ADDED = createTextAttributesKey("PATCH_ADDED",
+            DefaultLanguageHighlighterColors.BLOCK_COMMENT);
+    public static final TextAttributesKey INSERTED = createTextAttributesKey("PATCH_INSERTED",
             DiffColors.DIFF_INSERTED);
     public static final TextAttributesKey DELETED = createTextAttributesKey("PATCH_DELETED",
             DiffColors.DIFF_DELETED);
-    public static final TextAttributesKey MODIFIED = createTextAttributesKey("PATCH_MODIFIED",
+    public static final TextAttributesKey CHANGED = createTextAttributesKey("PATCH_CHANGED",
             DiffColors.DIFF_MODIFIED);
     public static final TextAttributesKey HUNK_HEAD = createTextAttributesKey("PATCH_HUNK_HEAD",
             DefaultLanguageHighlighterColors.LABEL);
@@ -49,7 +50,7 @@ public class DiffSyntaxHighlighter extends SyntaxHighlighterBase {
             DefaultLanguageHighlighterColors.DOC_COMMENT);
     public static final TextAttributesKey TEXT = createTextAttributesKey("PATCH_TEXT",
             HighlighterColors.TEXT);
-    public static final TextAttributesKey GIT_HEAD = createTextAttributesKey("PATCH_GIT_HEAD",
+    public static final TextAttributesKey LEADING_TEXT = createTextAttributesKey("PATCH_LEADING_TEXT",
             DefaultLanguageHighlighterColors.BLOCK_COMMENT);
 
     @NotNull
@@ -58,27 +59,62 @@ public class DiffSyntaxHighlighter extends SyntaxHighlighterBase {
         return new DiffLexerAdapter();
     }
 
+    private boolean isChangedLine(IElementType tokenType) {
+        return tokenType.equals(DiffTypes.CONTEXT_CHANGED_LINE);
+    }
+
+    private boolean isInsertedLine(IElementType tokenType) {
+        return tokenType.equals(DiffTypes.CONTEXT_INSERTED_LINE) ||
+                tokenType.equals(DiffTypes.UNIFIED_INSERTED_LINE) ||
+                tokenType.equals(DiffTypes.NORMAL_TO_LINE);
+    }
+
+    private boolean isDeletedLine(IElementType tokenType) {
+        return tokenType.equals(DiffTypes.CONTEXT_DELETED_LINE) ||
+                tokenType.equals(DiffTypes.UNIFIED_DELETED_LINE) ||
+                tokenType.equals(DiffTypes.NORMAL_FROM_LINE);
+    }
+
+    private boolean isHunkHead(IElementType tokenType) {
+        return tokenType.equals(DiffTypes.CONTEXT_FROM_LINE_NUMBERS) ||
+                tokenType.equals(DiffTypes.CONTEXT_TO_LINE_NUMBERS) ||
+                tokenType.equals(DiffTypes.UNIFIED_LINE_NUMBERS) ||
+                tokenType.equals(DiffTypes.NORMAL_ADD_COMMAND) ||
+                tokenType.equals(DiffTypes.NORMAL_DELETE_COMMAND) ||
+                tokenType.equals(DiffTypes.NORMAL_CHANGE_COMMAND);
+    }
+
+    private boolean isSeparator(IElementType tokenType) {
+        return tokenType.equals(DiffTypes.CONTEXT_HUNK_SEPERATOR) ||
+                tokenType.equals(DiffTypes.NORMAL_SEPARATOR);
+    }
+
+    private boolean isFileName(IElementType tokenType) {
+        return tokenType.equals(DiffTypes.CONTEXT_FROM_LABEL) ||
+                 tokenType.equals(DiffTypes.CONTEXT_TO_LABEL) ||
+                 tokenType.equals(DiffTypes.UNIFIED_FROM_LABEL) ||
+                 tokenType.equals(DiffTypes.UNIFIED_TO_LABEL);
+    }
+
     @NotNull
     @Override
     public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
         if (tokenType.equals(DiffTypes.COMMAND)) {
             return pack(COMMAND);
-        } else if (tokenType.equals(DiffTypes.FILE)) {
-            return pack(FILE);
-        } else if (tokenType.equals(DiffTypes.ADDED)) {
-            return pack(ADDED);
-        } else if (tokenType.equals(DiffTypes.DELETED)) {
+        } else if (isChangedLine(tokenType)) {
+            return pack(CHANGED);
+        } else if (isInsertedLine(tokenType)) {
+            return pack(INSERTED);
+        } else if (isDeletedLine(tokenType)) {
             return pack(DELETED);
-        } else if (tokenType.equals(DiffTypes.MODIFIED)) {
-            return pack(MODIFIED);
-        } else if (tokenType.equals(DiffTypes.HUNK_HEAD)) {
+        } else if (isHunkHead(tokenType)) {
             return pack(HUNK_HEAD);
-        } else if (tokenType.equals(DiffTypes.SEPARATOR)) {
+        } else if (isSeparator(tokenType)) {
             return pack(SEPARATOR);
+        } else if (isFileName(tokenType)) {
+            return pack(FILE);
         } else if (tokenType.equals(DiffTypes.EOLHINT)) {
             return pack(EOLHINT);
-        } else if (tokenType.equals(DiffTypes.GIT_HEAD)) {
-            return pack(GIT_HEAD);
         } else {
             return pack(TEXT);
         }

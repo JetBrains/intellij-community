@@ -45,7 +45,8 @@ intellij {
     version = 'LATEST-EAP-SNAPSHOT'
 }
 
-File genSrc = file('src/main/generated-java')
+def genSrcPath = 'src/main/generated-java'
+File genSrc = file(genSrcPath)
 sourceSets.main.java.srcDir genSrc
 idea.module.generatedSourceDirs += genSrc
 
@@ -61,7 +62,8 @@ patchPluginXml {
     pluginDescription '''
     <h1>Syntax highlighting for .diff files and .patch files</h1>
     <p>Supports the common formats: normal, contextual, unified (git patch).</p>
-    <p>Does not support the formats: side-by-side, diff3, ed, if-else, RCS.</p>
+    <p>Does not support the formats: side-by-side, diff3, ed, if-else, RCS.
+       Currently does not support git binary patches.</p>
     <br/>
     <hr/>
     <p>Copyright 2019 Thomas Rosenau</p>
@@ -92,17 +94,19 @@ patchPluginXml {
     '''
 }
 
+def namespacePath = 'de/thomasrosenau/diffplugin'
+
 task generateDiffLexer(type: GenerateLexer) {
-    source 'src/main/java/de/thomasrosenau/diffplugin/lexer/Diff.flex'
-    targetDir 'src/main/generated-java/de/thomasrosenau/diffplugin'
+    source 'src/main/java/' + namespacePath + '/lexer/Diff.flex'
+    targetDir genSrcPath + '/' + namespacePath
     targetClass 'DiffLexer'
     purgeOldFiles true
 }
 
 task generateDiffParser(type: GenerateParser) {
-    source 'src/main/java/de/thomasrosenau/diffplugin/parser/Diff.bnf'
-    targetRoot 'src/main/generated-java'
+    source 'src/main/java/' + namespacePath + '/parser/Diff.bnf'
+    targetRoot genSrcPath
     pathToParser 'DiffParser.java'
-    pathToPsiRoot 'psi'
+    pathToPsiRoot namespacePath + '/psi'
     purgeOldFiles true
 }

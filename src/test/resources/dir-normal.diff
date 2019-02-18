@@ -1,3 +1,4 @@
+Only in lao: preamble
 diff -r lao/quote tzu/quote
 1,2d0
 < The Way that can be told of is not the eternal Way;
@@ -13,3 +14,4 @@ diff -r lao/quote tzu/quote
 > They both may be called deep and profound.
 > Deeper and more profound,
 > The door of all subtleties!
+Only in tzu: unquote

@@ -30,16 +30,15 @@ import org.jetbrains.annotations.Nullable;
 
 public class DiffColorSettingsPage implements ColorSettingsPage {
     private static final AttributesDescriptor[] DESCRIPTORS = new AttributesDescriptor[] {
-            new AttributesDescriptor("Changed lines//Inserted line", DiffSyntaxHighlighter.ADDED),
+            new AttributesDescriptor("Changed lines//Inserted line", DiffSyntaxHighlighter.INSERTED),
             new AttributesDescriptor("Changed lines//Deleted line", DiffSyntaxHighlighter.DELETED),
-            new AttributesDescriptor("Changed lines//Changed line", DiffSyntaxHighlighter.MODIFIED),
+            new AttributesDescriptor("Changed lines//Changed line", DiffSyntaxHighlighter.CHANGED),
             new AttributesDescriptor("Meta info//Console command", DiffSyntaxHighlighter.COMMAND),
             new AttributesDescriptor("Meta info//File names", DiffSyntaxHighlighter.FILE),
             new AttributesDescriptor("Meta info//Newline hint", DiffSyntaxHighlighter.EOLHINT),
-            new AttributesDescriptor("Meta info//git patch header", DiffSyntaxHighlighter.GIT_HEAD),
             new AttributesDescriptor("Hunk header", DiffSyntaxHighlighter.HUNK_HEAD),
             new AttributesDescriptor("Separator", DiffSyntaxHighlighter.SEPARATOR),
-            new AttributesDescriptor("Text", DiffSyntaxHighlighter.TEXT)
+            new AttributesDescriptor("Text (default)", DiffSyntaxHighlighter.TEXT)
     };
 
     @Nullable
@@ -58,55 +57,22 @@ public class DiffColorSettingsPage implements ColorSettingsPage {
     @Override
     public String getDemoText() {
         // TODO: provide better example for multiple formats
-        return "From 4c763966942c5a7376c6cd299d2ef7e617a0957b Mon Sep 17 00:00:00 2001\n" +
-                "From: John Doe <john.doe@example.com>\n" +
-                "Date: Wed, 21 Mar 2018 10:49:11 +0000\n" +
-                "Subject: [PATCH 28/35] Fixed broken links\n" +
-                "\n" +
-                "---\n" +
-                " .gitignore                    |   3 +-\n" +
-                " .travis.yml                   |   6 +-\n" +
-                " commanderConfig.js            |  17 +++--\n" +
-                " package.json                  |   2 +-\n" +
-                " test/Cli.js                   | 139 ++++++++++++++++++++++++++++++++++\n" +
-                " test/{index.js => Factory.js} |   4 +-\n" +
-                " test/ProvidersCLI.js          |  41 ++++++++++\n" +
-                " test/helpers.js               |  31 ++++++++\n" +
-                " test/mocha.opts               |   1 +\n" +
-                " 9 files changed, 231 insertions(+), 13 deletions(-)\n" +
-                " create mode 100644 test/Cli.js\n" +
-                " rename test/{index.js => Factory.js} (94%)\n" +
-                " create mode 100644 test/ProvidersCLI.js\n" +
-                " create mode 100644 test/helpers.js\n" +
-                " create mode 100644 test/mocha.opts\n" +
-                "\n" +
-                "diff --git a/test/index.js b/test/Factory.js\n" +
-                "similarity index 94%\n" +
-                "rename from test/index.js\n" +
-                "rename to test/Factory.js\n" +
-                "index e77e4b8..6a3c7f5 100644\n" +
-                "--- a/test/index.js\n" +
-                "+++ b/test/Factory.js\n" +
-                "@@ -1,6 +1,6 @@\n" +
-                " var chai = require('chai');\n" +
-                " var expect = require('chai').expect;\n" +
-                "-var Image = require('../image/Image.js');\n" +
-                "+var Image = require('../image/Image');\n" +
-                " \n" +
-                " describe('Image Factory', function () {\n" +
-                "   'use strict';\n" +
-                "@@ -61,7 +61,7 @@ describe('Image Providers', function () {\n" +
-                "     Image.setProvider('UnsplashIt');\n" +
-                " \n" +
-                "     expect(Image.getImageUrl(size))\n" +
-                "-        .to.equal('https://unsplash.it/400/400');\n" +
-                "+      .to.equal('https://unsplash.it/400/400');\n" +
-                "   });\n" +
-                " \n" +
-                "   it('returns FakeImg URL', function () {\n" +
-                "\\ No newline at end of file\n" +
-                "-- \n" +
-                "2.20.1\n";
+        return "Only in lao: preamble\n" + "diff -c lao/quote tzu/quote\n" +
+                "*** lao/quote\t2019-02-18 08:26:38.000000000 +0100\n" +
+                "--- tzu/quote\t2019-02-18 08:23:58.000000000 +0100\n" + "***************\n" + "*** 1,7 ****\n" +
+                "- The Way that can be told of is not the eternal Way;\n" +
+                "- The name that can be named is not the eternal name.\n" +
+                "  The Nameless is the origin of Heaven and Earth;\n" + "! The Named is the mother of all things.\n" +
+                "  Therefore let there always be non-being,\n" + "    so we may see their subtlety,\n" +
+                "  And let there always be being,\n" + "--- 1,6 ----\n" +
+                "  The Nameless is the origin of Heaven and Earth;\n" + "! The named is the mother of all things.\n" +
+                "!\n" + "  Therefore let there always be non-being,\n" + "    so we may see their subtlety,\n" +
+                "  And let there always be being,\n" + "***************\n" + "*** 9,11 ****\n" + "--- 8,13 ----\n" +
+                "  The two are the same,\n" + "  But after they are produced,\n" + "    they have different names.\n" +
+                "+ They both may be called deep and profound.\n" + "+ Deeper and more profound,\n" +
+                "+ The door of all subtleties!\n" +
+                "Only in tzu: unquote\n" +
+                "\\ No newline at end of file\n";
     }
 
     @Nullable

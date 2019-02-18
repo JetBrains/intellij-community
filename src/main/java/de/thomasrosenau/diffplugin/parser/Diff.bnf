@@ -29,8 +29,36 @@
   tokenTypeClass="de.thomasrosenau.diffplugin.psi.DiffTokenType"
 }
 
-diffFile ::= (info | changed | plain)*
+// TODO: make stuff private if possible
 
-info ::= COMMAND | FILE | SEPARATOR | HUNK_HEAD | EOLHINT | GIT_HEAD
-changed ::=  ADDED | DELETED | MODIFIED
-plain ::= OTHER
+// https://www.gnu.org/software/diffutils/manual/diffutils.html#Imperfect
+diffFile ::= (leadingText (normalDiff | contextDiff | unifiedDiff))+ trailingText // TODO: handle indentation
+
+// TODO: Handle Prereq: and Index:
+// TODO: Handle git header
+leadingText ::= anyLine* (consoleCommand anyLine*)?
+consoleCommand ::= COMMAND
+// TODO: Handle git footer
+trailingText ::= anyLine*
+anyLine ::= WHITE_SPACE | OTHER
+
+// https://www.gnu.org/software/diffutils/manual/diffutils.html#Detailed-Context
+contextDiff ::= CONTEXT_FROM_LABEL CONTEXT_TO_LABEL contextHunk+
+contextHunk ::= CONTEXT_HUNK_SEPERATOR contextHunkFrom contextHunkTo
+contextHunkFrom ::= CONTEXT_FROM_LINE_NUMBERS contextFromFileLine* (EOLHINT)?
+contextHunkTo ::= CONTEXT_TO_LINE_NUMBERS contextToFileLine* (EOLHINT)?
+contextFromFileLine ::= CONTEXT_COMMON_LINE | CONTEXT_CHANGED_LINE | CONTEXT_DELETED_LINE
+contextToFileLine ::= CONTEXT_COMMON_LINE | CONTEXT_CHANGED_LINE | CONTEXT_INSERTED_LINE
+
+// https://www.gnu.org/software/diffutils/manual/diffutils.html#Detailed-Unified
+unifiedDiff ::= UNIFIED_FROM_LABEL UNIFIED_TO_LABEL unifiedHunk+
+// TODO: Handle git binaries
+unifiedHunk ::= UNIFIED_LINE_NUMBERS (unifiedLine | WHITE_SPACE)+
+unifiedLine ::= UNIFIED_INSERTED_LINE | UNIFIED_DELETED_LINE | UNIFIED_COMMON_LINE | EOLHINT
+
+// https://www.gnu.org/software/diffutils/manual/diffutils.html#Detailed-Normal
+normalDiff ::= normalHunk+
+normalHunk ::= normalHunkAdd | normalHunkChange | normalHunkDelete
+normalHunkAdd ::= NORMAL_ADD_COMMAND NORMAL_TO_LINE+ EOLHINT?
+normalHunkChange ::= NORMAL_CHANGE_COMMAND NORMAL_FROM_LINE+ EOLHINT? NORMAL_SEPARATOR NORMAL_TO_LINE+ EOLHINT?
+normalHunkDelete ::= NORMAL_DELETE_COMMAND NORMAL_FROM_LINE+ EOLHINT?

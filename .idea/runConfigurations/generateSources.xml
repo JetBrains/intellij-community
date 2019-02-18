@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="run in IDE" type="GradleRunConfiguration" factoryName="Gradle">
+  <configuration default="false" name="generateSources" type="GradleRunConfiguration" factoryName="Gradle">
     <ExternalSystemSettings>
       <option name="executionName" />
       <option name="externalProjectPath" value="$PROJECT_DIR$" />
@@ -10,14 +10,13 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value="runIde" />
+          <option value="generateDiffParser" />
+          <option value="generateDiffLexer" />
         </list>
       </option>
       <option name="vmOptions" value="" />
     </ExternalSystemSettings>
     <GradleScriptDebugEnabled>true</GradleScriptDebugEnabled>
-    <method v="2">
-      <option name="RunConfigurationTask" enabled="true" run_configuration_name="generateSources" run_configuration_type="GradleRunConfiguration" />
-    </method>
+    <method v="2" />
   </configuration>
 </component>
