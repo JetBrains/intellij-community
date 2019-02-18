@@ -64,7 +64,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,6 +82,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -123,7 +123,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   private static final AtomicInteger ourOpenFilesSetModificationCount = new AtomicInteger();
 
   static final ModificationTracker OPEN_FILE_SET_MODIFICATION_COUNT = ourOpenFilesSetModificationCount::get;
-
+  private final List<VirtualFile> myOpenedFiles = new CopyOnWriteArrayList<>();
 
   public FileEditorManagerImpl(@NotNull Project project, DockManager dockManager) {
 /*    ApplicationManager.getApplication().assertIsDispatchThread(); */
@@ -887,6 +887,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         }
 
         compositeRef.set(composite);
+        myOpenedFiles.add(file);
       }
 
       final EditorWithProviderComposite composite = compositeRef.get();
@@ -1259,11 +1260,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Override
   @NotNull
   public VirtualFile[] getOpenFiles() {
-    Set<VirtualFile> openFiles = new THashSet<>();
-    for (EditorsSplitters each : getAllSplitters()) {
-      ContainerUtil.addAll(openFiles, each.getOpenFiles());
-    }
-    return VfsUtilCore.toVirtualFileArray(openFiles);
+    return VfsUtilCore.toVirtualFileArray(new HashSet<>(myOpenedFiles));
   }
 
   @Override
@@ -1626,6 +1623,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   }
 
   void disposeComposite(@NotNull EditorWithProviderComposite editor) {
+    myOpenedFiles.remove(editor.getFile());
+
     if (getAllEditors().length == 0) {
       setCurrentWindow(null);
     }
