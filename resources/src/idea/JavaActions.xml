@@ -1,4 +1,4 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin>
   <actions>
     <action id="RerunFailedTests" class="com.intellij.execution.testframework.actions.RerunFailedTestsAction"
             icon="AllIcons.RunConfigurations.RerunFailedTests"/>
@@ -193,7 +193,6 @@
 
     <group id="ProjectViewAnalysisGroup">
       <reference ref="TypeHierarchy"/>
-      <reference ref="ReformatCode"/>
       <reference ref="OptimizeImports"/>
 
       <add-to-group group-id="ProjectViewPopupMenuModifyGroup" anchor="first"/>
