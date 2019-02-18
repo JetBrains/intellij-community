@@ -102,14 +102,6 @@ public class TextPanel extends JComponent implements Accessible {
     myAlignment = alignment;
   }
 
-  private static String splitText(final JLabel label, final String text, final int widthLimit) {
-    final FontMetrics fontMetrics = label.getFontMetrics(label.getFont());
-
-    final String[] lines = UIUtil.splitText(text, fontMetrics, widthLimit, ' ');
-
-    return String.join("\n", lines);
-  }
-
   public final void setText(@Nullable String text) {
     text = StringUtil.notNullize(text);
     if (text.equals(myText)) {
