@@ -67,12 +67,13 @@ class GeneratorTestCase(TestCase):
         before_dir = os.path.join(self.test_data_dir, subdir, 'before')
         after_dir = os.path.join(self.test_data_dir, subdir, 'after')
         dst_dir = os.path.join(self.temp_dir, tmp_subdir)
-        for child_name in os.listdir(before_dir):
-            child_path = os.path.join(before_dir, child_name)
-            child_dst_path = os.path.join(dst_dir, child_name)
-            if os.path.isfile(child_path):
-                shutil.copy2(child_path, child_dst_path)
-            elif os.path.isdir(child_path):
-                shutil.copytree(child_path, child_dst_path)
+        if os.path.exists(before_dir):
+            for child_name in os.listdir(before_dir):
+                child_path = os.path.join(before_dir, child_name)
+                child_dst_path = os.path.join(dst_dir, child_name)
+                if os.path.isfile(child_path):
+                    shutil.copy2(child_path, child_dst_path)
+                elif os.path.isdir(child_path):
+                    shutil.copytree(child_path, child_dst_path)
         yield dst_dir
         self.assertDirsEqual(dst_dir, after_dir)
