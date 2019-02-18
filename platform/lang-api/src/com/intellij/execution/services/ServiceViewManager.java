@@ -3,13 +3,18 @@ package com.intellij.execution.services;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.AnimatedIcon;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
+
+import javax.swing.*;
 
 @ApiStatus.Experimental
 public interface ServiceViewManager {
   Topic<ServiceViewListener> SERVICE_VIEW_TOPIC =
     Topic.create("services tool window", ServiceViewListener.class, Topic.BroadcastDirection.TO_PARENT);
+
+  Icon RUNNING_ICON = new AnimatedIcon.Default();
 
   void selectNode(Object node);
 
