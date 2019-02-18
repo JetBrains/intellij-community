@@ -35,18 +35,26 @@ public abstract class GoToMnemonicBookmarkActionBase extends AnAction implements
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(e.getProject() != null);
+    e.getPresentation().setEnabled(getBookmark(e) != null);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    Bookmark bookmark = getBookmark(e);
+    if (bookmark != null) {
+      bookmark.navigate(true);
+    }
+  }
+
+  private Bookmark getBookmark(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project != null) {
       Bookmark bookmark = BookmarkManager.getInstance(project).findBookmarkForMnemonic((char)('0' + myNumber));
-      if (bookmark != null) {
-        bookmark.navigate(true);
+      if (bookmark != null && bookmark.canNavigate()) {
+        return bookmark;
       }
     }
+    return null;
   }
 
   public static class GotoBookmark0Action extends GoToMnemonicBookmarkActionBase {
