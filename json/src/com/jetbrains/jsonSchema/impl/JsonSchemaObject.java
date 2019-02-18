@@ -110,6 +110,8 @@ public class JsonSchemaObject {
   @Nullable private JsonSchemaObject myElse;
   private boolean myShouldValidateAgainstJSType;
 
+  @Nullable private String myDeprecationMessage;
+
   public boolean isValidByExclusion() {
     return myIsValidByExclusion;
   }
@@ -490,6 +492,15 @@ public class JsonSchemaObject {
 
   public void setAdditionalItemsAllowed(@Nullable Boolean additionalItemsAllowed) {
     myAdditionalItemsAllowed = additionalItemsAllowed;
+  }
+
+  @Nullable
+  public String getDeprecationMessage() {
+    return myDeprecationMessage;
+  }
+
+  public void setDeprecationMessage(@Nullable String deprecationMessage) {
+    myDeprecationMessage = deprecationMessage;
   }
 
   @Nullable
