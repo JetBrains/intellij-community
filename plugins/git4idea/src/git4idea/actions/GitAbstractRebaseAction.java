@@ -22,20 +22,19 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import git4idea.rebase.GitRebaseActionDialog;
+import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitRebaseUtils;
+import git4idea.rebase.GitSelectRootDialog;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
-import static git4idea.GitUtil.*;
+import static git4idea.GitUtil.getRepositoryManager;
+import static git4idea.GitUtil.hasGitRepositories;
 
 public abstract class GitAbstractRebaseAction extends DumbAwareAction {
 
@@ -96,11 +95,11 @@ public abstract class GitAbstractRebaseAction extends DumbAwareAction {
   private GitRepository chooseRepository(@NotNull Project project, @NotNull Collection<GitRepository> repositories) {
     GitRepository firstRepo = assertNotNull(ContainerUtil.getFirstItem(repositories));
     if (repositories.size() == 1) return firstRepo;
-    ArrayList<VirtualFile> roots = newArrayList(getRootsFromRepositories(repositories));
-    GitRebaseActionDialog dialog = new GitRebaseActionDialog(project, getTemplatePresentation().getText(), roots, firstRepo.getRoot());
-    dialog.show();
-    VirtualFile root = dialog.selectRoot();
-    if (root == null) return null;
-    return getRepositoryManager(project).getRepositoryForRootQuick(root); // TODO avoid root <-> GitRepository double conversion
+    return new GitSelectRootDialog(project,
+                                   assertNotNull(getTemplatePresentation().getText()),
+                                   GitBundle.message("rebase.action.message"),
+                                   repositories,
+                                   null)
+      .selectRoot();
   }
 }
