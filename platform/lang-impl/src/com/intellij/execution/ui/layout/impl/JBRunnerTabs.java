@@ -7,10 +7,9 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.tabs.JBTabsBackgroundAndBorder;
 import com.intellij.ui.tabs.JBTabsFactory;
 import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.newImpl.JBBaseTabsBackgroundAndBorder;
+import com.intellij.ui.tabs.newImpl.JBTabsBackgroundAndBorder;
 import com.intellij.ui.tabs.newImpl.JBEditorTabs;
 import com.intellij.ui.tabs.newImpl.JBTabsImpl;
 import com.intellij.ui.tabs.newImpl.TabLabel;
@@ -39,7 +38,7 @@ public class JBRunnerTabs extends JBEditorTabs implements JBRunnerTabsBase {
 
   @Override
   protected JBTabsBackgroundAndBorder createTabBorder() {
-    return new JBBaseTabsBackgroundAndBorder(this) {
+    return new JBTabsBackgroundAndBorder(this) {
       @NotNull
       @Override
       public Insets getEffectiveBorder() {

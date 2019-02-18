@@ -1,16 +1,23 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.newImpl
 
-import com.intellij.ui.tabs.JBTabsBackgroundAndBorder
 import com.intellij.util.ui.JBUI
-import java.awt.*
+import java.awt.Component
+import java.awt.Graphics2D
+import java.awt.Insets
+import java.awt.Rectangle
+import javax.swing.border.Border
 
-abstract class JBBaseTabsBackgroundAndBorder(val tabs: JBTabsImpl) : JBTabsBackgroundAndBorder {
-  override var thickness: Int = 1
+abstract class JBTabsBackgroundAndBorder(val tabs: JBTabsImpl) : Border {
+  var thickness: Int = 1
 
   override fun getBorderInsets(c: Component?): Insets = JBUI.emptyInsets()
 
-  override val effectiveBorder: Insets
+  override fun isBorderOpaque(): Boolean {
+    return true
+  }
+
+  open val effectiveBorder: Insets
     get() = JBUI.emptyInsets()
 
   protected fun paintBackground(g: Graphics2D, rect: Rectangle) {

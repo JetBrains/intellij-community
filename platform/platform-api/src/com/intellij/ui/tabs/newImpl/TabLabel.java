@@ -170,7 +170,8 @@ public class TabLabel extends JPanel implements Accessible {
     };
     label.setOpaque(false);
     label.setBorder(null);
-    label.setIconTextGap(tabs.isEditorTabs() ? (!UISettings.getShadowInstance().getHideTabsIfNeed() ? 4 : 2) : new JLabel().getIconTextGap());
+    label.setIconTextGap(
+      tabs.isEditorTabs() ? (!UISettings.getShadowInstance().getHideTabsIfNeed() ? 4 : 2) + 1 : new JLabel().getIconTextGap());
     label.setIconOpaque(false);
     label.setIpad(JBUI.emptyInsets());
 
@@ -181,11 +182,11 @@ public class TabLabel extends JPanel implements Accessible {
   public Insets getInsets() {
     Insets insets = super.getInsets();
     if (myTabs.isEditorTabs() && UISettings.getShadowInstance().getShowCloseButton() && hasIcons()) {
-      if (!UISettings.getShadowInstance().getCloseTabButtonOnTheRight()) {
-        insets.left = 3;
+      if (UISettings.getShadowInstance().getCloseTabButtonOnTheRight()) {
+        insets.right -= JBUI.scale(4);
       }
       else {
-        insets.right = 3;
+        insets.left -= JBUI.scale(4);
       }
     }
     return insets;
@@ -472,7 +473,7 @@ public class TabLabel extends JPanel implements Accessible {
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
 
-    paintBackground(g);
+//    paintBackground(g);
   }
 
   private void paintBackground(Graphics g) {
@@ -493,6 +494,7 @@ public class TabLabel extends JPanel implements Accessible {
 
   @Override
   protected void paintChildren(final Graphics g) {
+    paintBackground(g);
     super.paintChildren(g);
 
     if (getLabelComponent().getParent() == null)

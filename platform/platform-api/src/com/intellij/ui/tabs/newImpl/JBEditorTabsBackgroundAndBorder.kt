@@ -4,7 +4,7 @@ package com.intellij.ui.tabs.newImpl
 import com.intellij.ui.tabs.JBTabsPosition
 import java.awt.*
 
-class JBEditorTabsBackgroundAndBorder(tabs: JBTabsImpl) : JBBaseTabsBackgroundAndBorder(tabs) {
+class JBEditorTabsBackgroundAndBorder(tabs: JBTabsImpl) : JBTabsBackgroundAndBorder(tabs) {
 
   override val effectiveBorder: Insets
     get() = Insets(thickness, 0, 0, 0)

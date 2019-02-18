@@ -3,7 +3,7 @@ package com.intellij.ui.tabs.newImpl
 
 import java.awt.*
 
-open class JBDefaultTabsBackgroundAndBorder(tabs: JBTabsImpl) : JBBaseTabsBackgroundAndBorder(tabs) {
+open class JBDefaultTabsBackgroundAndBorder(tabs: JBTabsImpl) : JBTabsBackgroundAndBorder(tabs) {
   override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
     if (tabs.isEmptyVisible) return
     g as Graphics2D

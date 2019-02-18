@@ -902,11 +902,6 @@ public class JBTabsImpl extends JComponent
       return ActionCallback.REJECTED;
     }
 
-    TabLabel label = myInfo2Label.get(info);
-    if(label != null) {
-      setComponentZOrder(label, 0);
-    }
-
     if (mySelectionChangeHandler != null) {
       return mySelectionChangeHandler.execute(info, requestFocus, new ActiveRunnable() {
         @NotNull
@@ -948,6 +943,11 @@ public class JBTabsImpl extends JComponent
     TabInfo oldInfo = mySelectedInfo;
     mySelectedInfo = info;
     final TabInfo newInfo = getSelectedInfo();
+
+    TabLabel label = myInfo2Label.get(info);
+    if(label != null) {
+      setComponentZOrder(label, 0);
+    }
 
     fireBeforeSelectionChanged(oldInfo, newInfo);
 

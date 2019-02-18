@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="rd-text" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-text:0.191.24" />
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-text:0.191.45" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/0.191.24/rd-text-0.191.24.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/0.191.45/rd-text-0.191.45.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/0.191.24/rd-text-0.191.24-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/0.191.45/rd-text-0.191.45-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

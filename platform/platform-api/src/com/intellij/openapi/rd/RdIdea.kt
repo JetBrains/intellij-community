@@ -26,10 +26,7 @@ fun IdeGlassPane.mouseMoved(): ISource<MouseEvent> {
         }
       }
 
-      val createNestedDisposable = lifetime.createNestedDisposable()
-
-      this@mouseMoved.addMouseMotionPreprocessor(listener, createNestedDisposable)
-      this@mouseMoved.addMouseMotionPreprocessor(listener, createNestedDisposable)
+      this@mouseMoved.addMouseMotionPreprocessor(listener, lifetime.createNestedDisposable())
     }
   }
 }
