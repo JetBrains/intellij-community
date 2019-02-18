@@ -138,13 +138,6 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
   }
 
   @Override
-  public void subtreeChanged() {
-    final CompositeElement compositeElement = calcTreeElement();
-    if (compositeElement != null) compositeElement.clearCaches();
-    super.subtreeChanged();
-  }
-
-  @Override
   @NotNull
   public PsiElement[] getChildren() {
     PsiElement psiChild = getFirstChild();
