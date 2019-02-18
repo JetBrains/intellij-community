@@ -4,15 +4,21 @@ package com.intellij.internal.statistic.collectors.fus.fileTypes;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.StatisticsUtilKt;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.LazyInstance;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.KeyedLazyInstanceEP;
+import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 
 public class FileTypeUsageCounterCollector {
-  private static final ExtensionPointName<KeyedLazyInstanceEP<FileTypeUsageSchemaDescriptor>> EP =
+  private static final Logger LOG = Logger.getInstance("#" + FileTypeUsageCounterCollector.class.getPackage().getName());
+
+  private static final ExtensionPointName<FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor>> EP =
     ExtensionPointName.create("com.intellij.fileTypeUsageSchemaDescriptor");
 
   public static void triggerEdit(@NotNull Project project, @NotNull VirtualFile file) {
@@ -29,20 +35,47 @@ public class FileTypeUsageCounterCollector {
     final FeatureUsageData data = new FeatureUsageData().addData("type", type);
     FileType fileType = file.getFileType();
 
-    for (KeyedLazyInstanceEP<FileTypeUsageSchemaDescriptor> ext : EP.getExtensionList()) {
+    for (FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor> ext : EP.getExtensionList()) {
       FileTypeUsageSchemaDescriptor instance = ext.getInstance();
+      if (ext.schema == null) {
+        LOG.warn("Extension " + ext.implementationClass + " should define a 'schema' attribute");
+        continue;
+      }
 
-      String schema = instance.describeSchema(file);
-      if (schema != null) {
-        if (!StatisticsUtilKt.getPluginType(instance.getClass()).isDevelopedByJetBrains()) {
-          schema = "third.party";
-        }
-        data.addData("schema", schema);
+      if (instance.describes(file)) {
+        data.addData("schema", StatisticsUtilKt.getPluginType(instance.getClass()).isSafeToReport() ? ext.schema : "third.party");
         break;
       }
     }
 
     final String id = FileTypeUsagesCollector.toReportedId(fileType, data);
     FUCounterUsageLogger.getInstance().logEvent(project, "file.types.usage", id, data);
+  }
+
+  public static class FileTypeUsageSchemaDescriptorEP<T> extends AbstractExtensionPointBean implements KeyedLazyInstance<T> {
+    // these must be public for scrambling compatibility
+    @Attribute("schema")
+    public String schema;
+
+    @Attribute("implementationClass")
+    public String implementationClass;
+
+    private final LazyInstance<T> myHandler = new LazyInstance<T>() {
+      @Override
+      protected Class<T> getInstanceClass() throws ClassNotFoundException {
+        return findClass(implementationClass);
+      }
+    };
+
+    @NotNull
+    @Override
+    public T getInstance() {
+      return myHandler.getValue();
+    }
+
+    @Override
+    public String getKey() {
+      return schema;
+    }
   }
 }
