@@ -83,6 +83,10 @@ private fun extractVariablesFromStatement(current: GrStatement,
   else if (current is GrBinaryExpression && current.isOr()) {
     extractVariablesFromTable(current, statements).forEach(consumer)
   }
+  else if (current is GrLabeledStatement && current.name == "and") {
+    val labeledStatement = current.statement ?: return
+    extractVariablesFromStatement(labeledStatement, statements, consumer)
+  }
 }
 
 private fun extractVariableFromAssignment(assignment: GrAssignmentExpression): SpockVariableDescriptor? {
