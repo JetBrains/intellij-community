@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.ext.spock
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.util.BaseTest
-import org.junit.Ignore
 import org.junit.Test
 
 import static com.intellij.testFramework.UsefulTestCase.assertContainsElements
@@ -51,7 +50,6 @@ class FooSpec extends spock.lang.Specification {
     testVariableNames 'where: [bar, baz] << [[1,2]]', 'bar', 'baz'
   }
 
-  @Ignore
   @Test
   void 'empty single column table'() {
     testVariableNames 'where: bar | _', 'bar'
