@@ -29,7 +29,7 @@ internal interface ConstrainedExecutionEx<E : ConstrainedExecution<E>> : Constra
    * such executor MUST NEVER be used for dispatching coroutines, as execution of a coroutine may hang at a suspension point forever
    * without giving it a chance to handle cancellation and exit gracefully.
    */
-  fun rawConstraintsExecutor(condition: BooleanSupplier? = null): Executor
+  fun createConstraintSchedulingExecutor(condition: BooleanSupplier? = null): Executor
 
   fun dispatchLaterUnconstrained(runnable: Runnable)
 

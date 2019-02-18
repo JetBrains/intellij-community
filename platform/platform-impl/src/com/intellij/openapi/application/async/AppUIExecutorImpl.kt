@@ -48,8 +48,8 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
   override fun dispatchLaterUnconstrained(runnable: Runnable) =
     ApplicationManager.getApplication().invokeLater(runnable, modality)
 
-  override fun rawConstraintsExecutor(condition: BooleanSupplier?): Executor =
-    RescheduleAttemptLimitAwareDispatcher(constraints, condition)
+  override fun createConstraintSchedulingExecutor(condition: BooleanSupplier?): Executor =
+    LimitedAttemptConstraintSchedulingExecutor(constraints, condition)
 
   override fun execute(command: Runnable): Unit = taskExecutor.execute(command)
   override fun submit(task: Runnable): CancellablePromise<*> = taskExecutor.submit(task)

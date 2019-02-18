@@ -21,7 +21,8 @@ class ConstrainedCoroutineSupport internal constructor(private val constrainedEx
     exceptionHandler + coroutineName + continuationInterceptor
   }
 
-  private fun composeDispatchers(): CoroutineDispatcher = ExecutorDispatcher(constrainedExecution.rawConstraintsExecutor())
+  private fun composeDispatchers(): CoroutineDispatcher =
+    ExecutorDispatcher(constrainedExecution.createConstraintSchedulingExecutor())
 
   internal class ExecutorDispatcher(private val executor: Executor) : CoroutineDispatcher() {
     override fun dispatch(context: CoroutineContext, block: Runnable) = executor.execute(block)

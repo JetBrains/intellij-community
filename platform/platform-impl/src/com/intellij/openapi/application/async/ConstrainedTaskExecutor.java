@@ -20,7 +20,7 @@ public class ConstrainedTaskExecutor {
 
   public void execute(@NotNull Runnable command) {
     final Expiration expiration = myConstraintExecution.composeExpiration();
-    final Executor executor = myConstraintExecution.rawConstraintsExecutor(() -> expiration == null || !expiration.isExpired());
+    final Executor executor = myConstraintExecution.createConstraintSchedulingExecutor(() -> expiration == null || !expiration.isExpired());
     executor.execute(command);
   }
 
@@ -43,7 +43,7 @@ public class ConstrainedTaskExecutor {
       promise.onProcessed(value -> expirationHandle.unregisterHandler());
     }
 
-    final Executor executor = myConstraintExecution.rawConstraintsExecutor(() -> !promise.isCancelled());
+    final Executor executor = myConstraintExecution.createConstraintSchedulingExecutor(() -> !promise.isCancelled());
     executor.execute(() -> {
       try {
         final T result = task.call();

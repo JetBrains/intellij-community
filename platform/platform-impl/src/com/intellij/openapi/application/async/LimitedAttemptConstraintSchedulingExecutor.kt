@@ -6,10 +6,10 @@ import kotlinx.coroutines.Runnable
 import java.util.*
 import java.util.function.BooleanSupplier
 
-internal class RescheduleAttemptLimitAwareDispatcher(constraints: Array<ContextConstraint>,
-                                                     condition: BooleanSupplier?,
-                                                     private val myLimit: Int = 3000)
-  : BaseConstrainedExecution.ConstraintsExecutor(constraints, condition) {
+internal class LimitedAttemptConstraintSchedulingExecutor(constraints: Array<ContextConstraint>,
+                                                          condition: BooleanSupplier?,
+                                                          private val myLimit: Int = 3000)
+  : BaseConstrainedExecution.ConstraintSchedulingExecutor(constraints, condition) {
   private var myAttemptCount: Int = 0
 
   private val myLogLimit: Int = 30

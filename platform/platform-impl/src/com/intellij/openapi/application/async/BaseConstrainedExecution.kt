@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.async
 
-import com.intellij.openapi.application.async.BaseConstrainedExecution.ConstraintsExecutor
+import com.intellij.openapi.application.async.BaseConstrainedExecution.ConstraintSchedulingExecutor
 import com.intellij.openapi.application.async.ConstrainedExecution.ContextConstraint
 import com.intellij.openapi.diagnostic.Logger
 import kotlinx.coroutines.Runnable
@@ -14,8 +14,9 @@ import java.util.function.BooleanSupplier
  *
  * ## Implementation notes: ##
  *
- * So, the [ConstraintsExecutor.execute] starts checking the list of constraints, one by one, rescheduling and restarting itself for each
- * unsatisfied constraint ([ConstraintsExecutor.retrySchedule]), until at some point *all* of the constraints are satisfied *at once*.
+ * So, the [ConstraintSchedulingExecutor.execute] starts checking the list of constraints, one by one, rescheduling and restarting itself
+ * for each unsatisfied constraint ([ConstraintSchedulingExecutor.retrySchedule]), until at some point *all* of the constraints are
+ * satisfied *at once*.
  *
  * This ultimately ends up with [ContextConstraint.schedule] being called one by one for every constraint of the chain that needs to be
  * scheduled. Finally, the runnable is called, executing the task in the properly arranged context.
@@ -30,10 +31,11 @@ abstract class BaseConstrainedExecution<E : ConstrainedExecution<E>>(protected v
   override fun withConstraint(constraint: ContextConstraint): E =
     cloneWith(constraints + constraint)
 
-  override fun rawConstraintsExecutor(condition: BooleanSupplier?): Executor = ConstraintsExecutor(constraints, condition)
+  override fun createConstraintSchedulingExecutor(condition: BooleanSupplier?): Executor =
+    ConstraintSchedulingExecutor(constraints, condition)
 
-  open class ConstraintsExecutor(private val constraints: Array<ContextConstraint>,
-                                 private val condition: BooleanSupplier?) : Executor {
+  open class ConstraintSchedulingExecutor(private val constraints: Array<ContextConstraint>,
+                                          private val condition: BooleanSupplier?) : Executor {
     override fun execute(runnable: Runnable) {
       if (condition?.asBoolean == false) return
       for (constraint in constraints) {
