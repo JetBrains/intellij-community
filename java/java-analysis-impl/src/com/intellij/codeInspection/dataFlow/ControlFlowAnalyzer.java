@@ -1700,6 +1700,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
           pushUnknown();
         }
         break;
+      } else if (!qualifierExpression.isPhysical() && call.isPhysical()) {
+        // Possible -- see com.intellij.psi.impl.source.jsp.jspJava.JspMethodCallImpl.getMethodExpression
+        pushUnknown();
+        break;
       }
       call = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(qualifierExpression), PsiMethodCallExpression.class);
       if (call == null) {
