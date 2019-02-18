@@ -595,6 +595,10 @@
       <description>Second Cmd/Ctrl+E switches to Recently Edited Files</description>
     </experimentalFeature>
 
+    <experimentalFeature id="advertise.recent.locations" percentOfUsers="100">
+      <description>Advertise Recent Locations feature in Forward/Back</description>
+    </experimentalFeature>
+
     <rawEditorTypedHandler implementationClass="com.intellij.openapi.editor.impl.EditorFactoryImpl$MyRawTypedHandler"/>
 
     <stalledStorage file="statistics.toolbar.clicks.xml">

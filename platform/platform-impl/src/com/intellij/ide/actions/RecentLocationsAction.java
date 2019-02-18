@@ -56,7 +56,6 @@ import java.util.List;
 import static com.intellij.ui.speedSearch.SpeedSearchSupply.ENTERED_PREFIX_PROPERTY_NAME;
 
 public class RecentLocationsAction extends DumbAwareAction {
-  private static final String RECENT_LOCATIONS_ACTION_ID = "RecentLocations";
   private static final String LOCATION_SETTINGS_KEY = "recent.locations.popup";
   private static final String SHOW_RECENT_CHANGED_LOCATIONS = "SHOW_RECENT_CHANGED_LOCATIONS";
   private static final int DEFAULT_WIDTH = JBUI.scale(700);
@@ -69,6 +68,7 @@ public class RecentLocationsAction extends DumbAwareAction {
                                                                 SHORTCUT_FOREGROUND_COLOR.getGreen(),
                                                                 SHORTCUT_FOREGROUND_COLOR.getBlue());
 
+  static final String RECENT_LOCATIONS_ACTION_ID = "RecentLocations";
   static final String EMPTY_FILE_TEXT = IdeBundle.message("recent.locations.popup.empty.file.text");
 
   @Override

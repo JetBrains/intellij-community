@@ -19,6 +19,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Arrays;
 
 /**
  * Default implementation of the {@link ShortcutSet} interface.
@@ -65,5 +66,23 @@ public final class CustomShortcutSet implements ShortcutSet {
       shortcuts[i] = KeyboardShortcut.fromString(keyboardShortcuts[i]);
     }
     return new CustomShortcutSet(shortcuts);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    CustomShortcutSet set = (CustomShortcutSet)o;
+
+    // Probably incorrect - comparing Object[] arrays with Arrays.equals
+    if (!Arrays.equals(myShortcuts, set.myShortcuts)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return Arrays.hashCode(myShortcuts);
   }
 }
