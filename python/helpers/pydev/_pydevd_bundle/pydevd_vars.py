@@ -634,8 +634,10 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
     def col_to_format(c):
         return format if dtypes[c] == 'f' and format else array_default_format(dtypes[c])
 
+    iat = df.iat if dim == 1 or len(df.columns.unique()) == len(df.columns) else df.iloc
+
     xml += header_data_to_xml(rows, cols, dtypes, col_bounds, col_to_format, df, dim)
-    xml += array_data_to_xml(rows, cols, lambda r: (("%" + col_to_format(c)) % (df.iat[r, c] if dim > 1 else df.iat[r])
+    xml += array_data_to_xml(rows, cols, lambda r: (("%" + col_to_format(c)) % (iat[r, c] if dim > 1 else iat[r])
                                                     for c in range(cols)))
     return xml
 

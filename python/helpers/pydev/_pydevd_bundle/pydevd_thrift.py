@@ -540,9 +540,11 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
     def col_to_format(c):
         return format if dtypes[c] == 'f' and format else array_default_format(dtypes[c])
 
+    iat = df.iat if dim == 1 or len(df.columns.unique()) == len(df.columns) else df.iloc
+
     array_chunk.headers = header_data_to_thrift_struct(rows, cols, dtypes, col_bounds, col_to_format, df, dim)
     array_chunk.data = array_data_to_thrift_struct(rows, cols,
-                                                   lambda r: (("%" + col_to_format(c)) % (df.iat[r, c] if dim > 1 else df.iat[r])
+                                                   lambda r: (("%" + col_to_format(c)) % (iat[r, c] if dim > 1 else iat[r])
                                                               for c in range(cols)))
     return array_chunk
 
