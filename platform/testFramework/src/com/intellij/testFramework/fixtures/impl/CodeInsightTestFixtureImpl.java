@@ -91,11 +91,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.StubTextInconsistencyException;
+import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.refactoring.rename.*;
@@ -111,7 +113,6 @@ import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.ComparisonFailure;
@@ -241,9 +242,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public static void ensureIndexesUpToDate(@NotNull Project project) {
     if (!DumbService.isDumb(project)) {
       ReadAction.run(() -> {
-        for (FileBasedIndexExtension<?,?> extension : FileBasedIndexExtension.EXTENSION_POINT_NAME.getExtensionList()) {
-          FileBasedIndex.getInstance().ensureUpToDate(extension.getName(), project, null);
-        }
+        FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, null);
+        FileBasedIndex.getInstance().ensureUpToDate(TodoIndex.NAME, project, null);
       });
     }
   }
