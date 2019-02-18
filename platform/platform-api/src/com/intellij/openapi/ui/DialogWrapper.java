@@ -182,6 +182,8 @@ public abstract class DialogWrapper {
 
   private final List<Function0<ValidationInfo>> myValidateCallbacks = new ArrayList<>();
 
+  private DialogPanel myDialogPanel = null;
+
   @NotNull
   protected String getDoNotShowMessage() {
     return CommonBundle.message("dialog.options.do.not.show");
@@ -1042,6 +1044,9 @@ public abstract class DialogWrapper {
    */
   protected void doOKAction() {
     if (getOKAction().isEnabled()) {
+      if (myDialogPanel != null) {
+        myDialogPanel.apply();
+      }
       close(OK_EXIT_CODE);
     }
   }
@@ -1319,6 +1324,7 @@ public abstract class DialogWrapper {
         DialogPanel dialogPanel = (DialogPanel)centerPanel;
         myPreferredFocusedComponentFromPanel = dialogPanel.getPreferredFocusedComponent();
         myValidateCallbacks.addAll(dialogPanel.getValidateCallbacks());
+        myDialogPanel = dialogPanel;
       }
     }
 

@@ -167,7 +167,7 @@ fun dialog(title: String,
       return if (createActions == null) super.createActions() else createActions(this).toTypedArray()
     }
 
-    override fun getPreferredFocusedComponent() = focusedComponent
+    override fun getPreferredFocusedComponent() = focusedComponent ?: super.getPreferredFocusedComponent()
 
     override fun doOKAction() {
       if (okAction.isEnabled) {

@@ -335,6 +335,11 @@ class CellBuilderImpl<T : JComponent> internal constructor(
     builder.validateCallbacks.add { callback(component) }
     return this
   }
+
+  override fun onApply(callback: () -> Unit): CellBuilder<T> {
+    builder.applyCallbacks.add(callback)
+    return this
+  }
 }
 
 private fun getCommentLeftInset(spacing: SpacingConfiguration, component: JComponent): Int {
