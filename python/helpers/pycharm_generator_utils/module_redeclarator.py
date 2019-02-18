@@ -861,7 +861,7 @@ class ModuleRedeclarator(object):
             if item_name in (
                 "__dict__", "__doc__", "__module__", "__file__", "__name__", "__builtins__", "__package__"):
                 continue # handled otherwise
-            if self.test_mode and item_name in ('__loader__', '__spec__'):
+            if self.test_mode and item_name in ('__loader__', '__spec__', '__cached__'):
                 continue
             try:
                 item = getattr(self.module, item_name) # let getters do the magic
