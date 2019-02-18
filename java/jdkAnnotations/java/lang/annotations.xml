@@ -449,6 +449,18 @@
   <item name="java.lang.String String(java.lang.StringBuilder) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name="java.lang.String boolean charAt(int) 0">
+    <annotation name="org.jetbrains.annotations.Range" >
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name="java.lang.String boolean codePointAt(int) 0">
+    <annotation name="org.jetbrains.annotations.Range" >
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
   <item name="java.lang.String boolean contains(java.lang.CharSequence) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
@@ -636,8 +648,26 @@
   <item name="java.lang.String java.lang.String substring(int)">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name="java.lang.String java.lang.String substring(int) 0">
+    <annotation name="org.jetbrains.annotations.Range" >
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
   <item name="java.lang.String java.lang.String substring(int, int)">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String substring(int, int) 0">
+    <annotation name="org.jetbrains.annotations.Range" >
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name="java.lang.String java.lang.String substring(int, int) 1">
+    <annotation name="org.jetbrains.annotations.Range" >
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
   </item>
   <item name="java.lang.String java.lang.String toLowerCase()">
     <annotation name="org.jetbrains.annotations.NotNull" />

@@ -24,7 +24,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_1_7;
+    return JAVA_1_7_ANNOTATED;
   }
 
   @Override

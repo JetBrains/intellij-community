@@ -84,8 +84,7 @@ public class HardcodedContracts {
                 return Collections.singletonList(new StandardMethodContract(constraints, fail()));
               })
     .register(instanceCall(JAVA_LANG_STRING, "charAt", "codePointAt").parameterCount(1),
-              ContractProvider.of(nonnegativeArgumentContract(0),
-                                  specialFieldRangeContract(0, RelationType.LT, SpecialField.STRING_LENGTH)))
+              ContractProvider.of(specialFieldRangeContract(0, RelationType.LT, SpecialField.STRING_LENGTH)))
     .register(anyOf(instanceCall(JAVA_LANG_STRING, "substring", "subSequence").parameterCount(2),
                     instanceCall(JAVA_LANG_STRING, "substring").parameterCount(1)),
               (call, cnt) -> getSubstringContracts(cnt == 2))
@@ -108,8 +107,7 @@ public class HardcodedContracts {
               ContractProvider.of(singleConditionContract(
                 ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ, ContractValue.zero(), returnFalse())))
     .register(instanceCall(JAVA_UTIL_LIST, "get").parameterTypes("int"),
-              ContractProvider.of(nonnegativeArgumentContract(0),
-                                  specialFieldRangeContract(0, RelationType.LT, SpecialField.COLLECTION_SIZE)))
+              ContractProvider.of(specialFieldRangeContract(0, RelationType.LT, SpecialField.COLLECTION_SIZE)))
     .register(instanceCall("java.util.SortedSet", "first", "last").parameterCount(0),
               ContractProvider.of(singleConditionContract(
                 ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ,
@@ -215,11 +213,9 @@ public class HardcodedContracts {
 
   @NotNull
   private static List<MethodContract> getSubstringContracts(boolean endLimited) {
-    List<MethodContract> contracts = new ArrayList<>(5);
-    contracts.add(nonnegativeArgumentContract(0));
+    List<MethodContract> contracts = new ArrayList<>(3);
     contracts.add(specialFieldRangeContract(0, RelationType.LE, SpecialField.STRING_LENGTH));
     if (endLimited) {
-      contracts.add(nonnegativeArgumentContract(1));
       contracts.add(specialFieldRangeContract(1, RelationType.LE, SpecialField.STRING_LENGTH));
       contracts.add(singleConditionContract(ContractValue.argument(0), RelationType.LE.getNegated(), ContractValue.argument(1), fail()));
     }

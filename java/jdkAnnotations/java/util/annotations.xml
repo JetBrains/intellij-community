@@ -1708,6 +1708,12 @@
   <item name="java.util.List boolean containsAll(java.util.Collection&lt;?&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name="java.util.List E get(int) 0">
+    <annotation name="org.jetbrains.annotations.Range" >
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
   <item name='java.util.List boolean remove(java.lang.Object)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>
