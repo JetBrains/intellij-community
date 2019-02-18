@@ -13,18 +13,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 public class IntellijConfigOptionDescriptorProvider implements EditorConfigOptionDescriptorProvider {
-
-  /**
-   * Properties not supported currently in EditorConfig
-   */
-  private final static Set<String> UNSUPPORTED_PROPERTIES = ContainerUtil.newHashSet();
-  static {
-    UNSUPPORTED_PROPERTIES.add("imports_layout");
-    UNSUPPORTED_PROPERTIES.add("packages_to_use_import_on_demand");
-  }
 
   @NotNull
   @Override
@@ -46,7 +36,10 @@ public class IntellijConfigOptionDescriptorProvider implements EditorConfigOptio
     CodeStylePropertiesUtil.collectMappers(CodeStyle.getDefaultSettings(), mapper -> mappers.add(mapper));
     for (AbstractCodeStylePropertyMapper mapper : mappers) {
       for (String property : mapper.enumProperties()) {
-        if (UNSUPPORTED_PROPERTIES.contains(property)) continue;
+        if (IntellijPropertyKindMap.getPropertyKind(property) == EditorConfigPropertyKind.EDITOR_CONFIG_STANDARD) {
+          // Descriptions for standard properties are added separately
+          continue;
+        }
         List<String> ecNames = EditorConfigIntellijNameUtil.toEditorConfigNames(mapper, property);
         final EditorConfigDescriptor valueDescriptor = createValueDescriptor(property, mapper);
         if (valueDescriptor != null) {

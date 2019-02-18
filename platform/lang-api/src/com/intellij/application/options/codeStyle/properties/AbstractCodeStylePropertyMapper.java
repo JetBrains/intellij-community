@@ -96,7 +96,7 @@ public abstract class AbstractCodeStylePropertyMapper {
     private final Object myObject;
     private final Set<String> mySupportedFields;
 
-    CodeStyleObjectDescriptor(@NotNull Object codeStyleObject, @Nullable Set<String> fields) {
+    public CodeStyleObjectDescriptor(@NotNull Object codeStyleObject, @Nullable Set<String> fields) {
       myObject = codeStyleObject;
       mySupportedFields = fields;
     }
@@ -123,6 +123,7 @@ public abstract class AbstractCodeStylePropertyMapper {
   @NotNull
   public abstract String getLanguageDomainId();
 
+  @Deprecated
   public boolean containsProperty(@NotNull String name) {
     return getAccessorMap().containsKey(name);
   }

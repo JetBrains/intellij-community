@@ -21,6 +21,7 @@ public abstract class CodeStylePropertyAccessor<V> {
   @Nullable
   protected abstract V parseString(@NotNull String string);
 
+  @Deprecated
   public boolean isGenericProperty() {
     return false;
   }

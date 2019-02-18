@@ -63,9 +63,4 @@ public class VisualGuidesAccessor extends CodeStylePropertyAccessor<List<Integer
   public String getPropertyName() {
     return VISUAL_GUIDES_PROPERTY_NAME;
   }
-
-  @Override
-  public boolean isGenericProperty() {
-    return true;
-  }
 }

@@ -3,7 +3,6 @@ package com.intellij.application.options.codeStyle.properties;
 
 import com.intellij.configurationStore.Property;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,8 +73,4 @@ public abstract class CodeStyleFieldAccessor<T,V> extends CodeStylePropertyAcces
     return PropertyNameUtil.getPropertyName(myField.getName());
   }
 
-  @Override
-  public boolean isGenericProperty() {
-    return myObject instanceof CommonCodeStyleSettings || myObject instanceof CommonCodeStyleSettings.IndentOptions;
-  }
 }
