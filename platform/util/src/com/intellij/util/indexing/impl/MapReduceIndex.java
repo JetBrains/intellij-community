@@ -200,8 +200,6 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   @Override
   @NotNull
   public ValueContainer<Value> getData(@NotNull final Key key) throws StorageException {
-    // Android Studio: Code instrumented to log indexing/index performance.
-    return myIndexCounters.getGetDataCounter().timeCallable(() -> {
     final Lock lock = getReadLock();
     try {
       lock.lock();
@@ -215,7 +213,6 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
       ValueContainerImpl.ourDebugIndexInfo.set(null);
       lock.unlock();
     }
-    });  // Android Studio: Code instrumented to log indexing/index performance.
   }
 
   @NotNull
