@@ -37,7 +37,7 @@ class GeneratorTestCase(TestCase):
     def assertDirsEqual(self, actual_dir, expected_dir):
         actual_dir_children = sorted(os.listdir(actual_dir))
         expected_dir_children = sorted(os.listdir(expected_dir))
-        self.assertEquals(expected_dir_children, actual_dir_children)
+        self.assertEqual(expected_dir_children, actual_dir_children)
         for actual_child, expected_child in zip(actual_dir_children,
                                                 expected_dir_children):
             actual_child = os.path.join(actual_dir, actual_child)
