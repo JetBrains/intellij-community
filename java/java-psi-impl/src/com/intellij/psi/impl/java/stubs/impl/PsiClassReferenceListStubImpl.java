@@ -103,13 +103,6 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
 
   @Override
   public String toString() {
-    StringBuilder builder = new StringBuilder();
-    builder.append("PsiRefListStub[").append(getRole()).append(':');
-    for (int i = 0; i < myNames.length; i++) {
-      if (i > 0) builder.append(", ");
-      builder.append(myNames[i]);
-    }
-    builder.append(']');
-    return builder.toString();
+    return "PsiRefListStub[" + getRole() + ':' + String.join(", ", myNames) + ']';
   }
 }
