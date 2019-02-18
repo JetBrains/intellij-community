@@ -32,6 +32,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -96,8 +97,10 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
     myForbid = forbid;
   }
 
+  @TestOnly
   public void flushDirt() {
     myDirtReporter.run();
+    waitForAsyncTaskCompletion();
   }
 
   @Override
@@ -108,8 +111,13 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       //noinspection TestOnlyProblems
-      myZipperUpdater.waitForAllExecuted(10, TimeUnit.SECONDS);
+      waitForAsyncTaskCompletion();
     }
+  }
+
+  @TestOnly
+  private void waitForAsyncTaskCompletion() {
+    myZipperUpdater.waitForAllExecuted(10, TimeUnit.SECONDS);
   }
 
   @Override
