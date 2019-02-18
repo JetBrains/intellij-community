@@ -164,6 +164,7 @@ private fun splitOr(res: MutableList<GrExpression?>, expression: GrExpression?) 
 
 private fun createVariableDescriptor(element: PsiElement?): SpockVariableDescriptor? {
   val name = getNameByReference(element) ?: return null
+  if (name == "_") return null
   return SpockVariableDescriptor(element, name)
 }
 
