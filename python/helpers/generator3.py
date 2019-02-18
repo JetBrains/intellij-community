@@ -356,17 +356,18 @@ def read_generator_version(skeleton_file):
 
 def should_update_skeleton(base_dir, mod_qname):
     mod_cache_base = os.path.join(base_dir, *mod_qname.split('.'))
-    cur_version = version()
+    cur_version = version_to_tuple(version())
 
     with ignored_os_errors(errno.ENOENT):
         with fopen(os.path.join(base_dir, FAILED_VERSION_STAMP), 'r') as f:
             stamp_content = f.read().strip()
-            if cur_version != 'test':
-                return version_to_tuple(stamp_content) != cur_version
+            return stamp_content != cur_version
 
+    # noinspection PyUnreachableCode
     mod_cache_pkg = os.path.join(mod_cache_base, '__init__.py')
     mod_cache_file = mod_cache_base + '.py'
     required_version = read_required_version(mod_qname)
+
     for path in (mod_cache_pkg, mod_cache_file):
         with ignored_os_errors(errno.ENOENT):
             with fopen(path, 'r') as f:

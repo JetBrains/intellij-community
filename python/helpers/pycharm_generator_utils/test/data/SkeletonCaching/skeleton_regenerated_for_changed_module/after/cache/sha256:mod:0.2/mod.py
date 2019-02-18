@@ -1,6 +1,6 @@
 # encoding: utf-8
 # module mod
-# by generator test
+# by generator 1000.0
 # no doc
 
 # imports
