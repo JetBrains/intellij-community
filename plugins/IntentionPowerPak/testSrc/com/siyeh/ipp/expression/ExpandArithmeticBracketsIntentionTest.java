@@ -17,10 +17,6 @@ public class ExpandArithmeticBracketsIntentionTest extends IPPTestCase {
     doTest();
   }
 
-  public void testUnary() {
-    doTest();
-  }
-
   public void testUselessPrefixes() {
     doTest();
   }
