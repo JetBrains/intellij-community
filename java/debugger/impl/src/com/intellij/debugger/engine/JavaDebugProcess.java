@@ -3,6 +3,7 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.DebuggerActions;
+import com.intellij.debugger.actions.JvmSmartStepIntoActionHandler;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.*;
@@ -49,6 +50,7 @@ import com.intellij.xdebugger.impl.XDebuggerInlayUtil;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.memory.component.InstancesTracker;
 import com.intellij.xdebugger.memory.component.MemoryViewManager;
+import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.LocatableEvent;
@@ -65,6 +67,7 @@ public class JavaDebugProcess extends XDebugProcess {
   private final JavaDebuggerEditorsProvider myEditorsProvider;
   private final XBreakpointHandler<?>[] myBreakpointHandlers;
   private final NodeManagerImpl myNodeManager;
+  private final JvmSmartStepIntoActionHandler mySmartStepIntoActionHandler;
 
   private static final JavaBreakpointHandlerFactory[] ourDefaultBreakpointHandlerFactories = {
     JavaBreakpointHandler.JavaLineBreakpointHandler::new,
@@ -74,13 +77,13 @@ public class JavaDebugProcess extends XDebugProcess {
     JavaBreakpointHandler.JavaWildcardBreakpointHandler::new
   };
 
-  public static JavaDebugProcess create(@NotNull final XDebugSession session, final DebuggerSession javaSession) {
+  public static JavaDebugProcess create(@NotNull final XDebugSession session, @NotNull final DebuggerSession javaSession) {
     JavaDebugProcess res = new JavaDebugProcess(session, javaSession);
     javaSession.getProcess().setXDebugProcess(res);
     return res;
   }
 
-  protected JavaDebugProcess(@NotNull final XDebugSession session, final DebuggerSession javaSession) {
+  protected JavaDebugProcess(@NotNull final XDebugSession session, @NotNull final DebuggerSession javaSession) {
     super(session);
     myJavaSession = javaSession;
     myEditorsProvider = new JavaDebuggerEditorsProvider();
@@ -184,6 +187,8 @@ public class JavaDebugProcess extends XDebugProcess {
     if (Registry.is("debugger.show.values.between.lines") && session instanceof XDebugSessionImpl) {
       ((XDebugSessionImpl)session).getSessionData().putUserData(XDebuggerInlayUtil.HELPER_KEY, new JavaDebuggerInlayUtil.Helper());
     }
+
+    mySmartStepIntoActionHandler = new JvmSmartStepIntoActionHandler(javaSession);
   }
 
   private void unsetPausedIfNeeded(DebuggerContextImpl context) {
@@ -505,8 +510,9 @@ public class JavaDebugProcess extends XDebugProcess {
     return true;
   }
 
+  @Nullable
   @Override
-  public boolean isPreferSmartStepInto() {
-    return Registry.is("debugger.smart.step.always");
+  public XSmartStepIntoHandler<?> getSmartStepIntoHandler() {
+    return mySmartStepIntoActionHandler;
   }
 }
