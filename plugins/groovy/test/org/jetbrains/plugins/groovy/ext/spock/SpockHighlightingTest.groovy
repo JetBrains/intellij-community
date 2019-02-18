@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.ext.spock
 import com.intellij.codeInspection.LocalInspectionTool
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyPointlessArithmeticInspection
 import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyPointlessBooleanInspection
 import org.jetbrains.plugins.groovy.util.HighlightingTest
 import org.junit.Test
@@ -13,7 +14,11 @@ class SpockHighlightingTest extends SpockTestBase implements HighlightingTest {
 
   @Override
   Collection<? extends Class<? extends LocalInspectionTool>> getInspections() {
-    return [GroovyAssignabilityCheckInspection, GroovyPointlessBooleanInspection]
+    return [
+      GroovyAssignabilityCheckInspection,
+      GroovyPointlessBooleanInspection,
+      GroovyPointlessArithmeticInspection,
+    ]
   }
 
   @Test
@@ -54,6 +59,28 @@ class FooSpec extends spock.lang.Specification {
     where:
     a    || b
     true || false
+  }
+}
+'''
+  }
+
+  @Test
+  void 'interactions'() {
+    highlightingTest '''\
+interface Subscriber {
+  def receive(String event)
+}
+
+class FooSpec extends spock.lang.Specification {
+
+  def sub = Mock(Subscriber)
+
+  def feature() {
+    when:
+    sub1.receive("hi")
+
+    then:
+    1 * sub1.receive(_)
   }
 }
 '''
