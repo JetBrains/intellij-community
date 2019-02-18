@@ -259,8 +259,10 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     Application application = ApplicationManager.getApplication();
 
     ProgressIndicator progressIndicator = isDefault() ? null : ProgressIndicatorProvider.getGlobalProgressIndicator();
-    init(progressIndicator,
-         () -> application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this), true);
+    //noinspection CodeBlock2Expr
+    init(progressIndicator, application.isUnitTestMode() ? () -> {
+      application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this);
+    } : null, true);
 
     if (!isDefault() && !application.isHeadlessEnvironment()) {
       distributeProgress();
