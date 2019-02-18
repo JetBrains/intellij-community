@@ -34,6 +34,22 @@ public abstract class JsonBySchemaHeavyCompletionTestBase extends JsonSchemaHeav
     });
   }
 
+  protected void baseReplaceTest(@SuppressWarnings("SameParameterValue") final String folder, @SuppressWarnings("SameParameterValue") final String testFile) throws Exception {
+    baseTest(folder, testFile, () -> {
+      final CodeCompletionHandlerBase handlerBase = new CodeCompletionHandlerBase(CompletionType.BASIC);
+      handlerBase.invokeCompletion(getProject(), getEditor());
+      if (myItems != null) {
+        selectItem(myItems[0], '\t');
+      }
+      try {
+        checkResultByFile("/" + folder + "/" + testFile + "_after." + getExtensionWithoutDot());
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    });
+  }
+
   protected abstract String getExtensionWithoutDot();
 
   protected void baseTest(@NotNull final String folder, @NotNull final String testFile, @NotNull final Runnable checker) throws Exception {
