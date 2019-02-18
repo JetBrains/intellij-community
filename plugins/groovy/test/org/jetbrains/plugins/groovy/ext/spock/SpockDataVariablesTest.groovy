@@ -69,4 +69,15 @@ bar | baz | bad
 foo = bar * baz
 ''', 'bar', 'baz', 'bad', 'foo'
   }
+
+  @Test
+  void 'derived parameterization with label after table'() {
+    testVariableNames '''\
+where: 
+bar | baz | bad
+1 | 2 | 3
+and:
+foo = bar * baz
+''', 'bar', 'baz', 'bad', 'foo'
+  }
 }
