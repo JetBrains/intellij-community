@@ -60,6 +60,8 @@ public interface ProjectResolverContext extends UserDataHolderEx {
 
   boolean isUseQualifiedModuleNames();
 
+  default boolean isDelegatedBuild() { return true; }
+
   @NotNull
   ProjectImportAction.AllModels getModels();
 

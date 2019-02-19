@@ -26,6 +26,7 @@ import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.junit.Test;
 
@@ -74,6 +75,23 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
                         getProjectPath() + "/out/test/resources");
 
     assertModuleOutput("project", getProjectPath() + "/out/production/classes", getProjectPath() + "/out/test/classes");
+
+    getCurrentExternalProjectSettings().setDelegatedBuild(ThreeState.YES);
+
+    importProject();
+    if (isGradle40orNewer()) {
+      assertModuleOutputs("project",
+                          getProjectPath() + "/build/classes/java/main",
+                          getProjectPath() + "/build/resources/main",
+                          getProjectPath() + "/build/classes/java/test",
+                          getProjectPath() + "/build/resources/test");
+    } else {
+      assertModuleOutputs("project",
+                          getProjectPath() + "/build/classes/main",
+                          getProjectPath() + "/build/resources/main",
+                          getProjectPath() + "/build/classes/test",
+                          getProjectPath() + "/build/resources/test");
+    }
   }
 
   @Test
@@ -95,7 +113,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertDefaultGradleJavaProjectFolders("project");
 
     assertModuleOutput("project.main", getProjectPath() + "/build", "");
-    String testClassesOutputPath = "/out/test/classes";
+    String testClassesOutputPath = isGradle40orNewer() ? "/build/classes/java/test" : "/build/classes/test";
     assertModuleOutput("project.test", "", getProjectPath() + testClassesOutputPath);
 
     importProjectUsingSingeModulePerGradleProject();
@@ -104,7 +122,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
     assertDefaultGradleJavaProjectFoldersForMergedModule("project");
 
-    assertModuleOutput("project", getProjectPath() + "/build", getProjectPath() + "/out/test/classes");
+    assertModuleOutput("project", getProjectPath() + "/build", getProjectPath() + testClassesOutputPath);
   }
 
   @Test
@@ -201,7 +219,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
     assertModules("project", "project.main", "project.test");
     assertContentRoots("project", getProjectPath());
-    assertExcludes("project", ".gradle", "build", "out");
+    assertExcludes("project", ".gradle", "build");
     assertContentRoots("project.main", getProjectPath() + "/src/main");
     assertSources("project.main", "java", "src2");
     assertResources("project.main", "resources", "resources2");
@@ -214,7 +232,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertModules("project");
     assertContentRoots("project", getProjectPath());
 
-    assertExcludes("project", ".gradle", "build", "out");
+    assertExcludes("project", ".gradle", "build");
     assertSources("project", "src/main/java", "src/main/src2");
     assertResources("project", "src/main/resources", "src/main/resources2");
     assertTestSources("project", "src/test/java", "src/test/src2");
@@ -279,7 +297,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertModules("project", "project.main", "project.test");
     assertContentRoots("project", getProjectPath());
 
-    assertExcludes("project", ".gradle", "build", "out");
+    assertExcludes("project", ".gradle", "build");
     final String mainSourceSetModuleName = "project.main";
     assertContentRoots(mainSourceSetModuleName, getProjectPath() + "/src");
     assertSources(mainSourceSetModuleName, "", "main/java");
@@ -292,7 +310,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     importProjectUsingSingeModulePerGradleProject();
     assertModules("project");
     assertContentRoots("project", getProjectPath());
-    assertExcludes("project", ".gradle", "build", "out");
+    assertExcludes("project", ".gradle", "build");
     assertSources("project", "src", "src/main/java");
     assertResources("project", "src/main/resources", "src/resources");
     assertTestSources("project", "src/test/java", "test");
@@ -308,7 +326,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     );
 
     assertModules("project");
-    assertExcludes("project", ".gradle", "build", "out");
+    assertExcludes("project", ".gradle", "build");
     assertSources("project", "src/main/java");
     assertResources("project");
     assertTestSources("project");
@@ -593,7 +611,9 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   }
 
   protected void assertDefaultGradleJavaProjectFolders(@NotNull String mainModuleName) {
-    assertExcludes(mainModuleName, ".gradle", "build", "out");
+    boolean isDelegatedBuild = GradleSettingsService.getInstance(myProject).isDelegatedBuildEnabled(getProjectPath());
+    String[] excludes = isDelegatedBuild ? new String[]{".gradle", "build"} : new String[]{".gradle", "build", "out"};
+    assertExcludes(mainModuleName, excludes);
     final String mainSourceSetModuleName = mainModuleName + ".main";
     assertContentRoots(mainSourceSetModuleName, getProjectPath() + "/src/main");
     assertSources(mainSourceSetModuleName, "java");
@@ -606,7 +626,9 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
   protected void assertDefaultGradleJavaProjectFoldersForMergedModule(@NotNull String moduleName) {
     assertContentRoots(moduleName, getProjectPath());
-    assertExcludes(moduleName, ".gradle", "build", "out");
+    boolean isDelegatedBuild = GradleSettingsService.getInstance(myProject).isDelegatedBuildEnabled(getProjectPath());
+    String[] excludes = isDelegatedBuild ? new String[]{".gradle", "build"} : new String[]{".gradle", "build", "out"};
+    assertExcludes(moduleName, excludes);
     assertSources(moduleName, "src/main/java");
     assertResources(moduleName, "src/main/resources");
     assertTestSources(moduleName, "src/test/java");
