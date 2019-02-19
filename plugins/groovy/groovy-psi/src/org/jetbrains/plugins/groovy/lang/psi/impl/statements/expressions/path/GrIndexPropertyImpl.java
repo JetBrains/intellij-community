@@ -4,9 +4,8 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -21,6 +20,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.references.GrGetAtReference;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrIndexPropertyReference;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrPutAtReference;
 
+import static com.intellij.psi.util.CachedValueProvider.Result;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_Q;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyIndexPropertyUtil.isClassLiteral;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyIndexPropertyUtil.isSimpleArrayAccess;
@@ -33,33 +33,27 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ReferencesKt.referenceAr
  */
 public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProperty {
 
-  private final CachedValue<GrIndexPropertyReference> myRValueReference;
-  private final CachedValue<GrIndexPropertyReference> myLValueReference;
-
   public GrIndexPropertyImpl(@NotNull ASTNode node) {
     super(node);
-    CachedValuesManager manager = CachedValuesManager.getManager(getProject());
-    myRValueReference = manager.createCachedValue(() -> {
-      GrIndexPropertyReference reference = isRValue(this) && isIndexAccess() ? new GrGetAtReference(this) : null;
-      return Result.create(reference, this);
-    });
-    myLValueReference = manager.createCachedValue(() -> {
-      Argument rValue = getRValue(this);
-      GrIndexPropertyReference reference = rValue != null && isIndexAccess() ? new GrPutAtReference(this, rValue) : null;
-      return Result.create(reference, this);
-    });
   }
 
   @Nullable
   @Override
   public GroovyReference getRValueReference() {
-    return myRValueReference.getValue();
+    return CachedValuesManager.getCachedValue(this, () -> {
+      GrIndexPropertyReference reference = isRValue(this) && isIndexAccess() ? new GrGetAtReference(this) : null;
+      return Result.create(reference, PsiModificationTracker.MODIFICATION_COUNT);
+    });
   }
 
   @Nullable
   @Override
   public GroovyReference getLValueReference() {
-    return myLValueReference.getValue();
+    return CachedValuesManager.getCachedValue(this, () -> {
+      Argument rValue = getRValue(this);
+      GrIndexPropertyReference reference = rValue != null && isIndexAccess() ? new GrPutAtReference(this, rValue) : null;
+      return Result.create(reference, PsiModificationTracker.MODIFICATION_COUNT);
+    });
   }
 
   @NotNull
