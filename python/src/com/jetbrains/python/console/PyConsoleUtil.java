@@ -96,7 +96,10 @@ public class PyConsoleUtil {
 
   public static void scrollDown(final Editor currentEditor) {
     ApplicationManager.getApplication().invokeLater(
-      () -> currentEditor.getCaretModel().moveToOffset(currentEditor.getDocument().getTextLength()));
+      () -> {
+        if (!currentEditor.isDisposed()) currentEditor.getCaretModel().moveToOffset(currentEditor.getDocument().getTextLength());
+      }
+    );
   }
 
 
