@@ -67,8 +67,6 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       return;
     }
 
-    assert document.isWritable() : "Document must be writeable";
-
     DataContext context =
       dataId -> PasteAction.TRANSFERABLE_PROVIDER.is(dataId) ? (Producer<Transferable>)() -> transferable : dataContext.getData(dataId);
 

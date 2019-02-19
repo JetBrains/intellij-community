@@ -494,7 +494,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   public boolean requestWriting(@NotNull Document document, Project project) {
     final VirtualFile file = getInstance().getFile(document);
     if (project != null && file != null && file.isValid()) {
-      return !file.getFileType().isBinary() && ReadonlyStatusHandler.ensureFilesWritable(project, file);
+      boolean result = !file.getFileType().isBinary() && ReadonlyStatusHandler.ensureFilesWritable(project, file);
+      assert !result || document.isWritable();
+      return result;
     }
     if (document.isWritable()) {
       return true;
