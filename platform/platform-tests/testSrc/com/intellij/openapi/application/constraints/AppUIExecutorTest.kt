@@ -196,8 +196,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
     val executor = AppUIExecutor.onUiThread()
       .withConstraint(object : ConstrainedExecution.ContextConstraint {
 
-        override val isCorrectContext: Boolean
-          get() = scheduled
+        override fun isCorrectContext(): Boolean = scheduled
 
         override fun schedule(runnable: Runnable) {
           scheduled = true
@@ -226,8 +225,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
 
     val executor = AppUIExecutor.onUiThread()
       .withConstraint(object : ConstrainedExecution.ContextConstraint {
-        override val isCorrectContext: Boolean
-          get() = scheduled
+        override fun isCorrectContext(): Boolean = scheduled
 
         override fun schedule(runnable: Runnable) {
           if (Disposer.isDisposed(disposable)) {
@@ -295,8 +293,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
     val uiExecutor = AppUIExecutor.onUiThread()
     val executor = uiExecutor
       .withConstraint(object : ConstrainedExecution.ContextConstraint {
-        override val isCorrectContext: Boolean
-          get() = scheduled
+        override fun isCorrectContext(): Boolean = scheduled
 
         override fun schedule(runnable: Runnable) {
           if (Disposer.isDisposed(disposable)) {
@@ -458,8 +455,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
     val uiExecutor = AppUIExecutor.onUiThread()
     val executor = uiExecutor
       .withConstraint(object : ConstrainedExecution.ContextConstraint {
-        override val isCorrectContext: Boolean
-          get() = outerScheduled
+        override fun isCorrectContext(): Boolean = outerScheduled
 
         override fun schedule(runnable: Runnable) {
           if (shouldDisposeOnDispatch) {
@@ -477,8 +473,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
         override fun toString() = "test outer"
       }, constraintDisposable)
       .withConstraint(object : ConstrainedExecution.ContextConstraint {
-        override val isCorrectContext: Boolean
-          get() = innerScheduled
+        override fun isCorrectContext(): Boolean = innerScheduled
 
         override fun schedule(runnable: Runnable) {
           innerScheduled = true

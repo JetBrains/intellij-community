@@ -39,9 +39,9 @@ abstract class BaseConstrainedExecution<E : ConstrainedExecution<E>>(protected v
     override fun execute(runnable: Runnable) {
       if (condition?.asBoolean == false) return
       for (constraint in constraints) {
-        if (!constraint.isCorrectContext) {
+        if (!constraint.isCorrectContext()) {
           return constraint.schedule(Runnable {
-            LOG.assertTrue(constraint.isCorrectContext)
+            LOG.assertTrue(constraint.isCorrectContext())
             retrySchedule(runnable, causeConstraint = constraint)
           })
         }

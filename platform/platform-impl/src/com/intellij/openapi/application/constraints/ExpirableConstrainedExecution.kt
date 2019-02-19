@@ -54,8 +54,8 @@ internal abstract class ExpirableConstrainedExecution<E : ConstrainedExecution<E
    */
   internal inner class ExpirableContextConstraint(private val constraint: ContextConstraint,
                                                   private val expiration: Expiration) : ContextConstraint {
-    override val isCorrectContext: Boolean
-      get() = expiration.isExpired || constraint.isCorrectContext
+    override fun isCorrectContext(): Boolean =
+      expiration.isExpired || constraint.isCorrectContext()
 
     override fun schedule(runnable: Runnable) {
       val runOnce = RunOnce()

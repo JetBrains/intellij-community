@@ -33,8 +33,8 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
   override val coroutineContext: CoroutineContext by lazy(PUBLICATION) { ConstrainedCoroutineSupport(this).coroutineContext }
 
   constructor(modality: ModalityState) : this(modality, arrayOf(/* fallback */ object : ContextConstraint {
-    override val isCorrectContext: Boolean
-      get() = ApplicationManager.getApplication().isDispatchThread && !ModalityState.current().dominates(modality)
+    override fun isCorrectContext(): Boolean =
+      ApplicationManager.getApplication().isDispatchThread && !ModalityState.current().dominates(modality)
 
     override fun schedule(runnable: Runnable) {
       ApplicationManager.getApplication().invokeLater(runnable, modality)
@@ -62,7 +62,7 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
       @Volatile
       var usedOnce: Boolean = false
 
-      override val isCorrectContext: Boolean get() =
+      override fun isCorrectContext(): Boolean =
         when (edtEventCount) {
           -1 -> ApplicationManager.getApplication().isDispatchThread
           else -> usedOnce || edtEventCount != IdeEventQueue.getInstance().eventCount
@@ -90,8 +90,8 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
   override fun inTransaction(parentDisposable: Disposable): AppUIExecutor {
     val id = TransactionGuard.getInstance().contextTransaction
     return withConstraint(object : ContextConstraint {
-      override val isCorrectContext: Boolean
-        get() = TransactionGuard.getInstance().contextTransaction != null
+      override fun isCorrectContext(): Boolean =
+        TransactionGuard.getInstance().contextTransaction != null
 
       override fun schedule(runnable: Runnable) {
         // The Application instance is passed as a disposable here to ensure the runnable is always invoked,
@@ -106,8 +106,8 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
 
   override fun inUndoTransparentAction(): AppUIExecutor {
     return withConstraint(object : ContextConstraint {
-      override val isCorrectContext: Boolean
-        get() = CommandProcessor.getInstance().isUndoTransparentActionInProgress
+      override fun isCorrectContext(): Boolean =
+        CommandProcessor.getInstance().isUndoTransparentActionInProgress
 
       override fun schedule(runnable: Runnable) {
         CommandProcessor.getInstance().runUndoTransparentAction(runnable)
@@ -119,8 +119,8 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
 
   override fun inWriteAction(): AppUIExecutor {
     return withConstraint(object : ContextConstraint {
-      override val isCorrectContext: Boolean
-        get() = ApplicationManager.getApplication().isWriteAccessAllowed
+      override fun isCorrectContext(): Boolean =
+        ApplicationManager.getApplication().isWriteAccessAllowed
 
       override fun schedule(runnable: Runnable) {
         ApplicationManager.getApplication().runWriteAction(runnable)
@@ -132,8 +132,8 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
 }
 
 internal class WithDocumentsCommitted(private val project: Project, private val modality: ModalityState) : ContextConstraint {
-  override val isCorrectContext: Boolean
-    get() = !PsiDocumentManager.getInstance(project).hasUncommitedDocuments()
+  override fun isCorrectContext(): Boolean =
+    !PsiDocumentManager.getInstance(project).hasUncommitedDocuments()
 
   override fun schedule(runnable: Runnable) {
     PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(runnable, modality)
@@ -143,8 +143,8 @@ internal class WithDocumentsCommitted(private val project: Project, private val 
 }
 
 internal class InSmartMode(private val project: Project) : ContextConstraint {
-  override val isCorrectContext: Boolean
-    get() = !DumbService.getInstance(project).isDumb
+  override fun isCorrectContext(): Boolean =
+    !DumbService.getInstance(project).isDumb
 
   override fun schedule(runnable: Runnable) {
     DumbService.getInstance(project).runWhenSmart(runnable)

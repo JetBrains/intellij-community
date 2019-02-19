@@ -32,7 +32,7 @@ interface ConstrainedExecution<E : ConstrainedExecution<E>> {
    * to reschedule another attempt to traverse the list of constraints.
    */
   interface ContextConstraint {
-    val isCorrectContext: Boolean
+    fun isCorrectContext(): Boolean
     fun schedule(runnable: Runnable)
     override fun toString(): String
   }
