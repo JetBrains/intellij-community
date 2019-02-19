@@ -28,6 +28,7 @@
     <lang.syntaxHighlighterFactory language="Diff"
         implementationClass="de.thomasrosenau.diffplugin.highlighter.DiffSyntaxHighlighterFactory" />
     <colorSettingsPage implementation="de.thomasrosenau.diffplugin.highlighter.DiffColorSettingsPage" />
+    <lang.foldingBuilder language="Diff" implementationClass="de.thomasrosenau.diffplugin.DiffFoldingBuilder"/>
   </extensions>
 
 </idea-plugin>
