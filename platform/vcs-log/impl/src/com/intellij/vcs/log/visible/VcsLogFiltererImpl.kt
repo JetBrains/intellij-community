@@ -158,7 +158,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
   private fun filteredDetailsInVcs(providers: Map<VirtualFile, VcsLogProvider>,
                                    filterCollection: VcsLogFilterCollection,
                                    maxCount: Int): Collection<CommitId> {
-    val commits = ContainerUtil.newArrayList<CommitId>()
+    val commits = mutableListOf<CommitId>()
 
     val visibleRoots = VcsLogUtil.getAllVisibleRoots(providers.keys, filterCollection)
     for (root in visibleRoots) {
@@ -188,7 +188,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
                               hashes: Collection<String>,
                               sortType: PermanentGraph.SortType,
                               commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage>? {
-    val hashFilterResult = ContainerUtil.newHashSet<Int>()
+    val hashFilterResult = hashSetOf<Int>()
     for (partOfHash in hashes) {
       if (partOfHash.length == VcsLogUtil.FULL_HASH_LENGTH) {
         val hash = HashImpl.build(partOfHash)
@@ -211,7 +211,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
       return Pair(visiblePack, CommitCountStage.ALL)
     }
 
-    val textFilter = VcsLogFilterObject.fromPatternsList(ContainerUtil.newArrayList(hashes), false)
+    val textFilter = VcsLogFilterObject.fromPatternsList(ArrayList(hashes), false)
     val textFilterResult = filterByDetails(dataPack, VcsLogFilterObject.collection(textFilter),
                                            commitCount, dataPack.logProviders.keys, null)
     if (hashFilterResult.isEmpty() && textFilterResult.matchingCommits.matchesNothing()) return null
@@ -241,7 +241,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
         return getMatchingHeads(roots, revisionFilter)
       }
 
-      return ContainerUtil.union(getMatchingHeads(refs, roots, branchFilter), getMatchingHeads(roots, revisionFilter))
+      return getMatchingHeads(refs, roots, branchFilter).union(getMatchingHeads(roots, revisionFilter))
     }
 
     if (branchFilter == null) return getMatchingHeads(refs, roots)
@@ -268,7 +268,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
   private fun filterDetailsInMemory(permanentGraph: PermanentGraph<Int>,
                                     detailsFilters: List<VcsLogDetailsFilter>,
                                     matchingHeads: Set<Int>?): Collection<CommitId> {
-    val result = ContainerUtil.newArrayList<CommitId>()
+    val result = mutableListOf<CommitId>()
     for (commit in permanentGraph.allCommits) {
       val data = getDetailsFromCache(commit.id)
                  ?: // no more continuous details in the cache
@@ -284,7 +284,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
                                 permanentGraph: PermanentGraph<Int>,
                                 detailsFilters: List<VcsLogDetailsFilter>,
                                 matchingHeads: Set<Int>?): Boolean {
-    val matchesAllDetails = ContainerUtil.and(detailsFilters) { filter -> filter.matches(commit) }
+    val matchesAllDetails = detailsFilters.all { filter -> filter.matches(commit) }
     return matchesAllDetails && matchesAnyHead(permanentGraph, commit, matchingHeads)
   }
 
@@ -329,9 +329,9 @@ fun areFiltersAffectedByIndexing(filters: VcsLogFilterCollection, roots: List<Vi
   if (detailsFilters.isEmpty()) return false
 
   val affectedRoots = VcsLogUtil.getAllVisibleRoots(roots, filters)
-  val needsIndex = !affectedRoots.isEmpty()
+  val needsIndex = affectedRoots.isNotEmpty()
   if (needsIndex) {
-    LOG.debug(filters.toString() + " are affected by indexing of " + affectedRoots)
+    LOG.debug("$filters are affected by indexing of $affectedRoots")
   }
   return needsIndex
 }
@@ -343,5 +343,5 @@ internal fun <T> Collection<T>?.matchesNothing(): Boolean {
 internal fun <T> union(c1: Set<T>?, c2: Set<T>?): Set<T>? {
   if (c1 == null) return c2
   if (c2 == null) return c1
-  return ContainerUtil.union(c1, c2)
+  return c1.union(c2)
 }
