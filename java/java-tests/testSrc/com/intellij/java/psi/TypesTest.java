@@ -25,6 +25,7 @@ import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.ref.GCUtil;
 
 import java.io.File;
 
@@ -453,5 +454,21 @@ public class TypesTest extends GenericsTestCase {
     final PsiStatement declaration = factory.createStatementFromText("Byte b = 1;", null);
     final PsiExpression plusPlusPostfix = factory.createExpressionFromText("b++", declaration);
     assertEquals(PsiType.BYTE.getBoxedType(declaration), plusPlusPostfix.getType());
+  }
+
+  public void testVariableTypeInvalidation() {
+    PsiElementFactory factory = myJavaFacade.getElementFactory();
+    PsiStatement statement = factory.createStatementFromText("String s;", null);
+    PsiLocalVariable var = (PsiLocalVariable)((PsiDeclarationStatement)statement).getDeclaredElements()[0];
+    PsiType type = var.getType();
+    assertTrue(type.isValid());
+
+    var.getTypeElement().replace(factory.createTypeElement(PsiType.INT));
+
+    assertFalse(type.isValid());
+
+    GCUtil.tryGcSoftlyReachableObjects();
+
+    assertFalse(type.isValid());
   }
 }
