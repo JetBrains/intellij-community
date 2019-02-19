@@ -9,7 +9,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.branch.GitRebaseParams;
@@ -262,7 +261,7 @@ public class GitRebaseUtils {
 
   @NotNull
   public static Collection<GitRepository> getRebasingRepositories(@NotNull Project project) {
-    return ContainerUtil.filter(GitUtil.getRepositories(project), repository -> repository.getState() == Repository.State.REBASING);
+    return GitUtil.getRepositoriesInState(project, Repository.State.REBASING);
   }
 
   /**

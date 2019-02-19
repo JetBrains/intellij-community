@@ -101,6 +101,8 @@
       <separator/>
       <action id="Git.Rebase" class="git4idea.actions.GitRebase" text="Rebase..."/>
       <action id="Git.Rebase.Abort" class="git4idea.actions.GitRebaseAbort" text="Abort Rebase"/>
+      <action id="Git.Merge.Abort" class="git4idea.actions.GitAbortOperationAction$Merge" text="Abort Merge"/>
+      <action id="Git.CherryPick.Abort" class="git4idea.actions.GitAbortOperationAction$CherryPick" text="Abort Cherry-Pick"/>
       <action id="Git.Rebase.Continue" class="git4idea.actions.GitRebaseContinue" text="Continue Rebase"/>
       <action id="Git.Rebase.Skip" class="git4idea.actions.GitRebaseSkip" text="Skip Commit"/>
     </group>
@@ -108,6 +110,8 @@
     <group id="Git.Ongoing.Rebase.Actions" popup="false">
       <!-- See GitOngoingOperationAction -->
       <reference id="Git.Rebase.Abort"/>
+      <reference id="Git.Merge.Abort"/>
+      <reference id="Git.CherryPick.Abort"/>
       <reference id="Git.Rebase.Continue"/>
       <reference id="Git.Rebase.Skip"/>
     </group>
