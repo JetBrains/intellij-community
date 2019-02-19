@@ -657,6 +657,12 @@ public final class EditorUtil {
     return TextRange.create(start, end);
   }
 
+  public static int logicalToVisualLine(@NotNull Editor editor, int logicalLine) {
+    LogicalPosition logicalPosition = new LogicalPosition(logicalLine, 0);
+    VisualPosition visualPosition = editor.logicalToVisualPosition(logicalPosition);
+    return visualPosition.line;
+  }
+
   public static int yPositionToLogicalLine(@NotNull Editor editor, @NotNull MouseEvent event) {
     return yPositionToLogicalLine(editor, event.getY());
   }

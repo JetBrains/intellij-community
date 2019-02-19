@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.ex;
 
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.TextAnnotationGutterProvider;
@@ -16,6 +17,8 @@ import java.awt.*;
 import java.util.List;
 
 public abstract class EditorGutterComponentEx extends JComponent implements EditorGutter {
+  public static final DataKey<Integer> GUTTER_ARROW_LOGICAL_LINE = DataKey.create("EditorGutterComponentEx.GUTTER_ARROW_LOGICAL_LINE");
+
   @Nullable
   public abstract FoldRegion findFoldingAnchorAt(int x, int y);
 

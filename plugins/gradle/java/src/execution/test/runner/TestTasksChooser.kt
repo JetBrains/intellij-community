@@ -1,32 +1,30 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.test.runner
 
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
+import com.intellij.ide.IdeTooltipManager
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.scope.TestsScope
 import com.intellij.ui.FileColorManager
-import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.FunctionUtil
 import com.intellij.util.ui.JBUI
 import icons.ExternalSystemIcons
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducer.findAllTestsTaskToRun
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.TasksToRun
+import org.jetbrains.plugins.gradle.util.getBestBalloonPosition
+import org.jetbrains.plugins.gradle.util.getBestPopupPosition
 import java.awt.Component
-import java.awt.MouseInfo
 import java.util.function.Consumer
 import javax.swing.DefaultListCellRenderer
+import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.border.EmptyBorder
 
@@ -111,17 +109,16 @@ open class TestTasksChooser {
         }
       }
       .createPopup()
-      .show(getPreferredPopupPosition(context))
+      .show(getBestPopupPosition(context))
   }
 
   protected open fun showTestsNotFoundWarning(project: Project, context: DataContext) {
     assert(!ApplicationManager.getApplication().isCommandLine)
-    val notification = Notification(
-      "Test tasks chooser",
-      GradleBundle.message("gradle.tests.tasks.choosing.warning.text"),
-      "",
-      NotificationType.WARNING)
-    Notifications.Bus.notify(notification, project)
+    JBPopupFactory.getInstance()
+      .createBalloonBuilder(JLabel(GradleBundle.message("gradle.tests.tasks.choosing.warning.text")))
+      .setFillColor(IdeTooltipManager.getInstance().getTextBackground(false))
+      .createBalloon()
+      .show(getBestBalloonPosition(context), Balloon.Position.above)
   }
 
   private fun suggestPopupTitle(context: DataContext): String {
@@ -129,13 +126,6 @@ open class TestTasksChooser {
     return when (locationName) {
       null -> GradleBundle.message("gradle.tests.tasks.choosing.popup.title.common")
       else -> GradleBundle.message("gradle.tests.tasks.choosing.popup.title", locationName)
-    }
-  }
-
-  private fun getPreferredPopupPosition(context: DataContext): RelativePoint {
-    return when (context.getData(PlatformDataKeys.CONTEXT_COMPONENT)) {
-      is EditorGutterComponentEx -> RelativePoint(MouseInfo.getPointerInfo().location)
-      else -> JBPopupFactory.getInstance().guessBestPopupLocation(context)
     }
   }
 
