@@ -400,6 +400,7 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
     myEditor.invokeDelayedErrorStripeRepaint();
 
     for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
+      if (!caret.isValid()) continue;
       // There is a possible case that caret position is already visual position aware. But visual position depends on number of folded
       // logical lines as well, hence, we can't be sure that target logical position defines correct visual position because fold
       // regions have just changed. Hence, we use 'raw' logical position instead.

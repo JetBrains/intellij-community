@@ -3,8 +3,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.FoldingGroup;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.util.Ref;
@@ -397,5 +396,19 @@ public class FoldingTest extends AbstractEditorTest {
   public void testAddingEmptyRegion() {
     FoldRegion region = addFoldRegion(0, 0, ".");
     assertNull(region);
+  }
+
+  public void testMultipleCaretsUpdateOnRegionCollapsing() {
+    CaretModel caretModel = myEditor.getCaretModel();
+    caretModel.moveToVisualPosition(new VisualPosition(0, 0));
+    caretModel.addCaret(new VisualPosition(0, 1));
+    caretModel.addCaret(new VisualPosition(0, 2));
+    caretModel.addCaret(new VisualPosition(0, 3));
+
+    addCollapsedFoldRegion(0, 4, "...");
+
+    List<Caret> carets = caretModel.getAllCarets();
+    assertSize(1, carets);
+    assertEquals(0, carets.get(0).getOffset());
   }
 }
