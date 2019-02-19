@@ -29,7 +29,7 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
   public static final String TABS_ALPHABETICAL_KEY = "tabs.alphabetical";
 
   /**
-   * @Deprecated use {@link #tabPainter}.
+   * @Deprecated use {@link #myTabPainter}.
    */
   @Deprecated
   protected JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter(this);
@@ -108,6 +108,6 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
    */
   @Deprecated
   protected Color getEmptySpaceColor() {
-    return tabPainter.getBackgroundColor();
+    return myTabPainter.getBackgroundColor();
   }
 }

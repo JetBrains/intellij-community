@@ -14,6 +14,7 @@ class TabTheme(
   val underlineThickness: Int = JBUI.CurrentTheme.DefaultTabs.underlineThickness()
 ) {
   companion object {
+    @JvmField
     val EDITOR = TabTheme(JBUI.CurrentTheme.EditorTabs.background(),
                           JBUI.CurrentTheme.EditorTabs.borderColor(),
                           JBUI.CurrentTheme.EditorTabs.underlineColor(),
@@ -21,7 +22,7 @@ class TabTheme(
                           JBUI.CurrentTheme.EditorTabs.hoverOverlayColor(),
                           JBUI.CurrentTheme.EditorTabs.unselectedOverlayColor(),
                           JBUI.CurrentTheme.EditorTabs.underlineThickness())
-
+    @JvmField
     val TOOL_WINDOW = TabTheme(null,
                                JBUI.CurrentTheme.EditorTabs.borderColor(),
                                JBUI.CurrentTheme.EditorTabs.underlineColor(),

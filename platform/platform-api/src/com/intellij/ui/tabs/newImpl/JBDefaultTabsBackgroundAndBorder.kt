@@ -8,13 +8,14 @@ open class JBDefaultTabsBackgroundAndBorder(tabs: JBTabsImpl) : JBTabsBackground
     if (tabs.isEmptyVisible) return
     g as Graphics2D
 
-    paintBackground(g, Rectangle(x, y, width, height))
-
     val rect = Rectangle(x, y, width, height)
+
+    paintBackground(g, rect)
+
 
     val firstLabel = tabs.myInfo2Label.get(tabs.lastLayoutPass.getTabAt(0, 0)) ?: return
     val maxY = firstLabel.bounds.maxY.toInt() - thickness
 
-    tabs.getTabPainter().paintBorderLine(g, thickness, Point(rect.x, maxY), Point(rect.maxX.toInt(), maxY))
+    tabs.tabPainter.paintBorderLine(g, thickness, Point(rect.x, maxY), Point(rect.maxX.toInt(), maxY))
   }
 }

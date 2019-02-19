@@ -31,7 +31,6 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.LazyUiDisposable;
 import com.jetbrains.rd.util.lifetime.Lifetime;
-import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -174,7 +173,7 @@ public class JBTabsImpl extends JComponent
   private boolean myAlwaysPaintSelectedTab;
   private int myFirstTabOffset;
 
-  protected final JBTabPainter tabPainter = createTabPainter();
+  protected final JBTabPainter myTabPainter = createTabPainter();
   private boolean myAlphabeticalMode = false;
   private boolean mySupportsCompression = false;
   private String myEmptyText = null;
@@ -188,10 +187,10 @@ public class JBTabsImpl extends JComponent
   }
 
   public JBTabPainter getTabPainter() {
-    return tabPainter;
+    return myTabPainter;
   }
 
-  Lifetime lifetime = createLifetime(this);
+  private Lifetime lifetime = createLifetime(this);
   private TabLabel tabLabelAtMouse;
 
   public JBTabsImpl(@NotNull Project project) {
@@ -212,7 +211,7 @@ public class JBTabsImpl extends JComponent
     myFocusManager = focusManager != null ? focusManager : IdeFocusManager.getGlobalInstance();
 
     setOpaque(true);
-    setBackground(tabPainter.getBackgroundColor());
+    setBackground(myTabPainter.getBackgroundColor());
 
     setBorder(myBorder);
 
@@ -237,7 +236,7 @@ public class JBTabsImpl extends JComponent
       tabLabelAtMouse = label;
       if (tabLabelAtMouse != null) tabLabelAtMouse.repaint();
 
-      return Unit.INSTANCE;
+      return null;
     });
 
     myPopupListener = new PopupMenuListener() {
@@ -389,7 +388,7 @@ public class JBTabsImpl extends JComponent
   }
 
   protected boolean isActiveTabs(TabInfo info) {
-    return Utils.Companion.isFocusOwner(this);
+    return UIUtil.isFocusAncestor(this);
   }
 
   public boolean isEditorTabs() {
@@ -1571,20 +1570,14 @@ public class JBTabsImpl extends JComponent
   public Rectangle layoutComp(final Rectangle bounds, final JComponent comp, int deltaWidth, int deltaHeight) {
     final Insets insets = getLayoutInsets();
 
-    final Insets border = new Insets(0, 0, 0, 0);
-    final boolean noTabsVisible = isStealthModeEffective() || isHideTabs();
-
     final Insets inner = getInnerInsets();
-    border.top += inner.top;
-    border.bottom += inner.bottom;
-    border.left += inner.left;
-    border.right += inner.right;
 
+    int x = insets.left + bounds.x + inner.left;
+    int y = insets.top + bounds.y + inner.top;
+    int width = bounds.width - insets.left - insets.right - bounds.x - inner.left - inner.right;
+    int height = bounds.height - insets.top - insets.bottom - bounds.y - inner.top - inner.bottom;
 
-    int x = insets.left + bounds.x + border.left;
-    int y = insets.top + bounds.y + border.top;
-    int width = bounds.width - insets.left - insets.right - bounds.x - border.left - border.right;
-    int height = bounds.height - insets.top - insets.bottom - bounds.y - border.top - border.bottom;
+    final boolean noTabsVisible = isStealthModeEffective() || isHideTabs();
 
     if (!noTabsVisible) {
       width += deltaWidth;

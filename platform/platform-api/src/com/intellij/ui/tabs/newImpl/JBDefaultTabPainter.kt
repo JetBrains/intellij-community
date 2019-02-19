@@ -16,25 +16,23 @@ open class JBDefaultTabPainter(val theme : TabTheme = TabTheme()) : JBTabPainter
   override fun getBackgroundColor(): Color = theme.background ?: theme.borderColor
 
   override fun fillBackground(g: Graphics2D, rect: Rectangle) {
-    g.color = theme.background
-    g.fillRect(rect)
+    theme.background?.let{
+      g.fillRect(rect, theme.background)
+    }
   }
 
   override fun paintTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, borderThickness: Int, tabColor: Color?, hovered: Boolean) {
     tabColor?.let {
-      g.color = tabColor
-      g.fillRect(rect)
+      g.fillRect(rect, tabColor)
     }
 
     if(hovered) {
-      g.color = if(tabColor != null) theme.hoverOverlayColor else theme.borderColor
-      g.fillRect(rect)
+      g.fillRect(rect, if(tabColor != null) theme.hoverOverlayColor else theme.borderColor)
       return
     }
 
     tabColor ?: return
-    g.color = theme.unselectedOverlayColor
-    g.fillRect(rect)
+    g.fillRect(rect, theme.unselectedOverlayColor)
   }
 
   override fun paintSelectedTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, tabColor: Color?, active: Boolean, hovered: Boolean) {
@@ -44,22 +42,15 @@ open class JBDefaultTabPainter(val theme : TabTheme = TabTheme()) : JBTabPainter
      *  background filled for editors tab dragging
      */
     color?.let {
-      g.color = color
-      g.fillRect(rect)
+      g.fillRect(rect, color)
     }
 
     if(hovered) {
-      g.color = if(tabColor != null) theme.hoverOverlayColor else theme.borderColor
-      g.fillRect(rect)
+      g.fillRect(rect, if(tabColor != null) theme.hoverOverlayColor else theme.borderColor)
     }
 
-    val thickness = theme.underlineThickness
-
-    val underline = underlineRectangle(position, rect, thickness)
-
-    // TODO use LinePainter2D.paint
-    g.color = if(active) theme.underline else theme.inactiveUnderline
-    g.fillRect(underline)
+    val underline = underlineRectangle(position, rect, theme.underlineThickness)
+    g.fillRect(underline, if(active) theme.underline else theme.inactiveUnderline)
   }
 
   override fun paintBorderLine(g: Graphics2D, thickness: Int, from: Point, to: Point) {

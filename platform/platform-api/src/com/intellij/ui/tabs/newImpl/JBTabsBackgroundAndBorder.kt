@@ -21,6 +21,6 @@ abstract class JBTabsBackgroundAndBorder(val tabs: JBTabsImpl) : Border {
     get() = JBUI.emptyInsets()
 
   protected fun paintBackground(g: Graphics2D, rect: Rectangle) {
-    tabs.getTabPainter().fillBackground(g, rect)
+    tabs.tabPainter.fillBackground(g, rect)
   }
 }
