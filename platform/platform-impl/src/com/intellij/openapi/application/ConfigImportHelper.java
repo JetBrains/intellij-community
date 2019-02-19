@@ -132,7 +132,7 @@ public class ConfigImportHelper {
   }
 
   @Nullable
-  private static File findRecentConfigDirectory(File newConfigDir) {
+  private static File findRecentConfigDirectory(@NotNull File newConfigDir) {
     // looks for the most recent existing config directory in the vicinity of the new one, assuming standard layout
     // ("~/Library/<selector_prefix><selector_version>" on macOS, "~/.<selector_prefix><selector_version>/config" on other OSes)
 

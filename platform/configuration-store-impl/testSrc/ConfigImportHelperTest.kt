@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.stateStore
 import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.description.Description
@@ -15,7 +14,7 @@ import org.junit.ClassRule
 import org.junit.Test
 import java.io.File
 
-class ConfigImportHelperTest : BareTestFixtureTestCase() {
+class ConfigImportHelperTest {
   companion object {
     @JvmField
     @ClassRule
