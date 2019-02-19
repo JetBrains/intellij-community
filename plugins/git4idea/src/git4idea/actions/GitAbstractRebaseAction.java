@@ -36,7 +36,7 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 import static git4idea.GitUtil.getRepositoryManager;
 import static git4idea.GitUtil.hasGitRepositories;
 
-public abstract class GitAbstractRebaseAction extends DumbAwareAction {
+public abstract class GitAbstractRebaseAction extends DumbAwareAction implements GitOngoingOperationAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -69,6 +69,12 @@ public abstract class GitAbstractRebaseAction extends DumbAwareAction {
     }
   }
 
+  @Override
+  public boolean isEnabled(@NotNull GitRepository repository) {
+    return repository.isRebaseInProgress();
+  }
+
+  @Override
   public void performInBackground(@NotNull GitRepository repositoryToOperate) {
     ProgressManager.getInstance().run(new Task.Backgroundable(repositoryToOperate.getProject(), getProgressTitle()) {
       @Override
