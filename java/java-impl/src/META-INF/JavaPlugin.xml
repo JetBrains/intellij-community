@@ -1215,6 +1215,11 @@
       <descriptionDirectoryName>EditContractIntention</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInspection.dataFlow.EditRangeIntention</className>
+      <category>Java/Annotations</category>
+      <descriptionDirectoryName>EditRangeIntention</descriptionDirectoryName>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AnnotateIntentionAction</className>
       <category>Java/Annotations</category>
     </intentionAction>
