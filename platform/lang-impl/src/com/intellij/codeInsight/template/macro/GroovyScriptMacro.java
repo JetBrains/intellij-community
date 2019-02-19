@@ -48,7 +48,13 @@ public class GroovyScriptMacro extends Macro {
   public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
     if (params.length == 0) return null;
     Object o = runIt(params, context);
-    if (o != null) return new TextResult(StringUtil.convertLineSeparators(o.toString()));
+    if (o instanceof Collection && !((Collection)o).isEmpty()) {
+      return new TextResult(toNormalizedString(((Collection)o).iterator().next()));
+    }
+    if (o instanceof Object[] && ((Object[])o).length > 0) {
+      return new TextResult(toNormalizedString(((Object[])o)[0]));
+    }
+    if (o != null) return new TextResult(toNormalizedString(o));
     return null;
   }
 
@@ -95,6 +101,10 @@ public class GroovyScriptMacro extends Macro {
     Collection collection = o instanceof Collection ? (Collection)o :
                             o instanceof Object[] ? Arrays.asList((Object[])o) :
                             ContainerUtil.createMaybeSingletonList(o);
-    return ContainerUtil.map2Array(collection, LookupElement.class, item -> LookupElementBuilder.create(StringUtil.convertLineSeparators(item.toString())));
+    return ContainerUtil.map2Array(collection, LookupElement.class, item -> LookupElementBuilder.create(toNormalizedString(item)));
+  }
+
+  private static String toNormalizedString(Object o) {
+    return StringUtil.convertLineSeparators(o.toString());
   }
 }
