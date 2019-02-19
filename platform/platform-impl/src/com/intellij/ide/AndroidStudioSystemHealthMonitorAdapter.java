@@ -55,12 +55,6 @@ public class AndroidStudioSystemHealthMonitorAdapter {
     }
   }
 
-  public static void recordEventTime(int interval, long elapsed) {
-    if (ourListener != null) {
-      ourListener.recordEventTime(interval, elapsed);
-    }
-  }
-
   public static void reportException(Throwable t, StackTrace trace) {
     if (ourListener != null) {
       ourListener.reportException(t, trace);
@@ -86,8 +80,6 @@ public class AndroidStudioSystemHealthMonitorAdapter {
     void incrementAndSaveExceptionCount();
 
     void incrementAndSaveNonBundledPluginsExceptionCount();
-
-    void recordEventTime(int interval, long elapsed);
 
     void reportException(Throwable t, StackTrace trace);
 
