@@ -1,5 +1,89 @@
+define("core", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+});
+define("components", ["require", "exports", "@amcharts/amcharts4/charts", "@amcharts/amcharts4/core"], function (require, exports, am4charts, am4core) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    class ComponentsChart {
+        // isUseYForName - if true, names are more readable, but not possible to see all components because layout from top to bottom (so, opposite from left to right some data can be out of current screen)
+        constructor(container, isUseYForName = false) {
+            const chart = am4core.create(container, am4charts.XYChart);
+            this.chart = chart;
+            this.configureChart(isUseYForName);
+            // https://www.amcharts.com/docs/v4/tutorials/auto-adjusting-chart-height-based-on-a-number-of-data-items/
+            // noinspection SpellCheckingInspection
+            // chart.events.on("datavalidated", (event: any) => {
+            //   const chart = event.target
+            //   const categoryAxis = chart.yAxes.getIndex(0)
+            //   const adjustHeight = chart.data.length * (isUseYForName ? 20 : 10) - categoryAxis.pixelHeight
+            //
+            //   // get current chart height
+            //   let targetHeight = chart.pixelHeight + adjustHeight
+            //
+            //   // Set it on chart's container
+            //   chart.svgContainer.htmlElement.style.height = targetHeight + "px"
+            // })
+            chart.scrollbarX = new am4core.Scrollbar();
+        }
+        render(data) {
+            const components = data.components;
+            if (components == null || components.length === 0) {
+                this.chart.data = [];
+                return;
+            }
+            // let startOffset = components[0].start
+            for (const component of components) {
+                const lastDotIndex = component.name.lastIndexOf(".");
+                component.shortName = lastDotIndex < 0 ? component.name : component.name.substring(lastDotIndex + 1);
+                // component.relativeStart = component.start - startOffset
+            }
+            this.chart.data = components;
+        }
+        configureChart(isUseYForName) {
+            const chart = this.chart;
+            configureCommonChartSettings(chart);
+            const nameAxis = (isUseYForName ? chart.yAxes : chart.xAxes).push(new am4charts.CategoryAxis());
+            nameAxis.renderer.labels;
+            nameAxis.dataFields.category = "shortName";
+            // allow to copy text
+            const nameAxisLabel = nameAxis.renderer.labels.template;
+            nameAxisLabel.selectable = true;
+            nameAxisLabel.fontSize = 12;
+            if (!isUseYForName) {
+                nameAxisLabel.rotation = -45;
+                nameAxisLabel.location = 0.4;
+                nameAxisLabel.verticalCenter = "middle";
+                nameAxisLabel.horizontalCenter = "right";
+                nameAxis.renderer.minGridDistance = 0.1;
+                // https://www.amcharts.com/docs/v4/concepts/axes/#Grid_labels_and_ticks
+                nameAxis.renderer.grid.template.location = 0;
+                nameAxis.renderer.grid.template.disabled = true;
+            }
+            const durationAxis = (isUseYForName ? chart.xAxes : chart.yAxes).push(new am4charts.DurationAxis());
+            durationAxis.title.text = "Duration";
+            // https://www.amcharts.com/docs/v4/reference/durationformatter/
+            // base unit the values are in
+            durationAxis.durationFormatter.baseUnit = "millisecond";
+            durationAxis.durationFormatter.durationFormat = "S";
+            const series = chart.series.push(new am4charts.ColumnSeries());
+            series.columns.template.tooltipText = "{name}: {duration} ms";
+            series.dataFields.dateX = "start";
+            series.dataFields.categoryX = "shortName";
+            series.dataFields.categoryY = "shortName";
+            series.dataFields.valueY = "duration";
+            series.dataFields.valueX = "duration";
+        }
+    }
+    exports.ComponentsChart = ComponentsChart;
+    function configureCommonChartSettings(chart) {
+        chart.exporting.menu = new am4core.ExportMenu();
+        chart.mouseWheelBehavior = "zoomX";
+        // chart.cursor = new am4charts.XYCursor()
+    }
+});
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 define("timeline", ["require", "exports", "vis"], function (require, exports, vis) {
-    // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
@@ -21,7 +105,7 @@ define("timeline", ["require", "exports", "vis"], function (require, exports, vi
             return o1.rawIndex - o2.rawIndex;
         },
     };
-    class TimelineChart {
+    class TimelineChartManager {
         constructor(container) {
             this.dataSet = new vis.DataSet();
             this.lastData = null;
@@ -48,8 +132,8 @@ define("timeline", ["require", "exports", "vis"], function (require, exports, vi
             this.timeline.fit();
         }
     }
-    exports.TimelineChart = TimelineChart;
-    function computeTitle(item, index) {
+    exports.TimelineChartManager = TimelineChartManager;
+    function computeTitle(item, _index) {
         let result = item.name + (item.description == null ? "" : `<br/>${item.description}`) + `<br/>${item.duration} ms`;
         // debug
         // result += `<br/>${index}`
@@ -99,118 +183,67 @@ define("timeline", ["require", "exports", "vis"], function (require, exports, vi
 define("main", ["require", "exports", "@amcharts/amcharts4/core", "@amcharts/amcharts4/themes/animated", "components", "timeline"], function (require, exports, am4core, animated_1, components_1, timeline_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    const storageKeyData = "inputIjFormat";
+    const storageKeyPort = "ijPort";
     function main() {
         am4core.useTheme(animated_1.default);
-        const g = window;
-        const dataListeners = configureInput(document.getElementById("ijInput"));
-        const timeLineChart = new timeline_1.TimelineChart(document.getElementById("visualization"));
-        const componentsChart = new components_1.ComponentsChart(document.getElementById("componentsVisualization"));
+        const chartManagers = [
+            new timeline_1.TimelineChartManager(document.getElementById("visualization")),
+            new components_1.ComponentsChart(document.getElementById("componentsVisualization")),
+        ];
         // debug
-        g.componentsChart = componentsChart;
-        dataListeners.push((data) => {
-            g.lastData = data;
-            timeLineChart.render(data);
-            componentsChart.render(data);
+        const global = window;
+        global.componentsChart = chartManagers[1];
+        configureInput(document.getElementById("ijInput"), data => {
+            global.lastData = data;
+            for (const chartManager of chartManagers) {
+                chartManager.render(data);
+            }
         });
     }
     exports.main = main;
-    function configureInput(inputElement) {
-        const dataListeners = [];
-        const storageKey = "inputIjFormat";
-        function restoreOldData() {
-            let oldData = localStorage.getItem(storageKey);
-            if (oldData != null && oldData.length > 0) {
-                inputElement.value = oldData;
-                callListeners(oldData);
+    function configureInput(inputElement, dataListener) {
+        function callListener(rawData) {
+            dataListener(JSON.parse(rawData));
+        }
+        function setInput(rawData) {
+            if (rawData != null && rawData.length !== 0) {
+                inputElement.value = rawData;
+                callListener(rawData);
             }
         }
-        window.addEventListener("load", event => {
-            restoreOldData();
+        const portInputElement = document.getElementById("ijPort");
+        window.addEventListener("load", () => {
+            portInputElement.value = localStorage.getItem(storageKeyPort) || "63342";
+            setInput(localStorage.getItem(storageKeyData));
+        });
+        function grabFromRunningInstance(port) {
+            fetch(`http://localhost:${port}/api/about/?startUpMeasurement`, { credentials: "omit" })
+                .then(it => it.json())
+                .then(json => setInput(JSON.stringify(json.startUpMeasurement || { items: [] }, null, 2)));
+        }
+        getButton("grabButton").addEventListener("click", () => {
+            // use parseInt to validate input
+            let port = portInputElement.value;
+            if (port.length === 0) {
+                port = "63342";
+            }
+            else if (!/^\d+$/.test(port)) {
+                throw new Error("Port number value is not numeric");
+            }
+            localStorage.setItem(storageKeyPort, port);
+            grabFromRunningInstance(port);
+        });
+        getButton("grabDevButton").addEventListener("click", () => {
+            grabFromRunningInstance("63343");
         });
         inputElement.addEventListener("input", () => {
-            const rawString = inputElement.value.trim();
-            localStorage.setItem(storageKey, rawString);
-            callListeners(rawString);
+            const rawData = inputElement.value.trim();
+            localStorage.setItem(storageKeyData, rawData);
+            callListener(rawData);
         });
-        function callListeners(rawData) {
-            const data = JSON.parse(rawData);
-            for (const dataListener of dataListeners) {
-                dataListener(data);
-            }
-        }
-        return dataListeners;
     }
-});
-define("components", ["require", "exports", "@amcharts/amcharts4/charts", "@amcharts/amcharts4/core"], function (require, exports, am4charts, am4core) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    class ComponentsChart {
-        // isUseYForName - if true, names are more readable, but not possible to see all components because layout from top to bottom (so, opposite from left to right some data can be out of current screen)
-        constructor(container, isUseYForName = false) {
-            const chart = am4core.create(container, am4charts.XYChart);
-            this.chart = chart;
-            this.configureChart(isUseYForName);
-            // https://www.amcharts.com/docs/v4/tutorials/auto-adjusting-chart-height-based-on-a-number-of-data-items/
-            // noinspection SpellCheckingInspection
-            // chart.events.on("datavalidated", (event: any) => {
-            //   const chart = event.target
-            //   const categoryAxis = chart.yAxes.getIndex(0)
-            //   const adjustHeight = chart.data.length * (isUseYForName ? 20 : 10) - categoryAxis.pixelHeight
-            //
-            //   // get current chart height
-            //   let targetHeight = chart.pixelHeight + adjustHeight
-            //
-            //   // Set it on chart's container
-            //   chart.svgContainer.htmlElement.style.height = targetHeight + "px"
-            // })
-            chart.scrollbarX = new am4core.Scrollbar();
-        }
-        render(data) {
-            const components = data.components;
-            if (components == null || components.length === 0) {
-                this.chart.data = [];
-                return;
-            }
-            // let startOffset = components[0].start
-            for (const component of components) {
-                const lastDotIndex = component.name.lastIndexOf(".");
-                component.shortName = lastDotIndex < 0 ? component.name : component.name.substring(lastDotIndex + 1);
-                // component.relativeStart = component.start - startOffset
-            }
-            this.chart.data = components;
-        }
-        configureChart(isUseYForName) {
-            const chart = this.chart;
-            chart.mouseWheelBehavior = "zoomX";
-            const nameAxis = (isUseYForName ? chart.yAxes : chart.xAxes).push(new am4charts.CategoryAxis());
-            nameAxis.renderer.labels;
-            nameAxis.dataFields.category = "shortName";
-            // allow to copy text
-            nameAxis.renderer.labels.template.selectable = true;
-            if (!isUseYForName) {
-                nameAxis.renderer.labels.template.rotation = -45;
-                nameAxis.renderer.labels.template.location = 0.4;
-                nameAxis.renderer.labels.template.verticalCenter = "middle";
-                nameAxis.renderer.labels.template.horizontalCenter = "right";
-                nameAxis.renderer.minGridDistance = 0.1;
-                // https://www.amcharts.com/docs/v4/concepts/axes/#Grid_labels_and_ticks
-                nameAxis.renderer.grid.template.location = 0;
-                nameAxis.renderer.grid.template.disabled = true;
-            }
-            const durationAxis = (isUseYForName ? chart.xAxes : chart.yAxes).push(new am4charts.DurationAxis());
-            durationAxis.title.text = "Duration";
-            // https://www.amcharts.com/docs/v4/reference/durationformatter/
-            // base unit the values are in
-            durationAxis.durationFormatter.baseUnit = "millisecond";
-            durationAxis.durationFormatter.durationFormat = "S";
-            const series = chart.series.push(new am4charts.ColumnSeries());
-            series.columns.template.tooltipText = "{name}: {duration} ms";
-            series.dataFields.dateX = "start";
-            series.dataFields.categoryX = "shortName";
-            series.dataFields.categoryY = "shortName";
-            series.dataFields.valueY = "duration";
-            series.dataFields.valueX = "duration";
-        }
+    function getButton(id) {
+        return document.getElementById(id);
     }
-    exports.ComponentsChart = ComponentsChart;
 });

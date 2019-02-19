@@ -1,16 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
-import {InputData} from "./main"
+import {ChartManager, InputData} from "./core"
 
-export class ComponentsChart {
+export class ComponentsChart implements ChartManager {
   private readonly chart: am4charts.XYChart
 
   // isUseYForName - if true, names are more readable, but not possible to see all components because layout from top to bottom (so, opposite from left to right some data can be out of current screen)
   constructor(container: HTMLElement, isUseYForName = false) {
     const chart = am4core.create(container, am4charts.XYChart)
     this.chart = chart
-
     this.configureChart(isUseYForName)
 
     // https://www.amcharts.com/docs/v4/tutorials/auto-adjusting-chart-height-based-on-a-number-of-data-items/
@@ -47,19 +46,21 @@ export class ComponentsChart {
 
   private configureChart(isUseYForName: boolean) {
     const chart = this.chart
-    chart.mouseWheelBehavior = "zoomX"
+    configureCommonChartSettings(chart)
 
     const nameAxis = (isUseYForName ? chart.yAxes : chart.xAxes).push(new am4charts.CategoryAxis())
     nameAxis.renderer.labels
     nameAxis.dataFields.category = "shortName"
     // allow to copy text
-    nameAxis.renderer.labels.template.selectable = true
+    const nameAxisLabel = nameAxis.renderer.labels.template
+    nameAxisLabel.selectable = true
+    nameAxisLabel.fontSize = 12
 
     if (!isUseYForName) {
-      nameAxis.renderer.labels.template.rotation = -45
-      nameAxis.renderer.labels.template.location = 0.4
-      nameAxis.renderer.labels.template.verticalCenter = "middle"
-      nameAxis.renderer.labels.template.horizontalCenter = "right"
+      nameAxisLabel.rotation = -45
+      nameAxisLabel.location = 0.4
+      nameAxisLabel.verticalCenter = "middle"
+      nameAxisLabel.horizontalCenter = "right"
       nameAxis.renderer.minGridDistance = 0.1
 
       // https://www.amcharts.com/docs/v4/concepts/axes/#Grid_labels_and_ticks
@@ -84,4 +85,10 @@ export class ComponentsChart {
     series.dataFields.valueY = "duration"
     series.dataFields.valueX = "duration"
   }
+}
+
+function configureCommonChartSettings(chart: am4charts.XYChart) {
+  chart.exporting.menu = new am4core.ExportMenu()
+  chart.mouseWheelBehavior = "zoomX"
+  // chart.cursor = new am4charts.XYCursor()
 }

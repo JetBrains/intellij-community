@@ -3,73 +3,80 @@ import * as am4core from "@amcharts/amcharts4/core"
 
 import am4themes_animated from "@amcharts/amcharts4/themes/animated"
 import {ComponentsChart} from "./components"
-import {TimelineChart} from "./timeline"
+import {TimelineChartManager} from "./timeline"
+import {ChartManager, InputData} from "./core"
 
-export function main() {
+const storageKeyData = "inputIjFormat"
+const storageKeyPort = "ijPort"
+
+export function main(): void {
   am4core.useTheme(am4themes_animated)
 
-  const g = window as any
-  const dataListeners = configureInput(document.getElementById("ijInput")!! as HTMLTextAreaElement)
-
-  const timeLineChart = new TimelineChart(document.getElementById("visualization")!!)
-
-  const componentsChart = new ComponentsChart(document.getElementById("componentsVisualization")!!)
+  const chartManagers: Array<ChartManager> = [
+    new TimelineChartManager(document.getElementById("visualization")!!),
+    new ComponentsChart(document.getElementById("componentsVisualization")!!),
+  ]
   // debug
-  g.componentsChart = componentsChart
+  const global = window as any
+  global.componentsChart = chartManagers[1]
 
-  dataListeners.push((data: any) => {
-    g.lastData = data
-    timeLineChart.render(data)
-    componentsChart.render(data)
+  configureInput(document.getElementById("ijInput")!! as HTMLTextAreaElement, data => {
+    global.lastData = data
+    for (const chartManager of chartManagers) {
+      chartManager.render(data)
+    }
   })
 }
 
-export interface Item {
-  name: string
+function configureInput(inputElement: HTMLTextAreaElement, dataListener: (data: InputData) => void): void {
+  function callListener(rawData: string) {
+    dataListener(JSON.parse(rawData))
+  }
 
-  start: number
-  end: number
-
-  duration: number
-
-  // added data
-  shortName: string
-  // relativeStart: number
-}
-
-export interface InputData {
-  items: Array<Item>
-  components?: Array<Item>
-}
-
-function configureInput(inputElement: HTMLTextAreaElement): Array<(data: InputData) => void> {
-  const dataListeners: Array<(data: InputData) => void> = []
-  const storageKey = "inputIjFormat"
-
-  function restoreOldData() {
-    let oldData = localStorage.getItem(storageKey)
-    if (oldData != null && oldData.length > 0) {
-      inputElement.value = oldData
-      callListeners(oldData)
+  function setInput(rawData: string | null) {
+    if (rawData != null && rawData.length !== 0) {
+      inputElement.value = rawData
+      callListener(rawData)
     }
   }
 
-  window.addEventListener("load", event => {
-    restoreOldData()
+  const portInputElement = document.getElementById("ijPort") as HTMLInputElement
+
+  window.addEventListener("load", () => {
+    portInputElement.value = localStorage.getItem(storageKeyPort) || "63342"
+    setInput(localStorage.getItem(storageKeyData))
+  })
+
+  function grabFromRunningInstance(port: string) {
+    fetch(`http://localhost:${port}/api/about/?startUpMeasurement`, {credentials: "omit"})
+      .then(it => it.json())
+      .then(json => setInput(JSON.stringify(json.startUpMeasurement || {items: []}, null, 2)))
+  }
+
+  getButton("grabButton").addEventListener("click", () => {
+    // use parseInt to validate input
+    let port = portInputElement.value
+    if (port.length === 0) {
+      port = "63342"
+    } else if (!/^\d+$/.test(port)) {
+      throw new Error("Port number value is not numeric")
+    }
+
+    localStorage.setItem(storageKeyPort, port)
+    grabFromRunningInstance(port)
+  })
+
+  getButton("grabDevButton").addEventListener("click", () => {
+    grabFromRunningInstance("63343")
   })
 
   inputElement.addEventListener("input", () => {
-    const rawString = inputElement.value.trim()
-    localStorage.setItem(storageKey, rawString)
-    callListeners(rawString)
+    const rawData = inputElement.value.trim()
+    localStorage.setItem(storageKeyData, rawData)
+    callListener(rawData)
   })
+}
 
-  function callListeners(rawData: string) {
-    const data = JSON.parse(rawData)
-    for (const dataListener of dataListeners) {
-      dataListener(data)
-    }
-  }
-
-  return dataListeners
+function getButton(id: string): HTMLButtonElement {
+  return document.getElementById(id) as HTMLButtonElement
 }

@@ -1,8 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-"use strict"
 
-import {InputData, Item} from "./main"
 import vis = require("vis")
+import {ChartManager, InputData, Item} from "./core"
 
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 // https://github.com/almende/vis/blob/master/examples/timeline/dataHandling/dataSerialization.html
@@ -25,7 +24,7 @@ const timelineOptions: any = {
   },
 }
 
-export class TimelineChart {
+export class TimelineChartManager implements ChartManager {
   private readonly dataSet = new vis.DataSet()
   private readonly timeline: vis.Timeline
 
@@ -40,7 +39,6 @@ export class TimelineChart {
       }
     })
   }
-
 
   render(ijData: InputData) {
     this.lastData = ijData
@@ -61,7 +59,7 @@ export class TimelineChart {
   }
 }
 
-function computeTitle(item: any, index: number) {
+function computeTitle(item: any, _index: number) {
   let result = item.name + (item.description == null ? "" : `<br/>${item.description}`) + `<br/>${item.duration} ms`
   // debug
   // result += `<br/>${index}`

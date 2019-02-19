@@ -12,8 +12,11 @@ import gnu.trove.THashMap
 import java.io.StringWriter
 import java.util.concurrent.atomic.AtomicInteger
 
-internal class StartUpPerformanceReporter : StartupActivity, DumbAware {
+class StartUpPerformanceReporter : StartupActivity, DumbAware {
   private val activationCount = AtomicInteger()
+
+  var lastReport: String? = null
+    private set
 
   override fun runActivity(project: Project) {
     val end = System.currentTimeMillis()
@@ -31,7 +34,6 @@ internal class StartUpPerformanceReporter : StartupActivity, DumbAware {
     if (items.isEmpty() || (ApplicationManager.getApplication().isUnitTestMode && activationNumber > 2)) {
       return
     }
-
 
     // project components initialization must be first
 //    {
@@ -64,6 +66,8 @@ internal class StartUpPerformanceReporter : StartupActivity, DumbAware {
     })
 
     val stringWriter = StringWriter()
+    val logPrefix = "=== Start: StartUp Measurement ===\n"
+    stringWriter.write(logPrefix)
     val writer = JsonWriter(stringWriter)
     writer.setIndent("  ")
     writer.beginObject()
@@ -111,10 +115,15 @@ internal class StartUpPerformanceReporter : StartupActivity, DumbAware {
     writer.name("totalDurationActual").value(end - items.first().start)
 
     writer.endObject()
+    writer.flush()
+
+    lastReport = stringWriter.buffer.substring(logPrefix.length)
+
+    stringWriter.write("\n=== Stop: StartUp Measurement ===")
     var string = stringWriter.toString()
     // to make output more compact (quite a lot slow components) - should we write own JSON encoder? well, for now potentially slow RegExp is ok
     string = string.replace(Regex(",\\s+(\"start\"|\"end\"|\\{)"), ", $1")
-    log.info("=== Start: StartUp Measurement ===\n$string\n=== Stop: StartUp Measurement ===")
+    log.info(string)
   }
 
   private fun writeActivities(slowComponents: List<StartUpMeasurer.Item>, writer: JsonWriter, fieldName: String) {
