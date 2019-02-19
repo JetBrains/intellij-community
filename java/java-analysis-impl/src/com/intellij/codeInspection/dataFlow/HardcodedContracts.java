@@ -48,8 +48,6 @@ import static com.siyeh.ig.callMatcher.CallMatcher.*;
  */
 public class HardcodedContracts {
   private static final List<MethodContract> ARRAY_RANGE_CONTRACTS = ContainerUtil.immutableList(
-    nonnegativeArgumentContract(1),
-    nonnegativeArgumentContract(2),
     singleConditionContract(ContractValue.argument(1), RelationType.GT, ContractValue.argument(0).specialField(SpecialField.ARRAY_LENGTH),
                             fail()),
     singleConditionContract(ContractValue.argument(2), RelationType.GT, ContractValue.argument(0).specialField(SpecialField.ARRAY_LENGTH),
@@ -225,10 +223,6 @@ public class HardcodedContracts {
   static MethodContract optionalAbsentContract(ContractReturnValue returnValue) {
     return singleConditionContract(ContractValue.qualifier().specialField(SpecialField.OPTIONAL_VALUE), RelationType.EQ,
                                    ContractValue.nullValue(), returnValue);
-  }
-
-  static MethodContract nonnegativeArgumentContract(int argNumber) {
-    return singleConditionContract(ContractValue.argument(argNumber), RelationType.LT, ContractValue.zero(), fail());
   }
 
   static MethodContract specialFieldRangeContract(int index, RelationType type, SpecialField specialField) {
