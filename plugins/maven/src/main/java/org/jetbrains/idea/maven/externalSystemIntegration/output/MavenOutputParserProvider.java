@@ -29,10 +29,11 @@ public class MavenOutputParserProvider implements ExternalSystemOutputParserProv
     return new MavenLogOutputParser(taskId,
                                     ContainerUtil.list(
                                       new ArtifactDownloadScanning(),
-                                      new BuildErrorNotification(),
+                                      new JavaBuildErrorNotification(),
+                                      new KotlinBuildErrorNotification(),
                                       new ProjectScanning(),
                                       new WarningNotifier(),
-                                      new OOMEventParser()
+                                      new CommonErrorParser()
                                     ));
   }
 }
