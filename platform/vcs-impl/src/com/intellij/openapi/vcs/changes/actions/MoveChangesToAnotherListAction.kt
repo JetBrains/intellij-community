@@ -2,8 +2,10 @@
 package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.vcs.FilePath
@@ -27,8 +29,7 @@ import java.util.stream.Stream
 /**
  * @author max
  */
-class MoveChangesToAnotherListAction : AnAction(ActionsBundle.actionText(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST),
-                                                ActionsBundle.actionDescription(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST), null), DumbAware {
+class MoveChangesToAnotherListAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     val isEnabled = isEnabled(e)
