@@ -225,7 +225,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     registerWithShortcutSet("ChangesView.NewChangeList", CommonShortcuts.getNew(), component);
     registerWithShortcutSet("ChangesView.RemoveChangeList", CommonShortcuts.getDelete(), component);
     registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), component);
-    registerWithShortcutSet(IdeActions.ACTION_SHOW_DIFF_COMMON, CommonShortcuts.getDiff(), component);
   }
 
   @NotNull
