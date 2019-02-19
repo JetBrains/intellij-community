@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Disposer
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.lifetime.isAlive
+import com.jetbrains.rd.util.lifetime.onTermination
 
 inline fun using(disposable: Disposable, block: () -> Unit) {
   try {
@@ -25,6 +26,8 @@ fun Disposable.createLifetime(): Lifetime = this.defineNestedLifetime().lifetime
 
 fun Disposable.doIfAlive(action: (Lifetime) -> Unit) {
   val disposableLifetime: Lifetime?
+  if(Disposer.isDisposed(this)) return
+
   try {
     disposableLifetime = this.createLifetime()
   } catch(t : Throwable){
@@ -38,12 +41,9 @@ fun Disposable.doIfAlive(action: (Lifetime) -> Unit) {
 }
 
 fun Lifetime.createNestedDisposable(debugName: String = "lifetimeToDisposable"): Disposable {
-  val d = object : Disposable {
-    override fun dispose() = Unit
-    override fun toString() = debugName
-  }
+  val d = Disposer.newDisposable(debugName)
 
-  this.add {
+  this.onTermination {
     Disposer.dispose(d)
   }
   return d

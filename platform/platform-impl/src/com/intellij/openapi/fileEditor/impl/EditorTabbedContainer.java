@@ -720,13 +720,34 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       };
     }
 
+    private boolean active = false;
+
+    @NotNull
+    @Override
+    public ActionCallback select(@NotNull TabInfo info, boolean requestFocus) {
+      active = true;
+      return super.select(info, requestFocus);
+    }
+
     private IdeEventQueue.EventDispatcher createFocusDispatcher() {
       return e -> {
         if (e instanceof FocusEvent) {
-          SwingUtilities.invokeLater(() -> updateTabs());
+          SwingUtilities.invokeLater(() -> {
+            boolean newActive = UIUtil.isFocusAncestor(this);
+
+            if(newActive != active) {
+              active = newActive;
+              updateTabs();
+            }
+          });
         }
         return false;
       };
+    }
+
+    @Override
+    protected boolean isActiveTabs(TabInfo info) {
+      return active;
     }
 
     @Nullable
