@@ -113,7 +113,7 @@ class SkeletonCachingTest(GeneratorTestCase):
                 _ast.py
         sdk_skeletons/
             _ast.py
-        """.format(hash=generator3.module_hash('_ast', None)))
+        """.format(hash=generator3.builtin_module_hash('_ast')))
 
     def test_basic_layout_for_physical_module(self):
         mod_path = os.path.join(self.test_data_dir, 'mod.py')
@@ -124,7 +124,7 @@ class SkeletonCachingTest(GeneratorTestCase):
                 mod.py
         sdk_skeletons/
             mod.py
-        """.format(hash=generator3.module_hash('mod', mod_path)))
+        """.format(hash=generator3.physical_module_hash(mod_path)))
 
     def test_skeleton_regenerated_for_changed_module(self):
         self.check_generator_output('mod', mod_path='mod.py', mod_location=self.find_test_data_subdir('versions/v2'))

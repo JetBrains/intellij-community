@@ -327,16 +327,25 @@ def module_hash(mod_qname, mod_path):
                 return prefix + ':' + version
             return prefix
         else:
-            with fopen(mod_path, 'rb') as f:
-                return hashlib.sha256(f.read()).hexdigest()
-
-    # Hash the content
+            return physical_module_hash(mod_path)
     else:
-        major_version = '.'.join(map(str, sys.version_info[:2]))
-        module = __import__(mod_qname)
-        defined_names = ':'.join(sorted(dir(module)))
-        identity = (major_version + defined_names).encode(encoding=OUT_ENCODING)
-        return hashlib.sha256(identity).hexdigest()
+        return builtin_module_hash(mod_qname)
+
+
+def builtin_module_hash(mod_qname):
+    # Hash the content of interpreter executable, i.e. it will be the same for all built-in modules.
+    # Also, it's the same for a virtualenv interpreter and its base.
+    with fopen(sys.executable, 'rb') as f:
+        return sha256(f.read())
+
+
+def physical_module_hash(mod_path):
+    with fopen(mod_path, 'rb') as f:
+        return sha256(f.read())
+
+
+def sha256(binary):
+    return hashlib.sha256(binary).hexdigest()
 
 
 def version_to_tuple(version):
