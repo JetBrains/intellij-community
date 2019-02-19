@@ -88,6 +88,10 @@ public class UnnecessaryBoxingFixTest extends IGQuickFixesTestCase {
     doFixTest();
   }
 
+  public void testParseInt() {
+    doTest(getTestName(false), InspectionGadgetsBundle.message("unnecessary.boxing.use.parse.quickfix", "Integer.parseInt"));
+  }
+
   private void doFixTest() {
     doTest(getTestName(false), InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"));
   }
