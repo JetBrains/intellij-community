@@ -3,13 +3,12 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.project.Project
 
 /**
  * Trivial implementation used in tests and in the headless mode.
  */
 internal class HeadlessSaveAndSyncHandler : BaseSaveAndSyncHandler() {
-  override fun scheduleSaveDocumentsAndProjectsAndApp(onlyProject: Project?, forceSavingAllSettings: Boolean, forceExecuteImmediately: Boolean) {}
+  override fun scheduleSave(task: SaveTask, forceExecuteImmediately: Boolean) {}
 
   override fun scheduleRefresh() {}
 

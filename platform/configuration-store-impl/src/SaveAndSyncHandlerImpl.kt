@@ -16,6 +16,7 @@ import com.intellij.openapi.components.BaseComponent
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 import com.intellij.openapi.progress.ProgressIndicator
@@ -48,7 +49,7 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable, Ba
   @Volatile
   private var refreshSessionId = -1L
 
-  private val saveQueue = ArrayDeque<SaveTask>()
+  private val saveQueue = ArrayDeque<SaveAndSyncHandler.SaveTask>()
 
   private val saveAlarm = pooledThreadSingleAlarm(delay = 300, parentDisposable = this) {
     val app = ApplicationManager.getApplication()
@@ -64,8 +65,24 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable, Ba
       val task = synchronized(saveQueue) {
         saveQueue.pollFirst() ?: return
       }
+
+      if (task.onlyProject?.isDisposed == true) {
+        continue
+      }
+
       LOG.runAndLogException {
-        task.save()
+        coroutineScope {
+          if (task.saveDocuments) {
+            launch(storeEdtCoroutineContext) {
+              // forceSavingAllSettings is set to true currently only if save triggered explicitly (or on close app/project), so, pass equal isDocumentsSavingExplicit
+              // in any case flag isDocumentsSavingExplicit is not really important
+              (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(task.forceSavingAllSettings)
+            }
+          }
+          launch {
+            saveProjectsAndApp(forceSavingAllSettings = task.forceSavingAllSettings, onlyProject = task.onlyProject)
+          }
+        }
       }
     }
   }
@@ -109,19 +126,18 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable, Ba
     val busConnection = ApplicationManager.getApplication().messageBus.connect(this)
     busConnection.subscribe(FrameStateListener.TOPIC, object : FrameStateListener {
       override fun onFrameDeactivated() {
-        LOG.debug("save(): enter")
-
-        if (!settings.isSaveOnFrameDeactivation) {
+        if (!settings.isSaveOnFrameDeactivation || !canSyncOrSave()) {
           return
         }
 
-        if (canSyncOrSave() && addToSaveQueue(saveAppTask)) {
-          // do not cancel if there is already request - opposite to scheduleSaveDocumentsAndProjectsAndApp,
-          // on frame deactivation better to save as soon as possible
-          saveAlarm.request(delay = 100)
-        }
+        // for web development it is crucially important to save documents on frame deactivation as early as possible
+        FileDocumentManager.getInstance().saveAllDocuments()
 
-        LOG.debug("save(): exit")
+        if (addToSaveQueue(saveAppAndProjectsSettingsTask)) {
+          // do not cancel if there is already request - opposite to scheduleSave,
+          // on frame deactivation better to save as soon as possible
+          saveAlarm.request()
+        }
       }
 
       override fun onFrameActivated() {
@@ -132,28 +148,24 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable, Ba
     })
   }
 
-  override fun scheduleSaveDocumentsAndProjectsAndApp(onlyProject: Project?, forceSavingAllSettings: Boolean, forceExecuteImmediately: Boolean) {
-    val task = when {
-      onlyProject == null && !forceSavingAllSettings -> saveAppTask
-      else -> SaveTask(onlyProject, forceSavingAllSettings)
-    }
-
+  override fun scheduleSave(task: SaveAndSyncHandler.SaveTask, forceExecuteImmediately: Boolean) {
     if (addToSaveQueue(task) || forceExecuteImmediately) {
       saveAlarm.cancelAndRequest(forceRun = forceExecuteImmediately)
     }
   }
 
-  private fun addToSaveQueue(task: SaveTask): Boolean {
+  private fun addToSaveQueue(task: SaveAndSyncHandler.SaveTask): Boolean {
     synchronized(saveQueue) {
-      if (task === saveAppTask) {
-        saveQueue.removeAll { it.onlyProject != null && !it.forceSavingAllSettings }
+      if (task.onlyProject == null) {
+        saveQueue.removeAll(task::isMoreGenericThan)
       }
-
-      if (saveQueue.contains(task)) {
+      else if (saveQueue.any { it.isMoreGenericThan(task) }) {
         return false
       }
-      else {
-        return saveQueue.add(task)
+
+      return when {
+        saveQueue.contains(task) -> false
+        else -> saveQueue.add(task)
       }
     }
   }
@@ -288,27 +300,8 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable, Ba
   }
 }
 
+private val saveAppAndProjectsSettingsTask = SaveAndSyncHandler.SaveTask(saveDocuments = false)
+
 internal abstract class BaseSaveAndSyncHandler : SaveAndSyncHandler() {
   internal val edtPoolDispatcherManager = EdtPoolDispatcherManager()
-}
-
-private val saveAppTask = SaveTask(onlyProject = null, forceSavingAllSettings = false)
-
-private data class SaveTask(val onlyProject: Project?, val forceSavingAllSettings: Boolean) {
-  suspend fun save() {
-    if (onlyProject?.isDisposed == true) {
-      return
-    }
-
-    coroutineScope {
-      launch(storeEdtCoroutineContext) {
-        // forceSavingAllSettings is set to true currently only if save triggered explicitly (or on close app/project), so, pass equal isDocumentsSavingExplicit
-        // in any case flag isDocumentsSavingExplicit is not really important
-        (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(forceSavingAllSettings)
-      }
-      launch {
-        saveProjectsAndApp(forceSavingAllSettings = forceSavingAllSettings, onlyProject = onlyProject)
-      }
-    }
-  }
 }

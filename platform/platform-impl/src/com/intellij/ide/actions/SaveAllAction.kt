@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbAware
 
 // class is "open" due to backward compatibility - do not extend it.
@@ -16,7 +17,8 @@ open class SaveAllAction : AnAction(), DumbAware {
     CommonDataKeys.EDITOR.getData(e.dataContext)?.let(::stripSpacesFromCaretLines)
 
     val project = CommonDataKeys.PROJECT.getData(e.dataContext)
-    (SaveAndSyncHandler.getInstance()).scheduleSaveDocumentsAndProjectsAndApp(onlyProject = project, forceSavingAllSettings = true, forceExecuteImmediately = true)
+    FileDocumentManager.getInstance().saveAllDocuments()
+    (SaveAndSyncHandler.getInstance()).scheduleSave(SaveAndSyncHandler.SaveTask(onlyProject = project, forceSavingAllSettings = true, saveDocuments = false), forceExecuteImmediately = true)
   }
 }
 

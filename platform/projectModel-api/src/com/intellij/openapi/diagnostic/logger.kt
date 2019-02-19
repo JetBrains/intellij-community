@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diagnostic
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProcessCanceledException
+import java.util.concurrent.CancellationException
 import kotlin.reflect.KProperty
 import kotlin.reflect.jvm.javaGetter
 
@@ -40,6 +41,9 @@ inline fun <T> Logger.runAndLogException(runnable: () -> T): T? {
     return runnable()
   }
   catch (e: ProcessCanceledException) {
+    throw e
+  }
+  catch (e: CancellationException) {
     throw e
   }
   catch (e: Throwable) {
