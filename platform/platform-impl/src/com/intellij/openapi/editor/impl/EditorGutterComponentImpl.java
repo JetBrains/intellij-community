@@ -80,6 +80,8 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.intellij.openapi.util.DataManagerUtil.saveDataByComponent;
+
 /**
  * Gutter content (left to right):
  * <ul>
@@ -1926,12 +1928,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private void invokePopup(MouseEvent e) {
+    int line = EditorUtil.yPositionToLogicalLine(myEditor, e);
+    saveDataByComponent(this, GUTTER_ARROW_LOGICAL_LINE, line);
     final ActionManager actionManager = ActionManager.getInstance();
     if (myEditor.getMouseEventArea(e) == EditorMouseEventArea.ANNOTATIONS_AREA) {
       final List<AnAction> addActions = new ArrayList<>();
       if (myCanCloseAnnotations) addActions.add(new CloseAnnotationsAction());
-      final Point p = e.getPoint();
-      int line = EditorUtil.yPositionToLogicalLine(myEditor, p);
       //if (line >= myEditor.getDocument().getLineCount()) return;
 
       for (TextAnnotationGutterProvider gutterProvider : myTextAnnotationGutters) {
