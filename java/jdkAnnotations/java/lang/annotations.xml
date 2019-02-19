@@ -449,13 +449,13 @@
   <item name="java.lang.String String(java.lang.StringBuilder) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
-  <item name="java.lang.String boolean charAt(int) 0">
+  <item name="java.lang.String char charAt(int) 0">
     <annotation name="org.jetbrains.annotations.Range" >
       <val name="from" val="0"/>
       <val name="to" val="java.lang.Integer.MAX_VALUE"/>
     </annotation>
   </item>
-  <item name="java.lang.String boolean codePointAt(int) 0">
+  <item name="java.lang.String int codePointAt(int) 0">
     <annotation name="org.jetbrains.annotations.Range" >
       <val name="from" val="0"/>
       <val name="to" val="java.lang.Integer.MAX_VALUE"/>
