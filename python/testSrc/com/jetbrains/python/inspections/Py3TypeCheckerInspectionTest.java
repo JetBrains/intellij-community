@@ -370,4 +370,9 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testClassLevelAssignment() {
     doTest();
   }
+
+  // PY-24832
+  public void testNoTypeMismatchInAssignmentWithoutTypeAnnotation() {
+    doTest();
+  }
 }
