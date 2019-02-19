@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.application.async
+package com.intellij.openapi.application.impl
 
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.Disposable
@@ -7,6 +7,7 @@ import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.async.*
 import com.intellij.openapi.application.async.ConstrainedExecution.ContextConstraint
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.DumbService

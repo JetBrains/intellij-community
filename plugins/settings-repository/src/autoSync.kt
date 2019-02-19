@@ -7,9 +7,9 @@ import com.intellij.notification.Notifications
 import com.intellij.notification.NotificationsAdapter
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.async.coroutineDispatchingContext
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator

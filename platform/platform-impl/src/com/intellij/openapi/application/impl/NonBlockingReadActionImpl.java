@@ -8,8 +8,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.NonBlockingReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.async.ConstrainedExecution.ContextConstraint;
-import com.intellij.openapi.application.async.InSmartMode;
-import com.intellij.openapi.application.async.WithDocumentsCommitted;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;

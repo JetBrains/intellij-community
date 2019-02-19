@@ -15,7 +15,7 @@ import java.util.function.BooleanSupplier;
 public class ConstrainedTaskExecutor {
   private final @NotNull ConstrainedExecutionEx<?> myConstraintExecution;
 
-  ConstrainedTaskExecutor(@NotNull ConstrainedExecutionEx<?> execution) {
+  public ConstrainedTaskExecutor(@NotNull ConstrainedExecutionEx<?> execution) {
     myConstraintExecution = execution;
   }
 
