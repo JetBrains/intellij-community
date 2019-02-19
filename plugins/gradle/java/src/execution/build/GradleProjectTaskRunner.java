@@ -33,10 +33,13 @@ import com.intellij.openapi.externalSystem.task.TaskCallback;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.task.*;
 import com.intellij.task.impl.JpsProjectTaskRunner;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -235,9 +238,9 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       if (!(projectTask instanceof ModuleBuildTask)) continue;
 
       ModuleBuildTask moduleBuildTask = (ModuleBuildTask)projectTask;
-      Module module = moduleBuildTask.getModule();
-      affectedModules.add(module);
+      collectAffectedModules(affectedModules, moduleBuildTask);
 
+      Module module = moduleBuildTask.getModule();
       final String rootProjectPath = rootPathsMap.get(module);
       if (isEmpty(rootProjectPath)) continue;
 
@@ -293,6 +296,20 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       }
     }
     return affectedModules;
+  }
+
+  private static void collectAffectedModules(@NotNull List<Module> affectedModules, @NotNull ModuleBuildTask moduleBuildTask) {
+    Module module = moduleBuildTask.getModule();
+    if (moduleBuildTask.isIncludeDependentModules()) {
+      OrderEnumerator enumerator = ModuleRootManager.getInstance(module).orderEntries().recursively();
+      if (!moduleBuildTask.isIncludeRuntimeDependencies()) {
+        enumerator = enumerator.compileOnly();
+      }
+      enumerator.forEachModule(new CommonProcessors.CollectProcessor<>(affectedModules));
+    }
+    else {
+      affectedModules.add(module);
+    }
   }
 
   @NotNull
