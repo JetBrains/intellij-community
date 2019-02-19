@@ -116,6 +116,7 @@ open class TestTasksChooser {
     assert(!ApplicationManager.getApplication().isCommandLine)
     JBPopupFactory.getInstance()
       .createBalloonBuilder(JLabel(GradleBundle.message("gradle.tests.tasks.choosing.warning.text")))
+      .setDisposable(ApplicationManager.getApplication())
       .setFillColor(IdeTooltipManager.getInstance().getTextBackground(false))
       .createBalloon()
       .show(getBestBalloonPosition(context), Balloon.Position.above)
