@@ -124,7 +124,10 @@ public abstract class AbstractExternalSystemConfigurable<
     myProjectsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     addTitle(ExternalSystemBundle.message("settings.title.linked.projects", myExternalSystemId.getReadableName()));
-    myComponent.add(new JBScrollPane(myProjectsList), ExternalSystemUiUtil.getFillLineConstraints(1).pady(30));
+    myComponent.add(new JBScrollPane(myProjectsList),
+                    ExternalSystemUiUtil
+                      .getFillLineConstraints(1)
+                      .pady(JBUI.scale(30)));
 
     addTitle(ExternalSystemBundle.message("settings.title.project.settings"));
     List<ProjectSettings> settings = ContainerUtilRt.newArrayList(s.getLinkedProjectsSettings());
