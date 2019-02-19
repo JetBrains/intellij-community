@@ -2,10 +2,12 @@
 package org.jetbrains.plugins.groovy.intentions.closure
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.util.ErrorUtil
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
 
 internal object ImplicitClosureCallPredicate : PsiElementPredicate {
 
@@ -13,13 +15,19 @@ internal object ImplicitClosureCallPredicate : PsiElementPredicate {
     if (element !is GrMethodCallExpression) {
       return false
     }
-    val invokedExpression = element.invokedExpression
-    val type = invokedExpression.type ?: return false
-    if (!type.equalsToText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) {
+    if (ErrorUtil.containsError(element)) {
       return false
     }
-    else {
-      return !ErrorUtil.containsError(element)
-    }
+    val result = element.advancedResolve()
+    return result.isInvokedOnProperty && element.invokedExpression.type.isClosureType()
+           || result.element.isClosureCallMethod()
+  }
+
+  private fun PsiType?.isClosureType(): Boolean {
+    return this != null && equalsToText(GROOVY_LANG_CLOSURE)
+  }
+
+  private fun PsiElement?.isClosureCallMethod(): Boolean {
+    return this is PsiMethod && name == "call" && containingClass?.qualifiedName == GROOVY_LANG_CLOSURE
   }
 }
