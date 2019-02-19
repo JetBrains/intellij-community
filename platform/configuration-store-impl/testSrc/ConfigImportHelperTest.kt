@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.stateStore
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.directoryStreamIfExists
@@ -55,36 +54,45 @@ class ConfigImportHelperTest {
   }
 
   @Test
-  fun `find recent config directory`() {
-    val fs = fsRule.fs
-    writeStorageFile("2020.1", 100)
-    writeStorageFile("2021.1", 200)
-    writeStorageFile("2022.1", 300)
-    val newConfigPath = fs.getPath("/data/${constructConfigPath("2022.1")}")
-    assertThat(ConfigImportHelper.findRecentConfigDirectory(newConfigPath).joinToString("\n")).isEqualTo("""
-      /data/IntelliJIdea2022.1
-      /data/IntelliJIdea2021.1
-      /data/IntelliJIdea2020.1
-    """.trimIndent())
-
-    writeStorageFile("2021.1", 400)
-    assertThat(ConfigImportHelper.findRecentConfigDirectory(newConfigPath).joinToString("\n")).isEqualTo("""
-      /data/IntelliJIdea2021.1
-      /data/IntelliJIdea2022.1
-      /data/IntelliJIdea2020.1
-    """.trimIndent())
+  fun `find recent config directory on macOS`() {
+    doTest(true)
   }
 
-  private fun writeStorageFile(version: String, lastModified: Long) {
-    val path = fsRule.fs.getPath("/data/" + (constructConfigPath(version)),
+  @Test
+  fun `find recent config directory`() {
+    doTest(false)
+  }
+
+  private fun doTest(isMacOs: Boolean) {
+    val fs = fsRule.fs
+    writeStorageFile("2020.1", 100, isMacOs)
+    writeStorageFile("2021.1", 200, isMacOs)
+    writeStorageFile("2022.1", 300, isMacOs)
+    val newConfigPath = fs.getPath("/data/${constructConfigPath("2022.1", isMacOs)}")
+    assertThat(ConfigImportHelper.findRecentConfigDirectory(newConfigPath, isMacOs).joinToString("\n")).isEqualTo("""
+        /data/${constructConfigPath("2022.1", isMacOs)}
+        /data/${constructConfigPath("2021.1", isMacOs)}
+        /data/${constructConfigPath("2020.1", isMacOs)}
+      """.trimIndent())
+
+    writeStorageFile("2021.1", 400, isMacOs)
+    assertThat(ConfigImportHelper.findRecentConfigDirectory(newConfigPath, isMacOs).joinToString("\n")).isEqualTo("""
+        /data/${constructConfigPath("2021.1", isMacOs)}
+        /data/${constructConfigPath("2022.1", isMacOs)}
+        /data/${constructConfigPath("2020.1", isMacOs)}
+      """.trimIndent())
+  }
+
+  private fun writeStorageFile(version: String, lastModified: Long, isMacOs: Boolean) {
+    val path = fsRule.fs.getPath("/data/" + (constructConfigPath(version, isMacOs)),
                                  PathManager.OPTIONS_DIRECTORY + '/' + StoragePathMacros.NOT_ROAMABLE_FILE)
     Files.setLastModifiedTime(path.write(version), FileTime.fromMillis(lastModified))
   }
 
 }
 
-private fun constructConfigPath(version: String): String {
-  return "IntelliJIdea$version" + if (SystemInfo.isMac) "" else "/${ConfigImportHelper.CONFIG}"
+private fun constructConfigPath(version: String, isMacOs: Boolean): String {
+  return "${if (isMacOs) "" else "."}IntelliJIdea$version" + if (isMacOs) "" else "/${ConfigImportHelper.CONFIG}"
 }
 
 private fun description(block: () -> String) = object : Description() {
