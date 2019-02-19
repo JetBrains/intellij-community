@@ -129,13 +129,13 @@ class SkeletonCachingTest(GeneratorTestCase):
         self.check_generator_output('mod', mod_location=self.find_binary_subdir('versions/v2'))
 
     def test_skeleton_regenerated_for_upgraded_generator_with_explicit_update_stamp(self):
-        self.check_generator_output('mod', mod_location=self.binaries_dir, gen_version='0.2', custom_required_gen=True)
+        self.check_generator_output('mod', mod_path='mod.py', gen_version='0.2', custom_required_gen=True)
 
     def test_skeleton_not_regenerated_for_upgraded_generator_without_explicit_version_stamp(self):
-        self.check_generator_output('mod', mod_location=self.binaries_dir, gen_version='0.2', custom_required_gen=True)
+        self.check_generator_output('mod', mod_path='mod.py', gen_version='0.2', custom_required_gen=True)
 
     def test_skeleton_not_regenerated_for_upgraded_generator_with_earlier_update_stamp(self):
-        self.check_generator_output('mod', mod_location=self.binaries_dir, gen_version='0.2', custom_required_gen=True)
+        self.check_generator_output('mod', mod_path='mod.py', gen_version='0.2', custom_required_gen=True)
 
     def test_version_stamp_put_in_cache_directory_for_failed_module(self):
         self.check_generator_output('failing', mod_path='failing.py', gen_version='0.1', fake_hashes=False)
