@@ -30,7 +30,7 @@ fun AppUIExecutor.withConstraint(constraint: ConstrainedExecution.ContextConstra
 
 /**
  * A [context][CoroutineContext] to be used with the standard [launch], [async], [withContext] coroutine builders.
- * Contains: [ContinuationInterceptor] + [CoroutineExceptionHandler] + [CoroutineName].
+ * Contains: [ContinuationInterceptor] + [CoroutineName].
  */
 fun AppUIExecutor.coroutineDispatchingContext(): CoroutineContext =
   (this as AppUIExecutorEx).coroutineContext
