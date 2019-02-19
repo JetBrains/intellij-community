@@ -36,7 +36,7 @@ internal abstract class ExpirableConstrainedExecution<E : ConstrainedExecution<E
   }
 
   /** Must schedule the runnable and return immediately. */
-  abstract override fun dispatchLaterUnconstrained(runnable: Runnable)
+  abstract fun dispatchLaterUnconstrained(runnable: Runnable)
 
   private val compositeExpiration: Expiration? by lazy(PUBLICATION) {
     Expiration.composeExpiration(expirationSet)

@@ -31,8 +31,6 @@ internal interface ConstrainedExecutionEx<E : ConstrainedExecution<E>> : Constra
    */
   fun createConstraintSchedulingExecutor(condition: BooleanSupplier? = null): Executor
 
-  fun dispatchLaterUnconstrained(runnable: Runnable)
-
   /**
    * Returns [Expiration] corresponding to the set of [Disposable]s added using [expireWith] and [withConstraint], if any.
    */
