@@ -139,6 +139,7 @@ public abstract class ActionPlaces {
 
   public static final String RUN_DASHBOARD_POPUP = "RunDashboardPopup";
   public static final String SERVICES_POPUP = "ServicesPopup";
+  public static final String SERVICES_TOOLBAR = "ServicesToolbar";
 
   public static final String TOUCHBAR_GENERAL = "TouchBarGeneral";
 
