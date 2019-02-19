@@ -105,6 +105,13 @@
       <action id="Git.Rebase.Skip" class="git4idea.actions.GitRebaseSkip" text="Skip Commit"/>
     </group>
 
+    <group id="Git.Ongoing.Rebase.Actions" popup="false">
+      <!-- See GitOngoingOperationAction -->
+      <reference id="Git.Rebase.Abort"/>
+      <reference id="Git.Rebase.Continue"/>
+      <reference id="Git.Rebase.Skip"/>
+    </group>
+
     <group id="Git.Menu" class="git4idea.actions.GitMenu" popup="true" text="_Git">
       <reference ref="GitFileActions"/>
       <separator/>
