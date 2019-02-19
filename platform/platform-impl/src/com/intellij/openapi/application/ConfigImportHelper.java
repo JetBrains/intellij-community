@@ -70,7 +70,7 @@ public class ConfigImportHelper {
 
     ConfigImportSettings settings = getConfigImportSettings();
     Path newConfigDir = Paths.get(newConfigPath);
-    List<Path> guessedOldConfigDirs = findRecentConfigDirectory(newConfigDir);
+    List<Path> guessedOldConfigDirs = findRecentConfigDirectory(newConfigDir, SystemInfo.isMac);
 
     ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(guessedOldConfigDirs, f -> findConfigDirectoryByPath(f));
     dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
@@ -140,20 +140,20 @@ public class ConfigImportHelper {
   }
 
   @NotNull
-  public static List<Path> findRecentConfigDirectory(@NotNull Path newConfigDir) {
+  public static List<Path> findRecentConfigDirectory(@NotNull Path newConfigDir, boolean isMacOs) {
     // looks for the most recent existing config directory in the vicinity of the new one, assuming standard layout
     // ("~/Library/<selector_prefix><selector_version>" on macOS, "~/.<selector_prefix><selector_version>/config" on other OSes)
 
-    Path configsHome = (SystemInfo.isMac ? newConfigDir : newConfigDir.getParent()).getParent();
+    Path configsHome = (isMacOs ? newConfigDir : newConfigDir.getParent()).getParent();
     if (configsHome == null || !Files.isDirectory(configsHome)) {
       return Collections.emptyList();
     }
 
     String nameWithSelector = PathManager.getPathsSelector();
     if (nameWithSelector == null) {
-      nameWithSelector = (SystemInfo.isMac ? newConfigDir : newConfigDir.getParent()).getFileName().toString();
+      nameWithSelector = (isMacOs ? newConfigDir : newConfigDir.getParent()).getFileName().toString();
     }
-    String prefix = getPrefixFromSelector(nameWithSelector);
+    String prefix = getPrefixFromSelector(nameWithSelector, isMacOs);
     if (prefix == null) {
       return Collections.emptyList();
     }
@@ -172,7 +172,7 @@ public class ConfigImportHelper {
 
     TObjectLongHashMap<Path> fileToLastModified = new TObjectLongHashMap<>();
     for (Path child : candidates) {
-      Path candidate = SystemInfo.isMac ? child : child.resolve(CONFIG);
+      Path candidate = isMacOs ? child : child.resolve(CONFIG);
       long lastModified = 0;
       for (String name : OPTIONS) {
         long modified;
@@ -199,10 +199,10 @@ public class ConfigImportHelper {
   }
 
   @Nullable
-  private static String getPrefixFromSelector(String nameWithSelector) {
+  private static String getPrefixFromSelector(@NotNull String nameWithSelector, boolean isMacOs) {
     Matcher m = Pattern.compile("\\.?([^\\d]+)\\d+(\\.\\d+)?").matcher(nameWithSelector);
     String selector = m.matches() ? m.group(1) : null;
-    return StringUtil.isEmpty(selector) ? null : SystemInfo.isMac ? selector : '.' + selector;
+    return StringUtil.isEmpty(selector) ? null : isMacOs ? selector : '.' + selector;
   }
 
   @Nullable
