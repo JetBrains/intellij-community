@@ -22,7 +22,6 @@ import com.intellij.util.ObjectUtils
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.isEmpty
 import com.intellij.vcsUtil.VcsUtil
-import java.util.*
 import java.util.stream.Stream
 
 /**
@@ -54,80 +53,25 @@ class MoveChangesToAnotherListAction : AnAction(ActionsBundle.actionText(IdeActi
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getRequiredData(CommonDataKeys.PROJECT)
-    val changesList = ContainerUtil.newArrayList<Change>()
+    with(MoveChangesHandler(e.project!!)) {
+      addChanges(e.getData(VcsDataKeys.CHANGES))
+      if (isEmpty) {
+        addChangesForFiles(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY))
+      }
 
-    val changes = e.getData(VcsDataKeys.CHANGES)
-    if (changes != null) {
-      ContainerUtil.addAll<Change, Change, List<Change>>(changesList, *changes)
-    }
+      if (isEmpty) {
+        VcsBalloonProblemNotifier.showOverChangesView(project, "Nothing is selected that can be moved", MessageType.INFO)
+        return
+      }
 
-    val unversionedFiles = ContainerUtil.newArrayList<VirtualFile>()
-    val changedFiles = ContainerUtil.newArrayList<VirtualFile>()
-    val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
-    if (files != null && changesList.isEmpty()) {
-      changesList.addAll(getChangesForSelectedFiles(project, files, unversionedFiles, changedFiles))
-    }
-
-    if (changesList.isEmpty() && unversionedFiles.isEmpty()) {
-      VcsBalloonProblemNotifier.showOverChangesView(project, "Nothing is selected that can be moved", MessageType.INFO)
-      return
-    }
-
-    if (!askAndMove(project, changesList, unversionedFiles)) return
-    if (!changedFiles.isEmpty()) {
-      selectAndShowFile(project, changedFiles[0])
+      if (!askAndMove(project, changes, unversionedFiles)) return
+      if (!changedFiles.isEmpty()) {
+        selectAndShowFile(project, changedFiles[0])
+      }
     }
   }
 
   companion object {
-
-    private fun getChangesForSelectedFiles(project: Project,
-                                           selectedFiles: Array<VirtualFile>,
-                                           unversionedFiles: MutableList<in VirtualFile>,
-                                           changedFiles: MutableList<in VirtualFile>): List<Change> {
-      val changes = ArrayList<Change>()
-      val changeListManager = ChangeListManager.getInstance(project)
-
-      for (vFile in selectedFiles) {
-        val change = changeListManager.getChange(vFile)
-        if (change == null) {
-          val status = changeListManager.getStatus(vFile)
-          if (FileStatus.UNKNOWN == status) {
-            unversionedFiles.add(vFile)
-            changedFiles.add(vFile)
-          }
-          else if (FileStatus.NOT_CHANGED == status && vFile.isDirectory) {
-            addAllChangesUnderPath(changeListManager, VcsUtil.getFilePath(vFile), changes, changedFiles)
-          }
-        }
-        else {
-          val afterPath = ChangesUtil.getAfterPath(change)
-          if (afterPath != null && afterPath.isDirectory) {
-            addAllChangesUnderPath(changeListManager, afterPath, changes, changedFiles)
-          }
-          else {
-            changes.add(change)
-            changedFiles.add(vFile)
-          }
-        }
-      }
-      return changes
-    }
-
-    private fun addAllChangesUnderPath(changeListManager: ChangeListManager,
-                                       file: FilePath,
-                                       changes: MutableList<in Change>,
-                                       changedFiles: MutableList<in VirtualFile>) {
-      for (change in changeListManager.getChangesIn(file)) {
-        changes.add(change)
-
-        val path = ChangesUtil.getAfterPath(change)
-        if (path != null && path.virtualFile != null) {
-          changedFiles.add(path.virtualFile!!)
-        }
-      }
-    }
 
     private fun selectAndShowFile(project: Project, file: VirtualFile) {
       val window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
@@ -187,6 +131,55 @@ class MoveChangesToAnotherListAction : AnAction(ActionsBundle.actionText(IdeActi
       val changesSet = ContainerUtil.newHashSet(changes)
 
       return ContainerUtil.findAll(lists) { list -> !ContainerUtil.intersects(changesSet, list.changes) }
+    }
+  }
+}
+
+private class MoveChangesHandler(val project: Project) {
+  private val changeListManager = ChangeListManager.getInstance(project)
+
+  val unversionedFiles = mutableListOf<VirtualFile>()
+  val changedFiles = mutableListOf<VirtualFile>()
+  val changes = mutableListOf<Change>()
+
+  val isEmpty get() = changes.isEmpty() && unversionedFiles.isEmpty()
+
+  fun addChanges(changes: Array<Change>?) {
+    this.changes.addAll(changes.orEmpty())
+  }
+
+  fun addChangesForFiles(files: Array<VirtualFile>?) {
+    for (file in files.orEmpty()) {
+      val change = changeListManager.getChange(file)
+      if (change == null) {
+        val status = changeListManager.getStatus(file)
+        if (FileStatus.UNKNOWN == status) {
+          unversionedFiles.add(file)
+          changedFiles.add(file)
+        }
+        else if (FileStatus.NOT_CHANGED == status && file.isDirectory) {
+          addChangesUnder(VcsUtil.getFilePath(file))
+        }
+      }
+      else {
+        val afterPath = ChangesUtil.getAfterPath(change)
+        if (afterPath != null && afterPath.isDirectory) {
+          addChangesUnder(afterPath)
+        }
+        else {
+          changes.add(change)
+          changedFiles.add(file)
+        }
+      }
+    }
+  }
+
+  private fun addChangesUnder(path: FilePath) {
+    for (change in changeListManager.getChangesIn(path)) {
+      changes.add(change)
+
+      val file = ChangesUtil.getAfterPath(change)?.virtualFile
+      file?.let { changedFiles.add(it) }
     }
   }
 }
