@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.style;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -13,6 +13,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyExpressionUtil.isFake;
+
 public class JavaStylePropertiesInvocationInspection extends BaseInspection {
   @NotNull
   @Override
@@ -20,6 +22,7 @@ public class JavaStylePropertiesInvocationInspection extends BaseInspection {
     return new BaseInspectionVisitor() {
       @Override
       public void visitMethodCall(@NotNull GrMethodCall methodCall) {
+        if (isFake(methodCall)) return;
         if (JavaStylePropertiesUtil.isPropertyAccessor(methodCall)) {
           final String message = GroovyInspectionBundle.message("java.style.property.access");
           final GrExpression expression = methodCall.getInvokedExpression();

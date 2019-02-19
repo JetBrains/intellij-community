@@ -308,11 +308,4 @@ public abstract class XDebugProcess {
   public void logStack(@NotNull XSuspendContext suspendContext, @NotNull XDebugSession session) {
     XDebuggerUtil.getInstance().logStack(suspendContext, session);
   }
-
-  /**
-   * If true, debugger will use smart step into handler first instead of the regular step into handler
-   */
-  public boolean isPreferSmartStepInto() {
-    return false;
-  }
 }

@@ -117,11 +117,11 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     }, this);
   }
 
-  private static boolean isEditorOpenedFor(Document document) {
+  private static boolean isEditorOpenedFor(@NotNull Document document) {
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile == null) return false;
     Project project = guessProject(virtualFile);
-    return project != null && !project.isDisposed() && FileEditorManager.getInstance(project).getEditors(virtualFile).length != 0;
+    return project != null && !project.isDisposed() && FileEditorManager.getInstance(project).isFileOpen(virtualFile);
   }
 
   @NonNls public static final String PROP_CACHED_ENCODING_CHANGED = "cachedEncoding";
@@ -216,6 +216,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   }
 
   @Override
+  @NotNull
   public State getState() {
     return myState;
   }
@@ -266,7 +267,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   }
 
   @Nullable
-  private static Project guessProject(final VirtualFile virtualFile) {
+  private static Project guessProject(@Nullable VirtualFile virtualFile) {
     return ProjectLocator.getInstance().guessProjectForFile(virtualFile);
   }
 

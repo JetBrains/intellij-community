@@ -111,6 +111,14 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
   @Nullable
   @Override
   public JsonPropertyAdapter getParentPropertyAdapter(@NotNull PsiElement element) {
+    YAMLMapping mapping = PsiTreeUtil.getParentOfType(element, YAMLMapping.class, true, YAMLKeyValue.class);
+    if (mapping != null) {
+      // if we reach a mapping without reaching any key-value, this is a case like:
+      // - foo: bar
+      //   a
+      // and we should create a property adapter for "a" for proper behavior of features
+      return new YamlPropertyAdapter(element.getParent());
+    }
     final YAMLKeyValue property = PsiTreeUtil.getParentOfType(element, YAMLKeyValue.class, false);
     if (property == null) return null;
     // it is a parent property only if its value contains the current property

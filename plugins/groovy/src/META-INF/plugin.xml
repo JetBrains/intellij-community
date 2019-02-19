@@ -530,7 +530,6 @@
              id="groovyReferenceListWeigher" order="before openedInEditor"/>
 
     <debuggerClassFilterProvider implementation="org.jetbrains.plugins.groovy.debugger.GroovyDebuggerClassFilterProvider"/>
-    <debugger.jvmSmartStepIntoHandler implementation="org.jetbrains.plugins.groovy.debugger.GroovySmartStepIntoHandler"/>
 
     <useScopeEnlarger implementation="org.jetbrains.plugins.groovy.lang.psi.impl.search.GrPrivateFieldScopeEnlarger"/>
 

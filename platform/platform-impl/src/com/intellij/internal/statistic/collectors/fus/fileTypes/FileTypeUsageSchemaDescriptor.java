@@ -3,14 +3,13 @@ package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public interface FileTypeUsageSchemaDescriptor {
   /**
-   * Used to categorise file types usage statistics.
-   * If the file has some generic file type (e.g. XML), this method allow specifying the 'schema' more precisely,
-   * e.g `Maven` or `Spring`.
+   * Is used to categorise file types usage statistics.
+   * If a file has some generic file type (e.g. XML), this method allow specifying its 'schema' more precisely, e.g `Maven` or `Spring`.
+   *
+   * @return true if the given file has the schema name, given in the `schema` attribute of the `FileTypeUsageSchemaDescriptor` extension.
    */
-  @Nullable
-  String describeSchema(@NotNull VirtualFile file);
+  boolean describes(@NotNull VirtualFile file);
 }

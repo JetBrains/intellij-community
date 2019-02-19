@@ -91,20 +91,25 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     for (ComponentConfig config : componentConfigs) {
       registerComponents(config);
     }
-    if (isNeededToMeasure) {
+    if (measureToken != null) {
       measureToken.end();
     }
     myComponentConfigCount = componentConfigs.size();
 
     if (componentsRegistered != null) {
+      measureToken = isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix + StartUpMeasurer.Phases.COMPONENTS_REGISTERED_CALLBACK_SUFFIX) : null;
       componentsRegistered.run();
+      if (measureToken != null) {
+        measureToken.end();
+      }
     }
 
     measureToken = isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix + StartUpMeasurer.Phases.CREATE_COMPONENTS_SUFFIX) : null;
     createComponents(indicator);
-    if (isNeededToMeasure) {
+    if (measureToken != null) {
       measureToken.end();
     }
+
     myComponentsCreated = true;
     if (isNeededToMeasure) {
       totalMeasureToken.end("component count: " + getComponentConfigCount());

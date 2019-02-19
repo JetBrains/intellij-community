@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.hash.HashMap;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -34,11 +35,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Map;
 
 public class UnnecessaryBoxingInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean onlyReportSuperfluouslyBoxed = false;
+
+  private static final Map<PsiType, String> replacementMap = new HashMap<>();
+
+  static {
+    replacementMap.put(PsiType.SHORT, "Short.parseShort");
+    replacementMap.put(PsiType.INT, "Integer.parseInt");
+    replacementMap.put(PsiType.LONG, "Long.parseLong");
+    replacementMap.put(PsiType.DOUBLE, "Double.parseDouble");
+    replacementMap.put(PsiType.FLOAT, "Float.parseFloat");
+  }
 
   @Override
   @NotNull
@@ -61,20 +73,33 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("unnecessary.boxing.problem.descriptor");
+    if (infos.length == 0) {
+      return InspectionGadgetsBundle.message("unnecessary.boxing.problem.descriptor");
+    }
+    return InspectionGadgetsBundle.message("unnecessary.boxing.inside.value.of.problem.descriptor");
   }
 
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
-    return new UnnecessaryBoxingFix();
+    return infos.length == 0 ? new UnnecessaryBoxingFix() : new UnnecessaryBoxingFix((PsiType)infos[0]);
   }
 
   private static class UnnecessaryBoxingFix extends InspectionGadgetsFix {
 
+    private final String name;
+
+    private UnnecessaryBoxingFix() {
+      this.name = InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix");
+    }
+
+    private UnnecessaryBoxingFix(PsiType expectedType) {
+      this.name = InspectionGadgetsBundle.message("unnecessary.boxing.use.parse.quickfix", replacementMap.get(expectedType));
+    }
+
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix");
+      return name;
     }
 
     @Override
@@ -89,8 +114,21 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
         return;
       }
       final PsiExpression unboxedExpression = arguments[0];
+      final PsiType unboxedExpressionType = unboxedExpression.getType();
+      if (unboxedExpressionType == null) {
+        return;
+      }
+      final CommentTracker commentTracker = new CommentTracker();
+      if (unboxedExpressionType.getCanonicalText().equals("java.lang.String")) {
+        final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false, true);
+        final String parseMethodName = replacementMap.get(expectedType);
+        if (parseMethodName == null) {
+          return;
+        }
+        PsiReplacementUtil.replaceExpression(expression, parseMethodName + "(" + unboxedExpression.getText() + ")", commentTracker);
+        return;
+      }
       final Object value = ExpressionUtils.computeConstantExpression(unboxedExpression);
-      CommentTracker commentTracker = new CommentTracker();
       if (value != null) {
         if (value == Boolean.TRUE) {
           PsiReplacementUtil.replaceExpression(expression, "java.lang.Boolean.TRUE", commentTracker);
@@ -212,13 +250,21 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
         return;
       }
       final PsiExpression boxedExpression = arguments[0];
-      if (!(boxedExpression.getType() instanceof PsiPrimitiveType)) {
-        return;
-      }
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       @NonNls
       final String referenceName = methodExpression.getReferenceName();
       if (!"valueOf".equals(referenceName)) {
+        return;
+      }
+      final PsiType boxedExpressionType = boxedExpression.getType();
+      if (boxedExpressionType != null && boxedExpressionType.getCanonicalText().equals("java.lang.String")) {
+        final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false, true);
+        if (replacementMap.containsKey(expectedType)) {
+          registerError(expression, expectedType);
+        }
+        return;
+      }
+      if (!(boxedExpressionType instanceof PsiPrimitiveType)) {
         return;
       }
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();

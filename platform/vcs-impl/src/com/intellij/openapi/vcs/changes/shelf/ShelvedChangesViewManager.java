@@ -82,6 +82,7 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.REPOSIT
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.util.containers.UtilKt.isEmpty;
 import static java.util.Comparator.comparing;
 
 public class ShelvedChangesViewManager implements Disposable {
@@ -175,7 +176,7 @@ public class ShelvedChangesViewManager implements Disposable {
   }
 
   private boolean hasExactlySelectedChanges() {
-    return !VcsTreeModelData.exactlySelected(myTree).userObjects(ShelvedWrapper.class).isEmpty();
+    return !isEmpty(VcsTreeModelData.exactlySelected(myTree).userObjectsStream(ShelvedWrapper.class));
   }
 
   @CalledInAwt

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -400,17 +400,21 @@ public class DebuggerUIUtil {
     action.registerCustomShortcutSet(action.getShortcutSet(), component, parentDisposable);
   }
 
-  public static void registerExtraHandleShortcuts(final ListPopupImpl popup, String... actionNames) {
+  public static void registerExtraHandleShortcuts(ListPopupImpl popup, Ref<Boolean> showAd, String... actionNames) {
     for (String name : actionNames) {
       KeyStroke stroke = KeymapUtil.getKeyStroke(ActionManager.getInstance().getAction(name).getShortcutSet());
       if (stroke != null) {
         popup.registerAction("handleSelection " + stroke, stroke, new AbstractAction() {
           @Override
           public void actionPerformed(ActionEvent e) {
+            showAd.set(false);
             popup.handleSelect(true);
           }
         });
       }
+    }
+    if (showAd.get()) {
+      popup.setAdText(getSelectionShortcutsAdText(actionNames));
     }
   }
 

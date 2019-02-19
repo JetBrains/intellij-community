@@ -7,8 +7,10 @@ import com.intellij.execution.dashboard.tree.RunConfigurationNode;
 import com.intellij.execution.dashboard.tree.RunDashboardTreeCellRenderer;
 import com.intellij.execution.runners.FakeRerunAction;
 import com.intellij.execution.services.ServiceViewContributor;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
@@ -53,30 +55,12 @@ public class RunConfigurationsServiceViewContributor
 
       @Override
       public ActionGroup getToolbarActions() {
-        DefaultActionGroup actionGroup = new DefaultActionGroup();
-        actionGroup.add(ActionManager.getInstance().getAction(RUN_DASHBOARD_CONTENT_TOOLBAR));
-
-        RunnerLayoutUiImpl ui = getRunnerLayoutUi(node.getDescriptor());
-        if (ui == null) return actionGroup;
-
-        List<AnAction> leftToolbarActions = ui.getActions();
-        for (AnAction action : leftToolbarActions) {
-          if (!(action instanceof StopAction) && !(action instanceof FakeRerunAction)) {
-            actionGroup.add(action);
-          }
-        }
-        return actionGroup;
+        return RunConfigurationsServiceViewContributor.getToolbarActions(node.getDescriptor());
       }
 
       @Override
       public ActionGroup getPopupActions() {
-        DefaultActionGroup actions = new DefaultActionGroup();
-        ActionManager actionManager = ActionManager.getInstance();
-        actions.add(actionManager.getAction(RUN_DASHBOARD_CONTENT_TOOLBAR));
-        actions.addSeparator();
-        actions.add(actionManager.getAction(RUN_DASHBOARD_TREE_TOOLBAR));
-        actions.add(actionManager.getAction(RUN_DASHBOARD_POPUP));
-        return actions;
+        return RunConfigurationsServiceViewContributor.getPopupActions();
       }
 
       @Override
@@ -158,6 +142,9 @@ public class RunConfigurationsServiceViewContributor
   @NotNull
   @Override
   public ViewDescriptor getGroupDescriptor(@NotNull RunDashboardGroup group) {
+    PresentationData presentationData = new PresentationData();
+    presentationData.setPresentableText(group.getName());
+    presentationData.setIcon(group.getIcon());
     return new ViewDescriptor() {
       @Override
       public JComponent getContentComponent() {
@@ -166,30 +153,17 @@ public class RunConfigurationsServiceViewContributor
 
       @Override
       public ActionGroup getToolbarActions() {
-        return null;
+        return RunConfigurationsServiceViewContributor.getToolbarActions(null);
+      }
+
+      @Override
+      public ActionGroup getPopupActions() {
+        return RunConfigurationsServiceViewContributor.getPopupActions();
       }
 
       @Override
       public ItemPresentation getPresentation() {
-        return new ItemPresentation() {
-          @Nullable
-          @Override
-          public String getPresentableText() {
-            return group.getName();
-          }
-
-          @Nullable
-          @Override
-          public String getLocationString() {
-            return null;
-          }
-
-          @Nullable
-          @Override
-          public Icon getIcon(boolean unused) {
-            return group.getIcon();
-          }
-        };
+        return presentationData;
       }
 
       @Override
@@ -208,6 +182,9 @@ public class RunConfigurationsServiceViewContributor
   @NotNull
   @Override
   public ViewDescriptor getStateDescriptor(@NotNull RunDashboardRunConfigurationStatus status) {
+    PresentationData presentationData = new PresentationData();
+    presentationData.setPresentableText(status.getName());
+    presentationData.setIcon(status.getIcon());
     return new ViewDescriptor() {
       @Override
       public JComponent getContentComponent() {
@@ -221,25 +198,7 @@ public class RunConfigurationsServiceViewContributor
 
       @Override
       public ItemPresentation getPresentation() {
-        return new ItemPresentation() {
-          @Nullable
-          @Override
-          public String getPresentableText() {
-            return status.getName();
-          }
-
-          @Nullable
-          @Override
-          public String getLocationString() {
-            return null;
-          }
-
-          @Nullable
-          @Override
-          public Icon getIcon(boolean unused) {
-            return status.getIcon();
-          }
-        };
+        return presentationData;
       }
 
       @Override
@@ -252,5 +211,31 @@ public class RunConfigurationsServiceViewContributor
   @NotNull
   private static JComponent createEmptyContent() {
     return new JBPanelWithEmptyText().withEmptyText(ExecutionBundle.message("run.dashboard.not.started.configuration.message"));
+  }
+
+  private static ActionGroup getToolbarActions(@Nullable RunContentDescriptor descriptor) {
+    DefaultActionGroup actionGroup = new DefaultActionGroup();
+    actionGroup.add(ActionManager.getInstance().getAction(RUN_DASHBOARD_CONTENT_TOOLBAR));
+
+    RunnerLayoutUiImpl ui = getRunnerLayoutUi(descriptor);
+    if (ui == null) return actionGroup;
+
+    List<AnAction> leftToolbarActions = ui.getActions();
+    for (AnAction action : leftToolbarActions) {
+      if (!(action instanceof StopAction) && !(action instanceof FakeRerunAction)) {
+        actionGroup.add(action);
+      }
+    }
+    return actionGroup;
+  }
+
+  private static ActionGroup getPopupActions() {
+    DefaultActionGroup actions = new DefaultActionGroup();
+    ActionManager actionManager = ActionManager.getInstance();
+    actions.add(actionManager.getAction(RUN_DASHBOARD_CONTENT_TOOLBAR));
+    actions.addSeparator();
+    actions.add(actionManager.getAction(RUN_DASHBOARD_TREE_TOOLBAR));
+    actions.add(actionManager.getAction(RUN_DASHBOARD_POPUP));
+    return actions;
   }
 }

@@ -336,7 +336,15 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
       return false;
     }
     PostfixTemplateProvider provider = selectedTemplate.getProvider();
-    return provider != null && provider.createEditor(selectedTemplate) != null;
+    if (provider == null) {
+      return false;
+    }
+    PostfixTemplateEditor editor = provider.createEditor(selectedTemplate);
+    if (editor != null) {
+      Disposer.dispose(editor);
+      return true;
+    }
+    return false;
   }
 
   public void duplicateSelectedTemplate() {

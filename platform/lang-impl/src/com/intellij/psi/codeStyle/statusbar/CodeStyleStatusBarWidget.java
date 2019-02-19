@@ -113,11 +113,11 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
   @Override
   protected ListPopup createPopup(DataContext context)
   {
-    MyWidgetState state = (MyWidgetState)getWidgetState(context.getData(CommonDataKeys.VIRTUAL_FILE));
+    WidgetState state = getWidgetState(context.getData(CommonDataKeys.VIRTUAL_FILE));
     Editor editor = getEditor();
     PsiFile psiFile = getPsiFile();
-    if (state != WidgetState.HIDDEN && editor != null && psiFile != null) {
-      AnAction[] actions = getActions(state.getContributor(), psiFile);
+    if (state instanceof MyWidgetState && editor != null && psiFile != null) {
+      AnAction[] actions = getActions(((MyWidgetState)state).getContributor(), psiFile);
       ActionGroup actionGroup = new ActionGroup() {
         @NotNull
         @Override

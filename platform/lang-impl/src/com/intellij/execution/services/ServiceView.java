@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
@@ -26,23 +27,28 @@ import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanelWithEmptyText;
+import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.BaseTreeModel;
+import com.intellij.ui.tree.Searchable;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.Invoker;
+import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
-import javax.swing.event.TreeExpansionEvent;
-import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
@@ -51,6 +57,7 @@ import java.util.List;
 import java.util.*;
 
 import static com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus.*;
+import static com.intellij.execution.services.ServiceViewManager.SERVICE_VIEW_MASTER_COMPONENT;
 import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
 import static com.intellij.util.ui.UIUtil.CONTRAST_BORDER_COLOR;
 
@@ -76,8 +83,8 @@ class ServiceView extends JPanel implements Disposable {
   private final Map<Object, ServiceViewContributor.SubtreeDescriptor> mySubtrees = new HashMap<>();
 
   private final MyTreeModel myTreeModel;
+  private final AsyncTreeModel myAsyncTreeModel;
   private Object myLastSelection;
-  private final Set<Object> myCollapsedTreeNodeValues = new HashSet<>();
   private final List<? extends RunDashboardGrouper> myGroupers;
   private final RunDashboardStatusFilter myStatusFilter = new RunDashboardStatusFilter();
 
@@ -92,7 +99,8 @@ class ServiceView extends JPanel implements Disposable {
 
     myTree = new Tree();
     myTreeModel = new MyTreeModel();
-    myTree.setModel(myTreeModel);
+    myAsyncTreeModel = new AsyncTreeModel(myTreeModel, this);
+    myTree.setModel(myAsyncTreeModel);
     initTree();
     myTreeModel.refreshAll();
 
@@ -145,46 +153,14 @@ class ServiceView extends JPanel implements Disposable {
     myTree.setLineStyleAngled();
     myTree.setCellRenderer(new MyTreeCellRenderer());
     UIUtil.putClientProperty(myTree, ANIMATION_IN_RENDERER_ALLOWED, true);
+    UIUtil.putClientProperty(myTree, SERVICE_VIEW_MASTER_COMPONENT, Boolean.TRUE);
 
     // listeners
     myTree.addTreeSelectionListener(e -> onSelectionChanged());
-    myTree.addTreeExpansionListener(new TreeExpansionListener() {
-      @Override
-      public void treeExpanded(TreeExpansionEvent event) {
-        Object value = TreeUtil.getLastUserObject(event.getPath());
-        if (value != null) {
-          myCollapsedTreeNodeValues.remove(value);
-        }
-      }
-
-      @Override
-      public void treeCollapsed(TreeExpansionEvent event) {
-        Object value = TreeUtil.getLastUserObject(event.getPath());
-        if (value != null) {
-          myCollapsedTreeNodeValues.add(value);
-        }
-      }
-    });
     new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true);
     RunDashboardTreeMouseListener mouseListener = new RunDashboardTreeMouseListener(myTree);
     mouseListener.installOn(myTree);
 
-    myTreeModel.addTreeModelListener(new TreeModelAdapter() {
-      @Override
-      public void treeStructureChanged(TreeModelEvent event) {
-        TreeUtil.promiseVisit(myTree, new TreeVisitor() {
-          @NotNull
-          @Override
-          public Action visit(@NotNull TreePath path) {
-            Object node = TreeUtil.getLastUserObject(path);
-            if (node instanceof NodeDescriptor) {
-              ((NodeDescriptor)node).update();
-            }
-            return Action.CONTINUE;
-          }
-        });
-      }
-    });
     //RowsDnDSupport.install(myTree, myTreeModel);
     //new DoubleClickListener() {
     //  @Override
@@ -278,7 +254,7 @@ class ServiceView extends JPanel implements Disposable {
     myTreeModel.refreshAll();
   }
 
-  public void selectNode(Object node) {
+  void selectNode(Object node) {
     TreeUtil.select(myTree, new NodeSelectionVisitor(node), path -> {
     });
   }
@@ -292,14 +268,14 @@ class ServiceView extends JPanel implements Disposable {
   }
 
   private class MyTreeExpander extends DefaultTreeExpander {
-    private boolean myFlat;
+    private volatile boolean myFlat;
 
     MyTreeExpander() {
       super(myTree);
       myTreeModel.addTreeModelListener(new TreeModelAdapter() {
         @Override
         public void treeStructureChanged(TreeModelEvent e) {
-          myFlat = isFlat();
+          isFlat();
         }
       });
     }
@@ -314,14 +290,25 @@ class ServiceView extends JPanel implements Disposable {
       return super.canCollapse() && !myFlat;
     }
 
-    private boolean isFlat() {
-      Object root = myTreeModel.getRoot();
-      for (Object child : myTreeModel.getChildren(root)) {
-        if (myTreeModel.getChildCount(child) > 0) {
-          return false;
+    private void isFlat() {
+      myFlat = true;
+      myAsyncTreeModel.accept(new TreeVisitor() {
+        @NotNull
+        @Override
+        public Action visit(@NotNull TreePath path) {
+          if (path.getPathCount() == 1) {
+            return Action.CONTINUE;
+          }
+          if (path.getPathCount() == 2) {
+            if (myAsyncTreeModel.getChildCount(path.getLastPathComponent()) > 0) {
+              myFlat = false;
+              return Action.INTERRUPT;
+            }
+            return Action.SKIP_CHILDREN;
+          }
+          return Action.INTERRUPT;
         }
-      }
-      return true;
+      });
     }
   }
 
@@ -398,49 +385,77 @@ class ServiceView extends JPanel implements Disposable {
   }
 
 
-  private class MyTreeModel extends BaseTreeModel<Object> {
+  private class MyTreeModel extends BaseTreeModel<Object> implements InvokerSupplier, Searchable {
     final Object myRoot = ObjectUtils.sentinel("services root");
-    Map<Object, List<Object>> myCachedChildren = FactoryMap.create(this::doGetChildren);
+    final Invoker myInvoker = new Invoker.BackgroundThread(this);
+
+    @NotNull
+    @Override
+    public Invoker getInvoker() {
+      return myInvoker;
+    }
+
+    @NotNull
+    @Override
+    public Promise<TreePath> getTreePath(Object object) {
+      return Promises.resolvedPromise(new TreePath(myRoot)); // TODO [konstantin.aleev]
+    }
+
+    @Override
+    public boolean isLeaf(Object object) {
+      return object != myRoot && !(object instanceof GroupNode) && !mySubtrees.containsKey(object);
+    }
 
     @Override
     public List<?> getChildren(Object parent) {
-      return myCachedChildren.get(parent);
-    }
-
-    List<Object> doGetChildren(Object parent) {
-      List<Object> result;
       if (parent == myRoot) {
-        result = new ArrayList<>();
-        for (@SuppressWarnings("unchecked") ServiceViewContributor<Object, Object, Object> contributor : EP_NAME.getExtensions()) {
-          for (Object node : contributor.getNodes(myProject)) {
-            myViewDescriptors.put(node, contributor.getNodeDescriptor(node));
-            mySubtrees.put(node, contributor.getNodeSubtree(node));
-            myContributors.put(node, contributor);
-            List<Object> groups = contributor.getGroups(node);
-            for (Object group : groups) {
-              myViewDescriptors.put(group, contributor.getGroupDescriptor(group));
-            }
-            result.add(node);
-          }
-        }
+        return getRootChildren();
       }
-      else {
-        //noinspection unchecked
-        ServiceViewContributor.SubtreeDescriptor<Object> subtree = mySubtrees.get(parent);
-        if (subtree != null) {
-          result = new SmartList<>();
-          for (Object item : subtree.getItems()) {
-            myViewDescriptors.put(item, subtree.getItemDescriptor(item));
-            mySubtrees.put(item, subtree.getNodeSubtree(item));
-            myContributors.put(item, myContributors.get(parent));
-            result.add(item);
-          }
-        }
-        else {
-          result = Collections.emptyList();
-        }
+      if (parent instanceof GroupNode) {
+        return new ArrayList<>(((GroupNode)parent).children);
+      }
+
+      //noinspection unchecked
+      ServiceViewContributor.SubtreeDescriptor<Object> subtree = mySubtrees.get(parent);
+      if (subtree == null) return Collections.emptyList();
+
+      List<Object> result = new SmartList<>();
+      for (Object item : subtree.getItems()) {
+        myViewDescriptors.put(item, subtree.getItemDescriptor(item));
+        mySubtrees.put(item, subtree.getNodeSubtree(item));
+        myContributors.put(item, myContributors.get(parent));
+        result.add(item);
       }
       return result;
+    }
+
+    @NotNull
+    private List<?> getRootChildren() {
+      Set<Object> rootChildren = new LinkedHashSet<>();
+      Map<TreePath, GroupNode> groupNodes = FactoryMap.create(GroupNode::new);
+      for (@SuppressWarnings("unchecked") ServiceViewContributor<Object, Object, Object> contributor : EP_NAME.getExtensions()) {
+        for (Object node : contributor.getNodes(myProject)) {
+          if (node instanceof NodeDescriptor) {
+            ((NodeDescriptor)node).update();
+          }
+          myViewDescriptors.put(node, contributor.getNodeDescriptor(node));
+          mySubtrees.put(node, contributor.getNodeSubtree(node));
+          myContributors.put(node, contributor);
+          List<Object> groups = contributor.getGroups(node);
+          Object child = node;
+          TreePath path = new TreePath(groups.toArray()).pathByAddingChild(node);
+          while (path.getParentPath() != null) {
+            GroupNode groupNode = groupNodes.get(path.getParentPath());
+            myViewDescriptors.put(groupNode, contributor.getGroupDescriptor(groupNode.path.getLastPathComponent()));
+            myContributors.put(groupNode, contributor);
+            groupNode.children.add(child);
+            child = groupNode;
+            path = path.getParentPath();
+          }
+          rootChildren.add(child);
+        }
+      }
+      return new ArrayList<>(rootChildren);
     }
 
     @Override
@@ -449,10 +464,7 @@ class ServiceView extends JPanel implements Disposable {
     }
 
     void refreshAll() {
-      List<Object> selected = TreeUtil.collectSelectedUserObjects(myTree);
-      myCachedChildren.clear();
-      treeStructureChanged(new TreePath(myRoot), null, null);
-      TreeUtil.promiseSelect(myTree, selected.stream().map(NodeSelectionVisitor::new));
+      treeStructureChanged(null, null, null);
     }
   }
 
@@ -476,7 +488,7 @@ class ServiceView extends JPanel implements Disposable {
                                                   boolean leaf,
                                                   int row,
                                                   boolean hasFocus) {
-      if (value == myTreeModel.getRoot()) {
+      if (value == myTreeModel.getRoot() || value instanceof LoadingNode) {
         return myColoredRender;
       }
       ServiceViewContributor.ViewDescriptor nodeDescriptor = myViewDescriptors.get(value);
@@ -486,11 +498,36 @@ class ServiceView extends JPanel implements Disposable {
         renderer = ObjectUtils.notNull(contributor.getViewDescriptorRenderer(), myNodeRenderer);
         myRenderers.put(contributor, renderer);
       }
+      if (value instanceof GroupNode) {
+        value = ((GroupNode)value).path.getLastPathComponent();
+      }
       Component component = renderer.getRendererComponent(myTree, value, nodeDescriptor, selected, hasFocus);
       if (component == null) {
         component = myNodeRenderer.getRendererComponent(myTree, value, nodeDescriptor, selected, hasFocus);
       }
       return component;
+    }
+  }
+
+  private static class GroupNode {
+    final TreePath path;
+    final Set<Object> children = new LinkedHashSet<>();
+
+    GroupNode(TreePath path) {
+      this.path = path;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      GroupNode node = (GroupNode)o;
+      return Objects.equals(path, node.path);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(path);
     }
   }
 
@@ -525,10 +562,22 @@ class ServiceView extends JPanel implements Disposable {
   }
 
   public static class ItemToolbarActionGroup extends ActionGroup {
+    private final static AnAction[] FAKE_GROUP = new AnAction[]{new DumbAwareAction(null, null, EmptyIcon.ICON_16) {
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(false);
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+      }
+    }};
+
     @NotNull
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
-      return doGetActions(e, true);
+      AnAction[] actions = doGetActions(e, true);
+      return actions.length != 0 ? actions : FAKE_GROUP;
     }
   }
 

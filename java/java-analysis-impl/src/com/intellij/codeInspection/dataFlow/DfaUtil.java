@@ -5,6 +5,7 @@ import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.inference.InferenceFromSourceUtil;
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.TextRange;
@@ -408,6 +409,33 @@ public class DfaUtil {
       return visitor.exprValue;
     }
     return null;
+  }
+
+  @NotNull
+  public static List<? extends MethodContract> addRangeContracts(@Nullable PsiMethod method,
+                                                                 @NotNull List<? extends MethodContract> contracts) {
+    if (method == null) return contracts;
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    List<MethodContract> rangeContracts = new ArrayList<>();
+    for (int i = 0; i < parameters.length; i++) {
+      PsiParameter parameter = parameters[i];
+      LongRangeSet fromType = LongRangeSet.fromType(parameter.getType());
+      if (fromType == null) continue;
+      LongRangeSet fromAnnotation = LongRangeSet.fromPsiElement(parameter);
+      if (fromAnnotation.min() > fromType.min()) {
+        MethodContract contract = MethodContract.singleConditionContract(
+          ContractValue.argument(i), DfaRelationValue.RelationType.LT, ContractValue.constant(fromAnnotation.min(), PsiType.LONG),
+          ContractReturnValue.fail());
+        rangeContracts.add(contract);
+      }
+      if (fromAnnotation.max() < fromType.max()) {
+        MethodContract contract = MethodContract.singleConditionContract(
+          ContractValue.argument(i), DfaRelationValue.RelationType.GT, ContractValue.constant(fromAnnotation.max(), PsiType.LONG),
+          ContractReturnValue.fail());
+        rangeContracts.add(contract);
+      }
+    }
+    return ContainerUtil.concat(rangeContracts, contracts);
   }
 
   private static class ValuableInstructionVisitor extends StandardInstructionVisitor {

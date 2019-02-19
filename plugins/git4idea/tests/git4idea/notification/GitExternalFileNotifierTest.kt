@@ -35,8 +35,15 @@ class GitExternalFileNotifierTest : GitSingleRepoTest() {
     val worker = GitBranchWorker(project, git, GitBranchWorkerTest.TestUiHandler())
 
     worker.checkoutNewBranch("new", listOf(repo))
-    val file1 = file("file1.txt").create().addCommit("commit file1")
-    val file2 = file("file2.txt").create().addCommit("commit file2")
+    val file1Name = "file1.txt"
+    val file2Name = "file2.txt"
+    //create file1 and file2 via VFS - this will ensure no notification about external files added pop-up
+    val file1 = file(projectRoot.createFile(file1Name).name)
+    git("add $file1Name")
+    git("commit -m $file1Name")
+    val file2 = file(projectRoot.createFile(file2Name).name)
+    git("add $file2Name")
+    git("commit -m $file2Name")
 
     worker.checkout("master", false, listOf(repo))
     file1.assertNotExists()

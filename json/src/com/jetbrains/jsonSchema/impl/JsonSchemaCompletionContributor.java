@@ -412,8 +412,8 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
           builder = builder.withInsertHandler(createDefaultPropertyInsertHandler(hasValue, insertComma));
         }
       }
-      else if (!hasValue) {
-        builder = builder.withInsertHandler(createDefaultPropertyInsertHandler(false, insertComma));
+      else {
+        builder = builder.withInsertHandler(createDefaultPropertyInsertHandler(hasValue, insertComma));
       }
 
       String deprecationMessage = jsonSchemaObject.getDeprecationMessage();
@@ -471,12 +471,20 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
           Project project = context.getProject();
 
           if (handleInsideQuotesInsertion(context, editor, hasValue)) return;
-
           int offset = editor.getCaretModel().getOffset();
+          int initialOffset = offset;
           CharSequence docChars = context.getDocument().getCharsSequence();
           while (offset < docChars.length() && Character.isWhitespace(docChars.charAt(offset))) {
             offset++;
           }
+          if (hasValue) {
+            // fix colon for YAML and alike
+            if (offset < docChars.length() && docChars.charAt(offset) != ':') {
+              editor.getDocument().insertString(initialOffset, ":");
+            }
+            return;
+          }
+
           if (offset < docChars.length() && docChars.charAt(offset) == ':') {
             if (offset + 1 < docChars.length() && docChars.charAt(offset + 1) == ' ') {
               editor.getCaretModel().moveToOffset(offset + 2);

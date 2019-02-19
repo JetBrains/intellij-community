@@ -18,7 +18,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -28,10 +27,12 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.Range;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.OrderedSet;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.sun.jdi.Location;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 import org.jetbrains.org.objectweb.asm.Label;
 import org.jetbrains.org.objectweb.asm.MethodVisitor;
 import org.jetbrains.org.objectweb.asm.Opcodes;
@@ -50,21 +51,14 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
     return file.getLanguage().isKindOf(JavaLanguage.INSTANCE);
   }
 
+  @NotNull
   @Override
-  public boolean doSmartStep(SourcePosition position, DebuggerSession session, TextEditor fileEditor) {
+  public Promise<List<SmartStepTarget>> findSmartStepTargetsAsync(SourcePosition position, DebuggerSession session) {
+    AsyncPromise<List<SmartStepTarget>> res = new AsyncPromise<>();
     session.getProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(session.getContextManager().getContext()) {
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-        List<SmartStepTarget> targets =
-          ReadAction.compute(() -> findSmartStepTargets(position, suspendContext, getDebuggerContext()));
-        DebuggerUIUtil.invokeLater(() -> {
-          if (targets.isEmpty()) {
-            doStepInto(session, Registry.is("debugger.single.smart.step.force"), null, false);
-          }
-          else {
-            handleTargets(position, session, fileEditor, targets);
-          }
-        });
+        res.setResult(ReadAction.compute(() -> findSmartStepTargets(position, suspendContext, getDebuggerContext())));
       }
 
       @Override
@@ -72,7 +66,16 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         return Priority.NORMAL;
       }
     });
-    return true;
+    return res;
+  }
+
+  @NotNull
+  @Override
+  public Promise<List<SmartStepTarget>> findStepIntoTargets(SourcePosition position, DebuggerSession session) {
+    if (Registry.is("debugger.smart.step.always")) {
+      return findSmartStepTargetsAsync(position, session);
+    }
+    return Promises.rejectedPromise();
   }
 
   @NotNull

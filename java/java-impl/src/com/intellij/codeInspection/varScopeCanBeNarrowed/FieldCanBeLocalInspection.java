@@ -383,31 +383,9 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitJavaFile(PsiJavaFile file) {
-        final JavaElementVisitor visitor = new JavaElementVisitor() {
-          @Override
-          public void visitClass(PsiClass aClass) {
-            super.visitClass(aClass);
-            Arrays.stream(aClass.getChildren()).forEach(c -> c.accept(this));
-            doCheckClass(aClass, holder, EXCLUDE_ANNOS, IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS);
-          }
-
-          @Override
-          public void visitDeclarationStatement(PsiDeclarationStatement statement) {
-            super.visitDeclarationStatement(statement);
-            Arrays.stream(statement.getDeclaredElements()).forEach(d -> d.accept(this));
-          }
-
-          @Override
-          public void visitMethod(PsiMethod method) {
-            super.visitMethod(method);
-            final PsiCodeBlock body = method.getBody();
-            if (body != null) Arrays.stream(body.getChildren()).forEach(c -> c.accept(this));
-          }
-        };
-        for (PsiClass aClass : file.getClasses()) {
-          aClass.accept(visitor);
-        }
+      public void visitClass(PsiClass aClass) {
+        super.visitClass(aClass);
+        doCheckClass(aClass, holder, EXCLUDE_ANNOS, IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS);
       }
     };
   }

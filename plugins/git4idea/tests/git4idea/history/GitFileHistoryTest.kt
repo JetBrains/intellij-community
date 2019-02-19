@@ -70,9 +70,8 @@ class GitFileHistoryTest : GitSingleRepoTest() {
 
     commits.reverse()
 
-    val vFile = VcsUtil.getVirtualFileWithRefresh(commits.first().file)
-    TestCase.assertNotNull(vFile)
-    val history = GitFileHistory.collectHistory(myProject, VcsUtil.getFilePath(vFile!!))
+    updateChangeListManager()
+    val history = GitFileHistory.collectHistory(myProject, VcsUtil.getFilePath(commits.first().file))
     assertSameHistory(commits, history)
   }
 
