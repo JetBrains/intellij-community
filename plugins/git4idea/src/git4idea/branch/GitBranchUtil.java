@@ -260,6 +260,9 @@ public class GitBranchUtil {
     if (state == GitRepository.State.MERGING || state == GitRepository.State.REBASING) {
       prefix = state.toString() + " ";
     }
+    else if (state == GitRepository.State.GRAFTING) {
+      prefix = "Cherry-picking in ";
+    }
 
     GitBranch branch = repository.getCurrentBranch();
     String branchName = (branch == null ? "" : branch.getName());
