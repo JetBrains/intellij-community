@@ -74,7 +74,7 @@ public class SecureUrlClassLoaderTest {
 
   @NotNull
   private static URL getJarUrl(String className) throws MalformedURLException {
-    URL classUrl = UrlClassLoaderTest.class.getClassLoader().getResource(classNameToJarEntryName(className));
+    URL classUrl = SecureUrlClassLoaderTest.class.getClassLoader().getResource(classNameToJarEntryName(className));
     assertEquals("jar", Objects.requireNonNull(classUrl).getProtocol());
     classUrl = new URL(classUrl.toExternalForm().split("[!]", 2)[0].substring("jar:".length()));
     return classUrl;
