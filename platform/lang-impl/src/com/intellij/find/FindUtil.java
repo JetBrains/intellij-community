@@ -478,6 +478,8 @@ public class FindUtil {
       return false;
     }
 
+    assert document.isWritable() : "Document must be writeable";
+
     document.startGuardedBlockChecking();
     boolean toPrompt = model.isPromptOnReplace();
 
