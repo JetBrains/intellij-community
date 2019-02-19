@@ -1,22 +1,37 @@
 import os
 import shutil
 import tempfile
+import unittest
 from contextlib import contextmanager
-from unittest import TestCase
 
 _test_dir = os.path.dirname(__file__)
 _test_data_root_dir = os.path.join(_test_dir, 'data')
 _override_test_data = False
 
 
-class GeneratorTestCase(TestCase):
+class GeneratorTestCase(unittest.TestCase):
     longMessage = True
 
     def setUp(self):
         self.temp_dir = tempfile.mkdtemp()
 
     def tearDown(self):
-        shutil.rmtree(self.temp_dir)
+        if not self._test_has_failed():
+            shutil.rmtree(self.temp_dir)
+
+    def _test_has_failed(self):
+        try:
+            result = self._resultForDoCleanups  # type: unittest.TestResult
+            return result.failures or result.errors
+        except AttributeError:
+            pass
+
+        try:
+            return any(error for (method, error) in self._outcome.errors)
+        except AttributeError:
+            pass
+
+        return False
 
     @property
     def test_name(self):

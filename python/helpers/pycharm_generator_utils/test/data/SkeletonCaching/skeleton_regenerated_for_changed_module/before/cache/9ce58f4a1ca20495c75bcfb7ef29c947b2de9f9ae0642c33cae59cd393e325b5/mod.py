@@ -6,7 +6,7 @@
 
 # Variables with simple values
 
-version = 2
+version = 1
 
 # no functions
 # no classes
