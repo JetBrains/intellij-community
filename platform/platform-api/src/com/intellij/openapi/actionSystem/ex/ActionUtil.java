@@ -360,7 +360,7 @@ public class ActionUtil {
     p1.setDisabledIcon(ObjectUtils.chooseNotNull(p1.getDisabledIcon(), p2.getDisabledIcon()));
     p1.setSelectedIcon(ObjectUtils.chooseNotNull(p1.getSelectedIcon(), p2.getSelectedIcon()));
     p1.setHoveredIcon(ObjectUtils.chooseNotNull(p1.getHoveredIcon(), p2.getHoveredIcon()));
-    if (p1.getTextWithPossibleMnemonic() == null) {
+    if (StringUtil.isEmpty(p1.getText())) {
       p1.setTextWithMnemonic(p2.getTextWithPossibleMnemonic());
     }
     p1.setDescription(ObjectUtils.chooseNotNull(p1.getDescription(), p2.getDescription()));

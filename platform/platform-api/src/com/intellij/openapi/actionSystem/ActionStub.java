@@ -17,6 +17,7 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
@@ -98,7 +99,7 @@ public class ActionStub extends AnAction{
     if (targetPresentation.getIcon() == null && sourcePresentation.getIcon() != null) {
       targetPresentation.setIcon(sourcePresentation.getIcon());
     }
-    if (targetPresentation.getTextWithPossibleMnemonic() == null) {
+    if (StringUtil.isEmpty(targetPresentation.getText()) && sourcePresentation.getText() != null) {
       targetPresentation.setTextWithMnemonic(sourcePresentation.getTextWithPossibleMnemonic());
     }
     if (targetPresentation.getDescription() == null && sourcePresentation.getDescription() != null) {
