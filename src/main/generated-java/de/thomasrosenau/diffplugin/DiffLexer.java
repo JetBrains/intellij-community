@@ -740,7 +740,7 @@ public class DiffLexer implements FlexLexer {
             // lookahead expression with fixed lookahead length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -1);
-            { return EOLHINT;
+            { return EOL_HINT;
             } 
             // fall through
           case 52: break;
@@ -772,7 +772,7 @@ public class DiffLexer implements FlexLexer {
             // lookahead expression with fixed lookahead length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -2);
-            { return EOLHINT;
+            { return EOL_HINT;
             } 
             // fall through
           case 56: break;
@@ -945,7 +945,7 @@ public class DiffLexer implements FlexLexer {
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzStartRead, 15);
-            { return CONTEXT_HUNK_SEPERATOR;
+            { return CONTEXT_HUNK_SEPARATOR;
             } 
             // fall through
           case 78: break;

@@ -19,9 +19,9 @@ package de.thomasrosenau.diffplugin;
 import com.intellij.lang.Language;
 
 public class DiffLanguage extends Language {
-  public static final DiffLanguage INSTANCE = new DiffLanguage();
+    public static final DiffLanguage INSTANCE = new DiffLanguage();
 
-  private DiffLanguage() {
-    super("Diff");
-  }
+    private DiffLanguage() {
+        super("Diff");
+    }
 }

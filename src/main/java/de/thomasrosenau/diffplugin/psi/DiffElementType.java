@@ -19,10 +19,11 @@ package de.thomasrosenau.diffplugin.psi;
 
 import com.intellij.psi.tree.IElementType;
 import de.thomasrosenau.diffplugin.DiffLanguage;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-public class DiffElementType extends IElementType {
-  public DiffElementType(@NotNull @NonNls String debugName) {
-    super(debugName, DiffLanguage.INSTANCE);
-  }
+class DiffElementType extends IElementType {
+    public DiffElementType(@NotNull @NonNls String debugName) {
+        super(debugName, DiffLanguage.INSTANCE);
+    }
 }

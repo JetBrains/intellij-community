@@ -33,11 +33,11 @@ public interface DiffTypes {
   IElementType CONTEXT_DELETED_LINE = new DiffTokenType("CONTEXT_DELETED_LINE");
   IElementType CONTEXT_FROM_LABEL = new DiffTokenType("CONTEXT_FROM_LABEL");
   IElementType CONTEXT_FROM_LINE_NUMBERS = new DiffTokenType("CONTEXT_FROM_LINE_NUMBERS");
-  IElementType CONTEXT_HUNK_SEPERATOR = new DiffTokenType("CONTEXT_HUNK_SEPERATOR");
+  IElementType CONTEXT_HUNK_SEPARATOR = new DiffTokenType("CONTEXT_HUNK_SEPARATOR");
   IElementType CONTEXT_INSERTED_LINE = new DiffTokenType("CONTEXT_INSERTED_LINE");
   IElementType CONTEXT_TO_LABEL = new DiffTokenType("CONTEXT_TO_LABEL");
   IElementType CONTEXT_TO_LINE_NUMBERS = new DiffTokenType("CONTEXT_TO_LINE_NUMBERS");
-  IElementType EOLHINT = new DiffTokenType("EOLHINT");
+  IElementType EOL_HINT = new DiffTokenType("EOL_HINT");
   IElementType NORMAL_ADD_COMMAND = new DiffTokenType("NORMAL_ADD_COMMAND");
   IElementType NORMAL_CHANGE_COMMAND = new DiffTokenType("NORMAL_CHANGE_COMMAND");
   IElementType NORMAL_DELETE_COMMAND = new DiffTokenType("NORMAL_DELETE_COMMAND");

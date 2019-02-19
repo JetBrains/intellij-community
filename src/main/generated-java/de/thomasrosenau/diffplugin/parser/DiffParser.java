@@ -154,13 +154,13 @@ public class DiffParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // CONTEXT_HUNK_SEPERATOR contextHunkFrom contextHunkTo
+  // CONTEXT_HUNK_SEPARATOR contextHunkFrom contextHunkTo
   public static boolean contextHunk(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "contextHunk")) return false;
-    if (!nextTokenIs(builder_, CONTEXT_HUNK_SEPERATOR)) return false;
+    if (!nextTokenIs(builder_, CONTEXT_HUNK_SEPARATOR)) return false;
     boolean result_;
     Marker marker_ = enter_section_(builder_);
-    result_ = consumeToken(builder_, CONTEXT_HUNK_SEPERATOR);
+    result_ = consumeToken(builder_, CONTEXT_HUNK_SEPARATOR);
     result_ = result_ && contextHunkFrom(builder_, level_ + 1);
     result_ = result_ && contextHunkTo(builder_, level_ + 1);
     exit_section_(builder_, marker_, CONTEXT_HUNK, result_);
@@ -168,7 +168,7 @@ public class DiffParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // CONTEXT_FROM_LINE_NUMBERS contextFromFileLine* (EOLHINT)?
+  // CONTEXT_FROM_LINE_NUMBERS contextFromFileLine* (EOL_HINT)?
   public static boolean contextHunkFrom(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "contextHunkFrom")) return false;
     if (!nextTokenIs(builder_, CONTEXT_FROM_LINE_NUMBERS)) return false;
@@ -192,15 +192,15 @@ public class DiffParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // (EOLHINT)?
+  // (EOL_HINT)?
   private static boolean contextHunkFrom_2(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "contextHunkFrom_2")) return false;
-    consumeToken(builder_, EOLHINT);
+    consumeToken(builder_, EOL_HINT);
     return true;
   }
 
   /* ********************************************************** */
-  // CONTEXT_TO_LINE_NUMBERS contextToFileLine* (EOLHINT)?
+  // CONTEXT_TO_LINE_NUMBERS contextToFileLine* (EOL_HINT)?
   public static boolean contextHunkTo(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "contextHunkTo")) return false;
     if (!nextTokenIs(builder_, CONTEXT_TO_LINE_NUMBERS)) return false;
@@ -224,10 +224,10 @@ public class DiffParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // (EOLHINT)?
+  // (EOL_HINT)?
   private static boolean contextHunkTo_2(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "contextHunkTo_2")) return false;
-    consumeToken(builder_, EOLHINT);
+    consumeToken(builder_, EOL_HINT);
     return true;
   }
 
@@ -374,7 +374,7 @@ public class DiffParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // NORMAL_ADD_COMMAND NORMAL_TO_LINE+ EOLHINT?
+  // NORMAL_ADD_COMMAND NORMAL_TO_LINE+ EOL_HINT?
   public static boolean normalHunkAdd(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "normalHunkAdd")) return false;
     if (!nextTokenIs(builder_, NORMAL_ADD_COMMAND)) return false;
@@ -402,15 +402,15 @@ public class DiffParser implements PsiParser, LightPsiParser {
     return result_;
   }
 
-  // EOLHINT?
+  // EOL_HINT?
   private static boolean normalHunkAdd_2(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "normalHunkAdd_2")) return false;
-    consumeToken(builder_, EOLHINT);
+    consumeToken(builder_, EOL_HINT);
     return true;
   }
 
   /* ********************************************************** */
-  // NORMAL_CHANGE_COMMAND NORMAL_FROM_LINE+ EOLHINT? NORMAL_SEPARATOR NORMAL_TO_LINE+ EOLHINT?
+  // NORMAL_CHANGE_COMMAND NORMAL_FROM_LINE+ EOL_HINT? NORMAL_SEPARATOR NORMAL_TO_LINE+ EOL_HINT?
   public static boolean normalHunkChange(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "normalHunkChange")) return false;
     if (!nextTokenIs(builder_, NORMAL_CHANGE_COMMAND)) return false;
@@ -441,10 +441,10 @@ public class DiffParser implements PsiParser, LightPsiParser {
     return result_;
   }
 
-  // EOLHINT?
+  // EOL_HINT?
   private static boolean normalHunkChange_2(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "normalHunkChange_2")) return false;
-    consumeToken(builder_, EOLHINT);
+    consumeToken(builder_, EOL_HINT);
     return true;
   }
 
@@ -463,15 +463,15 @@ public class DiffParser implements PsiParser, LightPsiParser {
     return result_;
   }
 
-  // EOLHINT?
+  // EOL_HINT?
   private static boolean normalHunkChange_5(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "normalHunkChange_5")) return false;
-    consumeToken(builder_, EOLHINT);
+    consumeToken(builder_, EOL_HINT);
     return true;
   }
 
   /* ********************************************************** */
-  // NORMAL_DELETE_COMMAND NORMAL_FROM_LINE+ EOLHINT?
+  // NORMAL_DELETE_COMMAND NORMAL_FROM_LINE+ EOL_HINT?
   public static boolean normalHunkDelete(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "normalHunkDelete")) return false;
     if (!nextTokenIs(builder_, NORMAL_DELETE_COMMAND)) return false;
@@ -499,10 +499,10 @@ public class DiffParser implements PsiParser, LightPsiParser {
     return result_;
   }
 
-  // EOLHINT?
+  // EOL_HINT?
   private static boolean normalHunkDelete_2(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "normalHunkDelete_2")) return false;
-    consumeToken(builder_, EOLHINT);
+    consumeToken(builder_, EOL_HINT);
     return true;
   }
 
@@ -586,7 +586,7 @@ public class DiffParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // UNIFIED_INSERTED_LINE | UNIFIED_DELETED_LINE | UNIFIED_COMMON_LINE | EOLHINT
+  // UNIFIED_INSERTED_LINE | UNIFIED_DELETED_LINE | UNIFIED_COMMON_LINE | EOL_HINT
   public static boolean unifiedLine(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "unifiedLine")) return false;
     boolean result_;
@@ -594,7 +594,7 @@ public class DiffParser implements PsiParser, LightPsiParser {
     result_ = consumeToken(builder_, UNIFIED_INSERTED_LINE);
     if (!result_) result_ = consumeToken(builder_, UNIFIED_DELETED_LINE);
     if (!result_) result_ = consumeToken(builder_, UNIFIED_COMMON_LINE);
-    if (!result_) result_ = consumeToken(builder_, EOLHINT);
+    if (!result_) result_ = consumeToken(builder_, EOL_HINT);
     exit_section_(builder_, level_, marker_, result_, false, null);
     return result_;
   }

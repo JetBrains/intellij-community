@@ -45,7 +45,7 @@ Range = {Digits} ("," {Digits})?
 
 <YYINITIAL> ^ "*** " {InputCharacters} $ { yybegin(CONTEXT); return CONTEXT_FROM_LABEL; }
 <CONTEXT> {
-  ^ "***************" $ { return CONTEXT_HUNK_SEPERATOR; }
+  ^ "***************" $ { return CONTEXT_HUNK_SEPARATOR; }
   ^ "*** " {Range} " ****" $ { return CONTEXT_FROM_LINE_NUMBERS; }
   ^ "--- " {Range} " ----" $ { return CONTEXT_TO_LINE_NUMBERS; }
   ^ "--- " {InputCharacters} $ { return CONTEXT_TO_LABEL; }
@@ -77,7 +77,7 @@ Range = {Digits} ("," {Digits})?
 
 ^ "diff " {InputCharacters} $ { yybegin(YYINITIAL); return COMMAND; }
 
-^ "\\" {InputCharacters} $ { return EOLHINT; }
+^ "\\" {InputCharacters} $ { return EOL_HINT; }
 
 ^ {InputCharacters} $ { return OTHER; }
 

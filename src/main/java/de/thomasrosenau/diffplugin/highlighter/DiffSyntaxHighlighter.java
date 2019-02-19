@@ -31,10 +31,10 @@ import de.thomasrosenau.diffplugin.psi.DiffTypes;
 import org.jetbrains.annotations.NotNull;
 
 // TODO: add tests
-public class DiffSyntaxHighlighter extends SyntaxHighlighterBase {
+class DiffSyntaxHighlighter extends SyntaxHighlighterBase {
     public static final TextAttributesKey COMMAND = createTextAttributesKey("PATCH_COMMAND",
             ConsoleViewContentType.USER_INPUT_KEY);
-    public static final TextAttributesKey FILE = createTextAttributesKey("PATCH_FILEINFO",
+    public static final TextAttributesKey FILE = createTextAttributesKey("PATCH_FILENAME",
             DefaultLanguageHighlighterColors.BLOCK_COMMENT);
     public static final TextAttributesKey INSERTED = createTextAttributesKey("PATCH_INSERTED",
             DiffColors.DIFF_INSERTED);
@@ -46,12 +46,10 @@ public class DiffSyntaxHighlighter extends SyntaxHighlighterBase {
             DefaultLanguageHighlighterColors.LABEL);
     public static final TextAttributesKey SEPARATOR = createTextAttributesKey("PATCH_SEPARATOR",
             DefaultLanguageHighlighterColors.LINE_COMMENT);
-    public static final TextAttributesKey EOLHINT = createTextAttributesKey("PATCH_EOLHINT",
+    public static final TextAttributesKey EOL_HINT = createTextAttributesKey("PATCH_EOL_HINT",
             DefaultLanguageHighlighterColors.DOC_COMMENT);
     public static final TextAttributesKey TEXT = createTextAttributesKey("PATCH_TEXT",
             HighlighterColors.TEXT);
-    public static final TextAttributesKey LEADING_TEXT = createTextAttributesKey("PATCH_LEADING_TEXT",
-            DefaultLanguageHighlighterColors.BLOCK_COMMENT);
 
     @NotNull
     @Override
@@ -85,7 +83,7 @@ public class DiffSyntaxHighlighter extends SyntaxHighlighterBase {
     }
 
     private boolean isSeparator(IElementType tokenType) {
-        return tokenType.equals(DiffTypes.CONTEXT_HUNK_SEPERATOR) ||
+        return tokenType.equals(DiffTypes.CONTEXT_HUNK_SEPARATOR) ||
                 tokenType.equals(DiffTypes.NORMAL_SEPARATOR);
     }
 
@@ -113,8 +111,8 @@ public class DiffSyntaxHighlighter extends SyntaxHighlighterBase {
             return pack(SEPARATOR);
         } else if (isFileName(tokenType)) {
             return pack(FILE);
-        } else if (tokenType.equals(DiffTypes.EOLHINT)) {
-            return pack(EOLHINT);
+        } else if (tokenType.equals(DiffTypes.EOL_HINT)) {
+            return pack(EOL_HINT);
         } else {
             return pack(TEXT);
         }

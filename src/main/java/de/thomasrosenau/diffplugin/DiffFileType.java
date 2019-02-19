@@ -23,33 +23,33 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DiffFileType extends LanguageFileType {
-  public static final DiffFileType INSTANCE = new DiffFileType();
+    public static final DiffFileType INSTANCE = new DiffFileType();
 
-  private DiffFileType() {
-    super(DiffLanguage.INSTANCE);
-  }
+    private DiffFileType() {
+        super(DiffLanguage.INSTANCE);
+    }
 
-  @NotNull
-  @Override
-  public String getName() {
-    return "Diff/Patch";
-  }
+    @NotNull
+    @Override
+    public String getName() {
+        return "Diff/Patch";
+    }
 
-  @NotNull
-  @Override
-  public String getDescription() {
-    return "Diff/Patch";
-  }
+    @NotNull
+    @Override
+    public String getDescription() {
+        return "Diff/Patch";
+    }
 
-  @NotNull
-  @Override
-  public String getDefaultExtension() {
-    return "diff";
-  }
+    @NotNull
+    @Override
+    public String getDefaultExtension() {
+        return "diff";
+    }
 
-  @Nullable
-  @Override
-  public Icon getIcon() {
-    return DiffIcons.FILE;
-  }
+    @Nullable
+    @Override
+    public Icon getIcon() {
+        return DiffIcons.FILE;
+    }
 }

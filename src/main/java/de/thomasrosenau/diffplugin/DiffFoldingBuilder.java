@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 // TODO: add tests
-public class DiffFoldingBuilder extends FoldingBuilderEx {
+class DiffFoldingBuilder extends FoldingBuilderEx {
     @NotNull
     @Override
     public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {

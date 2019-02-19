@@ -24,18 +24,18 @@ import de.thomasrosenau.diffplugin.DiffLanguage;
 import org.jetbrains.annotations.NotNull;
 
 public class DiffFile extends PsiFileBase {
-  public DiffFile(@NotNull FileViewProvider viewProvider) {
-    super(viewProvider, DiffLanguage.INSTANCE);
-  }
+    public DiffFile(@NotNull FileViewProvider viewProvider) {
+        super(viewProvider, DiffLanguage.INSTANCE);
+    }
 
-  @NotNull
-  @Override
-  public FileType getFileType() {
-    return DiffFileType.INSTANCE;
-  }
+    @NotNull
+    @Override
+    public FileType getFileType() {
+        return DiffFileType.INSTANCE;
+    }
 
-  @Override
-  public String toString() {
-    return "Diff / Patch File";
-  }
+    @Override
+    public String toString() {
+        return "Diff / Patch File";
+    }
 }

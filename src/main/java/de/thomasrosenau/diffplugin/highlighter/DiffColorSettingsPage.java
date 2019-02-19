@@ -28,14 +28,14 @@ import de.thomasrosenau.diffplugin.DiffIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DiffColorSettingsPage implements ColorSettingsPage {
+class DiffColorSettingsPage implements ColorSettingsPage {
     private static final AttributesDescriptor[] DESCRIPTORS = new AttributesDescriptor[] {
             new AttributesDescriptor("Changed lines//Inserted line", DiffSyntaxHighlighter.INSERTED),
             new AttributesDescriptor("Changed lines//Deleted line", DiffSyntaxHighlighter.DELETED),
             new AttributesDescriptor("Changed lines//Changed line", DiffSyntaxHighlighter.CHANGED),
             new AttributesDescriptor("Meta info//Console command", DiffSyntaxHighlighter.COMMAND),
             new AttributesDescriptor("Meta info//File names", DiffSyntaxHighlighter.FILE),
-            new AttributesDescriptor("Meta info//Newline hint", DiffSyntaxHighlighter.EOLHINT),
+            new AttributesDescriptor("Meta info//Newline hint", DiffSyntaxHighlighter.EOL_HINT),
             new AttributesDescriptor("Hunk header", DiffSyntaxHighlighter.HUNK_HEAD),
             new AttributesDescriptor("Separator", DiffSyntaxHighlighter.SEPARATOR),
             new AttributesDescriptor("Text (default)", DiffSyntaxHighlighter.TEXT)

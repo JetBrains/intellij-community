@@ -20,7 +20,7 @@ import com.intellij.lexer.FlexAdapter;
 import de.thomasrosenau.diffplugin.DiffLexer;
 
 public class DiffLexerAdapter extends FlexAdapter {
-  public DiffLexerAdapter() {
-    super(new DiffLexer(null));
-  }
+    public DiffLexerAdapter() {
+        super(new DiffLexer(null));
+    }
 }

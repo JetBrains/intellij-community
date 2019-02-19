@@ -19,7 +19,7 @@ import com.intellij.psi.tree.IElementType;
 import de.thomasrosenau.diffplugin.DiffLanguage;
 import org.jetbrains.annotations.*;
 
-public class DiffTokenType extends IElementType {
+class DiffTokenType extends IElementType {
     public DiffTokenType(@NotNull @NonNls String debugName) {
         super(debugName, DiffLanguage.INSTANCE);
     }

@@ -32,42 +32,42 @@ import de.thomasrosenau.diffplugin.psi.DiffFile;
 import de.thomasrosenau.diffplugin.psi.DiffTypes;
 import org.jetbrains.annotations.NotNull;
 
-public class DiffParserDefinition implements ParserDefinition {
+class DiffParserDefinition implements ParserDefinition {
 
-  public static final IFileElementType FILE = new IFileElementType(DiffLanguage.INSTANCE);
+    private static final IFileElementType FILE = new IFileElementType(DiffLanguage.INSTANCE);
 
-  @NotNull
-  @Override
-  public Lexer createLexer(Project project) {
-    return new DiffLexerAdapter();
-  }
+    @NotNull
+    @Override
+    public Lexer createLexer(Project project) {
+        return new DiffLexerAdapter();
+    }
 
-  @NotNull
-  public TokenSet getCommentTokens() {
-    return TokenSet.EMPTY;
-  }
+    @NotNull
+    public PsiParser createParser(final Project project) {
+        return new DiffParser();
+    }
 
-  @NotNull
-  public TokenSet getStringLiteralElements() {
-    return TokenSet.EMPTY;
-  }
+    @Override
+    public IFileElementType getFileNodeType() {
+        return FILE;
+    }
 
-  @NotNull
-  public PsiParser createParser(final Project project) {
-    return new de.thomasrosenau.diffplugin.parser.DiffParser();
-  }
+    @NotNull
+    public TokenSet getCommentTokens() {
+        return TokenSet.EMPTY;
+    }
 
-  @Override
-  public IFileElementType getFileNodeType() {
-    return FILE;
-  }
+    @NotNull
+    public TokenSet getStringLiteralElements() {
+        return TokenSet.EMPTY;
+    }
 
-  public PsiFile createFile(FileViewProvider viewProvider) {
-    return new DiffFile(viewProvider);
-  }
+    @NotNull
+    public PsiElement createElement(ASTNode node) {
+        return DiffTypes.Factory.createElement(node);
+    }
 
-  @NotNull
-  public PsiElement createElement(ASTNode node) {
-    return DiffTypes.Factory.createElement(node);
-  }
+    public PsiFile createFile(FileViewProvider viewProvider) {
+        return new DiffFile(viewProvider);
+    }
 }
