@@ -64,7 +64,7 @@ public class ClassPath {
                    @Nullable UrlClassLoader.CachingCondition cachingCondition,
                    boolean logErrorOnMissingJar,
                    boolean lazyClassloadingCaches,
-                   Set<URL> URLsWithProtectionDomain) {
+                   Set<URL> urlsWithProtectionDomain) {
     myLazyClassloadingCaches = lazyClassloadingCaches;
     myCanLockJars = canLockJars;
     myCanUseCache = canUseCache && !myLazyClassloadingCaches;
@@ -74,7 +74,7 @@ public class ClassPath {
     myCachingCondition = cachingCondition;
     myCanHavePersistentIndex = canHavePersistentIndex;
     myLogErrorOnMissingJar = logErrorOnMissingJar;
-    myURLsWithProtectionDomain = URLsWithProtectionDomain;
+    myURLsWithProtectionDomain = urlsWithProtectionDomain;
     push(urls);
   }
 
