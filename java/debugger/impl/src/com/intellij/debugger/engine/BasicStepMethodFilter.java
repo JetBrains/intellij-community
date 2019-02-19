@@ -21,6 +21,7 @@ import java.util.List;
  */
 public class BasicStepMethodFilter implements NamedMethodFilter {
   private static final Logger LOG = Logger.getInstance(BasicStepMethodFilter.class);
+  private static final String PROXY_CALL_SIGNATURE = "(Ljava/lang/Object;Ljava/lang/reflect/Method;[Ljava/lang/Object;)Ljava/lang/Object;";
 
   @NotNull
   protected final JVMName myDeclaringClassName;
@@ -68,10 +69,7 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
     Method method = location.method();
     String name = method.name();
     if (!myTargetMethodName.equals(name)) {
-      if (isLambdaCall(process, name, location)) {
-        return true;
-      }
-      if (isProxyCall(process, method, stackFrame)) {
+      if (isLambdaCall(process, name, location) || isProxyCall(process, method, stackFrame)) {
         return true;
       }
       return false;
@@ -118,8 +116,7 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
 
   private boolean isProxyCall(DebugProcessImpl process, Method method, @Nullable StackFrameProxyImpl stackFrame) {
     try {
-      if (stackFrame != null &&
-          "(Ljava/lang/Object;Ljava/lang/reflect/Method;[Ljava/lang/Object;)Ljava/lang/Object;".equals(method.signature())) {
+      if (stackFrame != null && PROXY_CALL_SIGNATURE.equals(method.signature())) {
         if ("invoke".equals(method.name())) {
           ReferenceType type = method.declaringType();
           if (!(type instanceof ClassType) ||
