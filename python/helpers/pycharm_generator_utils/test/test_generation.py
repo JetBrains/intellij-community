@@ -34,7 +34,7 @@ class SkeletonCachingTest(GeneratorTestCase):
     def find_binary_subdir(self, subdir):
         return os.path.join(self.binaries_dir, subdir)
 
-    def find_test_data_subdir(self, subdir):
+    def get_test_data_path(self, subdir):
         return os.path.join(self.test_data_dir, subdir)
 
     def run_generator(self, mod_qname, mod_path=None,
@@ -105,7 +105,7 @@ class SkeletonCachingTest(GeneratorTestCase):
             sys.path.pop(0)
         return None
 
-    def test_basic_layout_for_builtin_module(self):
+    def test_layout_for_builtin_module(self):
         self.run_generator(mod_qname='_ast')
         self.assertDirLayoutEquals(os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR), """
         cache/
@@ -115,7 +115,7 @@ class SkeletonCachingTest(GeneratorTestCase):
             _ast.py
         """.format(hash=generator3.builtin_module_hash('_ast')))
 
-    def test_basic_layout_for_physical_module(self):
+    def test_layout_for_toplevel_physical_module(self):
         mod_path = os.path.join(self.test_data_dir, 'mod.py')
         self.run_generator(mod_qname='mod', mod_path=mod_path)
         self.assertDirLayoutEquals(os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR), """
@@ -126,8 +126,27 @@ class SkeletonCachingTest(GeneratorTestCase):
             mod.py
         """.format(hash=generator3.physical_module_hash(mod_path)))
 
+    def test_layout_for_physical_module_inside_package(self):
+        mod_path = self.get_test_data_path('pkg/subpkg/mod.py')
+        self.run_generator(mod_qname='pkg.subpkg.mod', mod_path=mod_path)
+        self.assertDirLayoutEquals(os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR), """
+        cache/
+            {hash}/
+                pkg/
+                    __init__.py
+                    subpkg/
+                        __init__.py
+                        mod.py
+        sdk_skeletons/
+            pkg/
+                __init__.py
+                subpkg/
+                    __init__.py
+                    mod.py
+        """.format(hash=generator3.physical_module_hash(mod_path)))
+
     def test_skeleton_regenerated_for_changed_module(self):
-        self.check_generator_output('mod', mod_path='mod.py', mod_location=self.find_test_data_subdir('versions/v2'))
+        self.check_generator_output('mod', mod_path='mod.py', mod_location=self.get_test_data_path('versions/v2'))
 
     def test_skeleton_regenerated_for_upgraded_generator_with_explicit_update_stamp(self):
         self.check_generator_output('mod', mod_path='mod.py', gen_version='0.2', custom_required_gen=True)
