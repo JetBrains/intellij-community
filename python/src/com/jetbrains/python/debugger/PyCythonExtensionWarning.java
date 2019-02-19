@@ -143,7 +143,7 @@ public class PyCythonExtensionWarning {
       }
       GeneralCommandLine commandLine = new GeneralCommandLine(cmdline).withEnvironment(environment);
 
-      final boolean canCreate = FileUtil.ensureCanCreateFile(new File(helpersPath));
+      final boolean canCreate = FileUtil.ensureCanCreateFile(new File(cythonExtensionsDir));
       final boolean useSudo = !canCreate && !SystemInfo.isWindows;
       Process process;
       if (useSudo) {
