@@ -340,8 +340,12 @@ def builtin_module_hash(mod_qname):
 
 
 def physical_module_hash(mod_path):
-    with fopen(mod_path, 'rb') as f:
-        return sha256(f.read())
+    pure_py = os.path.splitext(mod_path)[1] == '.py'
+    # Open .py files in text mode to avoid LF/CRLF conversion issues. It should happen only in tests.
+    mode = 'r' if pure_py else 'rb'
+    with fopen(mod_path, mode) as f:
+        data = f.read()
+        return sha256(data.encode(OUT_ENCODING) if pure_py else data)
 
 
 def sha256(binary):
