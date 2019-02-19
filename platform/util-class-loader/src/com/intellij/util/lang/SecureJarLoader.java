@@ -16,7 +16,7 @@ import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-public class SecureJarLoader extends JarLoader {
+class SecureJarLoader extends JarLoader {
   @Nullable private volatile ProtectionDomain myProtectionDomain;
 
   SecureJarLoader(URL url, int index, ClassPath configuration) throws IOException {
