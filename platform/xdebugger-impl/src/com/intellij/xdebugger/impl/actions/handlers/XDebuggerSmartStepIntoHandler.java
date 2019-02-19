@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -41,7 +42,7 @@ import java.util.List;
  * @author nik
  */
 public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandler {
-
+  private static final Ref<Boolean> SHOW_AD = new Ref<>(true);
   private static final Logger LOG = Logger.getInstance(XDebuggerSmartStepIntoHandler.class);
 
   @Override
@@ -124,8 +125,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
       }
     });
 
-    DebuggerUIUtil.registerExtraHandleShortcuts(popup, XDebuggerActions.STEP_INTO, XDebuggerActions.SMART_STEP_INTO);
-    popup.setAdText(DebuggerUIUtil.getSelectionShortcutsAdText(XDebuggerActions.STEP_INTO, XDebuggerActions.SMART_STEP_INTO));
+    DebuggerUIUtil.registerExtraHandleShortcuts(popup, SHOW_AD, XDebuggerActions.STEP_INTO, XDebuggerActions.SMART_STEP_INTO);
     UIUtil.maybeInstall(popup.getList().getInputMap(JComponent.WHEN_FOCUSED),
                         "selectNextRow",
                         KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0));

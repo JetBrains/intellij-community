@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.CommonBundle;
@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -86,6 +87,7 @@ import static org.jetbrains.concurrency.Promises.resolvedPromise;
  * @author nik
  */
 public class XDebuggerUtilImpl extends XDebuggerUtil {
+  private static final Ref<Boolean> SHOW_BREAKPOINT_AD = new Ref<>(true);
   private XLineBreakpointType<?>[] myLineBreakpointTypes;
   private Map<Class<? extends XBreakpointType>, XBreakpointType> myBreakpointTypeByClass;
 
@@ -306,8 +308,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                 selectionListener.initialSet(getList().getSelectedValue());
               }
             };
-            DebuggerUIUtil.registerExtraHandleShortcuts(popup, IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT);
-            popup.setAdText(DebuggerUIUtil.getSelectionShortcutsAdText(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT));
+            DebuggerUIUtil.registerExtraHandleShortcuts(popup, SHOW_BREAKPOINT_AD, IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT);
 
             popup.addListSelectionListener(selectionListener);
             popup.show(relativePoint);
