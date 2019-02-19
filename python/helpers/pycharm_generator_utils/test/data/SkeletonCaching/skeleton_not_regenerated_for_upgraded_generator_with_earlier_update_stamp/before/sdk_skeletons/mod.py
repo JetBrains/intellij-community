@@ -2,17 +2,7 @@
 # module mod
 # by generator 0.1
 # no doc
+# no imports
 
-# imports
-
-# functions
-
-def func(*args, **kwargs): # real signature unknown
-    """ Docstring. """
-    pass
-
+# no functions
 # no classes
-# variables with complex values
-
-__test__ = {}
-

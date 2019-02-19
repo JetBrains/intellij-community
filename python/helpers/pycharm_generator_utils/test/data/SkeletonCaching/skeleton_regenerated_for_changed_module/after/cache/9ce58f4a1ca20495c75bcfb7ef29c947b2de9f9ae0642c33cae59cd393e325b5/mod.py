@@ -2,16 +2,11 @@
 # module mod
 # by generator 1000.0
 # no doc
-
-# imports
+# no imports
 
 # Variables with simple values
 
-__version__ = '0.2'
+version = 1
 
 # no functions
 # no classes
-# variables with complex values
-
-__test__ = {}
-
