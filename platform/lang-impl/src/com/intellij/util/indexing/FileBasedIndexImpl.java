@@ -466,20 +466,9 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
   private static <K, V> UpdatableIndex<K, V, FileContent> createIndex(@NotNull final FileBasedIndexExtension<K, V> extension,
                                                                @NotNull final MemoryIndexStorage<K, V> storage)
     throws StorageException, IOException {
-    final VfsAwareMapReduceIndex<K, V, FileContent> index;
-    if (extension instanceof CustomImplementationFileBasedIndexExtension) {
-      final UpdatableIndex<K, V, FileContent> custom =
-        ((CustomImplementationFileBasedIndexExtension<K, V, FileContent>)extension).createIndexImplementation(extension, storage);
-      if (!(custom instanceof VfsAwareMapReduceIndex)) {
-        return custom;
-      }
-      index = (VfsAwareMapReduceIndex<K, V, FileContent>)custom;
-    }
-    else {
-      index = new VfsAwareMapReduceIndex<>(extension, storage);
-    }
-
-    return index;
+    return extension instanceof CustomImplementationFileBasedIndexExtension
+           ? ((CustomImplementationFileBasedIndexExtension<K, V, FileContent>)extension).createIndexImplementation(extension, storage)
+           : new VfsAwareMapReduceIndex<>(extension, storage);
   }
 
   @Override
