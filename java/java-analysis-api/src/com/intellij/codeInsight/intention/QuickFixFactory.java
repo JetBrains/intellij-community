@@ -342,7 +342,7 @@ public abstract class QuickFixFactory {
                                                                      @NotNull PsiExpressionList list);
 
   @NotNull
-  public abstract IntentionAction createAddReturnFix(@NotNull PsiMethod method);
+  public abstract IntentionAction createAddReturnFix(@NotNull PsiParameterListOwner methodOrLambda);
 
   @NotNull
   public abstract IntentionAction createAddVariableInitializerFix(@NotNull PsiVariable variable);
