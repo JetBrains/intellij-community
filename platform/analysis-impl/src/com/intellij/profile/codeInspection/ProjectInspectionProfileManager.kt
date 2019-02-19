@@ -12,6 +12,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -51,8 +52,6 @@ class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProf
       return project.getComponent(ProjectInspectionProfileManager::class.java)
     }
   }
-
-  private var scopeListener: NamedScopesHolder.ScopeListener? = null
 
   private var state = State()
 
@@ -149,29 +148,31 @@ class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProf
   }
 
   @Suppress("unused")
-  private class ProjectInspectionProfileStartUpActivity : StartupActivity {
+  private class ProjectInspectionProfileStartUpActivity : StartupActivity, DumbAware {
     override fun runActivity(project: Project) {
-      getInstance(project).apply {
-        initialLoadSchemesFuture
-          .onSuccess {
-            if (!project.isDisposed) {
-              currentProfile.initInspectionTools(project)
-              this.project.messageBus.syncPublisher(ProfileChangeAdapter.TOPIC).profilesInitialized()
-            }
+      val profileManager = getInstance(project)
+      profileManager.initialLoadSchemesFuture
+        .onSuccess {
+          if (!project.isDisposed) {
+            profileManager.currentProfile.initInspectionTools(project)
+            project.messageBus.syncPublisher(ProfileChangeAdapter.TOPIC).profilesInitialized()
           }
+        }
 
-        scopeListener = NamedScopesHolder.ScopeListener {
-          for (profile in schemeManager.allSchemes) {
+      profileManager.initialLoadSchemesFuture.onProcessed {
+        val scopeListener = NamedScopesHolder.ScopeListener {
+          for (profile in profileManager.schemeManager.allSchemes) {
             profile.scopesChanged()
           }
         }
 
-        scopesManager.addScopeListener(scopeListener!!, project)
-        NamedScopeManager.getInstance(project).addScopeListener(scopeListener!!, project)
-        Disposer.register(project, Disposable {
-          (initialLoadSchemesFuture as? AsyncPromise<*>)?.cancel()
-        })
+        profileManager.scopesManager.addScopeListener(scopeListener, project)
+        NamedScopeManager.getInstance(project).addScopeListener(scopeListener, project)
       }
+
+      Disposer.register(project, Disposable {
+        (profileManager.initialLoadSchemesFuture as? AsyncPromise<*>)?.cancel()
+      })
     }
   }
 
