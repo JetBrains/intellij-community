@@ -8,11 +8,13 @@ import com.intellij.ide.TreeExpander;
 import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.TreeState;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
@@ -214,12 +216,19 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   public void addSelectionListener(@NotNull Runnable runnable) {
-    addTreeSelectionListener(new TreeSelectionListener() {
+    addSelectionListener(runnable, null);
+  }
+
+  public void addSelectionListener(@NotNull Runnable runnable, @Nullable Disposable parent) {
+    TreeSelectionListener listener = new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
         runnable.run();
       }
-    });
+    };
+
+    addTreeSelectionListener(listener);
+    if (parent != null) Disposer.register(parent, () -> removeTreeSelectionListener(listener));
   }
 
   public void setInclusionListener(@Nullable Runnable runnable) {
