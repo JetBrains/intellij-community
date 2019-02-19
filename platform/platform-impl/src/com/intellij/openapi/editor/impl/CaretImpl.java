@@ -357,7 +357,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
                                              boolean adjustForInlays,
                                              boolean fireListeners) {
     assertIsDispatchThread();
-    checkEditorDisposal();
+    checkDisposal();
     updateCachedStateIfNeeded();
     if (debugBuffer != null) {
       debugBuffer.append("Start moveToLogicalPosition(). Locate before soft wrap: ").append(locateBeforeSoftWrap).append(", position: ")
@@ -549,7 +549,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
   void doMoveToVisualPosition(@NotNull VisualPosition pos, boolean fireListeners) {
     assertIsDispatchThread();
-    checkEditorDisposal();
+    checkDisposal();
     validateCallContext();
     if (mySkipChangeRequests) {
       return;
@@ -1465,8 +1465,9 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     }
   }
 
-  private void checkEditorDisposal() {
+  private void checkDisposal() {
     if (myEditor.isDisposed()) myEditor.throwDisposalError("Editor is already disposed");
+    if (!isValid) throw new IllegalStateException("Caret is invalid");
   }
 
   @TestOnly
