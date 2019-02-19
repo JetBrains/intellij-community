@@ -6,8 +6,9 @@ Method contract has the following syntax:<br/>
  clause ::= args '->' effect<br/>
  args ::= ((arg ',')* arg )?<br/>
  arg ::= value-constraint<br/>
- value-constraint ::= 'any' | 'null' | '!null' | 'false' | 'true'<br/>
- effect ::= value-constraint | 'fail' | 'exit'<p/>
+ value-constraint ::= '_' | 'null' | '!null' | 'false' | 'true'<br/>
+ effect ::= value-constraint | 'fail' | 'new' | 'this' | 'param' number<br/>
+ number ::= [1-9] [0-9]*<p/>
 
 The constraints denote the following:<br/>
 <ul>
@@ -17,7 +18,9 @@ The constraints denote the following:<br/>
 <li> true - true boolean value
 <li> false - false boolean value
 <li> fail - the method throws exception, if the arguments satisfy argument constraints
-<li> exit - the method terminates the current process, if the arguments satisfy argument constraints
+<li> new - every time the method is executed, it returns a non-null new object that is distinct from other objects existing in the heap prior to method execution. If the method is pure, the new object is not stored in any field or array and will be lost if method return value is not used.
+<li> this - the method returns non-null this reference
+<li> param1 (param2, param3, etc.) - the method returns its first (second, third, etc.) argument
 </ul>
 Examples:<p/>
 <code>@Contract("_, null -> null")</code> - method returns null if its second argument is null<br/>
