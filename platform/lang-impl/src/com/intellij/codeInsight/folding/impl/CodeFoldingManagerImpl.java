@@ -214,7 +214,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
   @Override
   public void scheduleAsyncFoldingUpdate(@NotNull Editor editor) {
-    editor.putUserData(FoldingUpdate.CODE_FOLDING_KEY, null);
+    FoldingUpdate.clearFoldingCache(editor);
     DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
 
