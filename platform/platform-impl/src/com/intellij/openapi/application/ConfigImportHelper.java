@@ -53,7 +53,7 @@ public class ConfigImportHelper {
   private static final String FIRST_SESSION_KEY = "intellij.first.ide.session";
   private static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
 
-  private static final String CONFIG = "config";
+  public static final String CONFIG = "config";
   private static final String[] OPTIONS = {
     OPTIONS_DIRECTORY + '/' + StoragePathMacros.NOT_ROAMABLE_FILE,
     OPTIONS_DIRECTORY + '/' + IDE_GENERAL_XML,

@@ -60,14 +60,15 @@ class ConfigImportHelperTest {
     writeStorageFile("2020.1", 100)
     writeStorageFile("2021.1", 200)
     writeStorageFile("2022.1", 300)
-    assertThat(ConfigImportHelper.findRecentConfigDirectory(fs.getPath("/data/IntelliJIdea2022.1")).joinToString("\n")).isEqualTo("""
+    val newConfigPath = fs.getPath("/data/${constructConfigPath("2022.1")}")
+    assertThat(ConfigImportHelper.findRecentConfigDirectory(newConfigPath).joinToString("\n")).isEqualTo("""
       /data/IntelliJIdea2022.1
       /data/IntelliJIdea2021.1
       /data/IntelliJIdea2020.1
     """.trimIndent())
 
     writeStorageFile("2021.1", 400)
-    assertThat(ConfigImportHelper.findRecentConfigDirectory(fs.getPath("/data/IntelliJIdea2022.1")).joinToString("\n")).isEqualTo("""
+    assertThat(ConfigImportHelper.findRecentConfigDirectory(newConfigPath).joinToString("\n")).isEqualTo("""
       /data/IntelliJIdea2021.1
       /data/IntelliJIdea2022.1
       /data/IntelliJIdea2020.1
@@ -75,10 +76,15 @@ class ConfigImportHelperTest {
   }
 
   private fun writeStorageFile(version: String, lastModified: Long) {
-    val path = fsRule.fs.getPath("/data/IntelliJIdea$version" + (if (SystemInfo.isMac) "" else "/config"),
+    val path = fsRule.fs.getPath("/data/" + (constructConfigPath(version)),
                                  PathManager.OPTIONS_DIRECTORY + '/' + StoragePathMacros.NOT_ROAMABLE_FILE)
     Files.setLastModifiedTime(path.write(version), FileTime.fromMillis(lastModified))
   }
+
+}
+
+private fun constructConfigPath(version: String): String {
+  return "IntelliJIdea$version" + if (SystemInfo.isMac) "" else "/${ConfigImportHelper.CONFIG}"
 }
 
 private fun description(block: () -> String) = object : Description() {
