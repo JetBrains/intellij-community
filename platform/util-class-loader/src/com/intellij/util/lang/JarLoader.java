@@ -307,14 +307,19 @@ class JarLoader extends Loader {
         if (zipFile != null) return zipFile;
 
         // ZipFile's native implementation (ZipFile.c, zip_util.c) has path -> file descriptor cache
-        zipFile = new ZipFile(myFilePath);
+        zipFile = createZipFile(myFilePath);
         myZipFileSoftReference = new SoftReference<ZipFile>(zipFile);
         return zipFile;
       }
     }
     else {
-      return new ZipFile(myFilePath);
+      return createZipFile(myFilePath);
     }
+  }
+
+  @NotNull
+  protected ZipFile createZipFile(String path) throws IOException {
+    return new ZipFile(path);
   }
 
   protected void releaseZipFile(ZipFile zipFile) throws IOException {
