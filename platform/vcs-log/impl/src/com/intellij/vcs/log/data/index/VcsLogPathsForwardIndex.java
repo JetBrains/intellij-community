@@ -31,12 +31,14 @@ public abstract class VcsLogPathsForwardIndex
     super(extension);
   }
 
+  @NotNull
   @Override
   protected InputDataDiffBuilder<Integer, List<VcsLogPathsIndex.ChangeKind>> getDiffBuilder(int inputId,
                                                                                             @Nullable List<Collection<Integer>> oldData) {
     return new VcsLogPathsDiffBuilder(inputId, oldData);
   }
 
+  @NotNull
   @Override
   protected List<Collection<Integer>> convertToMapValueType(int inputId, @NotNull Map<Integer, List<VcsLogPathsIndex.ChangeKind>> map) {
     return convertToMapValueType(map);
