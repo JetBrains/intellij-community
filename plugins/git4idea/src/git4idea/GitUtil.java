@@ -931,6 +931,11 @@ public class GitUtil {
     return getRepositoryManager(project).getRepositories();
   }
 
+  @NotNull
+  public static Collection<GitRepository> getRepositoriesInState(@NotNull Project project, @NotNull Repository.State state) {
+    return ContainerUtil.filter(getRepositories(project), repository -> repository.getState() == state);
+  }
+
   /**
    * Checks if the given paths are equal only by case.
    * It is expected that the paths are different at least by the case.
