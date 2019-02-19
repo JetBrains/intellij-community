@@ -38,10 +38,7 @@ public class ConstrainedTaskExecutor {
 
     final AsyncPromise<T> promise = new AsyncPromise<>();
     if (expiration != null) {
-      final Expiration.Handle expirationHandle = expiration.invokeOnExpiration(() -> {
-        // to avoid executing arbitrary code from inside the expiration handler
-        myConstraintExecution.dispatchLaterUnconstrained(promise::cancel);
-      });
+      final Expiration.Handle expirationHandle = expiration.invokeOnExpiration(promise::cancel);
       promise.onProcessed(value -> expirationHandle.unregisterHandler());
     }
 

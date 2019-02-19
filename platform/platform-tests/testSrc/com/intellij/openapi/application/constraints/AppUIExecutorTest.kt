@@ -61,8 +61,14 @@ class AppUIExecutorTest : LightPlatformTestCase() {
 
   fun `test submitted task is not executed once expired`() {
     val queue = LinkedBlockingQueue<String>()
-    val disposable = Disposable {
-      queue.add("disposed")
+    val disposable = object : Disposable.Parent {
+      override fun beforeTreeDispose() {
+        queue.add("disposable.beforeTreeDispose()")
+      }
+
+      override fun dispose() {
+        queue.add("disposable.dispose()")
+      }
     }.also { Disposer.register(testRootDisposable, it) }
     val executor = AppUIExecutor.onUiThread(ModalityState.any()).later().expireWith(disposable)
 
@@ -80,8 +86,9 @@ class AppUIExecutorTest : LightPlatformTestCase() {
       assertOrderedEquals(queue,
                           "before submit",
                           "after submit",
-                          "disposed",
-                          "promise processed")
+                          "disposable.beforeTreeDispose()",
+                          "promise processed",
+                          "disposable.dispose()")
     }
   }
 
