@@ -160,7 +160,7 @@ public final class UsageStatisticsPersistenceComponent implements PersistentStat
       }
       UsageTracker.initialize(scheduler);
     } catch (Exception e) {
-      logger.error(e, "Unable to initialize analytics tracker");
+      logger.warning("Unable to initialize analytics tracker: " + e.getMessage());
       return;
     }
     // Update usage tracker maximums for long-lived process.
