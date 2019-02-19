@@ -1340,7 +1340,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Override
   @NotNull
   public FileEditor[] getEditors(@NotNull VirtualFile file) {
-    assertReadAccess();
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
     if (file instanceof BackedVirtualFile) file = ((BackedVirtualFile)file).getOriginFile();
 
@@ -1396,12 +1396,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @NotNull
   public List<JComponent> getTopComponents(@NotNull FileEditor editor) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final EditorComposite composite = getEditorComposite(editor);
     return composite != null ? composite.getTopComponents(editor) : Collections.emptyList();
   }
 
   @Override
   public void addTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final EditorComposite composite = getEditorComposite(editor);
     if (composite != null) {
       composite.addTopComponent(editor, component);
@@ -1410,6 +1412,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   public void removeTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final EditorComposite composite = getEditorComposite(editor);
     if (composite != null) {
       composite.removeTopComponent(editor, component);
@@ -1418,6 +1421,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   public void addBottomComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final EditorComposite composite = getEditorComposite(editor);
     if (composite != null) {
       composite.addBottomComponent(editor, component);
@@ -1426,6 +1430,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   public void removeBottomComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final EditorComposite composite = getEditorComposite(editor);
     if (composite != null) {
       composite.removeBottomComponent(editor, component);

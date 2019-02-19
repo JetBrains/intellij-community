@@ -1315,6 +1315,7 @@ public class JBTabsImpl extends JComponent
 
   @NotNull
   public List<TabInfo> getTabs() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (myAllTabs != null) return myAllTabs;
 
     ArrayList<TabInfo> result = new ArrayList<>(myVisibleInfos);
