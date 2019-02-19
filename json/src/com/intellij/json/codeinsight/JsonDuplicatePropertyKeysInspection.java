@@ -75,7 +75,7 @@ public class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
         for (Map.Entry<String, Collection<PsiElement>> entry : keys.entrySet()) {
           final Collection<PsiElement> sameNamedKeys = entry.getValue();
           final String entryKey = entry.getKey();
-          if (sameNamedKeys.size() > 1 && !(isSchemaFile || !COMMENT.equalsIgnoreCase(entryKey))) {
+          if (sameNamedKeys.size() > 1 && (!isSchemaFile || !COMMENT.equalsIgnoreCase(entryKey))) {
             for (PsiElement element : sameNamedKeys) {
               holder.registerProblem(element, JsonBundle.message("inspection.duplicate.keys.msg.duplicate.keys", entryKey),
                                      new NavigateToDuplicatesFix(sameNamedKeys, element, entryKey));
