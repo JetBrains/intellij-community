@@ -19,18 +19,11 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.util.ArrayUtil
-import com.intellij.util.ObjectUtils
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.ContainerUtil.intersects
 import com.intellij.util.containers.isEmpty
 import com.intellij.vcsUtil.VcsUtil
-import java.util.stream.Stream
 
-/**
- * @author max
- */
 class MoveChangesToAnotherListAction : DumbAwareAction() {
-
   override fun update(e: AnActionEvent) {
     val isEnabled = isEnabled(e)
 
@@ -42,15 +35,12 @@ class MoveChangesToAnotherListAction : DumbAwareAction() {
     }
   }
 
-  protected fun isEnabled(e: AnActionEvent): Boolean {
-    val project = e.getData(CommonDataKeys.PROJECT)
-    return if (project == null || !ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) {
-      false
-    }
-    else !e.getData<Stream<VirtualFile>>(ChangesListView.UNVERSIONED_FILES_DATA_KEY).isEmpty() ||
-         !ArrayUtil.isEmpty(e.getData(VcsDataKeys.CHANGES)) ||
-         !ArrayUtil.isEmpty(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY))
-
+  private fun isEnabled(e: AnActionEvent): Boolean {
+    val project = e.project
+    return project != null && ProjectLevelVcsManager.getInstance(project).hasActiveVcss() &&
+           (!e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY).isEmpty() ||
+            !e.getData(VcsDataKeys.CHANGES).isNullOrEmpty() ||
+            !e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY).isNullOrEmpty())
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -72,66 +62,51 @@ class MoveChangesToAnotherListAction : DumbAwareAction() {
     }
   }
 
-  companion object {
+  private fun selectAndShowFile(project: Project, file: VirtualFile) {
+    val window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
 
-    private fun selectAndShowFile(project: Project, file: VirtualFile) {
-      val window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
-
-      if (!window.isVisible) {
-        window.activate { ChangesViewManager.getInstance(project).selectFile(file) }
-      }
+    if (!window.isVisible) {
+      window.activate { ChangesViewManager.getInstance(project).selectFile(file) }
     }
+  }
 
+  companion object {
     @JvmStatic
-    fun askAndMove(project: Project,
-                   changes: Collection<Change>,
-                   unversionedFiles: List<VirtualFile>): Boolean {
+    fun askAndMove(project: Project, changes: Collection<Change>, unversionedFiles: List<VirtualFile>): Boolean {
       if (changes.isEmpty() && unversionedFiles.isEmpty()) return false
 
       val targetList = askTargetList(project, changes)
-
       if (targetList != null) {
-        val listManager = ChangeListManagerImpl.getInstanceImpl(project)
+        val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
 
-        listManager.moveChangesTo(targetList, *changes.toTypedArray())
+        changeListManager.moveChangesTo(targetList, *changes.toTypedArray())
         if (!unversionedFiles.isEmpty()) {
-          listManager.addUnversionedFiles(targetList, unversionedFiles)
+          changeListManager.addUnversionedFiles(targetList, unversionedFiles)
         }
         return true
       }
       return false
     }
 
+    @JvmStatic
+    fun guessPreferredList(lists: List<LocalChangeList>): ChangeList? =
+      lists.find { it.isDefault } ?: lists.find { it.changes.isEmpty() } ?: lists.firstOrNull()
+
     private fun askTargetList(project: Project, changes: Collection<Change>): LocalChangeList? {
-      val listManager = ChangeListManagerImpl.getInstanceImpl(project)
-      val nonAffectedLists = getNonAffectedLists(listManager.changeListsCopy, changes)
-      val suggestedLists = if (nonAffectedLists.isEmpty())
-        listOf(listManager.defaultChangeList)
-      else
-        nonAffectedLists
+      val changeListManager = ChangeListManager.getInstance(project)
+      val nonAffectedLists = getNonAffectedLists(changeListManager.changeLists, changes)
+      val suggestedLists = nonAffectedLists.ifEmpty { listOf(changeListManager.defaultChangeList) }
       val defaultSelection = guessPreferredList(nonAffectedLists)
 
-      val chooser = ChangeListChooser(project, suggestedLists, defaultSelection,
-                                      ActionsBundle.message("action.ChangesView.Move.text"), null)
+      val chooser = ChangeListChooser(project, suggestedLists, defaultSelection, ActionsBundle.message("action.ChangesView.Move.text"),
+                                      null)
       chooser.show()
-
       return chooser.selectedList
     }
 
-    @JvmStatic
-    fun guessPreferredList(lists: List<LocalChangeList>): ChangeList? {
-      val activeChangeList = ContainerUtil.find(lists) { it.isDefault }
-      if (activeChangeList != null) return activeChangeList
-
-      val emptyList = ContainerUtil.find(lists) { list -> list.changes.isEmpty() }
-
-      return ObjectUtils.chooseNotNull(emptyList, ContainerUtil.getFirstItem(lists))
-    }
-
     private fun getNonAffectedLists(lists: List<LocalChangeList>, changes: Collection<Change>): List<LocalChangeList> {
-      val changesSet = ContainerUtil.newHashSet(changes)
-
-      return ContainerUtil.findAll(lists) { list -> !ContainerUtil.intersects(changesSet, list.changes) }
+      val changesSet = changes.toSet()
+      return lists.filter { !intersects(changesSet, it.changes) }
     }
   }
 }
