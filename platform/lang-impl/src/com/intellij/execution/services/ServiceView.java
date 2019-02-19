@@ -53,6 +53,7 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
@@ -162,13 +163,15 @@ class ServiceView extends JPanel implements Disposable {
     mouseListener.installOn(myTree);
 
     //RowsDnDSupport.install(myTree, myTreeModel);
-    //new DoubleClickListener() {
-    //  @Override
-    //  protected boolean onDoubleClick(MouseEvent event) {
-    //  handle double click for leaves
-    //    return false;
-    //  }
-    //}.installOn(myTree);
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent event) {
+        if (myLastSelection != null && myTreeModel.isLeaf(myLastSelection)) {
+          return myViewDescriptors.get(myLastSelection).handleDoubleClick();
+        }
+        return false;
+      }
+    }.installOn(myTree);
 
     // popup
     ActionGroup actions = (ActionGroup)ActionManager.getInstance().getAction(SERVICE_VIEW_NODE_POPUP);
@@ -403,7 +406,7 @@ class ServiceView extends JPanel implements Disposable {
 
     @Override
     public boolean isLeaf(Object object) {
-      return object != myRoot && !(object instanceof GroupNode) && !mySubtrees.containsKey(object);
+      return object != myRoot && !(object instanceof GroupNode) && mySubtrees.get(object) == null;
     }
 
     @Override

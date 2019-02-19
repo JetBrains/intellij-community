@@ -72,6 +72,9 @@ public interface ServiceViewContributor<T, Group, State> {
     default void onNodeUnselected() {
     }
 
+    default boolean handleDoubleClick() {
+      return false;
+    }
   }
 
   interface ViewDescriptorRenderer {

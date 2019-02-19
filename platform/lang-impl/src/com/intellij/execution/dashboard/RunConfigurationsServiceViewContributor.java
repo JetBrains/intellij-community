@@ -109,6 +109,12 @@ public class RunConfigurationsServiceViewContributor
           contentManager.removeFromSelection(content);
         });
       }
+
+      @Override
+      public boolean handleDoubleClick() {
+        RunDashboardContributor contributor = node.getContributor();
+        return contributor != null && contributor.handleDoubleClick(node.getConfigurationSettings().getConfiguration());
+      };
     };
   }
 
