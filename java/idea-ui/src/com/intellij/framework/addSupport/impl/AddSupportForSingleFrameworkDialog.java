@@ -15,7 +15,6 @@
  */
 package com.intellij.framework.addSupport.impl;
 
-import com.intellij.CommonBundle;
 import com.intellij.facet.impl.DefaultFacetsProvider;
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.framework.FrameworkTypeEx;
@@ -110,7 +109,7 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
       if (!downloaded) {
         int answer = Messages.showYesNoDialog(getRootPane(),
                                               ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
-                                              CommonBundle.getWarningTitle(), Messages.getWarningIcon());
+                                              "Libraries Are Required", Messages.getWarningIcon());
         if (answer != Messages.YES) {
           return false;
         }

@@ -388,7 +388,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     if (questions.isEmpty()) return true;
 
     return Messages.showYesNoDialog(myProject, message("message.do.you.want.to.proceed", formatQuestions(questions)),
-                                    CommonBundle.getWarningTitle(), Messages.getWarningIcon()) == Messages.YES;
+                                    "Revert", Messages.getWarningIcon()) == Messages.YES;
   }
 
   private String formatQuestions(List<String> questions) {

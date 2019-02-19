@@ -80,6 +80,10 @@ public class CommonBundle extends BundleBase {
     return message("title.error");
   }
 
+  /**
+   * @deprecated Use more informative title instead
+   */
+  @Deprecated
   public static String getWarningTitle() {
     return message("title.warning");
   }
