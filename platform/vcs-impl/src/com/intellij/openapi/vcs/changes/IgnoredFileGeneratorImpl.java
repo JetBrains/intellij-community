@@ -1,26 +1,37 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.notification.NotificationAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsApplicationSettings;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
+
+import static com.intellij.openapi.vcs.changes.ignore.IgnoreFilesProcessorImplKt.ASKED_MANAGE_IGNORE_FILES_PROPERTY;
+import static com.intellij.vcsUtil.VcsImplUtil.MANAGE_IGNORE_FILES_PROPERTY;
 
 public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
 
@@ -35,53 +46,91 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
   }
 
   @Override
-  public boolean generateFile(@NotNull VirtualFile ignoreFileRoot, @NotNull AbstractVcs vcs) throws IOException {
-    return doGenerateOrAppend(ignoreFileRoot, vcs, false);
+  public void generateFile(@NotNull VirtualFile ignoreFileRoot, @NotNull AbstractVcs vcs, boolean notify) {
+    doGenerate(ignoreFileRoot, vcs, notify);
   }
 
-  @Override
-  public boolean appendFile(@NotNull VirtualFile ignoreFileRoot, @NotNull AbstractVcs vcs) throws IOException {
-    return doGenerateOrAppend(ignoreFileRoot, vcs, true);
-  }
+  private void doGenerate(@NotNull VirtualFile ignoreFileRoot, @NotNull AbstractVcs vcs, boolean notify) {
+    if (!needGenerateIgnoreFile(myProject, ignoreFileRoot)) {
+      LOG.debug("Skip VCS ignore file generation");
+      return;
+    }
 
-  private boolean doGenerateOrAppend(@NotNull VirtualFile ignoreFileRoot,
-                                     @NotNull AbstractVcs vcs, boolean append) throws IOException {
-    IgnoredFileContentProvider ignoredFileContentProvider = findIgnoredFileContentProvider(vcs);
+    IgnoredFileContentProvider ignoredFileContentProvider = VcsImplUtil.getIgnoredFileContentProvider(myProject, vcs);
     if (ignoredFileContentProvider == null) {
       LOG.debug("Cannot find content provider for vcs " + vcs.getName());
-      return false;
+      return;
     }
 
     String ignoreFileName = ignoredFileContentProvider.getFileName();
 
-    if (!needGenerateIgnoreFile(myProject, ignoreFileRoot)) {
-      LOG.debug("Skip VCS ignore file generation");
-      return false;
-    }
-
     synchronized (myWriteLock) {
       String ignoreFileContent =
         ignoredFileContentProvider.buildIgnoreFileContent(ignoreFileRoot, IgnoredFileProvider.IGNORE_FILE.getExtensions());
-      if (StringUtil.isEmptyOrSpaces(ignoreFileContent)) return false;
+      if (StringUtil.isEmptyOrSpaces(ignoreFileContent)) return;
 
       File ignoreFile = getIgnoreFile(ignoreFileRoot, ignoreFileName);
-      if (ignoreFile.exists() && !append) return false;
+      boolean append = ignoreFile.exists();
 
-      String projectCharsetName = EncodingProjectManager.getInstance(myProject).getDefaultCharsetName();
-      FileUtil.writeToFile(ignoreFile, ignoreFileContent.getBytes(projectCharsetName), append);
-      IgnoredFileRootStore.getInstance(myProject).addRoot(ignoreFile.getParent());
-      LocalFileSystem.getInstance().refreshIoFiles(Collections.singleton(ignoreFile));
-      return true;
+      if (notify && needAskToManageIgnoreFiles(myProject)) {
+        notifyVcsIgnoreFileManage(myProject, () -> writeToFile(append, ignoreFileContent, ignoreFile, true));
+      }
+      else {
+        writeToFile(append, ignoreFileContent, ignoreFile, false);
+      }
     }
   }
 
-  @Nullable
-  private IgnoredFileContentProvider findIgnoredFileContentProvider(@NotNull AbstractVcs vcs) {
-    IgnoredFileContentProvider[] contentProviders = IgnoredFileContentProvider.IGNORE_FILE_CONTENT_PROVIDER.getExtensions(myProject);
-    return Arrays.stream(contentProviders)
-      .filter((provider) -> provider.getSupportedVcs().equals(vcs.getKeyInstanceMethod()))
-      .findFirst().orElse(null);
+  private void writeToFile(boolean append, @NotNull String ignoreFileContent, @NotNull File ignoreFile, boolean openFile) {
+    String projectCharsetName = EncodingProjectManager.getInstance(myProject).getDefaultCharsetName();
+    try {
+      FileUtil.writeToFile(ignoreFile, ignoreFileContent.getBytes(projectCharsetName), append);
+    }
+    catch (IOException e) {
+      LOG.warn("Cannot write to file " + ignoreFile.getPath());
+    }
+    IgnoredFileRootStore.getInstance(myProject).addRoot(ignoreFile.getParent());
+    LocalFileSystem.getInstance().refreshIoFiles(Collections.singleton(ignoreFile));
+    if (openFile) {
+      openFile(ignoreFile);
+    }
   }
+
+  private void openFile(@NotNull File file) {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      VirtualFile vFile = VfsUtil.findFileByIoFile(file, true);
+      if (vFile == null) return;
+      new OpenFileDescriptor(myProject, vFile).navigate(true);
+    });
+  }
+
+  private static void notifyVcsIgnoreFileManage(@NotNull Project project,
+                                                @NotNull Runnable writeToIgnoreFile) {
+    PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
+    VcsApplicationSettings applicationSettings = VcsApplicationSettings.getInstance();
+
+    VcsNotifier.getInstance(project).notifyMinorInfo(
+      true,
+      "",
+      VcsBundle.message("ignored.file.manage.message"),
+      NotificationAction.create(VcsBundle.message("ignored.file.manage.this.project"), (event, notification) -> {
+        writeToIgnoreFile.run();
+        propertiesComponent.setValue(MANAGE_IGNORE_FILES_PROPERTY, true);
+        propertiesComponent.setValue(ASKED_MANAGE_IGNORE_FILES_PROPERTY, true);
+        notification.expire();
+      }),
+      NotificationAction.create(VcsBundle.message("ignored.file.manage.all.project"), (event, notification) -> {
+        writeToIgnoreFile.run();
+        applicationSettings.MANAGE_IGNORE_FILES = true;
+        propertiesComponent.setValue(ASKED_MANAGE_IGNORE_FILES_PROPERTY, true);
+        notification.expire();
+      }),
+      NotificationAction.create(VcsBundle.message("ignored.file.manage.notmanage"), (event, notification) -> {
+        propertiesComponent.setValue(ASKED_MANAGE_IGNORE_FILES_PROPERTY, true);
+        notification.expire();
+      }));
+  }
+
 
   @NotNull
   private static File getIgnoreFile(@NotNull VirtualFile ignoreFileRoot, @NotNull String ignoreFileName) {
@@ -93,9 +142,33 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
     boolean wasGeneratedPreviously = IgnoredFileRootStore.getInstance(project).containsRoot(ignoreFileRoot.getPath());
     if (wasGeneratedPreviously) {
       LOG.debug("Ignore file generated previously for root " + ignoreFileRoot.getPath());
+      return false;
     }
+
     boolean needGenerateRegistryFlag = Registry.is("vcs.ignorefile.generation", true);
-    return !wasGeneratedPreviously && needGenerateRegistryFlag;
+    if (!needGenerateRegistryFlag) {
+      return false;
+    }
+
+    PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
+    boolean askedToManageIgnores = propertiesComponent.getBoolean(ASKED_MANAGE_IGNORE_FILES_PROPERTY, false);
+
+    return isManageIgnoreTurnOn(project) || !askedToManageIgnores;
+  }
+
+  private static boolean isManageIgnoreTurnOn(@NotNull Project project){
+    boolean globalManageIgnores = VcsApplicationSettings.getInstance().MANAGE_IGNORE_FILES;
+    PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
+    boolean manageIgnoresInProject = propertiesComponent.getBoolean(MANAGE_IGNORE_FILES_PROPERTY, false);
+
+    return globalManageIgnores || manageIgnoresInProject;
+  }
+
+  private static boolean needAskToManageIgnoreFiles(@NotNull Project project) {
+    PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
+    boolean askedToManageIgnores = propertiesComponent.getBoolean(ASKED_MANAGE_IGNORE_FILES_PROPERTY, false);
+
+    return !askedToManageIgnores && !isManageIgnoreTurnOn(project);
   }
 
   @State(name = "IgnoredFileRootStore", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})

@@ -51,9 +51,9 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
       myModule = createMainModule()
       val moduleDir = myModule.moduleFile!!.parent
       myModule.addContentRoot(moduleDir)
-      val outDir = moduleDir.findOrCreateDir(OUT)
-      val excludedDir = moduleDir.findOrCreateDir(EXCLUDED)
-      val excludedChildDir = excludedDir.findOrCreateDir(EXCLUDED_CHILD_DIR)
+      val outDir = moduleDir.findOrCreateDir(OUT).apply { findOrCreateChildData(this, "out.txt") }
+      val excludedDir = moduleDir.findOrCreateDir(EXCLUDED).apply { findOrCreateChildData(this, "excl.txt") }
+      val excludedChildDir = excludedDir.findOrCreateDir(EXCLUDED_CHILD_DIR).apply { findOrCreateChildData(this, "excl_child.txt") }
       myModule.addExclude(outDir)
       myModule.addExclude(excludedDir)
       myModule.addExclude(excludedChildDir)
@@ -67,6 +67,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
     val shelf = File(ShelveChangesManager.getShelfPath(project))
     val shelfExist = if (shelf.exists()) true else shelf.mkdir()
     if (!shelfExist) fail("Shelf doesn't exist and cannot be created")
+    FileUtil.createIfDoesntExist(File(shelf, "some.patch")) //create file inside shelf dir because we don't add empty (without unversioned files) dirs to gitignore
 
     val workspaceFilePath = project.stateStore.workspaceFilePath
     if (workspaceFilePath == null) fail("Cannot detect workspace file path")
