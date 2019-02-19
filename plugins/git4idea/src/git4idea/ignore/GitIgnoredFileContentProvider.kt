@@ -41,6 +41,8 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
     val lineSeparator = lineSeparator()
     val untrackedFiles = getUntrackedFiles(ignoreFileRoot)
 
+    if (untrackedFiles.isEmpty()) return "" //if there is no untracked files this mean nothing to ignore
+
     for (i in ignoredFileProviders.indices) {
       val provider = ignoredFileProviders[i]
       val ignoredFiles = provider.getIgnoredFiles(project).ignoreBeansToRelativePaths(ignoreFileRoot, untrackedFiles)
@@ -75,7 +77,7 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
     val vcsContextFactory = VcsContextFactory.SERVICE.getInstance()
     return filter { ignoredBean ->
       when (ignoredBean.type) {
-        UNDER_DIR -> shouldIgnoreUnderDir(ignoredBean, ignoreFileRoot, vcsRoot, vcsContextFactory)
+        UNDER_DIR -> shouldIgnoreUnderDir(ignoredBean, untrackedFiles, ignoreFileRoot, vcsRoot, vcsContextFactory)
         FILE -> shouldIgnoreFile(ignoredBean, untrackedFiles, ignoreFileRoot, vcsRoot, vcsContextFactory)
         MASK -> shouldIgnoreByMask(ignoredBean, untrackedFiles)
       }
@@ -89,10 +91,12 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
   }
 
   private fun shouldIgnoreUnderDir(ignoredBean: IgnoredFileDescriptor,
+                                   untrackedFiles: Set<VirtualFile>,
                                    ignoreFileRoot: VirtualFile,
                                    vcsRoot: VirtualFile?,
                                    vcsContextFactory: VcsContextFactory) =
     FileUtil.exists(ignoredBean.path)
+    && untrackedFiles.any { FileUtil.isAncestor(ignoredBean.path!!, it.path, true) }
     && FileUtil.isAncestor(ignoreFileRoot.path, ignoredBean.path!!, false)
     && Comparing.equal(vcsRoot, VcsUtil.getVcsRootFor(project, vcsContextFactory.createFilePath(ignoredBean.path!!, true)))
     && gitIgnoreChecker.isIgnored(vcsRoot!!, File(ignoredBean.path!!)) is NotIgnored
