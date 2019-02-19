@@ -3,8 +3,8 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.async.ConstrainedExecution
-import com.intellij.openapi.application.async.cancelJobOnDisposal
+import com.intellij.openapi.application.constraints.ConstrainedExecution
+import com.intellij.openapi.application.constraints.cancelJobOnDisposal
 import kotlinx.coroutines.*
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext

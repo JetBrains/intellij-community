@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.application.async
+package com.intellij.openapi.application.constraints
 
-import com.intellij.openapi.application.async.ConstrainedExecution.ContextConstraint
+import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint
 import kotlinx.coroutines.Runnable
 import java.util.*
 import java.util.function.BooleanSupplier
