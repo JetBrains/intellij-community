@@ -1134,4 +1134,8 @@ def test() {
 }
 ''', JAVA_LANG_STRING
   }
+
+  void 'test spread list of classes'() {
+    doExprTest "[String, Integer]*.'class'", 'java.util.ArrayList<java.lang.Class<?>>'
+  }
 }

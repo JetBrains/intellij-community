@@ -247,12 +247,14 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         return method.getParameterList().getParameters()[0].getType();
       }
 
-      //'class' property with explicit generic
-      PsiClass containingClass = method.getContainingClass();
-      if (containingClass != null &&
-          CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName()) &&
-          "getClass".equals(method.getName())) {
-        return getTypeFromClassRef();
+      if (getDotTokenType() != GroovyTokenTypes.mSPREAD_DOT) {
+        //'class' property with explicit generic
+        PsiClass containingClass = method.getContainingClass();
+        if (containingClass != null &&
+            CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName()) &&
+            "getClass".equals(method.getName())) {
+          return getTypeFromClassRef();
+        }
       }
 
       return PsiUtil.getSmartReturnType(method);
