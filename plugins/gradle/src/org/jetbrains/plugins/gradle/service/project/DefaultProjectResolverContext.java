@@ -135,6 +135,11 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     return mySettings != null && mySettings.isUseQualifiedModuleNames();
   }
 
+  @Override
+  public boolean isDelegatedBuild() {
+    return mySettings == null || mySettings.isDelegatedBuild();
+  }
+
   public File getGradleUserHome() {
     if (myGradleUserHome == null) {
       String serviceDirectory = mySettings == null ? null : mySettings.getServiceDirectory();

@@ -76,6 +76,7 @@ import org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
 import org.jetbrains.plugins.gradle.service.settings.GradleConfigurable;
+import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.*;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -173,8 +174,9 @@ public class GradleManager
   public Function<Pair<Project, String>, GradleExecutionSettings> getExecutionSettingsProvider() {
     return pair -> {
       final Project project = pair.first;
+      final String projectPath = pair.second;
       GradleSettings settings = GradleSettings.getInstance(project);
-      File gradleHome = myInstallationManager.getGradleHome(project, pair.second);
+      File gradleHome = myInstallationManager.getGradleHome(project, projectPath);
       String localGradlePath = null;
       if (gradleHome != null) {
         try {
@@ -186,11 +188,11 @@ public class GradleManager
         }
       }
 
-      GradleProjectSettings projectLevelSettings = settings.getLinkedProjectSettings(pair.second);
+      GradleProjectSettings projectLevelSettings = settings.getLinkedProjectSettings(projectPath);
       final DistributionType distributionType;
       if (projectLevelSettings == null) {
         distributionType =
-          GradleUtil.isGradleDefaultWrapperFilesExist(pair.second) ? DistributionType.DEFAULT_WRAPPED : DistributionType.BUNDLED;
+          GradleUtil.isGradleDefaultWrapperFilesExist(projectPath) ? DistributionType.DEFAULT_WRAPPED : DistributionType.BUNDLED;
       }
       else {
         distributionType =
@@ -206,7 +208,7 @@ public class GradleManager
         result.addResolverExtensionClass(ClassHolder.from(extension.getClass()));
       }
 
-      final String rootProjectPath = projectLevelSettings != null ? projectLevelSettings.getExternalProjectPath() : pair.second;
+      final String rootProjectPath = projectLevelSettings != null ? projectLevelSettings.getExternalProjectPath() : projectPath;
       final Sdk gradleJdk = myInstallationManager.getGradleJdk(project, rootProjectPath);
       final String javaHome = gradleJdk != null ? gradleJdk.getHomePath() : null;
       if (!StringUtil.isEmpty(javaHome)) {
@@ -226,8 +228,10 @@ public class GradleManager
         result.setResolveModulePerSourceSet(projectLevelSettings.isResolveModulePerSourceSet());
         result.setUseQualifiedModuleNames(projectLevelSettings.isUseQualifiedModuleNames());
       }
+      boolean delegatedBuildEnabled = GradleSettingsService.getInstance(project).isDelegatedBuildEnabled(projectPath);
+      result.setDelegatedBuild(delegatedBuildEnabled);
 
-      configureExecutionWorkspace(projectLevelSettings, settings, result, project, pair.second);
+      configureExecutionWorkspace(projectLevelSettings, settings, result, project, projectPath);
       return result;
     };
   }
@@ -432,6 +436,11 @@ public class GradleManager
 
       @Override
       public void onGradleDistributionTypeChange(DistributionType currentValue, @NotNull String linkedProjectPath) {
+        ExternalProjectsManager.getInstance(project).getExternalProjectsWatcher().markDirty(linkedProjectPath);
+      }
+
+      @Override
+      public void onBuildDelegationChange(boolean delegatedBuild, @NotNull String linkedProjectPath) {
         ExternalProjectsManager.getInstance(project).getExternalProjectsWatcher().markDirty(linkedProjectPath);
       }
     });

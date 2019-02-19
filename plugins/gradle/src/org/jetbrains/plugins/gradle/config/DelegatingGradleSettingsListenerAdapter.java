@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener;
+import org.jetbrains.plugins.gradle.settings.TestRunner;
 
 /**
  * @author Denis Zhdanov
@@ -48,5 +49,13 @@ public class DelegatingGradleSettingsListenerAdapter extends DelegatingExternalS
 
   @Override
   public void onGradleVmOptionsChange(@Nullable String oldOptions, @Nullable String newOptions) {
+  }
+
+  @Override
+  public void onBuildDelegationChange(boolean delegatedBuild, @NotNull String linkedProjectPath) {
+  }
+
+  @Override
+  public void onTestRunnerChange(@NotNull TestRunner currentTestRunner, @NotNull String linkedProjectPath) {
   }
 }
