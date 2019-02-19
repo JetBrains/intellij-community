@@ -26,14 +26,16 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
   fun configDirectoryIsValidForImport() {
     PropertiesComponent.getInstance().setValue("property.ConfigImportHelperTest", true)
     try {
-      runBlocking { ApplicationManager.getApplication().stateStore.save(true) }
+      useAppConfigDir {
+        runBlocking { ApplicationManager.getApplication().stateStore.save(true) }
 
-      val config = File(PathManager.getConfigPath())
-      assertThat(ConfigImportHelper.isConfigDirectory(config))
-        .`as`(description {
-          "${config} exists=${config.exists()} options=${File(config, "options").list().asList()}"
-        })
-        .isTrue()
+        val config = File(PathManager.getConfigPath())
+        assertThat(ConfigImportHelper.isConfigDirectory(config))
+          .`as`(description {
+            "${config} exists=${config.exists()} options=${File(config, "options").list().asList()}"
+          })
+          .isTrue()
+      }
     }
     finally {
       PropertiesComponent.getInstance().unsetValue("property.ConfigImportHelperTest")
