@@ -34,6 +34,9 @@ class SkeletonCachingTest(GeneratorTestCase):
     def find_binary_subdir(self, subdir):
         return os.path.join(self.binaries_dir, subdir)
 
+    def find_test_data_subdir(self, subdir):
+        return os.path.join(self.test_data_dir, subdir)
+
     def run_generator(self, mod_qname, mod_path=None,
                       fake_hashes=False,
                       extra_syspath_entry=None,
@@ -57,9 +60,13 @@ class SkeletonCachingTest(GeneratorTestCase):
             env[ENV_REQUIRED_GEN_VERSION_FILE] = required_gen_version_file_path
 
         if _run_generator_in_separate_process:
+            generator3_path = os.path.abspath(generator3.__file__)
+            base, ext = os.path.splitext(generator3_path)
+            if ext == '.pyc':
+                generator3_path = base + '.py'
             args = [
                 sys.executable,
-                os.path.abspath(generator3.__file__),
+                generator3_path,
                 '-d', output_dir,
                 '-s', extra_syspath_entry,
                 mod_qname
