@@ -9,7 +9,7 @@ import java.util.function.BooleanSupplier
 internal class LimitedAttemptConstraintSchedulingExecutor(constraints: Array<ContextConstraint>,
                                                           condition: BooleanSupplier?,
                                                           private val myLimit: Int = 3000)
-  : BaseConstrainedExecution.ConstraintSchedulingExecutor(constraints, condition) {
+  : BaseConstrainedExecution.ConditionalConstraintSchedulingExecutor(constraints, condition) {
   private var myAttemptCount: Int = 0
 
   private val myLogLimit: Int = 30

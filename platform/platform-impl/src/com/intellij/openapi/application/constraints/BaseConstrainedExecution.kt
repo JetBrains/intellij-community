@@ -32,12 +32,13 @@ abstract class BaseConstrainedExecution<E : ConstrainedExecution<E>>(protected v
     cloneWith(constraints + constraint)
 
   override fun createConstraintSchedulingExecutor(condition: BooleanSupplier?): Executor =
-    ConstraintSchedulingExecutor(constraints, condition)
+    when (condition) {
+      null -> ConstraintSchedulingExecutor(constraints)
+      else -> ConditionalConstraintSchedulingExecutor(constraints, condition)
+    }
 
-  open class ConstraintSchedulingExecutor(private val constraints: Array<ContextConstraint>,
-                                          private val condition: BooleanSupplier?) : Executor {
+  open class ConstraintSchedulingExecutor(private val constraints: Array<ContextConstraint>) : Executor {
     override fun execute(runnable: Runnable) {
-      if (condition?.asBoolean == false) return
       for (constraint in constraints) {
         if (!constraint.isCorrectContext()) {
           return constraint.schedule(Runnable {
@@ -51,6 +52,15 @@ abstract class BaseConstrainedExecution<E : ConstrainedExecution<E>>(protected v
 
     protected open fun retrySchedule(runnable: Runnable, causeConstraint: ContextConstraint) {
       execute(runnable)
+    }
+  }
+
+  open class ConditionalConstraintSchedulingExecutor(constraints: Array<ContextConstraint>,
+                                                     private val condition: BooleanSupplier?) : ConstraintSchedulingExecutor(constraints) {
+    override fun execute(runnable: Runnable) {
+      if (condition?.asBoolean != false) {
+        super.execute(runnable)
+      }
     }
   }
 
