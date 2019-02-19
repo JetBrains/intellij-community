@@ -45,7 +45,8 @@ public class ConstrainedTaskExecutor {
       promise.onProcessed(value -> expirationHandle.unregisterHandler());
     }
 
-    final Executor executor = myConstraintExecution.createConstraintSchedulingExecutor(() -> !promise.isCancelled());
+    final BooleanSupplier condition = () -> !(expiration != null && expiration.isExpired() || promise.isCancelled());
+    final Executor executor = myConstraintExecution.createConstraintSchedulingExecutor(condition);
     executor.execute(() -> {
       try {
         final T result = task.call();

@@ -17,7 +17,9 @@ import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import org.jetbrains.concurrency.asDeferred
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.function.Consumer
 import javax.swing.SwingUtilities
 import kotlin.coroutines.CoroutineContext
 
@@ -36,7 +38,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
     override fun dispatch(context: CoroutineContext, block: Runnable) = SwingUtilities.invokeLater(block)
   }
 
-  private fun Deferred<Unit>.joinNonBlocking() {
+  private fun Deferred<Any>.joinNonBlocking(onceJoined: () -> Unit = { }) {
     var countDown = 5
     object : Runnable {
       override fun run() {
@@ -47,6 +49,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
           }
           catch (ignored: CancellationException) {
           }
+          onceJoined()
         }
         else {
           if (countDown-- <= 0) fail("Too many EDT reschedules")
@@ -54,6 +57,32 @@ class AppUIExecutorTest : LightPlatformTestCase() {
         }
       }
     }.run()
+  }
+
+  fun `test submitted task is not executed once expired`() {
+    val queue = LinkedBlockingQueue<String>()
+    val disposable = Disposable {
+      queue.add("disposed")
+    }.also { Disposer.register(testRootDisposable, it) }
+    val executor = AppUIExecutor.onUiThread(ModalityState.any()).later().expireWith(disposable)
+
+    queue.add("before submit")
+    val promise = executor.submit {
+      queue.add("run")
+    }.onProcessed(Consumer {
+      queue.add("promise processed")
+    })
+    queue.add("after submit")
+
+    Disposer.dispose(disposable)
+
+    promise.asDeferred().joinNonBlocking {
+      assertOrderedEquals(queue,
+                          "before submit",
+                          "after submit",
+                          "disposed",
+                          "promise processed")
+    }
   }
 
   fun `test coroutine onUiThread`() {
