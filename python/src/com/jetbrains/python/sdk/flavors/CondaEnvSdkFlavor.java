@@ -43,7 +43,7 @@ public class CondaEnvSdkFlavor extends CPythonSdkFlavor {
   public final static String[] CONDA_DEFAULT_ROOTS = new String[]{"anaconda", "anaconda2", "anaconda3", "miniconda", "miniconda2",
     "miniconda3", "Anaconda", "Anaconda2", "Anaconda3", "Miniconda", "Miniconda2", "Miniconda3"};
 
-  public static CondaEnvSdkFlavor INSTANCE = new CondaEnvSdkFlavor();
+  public static final CondaEnvSdkFlavor INSTANCE = new CondaEnvSdkFlavor();
 
   @Override
   public Collection<String> suggestHomePaths(@Nullable Module module) {
@@ -71,13 +71,12 @@ public class CondaEnvSdkFlavor extends CPythonSdkFlavor {
           final VirtualFile appData = userHome.findFileByRelativePath("AppData\\Local\\Continuum\\" + root);
           addEnvsFolder(roots, appData);
           condaFolder = LocalFileSystem.getInstance().findFileByPath("C:\\" + root);
-          addEnvsFolder(roots, condaFolder);
         }
         else {
           final String systemWidePath = "/opt/anaconda";
           condaFolder = LocalFileSystem.getInstance().findFileByPath(systemWidePath);
-          addEnvsFolder(roots, condaFolder);
         }
+        addEnvsFolder(roots, condaFolder);
       }
     }
     addEnvsFolder(roots, findPreferredCondaEnvsFolder());
