@@ -47,6 +47,7 @@ internal class DoNotSaveDefaultsTest {
       newConfigDir.delete()
       configDir.move(newConfigDir)
     }
+
     try {
       doTest(ApplicationManager.getApplication() as ApplicationImpl)
     }
