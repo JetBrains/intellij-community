@@ -16,6 +16,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
@@ -45,6 +46,7 @@ import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.awt.event.*;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -1261,6 +1263,7 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private final Set<Shortcut> shortcutsShowingPopups = new HashSet<>();
+  private WeakReference<Keymap> lastActiveKeymap = new WeakReference<Keymap>(null);
 
   private final List<String> actionsShowingPopupsList = new ArrayList<>();
   private long lastTypeaheadTimestamp = -1;
@@ -1268,16 +1271,22 @@ public class IdeEventQueue extends EventQueue {
   @NotNull
   private Set<Shortcut> getShortcutsShowingPopups () {
     KeymapManager keymapManager = KeymapManager.getInstance();
-    if (shortcutsShowingPopups.isEmpty() && keymapManager != null && keymapManager.getActiveKeymap() != null) {
-      String actionsAwareTypeaheadActionsList = Registry.get("action.aware.typeahead.actions.list").asString();
-      actionsShowingPopupsList.addAll(StringUtil.split(actionsAwareTypeaheadActionsList, ","));
-      actionsShowingPopupsList.forEach(actionId -> {
-        List<Shortcut> shortcuts = Arrays.asList(keymapManager.getActiveKeymap().getShortcuts(actionId));
-        if (TYPEAHEAD_LOG.isDebugEnabled()) {
-          shortcuts.forEach(s -> TYPEAHEAD_LOG.debug("Typeahead for " + actionId + " : Shortcuts: " + s));
+    if (keymapManager != null) {
+      Keymap keymap = keymapManager.getActiveKeymap();
+      if (keymap != null) {
+        if (!keymap.equals(lastActiveKeymap.get())) {
+          String actionsAwareTypeaheadActionsList = Registry.get("action.aware.typeahead.actions.list").asString();
+          actionsShowingPopupsList.addAll(StringUtil.split(actionsAwareTypeaheadActionsList, ","));
+          actionsShowingPopupsList.forEach(actionId -> {
+            List<Shortcut> shortcuts = Arrays.asList(keymap.getShortcuts(actionId));
+            if (TYPEAHEAD_LOG.isDebugEnabled()) {
+              shortcuts.forEach(s -> TYPEAHEAD_LOG.debug("Typeahead for " + actionId + " : Shortcuts: " + s));
+            }
+            shortcutsShowingPopups.addAll(shortcuts);
+          });
+          lastActiveKeymap = new WeakReference<>(keymap);
         }
-        shortcutsShowingPopups.addAll(shortcuts);
-      });
+      }
     }
     return shortcutsShowingPopups;
   }
