@@ -469,6 +469,6 @@ public class TypesTest extends GenericsTestCase {
 
     GCUtil.tryGcSoftlyReachableObjects();
 
-    assertFalse(type.isValid());
+    assertFalse(type.isValid()); // shouldn't throw
   }
 }
