@@ -258,16 +258,20 @@ class AsyncProjectViewSupport {
       file = file.getParent();
       if (file == null) return;
     }
-    SmartList<TreePath> list = new SmartList<>();
-    acceptAndUpdate(new ProjectViewFileVisitor(file, null) {
+    SmartList<TreePath> structures = new SmartList<>();
+    SmartList<TreePath> presentations = new SmartList<>();
+    myAsyncTreeModel.accept(new ProjectViewFileVisitor(file, structures::add) {
       @NotNull
       @Override
       protected Action visit(@NotNull TreePath path, @NotNull AbstractTreeNode node, @NotNull VirtualFile element) {
         Action action = super.visit(path, node, element);
-        if (action != Action.SKIP_CHILDREN) list.add(path);
+        if (action == Action.CONTINUE) presentations.add(path);
         return action;
       }
-    }, list, false);
+    }, false).onSuccess(path -> {
+      update(presentations, false);
+      update(structures, true);
+    });
   }
 
   private void updateAllPresentations() {
