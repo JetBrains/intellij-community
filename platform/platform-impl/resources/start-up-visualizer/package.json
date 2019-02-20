@@ -2,15 +2,18 @@
   "name": "start-up-visualizer",
   "private": true,
   "main": "out/index.js",
+  "dependencies": {
+    "@amcharts/amcharts4": "4.1.9"
+  },
   "devDependencies": {
+    "@types/parcel-env": "^0.0.0",
+    "parcel-bundler": "^1.11.0",
     "typescript": "^3.3.3"
   },
-  "dependencies": {
-    "@amcharts/amcharts4": "^4.1.8"
-  },
   "scripts": {
-    "compile": "tsc",
+    "compile": "tsc --outFile out/index.js --module amd",
     "//": "chrome://flags/#allow-insecure-localhost to tell Chrome to ignore cert warnings on localhost",
-    "serve": "caddy -quic -host localhost -port 8080 \"ext .html\" \"log stdout\" \"tls self_signed\" \"bind 127.0.0.1\""
+    "serve": "caddy -quic -host localhost -port 8080 \"ext .html\" \"log stdout\" \"tls self_signed\" \"bind 127.0.0.1\"",
+    "dev": "parcel dev.html"
   }
 }

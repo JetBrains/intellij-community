@@ -12,17 +12,6 @@ const groups = isCreateGroups ? [
   {id: "project components"},
 ] : null
 
-const timelineOptions: any = {
-  // http://visjs.org/examples/timeline/items/itemOrdering.html
-  // strange, but order allows to have consistent ordering but still some items not stacked correctly (e.g. "project components initialization between registration and creation even if indices are correct)
-  order: (o1: any, o2: any) => {
-    // if (o1.startRaw <= o2.startRaw && o1.endRaw >= o2.endRaw) {
-    //   return -1
-    // }
-    return o1.rawIndex - o2.rawIndex
-  },
-}
-
 export class TimelineChartManager extends XYChartManager {
   private lastData: InputData | null = null
   // private readonly dateAxis: am4charts.DateAxis
@@ -31,16 +20,6 @@ export class TimelineChartManager extends XYChartManager {
     super(container)
 
     const chart = this.chart
-
-    // const dateAxis = chart.xAxes.push(new am4charts.DateAxis())
-    // this.dateAxis = dateAxis
-    // // https://www.amcharts.com/docs/v4/concepts/formatters/formatting-date-time/
-    // // Milliseconds since 1970-01-01 / Unix epoch
-    // dateAxis.dateFormatter.inputDateFormat = "x"
-    // dateAxis.renderer.minGridDistance = 1
-    // dateAxis.renderer.labels.template.hideOversized = false
-    // // dateAxis.baseInterval = {count: 100, timeUnit: "millisecond"}
-    // dateAxis.baseInterval = {count: 1, timeUnit: "millisecond"}
 
     const durationAxis = chart.xAxes.push(new am4charts.DurationAxis())
     durationAxis.durationFormatter.baseUnit = "millisecond"
@@ -152,7 +131,7 @@ function computeLevels(input: InputData) {
         level++
       }
     }
-    item.level = level
+    (item as TimeLineItem).level = level
     prevItem = item
   }
 }
@@ -167,7 +146,7 @@ function transformIjData(input: InputData, timeOffset: number): Array<any> {
   // row index simply incremented till empirical limit (6).
   let rowIndex = 0
   for (let i = 0; i < input.items.length; i++) {
-    const item = input.items[i]
+    const item = input.items[i] as TimeLineItem
 
     const result: any = {
       name: item.name,
@@ -192,20 +171,6 @@ function transformIjData(input: InputData, timeOffset: number): Array<any> {
   return transformedItems
 }
 
-// function getLevel(itemIndex: number, items: Array<Item>, transformedItems: Array<any>): number {
-//   let index = itemIndex
-//   const currentItem = items[itemIndex]
-//   while (true) {
-//     --index
-//     if (index < 0) {
-//       return 1
-//     }
-//
-//     let prevItem = items[index]
-//     // items are sorted, no need to check start or next items
-//     const diff = prevItem.end - currentItem.end
-//     if (diff >= 0) {
-//       return transformedItems[index].level + ((diff == 0 && currentItem.start > prevItem.start) ? 0 : 1)
-//     }
-//   }
-// }
+interface TimeLineItem extends Item {
+  level: number
+}

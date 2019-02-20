@@ -3,11 +3,11 @@ import * as am4core from "@amcharts/amcharts4/core"
 
 import am4themes_animated from "@amcharts/amcharts4/themes/animated"
 import {ComponentsChartManager} from "./ComponentsChartManager"
-import {TimelineChartManager} from "./timeline"
+import {TimelineChartManager} from "./TimeLineChartManager"
 import {ChartManager, getButtonElement, getInputElement, InputData} from "./core"
 
-const storageKeyData = "inputIjFormat"
 const storageKeyPort = "ijPort"
+const storageKeyData = "inputIjFormat"
 
 export function main(): void {
   am4core.useTheme(am4themes_animated)

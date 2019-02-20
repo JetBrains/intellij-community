@@ -8,6 +8,8 @@
 // so, instead of all these JS nightmares, plain own bootstrap code is used.
 
 const nameToDefinition = new Map()
+// parcel hot-reload adds module but in production no such global var and it leads to error
+const module = null
 
 function define(name, dependencies, definition) {
   nameToDefinition.set(name, {dependencies, definition})

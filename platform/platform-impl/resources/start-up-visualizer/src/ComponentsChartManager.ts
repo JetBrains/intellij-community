@@ -1,49 +1,47 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import * as am4charts from "@amcharts/amcharts4/charts"
-import {InputData, XYChartManager} from "./core"
+import {InputData, Item, XYChartManager} from "./core"
 
 export class ComponentsChartManager extends XYChartManager {
   // isUseYForName - if true, names are more readable, but not possible to see all components because layout from top to bottom (so, opposite from left to right some data can be out of current screen)
-  constructor(container: HTMLElement, isUseYForName = false) {
+  constructor(container: HTMLElement) {
     super(container)
 
-    const chart = this.chart
-    const nameAxis = (isUseYForName ? chart.yAxes : chart.xAxes).push(new am4charts.CategoryAxis())
-    nameAxis.renderer.labels
+    this.configureNameAxis()
+    this.configureDurationAxis()
+    this.configureSeries()
+  }
+
+  private configureNameAxis(): void {
+    const nameAxis = this.chart.xAxes.push(new am4charts.CategoryAxis())
     nameAxis.dataFields.category = "shortName"
     // allow to copy text
     const nameAxisLabel = nameAxis.renderer.labels.template
     nameAxisLabel.selectable = true
     nameAxisLabel.fontSize = 12
 
-    if (!isUseYForName) {
-      nameAxisLabel.rotation = -45
-      nameAxisLabel.location = 0.4
-      nameAxisLabel.verticalCenter = "middle"
-      nameAxisLabel.horizontalCenter = "right"
-      nameAxis.renderer.minGridDistance = 0.1
+    nameAxisLabel.rotation = -45
+    nameAxisLabel.location = 0.4
+    nameAxisLabel.verticalCenter = "middle"
+    nameAxisLabel.horizontalCenter = "right"
+    nameAxis.renderer.minGridDistance = 1
+    nameAxis.renderer.grid.template.location = 0
+  }
 
-      // https://www.amcharts.com/docs/v4/concepts/axes/#Grid_labels_and_ticks
-      nameAxis.renderer.grid.template.location = 0
-      nameAxis.renderer.grid.template.disabled = true
-    }
-
-    const durationAxis = (isUseYForName ? chart.xAxes : chart.yAxes).push(new am4charts.DurationAxis())
+  private configureDurationAxis(): void {
+    const durationAxis = this.chart.yAxes.push(new am4charts.DurationAxis())
     durationAxis.title.text = "Duration"
-    // https://www.amcharts.com/docs/v4/reference/durationformatter/
-    // base unit the values are in
+    // base unit the values are in (https://www.amcharts.com/docs/v4/reference/durationformatter/)
     durationAxis.durationFormatter.baseUnit = "millisecond"
     durationAxis.durationFormatter.durationFormat = "S"
+  }
 
-    const series = chart.series.push(new am4charts.ColumnSeries())
-    series.columns.template.tooltipText = "{name}: {duration} ms"
-
+  private configureSeries(): void {
+    const series = this.chart.series.push(new am4charts.ColumnSeries())
     series.dataFields.dateX = "start"
-
     series.dataFields.categoryX = "shortName"
-    series.dataFields.categoryY = "shortName"
     series.dataFields.valueY = "duration"
-    series.dataFields.valueX = "duration"
+    series.columns.template.tooltipText = "{name}: {duration} ms"
   }
 
   render(data: InputData) {
@@ -53,12 +51,15 @@ export class ComponentsChartManager extends XYChartManager {
       return
     }
 
-    // let startOffset = components[0].start
     for (const component of components) {
+      const componentItem = component as ComponentItem
       const lastDotIndex = component.name.lastIndexOf(".")
-      component.shortName = lastDotIndex < 0 ? component.name : component.name.substring(lastDotIndex + 1)
-      // component.relativeStart = component.start - startOffset
+      componentItem.shortName = lastDotIndex < 0 ? component.name : component.name.substring(lastDotIndex + 1)
     }
     this.chart.data = components
   }
+}
+
+interface ComponentItem extends Item {
+  shortName: string
 }

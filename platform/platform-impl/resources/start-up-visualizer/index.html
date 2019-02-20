@@ -7,33 +7,14 @@
 
   <title>Start-up Timeline</title>
 
-  <style type="text/css">
-    body, html {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-    }
-
-    #componentsVisualization {
-      width: 100%;
-      height: 400px;
-    }
-
-    /* both bootstrap and bulma uglify look (large paddings, customized components and so on) */
-    /* https://blog.theodo.fr/2018/03/stop-using-bootstrap-layout-thanks-to-css-grid/ */
-    .container {
-      /* https://stackoverflow.com/a/47171358 */
-      display: inline-grid;
-      grid-template-columns: auto auto;
-      grid-gap: 1em;
-    }
-  </style>
-
   <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+  <link rel="stylesheet" type="text/css" href="main.css">
 
   <!-- for security reasons official source of scripts is not used - versioned URL must be used  -->
   <!-- jsdelivr cannot handle amcharts package (>50MB), so, use https://www.srihash.org/ to compute integrity -->
-  <script defer src="https://cdn.jsdelivr.net/gh/amcharts/amcharts4@4.1.8/dist/script/core.js" integrity="sha384-7PVSGX0nyBH6pmUtWhgSwLEkBsZSV2x8PC6yoTtfqNMEIkjgLd3uFuCPhoF+HuBw" crossorigin="anonymous"></script>
-  <script defer src="https://cdn.jsdelivr.net/gh/amcharts/amcharts4@4.1.8/dist/script/charts.js" integrity="sha384-JEPuN0Np2qs1UrTThu3TYpN6cb6J+sTaJcpJgdVtIt/QPBLAF85Hnno8iXuSqR+w" crossorigin="anonymous"></script>
-  <script defer src="https://cdn.jsdelivr.net/gh/amcharts/amcharts4@4.1.8/dist/script/themes/animated.js" integrity="sha384-2WR4/PAikFSwy8DTue1g8Cb6Bht0j1T3VoB1WthzSBLIf98n5BHhNHtOmfcPsqvk" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/gh/amcharts/amcharts4@4.1.9/dist/script/core.js" integrity="sha384-PlKsP/oQhuEJevVS1tTQ/cYJBNgqwZqOXgKuPFqvBNkv23cnGg2AFhcuWqiGlYSX" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/gh/amcharts/amcharts4@4.1.9/dist/script/charts.js" integrity="sha384-aly+R8ukAs/wzeo5YvKZznHxXi48TS3WCHBE8YnuVUKGO1ta/+yzwUV5QphoyPxY" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/gh/amcharts/amcharts4@4.1.9/dist/script/themes/animated.js" integrity="sha384-2WR4/PAikFSwy8DTue1g8Cb6Bht0j1T3VoB1WthzSBLIf98n5BHhNHtOmfcPsqvk" crossorigin="anonymous"></script>
 
   <script defer src="amd.js"></script>
   <script defer src="out/index.js"></script>
@@ -53,8 +34,6 @@
 </div>
 
 <h2 class="subTitle">Timeline</h2>
-<!--<input id="isUseRealTime" type="checkbox">-->
-<!--<label for="isUseRealTime" title="Is start time relative to wall-clock time or to zero (00s:00ms)?">Relative to wall-clock time</label>-->
 <div id="visualization"></div>
 
 <h2 class="subTitle">Slow Components</h2>

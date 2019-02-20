@@ -4,22 +4,23 @@ import * as am4core from "@amcharts/amcharts4/core"
 
 export interface Item {
   name: string
+  description?: string
 
   start: number
   end: number
 
   duration: number
 
-  // added data
-  shortName: string
-  level: number
-
-  isSubItem: boolean
+  isSubItem?: boolean
 }
 
 export interface InputData {
   items: Array<Item>
   components?: Array<Item>
+  preloadActivities?: Array<Item>
+
+  totalDurationComputed: number
+  totalDurationActual: number
 }
 
 export interface ChartManager {
@@ -39,11 +40,61 @@ export abstract class XYChartManager implements ChartManager {
   protected constructor(container: HTMLElement) {
     this.chart = am4core.create(container, am4charts.XYChart)
     configureCommonChartSettings(this.chart)
+
+    if (module != null && module.hot != null) {
+      let devState: DevState | null = null
+      const handler = () => {
+        const axis = this.chart.xAxes.getIndex(0)!!
+        if (devState == null) {
+          devState = {
+            start: axis.start,
+            end: axis.end,
+          }
+        }
+        else {
+          devState.start = axis.start
+          devState.end = axis.end
+        }
+
+        sessionStorage.setItem("devState", JSON.stringify(devState))
+      }
+      setTimeout(() => {
+        // noinspection SpellCheckingInspection
+        this.chart.xAxes.getIndex(0)!!.events.on("startchanged", handler)
+        // noinspection SpellCheckingInspection
+        this.chart.xAxes.getIndex(0)!!.events.on("endchanged", handler)
+      }, 1000)
+
+      // strange, but doesn't work
+      // module.hot.dispose(() => {
+      //   if (devState == null) {
+      //     sessionStorage.removeItem("devState")
+      //   }
+      //   else {
+      //     sessionStorage.setItem("devState", JSON.stringify(devState))
+      //   }
+      // })
+
+      const devStateRaw = sessionStorage.getItem("devState")
+      if (devStateRaw != null) {
+        this.chart.events.on("ready", () => {
+          const devState = JSON.parse(devStateRaw)
+          const axis = this.chart.xAxes.getIndex(0)!!
+          axis.start = devState.start
+          axis.end = devState.end
+        })
+      }
+    }
   }
 
   abstract render(data: InputData): void
 
   // abstract render(data: InputData): void
+}
+
+interface DevState {
+  start: number
+  end: number
 }
 
 export function getInputElement(id: string): HTMLInputElement {
