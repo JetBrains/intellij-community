@@ -106,7 +106,12 @@ public class JsonColorsPage implements RainbowColorSettingsPage, DisplayPriority
 
   @Override
   public boolean isRainbowType(TextAttributesKey type) {
-    return JSON_PROPERTY_KEY.equals(type);
+    return JSON_PROPERTY_KEY.equals(type)
+      || JSON_BRACES.equals(type)
+      || JSON_BRACKETS.equals(type)
+      || JSON_STRING.equals(type)
+      || JSON_NUMBER.equals(type)
+      || JSON_KEYWORD.equals(type);
   }
 
   @Nullable
