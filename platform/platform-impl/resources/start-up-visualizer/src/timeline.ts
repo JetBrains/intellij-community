@@ -25,42 +25,44 @@ const timelineOptions: any = {
 
 export class TimelineChartManager extends XYChartManager {
   private lastData: InputData | null = null
-  private readonly dateAxis: am4charts.DateAxis
+  // private readonly dateAxis: am4charts.DateAxis
 
   constructor(container: HTMLElement) {
     super(container)
 
     const chart = this.chart
 
-    const dateAxis = chart.xAxes.push(new am4charts.DateAxis())
-    this.dateAxis = dateAxis
-    // https://www.amcharts.com/docs/v4/concepts/formatters/formatting-date-time/
-    // Milliseconds since 1970-01-01 / Unix epoch
-    dateAxis.dateFormatter.inputDateFormat = "x"
-    dateAxis.renderer.minGridDistance = 1
-    dateAxis.renderer.labels.template.hideOversized = false
-    // dateAxis.baseInterval = {count: 100, timeUnit: "millisecond"}
-    dateAxis.baseInterval = {count: 1, timeUnit: "millisecond"}
+    // const dateAxis = chart.xAxes.push(new am4charts.DateAxis())
+    // this.dateAxis = dateAxis
+    // // https://www.amcharts.com/docs/v4/concepts/formatters/formatting-date-time/
+    // // Milliseconds since 1970-01-01 / Unix epoch
+    // dateAxis.dateFormatter.inputDateFormat = "x"
+    // dateAxis.renderer.minGridDistance = 1
+    // dateAxis.renderer.labels.template.hideOversized = false
+    // // dateAxis.baseInterval = {count: 100, timeUnit: "millisecond"}
+    // dateAxis.baseInterval = {count: 1, timeUnit: "millisecond"}
 
-    // const durationAxis = chart.xAxes.push(new am4charts.DurationAxis())
-    // durationAxis.durationFormatter.baseUnit = "millisecond"
-    // durationAxis.durationFormatter.durationFormat = "S"
-    // durationAxis.renderer.minGridDistance = 0.1
+    const durationAxis = chart.xAxes.push(new am4charts.DurationAxis())
+    durationAxis.durationFormatter.baseUnit = "millisecond"
+    durationAxis.durationFormatter.durationFormat = "S"
+    durationAxis.min = 0
+    durationAxis.strictMinMax = true
+    // durationAxis.renderer.grid.template.disabled = true
 
     const levelAxis = chart.yAxes.push(new am4charts.CategoryAxis())
     levelAxis.dataFields.category = "level"
     levelAxis.renderer.grid.template.location = 0
-    levelAxis.renderer.minGridDistance = 0.1
+    levelAxis.renderer.minGridDistance = 1
     levelAxis.renderer.labels.template.disabled = true
 
     const series = chart.series.push(new am4charts.ColumnSeries())
     // series.columns.template.width = am4core.percent(80)
     series.columns.template.tooltipText = "{name}: {duration}"
     series.dataFields.openDateX = "start"
+    series.dataFields.openValueX = "start"
     series.dataFields.dateX = "end"
+    series.dataFields.valueX = "end"
     series.dataFields.categoryY = "level"
-
-    series.dataFields.valueX = "duration"
 
     // series.columns.template.propertyFields.fill = "color"
     // series.columns.template.propertyFields.stroke = "color";
@@ -83,17 +85,14 @@ export class TimelineChartManager extends XYChartManager {
     valueLabel.interactionsEnabled = false
     // valueLabel.label.fontSize = 12
 
-
-    // const series2 = chart.series.push(new am4charts.LineSeries())
-    // series2.xAxis = durationAxis
-    // series2.dataFields.valueX = "duration"
-    // series2.dataFields.dateY = "start"
-
-    document.getElementById("isUseRealTime")!!.addEventListener("click", () => {
-      if (this.lastData != null) {
-        this.render(this.lastData)
-      }
-    })
+    const isUseRealTimeElement = document.getElementById("isUseRealTime")
+    if (isUseRealTimeElement != null) {
+      isUseRealTimeElement.addEventListener("click", () => {
+        if (this.lastData != null) {
+          this.render(this.lastData)
+        }
+      })
+    }
 
     this.addHeightAdjuster(levelAxis)
   }
@@ -116,21 +115,24 @@ export class TimelineChartManager extends XYChartManager {
   render(ijData: InputData) {
     this.lastData = ijData
 
-    const isUseRealTime = (document.getElementById("isUseRealTime") as HTMLInputElement).checked
+    // const isUseRealTime = (document.getElementById("isUseRealTime") as HTMLInputElement).checked
 
     // noinspection ES6ModulesDependencies
     const firstStart = new Date(ijData.items[0].start)
     // hack to force timeline to start from 0
-    const timeOffset = isUseRealTime ? 0 : (firstStart.getSeconds() * 1000) + firstStart.getMilliseconds()
+    // const timeOffset = isUseRealTime ? 0 : (firstStart.getSeconds() * 1000) + firstStart.getMilliseconds()
+    const timeOffset = ijData.items[0].start
 
     const data = transformIjData(ijData, timeOffset)
     this.chart.data = data
 
     const originalItems = ijData.items
+    const durationAxis = this.chart.xAxes.getIndex(0) as am4charts.DurationAxis
     // https://www.amcharts.com/docs/v4/concepts/axes/date-axis/
-    this.dateAxis.dateFormats.setKey("second", isUseRealTime ? "HH:mm:ss" : "s")
-    this.dateAxis.min = originalItems[0].start - timeOffset
-    this.dateAxis.max = originalItems[originalItems.length - 1].end - timeOffset
+    // this.dateAxis.dateFormats.setKey("second", isUseRealTime ? "HH:mm:ss" : "s")
+    // this.dateAxis.min = originalItems[0].start - timeOffset
+    // this.dateAxis.max = originalItems[originalItems.length - 1].end - timeOffset
+    durationAxis.max = originalItems[originalItems.length - 1].end - timeOffset
   }
 }
 

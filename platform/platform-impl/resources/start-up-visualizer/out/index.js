@@ -14,6 +14,14 @@ define("core", ["require", "exports", "@amcharts/amcharts4/charts", "@amcharts/a
         }
     }
     exports.XYChartManager = XYChartManager;
+    function getInputElement(id) {
+        return document.getElementById(id);
+    }
+    exports.getInputElement = getInputElement;
+    function getButtonElement(id) {
+        return document.getElementById(id);
+    }
+    exports.getButtonElement = getButtonElement;
 });
 define("ComponentsChartManager", ["require", "exports", "@amcharts/amcharts4/charts", "core"], function (require, exports, am4charts, core_1) {
     "use strict";
@@ -93,35 +101,39 @@ define("timeline", ["require", "exports", "core", "@amcharts/amcharts4/charts", 
         },
     };
     class TimelineChartManager extends core_2.XYChartManager {
+        // private readonly dateAxis: am4charts.DateAxis
         constructor(container) {
             super(container);
             this.lastData = null;
             const chart = this.chart;
-            const dateAxis = chart.xAxes.push(new am4charts.DateAxis());
-            this.dateAxis = dateAxis;
-            // https://www.amcharts.com/docs/v4/concepts/formatters/formatting-date-time/
-            // Milliseconds since 1970-01-01 / Unix epoch
-            dateAxis.dateFormatter.inputDateFormat = "x";
-            dateAxis.renderer.minGridDistance = 1;
-            dateAxis.renderer.labels.template.hideOversized = false;
-            // dateAxis.baseInterval = {count: 100, timeUnit: "millisecond"}
-            dateAxis.baseInterval = { count: 1, timeUnit: "millisecond" };
-            // const durationAxis = chart.xAxes.push(new am4charts.DurationAxis())
-            // durationAxis.durationFormatter.baseUnit = "millisecond"
-            // durationAxis.durationFormatter.durationFormat = "S"
-            // durationAxis.renderer.minGridDistance = 0.1
+            // const dateAxis = chart.xAxes.push(new am4charts.DateAxis())
+            // this.dateAxis = dateAxis
+            // // https://www.amcharts.com/docs/v4/concepts/formatters/formatting-date-time/
+            // // Milliseconds since 1970-01-01 / Unix epoch
+            // dateAxis.dateFormatter.inputDateFormat = "x"
+            // dateAxis.renderer.minGridDistance = 1
+            // dateAxis.renderer.labels.template.hideOversized = false
+            // // dateAxis.baseInterval = {count: 100, timeUnit: "millisecond"}
+            // dateAxis.baseInterval = {count: 1, timeUnit: "millisecond"}
+            const durationAxis = chart.xAxes.push(new am4charts.DurationAxis());
+            durationAxis.durationFormatter.baseUnit = "millisecond";
+            durationAxis.durationFormatter.durationFormat = "S";
+            durationAxis.min = 0;
+            durationAxis.strictMinMax = true;
+            // durationAxis.renderer.grid.template.disabled = true
             const levelAxis = chart.yAxes.push(new am4charts.CategoryAxis());
             levelAxis.dataFields.category = "level";
             levelAxis.renderer.grid.template.location = 0;
-            levelAxis.renderer.minGridDistance = 0.1;
+            levelAxis.renderer.minGridDistance = 1;
             levelAxis.renderer.labels.template.disabled = true;
             const series = chart.series.push(new am4charts.ColumnSeries());
             // series.columns.template.width = am4core.percent(80)
             series.columns.template.tooltipText = "{name}: {duration}";
             series.dataFields.openDateX = "start";
+            series.dataFields.openValueX = "start";
             series.dataFields.dateX = "end";
+            series.dataFields.valueX = "end";
             series.dataFields.categoryY = "level";
-            series.dataFields.valueX = "duration";
             // series.columns.template.propertyFields.fill = "color"
             // series.columns.template.propertyFields.stroke = "color";
             // series.columns.template.adapter.add("fill", (fill, target) => {
@@ -140,15 +152,14 @@ define("timeline", ["require", "exports", "core", "@amcharts/amcharts4/charts", 
             // https://github.com/amcharts/amcharts4/issues/668#issuecomment-446655416
             valueLabel.interactionsEnabled = false;
             // valueLabel.label.fontSize = 12
-            // const series2 = chart.series.push(new am4charts.LineSeries())
-            // series2.xAxis = durationAxis
-            // series2.dataFields.valueX = "duration"
-            // series2.dataFields.dateY = "start"
-            document.getElementById("isUseRealTime").addEventListener("click", () => {
-                if (this.lastData != null) {
-                    this.render(this.lastData);
-                }
-            });
+            const isUseRealTimeElement = document.getElementById("isUseRealTime");
+            if (isUseRealTimeElement != null) {
+                isUseRealTimeElement.addEventListener("click", () => {
+                    if (this.lastData != null) {
+                        this.render(this.lastData);
+                    }
+                });
+            }
             this.addHeightAdjuster(levelAxis);
         }
         addHeightAdjuster(levelAxis) {
@@ -165,18 +176,21 @@ define("timeline", ["require", "exports", "core", "@amcharts/amcharts4/charts", 
         }
         render(ijData) {
             this.lastData = ijData;
-            const isUseRealTime = document.getElementById("isUseRealTime").checked;
+            // const isUseRealTime = (document.getElementById("isUseRealTime") as HTMLInputElement).checked
             // noinspection ES6ModulesDependencies
             const firstStart = new Date(ijData.items[0].start);
             // hack to force timeline to start from 0
-            const timeOffset = isUseRealTime ? 0 : (firstStart.getSeconds() * 1000) + firstStart.getMilliseconds();
+            // const timeOffset = isUseRealTime ? 0 : (firstStart.getSeconds() * 1000) + firstStart.getMilliseconds()
+            const timeOffset = ijData.items[0].start;
             const data = transformIjData(ijData, timeOffset);
             this.chart.data = data;
             const originalItems = ijData.items;
+            const durationAxis = this.chart.xAxes.getIndex(0);
             // https://www.amcharts.com/docs/v4/concepts/axes/date-axis/
-            this.dateAxis.dateFormats.setKey("second", isUseRealTime ? "HH:mm:ss" : "s");
-            this.dateAxis.min = originalItems[0].start - timeOffset;
-            this.dateAxis.max = originalItems[originalItems.length - 1].end - timeOffset;
+            // this.dateAxis.dateFormats.setKey("second", isUseRealTime ? "HH:mm:ss" : "s")
+            // this.dateAxis.min = originalItems[0].start - timeOffset
+            // this.dateAxis.max = originalItems[originalItems.length - 1].end - timeOffset
+            durationAxis.max = originalItems[originalItems.length - 1].end - timeOffset;
         }
     }
     exports.TimelineChartManager = TimelineChartManager;
@@ -246,7 +260,7 @@ define("timeline", ["require", "exports", "core", "@amcharts/amcharts4/charts", 
 //     }
 //   }
 // }
-define("main", ["require", "exports", "@amcharts/amcharts4/core", "@amcharts/amcharts4/themes/animated", "ComponentsChartManager", "timeline"], function (require, exports, am4core, animated_1, ComponentsChartManager_1, timeline_1) {
+define("main", ["require", "exports", "@amcharts/amcharts4/core", "@amcharts/amcharts4/themes/animated", "ComponentsChartManager", "timeline", "core"], function (require, exports, am4core, animated_1, ComponentsChartManager_1, timeline_1, core_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     const storageKeyData = "inputIjFormat";
@@ -270,7 +284,7 @@ define("main", ["require", "exports", "@amcharts/amcharts4/core", "@amcharts/amc
     }
     exports.main = main;
     function configureInput(dataListener) {
-        const inputElement = getInputElement("ijInput");
+        const inputElement = core_3.getInputElement("ijInput");
         function callListener(rawData) {
             dataListener(JSON.parse(rawData));
         }
@@ -300,7 +314,7 @@ define("main", ["require", "exports", "@amcharts/amcharts4/core", "@amcharts/amc
                 setInput(rawData);
             });
         }
-        getButtonElement("grabButton").addEventListener("click", () => {
+        core_3.getButtonElement("grabButton").addEventListener("click", () => {
             // use parseInt to validate input
             let port = getPortInputElement().value;
             if (port.length === 0) {
@@ -312,7 +326,7 @@ define("main", ["require", "exports", "@amcharts/amcharts4/core", "@amcharts/amc
             localStorage.setItem(storageKeyPort, port);
             grabFromRunningInstance(port);
         });
-        getButtonElement("grabDevButton").addEventListener("click", () => {
+        core_3.getButtonElement("grabDevButton").addEventListener("click", () => {
             grabFromRunningInstance("63343");
         });
         inputElement.addEventListener("input", () => {
@@ -322,12 +336,6 @@ define("main", ["require", "exports", "@amcharts/amcharts4/core", "@amcharts/amc
         });
     }
     function getPortInputElement() {
-        return getInputElement("ijPort");
-    }
-    function getInputElement(id) {
-        return document.getElementById(id);
-    }
-    function getButtonElement(id) {
-        return document.getElementById(id);
+        return core_3.getInputElement("ijPort");
     }
 });

@@ -4,7 +4,7 @@ import * as am4core from "@amcharts/amcharts4/core"
 import am4themes_animated from "@amcharts/amcharts4/themes/animated"
 import {ComponentsChartManager} from "./ComponentsChartManager"
 import {TimelineChartManager} from "./timeline"
-import {ChartManager, InputData} from "./core"
+import {ChartManager, getButtonElement, getInputElement, InputData} from "./core"
 
 const storageKeyData = "inputIjFormat"
 const storageKeyPort = "ijPort"
@@ -92,12 +92,4 @@ function configureInput(dataListener: (data: InputData) => void): void {
 
 function getPortInputElement() {
   return getInputElement("ijPort")
-}
-
-function getInputElement(id: string): HTMLInputElement {
-  return document.getElementById(id) as HTMLInputElement
-}
-
-function getButtonElement(id: string): HTMLButtonElement {
-  return document.getElementById(id) as HTMLButtonElement
 }

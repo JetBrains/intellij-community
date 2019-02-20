@@ -45,3 +45,11 @@ export abstract class XYChartManager implements ChartManager {
 
   // abstract render(data: InputData): void
 }
+
+export function getInputElement(id: string): HTMLInputElement {
+  return document.getElementById(id) as HTMLInputElement
+}
+
+export function getButtonElement(id: string): HTMLButtonElement {
+  return document.getElementById(id) as HTMLButtonElement
+}
