@@ -1170,7 +1170,7 @@ public class PluginManagerCore {
                 }
               }
               catch (Exception e) {
-                LOG.error(e);
+                getLogger().error(e);
               }
             });
     }
