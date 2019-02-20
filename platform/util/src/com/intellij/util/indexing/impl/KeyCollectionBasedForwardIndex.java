@@ -17,21 +17,16 @@ package com.intellij.util.indexing.impl;
 
 import com.intellij.util.indexing.IndexExtension;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
-public abstract class KeyCollectionBasedForwardIndex<Key, Value> extends MapBasedForwardIndex<Key, Value, Collection<Key>> {
+public abstract class KeyCollectionBasedForwardIndex<Key, Value>
+  extends MapBasedForwardIndex<Key, Value, Collection<Key>>
+  implements KeysProviderForwardIndex<Key, Value> {
   protected KeyCollectionBasedForwardIndex(IndexExtension<Key, Value, ?> indexExtension) throws IOException {
     super(indexExtension);
-  }
-
-  @NotNull
-  @Override
-  protected InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId, @Nullable Collection<Key> keys) {
-    return new CollectionInputDataDiffBuilder<>(inputId, keys);
   }
 
   @NotNull

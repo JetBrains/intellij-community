@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
-class SharedMapBasedForwardIndex<Key, Value> extends AbstractForwardIndex<Key,Value> {
+class SharedMapBasedForwardIndex<Key, Value> extends AbstractForwardIndex<Key,Value> implements KeysProviderForwardIndex<Key, Value> {
   private final DataExternalizer<Collection<Key>> mySnapshotIndexExternalizer;
   private final KeyCollectionBasedForwardIndex<Key, Value> myUnderlying;
 
@@ -36,17 +36,18 @@ class SharedMapBasedForwardIndex<Key, Value> extends AbstractForwardIndex<Key,Va
     assert myUnderlying != null || (SharedIndicesData.ourFileSharedIndicesEnabled && !SharedIndicesData.DO_CHECKS);
   }
 
-  @NotNull
+  @Nullable
   @Override
-  public InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId) throws IOException {
+  public Collection<Key> getInput(int inputId) throws IOException {
+    Collection<Key> keys;
     if (SharedIndicesData.ourFileSharedIndicesEnabled) {
-      Collection<Key> keys = SharedIndicesData.recallFileData(inputId, (ID<Key, ?>)myIndexId, mySnapshotIndexExternalizer);
+      keys = SharedIndicesData.recallFileData(inputId, (ID<Key, ?>)myIndexId, mySnapshotIndexExternalizer);
       if (myUnderlying != null) {
         Collection<Key> keysFromInputsIndex = myUnderlying.getInput(inputId);
 
         if (keys == null && keysFromInputsIndex != null ||
             !DebugAssertions.equals(keysFromInputsIndex, keys, myKeyDescriptor)
-          ) {
+        ) {
           SharedIndicesData.associateFileData(inputId, (ID<Key, ?>)myIndexId, keysFromInputsIndex, mySnapshotIndexExternalizer);
           if (keys != null) {
             DebugAssertions.error(
@@ -56,9 +57,10 @@ class SharedMapBasedForwardIndex<Key, Value> extends AbstractForwardIndex<Key,Va
           keys = keysFromInputsIndex;
         }
       }
-      return new CollectionInputDataDiffBuilder<>(inputId, keys);
+    } else {
+      keys = myUnderlying.getInput(inputId);
     }
-    return new CollectionInputDataDiffBuilder<>(inputId, myUnderlying.getInput(inputId));
+    return keys;
   }
 
   @Override

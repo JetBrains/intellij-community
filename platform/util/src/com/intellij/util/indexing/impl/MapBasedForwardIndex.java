@@ -25,7 +25,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
-public abstract class MapBasedForwardIndex<Key, Value, MapValueType> extends AbstractForwardIndex<Key,Value> {
+public abstract class MapBasedForwardIndex<Key, Value, MapValueType>
+  extends AbstractForwardIndex<Key,Value>
+  implements InputDataProviderForwardIndex<Key, Value, MapValueType> {
   @NotNull
   private volatile PersistentHashMap<Integer, MapValueType> myInputsIndex;
 
@@ -38,16 +40,9 @@ public abstract class MapBasedForwardIndex<Key, Value, MapValueType> extends Abs
   public abstract PersistentHashMap<Integer, MapValueType> createMap() throws IOException;
 
   @NotNull
-  @Override
-  public InputDataDiffBuilder<Key, Value> getDiffBuilder(final int inputId) throws IOException {
-    return getDiffBuilder(inputId, getInput(inputId));
-  }
-
-  @NotNull
-  protected abstract InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId, @Nullable MapValueType mapValueType) throws IOException;
-  @NotNull
   protected abstract MapValueType convertToMapValueType(int inputId, @NotNull Map<Key, Value> map) throws IOException;
 
+  @Override
   @Nullable
   public MapValueType getInput(int inputId) throws IOException {
     return myInputsIndex.get(inputId);

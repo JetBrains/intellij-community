@@ -33,8 +33,8 @@ public abstract class VcsLogPathsForwardIndex
 
   @NotNull
   @Override
-  protected InputDataDiffBuilder<Integer, List<VcsLogPathsIndex.ChangeKind>> getDiffBuilder(int inputId,
-                                                                                            @Nullable List<Collection<Integer>> oldData) {
+  public InputDataDiffBuilder<Integer, List<VcsLogPathsIndex.ChangeKind>> getDiffBuilder(int inputId,
+                                                                                         @Nullable List<Collection<Integer>> oldData) {
     return new VcsLogPathsDiffBuilder(inputId, oldData);
   }
 

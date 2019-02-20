@@ -11,6 +11,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.impl.*;
@@ -197,6 +198,26 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     }
   }
 
+  @NotNull
+  @Override
+  public Map<Key, Value> getAssociatedMap(int fileId) throws StorageException {
+    Lock lock = getReadLock();
+    lock.lock();
+    try {
+      if (myForwardIndex instanceof KeyValueProviderForwardIndex) {
+        return ObjectUtils.notNull(((KeyValueProviderForwardIndex<Key, Value>)myForwardIndex).getInput(fileId), Collections.emptyMap());
+      }
+      LOG.assertTrue(mySnapshotInputMappings != null && myForwardIndex == null);
+      return mySnapshotInputMappings.readInputKeys(fileId);
+    }
+    catch (IOException e) {
+      throw new StorageException(e);
+    }
+    finally {
+      lock.unlock();
+    }
+  }
+
   @Override
   public void checkCanceled() {
     ProgressManager.checkCanceled();
@@ -260,7 +281,9 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     return new SharedMapBasedForwardIndex<>(indexExtension, backgroundIndex);
   }
 
-  private static class MyMapBasedForwardIndex<Key, Value> extends MapBasedForwardIndex<Key, Value, Map<Key, Value>> {
+  private static class MyMapBasedForwardIndex<Key, Value>
+    extends MapBasedForwardIndex<Key, Value, Map<Key, Value>>
+    implements KeyValueProviderForwardIndex<Key, Value> {
     protected MyMapBasedForwardIndex(IndexExtension<Key, Value, ?> indexExtension) throws IOException {
       super(indexExtension);
     }
@@ -275,12 +298,6 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
       } finally {
         PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.FALSE);
       }
-    }
-
-    @NotNull
-    @Override
-    protected InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId, @Nullable Map<Key, Value> map) {
-      return new MapInputDataDiffBuilder<>(inputId, map);
     }
 
     @NotNull

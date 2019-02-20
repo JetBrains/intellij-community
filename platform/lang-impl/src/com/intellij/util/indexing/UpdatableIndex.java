@@ -22,6 +22,7 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -30,6 +31,12 @@ import java.util.concurrent.locks.Lock;
 public interface UpdatableIndex<Key, Value, Input> extends InvertedIndex<Key,Value, Input> {
 
   boolean processAllKeys(@NotNull Processor<? super Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) throws StorageException;
+
+  /**
+   * @return null if file with corresponding fileId is not yet indexed.
+   */
+  @Nullable
+  Map<Key, Value> getAssociatedMap(int fileId) throws StorageException;
 
   @NotNull
   Lock getReadLock();

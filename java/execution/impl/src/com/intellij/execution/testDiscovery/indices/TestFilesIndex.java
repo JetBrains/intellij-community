@@ -38,7 +38,7 @@ public class TestFilesIndex extends MapReduceIndex<Integer, Void, UsedSources> {
 
   @Nullable
   Collection<Integer> getTestDataFor(int testId) throws IOException {
-    return ((MyForwardIndex)myForwardIndex).containsDataFrom(testId);
+    return ((MyForwardIndex)myForwardIndex).getInput(testId);
   }
 
   private static class MyIndexStorage extends MapIndexStorage<Integer, Void> {
@@ -85,11 +85,6 @@ public class TestFilesIndex extends MapReduceIndex<Integer, Void, UsedSources> {
   private abstract static class MyForwardIndex extends KeyCollectionBasedForwardIndex<Integer, Void> {
     protected MyForwardIndex() throws IOException {
       super(INDEX_EXTENSION);
-    }
-
-    @Nullable
-    public Collection<Integer> containsDataFrom(int testId) throws IOException {
-      return getInput(testId);
     }
   }
 }

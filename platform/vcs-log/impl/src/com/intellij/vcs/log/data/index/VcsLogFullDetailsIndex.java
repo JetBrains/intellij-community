@@ -115,7 +115,7 @@ public class VcsLogFullDetailsIndex<T, D extends VcsFullCommitDetails> implement
 
   @Nullable
   protected <MapIndexType> MapIndexType getKeysForCommit(int commit) throws IOException {
-    MapBasedForwardIndex<Integer, T, MapIndexType> index = myMapReduceIndex.getForwardIndex();
+    InputDataProviderForwardIndex<Integer, T, MapIndexType> index = myMapReduceIndex.getForwardIndex();
     if (index == null) return null;
 
     return index.getInput(commit);
