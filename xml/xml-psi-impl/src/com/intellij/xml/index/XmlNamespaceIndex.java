@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IOUtil;
@@ -49,8 +50,9 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     if (DumbService.isDumb(project) || (context != null && XmlUtil.isStubBuilding())) {
       return computeNamespace(file);
     }
-    final List<XsdNamespaceBuilder> list = FileBasedIndex.getInstance().getValues(NAME, file.getUrl(), createFilter(project));
-    return list.size() == 0 ? null : list.get(0).getNamespace();
+    if (!createFilter(project).contains(file)) return null;
+    Map<String, XsdNamespaceBuilder> indexedNamespace = FileBasedIndex.getInstance().getAssociatedMap(NAME, file, project);
+    return ContainerUtil.getFirstItem(indexedNamespace.keySet());
   }
 
   @Nullable
@@ -119,13 +121,11 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
         else {
           builder = XsdNamespaceBuilder.computeNamespace(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()));
         }
-        final HashMap<String, XsdNamespaceBuilder> map = new HashMap<>(2);
+        final HashMap<String, XsdNamespaceBuilder> map = new HashMap<>(1);
         String namespace = builder.getNamespace();
         if (namespace != null) {
           map.put(namespace, builder);
         }
-        // so that we could get ns by file url (see getNamespace method above)
-        map.put(inputData.getFile().getUrl(), builder);
         return map;
       }
     };
@@ -162,7 +162,7 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
 
   @Override
   public int getVersion() {
-    return 6;
+    return 7;
   }
 
   @Nullable
