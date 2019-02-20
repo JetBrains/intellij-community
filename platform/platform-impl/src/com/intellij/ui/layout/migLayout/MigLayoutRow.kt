@@ -16,6 +16,7 @@ import net.miginfocom.layout.CC
 import java.awt.Component
 import javax.swing.*
 import javax.swing.border.LineBorder
+import kotlin.reflect.KProperty0
 
 private const val COMPONENT_ENABLED_STATE_KEY = "MigLayoutRow.enabled"
 
@@ -323,9 +324,8 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
 class CellBuilderImpl<T : JComponent> internal constructor(
   private val builder: MigLayoutBuilder,
-  private val component: T
+  override val component: T
 ) : CellBuilder<T> {
-
   override fun focused(): CellBuilder<T> {
     builder.preferredFocusedComponent = component
     return this
@@ -339,6 +339,15 @@ class CellBuilderImpl<T : JComponent> internal constructor(
   override fun onApply(callback: () -> Unit): CellBuilder<T> {
     builder.applyCallbacks.add(callback)
     return this
+  }
+
+  override fun enabled(isEnabled: Boolean) {
+    component.isEnabled = isEnabled
+  }
+
+  override fun enableIfSelected(button: AbstractButton) {
+    component.isEnabled = button.isSelected
+    button.addChangeListener { component.isEnabled = button.isSelected }
   }
 }
 

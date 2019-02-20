@@ -12,9 +12,8 @@ import com.intellij.util.ui.JBUI
 import net.miginfocom.layout.*
 import java.awt.Component
 import java.awt.Container
-import javax.swing.ButtonGroup
-import javax.swing.JComponent
-import javax.swing.JLabel
+import javax.swing.*
+import kotlin.reflect.KProperty0
 
 internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagic: Boolean = true) : LayoutBuilderImpl {
   companion object {
@@ -172,7 +171,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
     fun processRows(rows: List<MigLayoutRow>) {
       for (row in rows) {
         // configureComponents will increase rowIndex, but if row doesn't have components, it is synthetic row (e.g. titled row that contains only sub rows)
-        if (!row.components.isEmpty()) {
+        if (row.components.isNotEmpty()) {
           configureComponents(row)
         }
         row.subRows?.let {
