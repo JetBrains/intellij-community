@@ -495,12 +495,13 @@ class ServiceView extends JPanel implements Disposable {
       }
       ServiceViewContributor.ViewDescriptor nodeDescriptor = myViewDescriptors.get(value);
       ServiceViewContributor contributor = myContributors.get(value);
-      ServiceViewContributor.ViewDescriptorRenderer renderer = myRenderers.get(contributor);
-      if (renderer == null) {
-        renderer = ObjectUtils.notNull(contributor.getViewDescriptorRenderer(), myNodeRenderer);
-        myRenderers.put(contributor, renderer);
+      if (!myRenderers.containsKey(contributor)) {
+        myRenderers.put(contributor, contributor.getViewDescriptorRenderer());
       }
-      Component component = renderer.getRendererComponent(myTree, value, nodeDescriptor, selected, hasFocus);
+      ServiceViewContributor.ViewDescriptorRenderer renderer = myRenderers.get(contributor);
+      Object renderedValue = value instanceof GroupNode ? ((GroupNode)value).path.getLastPathComponent() : value;
+      Component component = renderer == null ? null :
+                            renderer.getRendererComponent(myTree, renderedValue, nodeDescriptor, selected, hasFocus);
       if (component == null) {
         component = myNodeRenderer.getRendererComponent(myTree, value, nodeDescriptor, selected, hasFocus);
       }
