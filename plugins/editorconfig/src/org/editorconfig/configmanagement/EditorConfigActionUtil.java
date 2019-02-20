@@ -1,9 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
@@ -13,67 +11,31 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
-import com.intellij.psi.codeStyle.IndentStatusBarUIContributor;
-import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
 import com.intellij.util.containers.ContainerUtil;
 import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.List;
 
-public class EditorConfigStatusUIContributor extends IndentStatusBarUIContributor {
-
-  private static final String PROJECT_ADVERTISEMENT_FLAG = "editor.config.ad.shown";
-
-  private final boolean myEditorConfigIndentOptions;
-
+public class EditorConfigActionUtil {
   private static final NotificationGroup NOTIFICATION_GROUP =
     new NotificationGroup("EditorConfig", NotificationDisplayType.STICKY_BALLOON, true);
 
-  public EditorConfigStatusUIContributor(TransientCodeStyleSettings transientSettings) {
-    super(getOverriddenIndentOptions(transientSettings));
-    myEditorConfigIndentOptions = true;
+
+  public static AnAction[] createNavigationActions(@NotNull PsiFile file) {
+    List<AnAction> actions = ContainerUtil.newArrayList();
+    EditorConfigNavigationActionsFactory navigationActionsFactory =
+      EditorConfigNavigationActionsFactory.getInstance(file.getVirtualFile());
+    actions.addAll(navigationActionsFactory.getNavigationActions(file.getProject()));
+    return actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  public EditorConfigStatusUIContributor(IndentOptions options) {
-    super(options);
-    myEditorConfigIndentOptions = options.getFileIndentOptionsProvider() instanceof EditorConfigIndentOptionsProvider;
-  }
-
-  private static IndentOptions getOverriddenIndentOptions(@NotNull TransientCodeStyleSettings transientSettings) {
-    PsiFile file = transientSettings.getPsiFile();
-    return transientSettings.getLanguageIndentOptions(file.getLanguage());
-  }
-
-  @Override
-  public boolean areActionsAvailable(@NotNull VirtualFile file) {
-    return myEditorConfigIndentOptions;
-  }
-
-  @Nullable
-  @Override
-  public AnAction[] getActions(@NotNull PsiFile file) {
-    if (myEditorConfigIndentOptions) {
-      List<AnAction> actions = ContainerUtil.newArrayList();
-      EditorConfigNavigationActionsFactory navigationActionsFactory =
-        EditorConfigNavigationActionsFactory.getInstance(file.getVirtualFile());
-      actions.addAll(navigationActionsFactory.getNavigationActions(file.getProject()));
-      return actions.toArray(AnAction.EMPTY_ARRAY);
-    }
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public AnAction createDisableAction(@NotNull Project project) {
+  public static AnAction createDisableAction(@NotNull Project project) {
     return DumbAwareAction.create(
       EditorConfigBundle.message("action.disable"),
       e -> {
@@ -82,22 +44,6 @@ public class EditorConfigStatusUIContributor extends IndentStatusBarUIContributo
         CodeStyleSettingsManager.getInstance(project).notifyCodeStyleSettingsChanged();
         showDisabledDetectionNotification(project);
       });
-  }
-
-  @Nullable
-  @Override
-  public String getHint() {
-    return myEditorConfigIndentOptions ? "EditorConfig" : null;
-  }
-
-  @Nullable
-  @Override
-  public String getAdvertisementText(@NotNull PsiFile psiFile) {
-    final PropertiesComponent projectProperties = PropertiesComponent.getInstance(psiFile.getProject());
-    boolean adFlag = projectProperties.getBoolean(PROJECT_ADVERTISEMENT_FLAG);
-    if (adFlag) return null;
-    projectProperties.setValue(PROJECT_ADVERTISEMENT_FLAG, true);
-    return EditorConfigBundle.message("advertisement.text");
   }
 
   private static void showDisabledDetectionNotification(@NotNull Project project) {
@@ -111,9 +57,11 @@ public class EditorConfigStatusUIContributor extends IndentStatusBarUIContributo
             EditorConfigBundle.message("disabled.notification"), "",
             NotificationType.INFORMATION);
       addAction(new ReEnableAction(project, this));
-      addAction(new ShowEditorConfigOption(ApplicationBundle.message("code.style.indent.provider.notification.settings")));
+      addAction(new ShowEditorConfigOption(
+        ApplicationBundle.message("code.style.indent.provider.notification.settings")));
     }
   }
+
 
   private static class ShowEditorConfigOption extends DumbAwareAction {
     private ShowEditorConfigOption(@Nullable String text) {
@@ -146,13 +94,4 @@ public class EditorConfigStatusUIContributor extends IndentStatusBarUIContributo
     }
   }
 
-  @Override
-  public boolean isShowFileIndentOptionsEnabled() {
-    return false;
-  }
-
-  @Override
-  public Icon getIcon() {
-    return null;
-  }
 }

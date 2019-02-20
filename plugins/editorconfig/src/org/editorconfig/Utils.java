@@ -2,6 +2,7 @@
 package org.editorconfig;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
@@ -37,7 +38,9 @@ import java.util.Map;
 
 public class Utils {
 
-  public static final String FULL_SETTINGS_SUPPORT_REG_KEY = "editor.config.full.settings.support";
+  public static final  String FULL_SETTINGS_SUPPORT_REG_KEY = "editor.config.full.settings.support";
+  private static final String PROJECT_ADVERTISEMENT_FLAG    = "editor.config.ad.shown";
+
   private static boolean ourIsFullSettingsSupportEnabledInTest;
 
   public static String configValueForKey(List<? extends OutPair> outPairs, String key) {
@@ -194,5 +197,13 @@ public class Utils {
       result.append(EditorConfigIndentOptionsProvider.indentSizeKey).append("=").append(options.INDENT_SIZE).append("\n");
     }
     result.append("\n");
+  }
+
+  public static boolean isShowAdvertisementText(@NotNull Project project) {
+    final PropertiesComponent projectProperties = PropertiesComponent.getInstance(project);
+    boolean adFlag = projectProperties.getBoolean(PROJECT_ADVERTISEMENT_FLAG);
+    if (adFlag) return false;
+    projectProperties.setValue(PROJECT_ADVERTISEMENT_FLAG, true);
+    return true;
   }
 }
