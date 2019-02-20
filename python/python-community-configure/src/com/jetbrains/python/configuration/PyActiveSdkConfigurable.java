@@ -54,10 +54,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.function.Function;
+
+import static com.jetbrains.python.sdk.PySdkRenderingKt.groupModuleSdksByTypes;
 
 public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
@@ -219,7 +221,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
                                               : new PythonSdkDetailsDialog(myModule, myAddSdkCallback, getSettingsModifiedCallback());
 
     PythonSdkDetailsStep.show(myProject, myModule, myProjectSdksModel.getSdks(), allDialog, myMainPanel,
-                              myDetailsButton.getLocationOnScreen(), null, myAddSdkCallback);
+                              myDetailsButton.getLocationOnScreen(), myAddSdkCallback);
   }
 
   @Override
@@ -309,22 +311,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   private void updateSdkList(boolean preserveSelection) {
     final List<Sdk> allPythonSdks = myInterpreterList.getAllPythonSdks(myProject);
-    final List<Sdk> visibleSdks = StreamEx
-      .of(allPythonSdks)
-      .filter(sdk -> !PythonSdkType.isInvalid(sdk) && !PySdkExtKt.isAssociatedWithAnotherModule(sdk, myModule))
-      .toList();
-    final LinkedHashSet<Sdk> virtualEnvironments = StreamEx
-      .of(visibleSdks)
-      .filter(sdk -> PythonSdkType.isVirtualEnv(sdk) || PythonSdkType.isCondaVirtualEnv(sdk))
-      .collect(Collectors.toCollection(LinkedHashSet::new));
-    final LinkedHashSet<Sdk> remoteSdks = StreamEx
-      .of(visibleSdks)
-      .filter(sdk -> PythonSdkType.isRemote(sdk))
-      .collect(Collectors.toCollection(LinkedHashSet::new));
-    final List<Sdk> otherSdks = StreamEx
-      .of(visibleSdks)
-      .filter(sdk -> !virtualEnvironments.contains(sdk) && !remoteSdks.contains(sdk))
-      .toList();
 
     Sdk selection = preserveSelection ? ObjectUtils.tryCast(mySdkCombo.getSelectedItem(), Sdk.class) : null;
     if (!allPythonSdks.contains(selection)) {
@@ -334,19 +320,20 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     List<Object> items = new ArrayList<>();
     items.add(null);
 
-    if (selection != null && !visibleSdks.contains(selection)) {
+    final Map<PyRenderedSdkType, List<Sdk>> moduleSdksByTypes = groupModuleSdksByTypes(allPythonSdks, myModule, PythonSdkType::isInvalid);
+    if (selection != null && !StreamEx.of(moduleSdksByTypes.values()).flatCollection(Function.identity()).toList().contains(selection)) {
       items.add(0, selection);
     }
 
-    items.addAll(virtualEnvironments);
-    if (!otherSdks.isEmpty()) {
-      items.add(PySdkListCellRenderer.SEPARATOR);
+    final PyRenderedSdkType[] renderedSdkTypes = PyRenderedSdkType.values();
+    for (int i = 0; i < renderedSdkTypes.length; i++) {
+      final PyRenderedSdkType currentSdkType = renderedSdkTypes[i];
+
+      if (moduleSdksByTypes.containsKey(currentSdkType)) {
+        if (i != 0) items.add(PySdkListCellRenderer.SEPARATOR);
+        items.addAll(moduleSdksByTypes.get(currentSdkType));
+      }
     }
-    items.addAll(otherSdks);
-    if (!remoteSdks.isEmpty()) {
-      items.add(PySdkListCellRenderer.SEPARATOR);
-    }
-    items.addAll(remoteSdks);
 
     items.add(PySdkListCellRenderer.SEPARATOR);
     items.add(SHOW_ALL);

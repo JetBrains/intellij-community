@@ -4,7 +4,10 @@
     "module": "amd",
     "moduleResolution": "node",
     "target": "es2016",
-    "outFile": "out/index.js"
+    "outFile": "out/index.js",
+    "newLine": "LF",
+    "noEmitOnError": true,
+    "noUnusedParameters": true
   },
   "include": [
     "src/*.ts"

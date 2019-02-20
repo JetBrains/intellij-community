@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
-import com.intellij.CommonBundle;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.execution.configurations.ConfigurationType;
@@ -90,7 +89,7 @@ public class JUnit5Framework extends JavaTestFramework {
       int exit = ApplicationManager.getApplication().isUnitTestMode() ?
                  Messages.OK :
                        Messages.showOkCancelDialog("Method setUp already exist but is not annotated as @BeforeEach. Annotate?",
-                                                   CommonBundle.getWarningTitle(),
+                                                   "SetUp Not Annotated",
                                                    Messages.getWarningIcon());
       if (exit == Messages.OK) {
         new AddAnnotationFix(JUnitUtil.BEFORE_EACH_ANNOTATION_NAME, existingMethod).invoke(existingMethod.getProject(), null, existingMethod.getContainingFile());

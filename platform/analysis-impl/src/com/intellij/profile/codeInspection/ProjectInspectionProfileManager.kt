@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection
 
-import com.intellij.codeInspection.InspectionProfile
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.configurationStore.*
@@ -13,6 +12,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -25,7 +25,6 @@ import com.intellij.profile.ProfileChangeAdapter
 import com.intellij.project.isDirectoryBased
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.getAttributeBooleanValue
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters
@@ -53,10 +52,6 @@ class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProf
       return project.getComponent(ProjectInspectionProfileManager::class.java)
     }
   }
-
-  private val profileListeners: MutableList<ProfileChangeAdapter> = ContainerUtil.createLockFreeCopyOnWriteList<ProfileChangeAdapter>()
-
-  private var scopeListener: NamedScopesHolder.ScopeListener? = null
 
   private var state = State()
 
@@ -100,9 +95,7 @@ class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProf
     }
 
     override fun onCurrentSchemeSwitched(oldScheme: InspectionProfileImpl?, newScheme: InspectionProfileImpl?) {
-      for (adapter in profileListeners) {
-        adapter.profileActivated(oldScheme, newScheme)
-      }
+      project.messageBus.syncPublisher(ProfileChangeAdapter.TOPIC).profileActivated(oldScheme, newScheme)
     }
   }, schemeNameToFileName = OLD_NAME_CONVERTER, streamProvider = schemeManagerIprProvider)
 
@@ -128,7 +121,8 @@ class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProf
         val cleanupInspectionProfilesRunnable = {
           cleanupSchemes(project)
           (InspectionProfileManager.getInstance() as BaseInspectionProfileManager).cleanupSchemes(project)
-          fireProfilesShutdown()
+          this@ProjectInspectionProfileManager.project.messageBus.syncPublisher(ProfileChangeAdapter.TOPIC).profilesShutdown()
+          Unit
         }
 
         if (app.isUnitTestMode || app.isHeadlessEnvironment) {
@@ -154,29 +148,31 @@ class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProf
   }
 
   @Suppress("unused")
-  private class ProjectInspectionProfileStartUpActivity : StartupActivity {
+  private class ProjectInspectionProfileStartUpActivity : StartupActivity, DumbAware {
     override fun runActivity(project: Project) {
-      getInstance(project).apply {
-        initialLoadSchemesFuture
-          .onSuccess {
-            if (!project.isDisposed) {
-              currentProfile.initInspectionTools(project)
-              fireProfilesInitialized()
-            }
+      val profileManager = getInstance(project)
+      profileManager.initialLoadSchemesFuture
+        .onSuccess {
+          if (!project.isDisposed) {
+            profileManager.currentProfile.initInspectionTools(project)
+            project.messageBus.syncPublisher(ProfileChangeAdapter.TOPIC).profilesInitialized()
           }
+        }
 
-        scopeListener = NamedScopesHolder.ScopeListener {
-          for (profile in schemeManager.allSchemes) {
+      profileManager.initialLoadSchemesFuture.onProcessed {
+        val scopeListener = NamedScopesHolder.ScopeListener {
+          for (profile in profileManager.schemeManager.allSchemes) {
             profile.scopesChanged()
           }
         }
 
-        scopesManager.addScopeListener(scopeListener!!, project)
-        NamedScopeManager.getInstance(project).addScopeListener(scopeListener!!, project)
-        Disposer.register(project, Disposable {
-          (initialLoadSchemesFuture as? AsyncPromise<*>)?.cancel()
-        })
+        profileManager.scopesManager.addScopeListener(scopeListener, project)
+        NamedScopeManager.getInstance(project).addScopeListener(scopeListener, project)
       }
+
+      Disposer.register(project, Disposable {
+        (profileManager.initialLoadSchemesFuture as? AsyncPromise<*>)?.cancel()
+      })
     }
   }
 
@@ -301,18 +297,6 @@ class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProf
     return currentScheme
   }
 
-  private fun fireProfilesInitialized() {
-    for (listener in profileListeners) {
-      listener.profilesInitialized()
-    }
-  }
-
-  private fun fireProfilesShutdown() {
-    for (profileChangeAdapter in profileListeners) {
-      profileChangeAdapter.profilesShutdown()
-    }
-  }
-
   @Synchronized
   override fun getProfile(name: String, returnRootProfileIfNamedIsAbsent: Boolean): InspectionProfileImpl? {
     val profile = schemeManager.findSchemeByName(name)
@@ -323,20 +307,8 @@ class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProf
     fireProfileChanged(currentProfile)
   }
 
-  fun addProfileChangeListener(listener: ProfileChangeAdapter, parentDisposable: Disposable) {
-    ContainerUtil.add(listener, profileListeners, parentDisposable)
-  }
-
-  fun fireProfileChanged(oldProfile: InspectionProfile?, profile: InspectionProfile) {
-    for (adapter in profileListeners) {
-      adapter.profileActivated(oldProfile, profile)
-    }
-  }
-
   override fun fireProfileChanged(profile: InspectionProfileImpl) {
     profile.profileChanged()
-    for (adapter in profileListeners) {
-      adapter.profileChanged(profile)
-    }
+    project.messageBus.syncPublisher(ProfileChangeAdapter.TOPIC).profileChanged(profile)
   }
 }

@@ -41,7 +41,7 @@ class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
       ApplicationManager.getApplication().invokeLater(() -> {
         updatePreview(getComponent().isShowing());
       });
-    });
+    }, this);
   }
 
   @NotNull

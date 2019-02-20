@@ -451,6 +451,7 @@
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsNamesUsagesCollector"/>
 
     <applicationInitializedListener implementation="com.intellij.openapi.vcs.statistics.VcsBackForwardUsageTriggerCollector$Trigger"/>
+    <applicationInitializedListener implementation="com.intellij.openapi.application.Preloader"/>
 
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.EAPUsageCollector"/>
     <statistic.eventLog.fusEventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.FeatureUsageFileEventLoggerProvider"/>

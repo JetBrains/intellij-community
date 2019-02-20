@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -217,41 +216,54 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   }
 
   @NotNull
-  private Computable<PsiJavaCodeReferenceElement> getReferenceComputable(@NotNull PsiJavaCodeReferenceElement ref) {
+  private ClassReferencePointer getReferenceComputable(@NotNull PsiJavaCodeReferenceElement ref) {
     final PsiElement parent = getParent();
     if (parent instanceof PsiMethod || parent instanceof PsiVariable) {
       return computeFromTypeOwner(parent, new WeakReference<>(ref));
     }
 
-    return new Computable.PredefinedValueComputable<>(ref);
+    return ClassReferencePointer.constant(ref);
   }
 
   @NotNull
-  private static Computable<PsiJavaCodeReferenceElement> computeFromTypeOwner(PsiElement parent, @NotNull WeakReference<PsiJavaCodeReferenceElement> ref) {
-    return new Computable<PsiJavaCodeReferenceElement>() {
+  private static ClassReferencePointer computeFromTypeOwner(PsiElement parent, @NotNull WeakReference<PsiJavaCodeReferenceElement> ref) {
+    return new ClassReferencePointer() {
       volatile WeakReference<PsiJavaCodeReferenceElement> myCache = ref;
 
+      @Nullable
       @Override
-      public PsiJavaCodeReferenceElement compute() {
+      public PsiJavaCodeReferenceElement retrieveReference() {
         PsiJavaCodeReferenceElement result = myCache.get();
         if (result == null) {
-          myCache = new WeakReference<>(result = restoreReference());
+          PsiTypeElement typeElement = calcTypeElement();
+          if (typeElement != null) {
+            result = ((PsiTypeElementImpl)typeElement).getReferenceElement();
+          }
+          myCache = new WeakReference<>(result);
         }
         return result;
       }
 
+      @Nullable
+      private PsiTypeElement calcTypeElement() {
+        return parent instanceof PsiMethod ? ((PsiMethod)parent).getReturnTypeElement() : ((PsiVariable)parent).getTypeElement();
+      }
+
       @NotNull
-      private PsiJavaCodeReferenceElement restoreReference() {
-        PsiTypeElement typeElement = parent instanceof PsiMethod ? ((PsiMethod)parent).getReturnTypeElement()
-                                                                 : ((PsiVariable)parent).getTypeElement();
-        if (typeElement == null) {
-          PsiUtilCore.ensureValid(parent);
-          throw new IllegalStateException("No type for " + parent.getClass());
-        }
-        PsiJavaCodeReferenceElement result = ((PsiTypeElementImpl)typeElement).getReferenceElement();
+      @Override
+      public PsiJavaCodeReferenceElement retrieveNonNullReference() {
+        PsiJavaCodeReferenceElement result = retrieveReference();
         if (result == null) {
-          PsiUtilCore.ensureValid(typeElement);
-          throw new IllegalStateException("No reference in " + typeElement.getClass());
+          PsiTypeElement typeElement = calcTypeElement();
+          if (typeElement == null) {
+            PsiUtilCore.ensureValid(parent);
+            throw new IllegalStateException("No type for " + parent.getClass());
+          }
+          result = ((PsiTypeElementImpl)typeElement).getReferenceElement();
+          if (result == null) {
+            PsiUtilCore.ensureValid(typeElement);
+            throw new IllegalStateException("No reference in " + typeElement.getClass());
+          }
         }
         return result;
       }

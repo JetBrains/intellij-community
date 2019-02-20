@@ -16,7 +16,6 @@
 
 package com.intellij.tools;
 
-import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.CompoundScheme;
 import com.intellij.openapi.ui.Messages;
@@ -410,7 +409,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
       int result = Messages.showYesNoDialog(
         this,
         ToolsBundle.message("tools.delete.confirmation"),
-        CommonBundle.getWarningTitle(),
+        "Delete Tool",
         Messages.getWarningIcon()
       );
       if (result != Messages.YES) {

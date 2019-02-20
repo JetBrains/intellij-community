@@ -1089,7 +1089,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   @MagicConstant(intValues = {SwingConstants.HORIZONTAL, SwingConstants.VERTICAL})
-  int getOrientation() {
+  public int getOrientation() {
     return myOrientation;
   }
 

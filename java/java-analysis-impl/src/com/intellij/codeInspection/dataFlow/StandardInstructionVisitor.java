@@ -166,6 +166,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
     }
     processArrayAccess(arrayExpression, alwaysOutOfBounds);
+    if (alwaysOutOfBounds) {
+      return DfaInstructionState.EMPTY_ARRAY;
+    }
 
     DfaValue result = instruction.getValue();
     LongRangeSet rangeSet = memState.getValueFact(index, DfaFactType.RANGE);

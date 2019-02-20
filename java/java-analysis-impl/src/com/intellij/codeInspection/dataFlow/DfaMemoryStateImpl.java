@@ -1530,7 +1530,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private void removeEquivalence(DfaValue var) {
     int varID = var.getID();
     Integer varClassIndex = myIdToEqClassesIndices.get(varID);
-    if (varClassIndex == null) return;
+    if (varClassIndex == null) {
+      var = canonicalize(var);
+      varID = var.getID();
+      varClassIndex = myIdToEqClassesIndices.get(varID);
+      if (varClassIndex == null) return;
+    }
 
     EqClass varClass = myEqClasses.get(varClassIndex);
 

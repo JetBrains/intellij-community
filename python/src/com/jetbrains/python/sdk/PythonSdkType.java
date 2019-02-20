@@ -57,6 +57,7 @@ import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.run.PyVirtualEnvReader;
+import com.jetbrains.python.sdk.add.PyAddSdkDialog;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.pipenv.PyPipEnvSdkAdditionalData;
@@ -240,11 +241,7 @@ public final class PythonSdkType extends SdkType {
                                  @NotNull final JComponent parentComponent,
                                  @NotNull final Consumer<Sdk> sdkCreatedCallback) {
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent));
-    final PointerInfo pointerInfo = MouseInfo.getPointerInfo();
-    if (pointerInfo == null) return;
-    final Point point = pointerInfo.getLocation();
-    PythonSdkDetailsStep
-      .show(project, null, sdkModel.getSdks(), null, parentComponent, point, null, sdk -> {
+    PyAddSdkDialog.show(project, null, Arrays.asList(sdkModel.getSdks()), sdk -> {
         if (sdk != null) {
           sdk.putUserData(SDK_CREATOR_COMPONENT_KEY, new WeakReference<>(parentComponent));
           sdkCreatedCallback.consume(sdk);

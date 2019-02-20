@@ -280,7 +280,7 @@ public class JsonSchemaObject {
     if (other.myNot != null) myNot = other.myNot;
     if (other.myIfThenElse != null) {
       if (myIfThenElse == null) myIfThenElse = other.myIfThenElse;
-      else myIfThenElse.addAll(other.myIfThenElse);
+      else myIfThenElse = ContainerUtil.concat(myIfThenElse, other.myIfThenElse);
     }
     myShouldValidateAgainstJSType |= other.myShouldValidateAgainstJSType;
   }

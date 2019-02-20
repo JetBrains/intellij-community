@@ -7,6 +7,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.util.Disposer
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import java.util.*
@@ -43,7 +45,12 @@ internal class InTransactionRule(private val disposable: Disposable) : EdtTaskRu
   private val transactionId = TransactionGuard.getInstance().contextTransaction
 
   override fun dispatch(rules: List<EdtTaskRule>, ruleIndex: Int, block: Runnable) {
-    TransactionGuard.getInstance().submitTransaction(disposable, transactionId, computeRunnable(ruleIndex, rules, block))
+    TransactionGuard.getInstance().submitTransaction(ApplicationManager.getApplication(), transactionId, computeRunnable(ruleIndex, rules, Runnable {
+      if (Disposer.isDisposed(disposable)) {
+        throw CancellationException()
+      }
+      block.run()
+    }))
   }
 }
 

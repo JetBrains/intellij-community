@@ -46,6 +46,9 @@ public class ProjectLocatorImpl extends ProjectLocator {
       ProjectManager projectManager = ProjectManager.getInstance();
       if (projectManager == null) return null;
       final Project[] openProjects = projectManager.getOpenProjects();
+      if (openProjects.length == 1) {
+        return openProjects[0];
+      }
       for (Project openProject : openProjects) {
         if (isUnder(openProject, file)) return openProject;
       }

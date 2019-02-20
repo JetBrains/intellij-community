@@ -32,25 +32,17 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
 
   private static final String ADD = PyBundle.message("sdk.details.step.add");
   private static final String ALL = PyBundle.message("sdk.details.step.show.all");
-  @Nullable private String myNewProjectPath;
 
   public static void show(@Nullable final Project project,
                           @Nullable final Module module,
                           @NotNull final Sdk[] existingSdks,
-                          @Nullable final DialogWrapper showAllDialog,
+                          @NotNull final DialogWrapper showAllDialog,
                           @NotNull JComponent ownerComponent,
                           @NotNull final Point popupPoint,
-                          @Nullable String newProjectPath,
                           @NotNull final NullableConsumer<? super Sdk> sdkAddedCallback) {
     final PythonSdkDetailsStep sdkHomesStep = new PythonSdkDetailsStep(project, module, showAllDialog, existingSdks, sdkAddedCallback);
-    if (showAllDialog == null) {
-      sdkHomesStep.createLocalSdk();
-    }
-    else {
-      sdkHomesStep.myNewProjectPath = newProjectPath;
-      final ListPopup popup = JBPopupFactory.getInstance().createListPopup(sdkHomesStep);
-      popup.showInScreenCoordinates(ownerComponent, popupPoint);
-    }
+    final ListPopup popup = JBPopupFactory.getInstance().createListPopup(sdkHomesStep);
+    popup.showInScreenCoordinates(ownerComponent, popupPoint);
   }
 
   public PythonSdkDetailsStep(@Nullable final Project project,
@@ -85,18 +77,11 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
     if (!ALL.equals(selectedValue) && myShowAll != null)
       Disposer.dispose(myShowAll.getDisposable());
     if (ADD.equals(selectedValue)) {
-      createLocalSdk();
+      PyAddSdkDialog.show(myProject, myModule, Arrays.asList(myExistingSdks), sdk -> mySdkAddedCallback.consume(sdk));
     }
     else if (myShowAll != null) {
       myShowAll.show();
     }
-  }
-
-  private void createLocalSdk() {
-    final Project project = myNewProjectPath != null ? null : myProject;
-    final PyAddSdkDialog dialog = PyAddSdkDialog.create(project, myModule, Arrays.asList(myExistingSdks), myNewProjectPath);
-    final Sdk sdk = dialog.showAndGet() ? dialog.getOrCreateSdk() : null;
-    mySdkAddedCallback.consume(sdk);
   }
 
   @Override

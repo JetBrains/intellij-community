@@ -45,6 +45,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -270,11 +271,12 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     PsiClass[] allClasses = getCachedClassesByName(name, scope);
     if (allClasses.length == 0) return allClasses;
     if (allClasses.length == 1) {
-      return PsiSearchScopeUtil.isInScope(scope, allClasses[0]) ? allClasses : PsiClass.EMPTY_ARRAY;
+      return PsiSearchScopeUtil.isInScope(scope, allClasses[0]) ? allClasses.clone() : PsiClass.EMPTY_ARRAY;
     }
-    PsiClass[] array = ContainerUtil.findAllAsArray(allClasses, aClass -> PsiSearchScopeUtil.isInScope(scope, aClass));
-    Arrays.sort(array, PsiClassUtil.createScopeComparator(scope));
-    return array;
+    return StreamEx.of(allClasses)
+      .filter(aClass -> PsiSearchScopeUtil.isInScope(scope, aClass))
+      .sorted(PsiClassUtil.createScopeComparator(scope))
+      .toArray(PsiClass.EMPTY_ARRAY);
   }
 
   @Nullable

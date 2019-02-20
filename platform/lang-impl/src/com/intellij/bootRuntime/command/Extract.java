@@ -4,6 +4,7 @@ package com.intellij.bootRuntime.command;
 import com.intellij.bootRuntime.BinTrayUtil;
 import com.intellij.bootRuntime.Controller;
 import com.intellij.bootRuntime.bundles.Runtime;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 
@@ -15,6 +16,9 @@ import java.io.IOException;
 import static org.jetbrains.io.TarKt.unpackTarGz;
 
 public class Extract extends RuntimeCommand {
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.bootRuntime.command.Extract");
+
   public Extract(Project project, Controller controller, Runtime runtime) {
     super(project, controller, "Extract", runtime);
   }
@@ -37,7 +41,7 @@ public class Extract extends RuntimeCommand {
           FileUtil.delete(myRuntime.getDownloadPath());
         }
         catch (IOException ex) {
-          ex.printStackTrace();
+          LOG.warn(ex);
         }
       }
       BinTrayUtil.updateJdkConfigFileAndRestart(directoryToExtractFile);

@@ -22,11 +22,17 @@ abstract class SaveAndSyncHandler {
    * Save is not performed immediately and not finished on method call return.
    */
   fun scheduleSaveDocumentsAndProjectsAndApp(onlyProject: Project?) {
-    scheduleSaveDocumentsAndProjectsAndApp(onlyProject, forceSavingAllSettings = false, forceExecuteImmediately = false)
+    scheduleSave(SaveTask(onlyProject))
+  }
+
+  data class SaveTask(val onlyProject: Project? = null, val saveDocuments: Boolean = true, val forceSavingAllSettings: Boolean = false) {
+    fun isMoreGenericThan(other: SaveTask): Boolean {
+      return onlyProject == null && other.onlyProject != null && saveDocuments == other.saveDocuments && forceSavingAllSettings == other.forceSavingAllSettings
+    }
   }
 
   @ApiStatus.Experimental
-  abstract fun scheduleSaveDocumentsAndProjectsAndApp(onlyProject: Project?, forceSavingAllSettings: Boolean, forceExecuteImmediately: Boolean)
+  abstract fun scheduleSave(task: SaveTask, forceExecuteImmediately: Boolean = false)
 
   @Deprecated("", ReplaceWith("FileDocumentManager.getInstance().saveAllDocuments()", "com.intellij.openapi.fileEditor.FileDocumentManager"))
   fun saveProjectsAndDocuments() {

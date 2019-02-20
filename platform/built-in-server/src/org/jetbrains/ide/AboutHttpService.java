@@ -1,27 +1,16 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide;
 
 import com.google.gson.stream.JsonWriter;
 import com.intellij.ide.IdeAboutInfoUtil;
+import com.intellij.ide.StartUpPerformanceReporter;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
@@ -31,6 +20,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * @api {get} /about The application info
@@ -77,8 +68,15 @@ public class AboutHttpService extends RestService {
     return null;
   }
 
+  @Override
+  protected boolean isHostTrusted(@NotNull FullHttpRequest request, @NotNull QueryStringDecoder urlDecoder) throws InterruptedException, InvocationTargetException {
+    return !getBooleanParameter("more", urlDecoder) || super.isHostTrusted(request, urlDecoder);
+  }
+
   public static void getAbout(@NotNull OutputStream out, @Nullable QueryStringDecoder urlDecoder) throws IOException {
-    JsonWriter writer = createJsonWriter(out);
+    final OutputStreamWriter streamWriter = new OutputStreamWriter(out, CharsetToolkit.UTF8_CHARSET);
+    JsonWriter writer = new JsonWriter(streamWriter);
+    writer.setIndent("  ");
     writer.beginObject();
 
     IdeAboutInfoUtil.writeAboutJson(writer);
@@ -109,7 +107,18 @@ public class AboutHttpService extends RestService {
       writer.name("homePath").value(PathManager.getHomePath());
     }
 
-    writer.endObject();
-    writer.close();
+    if (urlDecoder != null && getBooleanParameter("startUpMeasurement", urlDecoder)) {
+      String report = StartupActivity.POST_STARTUP_ACTIVITY.findExtensionOrFail(StartUpPerformanceReporter.class).getLastReport();
+      if (report != null) {
+        streamWriter.write(", \"startUpMeasurement\": ");
+        streamWriter.write(report);
+      }
+      streamWriter.write("\n}");
+      streamWriter.close();
+    }
+    else {
+      writer.endObject();
+      writer.close();
+    }
   }
 }

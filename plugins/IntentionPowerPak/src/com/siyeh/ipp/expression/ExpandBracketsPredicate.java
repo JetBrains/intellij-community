@@ -25,10 +25,12 @@ public class ExpandBracketsPredicate implements PsiElementPredicate {
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiJavaToken)) return false;
 
-    final PsiParenthesizedExpression expression = PsiTreeUtil.getParentOfType(element, PsiParenthesizedExpression.class);
-    if (expression == null) return false;
+    while ((element = PsiTreeUtil.getParentOfType(element, PsiParenthesizedExpression.class)) != null) {
+      PsiParenthesizedExpression expression = (PsiParenthesizedExpression)element;
+      if (isSupportedInnerExpression(expression) && isSupportedOuterExpression(expression)) return true;
+    }
 
-    return isSupportedInnerExpression(expression) && isSupportedOuterExpression(expression);
+    return false;
   }
 
   private boolean isSupportedInnerExpression(@Nullable PsiExpression expression) {

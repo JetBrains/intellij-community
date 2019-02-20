@@ -3,13 +3,14 @@
   "private": true,
   "main": "out/index.js",
   "devDependencies": {
-    "@types/vis": "^4.21.11",
     "typescript": "^3.3.3"
   },
   "dependencies": {
     "@amcharts/amcharts4": "^4.1.8"
   },
   "scripts": {
-    "compile": "tsc"
+    "compile": "tsc",
+    "//": "chrome://flags/#allow-insecure-localhost to tell Chrome to ignore cert warnings on localhost",
+    "serve": "caddy -quic -host localhost -port 8080 \"ext .html\" \"log stdout\" \"tls self_signed\" \"bind 127.0.0.1\""
   }
 }

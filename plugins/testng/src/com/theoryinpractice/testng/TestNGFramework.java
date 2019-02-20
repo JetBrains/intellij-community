@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng;
 
-import com.intellij.CommonBundle;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.execution.configurations.ConfigurationType;
@@ -103,7 +102,7 @@ public class TestNGFramework extends JavaTestFramework {
       int exit = ApplicationManager.getApplication().isUnitTestMode() ?
                  Messages.YES :
                  Messages.showYesNoDialog(manager.getProject(), "Method \'" + setUpName + "\' already exist but is not annotated as @BeforeMethod.",
-                                          CommonBundle.getWarningTitle(),
+                                          "SetUp Not Annotated",
                                           "Annotate",
                                           "Create new method",
                                           Messages.getWarningIcon());

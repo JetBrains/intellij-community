@@ -21,7 +21,6 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.find.FindManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -130,7 +129,7 @@ public class DuplicatesImpl {
           showAll.set(allChosen);
           if (allChosen && confirmDuplicatePrompt != null && prompt == null) {
             if (Messages.showOkCancelDialog(project, "In order to replace all occurrences method signature will be changed. Proceed?",
-                                            CommonBundle.getWarningTitle(), Messages.getWarningIcon()) !=
+                                            "Signature Change Warning", CommonBundle.getContinueButtonText(), CommonBundle.getCancelButtonText(), Messages.getWarningIcon()) !=
                 Messages.OK) return true;
           }
           if (promptDialog.getExitCode() == FindManager.PromptResult.SKIP) return false;

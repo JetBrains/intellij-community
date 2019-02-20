@@ -163,7 +163,7 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
   @Nullable
   @Override
   public IndentStatusBarUIContributor getIndentStatusBarUiContributor(@NotNull IndentOptions indentOptions) {
-    return new EditorConfigStatusUIContributor(indentOptions);
+    return new EditorConfigIndentStatusBarUIContributor(indentOptions);
   }
 
 }

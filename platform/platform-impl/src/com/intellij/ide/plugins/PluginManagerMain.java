@@ -75,7 +75,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 
@@ -683,7 +682,7 @@ public abstract class PluginManagerMain implements Disposable {
       int result;
       if (!disabled.isEmpty() && !disabledDependants.isEmpty()) {
         result =
-          Messages.showYesNoCancelDialog(XmlStringUtil.wrapInHtml(message), CommonBundle.getWarningTitle(), "Enable all",
+          Messages.showYesNoCancelDialog(XmlStringUtil.wrapInHtml(message), "Dependent Plugins Found", "Enable all",
                                          "Enable updated plugin" + (disabled.size() > 1 ? "s" : ""), CommonBundle.getCancelButtonText(),
                                          Messages.getQuestionIcon());
         if (result == Messages.CANCEL) return false;
@@ -694,11 +693,11 @@ public abstract class PluginManagerMain implements Disposable {
           message += "updated plugin" + (disabled.size() > 1 ? "s" : "");
         }
         else {
-          //noinspection SpellCheckingInspection
-          message += "plugin dependenc" + (disabledDependants.size() > 1 ? "ies" : "y");
+          message += "plugin " +
+                     StringUtil.pluralize("dependency", disabledDependants.size());
         }
         message += "?";
-        result = Messages.showYesNoDialog(XmlStringUtil.wrapInHtml(message), CommonBundle.getWarningTitle(), Messages.getQuestionIcon());
+        result = Messages.showYesNoDialog(XmlStringUtil.wrapInHtml(message), "Dependent Plugins Found", Messages.getQuestionIcon());
         if (result == Messages.NO) return false;
       }
 

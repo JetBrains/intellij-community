@@ -14,7 +14,6 @@ import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
 import org.editorconfig.Utils;
 import org.editorconfig.configmanagement.EditorConfigNavigationActionsFactory;
-import org.editorconfig.configmanagement.EditorConfigStatusUIContributor;
 import org.editorconfig.core.EditorConfig;
 import org.editorconfig.core.EditorConfigException;
 import org.editorconfig.core.ParserCallback;
@@ -55,13 +54,7 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
   @Nullable
   @Override
   public CodeStyleStatusBarUIContributor getStatusBarUiContributor(@NotNull TransientCodeStyleSettings transientSettings) {
-    return new EditorConfigStatusUIContributor(transientSettings) {
-      @NotNull
-      @Override
-      public String getStatusText(@NotNull PsiFile psiFile) {
-        return "EditorConfig";
-      }
-    };
+    return new EditorConfigCodeStyleStatusBarUIContributor();
   }
 
   private static boolean applyCodeStyleSettings(@NotNull List<OutPair> editorConfigOptions,
@@ -95,8 +88,8 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
 
   @Nullable
   private static CodeStylePropertyAccessor findAccessor(@NotNull AbstractCodeStylePropertyMapper mapper,
-                                                       @NotNull String propertyName,
-                                                       @Nullable String langPrefix) {
+                                                        @NotNull String propertyName,
+                                                        @Nullable String langPrefix) {
     if (langPrefix != null) {
       if (propertyName.startsWith(langPrefix)) {
         final String prefixlessName = StringUtil.trimStart(propertyName, langPrefix);
