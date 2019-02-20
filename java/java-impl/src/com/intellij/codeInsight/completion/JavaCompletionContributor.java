@@ -105,7 +105,8 @@ public class JavaCompletionContributor extends CompletionContributor {
       psiElement(PsiCodeBlock.class).afterLeaf(PsiKeyword.TRY)));
   private static final ElementPattern<PsiElement> INSIDE_CONSTRUCTOR = psiElement().inside(psiMethod().constructor(true));
   private static final ElementPattern<PsiElement> AFTER_ENUM_CONSTANT =
-    psiElement().inside(PsiTypeElement.class).afterLeaf(psiElement().inside(true, psiElement(PsiEnumConstant.class), psiClass()));
+    psiElement().inside(PsiTypeElement.class).afterLeaf(
+      psiElement().inside(true, psiElement(PsiEnumConstant.class), psiElement(PsiClass.class, PsiExpressionList.class)));
 
   @Nullable
   public static ElementFilter getReferenceFilter(PsiElement position) {
