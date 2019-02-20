@@ -16,6 +16,7 @@
 package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 public interface RestartableLexer {
   /**
@@ -27,7 +28,7 @@ public interface RestartableLexer {
 
 
   /**
-   * Returns the restartable state of the lexer.
+   * Returns the default restartable state of the lexer.
    *
    * @return the lexer state.
    */
@@ -42,4 +43,6 @@ public interface RestartableLexer {
   boolean containsRestartableState(int data);
 
   boolean isRestartableState(int state);
+
+  void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState, Iterable<TokenInfo> tokenInfos);
 }
