@@ -1263,6 +1263,10 @@
       <className>com.intellij.codeInsight.intention.impl.SplitSwitchBranchWithSeveralCaseValuesAction</className>
       <category>Java/Control Flow</category>
     </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.WrapWithUnmodifiableAction</className>
+      <category>Java/Other</category>
+    </intentionAction>
     <externalAnnotationsArtifactsResolver implementation="com.intellij.jarRepository.ExternalAnnotationsRepositoryResolver"/>
     <errorQuickFixProvider implementation="com.intellij.codeInsight.daemon.impl.analysis.JavaErrorQuickFixProvider"/>
     <fileTypeDetector implementation="com.intellij.openapi.fileTypes.impl.JavaFileTypeDetector"/>
