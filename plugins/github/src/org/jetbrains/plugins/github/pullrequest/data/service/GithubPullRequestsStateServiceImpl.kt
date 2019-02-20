@@ -87,12 +87,13 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
   override fun merge(pullRequest: Long) {
     if (!busyStateTracker.acquire(pullRequest)) return
 
+    val dataProvider = dataLoader.getDataProvider(pullRequest)
     progressManager.run(object : Task.Backgroundable(project, "Merging Pull Request", true) {
       private lateinit var details: GithubPullRequestDetailed
 
       override fun run(indicator: ProgressIndicator) {
         indicator.text2 = "Loading details"
-        details = GithubAsyncUtil.awaitMutableFuture(indicator) { dataLoader.getDataProvider(pullRequest).detailsRequest }
+        details = GithubAsyncUtil.awaitFuture(indicator, dataProvider.detailsRequest)
         indicator.checkCanceled()
 
         indicator.text2 = "Acquiring commit message"
@@ -129,12 +130,13 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
   override fun rebaseMerge(pullRequest: Long) {
     if (!busyStateTracker.acquire(pullRequest)) return
 
+    val dataProvider = dataLoader.getDataProvider(pullRequest)
     progressManager.run(object : Task.Backgroundable(project, "Merging Pull Request", true) {
       lateinit var details: GithubPullRequestDetailed
 
       override fun run(indicator: ProgressIndicator) {
         indicator.text2 = "Loading details"
-        details = GithubAsyncUtil.awaitMutableFuture(indicator) { dataLoader.getDataProvider(pullRequest).detailsRequest }
+        details = GithubAsyncUtil.awaitFuture(indicator, dataProvider.detailsRequest)
         indicator.checkCanceled()
 
         indicator.text2 = "Merging"
@@ -161,6 +163,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
   override fun squashMerge(pullRequest: Long) {
     if (!busyStateTracker.acquire(pullRequest)) return
 
+    val dataProvider = dataLoader.getDataProvider(pullRequest)
     progressManager.run(object : Task.Backgroundable(project, "Merging Pull Request", true) {
       lateinit var details: GithubPullRequestDetailed
       lateinit var commits: List<GitCommit>
@@ -168,11 +171,11 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
 
       override fun run(indicator: ProgressIndicator) {
         indicator.text2 = "Loading details"
-        details = GithubAsyncUtil.awaitMutableFuture(indicator) { dataLoader.getDataProvider(pullRequest).detailsRequest }
+        details = GithubAsyncUtil.awaitFuture(indicator, dataProvider.detailsRequest)
         indicator.checkCanceled()
 
         indicator.text2 = "Loading commits"
-        commits = GithubAsyncUtil.awaitMutableFuture(indicator) { dataLoader.getDataProvider(pullRequest).logCommitsRequest }
+        commits = GithubAsyncUtil.awaitFuture(indicator, dataProvider.logCommitsRequest)
         indicator.checkCanceled()
 
         indicator.text2 = "Acquiring commit message"
