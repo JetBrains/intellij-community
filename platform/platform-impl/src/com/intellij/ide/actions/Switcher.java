@@ -631,9 +631,9 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     private <T> JBList<T> createSwitcherList(@NotNull CollectionListModel<T> model,
-                                             @NotNull ColoredListCellRenderer<T> cellRenderer,
+                                             @NotNull ColoredListCellRenderer cellRenderer,
                                              @NotNull Function<? super T, String> filteringNamer) {
-      JBList list = new JBList(model);
+      JBList<T> list = new JBList<>(model);
       list.addFocusListener(new FocusAdapter() {
         @Override
         public void focusGained(FocusEvent e) {
@@ -651,6 +651,7 @@ public class Switcher extends AnAction implements DumbAware {
       }
 
       list.setSelectionMode(isPinnedMode() ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
+      //noinspection unchecked
       list.setCellRenderer(cellRenderer);
       list.addKeyListener(this);
       list.addMouseListener(this);
