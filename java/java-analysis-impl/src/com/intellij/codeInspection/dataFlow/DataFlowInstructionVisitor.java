@@ -53,9 +53,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   @Override
   public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     PsiExpression left = instruction.getLExpression();
-    if (left != null && !Boolean.FALSE.equals(mySameValueAssigned.get(left)) && !TypeUtils.isJavaLangString(left.getType())) {
-      // Reporting strings is skipped because string reassignment might be intentionally used to deduplicate the heap objects
-      // (we compare strings by contents)
+    if (left != null && !Boolean.FALSE.equals(mySameValueAssigned.get(left))) {
       if (!left.isPhysical()) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Non-physical element in assignment instruction: " + left.getParent().getText(), new Throwable());
@@ -65,6 +63,9 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
         DfaValue target = memState.getStackValue(1);
         if (target != null && memState.areEqual(value, target) &&
             !(value instanceof DfaConstValue && isFloatingZero(((DfaConstValue)value).getValue())) &&
+            // Reporting strings is skipped because string reassignment might be intentionally used to deduplicate the heap objects
+            // (we compare strings by contents)
+            !(TypeUtils.isJavaLangString(left.getType()) && !memState.isNull(value)) &&
             !isAssignmentToDefaultValueInConstructor(instruction, runner, target)) {
           mySameValueAssigned.merge(left, Boolean.TRUE, Boolean::logicalAnd);
         }
