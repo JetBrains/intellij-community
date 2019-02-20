@@ -18,26 +18,30 @@ package com.intellij.diff.editor
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorLocation
+import com.intellij.openapi.fileEditor.FileEditorState
+import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import java.beans.PropertyChangeListener
+import java.beans.PropertyChangeSupport
 import javax.swing.JComponent
 
 class DiffRequestProcessorEditor(
-  private val project: Project,
   private val file: DiffVirtualFile,
   private val processor: DiffRequestProcessor
 ) : UserDataHolderBase(), FileEditor {
+  private val propertyChangeSupport = PropertyChangeSupport(this)
 
   init {
     Disposer.register(this, Disposable {
       Disposer.dispose(processor)
     })
     Disposer.register(processor, Disposable {
-      FileEditorManager.getInstance(project).closeFile(file)
+      propertyChangeSupport.firePropertyChange(FileEditor.PROP_VALID, true, false)
     })
   }
 
@@ -54,6 +58,14 @@ class DiffRequestProcessorEditor(
 
   override fun deselectNotify() {}
 
+  override fun addPropertyChangeListener(listener: PropertyChangeListener) {
+    propertyChangeSupport.addPropertyChangeListener(listener)
+  }
+
+  override fun removePropertyChangeListener(listener: PropertyChangeListener) {
+    propertyChangeSupport.removePropertyChangeListener(listener)
+  }
+
   //
   // Unused
   //
@@ -62,9 +74,6 @@ class DiffRequestProcessorEditor(
   override fun getState(level: FileEditorStateLevel): FileEditorState = FileEditorState.INSTANCE
   override fun setState(state: FileEditorState) {}
   override fun isModified(): Boolean = false
-
-  override fun addPropertyChangeListener(listener: PropertyChangeListener) {}
-  override fun removePropertyChangeListener(listener: PropertyChangeListener) {}
 
   override fun getBackgroundHighlighter(): BackgroundEditorHighlighter? = null
   override fun getCurrentLocation(): FileEditorLocation? = null

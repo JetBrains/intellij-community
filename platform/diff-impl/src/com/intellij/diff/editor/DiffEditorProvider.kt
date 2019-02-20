@@ -31,13 +31,13 @@ class DiffEditorProvider : AsyncFileEditorProvider, DumbAware {
   override fun createEditorAsync(project: Project, file: VirtualFile): AsyncFileEditorProvider.Builder {
     val builder = (file as DiffVirtualFile).createProcessorAsync(project)
     return object : AsyncFileEditorProvider.Builder() {
-      override fun build() = DiffRequestProcessorEditor(project, file, builder.build())
+      override fun build() = DiffRequestProcessorEditor(file, builder.build())
     }
   }
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
     val builder = (file as DiffVirtualFile).createProcessorAsync(project)
-    return DiffRequestProcessorEditor(project, file, builder.build())
+    return DiffRequestProcessorEditor(file, builder.build())
   }
 
   override fun disposeEditor(editor: FileEditor) {
