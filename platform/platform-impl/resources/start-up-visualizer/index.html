@@ -12,12 +12,6 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
     }
 
-    /*noinspection CssUnusedSymbol*/
-    .vis-item .vis-item-overflow {
-       /* http://visjs.org/examples/timeline/items/rangeOverflowItem.html */
-      overflow: visible !important;
-    }
-
     #componentsVisualization {
       width: 100%;
       height: 400px;
@@ -33,17 +27,16 @@
     }
   </style>
 
-  <!-- https://www.jsdelivr.com/package/gh/develar/vis?path=dist -->
-  <script src="https://cdn.jsdelivr.net/gh/develar/vis@4.22.0-rc.1/dist/vis-timeline-graph2d.min.js" integrity="sha256-mkIbNWZ05n+SwdvDA++5WZNTa8LzICy1ZerL+wsY7Qo=" crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/develar/vis@4.22.0-rc.1/dist/vis-timeline-graph2d.min.css" integrity="sha256-Utsidc/oVhKGTdj4DX0WZ+Ml3ddz8CTAnD8cCppa4Qw=" crossorigin="anonymous">
+  <link rel="icon" href="data:;base64,iVBORw0KGgo=">
 
   <!-- for security reasons official source of scripts is not used - versioned URL must be used  -->
   <!-- jsdelivr cannot handle amcharts package (>50MB), so, use https://www.srihash.org/ to compute integrity -->
-  <script src="https://cdn.jsdelivr.net/gh/amcharts/amcharts4@4.1.8/dist/script/core.js" integrity="sha384-7PVSGX0nyBH6pmUtWhgSwLEkBsZSV2x8PC6yoTtfqNMEIkjgLd3uFuCPhoF+HuBw" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/gh/amcharts/amcharts4@4.1.8/dist/script/charts.js" integrity="sha384-JEPuN0Np2qs1UrTThu3TYpN6cb6J+sTaJcpJgdVtIt/QPBLAF85Hnno8iXuSqR+w" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/gh/amcharts/amcharts4@4.1.8/dist/script/themes/animated.js" integrity="sha384-2WR4/PAikFSwy8DTue1g8Cb6Bht0j1T3VoB1WthzSBLIf98n5BHhNHtOmfcPsqvk" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/gh/amcharts/amcharts4@4.1.8/dist/script/core.js" integrity="sha384-7PVSGX0nyBH6pmUtWhgSwLEkBsZSV2x8PC6yoTtfqNMEIkjgLd3uFuCPhoF+HuBw" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/gh/amcharts/amcharts4@4.1.8/dist/script/charts.js" integrity="sha384-JEPuN0Np2qs1UrTThu3TYpN6cb6J+sTaJcpJgdVtIt/QPBLAF85Hnno8iXuSqR+w" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/gh/amcharts/amcharts4@4.1.8/dist/script/themes/animated.js" integrity="sha384-2WR4/PAikFSwy8DTue1g8Cb6Bht0j1T3VoB1WthzSBLIf98n5BHhNHtOmfcPsqvk" crossorigin="anonymous"></script>
 
-  <script src="amd.js"></script>
+  <script defer src="amd.js"></script>
+  <script defer src="out/index.js"></script>
 </head>
 <body>
 <div class="container">
@@ -51,10 +44,10 @@
   <textarea id="ijInput" placeholder="Enter the IntelliJ Platform start-up timeline..." autocomplete="off"
             cols="64" rows="4"></textarea>
   <div>
-    <button id="grabButton">Grab from running instance</button>
+    <button id="grabButton">Get from running instance</button>
     <input id="ijPort" type="number" min="1024" max="65535"/>
     <div style="padding-top: 0.5em">
-      <button id="grabDevButton" title="Grab from running instance on port 63343">Grab from running dev instance</button>
+      <button id="grabDevButton" title="Get from running instance on port 63343">Get from running dev instance</button>
     </div>
   </div>
 </div>
@@ -66,11 +59,5 @@
 
 <h2 class="subTitle">Slow Components</h2>
 <div id="componentsVisualization"></div>
-<script src="out/index.js"></script>
-<script type="text/javascript">
-  require(["main"], function (main) {
-    main.main()
-  })
-</script>
 </body>
 </html>

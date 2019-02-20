@@ -11,6 +11,12 @@ const nameToDefinition = new Map()
 
 function define(name, dependencies, definition) {
   nameToDefinition.set(name, {dependencies, definition})
+
+  if (name === "main") {
+    require(["main"], function (main) {
+      main.main()
+    })
+  }
 }
 
 function require(dependencies, definition) {

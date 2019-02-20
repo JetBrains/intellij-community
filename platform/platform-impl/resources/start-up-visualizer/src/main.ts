@@ -2,7 +2,7 @@
 import * as am4core from "@amcharts/amcharts4/core"
 
 import am4themes_animated from "@amcharts/amcharts4/themes/animated"
-import {ComponentsChart} from "./components"
+import {ComponentsChartManager} from "./ComponentsChartManager"
 import {TimelineChartManager} from "./timeline"
 import {ChartManager, InputData} from "./core"
 
@@ -14,13 +14,14 @@ export function main(): void {
 
   const chartManagers: Array<ChartManager> = [
     new TimelineChartManager(document.getElementById("visualization")!!),
-    new ComponentsChart(document.getElementById("componentsVisualization")!!),
+    new ComponentsChartManager(document.getElementById("componentsVisualization")!!),
   ]
   // debug
   const global = window as any
+  global.timelineChart = chartManagers[0]
   global.componentsChart = chartManagers[1]
 
-  configureInput(document.getElementById("ijInput")!! as HTMLTextAreaElement, data => {
+  configureInput(data => {
     global.lastData = data
     for (const chartManager of chartManagers) {
       chartManager.render(data)
@@ -28,7 +29,9 @@ export function main(): void {
   })
 }
 
-function configureInput(inputElement: HTMLTextAreaElement, dataListener: (data: InputData) => void): void {
+function configureInput(dataListener: (data: InputData) => void): void {
+  const inputElement = getInputElement("ijInput")
+
   function callListener(rawData: string) {
     dataListener(JSON.parse(rawData))
   }
@@ -40,22 +43,32 @@ function configureInput(inputElement: HTMLTextAreaElement, dataListener: (data: 
     }
   }
 
-  const portInputElement = document.getElementById("ijPort") as HTMLInputElement
-
-  window.addEventListener("load", () => {
-    portInputElement.value = localStorage.getItem(storageKeyPort) || "63342"
+  document.addEventListener("DOMContentLoaded", () => {
+    getPortInputElement().value = localStorage.getItem(storageKeyPort) || "63342"
     setInput(localStorage.getItem(storageKeyData))
   })
 
   function grabFromRunningInstance(port: string) {
     fetch(`http://localhost:${port}/api/about/?startUpMeasurement`, {credentials: "omit"})
       .then(it => it.json())
-      .then(json => setInput(JSON.stringify(json.startUpMeasurement || {items: []}, null, 2)))
+      .then(json => {
+        const data = json.startUpMeasurement
+        if (data == null) {
+          const message = "IntelliJ Platform IDE didn't report startup measurement result"
+          console.error(message, json)
+          alert(message)
+          return
+        }
+
+        const rawData = JSON.stringify(data, null, 2)
+        localStorage.setItem(storageKeyData, rawData)
+        setInput(rawData)
+      })
   }
 
-  getButton("grabButton").addEventListener("click", () => {
+  getButtonElement("grabButton").addEventListener("click", () => {
     // use parseInt to validate input
-    let port = portInputElement.value
+    let port = getPortInputElement().value
     if (port.length === 0) {
       port = "63342"
     } else if (!/^\d+$/.test(port)) {
@@ -66,7 +79,7 @@ function configureInput(inputElement: HTMLTextAreaElement, dataListener: (data: 
     grabFromRunningInstance(port)
   })
 
-  getButton("grabDevButton").addEventListener("click", () => {
+  getButtonElement("grabDevButton").addEventListener("click", () => {
     grabFromRunningInstance("63343")
   })
 
@@ -77,6 +90,14 @@ function configureInput(inputElement: HTMLTextAreaElement, dataListener: (data: 
   })
 }
 
-function getButton(id: string): HTMLButtonElement {
+function getPortInputElement() {
+  return getInputElement("ijPort")
+}
+
+function getInputElement(id: string): HTMLInputElement {
+  return document.getElementById(id) as HTMLInputElement
+}
+
+function getButtonElement(id: string): HTMLButtonElement {
   return document.getElementById(id) as HTMLButtonElement
 }

@@ -1,53 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import * as am4charts from "@amcharts/amcharts4/charts"
-import * as am4core from "@amcharts/amcharts4/core"
-import {ChartManager, InputData} from "./core"
+import {InputData, XYChartManager} from "./core"
 
-export class ComponentsChart implements ChartManager {
-  private readonly chart: am4charts.XYChart
-
+export class ComponentsChartManager extends XYChartManager {
   // isUseYForName - if true, names are more readable, but not possible to see all components because layout from top to bottom (so, opposite from left to right some data can be out of current screen)
   constructor(container: HTMLElement, isUseYForName = false) {
-    const chart = am4core.create(container, am4charts.XYChart)
-    this.chart = chart
-    this.configureChart(isUseYForName)
+    super(container)
 
-    // https://www.amcharts.com/docs/v4/tutorials/auto-adjusting-chart-height-based-on-a-number-of-data-items/
-    // noinspection SpellCheckingInspection
-    // chart.events.on("datavalidated", (event: any) => {
-    //   const chart = event.target
-    //   const categoryAxis = chart.yAxes.getIndex(0)
-    //   const adjustHeight = chart.data.length * (isUseYForName ? 20 : 10) - categoryAxis.pixelHeight
-    //
-    //   // get current chart height
-    //   let targetHeight = chart.pixelHeight + adjustHeight
-    //
-    //   // Set it on chart's container
-    //   chart.svgContainer.htmlElement.style.height = targetHeight + "px"
-    // })
-    chart.scrollbarX = new am4core.Scrollbar()
-  }
-
-  render(data: InputData) {
-    const components = data.components
-    if (components == null || components.length === 0) {
-      this.chart.data = []
-      return
-    }
-
-    // let startOffset = components[0].start
-    for (const component of components) {
-      const lastDotIndex = component.name.lastIndexOf(".")
-      component.shortName = lastDotIndex < 0 ? component.name : component.name.substring(lastDotIndex + 1)
-      // component.relativeStart = component.start - startOffset
-    }
-    this.chart.data = components
-  }
-
-  private configureChart(isUseYForName: boolean) {
     const chart = this.chart
-    configureCommonChartSettings(chart)
-
     const nameAxis = (isUseYForName ? chart.yAxes : chart.xAxes).push(new am4charts.CategoryAxis())
     nameAxis.renderer.labels
     nameAxis.dataFields.category = "shortName"
@@ -85,10 +45,20 @@ export class ComponentsChart implements ChartManager {
     series.dataFields.valueY = "duration"
     series.dataFields.valueX = "duration"
   }
-}
 
-function configureCommonChartSettings(chart: am4charts.XYChart) {
-  chart.exporting.menu = new am4core.ExportMenu()
-  chart.mouseWheelBehavior = "zoomX"
-  // chart.cursor = new am4charts.XYCursor()
+  render(data: InputData) {
+    const components = data.components
+    if (components == null || components.length === 0) {
+      this.chart.data = []
+      return
+    }
+
+    // let startOffset = components[0].start
+    for (const component of components) {
+      const lastDotIndex = component.name.lastIndexOf(".")
+      component.shortName = lastDotIndex < 0 ? component.name : component.name.substring(lastDotIndex + 1)
+      // component.relativeStart = component.start - startOffset
+    }
+    this.chart.data = components
+  }
 }

@@ -14,7 +14,7 @@ public final class StartUpMeasurer {
   // `what + noun` is used as scheme for name to make analyzing easier (to visually group - `components loading/initialization/etc`, not to put common part of name to end of)
   public static final class Phases {
     // this phase name is not fully clear - it is time from `IdeaApplication.initApplication` to `IdeaApplication.run`
-    public static final String INIT_APP = "application initialization";
+    public static final String INIT_APP = "app initialization";
 
     public static final String LOAD_PLUGIN_DESCRIPTORS = "plugin descriptors loading";
     public static final String INIT_PLUGINS = "plugins initialization";
