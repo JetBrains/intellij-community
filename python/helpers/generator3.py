@@ -368,7 +368,6 @@ def read_generator_version(skeleton_file):
 
 
 def should_update_skeleton(base_dir, mod_qname):
-    mod_cache_base = os.path.join(base_dir, *mod_qname.split('.'))
     cur_version = version_to_tuple(version())
 
     with ignored_os_errors(errno.ENOENT):
@@ -377,17 +376,24 @@ def should_update_skeleton(base_dir, mod_qname):
             return stamp_content != cur_version
 
     # noinspection PyUnreachableCode
-    mod_cache_pkg = os.path.join(mod_cache_base, '__init__.py')
-    mod_cache_file = mod_cache_base + '.py'
     required_version = read_required_version(mod_qname)
 
-    for path in (mod_cache_pkg, mod_cache_file):
+    for path in skeleton_path_candidates(base_dir, mod_qname, init_for_pkg=True):
         with ignored_os_errors(errno.ENOENT):
             with fopen(path, 'r') as f:
                 used_version = read_generator_version(f)
                 if used_version and required_version and used_version >= required_version:
                     return False
     return True
+
+
+def skeleton_path_candidates(base_dir, mod_qname, init_for_pkg=False):
+    base_path = os.path.join(base_dir, *mod_qname.split('.'))
+    if init_for_pkg:
+        yield os.path.join(base_path, '__init__.py')
+    else:
+        yield base_path
+    yield base_path + '.py'
 
 
 def read_required_gen_version_file():
@@ -441,10 +447,8 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
 
             if _prepopulate_cache_with_sdk_skeletons and not should_update_skeleton(sdk_skeletons_dir, name):
                 note('Prepopulating cache for %s from existing skeletons at %r', name, sdk_skeletons_dir)
-                name_parts = name.split('.')
-                copy_dst = build_pkg_structure(mod_cache_dir, '.'.join(name_parts[:-1]))
-                for path in (os.path.join(sdk_skeletons_dir, *name_parts),
-                             os.path.join(sdk_skeletons_dir, *(name_parts[:-1] + [name_parts[-1] + '.py']))):
+                copy_dst = build_pkg_structure(mod_cache_dir, '.'.join(name.split('.')[:-1]))
+                for path in skeleton_path_candidates(sdk_skeletons_dir, name, init_for_pkg=False):
                     if os.path.exists(path):
                         copy(path, copy_dst)
                         return True
