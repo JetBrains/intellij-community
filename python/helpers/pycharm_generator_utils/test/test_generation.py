@@ -27,13 +27,6 @@ class SkeletonCachingTest(GeneratorTestCase):
     PYTHON_STUBS_DIR = 'python_stubs'
     SDK_SKELETONS_DIR = 'sdk_skeletons'
 
-    @property
-    def binaries_dir(self):
-        return os.path.join(self.class_test_data_dir, 'binaries')
-
-    def find_binary_subdir(self, subdir):
-        return os.path.join(self.binaries_dir, subdir)
-
     def get_test_data_path(self, rel_path):
         return os.path.join(self.test_data_dir, rel_path)
 
