@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.migration;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
@@ -23,7 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -35,22 +36,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Map;
 
 public class UnnecessaryBoxingInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean onlyReportSuperfluouslyBoxed = false;
-
-  private static final Map<PsiType, String> replacementMap = new HashMap<>();
-
-  static {
-    replacementMap.put(PsiType.SHORT, "Short.parseShort");
-    replacementMap.put(PsiType.INT, "Integer.parseInt");
-    replacementMap.put(PsiType.LONG, "Long.parseLong");
-    replacementMap.put(PsiType.DOUBLE, "Double.parseDouble");
-    replacementMap.put(PsiType.FLOAT, "Float.parseFloat");
-  }
 
   @Override
   @NotNull
@@ -92,8 +82,8 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       this.name = InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix");
     }
 
-    private UnnecessaryBoxingFix(PsiType expectedType) {
-      this.name = InspectionGadgetsBundle.message("unnecessary.boxing.use.parse.quickfix", replacementMap.get(expectedType));
+    private UnnecessaryBoxingFix(PsiType retType) {
+      this.name = CommonQuickFixBundle.message("fix.replace.with.x", getParseMethod(retType));
     }
 
     @Override
@@ -120,12 +110,12 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       }
       final CommentTracker commentTracker = new CommentTracker();
       if (unboxedExpressionType.getCanonicalText().equals("java.lang.String")) {
-        final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false, true);
-        final String parseMethodName = replacementMap.get(expectedType);
+        PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
+        final String parseMethodName = getParseMethod(methodCall.getType());
         if (parseMethodName == null) {
           return;
         }
-        PsiReplacementUtil.replaceExpression(expression, parseMethodName + "(" + unboxedExpression.getText() + ")", commentTracker);
+        ExpressionUtils.bindCallTo(methodCall, parseMethodName);
         return;
       }
       final Object value = ExpressionUtils.computeConstantExpression(unboxedExpression);
@@ -256,24 +246,31 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       if (!"valueOf".equals(referenceName)) {
         return;
       }
+      final PsiMethod method = ObjectUtils.tryCast(methodExpression.resolve(), PsiMethod.class);
+      if (method == null) {
+        return;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
+        return;
+      }
+      final String canonicalText = aClass.getQualifiedName();
+      if (PsiTypesUtil.unboxIfPossible(canonicalText) == canonicalText) {
+        return;
+      }
       final PsiType boxedExpressionType = boxedExpression.getType();
       if (boxedExpressionType != null && boxedExpressionType.getCanonicalText().equals("java.lang.String")) {
         final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false, true);
-        if (replacementMap.containsKey(expectedType)) {
-          registerError(expression, expectedType);
+        final PsiType methodReturnType = method.getReturnType();
+        if (expectedType instanceof PsiPrimitiveType && getParseMethod(methodReturnType) != null) {
+          registerError(expression, methodReturnType);
         }
         return;
       }
       if (!(boxedExpressionType instanceof PsiPrimitiveType)) {
         return;
       }
-      final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
-      if (!(qualifierExpression instanceof PsiReferenceExpression)) {
-        return;
-      }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifierExpression;
-      final String canonicalText = referenceExpression.getCanonicalText();
-      if (PsiTypesUtil.unboxIfPossible(canonicalText) == canonicalText || isBoxingNecessary(expression, boxedExpression)) {
+      if (isBoxingNecessary(expression, boxedExpression)) {
         return;
       }
       if (onlyReportSuperfluouslyBoxed) {
@@ -351,5 +348,17 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       }
       return false;
     }
+  }
+
+  @Nullable
+  private static String getParseMethod(@Nullable PsiType type) {
+    if (type == null) {
+      return null;
+    }
+    final String typeText = type.getCanonicalText();
+    if (CommonClassNames.JAVA_LANG_BOOLEAN.equals(typeText) || CommonClassNames.JAVA_LANG_BYTE.equals(typeText)) {
+      return null;
+    }
+    return JavaPsiBoxingUtils.getParseMethod(typeText);
   }
 }
