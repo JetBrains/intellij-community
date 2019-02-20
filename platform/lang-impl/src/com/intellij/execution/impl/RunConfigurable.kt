@@ -434,7 +434,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   private fun defaultsSettingsChanged() {
     isModified = recentsLimit.text != recentsLimit.getClientProperty(INITIAL_VALUE_KEY) ||
                  confirmation.isSelected != confirmation.getClientProperty(INITIAL_VALUE_KEY) ||
-                 confirmationDeletionFromPopup.isSelected != confirmationDeletionFromPopup.getClientProperty(INITIAL_VALUE_KEY)
+                 confirmationDeletionFromPopup.isSelected != confirmationDeletionFromPopup.getClientProperty(INITIAL_VALUE_KEY) ||
                  runDashboardTypesPanel.isModified()
   }
 
