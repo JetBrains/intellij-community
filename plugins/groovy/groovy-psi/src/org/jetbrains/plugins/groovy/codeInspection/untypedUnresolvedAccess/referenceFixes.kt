@@ -17,6 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsCla
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.canBeClassOrPackage
 
 fun generateCreateClassActions(ref: GrReferenceElement<*>): Collection<IntentionAction> {
@@ -83,4 +84,16 @@ private fun resolvesToGroovy(qualifier: PsiElement?): Boolean {
     }
     else -> false
   }
+}
+
+fun generateAddImportActions(ref: GrReferenceElement<*>): Collection<IntentionAction> {
+  return generateAddImportAction(ref)?.let(::listOf) ?: emptyList()
+}
+
+private fun generateAddImportAction(ref: GrReferenceElement<*>): IntentionAction? {
+  if (ref.isQualified) return null
+  val referenceName = ref.referenceName ?: return null
+  if (referenceName.isEmpty()) return null
+  if (ref !is GrCodeReferenceElement && Character.isLowerCase(referenceName[0])) return null
+  return GroovyQuickFixFactory.getInstance().createGroovyAddImportAction(ref)
 }
