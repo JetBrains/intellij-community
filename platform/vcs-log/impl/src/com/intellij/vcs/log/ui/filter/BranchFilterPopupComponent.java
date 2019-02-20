@@ -15,9 +15,7 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.vcs.log.VcsLogBranchFilter;
 import com.intellij.vcs.log.VcsLogDataPack;
-import com.intellij.vcs.log.VcsLogRevisionFilter;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +27,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class BranchFilterPopupComponent
-  extends MultipleValueFilterPopupComponent<FilterPair<VcsLogBranchFilter, VcsLogRevisionFilter>, VcsLogClassicFilterUi.BranchFilterModel> {
+  extends MultipleValueFilterPopupComponent<BranchFilters, VcsLogClassicFilterUi.BranchFilterModel> {
   public static final String BRANCH_FILTER_NAME = "Branch";
   private final VcsLogClassicFilterUi.BranchFilterModel myBranchFilterModel;
 
@@ -41,13 +39,13 @@ public class BranchFilterPopupComponent
 
   @NotNull
   @Override
-  protected List<String> getFilterValues(@NotNull FilterPair<VcsLogBranchFilter, VcsLogRevisionFilter> filter) {
-    return myFilterModel.getFilterPresentation(filter);
+  protected List<String> getFilterValues(@NotNull BranchFilters filters) {
+    return myFilterModel.getFilterPresentation(filters);
   }
 
   @Override
   @Nullable
-  protected FilterPair<VcsLogBranchFilter, VcsLogRevisionFilter> createFilter(@NotNull List<String> values) {
+  protected BranchFilters createFilter(@NotNull List<String> values) {
     return myFilterModel.createFilterFromPresentation(values);
   }
 
