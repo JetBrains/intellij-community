@@ -165,7 +165,6 @@ public final class Presentation implements Cloneable {
 
   /**
    * Sets the text with mnemonic.
-   * @param text
    * @see #setText(String, boolean)
    */
   public void setText(String text) {

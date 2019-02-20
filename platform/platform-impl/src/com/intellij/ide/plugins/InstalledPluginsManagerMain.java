@@ -85,11 +85,11 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     installFromDisk.setMnemonic('d');
     installFromDisk.addActionListener(e -> {
       final InstalledPluginsTableModel model = (InstalledPluginsTableModel)pluginsModel;
-      chooseAndInstall(model, pair -> {
+      chooseAndInstall(model, myActionsPanel, pair -> {
         model.appendOrUpdateDescriptor(pair.second);
         setRequireShutdown(true);
         select(pair.second);
-      }, myActionsPanel);
+      });
     });
     myActionsPanel.add(installFromDisk);
 
@@ -98,9 +98,8 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     emptyText.appendText("Search in repositories", SimpleTextAttributes.LINK_ATTRIBUTES, new BrowseRepoListener(null));
   }
 
-  public static void chooseAndInstall(@NotNull final InstalledPluginsTableModel model,
-                                      @NotNull final Consumer<? super Pair<File, IdeaPluginDescriptor>> callback,
-                                      @Nullable final Component parent) {
+  static void chooseAndInstall(@NotNull final InstalledPluginsTableModel model,
+                               @Nullable final Component parent, @NotNull final Consumer<? super Pair<File, IdeaPluginDescriptor>> callback) {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, false, true, true, false, false) {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
@@ -292,6 +291,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     return this;
   }
 
+  @NotNull
   @Override
   protected ActionGroup getActionGroup(boolean inToolbar) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
@@ -493,7 +493,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      chooseAndInstall(new InstalledPluginsTableModel(), pair -> PluginManagerConfigurable.shutdownOrRestartApp(), null);
+      chooseAndInstall(new InstalledPluginsTableModel(), null, pair -> PluginManagerConfigurable.shutdownOrRestartApp());
     }
   }
 

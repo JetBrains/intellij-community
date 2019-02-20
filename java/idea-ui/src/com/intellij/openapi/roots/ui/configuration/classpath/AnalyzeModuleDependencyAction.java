@@ -9,10 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.scopes.LibraryScope;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModuleOrderEntry;
-import com.intellij.openapi.roots.ModuleSourceOrderEntry;
-import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.Messages;
@@ -30,15 +27,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.intellij.openapi.roots.JavaProjectRootsUtil.findExportedDependenciesReachableViaThisDependencyOnly;
-
 class AnalyzeModuleDependencyAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(AnalyzeModuleDependencyAction.class);
   private final ClasspathPanel myPanel;
 
   AnalyzeModuleDependencyAction(final ClasspathPanel panel) {
     super("Analyze This Dependency");
-    this.myPanel = panel;
+    myPanel = panel;
   }
 
   @Override
@@ -51,8 +46,9 @@ class AnalyzeModuleDependencyAction extends AnAction {
     if (selectedEntry instanceof ModuleOrderEntry) {
       Module depModule = ((ModuleOrderEntry)selectedEntry).getModule();
       LOG.assertTrue(depModule != null);
-      Map<OrderEntry, OrderEntry> additionalDependencies = findExportedDependenciesReachableViaThisDependencyOnly(myPanel.getRootModel().getModule(),
-                                                                                                                  depModule, modulesProvider);
+      Map<OrderEntry, OrderEntry> additionalDependencies = JavaProjectRootsUtil
+        .findExportedDependenciesReachableViaThisDependencyOnly(myPanel.getRootModel().getModule(),
+                                                                depModule, modulesProvider);
       additionalScopes = new LinkedHashMap<>();
       for (Map.Entry<OrderEntry, OrderEntry> entry : additionalDependencies.entrySet()) {
         additionalScopes.put(getScopeForOrderEntry(entry.getKey()), entry.getValue());
@@ -125,7 +121,7 @@ class AnalyzeModuleDependencyAction extends AnAction {
     return "";
   }
 
-  private static Set<GlobalSearchScope> findUsedScopes(List<? extends DependenciesBuilder> builders, List<GlobalSearchScope> scopes) {
+  private static Set<GlobalSearchScope> findUsedScopes(List<? extends DependenciesBuilder> builders, List<? extends GlobalSearchScope> scopes) {
     Set<GlobalSearchScope> usedScopes = new LinkedHashSet<>();
     for (DependenciesBuilder builder : builders) {
       for (Set<PsiFile> files : builder.getDependencies().values()) {
@@ -149,11 +145,11 @@ class AnalyzeModuleDependencyAction extends AnAction {
     if (selectedEntry instanceof ModuleSourceOrderEntry) {
       return GlobalSearchScope.moduleScope(selectedEntry.getOwnerModule());
     }
-    else if (selectedEntry instanceof ModuleOrderEntry) {
+    if (selectedEntry instanceof ModuleOrderEntry) {
       Module module = ((ModuleOrderEntry)selectedEntry).getModule();
       return module != null ? GlobalSearchScope.moduleScope(module) : null;
     }
-    else if (selectedEntry instanceof LibraryOrderEntry) {
+    if (selectedEntry instanceof LibraryOrderEntry) {
       Library library = ((LibraryOrderEntry)selectedEntry).getLibrary();
       return library != null ? new LibraryScope(myPanel.getProject(), library) : null;
     }

@@ -169,7 +169,7 @@ public abstract class CellPluginComponent extends JPanel {
     parent.repaint();
   }
 
-  public void setListeners(@NotNull LinkListener<IdeaPluginDescriptor> listener,
+  public void setListeners(@NotNull LinkListener<? super IdeaPluginDescriptor> listener,
                            @NotNull LinkListener<String> searchListener,
                            @NotNull EventHandler eventHandler) {
     //noinspection unchecked
@@ -193,10 +193,10 @@ public abstract class CellPluginComponent extends JPanel {
     eventHandler.addAll(this);
   }
 
-  public void createPopupMenu(@NotNull DefaultActionGroup group, @NotNull List<CellPluginComponent> selection) {
+  public void createPopupMenu(@NotNull DefaultActionGroup group, @NotNull List<? extends CellPluginComponent> selection) {
   }
 
-  public void handleKeyAction(int keyCode, @NotNull List<CellPluginComponent> selection) {
+  public void handleKeyAction(int keyCode, @NotNull List<? extends CellPluginComponent> selection) {
   }
 
   public void close() {

@@ -451,7 +451,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
   }
 
-  private static void reparseLater(@NotNull List<VirtualFile> changed) {
+  private static void reparseLater(@NotNull List<? extends VirtualFile> changed) {
     ApplicationManager.getApplication().invokeLater(() -> FileContentUtilCore.reparseFiles(changed), ApplicationManager.getApplication().getDisposed());
   }
 
@@ -635,6 +635,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return fileType;
   }
 
+  @NotNull
   private static String readableFlags(long flags) {
     String result = "";
     if (BitUtil.isSet(flags, ATTRIBUTES_WERE_LOADED_MASK)) result += (result.isEmpty() ? "" :" | ") + "ATTRIBUTES_WERE_LOADED_MASK";
@@ -752,7 +753,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return file.getFileSystem() instanceof FileSystemInterface;
   }
 
-  private int readSafely(InputStream stream, byte[] buffer, int offset, int length) throws IOException {
+  private int readSafely(@NotNull InputStream stream, @NotNull byte[] buffer, int offset, int length) throws IOException {
     int n = stream.read(buffer, offset, length);
     if (n <= 0) {
       // maybe locked because someone else is writing to it
@@ -856,7 +857,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   // for diagnostics
   @SuppressWarnings("ConstantConditions")
-  private static Object streamInfo(InputStream stream) throws IOException {
+  private static Object streamInfo(@NotNull InputStream stream) throws IOException {
     if (stream instanceof BufferedInputStream) {
       InputStream in = ReflectionUtil.getField(stream.getClass(), stream, InputStream.class, "in");
       byte[] buf = ReflectionUtil.getField(stream.getClass(), stream, byte[].class, "buf");
@@ -900,7 +901,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @Override
-  public void registerFileType(@NotNull final FileType type, @NotNull final List<FileNameMatcher> defaultAssociations) {
+  public void registerFileType(@NotNull final FileType type, @NotNull final List<? extends FileNameMatcher> defaultAssociations) {
     DeprecatedMethodException.report("Use FileTypeFactory instead.");
     ApplicationManager.getApplication().runWriteAction(() -> {
       fireBeforeFileTypesChanged();
