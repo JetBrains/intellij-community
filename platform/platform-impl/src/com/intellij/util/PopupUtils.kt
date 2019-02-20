@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.gradle.util
+package com.intellij.util
 
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
@@ -24,12 +24,12 @@ import javax.swing.JTable
 import javax.swing.JTree
 
 
-internal fun getBestPopupPosition(context: DataContext): RelativePoint {
+fun getBestPopupPosition(context: DataContext): RelativePoint {
   return getBestPopupPositionInsideGutter(context)
          ?: getBestPopupPositionInsideComponent(context)
 }
 
-internal fun getBestBalloonPosition(context: DataContext): RelativePoint {
+fun getBestBalloonPosition(context: DataContext): RelativePoint {
   return getBestBalloonPositionInsideGutter(context)
          ?: getBestBalloonPositionInsideEditor(context)
          ?: getBestBalloonPositionInsideList(context)
