@@ -15,11 +15,9 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.ClickListener
-import com.intellij.ui.HyperlinkLabel
-import com.intellij.ui.ListCellRendererWrapper
-import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
+import com.intellij.ui.*
 import com.intellij.ui.components.*
+import com.intellij.ui.layout.migLayout.*
 import com.intellij.util.ui.UIUtil
 import java.awt.Component
 import java.awt.event.ActionEvent
@@ -29,19 +27,28 @@ import java.util.function.Consumer
 import java.util.function.Supplier
 import javax.swing.*
 import kotlin.reflect.KMutableProperty0
+import kotlin.reflect.KProperty0
 
 @DslMarker
 annotation class CellMarker
 
 interface CellBuilder<T : JComponent> {
+  val component: T
+
   fun focused(): CellBuilder<T>
   fun withValidation(callback: (T) -> ValidationInfo?): CellBuilder<T>
   fun onApply(callback: () -> Unit): CellBuilder<T>
+  fun enabled(isEnabled: Boolean)
+  fun enableIfSelected(button: AbstractButton)
 
   fun withErrorIf(message: String, callback: (T) -> Boolean): CellBuilder<T> {
     withValidation { if (callback(it)) ValidationInfo(message, it) else null }
     return this
   }
+}
+
+fun CellBuilder<out JComponent>.enableIfSelected(builder: CellBuilder<out AbstractButton>) {
+  enableIfSelected(builder.component)
 }
 
 // separate class to avoid row related methods in the `cell { } `
@@ -110,6 +117,12 @@ abstract class Cell {
     return component
   }
 
+  fun checkBox(text: String, prop: KMutableProperty0<Boolean>): CellBuilder<JBCheckBox> {
+    val component = JBCheckBox(text, prop.get())
+    return component()
+      .onApply { prop.set(component.isSelected) }
+  }
+
   inline fun <T> comboBox(propertyUiManager: BooleanPropertyWithListUiManager<T, out ComboBoxModel<T>>, growPolicy: GrowPolicy? = null, crossinline renderer: ListCellRendererWrapper<T?>.(value: T, index: Int, isSelected: Boolean) -> Unit) {
     comboBox(propertyUiManager.listModel, propertyUiManager, growPolicy, object : ListCellRendererWrapper<T?>() {
       override fun customize(list: JList<*>, value: T?, index: Int, isSelected: Boolean, hasFocus: Boolean) {
@@ -145,6 +158,11 @@ abstract class Cell {
     val builder = component()
     builder.onApply { setter.accept(component.text) }
     return builder
+  }
+
+  fun spinner(prop: KMutableProperty0<Int>, minValue: Int, maxValue: Int, step: Int = 1): CellBuilder<JBIntSpinner> {
+    val component = JBIntSpinner(prop.get(), minValue, maxValue, step)
+    return component().onApply { prop.set(component.number) }
   }
 
   fun textFieldWithHistoryWithBrowseButton(browseDialogTitle: String,
@@ -204,5 +222,11 @@ abstract class Cell {
     JBScrollPane(component)(*constraints)
   }
 
-  abstract operator fun <T : JComponent> T.invoke(vararg constraints: CCFlags, gapLeft: Int = 0, growPolicy: GrowPolicy? = null, comment: String? = null): CellBuilder<T>
+  abstract operator fun <T : JComponent> T.invoke(
+    vararg constraints: CCFlags,
+    gapLeft: Int = 0,
+    growPolicy: GrowPolicy? = null,
+    comment: String? = null
+  ): CellBuilder<T>
+
 }
