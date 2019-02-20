@@ -45,8 +45,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class FoldingUpdate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.FoldingUpdate");
 
-  private static final Key<CachedValue<Runnable>> CODE_FOLDING_KEY_DEFAULT = Key.create("code folding");
-  private static final Key<CachedValue<Runnable>> CODE_FOLDING_KEY_NON_DEFAULT = Key.create("code folding");
+  private static final Key<CachedValue<Runnable>> CODE_FOLDING_KEY_DEFAULT = Key.create("code folding default");
+  private static final Key<CachedValue<Runnable>> CODE_FOLDING_KEY_NON_DEFAULT = Key.create("code folding nonDefault");
   private static final Key<String> CODE_FOLDING_FILE_EXTENSION_KEY = Key.create("code folding file extension");
 
   private FoldingUpdate() {
