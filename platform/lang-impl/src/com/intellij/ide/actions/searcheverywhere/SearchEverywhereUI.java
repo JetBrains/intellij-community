@@ -1077,14 +1077,16 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       else {
         itemsMap.forEach((contributor, list) -> {
           int startIndex = contributors().indexOf(contributor);
+          int insertionIndex = getInsertionPoint(contributor);
+          int endIndex = insertionIndex + list.size() - 1;
+          listElements.addAll(insertionIndex, list);
+          fireIntervalAdded(this, insertionIndex, endIndex);
+
+          // there were items for this contributor before update
           if (startIndex >= 0) {
-            addElementsWithPriority(contributor, startIndex, list);
-          }
-          else {
-            startIndex = getInsertionPoint(contributor);
-            int endIndex = startIndex + list.size() - 1;
-            listElements.addAll(startIndex, list);
-            fireIntervalAdded(this, startIndex, endIndex);
+            listElements.subList(startIndex, endIndex + 1)
+              .sort(Comparator.comparingInt(SESearcher.ElementInfo::getPriority).reversed());
+            fireContentsChanged(this, startIndex, endIndex);
           }
         });
       }
@@ -1123,26 +1125,6 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
         if (iterator.next().getElement() == MORE_ELEMENT) {
           iterator.remove();
           fireContentsChanged(this, index, index);
-        }
-      }
-    }
-
-    private void addElementsWithPriority(SearchEverywhereContributor<?> contributor, int index, List<SESearcher.ElementInfo> newElements) {
-      for (SESearcher.ElementInfo newElementInfo : newElements) {
-        if (index < listElements.size()) {
-          SESearcher.ElementInfo existingElementInfo = listElements.get(index);
-          while (existingElementInfo.getContributor() == contributor
-                 && existingElementInfo.getPriority() >= newElementInfo.getPriority()
-                 && existingElementInfo.getElement() != MORE_ELEMENT) {
-            index++;
-            if (index >= listElements.size()) break;
-            existingElementInfo = listElements.get(index);
-          }
-          listElements.add(index, newElementInfo);
-          index++;
-        }
-        else {
-          listElements.add(newElementInfo);
         }
       }
     }
@@ -1278,6 +1260,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
         return isMoreElement(index) ? index : index + 1;
       }
 
+      //todo binary search
       for (int i = 0; i < list.size(); i++) {
         if (list.get(i).getSortWeight() > contributor.getSortWeight()) {
           return i;
