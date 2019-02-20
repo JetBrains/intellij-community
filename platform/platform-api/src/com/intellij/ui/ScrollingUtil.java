@@ -196,19 +196,7 @@ public class ScrollingUtil {
   }
   private static void _ensureRangeIsVisible(JComponent c, int top, int bottom) {
     if (c instanceof JList) {
-      JList list = ((JList)c);
-      int size = list.getModel().getSize();
-      if (top < 0) {
-        top = 0;
-      }
-      if (bottom >= size) {
-        bottom = size - 1;
-      }
-      Rectangle cellBounds = list.getCellBounds(top, bottom);
-      if (cellBounds != null) {
-        cellBounds.x = 0;
-        c.scrollRectToVisible(cellBounds);
-      }
+      ensureRangeIsVisible((JList)c, top, bottom);
     }
     else if (c instanceof JTable) {
       JTable table = (JTable)c;
@@ -497,25 +485,16 @@ public class ScrollingUtil {
       moveHome(table);
       return;
     }
-    int size = table.getModel().getRowCount();
-    int decrement = visible - 1;
+    int step = visible - 1;
     ListSelectionModel selectionModel = table.getSelectionModel();
-    int index = Math.max(selectionModel.getMinSelectionIndex() - decrement, 0);
+    int index = Math.max(selectionModel.getMinSelectionIndex() - step, 0);
     int visibleIndex = getLeadingRow(table, table.getVisibleRect());
-    int top = visibleIndex - decrement;
+    int top = visibleIndex - step;
     if (top < 0) {
       top = 0;
     }
     int bottom = top + visible - 1;
-    if (bottom >= size) {
-      bottom = size - 1;
-    }
-
-    Rectangle cellBounds = getCellBounds(table, top, bottom);
-    table.scrollRectToVisible(cellBounds);
-
-    table.getSelectionModel().setSelectionInterval(index, index);
-    ensureIndexIsVisible(table, index, 0);
+    _scrollAfterPageMove(table, top, bottom, index);
   }
 
   public static void movePageDown(JTable table) {
@@ -525,12 +504,17 @@ public class ScrollingUtil {
       return;
     }
     ListSelectionModel selectionModel = table.getSelectionModel();
-    int size = table.getModel().getRowCount();
-    int increment = visible - 1;
-    int index = Math.min(selectionModel.getMinSelectionIndex() + increment, size - 1);
+    int step = visible - 1;
     int firstVisibleRow = getLeadingRow(table, table.getVisibleRect());
-    int top = firstVisibleRow + increment;
+    int top = firstVisibleRow + step;
     int bottom = top + visible - 1;
+    int size = table.getModel().getRowCount();
+    int index = Math.min(selectionModel.getMinSelectionIndex() + step, size - 1);
+    _scrollAfterPageMove(table, top, bottom, index);
+  }
+
+  private static void _scrollAfterPageMove(JTable table, int top, int bottom, int index) {
+    int size = table.getModel().getRowCount();
     if (bottom >= size) {
       bottom = size - 1;
     }
