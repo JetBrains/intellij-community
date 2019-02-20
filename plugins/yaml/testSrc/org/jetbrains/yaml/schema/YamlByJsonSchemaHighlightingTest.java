@@ -892,4 +892,13 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                 "  yyy:<warning descr=\"Schema validation: Incompatible types.\n Required: string. Actual: null.\">  </warning>\n" +
                 "  xxx: 0");
   }
+
+  public void testDeprecation() throws Exception {
+    doTest("{\"properties\": {\n" +
+           "    \"myPropertyXxx\": {\n" +
+           "      \"deprecationMessage\": \"Baz\",\n" +
+           "      \"description\": \"Foo bar\"\n" +
+           "    }\n" +
+           "  }}", "<weak_warning descr=\"Property 'myPropertyXxx' is deprecated: Baz\">myPropertyXxx</weak_warning>: a");
+  }
 }
