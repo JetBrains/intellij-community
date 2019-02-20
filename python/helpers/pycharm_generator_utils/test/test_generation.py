@@ -34,8 +34,8 @@ class SkeletonCachingTest(GeneratorTestCase):
     def find_binary_subdir(self, subdir):
         return os.path.join(self.binaries_dir, subdir)
 
-    def get_test_data_path(self, subdir):
-        return os.path.join(self.test_data_dir, subdir)
+    def get_test_data_path(self, rel_path):
+        return os.path.join(self.test_data_dir, rel_path)
 
     def run_generator(self, mod_qname, mod_path=None,
                       fake_hashes=False,
@@ -146,7 +146,7 @@ class SkeletonCachingTest(GeneratorTestCase):
         """.format(hash=generator3.physical_module_hash(mod_path)))
 
     def test_skeleton_regenerated_for_changed_module(self):
-        self.check_generator_output('mod', mod_path='mod.py', mod_location=self.get_test_data_path('versions/v2'))
+        self.check_generator_output('mod', mod_path='mod.py', mod_root='versions/v2')
 
     def test_skeleton_regenerated_for_upgraded_generator_with_explicit_update_stamp(self):
         self.check_generator_output('mod', mod_path='mod.py', gen_version='0.2', custom_required_gen=True)
@@ -182,18 +182,20 @@ class SkeletonCachingTest(GeneratorTestCase):
     def test_cache_not_prepopulated_with_outdated_existing_sdk_skeleton(self):
         self.check_generator_output('mod', mod_path='mod.py', gen_version='0.2', custom_required_gen=True)
 
-    def check_generator_output(self, mod_name, mod_path=None, mod_location=None, custom_required_gen=False, **kwargs):
+    def check_generator_output(self, mod_name, mod_path=None, mod_root=None, custom_required_gen=False, **kwargs):
         if custom_required_gen:
             kwargs['required_gen_version_file_path'] = os.path.join(self.test_data_dir, 'required_gen_version')
 
-        if not mod_location:
-            mod_location = self.test_data_dir
+        if not mod_root:
+            mod_root = self.test_data_dir
+        elif not os.path.isabs(mod_root):
+            mod_root = os.path.join(self.test_data_dir, mod_root)
 
         if mod_path:
-            mod_path = os.path.join(mod_location, mod_path)
+            mod_path = os.path.join(mod_root, mod_path)
 
         with self.comparing_dirs(tmp_subdir=self.PYTHON_STUBS_DIR):
-            self.run_generator(mod_name, mod_path=mod_path, extra_syspath_entry=mod_location, **kwargs)
+            self.run_generator(mod_name, mod_path=mod_path, extra_syspath_entry=mod_root, **kwargs)
 
     def assertDirLayoutEquals(self, dir_path, expected_layout):
         def format_dir(dir_path, indent=''):
