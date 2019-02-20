@@ -153,7 +153,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   public void setParametersAreUnknown() {
-    for (RefParameter parameter : myParameters) {
+    for (RefParameter parameter : getParameters()) {
       ((RefParameterImpl)parameter).clearTemplateValue();
     }
     for (RefMethod method : getSuperMethods()) {
