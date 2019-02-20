@@ -246,6 +246,7 @@ public class Switcher extends AnAction implements DumbAware {
     final JBCheckBox myShowOnlyEditedFilesCheckBox;
     final JLabel pathLabel = new JLabel(" ");
     final JPanel myTopPanel;
+    final JPanel myLeftPanel;
     final JPanel descriptions;
     final Project project;
     private final boolean myPinned;
@@ -436,15 +437,17 @@ public class Switcher extends AnAction implements DumbAware {
                                      }, AnAction::getTemplateText);
       actionAds.setEmptyText("");
 
-      JPanel leftPanel = new JBPanel<>(new VerticalFlowLayout()).withBorder(JBUI.Borders.empty(5, 5, 5, 20));
-      leftPanel.add(toolWindows);
+      myLeftPanel = new JBPanel<>(new VerticalFlowLayout().withProhibitSecondColumn(true)).withBorder(JBUI.Borders.empty(5, 5, 5, 20));
+      myLeftPanel.add(toolWindows);
       adsSeparator = new JBPanel<>()
-                      .withBorder(new CustomLineBorder(SEPARATOR_COLOR, JBUI.insets(4, 0, 4, 0)))
-                      .withPreferredSize(10, 1)
+                      .withBorder(new CustomLineBorder(SEPARATOR_COLOR, JBUI.insetsBottom(1)))
+                      .withPreferredSize(10, 11)
                       .withBackground(toolWindows.getBackground());
       adsSeparator.setVisible(actionAdvertisementEnabled);
-      leftPanel.add(adsSeparator);
-      leftPanel.add(actionAds);
+      myLeftPanel.add(adsSeparator);
+
+      actionAds.setBorder(JBUI.Borders.emptyTop(10));
+      myLeftPanel.add(actionAds);
 
       bindLists(toolWindows, actionAds);
 
@@ -557,7 +560,7 @@ public class Switcher extends AnAction implements DumbAware {
       }
 
       this.add(myTopPanel, BorderLayout.NORTH);
-      this.add(leftPanel, BorderLayout.WEST);
+      this.add(myLeftPanel, BorderLayout.WEST);
       if (filesModel.getSize() > 0) {
         files.setAlignmentY(1f);
         final JScrollPane pane = ScrollPaneFactory.createScrollPane(files, true);
@@ -1418,7 +1421,7 @@ public class Switcher extends AnAction implements DumbAware {
 
     private class SwitcherLayouter extends BorderLayout {
       private Rectangle sBounds;
-      private Rectangle tBounds;
+      private Rectangle leftBounds;
       private Rectangle fBounds;
       private Rectangle dBounds;
       private Rectangle headerBounds;
@@ -1430,7 +1433,7 @@ public class Switcher extends AnAction implements DumbAware {
         if (sBounds == null || !target.isShowing()) {
           super.layoutContainer(target);
           sBounds = separator.getBounds();
-          tBounds = toolWindows.getBounds();
+          leftBounds = myLeftPanel.getBounds();
           fBounds = filesPane.getBounds();
           dBounds = descriptions.getBounds();
           headerBounds = myTopPanel.getBounds();
@@ -1439,14 +1442,14 @@ public class Switcher extends AnAction implements DumbAware {
           final int h = target.getHeight();
           final int w = target.getWidth();
           sBounds.height = h - dBounds.height - headerBounds.height;
-          tBounds.height = h - dBounds.height - headerBounds.height;
+          leftBounds.height = h - dBounds.height - headerBounds.height;
           fBounds.height = h - dBounds.height - headerBounds.height;
-          fBounds.width = w - fBounds.x + JBUI.scale(10);
+          fBounds.width = w - sBounds.width - leftBounds.width;
           dBounds.width = w;
           headerBounds.width = w;
           dBounds.y = h - dBounds.height;
           separator.setBounds(sBounds);
-          toolWindows.setBounds(tBounds);
+          myLeftPanel.setBounds(leftBounds);
           filesPane.setBounds(fBounds);
           descriptions.setBounds(dBounds);
           myTopPanel.setBounds(headerBounds);

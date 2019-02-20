@@ -28,6 +28,7 @@ public class VerticalFlowLayout extends FlowLayout implements Serializable {
   public static final int TOP = 0;
   private boolean myVerticalFill;
   private boolean myHorizontalFill;
+  private boolean myProhibitSecondColumn;
   private final int vGap;
   private final int hGap;
 
@@ -60,6 +61,7 @@ public class VerticalFlowLayout extends FlowLayout implements Serializable {
     this.vGap = vGap;
     myHorizontalFill = fillHorizontally;
     myVerticalFill = fillVertically;
+    myProhibitSecondColumn = false;
   }
 
   @Override
@@ -86,7 +88,7 @@ public class VerticalFlowLayout extends FlowLayout implements Serializable {
       else{
         component.setSize(dimension.width, dimension.height);
       }
-      if (i1 + dimension.height > i){
+      if (i1 + dimension.height > i && !myProhibitSecondColumn) {
         a(container, l, insets.top + vGap, j1, i - i1, k1, l1);
         i1 = dimension.height;
         l += hGap + j1;
@@ -137,6 +139,11 @@ public class VerticalFlowLayout extends FlowLayout implements Serializable {
 
   public void setVerticalFill(boolean flag) {
     myVerticalFill = flag;
+  }
+
+  public VerticalFlowLayout withProhibitSecondColumn(boolean flag) {
+    myProhibitSecondColumn = flag;
+    return this;
   }
 
   @Override
