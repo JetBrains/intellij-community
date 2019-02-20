@@ -336,18 +336,21 @@ public abstract class DiffRequestProcessor implements Disposable {
       myActiveRequest = request;
       myActiveRequest.onAssigned(true);
 
-      ViewerState newState = null;
       try {
-        newState = createState();
-        newState.init();
+        myState = createState();
+        try {
+          myState.init();
+        }
+        catch (Throwable e) {
+          myState.destroy();
+          throw e;
+        }
       }
       catch (Throwable e) {
         LOG.error(e);
-        if (newState != null) newState.destroy();
-        newState = new ErrorState(new ErrorDiffRequest(DiffBundle.message("error.cant.show.diff.message")), getFittedTool(true));
-        newState.init();
+        myState = new ErrorState(new ErrorDiffRequest(DiffBundle.message("error.cant.show.diff.message")), getFittedTool(true));
+        myState.init();
       }
-      myState = newState;
     });
   }
 
