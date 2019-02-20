@@ -8,8 +8,10 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
@@ -1139,7 +1141,7 @@ public class IdeEventQueue extends EventQueue {
             && ((KeyboardShortcut)s).getSecondKeyStroke() == null
             && ((KeyboardShortcut)s).getFirstKeyStroke().equals(keyStrokeToFind));
 
-        if (thisShortcutMayShowPopup && KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof IdeFrame) {
+        if (!isActionPopupShown() && thisShortcutMayShowPopup && KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof IdeFrame) {
           if (TYPEAHEAD_LOG.isDebugEnabled()) {
             TYPEAHEAD_LOG.debug("Delay following events; Focused window is " +
                                 KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow().getClass().getName());
@@ -1164,7 +1166,7 @@ public class IdeEventQueue extends EventQueue {
               break;
             case TRIGGERED:
               long timeDelta = keyEvent.getWhen() - ourLastTimePressed.get();
-              if (timeDelta >= 100 && timeDelta <= 500) {
+              if (!isActionPopupShown() && timeDelta >= 100 && timeDelta <= 500) {
                 delayKeyEvents.set(true);
                 lastTypeaheadTimestamp = System.currentTimeMillis();
                 mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DETECTED;
@@ -1238,9 +1240,16 @@ public class IdeEventQueue extends EventQueue {
   }
 
   public void flushDelayedKeyEvents() {
-    if (delayKeyEvents.compareAndSet(true, false)) {
+    if (!isActionPopupShown() && delayKeyEvents.compareAndSet(true, false)) {
       postDelayedKeyEvents();
     }
+  }
+
+  private static boolean isActionPopupShown() {
+    ActionManager actionManager = ActionManager.getInstance();
+    return actionManager instanceof ActionManagerImpl &&
+           !((ActionManagerImpl)actionManager).isActionPopupStackEmpty() &&
+           !((ActionManagerImpl)actionManager).isToolWindowContextMenuVisible();
   }
 
   private SearchEverywhereTypeaheadState mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DEACTIVATED;
