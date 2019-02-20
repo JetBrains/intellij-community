@@ -61,6 +61,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.intellij.psi.util.PsiUtil.isInnerClass;
+import static org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.ReferenceFixesKt.generateAddImportActions;
 import static org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.ReferenceFixesKt.generateCreateClassActions;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.hasArguments;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.hasEnclosingInstanceInScope;
@@ -447,12 +448,9 @@ public class GrUnresolvedAccessChecker {
   }
 
   private static void registerAddImportFixes(GrReferenceElement refElement, @Nullable HighlightInfo info, final HighlightDisplayKey key) {
-    final String referenceName = refElement.getReferenceName();
-    if (StringUtil.isEmpty(referenceName)) return;
-    if (!(refElement instanceof GrCodeReferenceElement) && Character.isLowerCase(referenceName.charAt(0))) return;
-    if (refElement.getQualifier() != null) return;
-
-    QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createGroovyAddImportAction(refElement), key);
+    for (IntentionAction action : generateAddImportActions(refElement)) {
+      QuickFixAction.registerQuickFixAction(info, action, key);
+    }
   }
 
   private static void registerCreateClassByTypeFix(@NotNull GrReferenceElement refElement,
