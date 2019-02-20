@@ -54,7 +54,10 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
   protected void perform(@NotNull XDebugSession session, DataContext dataContext) {
     XSmartStepIntoHandler<?> handler = session.getDebugProcess().getSmartStepIntoHandler();
     XSourcePosition position = session.getTopFramePosition();
-    if (position == null || handler == null) return;
+    if (position == null || handler == null) {
+      session.stepInto();
+      return;
+    }
 
     FileEditor editor = FileEditorManager.getInstance(session.getProject()).getSelectedEditor(position.getFile());
     if (editor instanceof TextEditor) {
