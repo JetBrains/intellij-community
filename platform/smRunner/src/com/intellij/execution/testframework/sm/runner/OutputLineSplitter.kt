@@ -48,13 +48,11 @@ abstract class OutputLineSplitter() {
    * Make sure you do not process same type from different threads.
    */
   fun process(text: String, outputType: Key<*>) {
-    val castedOutputType: ProcessOutputType = (outputType as? ProcessOutputType) ?: ProcessOutputTypes.STDERR as ProcessOutputType
-
-    if (castedOutputType.isStdout) {
+    if (outputType is ProcessOutputType && outputType.isStdout) {
       // Synced because flush may be called from different thread
-      synchronized(tcMessagesManager) {
-        flushToStdOut(tcMessagesManager.processStdout(text, outputType))
-      }
+      flushToStdOut(synchronized(tcMessagesManager) {
+        return@synchronized tcMessagesManager.processStdout(text, outputType)
+      })
     }
     else {
       // Everything but stdout
@@ -67,9 +65,9 @@ abstract class OutputLineSplitter() {
    * Flush remainder. Call as last step.
    */
   fun flush() {
-    synchronized(tcMessagesManager) {
-      flushToStdOut(tcMessagesManager.popAllChunks())
-    }
+    flushToStdOut(synchronized(tcMessagesManager) {
+      return@synchronized tcMessagesManager.popAllChunks()
+    })
   }
 
   private fun flushToStdOut(chunks: List<OutputChunk>) {
