@@ -36,23 +36,24 @@ class RetypeFileAction : AnAction() {
       existingSession.stop(false)
     }
     else {
-      val retypeOptionsDialog = RetypeOptionsDialog(project, editor)
+      val retypeOptions = RetypeOptions(project)
+      val retypeOptionsDialog = RetypeOptionsDialog(project, retypeOptions, editor)
       if (!retypeOptionsDialog.showAndGet()) return
-      val scriptBuilder = if (retypeOptionsDialog.recordScript) StringBuilder() else null
-      val largeIndexFileCount = if (retypeOptionsDialog.enableLargeIndexing) retypeOptionsDialog.largeIndexFilesCount else -1
+      val scriptBuilder = if (retypeOptions.recordScript) StringBuilder() else null
+      val largeIndexFileCount = if (retypeOptions.enableLargeIndexing) retypeOptions.largeIndexFilesCount else -1
       latencyMap.clear()
-      if (retypeOptionsDialog.isRetypeCurrentFile) {
-        val session = RetypeSession(project, editor!!, retypeOptionsDialog.retypeDelay, scriptBuilder, retypeOptionsDialog.threadDumpDelay,
-                                    restoreText = retypeOptionsDialog.restoreOriginalText,
+      if (retypeOptions.retypeCurrentFile) {
+        val session = RetypeSession(project, editor!!, retypeOptions.retypeDelay, scriptBuilder, retypeOptions.threadDumpDelay,
+                                    restoreText = retypeOptions.restoreOriginalText,
                                     filesForIndexCount = largeIndexFileCount)
         session.start()
       }
       else {
-        val queue = RetypeQueue(project, retypeOptionsDialog.retypeDelay, retypeOptionsDialog.threadDumpDelay, scriptBuilder,
-                                largeIndexFileCount, retypeOptionsDialog.restoreOriginalText)
+        val queue = RetypeQueue(project, retypeOptions.retypeDelay, retypeOptions.threadDumpDelay, scriptBuilder,
+                                largeIndexFileCount, retypeOptions.restoreOriginalText)
         if (!collectSizeSampledFiles(project,
-                                     retypeOptionsDialog.retypeExtension.removePrefix("."),
-                                     retypeOptionsDialog.fileCount,
+                                     retypeOptions.retypeExtension.removePrefix("."),
+                                     retypeOptions.fileCount,
                                      queue)) return
         queue.processNext()
       }
