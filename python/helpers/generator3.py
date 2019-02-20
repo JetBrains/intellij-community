@@ -13,7 +13,7 @@ FAILED_VERSION_STAMP = '.failed'
 # TODO: Move all CLR-specific functions to clr_tools
 debug_mode = True
 quiet = False
-
+_prepopulate_cache_with_sdk_skeletons = True
 
 # TODO move to property of Generator3 as soon as tests finished
 def version():
@@ -438,6 +438,16 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
             note('Updating cache for %s at %r', name, mod_cache_dir)
             delete(mod_cache_dir)
             mkdir(mod_cache_dir)
+
+            if _prepopulate_cache_with_sdk_skeletons and not should_update_skeleton(sdk_skeletons_dir, name):
+                note('Prepopulating cache for %s from existing skeletons at %r', name, sdk_skeletons_dir)
+                name_parts = name.split('.')
+                copy_dst = build_pkg_structure(mod_cache_dir, '.'.join(name_parts[:-1]))
+                for path in (os.path.join(sdk_skeletons_dir, *name_parts),
+                             os.path.join(sdk_skeletons_dir, *(name_parts[:-1] + [name_parts[-1] + '.py']))):
+                    if os.path.exists(path):
+                        copy(path, copy_dst)
+                        return True
 
             old_modules = list(sys.modules.keys())
             imported_module_names = set()
