@@ -26,8 +26,8 @@ public class SearchModelTest extends LightPlatformCodeInsightFixtureTestCase {
 
     // adding to empty -----------------------------------------------------------------------
     model.addElements(Arrays.asList(
-      new SESearcher.ElementInfo("item_3_20", 340, STUB_CONTRIBUTOR_3),
       new SESearcher.ElementInfo("item_2_20", 250, STUB_CONTRIBUTOR_2),
+      new SESearcher.ElementInfo("item_3_20", 340, STUB_CONTRIBUTOR_3),
       new SESearcher.ElementInfo("item_1_20", 160, STUB_CONTRIBUTOR_1),
       new SESearcher.ElementInfo("item_3_30", 330, STUB_CONTRIBUTOR_3),
       new SESearcher.ElementInfo("item_2_10", 280, STUB_CONTRIBUTOR_2),

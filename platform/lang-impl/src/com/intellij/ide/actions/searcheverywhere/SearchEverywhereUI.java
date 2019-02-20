@@ -1260,14 +1260,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
         return isMoreElement(index) ? index : index + 1;
       }
 
-      //todo binary search
-      for (int i = 0; i < list.size(); i++) {
-        if (list.get(i).getSortWeight() > contributor.getSortWeight()) {
-          return i;
-        }
-      }
-
-      return listElements.size();
+      index = Collections.binarySearch(list, contributor, Comparator.comparingInt(SearchEverywhereContributor::getSortWeight));
+      return -index - 1;
     }
   }
 
