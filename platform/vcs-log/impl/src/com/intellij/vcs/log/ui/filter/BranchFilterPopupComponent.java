@@ -20,7 +20,6 @@ import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsLogRevisionFilter;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
-import com.intellij.vcs.log.visible.filters.FilterPair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
