@@ -1057,6 +1057,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
 
       if (resultsExpired) {
         retainContributors(itemsMap.keySet());
+        clearMoreItems();
 
         itemsMap.forEach((contributor, list) -> {
           Object[] oldItems = ArrayUtil.toObjectArray(getFoundItems(contributor));
@@ -1112,6 +1113,17 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
 
       if (startInterval <= endInterval) {
         fireIntervalRemoved(this, startInterval, endInterval);
+      }
+    }
+
+    private void clearMoreItems() {
+      ListIterator<SESearcher.ElementInfo> iterator = listElements.listIterator();
+      while (iterator.hasNext()) {
+        int index = iterator.nextIndex();
+        if (iterator.next().getElement() == MORE_ELEMENT) {
+          iterator.remove();
+          fireContentsChanged(this, index, index);
+        }
       }
     }
 
