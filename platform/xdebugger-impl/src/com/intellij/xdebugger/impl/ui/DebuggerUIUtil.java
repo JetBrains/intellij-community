@@ -27,6 +27,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
@@ -110,6 +111,19 @@ public class DebuggerUIUtil {
   public static void showPopupForEditorLine(@NotNull JBPopup popup, @NotNull Editor editor, int line) {
     RelativePoint point = getPositionForPopup(editor, line);
     if (point != null) {
+      popup.addListener(new JBPopupAdapter() {
+        @Override
+        public void beforeShown(@NotNull LightweightWindowEvent event) {
+          Window window = UIUtil.getWindow(popup.getContent());
+          if (window != null) {
+            Point actual = window.getLocation();
+            Point expected = point.getScreenPoint();
+            if (actual.y < expected.y) {
+              window.setLocation(actual.x, expected.y - window.getHeight() - editor.getLineHeight());
+            }
+          }
+        }
+      });
       popup.show(point);
     }
     else {
