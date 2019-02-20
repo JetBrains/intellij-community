@@ -251,7 +251,7 @@ class DragHelper extends MouseDragHelper {
       if (myTabs.getVisibleRect().contains(p) && myPressedOnScreenPoint.distance(new RelativePoint(event).getScreenPoint()) > 15) {
         final int answer = Messages.showOkCancelDialog(myTabs,
                                                        IdeBundle.message("alphabetical.mode.is.on.warning"),
-                                                       "Tabs Order Conflict",
+                                                       "Reorder Tabs",
                                                        "Off", "On",
                                                        Messages.getQuestionIcon());
         if (answer == Messages.OK) {

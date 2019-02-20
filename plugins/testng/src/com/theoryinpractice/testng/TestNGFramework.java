@@ -102,7 +102,7 @@ public class TestNGFramework extends JavaTestFramework {
       int exit = ApplicationManager.getApplication().isUnitTestMode() ?
                  Messages.YES :
                  Messages.showYesNoDialog(manager.getProject(), "Method \'" + setUpName + "\' already exist but is not annotated as @BeforeMethod.",
-                                          "SetUp Not Annotated",
+                                          "Create SetUp",
                                           "Annotate",
                                           "Create new method",
                                           Messages.getWarningIcon());

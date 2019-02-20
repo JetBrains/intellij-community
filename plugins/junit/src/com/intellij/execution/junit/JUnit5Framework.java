@@ -89,7 +89,7 @@ public class JUnit5Framework extends JavaTestFramework {
       int exit = ApplicationManager.getApplication().isUnitTestMode() ?
                  Messages.OK :
                        Messages.showOkCancelDialog("Method setUp already exist but is not annotated as @BeforeEach. Annotate?",
-                                                   "SetUp Not Annotated",
+                                                   "Create SetUp",
                                                    Messages.getWarningIcon());
       if (exit == Messages.OK) {
         new AddAnnotationFix(JUnitUtil.BEFORE_EACH_ANNOTATION_NAME, existingMethod).invoke(existingMethod.getProject(), null, existingMethod.getContainingFile());

@@ -131,7 +131,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
 
       if (ourState.wasInstalled(pluginDescriptor.getPluginId())) {
         String message = "Plugin '" + pluginDescriptor.getName() + "' was already installed";
-        MessagesEx.showWarningDialog(parent, message, "Already Installed");
+        MessagesEx.showWarningDialog(parent, message, "Install Plugin");
         return false;
       }
 
@@ -180,7 +180,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     if (!notInstalled.isEmpty()) {
       String deps = StringUtil.join(notInstalled, PluginId::toString, ", ");
       String message = "Plugin " + pluginDescriptor.getName() + " depends on unknown plugin" + (notInstalled.size() > 1 ? "s " : " ") + deps;
-      MessagesEx.showWarningDialog(parent, message, "Unknown Plugin Found");
+      MessagesEx.showWarningDialog(parent, message, "Install Plugin");
     }
     if (!disabledIds.isEmpty()) {
       final Set<IdeaPluginDescriptor> dependencies = new HashSet<>();
@@ -192,7 +192,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       String part = "disabled plugin" + (dependencies.size() > 1 ? "s " : " ");
       String deps = StringUtil.join(dependencies, IdeaPluginDescriptor::getName, ", ");
       String message = "Plugin " + pluginDescriptor.getName() + " depends on " + part + deps + ". Enable " + part.trim() + "?";
-      if (MessagesEx.showOkCancelDialog(parent, message, "Plugin Dependency Found", Messages.getWarningIcon()) == Messages.OK) {
+      if (MessagesEx.showOkCancelDialog(parent, message, "Install Plugin", Messages.getWarningIcon()) == Messages.OK) {
         model.enableRows(dependencies.toArray(new IdeaPluginDescriptor[0]), Boolean.TRUE);
       }
     }

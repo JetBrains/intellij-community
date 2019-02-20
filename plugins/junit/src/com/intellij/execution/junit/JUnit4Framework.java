@@ -95,7 +95,7 @@ public class JUnit4Framework extends JavaTestFramework {
       int exit = ApplicationManager.getApplication().isUnitTestMode() ?
                  Messages.OK :
                  Messages.showOkCancelDialog("Method setUp already exist but is not annotated as @Before. Annotate?",
-                                             "SetUp Not Annotated",
+                                             "Create SetUp",
                                              Messages.getWarningIcon());
       if (exit == Messages.OK) {
         new AddAnnotationFix(beforeAnnotationName, existingMethod).invoke(existingMethod.getProject(), null, existingMethod.getContainingFile());

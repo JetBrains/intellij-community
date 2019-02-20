@@ -129,7 +129,7 @@ public class DuplicatesImpl {
           showAll.set(allChosen);
           if (allChosen && confirmDuplicatePrompt != null && prompt == null) {
             if (Messages.showOkCancelDialog(project, "In order to replace all occurrences method signature will be changed. Proceed?",
-                                            "Signature Change Warning", CommonBundle.getContinueButtonText(), CommonBundle.getCancelButtonText(), Messages.getWarningIcon()) !=
+                                            "Change Method Signature", CommonBundle.getContinueButtonText(), CommonBundle.getCancelButtonText(), Messages.getWarningIcon()) !=
                 Messages.OK) return true;
           }
           if (promptDialog.getExitCode() == FindManager.PromptResult.SKIP) return false;
