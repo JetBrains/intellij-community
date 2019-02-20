@@ -16,7 +16,6 @@ import com.intellij.ui.components.JBOptionButton
 import com.intellij.util.ui.UIUtil
 import java.awt.GridBagConstraints
 import java.awt.Insets
-import javax.swing.Action
 import javax.swing.JButton
 import javax.swing.SwingUtilities
 
@@ -24,10 +23,6 @@ class Controller(val project: Project, val actionPanel:ActionPanel, val model: M
 
   init {
     CommandFactory.initialize(project, this)
-  }
-
-  fun actionsForCurrentRuntime() : List<Action> {
-    return runtimeStateToActions(model.selectedBundle, model.currentState()).toList()
   }
 
   fun updateRuntime() {
@@ -61,7 +56,7 @@ class Controller(val project: Project, val actionPanel:ActionPanel, val model: M
 
     actionPanel.rootPane?.defaultButton = job
 
-    actionPanel.add(job, constraint);
+    actionPanel.add(job, constraint)
     actionPanel.repaint()
     actionPanel.revalidate()
   }
@@ -81,11 +76,11 @@ class Controller(val project: Project, val actionPanel:ActionPanel, val model: M
     model.selectedBundle = local
   }
 
-  public fun restart() {
-    SwingUtilities.invokeLater({
-                                 SwingUtilities.getWindowAncestor(actionPanel).dispose()
-                                 ApplicationManagerEx.getApplicationEx().restart()
-                               })
+  fun restart() {
+    SwingUtilities.invokeLater {
+      SwingUtilities.getWindowAncestor(actionPanel).dispose()
+      ApplicationManagerEx.getApplicationEx().restart()
+    }
   }
 
   fun noRuntimeSelected() {

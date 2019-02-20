@@ -3,6 +3,4 @@ package com.intellij.bootRuntime
 
 import javax.swing.*
 
-class ActionButton(text: String, controller: Controller) : JButton(text) {
-
-}
+class ActionButton(text: String, controller: Controller) : JButton(text)

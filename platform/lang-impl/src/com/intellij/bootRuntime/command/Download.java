@@ -4,6 +4,7 @@ package com.intellij.bootRuntime.command;
 import com.intellij.bootRuntime.BinTrayUtil;
 import com.intellij.bootRuntime.Controller;
 import com.intellij.bootRuntime.bundles.Runtime;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.io.HttpRequests;
 
@@ -12,6 +13,8 @@ import java.io.File;
 import java.io.IOException;
 
 public class Download extends RuntimeCommand {
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.bootRuntime.command.Download");
 
   public Download(Project project, Controller controller, Runtime runtime) {
     super(project,controller,"Download", runtime);
@@ -31,7 +34,7 @@ public class Download extends RuntimeCommand {
       try {
         HttpRequests.request(link).saveToFile(downloadDirectoryFile, progressIndicator);
       } catch (IOException ioe) {
-        ioe.printStackTrace();
+        LOG.warn(ioe);
       }
     });
   }
