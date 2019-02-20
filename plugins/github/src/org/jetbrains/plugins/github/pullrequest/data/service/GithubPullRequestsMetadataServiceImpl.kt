@@ -221,8 +221,7 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
 
           val progressIndicator = EmptyProgressIndicator()
 
-          loadingFuture = GithubAsyncUtil
-            .futureOfMutable { dataLoader.getDataProvider(pullRequest).detailsRequest }
+          loadingFuture = dataLoader.getDataProvider(pullRequest).detailsRequest
             .thenComposeAsync(Function { details: GithubPullRequestDetailedWithHtml ->
               originalSelection = currentListExtractor(details).toHashSet()
               progressManager.submitBackgroundTask(project, "Load List Of Possibilities", true, progressIndicator) { indicator ->
