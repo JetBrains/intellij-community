@@ -34,12 +34,15 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.util.PopupUtilsKt.getBestPopupPosition;
 
 public class InheritorChooser {
 
@@ -131,15 +134,18 @@ public class InheritorChooser {
         .createPopupChooserBuilder(classes)
         .setRenderer(renderer)
         .setTitle(ExecutionBundle.message("test.cases.choosing.popup.title", locationName))
-        .setMovable(false)
+        .setAutoselectOnMouseMove(false)
+        .setNamerForFiltering(it -> it == null ? "" : it.getName())
+        .setMovable(true)
         .setResizable(false)
         .setRequestFocus(true)
+        .setMinSize(JBUI.size(270, 55))
         .setItemsChosenCallback((values) -> {
           if (values.isEmpty()) return;
           chooseAndPerform(values.toArray(), psiMethod, context, performRunnable, classes);
         })
         .createPopup()
-        .showInBestPositionFor(context.getDataContext());
+        .show(getBestPopupPosition(context.getDataContext()));
       return true;
     }
     return false;

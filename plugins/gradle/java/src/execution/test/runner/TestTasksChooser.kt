@@ -14,13 +14,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.scope.TestsScope
 import com.intellij.ui.FileColorManager
 import com.intellij.util.FunctionUtil
+import com.intellij.util.getBestBalloonPosition
+import com.intellij.util.getBestPopupPosition
 import com.intellij.util.ui.JBUI
 import icons.ExternalSystemIcons
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducer.findAllTestsTaskToRun
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.TasksToRun
-import org.jetbrains.plugins.gradle.util.getBestBalloonPosition
-import org.jetbrains.plugins.gradle.util.getBestPopupPosition
 import java.awt.Component
 import java.util.function.Consumer
 import javax.swing.DefaultListCellRenderer
@@ -100,7 +100,7 @@ open class TestTasksChooser {
       .setAdText(GradleBundle.message("gradle.tests.tasks.choosing.popup.hint"))
       .setResizable(false)
       .setRequestFocus(true)
-      .setMinSize(JBUI.size(250, -1))
+      .setMinSize(JBUI.size(270, 55))
       .setItemsChosenCallback {
         val choosesTestTasks = it.mapNotNull(testTasks::get)
         when {
