@@ -66,6 +66,7 @@ public class VcsGeneralConfigurationPanel {
   private JPanel myEmptyChangeListPanel;
   private JCheckBox myManageIgnoreFiles;
   private JCheckBox myAddExternalFiles;
+  private JCheckBox myMarkIgnoredAsExcluded;
   private ButtonGroup myEmptyChangelistRemovingGroup;
 
   public VcsGeneralConfigurationPanel(final Project project) {
@@ -119,6 +120,7 @@ public class VcsGeneralConfigurationPanel {
     settings.RELOAD_CONTEXT = myReloadContext.isSelected();
     settings.ADD_EXTERNAL_FILES_SILENTLY = myAddExternalFiles.isSelected();
     applicationSettings.MANAGE_IGNORE_FILES = myManageIgnoreFiles.isSelected();
+    applicationSettings.MARK_IGNORED_AS_EXCLUDED = myMarkIgnoredAsExcluded.isSelected();
 
     for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
       setting.setValue(myPromptOptions.get(setting).isSelected());
@@ -207,6 +209,7 @@ public class VcsGeneralConfigurationPanel {
     if (settings.RELOAD_CONTEXT != myReloadContext.isSelected()) return true;
     if (settings.ADD_EXTERNAL_FILES_SILENTLY != myAddExternalFiles.isSelected()) return true;
     if (applicationSettings.MANAGE_IGNORE_FILES != myManageIgnoreFiles.isSelected()) return true;
+    if (applicationSettings.MARK_IGNORED_AS_EXCLUDED != myMarkIgnoredAsExcluded.isSelected()) return true;
 
     if (getReadOnlyStatusHandler().getState().SHOW_DIALOG != myShowReadOnlyStatusDialog.isSelected()) {
       return true;
@@ -229,6 +232,7 @@ public class VcsGeneralConfigurationPanel {
     myReloadContext.setSelected(settings.RELOAD_CONTEXT);
     myAddExternalFiles.setSelected(settings.ADD_EXTERNAL_FILES_SILENTLY);
     myManageIgnoreFiles.setSelected(applicationSettings.MANAGE_IGNORE_FILES);
+    myMarkIgnoredAsExcluded.setSelected(applicationSettings.MARK_IGNORED_AS_EXCLUDED);
     myAddExternalFiles.setEnabled(myPerformActionOnAddingFile.isSelected());
     VcsShowConfirmationOption.Value value = settings.REMOVE_EMPTY_INACTIVE_CHANGELISTS;
     UIUtil.setSelectedButton(myEmptyChangelistRemovingGroup, value == VcsShowConfirmationOption.Value.SHOW_CONFIRMATION

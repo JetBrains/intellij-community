@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.repo;
 
+import com.intellij.dvcs.ignore.IgnoredToExcludeMarker;
 import com.intellij.dvcs.ignore.VcsIgnoredHolderUpdateListener;
 import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
@@ -61,7 +62,8 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
       myIgnoredRepositoryFilesHolder =
         new GitRepositoryIgnoredFilesHolder(project, this, GitRepositoryManager.getInstance(project), Git.getInstance());
       Disposer.register(this, myIgnoredRepositoryFilesHolder);
-      myIgnoredRepositoryFilesHolder.addUpdateStateListener(new MyRepositoryIgnoredHolderUpdateListener(getProject()));
+      myIgnoredRepositoryFilesHolder.addUpdateStateListener(new MyRepositoryIgnoredHolderUpdateListener(project));
+      myIgnoredRepositoryFilesHolder.addUpdateStateListener(new IgnoredToExcludeMarker(project));
     }
     else {
       myUntrackedFilesHolder = null;
