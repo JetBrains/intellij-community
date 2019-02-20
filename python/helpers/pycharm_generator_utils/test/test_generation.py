@@ -171,6 +171,17 @@ class SkeletonCachingTest(GeneratorTestCase):
     def test_segmentation_fault_handling(self):
         self.check_generator_output('sigsegv', mod_path='sigsegv.py', gen_version='0.1', fake_hashes=False)
 
+    def test_cache_prepopulated_with_existing_module_from_sdk_skeletons(self):
+        # Version shouldn't updated as we copy existing skeletons from SDK dir
+        self.check_generator_output('mod', mod_path='mod.py', gen_version='0.2', custom_required_gen=True)
+
+    def test_cache_prepopulated_with_existing_package_from_sdk_skeletons(self):
+        # Version shouldn't updated as we copy existing skeletons from SDK dir
+        self.check_generator_output('pkg.subpkg.mod', mod_path='pkg/subpkg/mod.py', gen_version='0.2', custom_required_gen=True)
+
+    def test_cache_not_prepopulated_with_outdated_existing_sdk_skeleton(self):
+        self.check_generator_output('mod', mod_path='mod.py', gen_version='0.2', custom_required_gen=True)
+
     def check_generator_output(self, mod_name, mod_path=None, mod_location=None, custom_required_gen=False, **kwargs):
         if custom_required_gen:
             kwargs['required_gen_version_file_path'] = os.path.join(self.test_data_dir, 'required_gen_version')
