@@ -31,9 +31,6 @@ import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.VfsEventGenerationHelper.LOG;
 
@@ -76,22 +73,17 @@ class LocalFileSystemRefreshWorker {
 
     myRefreshQueue.addLast(root);
 
-    try {
-      processQueue(fs, PersistentFS.getInstance());
-    }
-    catch (RefreshCancelledException e) {
-      LOG.debug("refresh cancelled");
-    }
+    processQueue(fs, PersistentFS.getInstance());
   }
 
-  private void processQueue(@NotNull NewVirtualFileSystem fs, @NotNull PersistentFS persistence) throws RefreshCancelledException {
+  private void processQueue(@NotNull NewVirtualFileSystem fs, @NotNull PersistentFS persistence) {
     TObjectHashingStrategy<String> strategy = FilePathHashingStrategy.create(fs.isCaseSensitive());
 
     while (!myRefreshQueue.isEmpty()) {
       NewVirtualFile file = myRefreshQueue.pullFirst();
       if (!myHelper.checkDirty(file)) continue;
 
-      checkCancelled(file);
+      if(checkCancelled(file)) break;
 
       if (file.isDirectory()) {
         boolean fullSync = ((VirtualDirectoryImpl)file).allChildrenLoaded();
@@ -105,6 +97,8 @@ class LocalFileSystemRefreshWorker {
       else {
         refreshFile(fs, persistence, strategy, file);
       }
+
+      if(checkCancelled(file)) break;
 
       if (myIsRecursive || !file.isDirectory()) {
         file.markClean();
@@ -123,9 +117,6 @@ class LocalFileSystemRefreshWorker {
     refreshingFileVisitor.visit(file);
     myHelper.addAllEventsFrom(refreshingFileVisitor.getHelper());
   }
-
-  private static final AtomicInteger myRequests = new AtomicInteger();
-  private static final AtomicLong myTime = new AtomicLong();
 
   private void fullDirRefresh(@NotNull NewVirtualFileSystem fs,
                               @NotNull PersistentFS persistence,
@@ -204,18 +195,18 @@ class LocalFileSystemRefreshWorker {
     }
   }
 
-  private static class RefreshCancelledException extends RuntimeException {
-  }
-
-  private void checkCancelled(@NotNull NewVirtualFile stopAt) {
-    if (myCancelled || ourCancellingCondition != null && ourCancellingCondition.fun(stopAt)) {
+  private boolean checkCancelled(@NotNull NewVirtualFile stopAt) {
+    boolean myRequestedCancel = false;
+    if (myCancelled || (myRequestedCancel = ourCancellingCondition != null && ourCancellingCondition.fun(stopAt))) {
+      if (myRequestedCancel) myCancelled = true;
       forceMarkDirty(stopAt);
       while (!myRefreshQueue.isEmpty()) {
         NewVirtualFile next = myRefreshQueue.pullFirst();
         forceMarkDirty(next);
       }
-      throw new RefreshCancelledException();
+      return true;
     }
+    return false;
   }
 
   private static void forceMarkDirty(@NotNull NewVirtualFile file) {
@@ -275,7 +266,9 @@ class LocalFileSystemRefreshWorker {
           return FileVisitResult.CONTINUE;
         }
 
-        checkCancelled(child);
+        if(checkCancelled(child)) {
+          return FileVisitResult.CONTINUE;
+        }
 
         if (!child.isDirty()) {
           return FileVisitResult.CONTINUE;
@@ -353,9 +346,7 @@ class LocalFileSystemRefreshWorker {
       return !VfsUtil.isBadName(name);
     }
 
-    public void visit(@NotNull VirtualFile fileOrDir) {
-      long started = System.nanoTime();
-
+    void visit(@NotNull VirtualFile fileOrDir) {
       try {
         Path path = Paths.get(fileOrDir.getPath());
         if (fileOrDir.isDirectory()) {
@@ -383,13 +374,6 @@ class LocalFileSystemRefreshWorker {
       }
       catch (IOException ex) {
         LOG.error(ex);
-      }
-
-      int requests = myRequests.incrementAndGet();
-      long l = myTime.addAndGet(System.nanoTime() - started);
-
-      if (requests % 1000 == 0) {
-        System.out.println("refresh:" + myRequests + " for " + TimeUnit.NANOSECONDS.toMillis(l) + "ms");
       }
     }
 
