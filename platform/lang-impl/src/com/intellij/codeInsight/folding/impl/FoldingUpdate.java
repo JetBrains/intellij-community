@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -45,9 +44,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class FoldingUpdate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.FoldingUpdate");
 
-  private static final Key<CachedValue<Runnable>> CODE_FOLDING_KEY_DEFAULT = Key.create("code folding default");
-  private static final Key<CachedValue<Runnable>> CODE_FOLDING_KEY_NON_DEFAULT = Key.create("code folding nonDefault");
-  private static final Key<String> CODE_FOLDING_FILE_EXTENSION_KEY = Key.create("code folding file extension");
+  private static final Key<CachedValue<Runnable>> CODE_FOLDING_KEY = Key.create("code folding");
 
   private FoldingUpdate() {
   }
@@ -60,24 +57,7 @@ public class FoldingUpdate {
     final Document document = editor.getDocument();
     LOG.assertTrue(!PsiDocumentManager.getInstance(project).isUncommited(document));
     
-    String currentFileExtension = null;
-    final VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile != null) {
-      currentFileExtension = virtualFile.getExtension();
-    }
-
-    Key<CachedValue<Runnable>> key = applyDefaultState ? CODE_FOLDING_KEY_DEFAULT : CODE_FOLDING_KEY_NON_DEFAULT;
-    CachedValue<Runnable> value = editor.getUserData(key);
-    if (value != null) {
-      // There was a problem that old fold regions have been cached on file extension change (e.g. *.java -> *.groovy).
-      // We want to drop them in such circumstances.
-      final String oldExtension = editor.getUserData(CODE_FOLDING_FILE_EXTENSION_KEY);
-      if (!Objects.equals(oldExtension, currentFileExtension)) {
-        value = null;
-        editor.putUserData(key, null);
-      }
-    }
-    editor.putUserData(CODE_FOLDING_FILE_EXTENSION_KEY, currentFileExtension);
+    CachedValue<Runnable> value = editor.getUserData(CODE_FOLDING_KEY);
 
     if (value != null && !applyDefaultState) {
       Getter<Runnable> cached = value.getUpToDateOrNull();
@@ -85,13 +65,12 @@ public class FoldingUpdate {
         return cached.get();
       }
     }
-    if (quick) return getUpdateResult(file, document, true, project, editor, applyDefaultState).getValue();
+    if (quick || applyDefaultState) return getUpdateResult(file, document, quick, project, editor, applyDefaultState).getValue();
     
     return CachedValuesManager.getManager(project).getCachedValue(
-      editor, key, () -> {
-        Document document1 = editor.getDocument();
-        PsiFile file1 = PsiDocumentManager.getInstance(project).getPsiFile(document1);
-        return getUpdateResult(file1, document1, false, project, editor, applyDefaultState);
+      editor, CODE_FOLDING_KEY, () -> {
+        PsiFile file1 = PsiDocumentManager.getInstance(project).getPsiFile(document);
+        return getUpdateResult(file1, document, false, project, editor, false);
       }, false);
   }
 
@@ -121,7 +100,7 @@ public class FoldingUpdate {
       }
     };
     Set<Object> dependencies = new HashSet<>();
-    dependencies.add(document);
+    dependencies.add(file);
     dependencies.add(editor.getFoldingModel());
     for (RegionInfo info : elementsToFold) {
       dependencies.addAll(info.descriptor.getDependencies());
@@ -308,8 +287,7 @@ public class FoldingUpdate {
   }
 
   static void clearFoldingCache(@NotNull Editor editor) {
-    editor.putUserData(CODE_FOLDING_KEY_DEFAULT, null);
-    editor.putUserData(CODE_FOLDING_KEY_NON_DEFAULT, null);
+    editor.putUserData(CODE_FOLDING_KEY, null);
   }
 
   static class RegionInfo {
