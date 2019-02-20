@@ -25,7 +25,7 @@ import java.util.List;
 public class EditorConfigNavigationActionsFactory extends DefaultParserCallback {
   private static final Key<EditorConfigNavigationActionsFactory> NAVIGATION_FACTORY_KEY = Key.create("editor.config.navigation.factory");
 
-  private final List<String> myEditorConfigFilePaths = ContainerUtil.newArrayList();
+  private final List<String> myEditorConfigFilePaths = Collections.synchronizedList(ContainerUtil.newArrayList());
 
   private EditorConfigNavigationActionsFactory() {
   }
@@ -63,10 +63,12 @@ public class EditorConfigNavigationActionsFactory extends DefaultParserCallback 
   @NotNull
   public List<VirtualFile> getEditorConfigFiles() {
     List<VirtualFile> files = ContainerUtil.newArrayList();
-    for (String path : myEditorConfigFilePaths) {
-      VirtualFile file = VfsUtil.findFile(Paths.get(path), true);
-      if (file != null) {
-        files.add(file);
+    synchronized (myEditorConfigFilePaths) {
+      for (String path : myEditorConfigFilePaths) {
+        VirtualFile file = VfsUtil.findFile(Paths.get(path), true);
+        if (file != null) {
+          files.add(file);
+        }
       }
     }
     return files;
@@ -82,7 +84,7 @@ public class EditorConfigNavigationActionsFactory extends DefaultParserCallback 
     return instance;
   }
 
-  private class NavigationActionGroup extends ActionGroup {
+  private static class NavigationActionGroup extends ActionGroup {
     private final AnAction[] myChildActions;
 
     private NavigationActionGroup(AnAction[] actions) {
