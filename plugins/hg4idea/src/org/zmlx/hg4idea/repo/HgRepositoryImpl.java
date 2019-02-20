@@ -2,6 +2,7 @@
 
 package org.zmlx.hg4idea.repo;
 
+import com.intellij.dvcs.ignore.IgnoredToExcludedSynchronizer;
 import com.intellij.dvcs.ignore.VcsIgnoredHolderUpdateListener;
 import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
@@ -57,6 +58,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     myLocalIgnoredHolder.setupVfsListener();
     Disposer.register(this, myLocalIgnoredHolder);
     myLocalIgnoredHolder.addUpdateStateListener(new MyIgnoredHolderAsyncListener(getProject()));
+    myLocalIgnoredHolder.addUpdateStateListener(new IgnoredToExcludedSynchronizer(getProject()));
     update();
   }
 

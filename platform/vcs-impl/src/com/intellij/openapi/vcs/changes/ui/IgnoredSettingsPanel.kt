@@ -18,7 +18,7 @@ import javax.swing.DefaultComboBoxModel
 internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigurable(message("ignored.file.tab.title"),
                                                                                       "project.propVCSSupport.Ignored.Files"), SearchableConfigurable {
   internal var selectedManageIgnoreOption = getIgnoredOption()
-  internal var selectedMarkExcludedAsIgnored = VcsApplicationSettings.getInstance().MARK_EXCLUDED_AS_IGNORED
+  internal var settings = VcsApplicationSettings.getInstance()
 
   override fun apply() {
     val modified = isModified
@@ -26,7 +26,6 @@ internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigu
 
     if (modified) {
       updateIgnoredOption(selectedManageIgnoreOption)
-      VcsApplicationSettings.getInstance().MARK_EXCLUDED_AS_IGNORED = selectedMarkExcludedAsIgnored
     }
   }
 
@@ -50,9 +49,10 @@ internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigu
       }
       titledRow(message("ignored.file.excluded.settings.title")) {
         row {
-          cell {
-            checkBox(message("ignored.file.excluded.to.ignored.label"), ::selectedMarkExcludedAsIgnored)
-          }
+          checkBox(message("ignored.file.excluded.to.ignored.label"), settings::MARK_EXCLUDED_AS_IGNORED)
+        }
+        row {
+          checkBox(message("ignored.file.ignored.to.excluded.label"), settings::MARK_IGNORED_AS_EXCLUDED)
         }
       }
     }
