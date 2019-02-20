@@ -4,7 +4,6 @@ package com.intellij.openapi.roots.ui.configuration.classpath;
 import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
-import com.intellij.find.FindBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -74,14 +73,14 @@ class AnalyzeModuleDependencyAction extends AnAction {
           Messages.showInfoMessage(myProject,
                                    "Dependencies were successfully collected in \"" +
                                    ToolWindowId.DEPENDENCIES + "\" toolwindow",
-                                   FindBundle.message("find.pointcut.applications.not.found.title"));
+                                   getTemplateText());
           return true;
         }
 
         List<OrderEntry> usedEntries = usedScopes.stream().map(additionalScopes::get).filter(Objects::nonNull).distinct().collect(Collectors.toList());
         if (usedEntries.isEmpty()) {
           String message = "No code dependencies were found." + generateSkipImportsWarning() + " Would you like to remove the dependency?";
-          if (Messages.showOkCancelDialog(myProject, message, "Dependencies Not Found", CommonBundle.message("button.remove"), Messages.CANCEL_BUTTON,
+          if (Messages.showOkCancelDialog(myProject, message, getTemplateText(), CommonBundle.message("button.remove"), Messages.CANCEL_BUTTON,
                                           Messages.getWarningIcon()) == Messages.OK) {
             myPanel.getRootModel().removeOrderEntry(selectedEntry);
           }
@@ -101,7 +100,7 @@ class AnalyzeModuleDependencyAction extends AnAction {
                          + StringUtil.decapitalize(selectedEntry.getPresentableName()) + "' " + (usedEntries.size() > 1 ? "are" : "is") + " used in code.\n" +
                          "Do you want to replace dependency on '" + selectedEntry.getPresentableName() + "' by " + replacementText + "?";
         String[] options = {"Replace", "Show Dependencies", Messages.CANCEL_BUTTON};
-        switch (Messages.showDialog(myProject, message, "Dependencies Not Found", options, 0, Messages.getWarningIcon())) {
+        switch (Messages.showDialog(myProject, message, getTemplateText(), options, 0, Messages.getWarningIcon())) {
           case 0:
             InlineModuleDependencyAction.inlineEntry(myPanel, selectedEntry, usedEntries::contains);
             return false;
