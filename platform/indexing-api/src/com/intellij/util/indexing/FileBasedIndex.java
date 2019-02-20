@@ -30,11 +30,13 @@ import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -137,6 +139,10 @@ public abstract class FileBasedIndex {
   public <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<? super K> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
     return processAllKeys(indexId, processor, scope.getProject());
   }
+
+  @ApiStatus.Experimental
+  @NotNull
+  public abstract <K, V> Map<K, V> getAssociatedMap(@NotNull ID<K, V> indexId, VirtualFile file, @NotNull Project project);
 
   public static void iterateRecursively(@Nullable final VirtualFile root,
                                         @NotNull final ContentIterator processor,

@@ -652,6 +652,15 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     return false;
   }
 
+  @ApiStatus.Experimental
+  @NotNull
+  @Override
+  public <K, V> Map<K, V> getAssociatedMap(@NotNull ID<K, V> indexId, VirtualFile file, @NotNull Project project) {
+    int fileId = getFileId(file);
+    Map<K, V> map = processExceptions(indexId, file, GlobalSearchScope.fileScope(project, file), index -> index.getAssociatedMap(fileId));
+    return map != null ? map : Collections.emptyMap();
+  }
+
   private static final ThreadLocal<Integer> myUpToDateCheckState = new ThreadLocal<>();
 
   public static <T,E extends Throwable> T disableUpToDateCheckIn(@NotNull ThrowableComputable<T, E> runnable) throws E {

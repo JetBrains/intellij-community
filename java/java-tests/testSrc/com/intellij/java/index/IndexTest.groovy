@@ -33,11 +33,14 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.impl.JavaSimplePropertyIndexKt
+import com.intellij.psi.impl.PropertyIndexValue
 import com.intellij.psi.impl.PsiDocumentManagerImpl
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
 import com.intellij.psi.impl.cache.impl.id.IdIndexImpl
+import com.intellij.psi.impl.cache.impl.id.IdTableBuilding
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex
 import com.intellij.psi.impl.file.impl.FileManagerImpl
 import com.intellij.psi.impl.java.JavaFunctionalExpressionIndex
@@ -1102,5 +1105,15 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       PsiDocumentManager.getInstance(project).commitAllDocuments()
       assert !findClass('Foo')
     }
+  }
+
+  void "test associated map"() {
+    def file = myFixture.addFileToProject("Foo.java", "class Foo { String bar; String getBar() { return bar; }}").getVirtualFile()
+    def idFileMap = FileBasedIndex.getInstance().getAssociatedMap(IdIndex.NAME, file, getProject())
+    assertEquals(9, idFileMap.size())
+    assertEquals(UsageSearchContext.IN_CODE, idFileMap.get(new IdIndexEntry("Foo", true)))
+    def simplePropertyFileMap = FileBasedIndex.getInstance().getAssociatedMap(JavaSimplePropertyIndexKt.indexId, file, getProject())
+    assertEquals(1, simplePropertyFileMap.size())
+    assertEquals(new PropertyIndexValue("bar", true), simplePropertyFileMap.get(0))
   }
 }
