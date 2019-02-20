@@ -401,6 +401,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
           !PsiType.VOID
             .equals(LambdaUtil.getFunctionalInterfaceReturnType(getFunctionalInterfaceType((UCallableReferenceExpression)refExpression)))) {
         refMethod.setReturnValueUsed(true);
+        refMethod.setParametersAreUnknown();
         addTypeReference(uFrom, returnType, refFrom.getRefManager());
       }
       return;

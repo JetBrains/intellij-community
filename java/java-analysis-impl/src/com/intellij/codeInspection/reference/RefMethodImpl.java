@@ -152,6 +152,15 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     }
   }
 
+  public void setParametersAreUnknown() {
+    for (RefParameter parameter : myParameters) {
+      ((RefParameterImpl)parameter).clearTemplateValue();
+    }
+    for (RefMethod method : getSuperMethods()) {
+      ((RefMethodImpl)method).setParametersAreUnknown();
+    }
+  }
+
   private static boolean isAppMain(PsiMethod psiMethod, RefMethod refMethod) {
     if (!refMethod.isStatic()) return false;
     if (!PsiType.VOID.equals(psiMethod.getReturnType())) return false;
