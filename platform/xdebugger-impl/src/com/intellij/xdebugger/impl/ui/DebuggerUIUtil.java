@@ -116,11 +116,10 @@ public class DebuggerUIUtil {
         public void beforeShown(@NotNull LightweightWindowEvent event) {
           Window window = UIUtil.getWindow(popup.getContent());
           if (window != null) {
-            Point actual = window.getLocation();
             Point expected = point.getScreenPoint();
-            if (actual.y < expected.y) {
-              window.setLocation(actual.x, expected.y - window.getHeight() - editor.getLineHeight());
-            }
+            Rectangle screen = ScreenUtil.getScreenRectangle(expected);
+            int y = expected.y - window.getHeight() - editor.getLineHeight();
+            if (screen.y < y) window.setLocation(window.getX(), y);
           }
         }
       });
