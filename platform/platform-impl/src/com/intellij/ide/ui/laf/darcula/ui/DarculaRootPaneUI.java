@@ -95,7 +95,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
   }
 
   private static boolean isCustomDecoration() {
-    return Registry.is("ide.win.frame.decoration");
+    return Registry.is("ide.win.frame.decoration") && SystemInfo.isJetBrainsJvm;
   }
 
   public void installBorder(JRootPane root) {
