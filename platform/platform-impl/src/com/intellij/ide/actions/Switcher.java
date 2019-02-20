@@ -52,6 +52,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.*;
@@ -1055,12 +1056,16 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     private static void removeElementAt(@NotNull JList jList, int index) {
-      final ListModel model = jList.getModel();
+      ListModel model = jList.getModel();
+      if (model instanceof FilteringListModel) {
+        model = ((FilteringListModel)model).getOriginalModel();
+      }
+
       if (model instanceof CollectionListModel) {
         ((CollectionListModel)model).remove(index);
       }
-      else if (model instanceof NameFilteringListModel) {
-        ((NameFilteringListModel)model).remove(index);
+      else if (model instanceof DefaultListModel) {
+        ((DefaultListModel)model).remove(index);
       }
       else {
         throw new IllegalArgumentException("Wrong list model " + model.getClass());
