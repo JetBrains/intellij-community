@@ -13,7 +13,7 @@ class GeneratorTestCase(unittest.TestCase):
     longMessage = True
 
     def setUp(self):
-        self.temp_dir = tempfile.mkdtemp()
+        self.temp_dir = tempfile.mkdtemp(prefix='{}_{}__'.format(self.test_class_name, self.test_name))
 
     def tearDown(self):
         if not self._test_has_failed():
@@ -52,7 +52,8 @@ class GeneratorTestCase(unittest.TestCase):
     def assertDirsEqual(self, actual_dir, expected_dir):
         actual_dir_children = sorted(os.listdir(actual_dir))
         expected_dir_children = sorted(os.listdir(expected_dir))
-        self.assertEqual(expected_dir_children, actual_dir_children)
+        self.assertEqual(expected_dir_children, actual_dir_children,
+                         'Children differ at {!r}'.format(actual_dir))
         for actual_child, expected_child in zip(actual_dir_children,
                                                 expected_dir_children):
             actual_child = os.path.join(actual_dir, actual_child)
