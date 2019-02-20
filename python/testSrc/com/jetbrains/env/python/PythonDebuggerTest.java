@@ -1875,5 +1875,29 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       }
     });
   }
-}
 
+  @Test
+  public void testWarningsSuppressing() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_warnings_suppressing.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 14);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        List<PyDebugValue> frameVariables = loadFrame();
+        PyDebugValue obj = findDebugValueByName(frameVariables, "obj");
+        loadVariable(obj);
+        String out = output();
+        assertTrue(out.contains("This warning should appear in the output."));
+        assertFalse(out.contains("This property is deprecated!"));
+        toggleBreakpoint(getFilePath(getScriptName()), 15);
+        resume();
+        waitForPause();
+        waitForOutput("This property is deprecated!");
+      }
+    });
+  }
+}
