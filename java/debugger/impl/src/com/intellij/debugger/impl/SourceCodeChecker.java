@@ -126,16 +126,21 @@ public class SourceCodeChecker {
           LOG.debug("Source check failed: method " + method.name() + " not found in sources");
         }
         if (!res) {
-          FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor(position.getFile().getVirtualFile());
-          if (editor instanceof TextEditor) {
-            AppUIUtil.invokeOnEdt(() -> HintManager.getInstance().showErrorHint(((TextEditor)editor).getEditor(),
-                                                                                DebuggerBundle.message("warning.source.code.not.match")));
-          }
-          else {
-            XDebuggerManagerImpl.NOTIFICATION_GROUP
-              .createNotification(DebuggerBundle.message("warning.source.code.not.match"), NotificationType.WARNING)
-              .notify(project);
-          }
+          VirtualFile virtualFile = position.getFile().getVirtualFile();
+          AppUIUtil.invokeOnEdt(() -> {
+            if (!project.isDisposed()) {
+              FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile);
+              if (editor instanceof TextEditor) {
+                HintManager.getInstance().showErrorHint(((TextEditor)editor).getEditor(),
+                                                        DebuggerBundle.message("warning.source.code.not.match"));
+              }
+              else {
+                XDebuggerManagerImpl.NOTIFICATION_GROUP
+                  .createNotification(DebuggerBundle.message("warning.source.code.not.match"), NotificationType.WARNING)
+                  .notify(project);
+              }
+            }
+          });
           return ThreeState.NO;
         }
         return ThreeState.YES;
