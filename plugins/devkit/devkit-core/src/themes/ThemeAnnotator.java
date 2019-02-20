@@ -29,9 +29,9 @@ public class ThemeAnnotator implements Annotator {
       if (parentNames.startsWith("*")) return; // anything allowed
 
       String fullKey = parentNames.isEmpty() ? property.getName() : parentNames + "." + property.getName();
-      holder.createErrorAnnotation(property.getNameElement().getTextRange(),
-                                   "Unresolved key '" + fullKey + "'")
-        .setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+      holder.createWarningAnnotation(property.getNameElement().getTextRange(),
+                                     "Unresolved key '" + fullKey + "'")
+        .setHighlightType(ProblemHighlightType.WARNING);
       return;
     }
 
