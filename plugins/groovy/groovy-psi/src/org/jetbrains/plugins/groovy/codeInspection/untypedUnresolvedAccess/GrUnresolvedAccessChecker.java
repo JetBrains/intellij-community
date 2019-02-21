@@ -331,9 +331,7 @@ public class GrUnresolvedAccessChecker {
     PsiClass targetClass = QuickfixUtil.findTargetClass(refExpr, compileStatic);
     if (targetClass == null) return;
 
-    if (!compileStatic) {
-      addDynamicAnnotation(info, refExpr, key);
-    }
+    addDynamicAnnotation(info, refExpr, key);
 
     if (!(targetClass instanceof SyntheticElement) || (targetClass instanceof GroovyScriptClass)) {
 
