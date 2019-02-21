@@ -28,13 +28,13 @@ import java.util.Locale;
  */
 public abstract class BaseHtmlLexer extends DelegateLexer {
   protected static final int BASE_STATE_MASK = 0x3F;
-  private static final int SEEN_STYLE = 0x40;
-  private static final int SEEN_TAG = 0x80;
-  private static final int SEEN_SCRIPT = 0x100;
-  private static final int SEEN_ATTRIBUTE = 0x200;
-  private static final int SEEN_CONTENT_TYPE = 0x400;
-  private static final int SEEN_STYLESHEET_TYPE = 0x800;
-  protected static final int BASE_STATE_SHIFT = 11;
+  private static final int SEEN_TAG = 0x40;
+  private static final int SEEN_ATTRIBUTE = 0x80;
+  private static final int SEEN_CONTENT_TYPE = 0x100;
+  private static final int SEEN_STYLESHEET_TYPE = 0x200;
+  private static final int SEEN_STYLE_SCRIPT_MASK = 0xE00;
+  private static final int SEEN_STYLE_SCRIPT_SHIFT = 10;
+  protected static final int BASE_STATE_SHIFT = 12;
   @Nullable
   protected static final Language ourDefaultLanguage = Language.findLanguageByID("JavaScript");
   @Nullable
@@ -44,6 +44,10 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
   protected boolean seenAttribute;
   protected boolean seenStyle;
   protected boolean seenScript;
+
+  private static final char SCRIPT = 1;
+  private static final char STYLE = 2;
+  private final int[] scriptStyleStack = new int[] {0, 0};
 
   @Nullable
   protected String scriptType = null;
@@ -119,8 +123,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
           return;
         }
 
-        seenStyle = style;
-        seenScript = script;
+        pushScriptStyle(script, style);
 
         if (!isHtmlTagState(state)) {
           seenAttribute=true;
@@ -133,13 +136,28 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     @Override
     public void handleElement(Lexer lexer) {
       if (seenAttribute) {
-        seenStyle = false;
-        seenScript = false;
+        popScriptStyle();
         seenAttribute = false;
       }
       seenContentType = false;
       seenStylesheetType = false;
     }
+  }
+
+  private void pushScriptStyle(boolean script, boolean style) {
+    int position = scriptStyleStack[0] == 0 ? 0 : 1;
+    scriptStyleStack[position] = script ? SCRIPT :
+                                 style ? STYLE :
+                                 0;
+    seenStyle = style;
+    seenScript = script;
+  }
+
+  protected void popScriptStyle() {
+    int position = scriptStyleStack[1] == 0 ? 0 : 1;
+    scriptStyleStack[position] = 0;
+    seenStyle = scriptStyleStack[0] == STYLE;
+    seenScript = scriptStyleStack[0] == SCRIPT;
   }
 
   class XmlAttributeValueHandler implements TokenHandler {
@@ -218,9 +236,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     @Override
     public void handleElement(Lexer lexer) {
       if (seenAttribute) {
-        seenScript=false;
-        seenStyle=false;
-
+        popScriptStyle();
         seenAttribute=false;
       } else {
         if (seenStyle || seenScript) {
@@ -233,8 +249,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
   class XmlTagEndHandler implements TokenHandler {
     @Override
     public void handleElement(Lexer lexer) {
-      seenStyle=false;
-      seenScript=false;
+      popScriptStyle();
       seenAttribute=false;
       seenContentType=false;
       seenStylesheetType=false;
@@ -283,12 +298,18 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
   }
 
   private void initState(final int initialState) {
-    seenScript = (initialState & SEEN_SCRIPT)!=0;
-    seenStyle = (initialState & SEEN_STYLE)!=0;
     seenTag = (initialState & SEEN_TAG)!=0;
     seenAttribute = (initialState & SEEN_ATTRIBUTE)!=0;
     seenContentType = (initialState & SEEN_CONTENT_TYPE) != 0;
     seenStylesheetType = (initialState & SEEN_STYLESHEET_TYPE) != 0;
+    if (seenTag || seenAttribute) {
+      int stack = (initialState & SEEN_STYLE_SCRIPT_MASK) >> SEEN_STYLE_SCRIPT_SHIFT + 1;
+      scriptStyleStack[0] = stack / 3;
+      scriptStyleStack[1] = stack % 3;
+    }
+    int position = scriptStyleStack[1] == 0 ? 0 : 1;
+    seenStyle = scriptStyleStack[position] == STYLE;
+    seenScript = scriptStyleStack[position] == SCRIPT;
     lexerOfCacheBufferSequence = null;
     cachedBufferSequence = null;
   }
@@ -335,10 +356,8 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
         if (base.getTokenType() != XmlTokenType.XML_END_TAG_START) { // we are inside comment
           base.start(buf,lastStart+1,getBufferEnd(),lastState);
           base.getTokenType();
-          base.advance();
-        } else {
-          base.advance();
         }
+        base.advance();
 
         while(XmlTokenType.WHITESPACES.contains(base.getTokenType())) {
           base.advance();
@@ -399,12 +418,14 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
   public int getState() {
     int state = super.getState();
 
-    state |= ((seenScript)?SEEN_SCRIPT:0);
     state |= ((seenTag)?SEEN_TAG:0);
-    state |= ((seenStyle)?SEEN_STYLE:0);
     state |= ((seenAttribute)?SEEN_ATTRIBUTE:0);
     state |= ((seenContentType)?SEEN_CONTENT_TYPE:0);
     state |= ((seenStylesheetType)?SEEN_STYLESHEET_TYPE:0);
+
+    if (seenTag || seenAttribute) {
+      state |= (scriptStyleStack[0] * 3 + scriptStyleStack[1] - 1) << 9;
+    }
 
     return state;
   }
