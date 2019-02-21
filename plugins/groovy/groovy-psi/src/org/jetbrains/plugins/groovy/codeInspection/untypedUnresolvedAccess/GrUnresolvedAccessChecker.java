@@ -31,18 +31,17 @@ import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFilter;
 import org.jetbrains.plugins.groovy.findUsages.MissingMethodAndPropertyUtil;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
@@ -60,11 +59,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.psi.util.PsiUtil.isInnerClass;
 import static org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.ReferenceFixesKt.generateAddImportActions;
 import static org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.ReferenceFixesKt.generateCreateClassActions;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.hasArguments;
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.hasEnclosingInstanceInScope;
 
 public class GrUnresolvedAccessChecker {
   public static final Logger LOG = Logger.getInstance(GrUnresolvedAccessChecker.class);
@@ -88,61 +84,10 @@ public class GrUnresolvedAccessChecker {
   }
 
   @Nullable
-  public HighlightInfo checkCodeReferenceElement(GrCodeReferenceElement refElement) {
-    HighlightInfo info = checkCodeRefInner(refElement);
-    addEmptyIntentionIfNeeded(info);
-    return info;
-  }
-
-  @Nullable
   public List<HighlightInfo> checkReferenceExpression(GrReferenceExpression ref) {
     List<HighlightInfo> info = checkRefInner(ref);
     addEmptyIntentionIfNeeded(ContainerUtil.getFirstItem(info));
     return info;
-  }
-
-  @Nullable
-  private HighlightInfo checkCodeRefInner(GrCodeReferenceElement refElement) {
-    if (PsiTreeUtil.getParentOfType(refElement, GroovyDocPsiElement.class) != null) return null;
-
-    PsiElement nameElement = refElement.getReferenceNameElement();
-    if (nameElement == null) return null;
-
-    if (isResolvedStaticImport(refElement)) return null;
-
-    GroovyResolveResult resolveResult = refElement.advancedResolve();
-    final PsiElement resolved = resolveResult.getElement();
-
-    if (!(refElement.getParent() instanceof GrPackageDefinition) && resolved == null) {
-      String message = GroovyBundle.message("cannot.resolve", refElement.getReferenceName());
-      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(nameElement).descriptionAndTooltip(message).create();
-
-      // todo implement for nested classes
-      registerCreateClassByTypeFix(refElement, info, myDisplayKey);
-      registerAddImportFixes(refElement, info, myDisplayKey);
-      UnresolvedReferenceQuickFixProvider
-        .registerReferenceFixes(refElement, new QuickFixActionRegistrarAdapter(info, myDisplayKey));
-      QuickFixFactory.getInstance().registerOrderEntryFixes(new QuickFixActionRegistrarAdapter(info, myDisplayKey), refElement);
-
-      return info;
-    }
-
-    if (refElement.getParent() instanceof GrNewExpression && GrStaticChecker.isInStaticContext(refElement)) {
-      GrNewExpression newExpression = (GrNewExpression)refElement.getParent();
-      if (resolved instanceof PsiClass) {
-        PsiClass clazz = (PsiClass)resolved;
-        final PsiClass outerClass = clazz.getContainingClass();
-        if (outerClass != null && isInnerClass(clazz) &&
-            !hasEnclosingInstanceInScope(outerClass, newExpression, true) &&
-            !hasArguments(newExpression)) {
-          String qname = clazz.getQualifiedName();
-          LOG.assertTrue(qname != null);
-          return createAnnotationForRef(refElement, true, GroovyBundle.message("cannot.reference.non.static", qname));
-        }
-      }
-    }
-
-    return null;
   }
 
   @Nullable
@@ -329,13 +274,6 @@ public class GrUnresolvedAccessChecker {
         QuickFixAction.registerQuickFixAction(info, emptyIntentionAction, myDisplayKey);
       }
     }
-  }
-
-  private static boolean isResolvedStaticImport(GrCodeReferenceElement refElement) {
-    final PsiElement parent = refElement.getParent();
-    return parent instanceof GrImportStatement &&
-           ((GrImportStatement)parent).isStatic() &&
-           refElement.multiResolve(false).length > 0;
   }
 
   private static boolean isStaticOk(GroovyResolveResult resolveResult) {

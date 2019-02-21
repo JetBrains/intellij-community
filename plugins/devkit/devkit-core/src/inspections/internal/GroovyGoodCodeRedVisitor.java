@@ -73,15 +73,9 @@ public class GroovyGoodCodeRedVisitor implements GoodCodeRedVisitor {
       @Override
       public void visitCodeReferenceElement(@NotNull GrCodeReferenceElement refElement) {
         super.visitCodeReferenceElement(refElement);
-        HighlightInfo info = unresolvedAccessChecker.checkCodeReferenceElement(refElement);
+        HighlightInfo info = accessibilityChecker.checkCodeReferenceElement(refElement);
         if (info != null) {
           registerProblem(holder, info, refElement);
-        }
-        else {
-          info = accessibilityChecker.checkCodeReferenceElement(refElement);
-          if (info != null) {
-            registerProblem(holder, info, refElement);
-          }
         }
       }
 
