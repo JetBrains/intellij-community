@@ -69,7 +69,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     ConcurrentCollectionFactory.createMap(ContainerUtil.identityStrategy());
   private final Set<RefEntity> myExcludedElements = ConcurrentCollectionFactory.createConcurrentSet(ContainerUtil.identityStrategy());
 
-  private WeakUnreferencedFilter myFilter;
+  private final WeakUnreferencedFilter myFilter;
   private DeadHTMLComposer myComposer;
   private final AtomicNotNullLazyValue<InspectionToolWrapper> myDummyWrapper = new AtomicNotNullLazyValue<InspectionToolWrapper>() {
     @NotNull
@@ -102,13 +102,12 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   public UnusedDeclarationPresentation(@NotNull InspectionToolWrapper toolWrapper, @NotNull GlobalInspectionContextImpl context) {
     super(toolWrapper, context);
     myQuickFixActions = createQuickFixes(toolWrapper);
+    myFilter = new WeakUnreferencedFilter(getTool(), getContext());
     ((EntryPointsManagerBase)getEntryPointsManager()).setAddNonJavaEntries(getTool().ADD_NONJAVA_TO_ENTRIES);
   }
 
+  @NotNull
   public RefFilter getFilter() {
-    if (myFilter == null) {
-      myFilter = new WeakUnreferencedFilter(getTool(), getContext());
-    }
     return myFilter;
   }
   private static class WeakUnreferencedFilter extends UnreferencedFilter {
