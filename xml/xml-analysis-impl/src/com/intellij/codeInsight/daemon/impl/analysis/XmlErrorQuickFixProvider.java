@@ -56,7 +56,8 @@ public class XmlErrorQuickFixProvider implements ErrorQuickFixProvider {
 
         @Override
         public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-          return true;
+          // Prevent this from running if we're inside a nested language inside XML
+          return element.getLanguage().equals(file.getLanguage());
         }
 
         @Override
