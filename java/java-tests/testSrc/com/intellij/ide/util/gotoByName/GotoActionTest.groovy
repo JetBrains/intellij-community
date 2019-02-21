@@ -129,6 +129,13 @@ class GotoActionTest extends LightCodeInsightFixtureTestCase {
     }
   }
 
+  void "test detected action groups"() {
+    assert getPresentableGroupName(project, "Zoom", "Images.Editor.ZoomIn", false) == "Images"
+    assert getPresentableGroupName(project, "Tab", "SearchEverywhere.NextTab", false) == "Search Everywhere"
+    assert getPresentableGroupName(project, "Tab", "NextTab", false) == "Window | Editor Tabs"
+    assert getPresentableGroupName(project, "Next Tab", "NextEditorTab", false) == "Tabs"
+  }
+
   void "test same invisible groups are ignored"() {
     def pattern = "GotoActionTest.TestAction"
 
@@ -146,23 +153,23 @@ class GotoActionTest extends LightCodeInsightFixtureTestCase {
 
     runWithGlobalAction(pattern, testAction) {
       runWithMainMenuGroup(outerGroup) {
-        assert getPresentableGroupName(project, pattern, testAction, outerGroup, false) == "Outer | VisibleGroup"
-        assert getPresentableGroupName(project, pattern, testAction, outerGroup, true) == "Outer | A HiddenGroup1"
+        assert getPresentableGroupName(project, pattern, testAction, false) == "Outer | VisibleGroup"
+        assert getPresentableGroupName(project, pattern, testAction, true) == "Outer | A HiddenGroup1"
 
         outerGroup.remove(visibleGroup)
 
-        assert getPresentableGroupName(project, pattern, testAction, outerGroup, false) == null
-        assert getPresentableGroupName(project, pattern, testAction, outerGroup, true) == "Outer | A HiddenGroup1"
+        assert getPresentableGroupName(project, pattern, testAction, false) == null
+        assert getPresentableGroupName(project, pattern, testAction, true) == "Outer | A HiddenGroup1"
 
         outerGroup.remove(hiddenGroup1)
 
-        assert getPresentableGroupName(project, pattern, testAction, outerGroup, false) == null
-        assert getPresentableGroupName(project, pattern, testAction, outerGroup, true) == "Outer | Z HiddenGroup2"
+        assert getPresentableGroupName(project, pattern, testAction, false) == null
+        assert getPresentableGroupName(project, pattern, testAction, true) == "Outer | Z HiddenGroup2"
 
         hiddenGroup2.remove(testAction)
 
-        assert getPresentableGroupName(project, pattern, testAction, outerGroup, false) == null
-        assert getPresentableGroupName(project, pattern, testAction, outerGroup, true) == null
+        assert getPresentableGroupName(project, pattern, testAction, false) == null
+        assert getPresentableGroupName(project, pattern, testAction, true) == null
       }
     }
   }
@@ -207,8 +214,13 @@ class GotoActionTest extends LightCodeInsightFixtureTestCase {
     return wrappers
   }
 
-  private static String getPresentableGroupName(Project project, String pattern, AnAction testAction, DefaultActionGroup menuGroup,
-                                                boolean passFlag) {
+  private static String getPresentableGroupName(Project project, String pattern, String testActionId, boolean passFlag) {
+    def action = ActionManager.instance.getAction(testActionId)
+    assert action != null
+    return getPresentableGroupName(project, pattern, action, passFlag)
+  }
+
+  private static String getPresentableGroupName(Project project, String pattern, AnAction testAction, boolean passFlag) {
     return computeWithCustomDataProvider(passFlag) {
       def result = getActionsFromPopup(project, pattern)
       def matches = result.findAll { it.action == testAction }
