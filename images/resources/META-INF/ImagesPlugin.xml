@@ -130,7 +130,7 @@
       </action> 
       <action class="org.intellij.images.thumbnail.actions.ToggleFileNameAction"
               id="Images.Thumbnails.ToggleFileName"
-              text="File Size"
+              text="File Name"
               description="Toggle whether to show the image name"
               icon="AllIcons.Actions.ShowImportStatements">
       </action>
