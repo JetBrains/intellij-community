@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -17,6 +15,8 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicDialo
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicElementSettings;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicMethodDialog;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isInStaticCompilationContext;
 
 /**
  * @author Maxim.Medvedev
@@ -66,7 +66,7 @@ public class DynamicMethodFix implements IntentionAction, LowPriorityAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
-    return myReferenceExpression.isValid();
+    return myReferenceExpression.isValid() && !isInStaticCompilationContext(myReferenceExpression);
   }
 
   @Override
