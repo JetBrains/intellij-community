@@ -42,9 +42,9 @@
 
     <action class="git4idea.actions.GitCheckoutRevisionAction" id="Git.CheckoutRevision" text="Checkout Revision"/>
     <group class="git4idea.ui.branch.GitLogBranchOperationsActionGroup" id="Git.BranchOperationGroup"/>
-    <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch" text="New Branch..."
+    <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch" text="Branch..."
             description="Create new branch starting from the selected commit"/>
-    <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag" text="New Tag..."
+    <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag" text="Tag..."
             description="Create new tag pointing to this commit"/>
     <action id="Git.Reset.In.Log" class="git4idea.reset.GitResetAction" text="Reset Current Branch to Here..." icon="AllIcons.Actions.Rollback"/>
     <action id="Git.Revert.In.Log" class="git4idea.revert.GitRevertAction" text="Revert Commit"
@@ -151,10 +151,12 @@
       <reference id="Git.Interactive.Rebase"/>
       <separator/>
       <reference id="Git.BranchOperationGroup"/>
-      <reference id="Git.CreateNewBranch"/>
-      <reference id="Git.CreateNewTag"/>
+      <group id="Git.Log.CreateNew" text="New" popup="true"
+             description="Create new branch or tag on selected commit">
+        <reference id="Git.CreateNewBranch"/>
+        <reference id="Git.CreateNewTag"/>
+      </group>
       <separator/>
-
       <add-to-group group-id="Vcs.Log.ContextMenu" relative-to-action="Vcs.Log.GoToChild" anchor="before"/>
     </group>
 
