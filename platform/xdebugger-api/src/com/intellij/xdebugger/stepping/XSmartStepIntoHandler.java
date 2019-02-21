@@ -42,7 +42,7 @@ public abstract class XSmartStepIntoHandler<Variant extends XSmartStepIntoVarian
    */
   @NotNull
   public Promise<List<Variant>> computeStepIntoVariants(@NotNull XSourcePosition position) {
-    return Promises.resolvedPromise();
+    return Promises.rejectedPromise();
   }
 
   /**
