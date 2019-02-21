@@ -9,6 +9,7 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.stateStore
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.util.io.createDirectories
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.exists
 import com.intellij.util.io.write
@@ -68,7 +69,11 @@ class ConfigImportHelperTest {
     writeStorageFile("2020.1", 100, isMacOs)
     writeStorageFile("2021.1", 200, isMacOs)
     writeStorageFile("2022.1", 300, isMacOs)
-    val newConfigPath = fs.getPath("/data/${constructConfigPath("2022.1", isMacOs)}")
+
+    val newConfigPath = fs.getPath("/data/${constructConfigPath("2022.3", isMacOs)}")
+    // create new config dir to test that it will be not suggested too (as on start of new version config dir can be created)
+    newConfigPath.createDirectories()
+
     assertThat(ConfigImportHelper.findRecentConfigDirectory(newConfigPath, isMacOs).joinToString("\n")).isEqualTo("""
         /data/${constructConfigPath("2022.1", isMacOs)}
         /data/${constructConfigPath("2021.1", isMacOs)}
