@@ -275,10 +275,13 @@ public abstract class InspectionRVContentProvider {
           InspectionTreeNode actualParent = moduleNode == null ? parent : moduleNode;
           currentParent = packageName == null ? actualParent : model.createPackageNode(packageName, actualParent);
         }
-        RefElementNode node = container.createNode(context.getPresentation(toolWrapper),
+        InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
+        RefElementNode node = container.createNode(presentation,
                                                    model,
                                                    currentParent,
-                                                   showStructure || HighlightInfoType.UNUSED_SYMBOL_DISPLAY_NAME.equals(toolWrapper.getDisplayName()));
+                                                   showStructure
+                                                   || HighlightInfoType.UNUSED_SYMBOL_DISPLAY_NAME.equals(toolWrapper.getDisplayName())
+                                                   || presentation.isDummy());
         appendDescriptor(context, toolWrapper, container, node);
       }
     }
