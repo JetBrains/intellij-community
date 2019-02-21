@@ -121,10 +121,6 @@
       <add-to-group group-id="VcsGroup" anchor="last"/>
     </group>
 
-    <group id="Git.LogContextMenu">
-      <separator/>
-    </group>
-
     <group id="Git.FileHistory.ContextMenu">
       <reference id="Git.SelectInGitLog"/>
       <separator/>
