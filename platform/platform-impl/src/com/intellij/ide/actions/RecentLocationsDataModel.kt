@@ -76,7 +76,7 @@ data class RecentLocationsDataModel(val project: Project, val editorsToRelease: 
   }
 
   private fun getBreadcrumbs(project: Project, placeInfo: IdeDocumentHistoryImpl.PlaceInfo): String {
-    val rangeMarker = placeInfo.rangeMarker
+    val rangeMarker = placeInfo.caretPosition
     val fileName = placeInfo.file.name
     if (rangeMarker == null) {
       return fileName
@@ -134,7 +134,7 @@ data class RecentLocationsDataModel(val project: Project, val editorsToRelease: 
   }
 
   private fun createEditor(project: Project, placeInfo: IdeDocumentHistoryImpl.PlaceInfo): EditorEx? {
-    val positionOffset = placeInfo.rangeMarker
+    val positionOffset = placeInfo.caretPosition
     if (positionOffset == null || !positionOffset.isValid) {
       return null
     }
