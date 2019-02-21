@@ -144,7 +144,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     }
   }
 
-  private void pushScriptStyle(boolean script, boolean style) {
+  protected void pushScriptStyle(boolean script, boolean style) {
     int position = scriptStyleStack[0] == 0 ? 0 : 1;
     scriptStyleStack[position] = script ? SCRIPT :
                                  style ? STYLE :
