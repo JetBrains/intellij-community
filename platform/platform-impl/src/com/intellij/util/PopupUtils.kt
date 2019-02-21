@@ -7,11 +7,10 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx.GUTTER_ARROW_LOGICAL_LINE
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx.LOGICAL_LINE_AT_CURSOR
 import com.intellij.openapi.editor.ex.util.EditorUtil.getDefaultCaretWidth
 import com.intellij.openapi.editor.ex.util.EditorUtil.logicalToVisualLine
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.loadDataByComponent
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.PopupFactoryImpl
@@ -53,7 +52,7 @@ private fun getBestBalloonPositionInsideGutter(context: DataContext): RelativePo
 private fun getBestPositionInsideGutter(context: DataContext, location: Rectangle.() -> Point): RelativePoint? {
   val component = getFocusComponent<EditorGutterComponentEx>(context) ?: return null
   val editor = CommonDataKeys.EDITOR.getData(context) ?: return null
-  val logicalLine = loadDataByComponent(component, GUTTER_ARROW_LOGICAL_LINE) ?: return null
+  val logicalLine = context.getData(LOGICAL_LINE_AT_CURSOR) ?: return null
   val visualLine = logicalToVisualLine(editor, logicalLine)
   val visibleArea = component.visibleRect
   val rect = Rectangle(0, visualLine * editor.lineHeight, component.width, editor.lineHeight)
