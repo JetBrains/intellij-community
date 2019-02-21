@@ -21,6 +21,7 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
 
   private static final ThreadLocal<Win32LocalFileSystem> THREAD_LOCAL = ThreadLocal.withInitial(Win32LocalFileSystem::new);
 
+  @NotNull
   public static Win32LocalFileSystem getWin32Instance() {
     if (!isAvailable()) throw new RuntimeException("Native filesystem for Windows is not loaded");
     Win32LocalFileSystem fileSystem = THREAD_LOCAL.get();
