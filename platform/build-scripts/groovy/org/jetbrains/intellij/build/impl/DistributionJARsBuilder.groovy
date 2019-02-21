@@ -188,7 +188,7 @@ class DistributionJARsBuilder {
   }
 
   Collection<String> getIncludedProjectArtifacts() {
-    platform.includedArtifacts.keySet() + pluginsToPublish.keySet().collectMany {it.includedArtifacts.keySet()}
+    platform.includedArtifacts.keySet() + getPluginsByModules(buildContext, getEnabledPluginModules()).collectMany {it.includedArtifacts.keySet()}
   }
 
   void buildJARs() {
