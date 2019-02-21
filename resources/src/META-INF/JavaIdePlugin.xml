@@ -708,7 +708,7 @@
     <internalFileTemplate name="package-info"/>
     <internalFileTemplate name="module-info"/>
 
-    <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler" id="copyJavaFilesOrPackages"/>
+    <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler" id="copyFilesOrDirectories"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.TargetElementUtil"
                         serviceImplementation="com.intellij.codeInsight.TargetElementUtil"/>
