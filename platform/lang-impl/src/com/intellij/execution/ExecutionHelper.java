@@ -5,13 +5,13 @@ package com.intellij.execution;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.ExecutionManagerImpl;
+import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
@@ -348,15 +348,6 @@ public class ExecutionHelper {
       if (indicator != null && title2 != null) {
         indicator.setText2(title2);
       }
-      Application application = ApplicationManager.getApplication();
-      if (application.isInternal() && !application.isHeadlessEnvironment()) {
-        if (application.isDispatchThread()) {
-          LOG.warn("Synchronous execution on EDT: " + processHandler, new Throwable());
-        }
-        else if (application.isReadAccessAllowed()) {
-          LOG.warn("Synchronous execution under ReadAction: " + processHandler, new Throwable());
-        }
-      }
       process.run();
     }
   }
@@ -419,7 +410,7 @@ public class ExecutionHelper {
         mySemaphore.down();
         ApplicationManager.getApplication().executeOnPooledThread(myWaitThread);
         ApplicationManager.getApplication().executeOnPooledThread(myCancelListener);
-
+        OSProcessHandler.checkEdtAndReadAction(processHandler);
         mySemaphore.waitFor();
       }
     };
@@ -448,7 +439,7 @@ public class ExecutionHelper {
       public void run() {
         mySemaphore.down();
         ApplicationManager.getApplication().executeOnPooledThread(myProcessThread);
-
+        OSProcessHandler.checkEdtAndReadAction(processHandler);
         mySemaphore.waitFor();
       }
     };

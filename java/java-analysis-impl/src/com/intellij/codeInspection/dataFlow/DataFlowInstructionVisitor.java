@@ -4,6 +4,8 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.util.OptionalUtil;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -183,7 +185,10 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
                                       @Nullable TextRange range,
                                       @NotNull DfaMemoryState memState) {
     if (!expression.isPhysical()) {
-      LOG.error("Non-physical expression is passed" + expression);
+      Application application = ApplicationManager.getApplication();
+      if (application.isEAP() || application.isInternal() || application.isUnitTestMode()) {
+        throw new IllegalStateException("Non-physical expression is passed");
+      }
     }
     expression.accept(new ExpressionVisitor(value, memState));
     if (range == null) {

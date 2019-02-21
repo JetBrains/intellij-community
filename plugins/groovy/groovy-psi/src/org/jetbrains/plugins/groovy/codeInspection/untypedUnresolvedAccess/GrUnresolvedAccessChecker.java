@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -9,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,20 +31,14 @@ import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFilter;
 import org.jetbrains.plugins.groovy.findUsages.MissingMethodAndPropertyUtil;
-import org.jetbrains.plugins.groovy.lang.GrCreateClassKind;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
@@ -68,6 +61,8 @@ import java.util.List;
 import java.util.Map;
 
 import static com.intellij.psi.util.PsiUtil.isInnerClass;
+import static org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.ReferenceFixesKt.generateAddImportActions;
+import static org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.ReferenceFixesKt.generateCreateClassActions;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.hasArguments;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.hasEnclosingInstanceInScope;
 
@@ -453,81 +448,17 @@ public class GrUnresolvedAccessChecker {
   }
 
   private static void registerAddImportFixes(GrReferenceElement refElement, @Nullable HighlightInfo info, final HighlightDisplayKey key) {
-    final String referenceName = refElement.getReferenceName();
-    if (StringUtil.isEmpty(referenceName)) return;
-    if (!(refElement instanceof GrCodeReferenceElement) && Character.isLowerCase(referenceName.charAt(0))) return;
-    if (refElement.getQualifier() != null) return;
-
-    QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createGroovyAddImportAction(refElement), key);
+    for (IntentionAction action : generateAddImportActions(refElement)) {
+      QuickFixAction.registerQuickFixAction(info, action, key);
+    }
   }
 
   private static void registerCreateClassByTypeFix(@NotNull GrReferenceElement refElement,
                                                    @Nullable HighlightInfo info,
-                                                   final HighlightDisplayKey key) {
-    GrPackageDefinition packageDefinition = PsiTreeUtil.getParentOfType(refElement, GrPackageDefinition.class);
-    if (packageDefinition != null) return;
-
-    PsiElement parent = refElement.getParent();
-    if (parent instanceof GrNewExpression &&
-        refElement.getManager().areElementsEquivalent(((GrNewExpression)parent).getReferenceElement(), refElement)) {
-      QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFromNewAction((GrNewExpression)parent), key);
+                                                   HighlightDisplayKey key) {
+    for (IntentionAction fix : generateCreateClassActions(refElement)) {
+      QuickFixAction.registerQuickFixAction(info, fix, key);
     }
-    else if (canBeClassOrPackage(refElement)) {
-      if (shouldBeInterface(refElement)) {
-        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement, GrCreateClassKind.INTERFACE), key);
-        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement, GrCreateClassKind.TRAIT), key);
-      }
-      else if (shouldBeClass(refElement)) {
-        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement, GrCreateClassKind.CLASS), key);
-        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement, GrCreateClassKind.ENUM), key);
-      }
-      else if (shouldBeAnnotation(refElement)) {
-        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement, GrCreateClassKind.ANNOTATION), key);
-      }
-      else {
-        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement, GrCreateClassKind.CLASS), key);
-        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement, GrCreateClassKind.INTERFACE), key);
-
-        if (!refElement.isQualified() || resolvesToGroovy(refElement.getQualifier())) {
-          QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement, GrCreateClassKind.TRAIT), key);
-        }
-
-        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement, GrCreateClassKind.ENUM), key);
-        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement, GrCreateClassKind.ANNOTATION), key);
-      }
-    }
-  }
-
-  private static boolean resolvesToGroovy(PsiElement qualifier) {
-    if (qualifier instanceof GrReferenceElement) {
-      return ((GrReferenceElement)qualifier).resolve() instanceof GroovyPsiElement;
-    }
-    if (qualifier instanceof GrExpression) {
-      PsiType type = ((GrExpression)qualifier).getType();
-      if (type instanceof PsiClassType) {
-        PsiClass resolved = ((PsiClassType)type).resolve();
-        return resolved instanceof GroovyPsiElement;
-      }
-    }
-    return false;
-  }
-
-  private static boolean canBeClassOrPackage(@NotNull GrReferenceElement refElement) {
-    return !(refElement instanceof GrReferenceExpression) || ResolveUtil.canBeClassOrPackage((GrReferenceExpression)refElement);
-  }
-
-  private static boolean shouldBeAnnotation(GrReferenceElement element) {
-    return element.getParent() instanceof GrAnnotation;
-  }
-
-  private static boolean shouldBeInterface(GrReferenceElement myRefElement) {
-    PsiElement parent = myRefElement.getParent();
-    return parent instanceof GrImplementsClause || parent instanceof GrExtendsClause && parent.getParent() instanceof GrInterfaceDefinition;
-  }
-
-  private static boolean shouldBeClass(GrReferenceElement myRefElement) {
-    PsiElement parent = myRefElement.getParent();
-    return parent instanceof GrExtendsClause && !(parent.getParent() instanceof GrInterfaceDefinition);
   }
 
   private static boolean shouldHighlightAsUnresolved(@NotNull GrReferenceExpression referenceExpression) {

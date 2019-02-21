@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.Graphics;
 import javax.swing.Icon;
 
-final class DefaultControl implements Control {
+public final class DefaultControl implements Control {
   private final CompoundIcon collapsedIcon = new CompoundIcon("treeCollapsed");
   private final CompoundIcon expandedIcon = new CompoundIcon("treeExpanded");
 

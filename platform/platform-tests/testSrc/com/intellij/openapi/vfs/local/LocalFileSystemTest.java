@@ -655,7 +655,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
       RefreshWorker.setCancellingCondition(null);
       topDir.refresh(false, true);
-      assertEquals(processed, files);
+      assertEquals(files, processed);
     }
     finally {
       connection.disconnect();

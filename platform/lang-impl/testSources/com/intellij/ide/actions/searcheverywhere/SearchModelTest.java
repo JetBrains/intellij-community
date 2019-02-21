@@ -26,8 +26,8 @@ public class SearchModelTest extends LightPlatformCodeInsightFixtureTestCase {
 
     // adding to empty -----------------------------------------------------------------------
     model.addElements(Arrays.asList(
-      new SESearcher.ElementInfo("item_3_20", 340, STUB_CONTRIBUTOR_3),
       new SESearcher.ElementInfo("item_2_20", 250, STUB_CONTRIBUTOR_2),
+      new SESearcher.ElementInfo("item_3_20", 340, STUB_CONTRIBUTOR_3),
       new SESearcher.ElementInfo("item_1_20", 160, STUB_CONTRIBUTOR_1),
       new SESearcher.ElementInfo("item_3_30", 330, STUB_CONTRIBUTOR_3),
       new SESearcher.ElementInfo("item_2_10", 280, STUB_CONTRIBUTOR_2),
@@ -72,8 +72,39 @@ public class SearchModelTest extends LightPlatformCodeInsightFixtureTestCase {
     Assert.assertEquals(expectedItems, actualItems);
 
     // expiring results -----------------------------------------------------------------------
-    // removing items -----------------------------------------------------------------------
+    model.expireResults();
+    model.addElements(Arrays.asList(
+      new SESearcher.ElementInfo("item_3_50", 310, STUB_CONTRIBUTOR_3),
+      new SESearcher.ElementInfo("item_1_20", 160, STUB_CONTRIBUTOR_1),
+      new SESearcher.ElementInfo("item_3_10", 350, STUB_CONTRIBUTOR_3),
+      new SESearcher.ElementInfo("item_2_23", 250, STUB_CONTRIBUTOR_2),
+      new SESearcher.ElementInfo("item_3_30", 330, STUB_CONTRIBUTOR_3),
+      new SESearcher.ElementInfo("item_2_05", 290, STUB_CONTRIBUTOR_2),
+      new SESearcher.ElementInfo("item_2_10", 280, STUB_CONTRIBUTOR_2),
+      new SESearcher.ElementInfo("item_1_35", 130, STUB_CONTRIBUTOR_1),
+      new SESearcher.ElementInfo("item_3_20", 340, STUB_CONTRIBUTOR_3),
+      new SESearcher.ElementInfo("item_1_25", 150, STUB_CONTRIBUTOR_1)
+    ));
+    model.setHasMore(STUB_CONTRIBUTOR_1, true);
+    model.setHasMore(STUB_CONTRIBUTOR_2, true);
 
+    actualItems = model.getItems();
+    expectedItems = Arrays.asList("item_1_20", "item_1_25", "item_1_35", SearchListModel.MORE_ELEMENT,
+                                  "item_2_05", "item_2_10", "item_2_23", SearchListModel.MORE_ELEMENT,
+                                  "item_3_10", "item_3_20", "item_3_30", "item_3_50");
+    Assert.assertEquals(expectedItems, actualItems);
+
+    // removing items -----------------------------------------------------------------------
+    model.removeElement("item_1_25", STUB_CONTRIBUTOR_1);
+    model.removeElement("item_3_20", STUB_CONTRIBUTOR_3);
+    model.removeElement("item_3_30", STUB_CONTRIBUTOR_3);
+    model.setHasMore(STUB_CONTRIBUTOR_1, false);
+
+    actualItems = model.getItems();
+    expectedItems = Arrays.asList("item_1_20", "item_1_35",
+                                  "item_2_05", "item_2_10", "item_2_23", SearchListModel.MORE_ELEMENT,
+                                  "item_3_10", "item_3_50");
+    Assert.assertEquals(expectedItems, actualItems);
   }
 
   @NotNull

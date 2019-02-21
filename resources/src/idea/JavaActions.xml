@@ -192,9 +192,6 @@
     </reference>
 
     <group id="ProjectViewAnalysisGroup">
-      <reference ref="TypeHierarchy"/>
-      <reference ref="OptimizeImports"/>
-
       <add-to-group group-id="ProjectViewPopupMenuModifyGroup" anchor="first"/>
     </group>
 

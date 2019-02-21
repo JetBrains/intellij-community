@@ -19,8 +19,12 @@ internal object ImplicitClosureCallPredicate : PsiElementPredicate {
       return false
     }
     val result = element.advancedResolve()
-    return result.isInvokedOnProperty && element.invokedExpression.type.isClosureType()
-           || result.element.isClosureCallMethod()
+    if (element.implicitCallReference == null) {
+      return result.isInvokedOnProperty && element.invokedExpression.type.isClosureType()
+    }
+    else {
+      return result.element.isClosureCallMethod()
+    }
   }
 
   private fun PsiType?.isClosureType(): Boolean {
