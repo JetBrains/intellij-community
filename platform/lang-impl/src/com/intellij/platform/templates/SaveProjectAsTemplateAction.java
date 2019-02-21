@@ -9,6 +9,8 @@ import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.impl.FileTemplateBase;
 import com.intellij.ide.util.projectWizard.ProjectTemplateFileProcessor;
 import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -96,8 +98,17 @@ public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
 
         @Override
         public void onSuccess() {
-          Messages.showInfoMessage(FileUtil.getNameWithoutExtension(file.getFileName().toString()) + " was successfully created.\n" +
-                                   "It's available now in Project Wizard", "Template Created");
+          new Notification("Project Template",
+                           "Template Created",
+                           FileUtil.getNameWithoutExtension(file.getFileName().toString()) + " was successfully created.\n" +
+                           "It's available now in Project Wizard",
+                           NotificationType.INFORMATION
+                           ).notify(getProject());
+        }
+
+        @Override
+        public boolean shouldStartInBackground() {
+          return true;
         }
 
         @Override
