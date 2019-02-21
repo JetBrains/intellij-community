@@ -20,4 +20,8 @@ public interface MethodFilter {
   default int onReached(SuspendContextImpl context, RequestHint hint) {
     return RequestHint.STOP;
   }
+
+  default int getSkipCount() {
+    return 0;
+  }
 }

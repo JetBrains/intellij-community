@@ -30,22 +30,30 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
   @Nullable
   protected final JVMName myTargetMethodSignature;
   private final Range<Integer> myCallingExpressionLines;
+  private final int myOrdinal;
 
   public BasicStepMethodFilter(@NotNull PsiMethod psiMethod, Range<Integer> callingExpressionLines) {
+    this(psiMethod, 0, callingExpressionLines);
+  }
+
+  public BasicStepMethodFilter(@NotNull PsiMethod psiMethod, int ordinal, Range<Integer> callingExpressionLines) {
     this(JVMNameUtil.getJVMQualifiedName(psiMethod.getContainingClass()),
          JVMNameUtil.getJVMMethodName(psiMethod),
          JVMNameUtil.getJVMSignature(psiMethod),
+         ordinal,
          callingExpressionLines);
   }
 
   protected BasicStepMethodFilter(@NotNull JVMName declaringClassName,
                                   @NotNull String targetMethodName,
                                   @Nullable JVMName targetMethodSignature,
+                                  int ordinal,
                                   Range<Integer> callingExpressionLines) {
     myDeclaringClassName = declaringClassName;
     myTargetMethodName = targetMethodName;
     myTargetMethodSignature = targetMethodSignature;
     myCallingExpressionLines = callingExpressionLines;
+    myOrdinal = ordinal;
   }
 
   @Override
@@ -169,5 +177,10 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
   @Override
   public Range<Integer> getCallingExpressionLines() {
     return myCallingExpressionLines;
+  }
+
+  @Override
+  public int getSkipCount() {
+    return myOrdinal;
   }
 }

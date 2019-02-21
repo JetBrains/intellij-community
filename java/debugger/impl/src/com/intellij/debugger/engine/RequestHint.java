@@ -39,6 +39,7 @@ public class RequestHint {
 
   @Nullable
   private final MethodFilter myMethodFilter;
+  private int myFilterMatchedCount = 0;
   private boolean myTargetMethodMatched = false;
 
   private boolean myIgnoreFilters = false;
@@ -201,8 +202,10 @@ public class RequestHint {
           return StepRequest.STEP_INTO;
         }
         if (myMethodFilter.locationMatches(context.getDebugProcess(), frameProxy)) {
-          myTargetMethodMatched = true;
-          return myMethodFilter.onReached(context, this);
+          if (myMethodFilter.getSkipCount() <= myFilterMatchedCount++) {
+            myTargetMethodMatched = true;
+            return myMethodFilter.onReached(context, this);
+          }
         }
       }
 

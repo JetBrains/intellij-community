@@ -27,6 +27,7 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.Range;
 import com.intellij.util.ThreeState;
 import com.sun.jdi.Location;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -271,6 +272,10 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
           final PsiMethod psiMethod = expression.resolveMethod();
           if (psiMethod != null) {
             myContextStack.push(psiMethod);
+            StreamEx.of(targets)
+              .select(MethodSmartStepTarget.class)
+              .filter(t -> t.getMethod().equals(psiMethod))
+              .forEach(t -> t.setOrdinal(t.getOrdinal() + 1));
             targets.add(new MethodSmartStepTarget(
               psiMethod,
               null,

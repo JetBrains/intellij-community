@@ -43,14 +43,15 @@ public abstract class JvmSmartStepIntoHandler {
   @Nullable
   protected MethodFilter createMethodFilter(SmartStepTarget stepTarget) {
     if (stepTarget instanceof MethodSmartStepTarget) {
-      final PsiMethod method = ((MethodSmartStepTarget)stepTarget).getMethod();
+      MethodSmartStepTarget methodSmartStepTarget = (MethodSmartStepTarget)stepTarget;
+      final PsiMethod method = methodSmartStepTarget.getMethod();
       if (stepTarget.needsBreakpointRequest()) {
         return Registry.is("debugger.async.smart.step.into") && method.getContainingClass() instanceof PsiAnonymousClass
                ? new ClassInstanceMethodFilter(method, stepTarget.getCallingExpressionLines())
                : new AnonymousClassMethodFilter(method, stepTarget.getCallingExpressionLines());
       }
       else {
-        return new BasicStepMethodFilter(method, stepTarget.getCallingExpressionLines());
+        return new BasicStepMethodFilter(method, methodSmartStepTarget.getOrdinal(), stepTarget.getCallingExpressionLines());
       }
     }
     if (stepTarget instanceof LambdaSmartStepTarget) {
