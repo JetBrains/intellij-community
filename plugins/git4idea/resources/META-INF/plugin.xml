@@ -133,10 +133,14 @@
       <add-to-group group-id="Vcs.FileHistory.ContextMenu" relative-to-action="VcsHistoryActionsGroup" anchor="before"/>
     </group>
 
-    <group id="Git.Log.ContextMenu">
-      <separator/>
+    <group id="Git.Log.ContextMenu.CheckoutBrowse">
       <reference id="Git.CheckoutRevision"/>
       <reference id="Git.BrowseRepoAtRevision"/>
+
+      <add-to-group group-id="Vcs.Log.ContextMenu" relative-to-action="Vcs.Log.CompareRevisions" anchor="before"/>
+    </group>
+
+    <group id="Git.Log.ContextMenu">
       <separator/>
       <reference id="Git.Reset.In.Log"/>
       <reference id="Git.Revert.In.Log"/>
