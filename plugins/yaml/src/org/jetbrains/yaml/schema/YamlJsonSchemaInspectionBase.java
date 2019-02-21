@@ -24,21 +24,31 @@ public abstract class YamlJsonSchemaInspectionBase extends LocalInspectionTool {
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
     PsiFile file = holder.getFile();
-    if (!(file instanceof YAMLFile)) return PsiElementVisitor.EMPTY_VISITOR;
+    if (!(file instanceof YAMLFile)) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
     List<YAMLDocument> documents = ((YAMLFile)file).getDocuments();
-    if (documents.size() != 1) return PsiElementVisitor.EMPTY_VISITOR;
+    if (documents.size() != 1) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
 
     YAMLDocument document = documents.get(0);
     YAMLValue topLevelValue = document.getTopLevelValue();
     PsiElement root = topLevelValue == null ? document : topLevelValue;
     JsonSchemaService service = JsonSchemaService.Impl.get(file.getProject());
     VirtualFile virtualFile = file.getViewProvider().getVirtualFile();
-    if (!service.isApplicableToFile(virtualFile)) return PsiElementVisitor.EMPTY_VISITOR;
+    if (!service.isApplicableToFile(virtualFile)) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
     final JsonSchemaObject rootSchema = service.getSchemaObject(virtualFile);
-    if (rootSchema == null) return PsiElementVisitor.EMPTY_VISITOR;
+    if (rootSchema == null) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
 
     JsonSchemaObject object = service.getSchemaObject(virtualFile);
-    if (object == null) return PsiElementVisitor.EMPTY_VISITOR;
+    if (object == null) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
     return doBuildVisitor(holder, session, root, object);
   }
 
