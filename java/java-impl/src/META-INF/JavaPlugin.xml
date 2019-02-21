@@ -105,6 +105,9 @@
                     interface="com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocationProvider"/>
 
     <extensionPoint qualifiedName="com.intellij.vetoSPICondition" interface="com.intellij.openapi.util.Condition"/>
+    <extensionPoint qualifiedName="com.intellij.languageCompilerRefAdapter" interface="com.intellij.compiler.backwardRefs.LanguageCompilerRefAdapter"/>
+    <extensionPoint qualifiedName="com.intellij.framework.type" interface="com.intellij.framework.FrameworkTypeEx"/>
+    <extensionPoint qualifiedName="com.intellij.runConfigurationExtension" interface="com.intellij.execution.RunConfigurationExtension"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
