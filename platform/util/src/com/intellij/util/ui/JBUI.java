@@ -1841,12 +1841,14 @@ public class JBUI {
 
       @NotNull
       public static Color foreground() {
-        return JBColor.namedColor("Popup.Advertiser.foreground", UIUtil.getLabelForeground());
+        Color foreground = JBUI.CurrentTheme.BigPopup.advertiserForeground();
+        return JBColor.namedColor("Popup.Advertiser.foreground", foreground);
       }
 
       @NotNull
       public static Color background() {
-        return JBColor.namedColor("Popup.Advertiser.background", UIUtil.getLabelBackground());
+        Color background = JBUI.CurrentTheme.BigPopup.advertiserBackground();
+        return JBColor.namedColor("Popup.Advertiser.background", background);
       }
 
       @NotNull
