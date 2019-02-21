@@ -175,6 +175,7 @@ data class RecentLocationsDataModel(val project: Project, val editorsToRelease: 
     settings.additionalLinesCount = 0
     settings.isRightMarginShown = false
     settings.isUseSoftWraps = false
+    settings.isAdditionalPageAtBottom = false
   }
 
   private fun setHighlighting(project: Project,
