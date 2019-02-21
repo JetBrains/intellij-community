@@ -5,7 +5,6 @@ import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.AsyncExecutionService;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.NonBlockingReadAction;
-import com.intellij.openapi.application.async.AppUIExecutorImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;

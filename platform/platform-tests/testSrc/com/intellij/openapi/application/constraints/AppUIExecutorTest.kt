@@ -1,10 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.application.async
+package com.intellij.openapi.application.constraints
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.impl.inWriteAction
+import com.intellij.openapi.application.impl.withConstraint
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.util.Disposer
@@ -14,7 +17,9 @@ import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import org.jetbrains.concurrency.asDeferred
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.function.Consumer
 import javax.swing.SwingUtilities
 import kotlin.coroutines.CoroutineContext
 
@@ -33,7 +38,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
     override fun dispatch(context: CoroutineContext, block: Runnable) = SwingUtilities.invokeLater(block)
   }
 
-  private fun Deferred<Unit>.joinNonBlocking() {
+  private fun Deferred<Any>.joinNonBlocking(onceJoined: () -> Unit = { }) {
     var countDown = 5
     object : Runnable {
       override fun run() {
@@ -44,6 +49,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
           }
           catch (ignored: CancellationException) {
           }
+          onceJoined()
         }
         else {
           if (countDown-- <= 0) fail("Too many EDT reschedules")
@@ -51,6 +57,39 @@ class AppUIExecutorTest : LightPlatformTestCase() {
         }
       }
     }.run()
+  }
+
+  fun `test submitted task is not executed once expired`() {
+    val queue = LinkedBlockingQueue<String>()
+    val disposable = object : Disposable.Parent {
+      override fun beforeTreeDispose() {
+        queue.add("disposable.beforeTreeDispose()")
+      }
+
+      override fun dispose() {
+        queue.add("disposable.dispose()")
+      }
+    }.also { Disposer.register(testRootDisposable, it) }
+    val executor = AppUIExecutor.onUiThread(ModalityState.any()).later().expireWith(disposable)
+
+    queue.add("before submit")
+    val promise = executor.submit {
+      queue.add("run")
+    }.onProcessed(Consumer {
+      queue.add("promise processed")
+    })
+    queue.add("after submit")
+
+    Disposer.dispose(disposable)
+
+    promise.asDeferred().joinNonBlocking {
+      assertOrderedEquals(queue,
+                          "before submit",
+                          "after submit",
+                          "disposable.beforeTreeDispose()",
+                          "promise processed",
+                          "disposable.dispose()")
+    }
   }
 
   fun `test coroutine onUiThread`() {
@@ -155,10 +194,9 @@ class AppUIExecutorTest : LightPlatformTestCase() {
     var scheduled = false
 
     val executor = AppUIExecutor.onUiThread()
-      .withConstraint(object : AsyncExecution.SimpleContextConstraint {
+      .withConstraint(object : ConstrainedExecution.ContextConstraint {
 
-        override val isCorrectContext: Boolean
-          get() = scheduled
+        override fun isCorrectContext(): Boolean = scheduled
 
         override fun schedule(runnable: Runnable) {
           scheduled = true
@@ -186,11 +224,10 @@ class AppUIExecutorTest : LightPlatformTestCase() {
     }.also { Disposer.register(testRootDisposable, it) }
 
     val executor = AppUIExecutor.onUiThread()
-      .withConstraint(object : AsyncExecution.ExpirableContextConstraint {
-        override val isCorrectContext: Boolean
-          get() = scheduled
+      .withConstraint(object : ConstrainedExecution.ContextConstraint {
+        override fun isCorrectContext(): Boolean = scheduled
 
-        override fun scheduleExpirable(runnable: Runnable) {
+        override fun schedule(runnable: Runnable) {
           if (Disposer.isDisposed(disposable)) {
             queue.add("refuse to run already disposed")
             return
@@ -255,11 +292,10 @@ class AppUIExecutorTest : LightPlatformTestCase() {
 
     val uiExecutor = AppUIExecutor.onUiThread()
     val executor = uiExecutor
-      .withConstraint(object : AsyncExecution.ExpirableContextConstraint {
-        override val isCorrectContext: Boolean
-          get() = scheduled
+      .withConstraint(object : ConstrainedExecution.ContextConstraint {
+        override fun isCorrectContext(): Boolean = scheduled
 
-        override fun scheduleExpirable(runnable: Runnable) {
+        override fun schedule(runnable: Runnable) {
           if (Disposer.isDisposed(disposable)) {
             queue.add("refuse to run already disposed")
             return
@@ -418,11 +454,10 @@ class AppUIExecutorTest : LightPlatformTestCase() {
 
     val uiExecutor = AppUIExecutor.onUiThread()
     val executor = uiExecutor
-      .withConstraint(object : AsyncExecution.ExpirableContextConstraint {
-        override val isCorrectContext: Boolean
-          get() = outerScheduled
+      .withConstraint(object : ConstrainedExecution.ContextConstraint {
+        override fun isCorrectContext(): Boolean = outerScheduled
 
-        override fun scheduleExpirable(runnable: Runnable) {
+        override fun schedule(runnable: Runnable) {
           if (shouldDisposeOnDispatch) {
             doDispose(queue, constraintDisposable, anotherDisposable)
           }
@@ -437,9 +472,8 @@ class AppUIExecutorTest : LightPlatformTestCase() {
 
         override fun toString() = "test outer"
       }, constraintDisposable)
-      .withConstraint(object : AsyncExecution.SimpleContextConstraint {
-        override val isCorrectContext: Boolean
-          get() = innerScheduled
+      .withConstraint(object : ConstrainedExecution.ContextConstraint {
+        override fun isCorrectContext(): Boolean = innerScheduled
 
         override fun schedule(runnable: Runnable) {
           innerScheduled = true
