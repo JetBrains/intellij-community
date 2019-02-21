@@ -22,6 +22,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   private static final long serialVersionUID = 1L;
 
   @NotNull private final Map<ExternalSystemSourceType, String> myCompileOutputPaths = ContainerUtil.newHashMap();
+  @NotNull private final Map<ExternalSystemSourceType, String> myExternalCompilerOutputPaths = ContainerUtil.newHashMap();
   @Nullable private Map<String, String> myProperties;
   @NotNull private final String myId;
   @NotNull private final String myModuleTypeId;
@@ -39,6 +40,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   @Nullable private ProjectCoordinate myPublication;
 
   private boolean myInheritProjectCompileOutputPath = true;
+  private boolean myUseExternalCompilerOutput;
 
   public ModuleData(@NotNull String id,
                     @NotNull ProjectSystemId owner,
@@ -122,15 +124,22 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
    */
   @Nullable
   public String getCompileOutputPath(@NotNull ExternalSystemSourceType type) {
-    return myCompileOutputPaths.get(type);
+    //noinspection ConstantConditions
+    return myUseExternalCompilerOutput && myExternalCompilerOutputPaths != null
+           ? myExternalCompilerOutputPaths.get(type)
+           : myCompileOutputPaths.get(type);
   }
 
   public void setCompileOutputPath(@NotNull ExternalSystemSourceType type, @Nullable String path) {
-    if (path == null) {
-      myCompileOutputPaths.remove(type);
-      return;
-    }
-    myCompileOutputPaths.put(type, ExternalSystemApiUtil.toCanonicalPath(path));
+    updatePath(myCompileOutputPaths, type, path);
+  }
+
+  public void setExternalCompilerOutputPath(@NotNull ExternalSystemSourceType type, @Nullable String path) {
+    updatePath(myExternalCompilerOutputPaths, type, path);
+  }
+
+  public void useExternalCompilerOutput(boolean useExternalCompilerOutput) {
+    myUseExternalCompilerOutput = useExternalCompilerOutput;
   }
 
   @Nullable
@@ -283,5 +292,16 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   @Override
   public String toString() {
     return getId();
+  }
+
+  private static void updatePath(Map<ExternalSystemSourceType, String> paths,
+                                 @NotNull ExternalSystemSourceType type,
+                                 @Nullable String path) {
+    if (paths == null) return;
+    if (path == null) {
+      paths.remove(type);
+      return;
+    }
+    paths.put(type, ExternalSystemApiUtil.toCanonicalPath(path));
   }
 }
