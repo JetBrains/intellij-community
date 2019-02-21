@@ -15,11 +15,13 @@
  */
 package com.intellij.diff.tools.util;
 
+import com.intellij.diff.util.Range;
 import com.intellij.diff.util.Side;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollingModel;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -41,6 +43,10 @@ public class SyncScrollSupport {
 
     @CalledInAwt
     int transfer(@NotNull Side baseSide, int line);
+
+    @NotNull
+    @CalledInAwt
+    Range getRange(@NotNull Side baseSide, int line);
   }
 
   public interface Support {
@@ -313,10 +319,6 @@ public class SyncScrollSupport {
       mySide = side;
     }
 
-    private int convertLine(int value) {
-      return myScrollable.transfer(mySide, value);
-    }
-
     public void setAnchor(int masterStartOffset, int masterEndOffset, int slaveStartOffset, int slaveEndOffset) {
       myAnchor = new Anchor(masterStartOffset, masterEndOffset, slaveStartOffset, slaveEndOffset);
     }
@@ -370,16 +372,17 @@ public class SyncScrollSupport {
       boolean onlyMajorBackward = false;
       int offset;
       if (myAnchor == null) {
-        LogicalPosition masterPos = master.xyToLogicalPosition(new Point(viewRect.x, viewRect.y + middleY));
-        int masterCenterLine = masterPos.line;
-        int convertedCenterLine = convertLine(masterCenterLine);
+        int masterVisualLine = master.yToVisualLine(viewRect.y + middleY);
+        int convertedVisualLine = transferVisualLine(masterVisualLine);
 
-        Point point = slave.logicalPositionToXY(new LogicalPosition(convertedCenterLine, masterPos.column));
+        int pointY = slave.visualLineToY(convertedVisualLine);
         int correction = (viewRect.y + middleY) % lineHeight;
-        offset = point.y - middleY + correction;
+        offset = pointY - middleY + correction;
 
-        onlyMajorBackward = correction < lineHeight / 2 && convertedCenterLine == convertLine(masterCenterLine - 1);
-        onlyMajorForward = correction > lineHeight / 2 && convertedCenterLine == convertLine(masterCenterLine + 1);
+        onlyMajorBackward = correction < lineHeight / 2 && masterVisualLine > 0 &&
+                            convertedVisualLine == transferVisualLine(masterVisualLine - 1);
+        onlyMajorForward = correction > lineHeight / 2 &&
+                           convertedVisualLine == transferVisualLine(masterVisualLine + 1);
       }
       else {
         double progress = myAnchor.masterStartOffset == myAnchor.masterEndOffset || viewRect.y == myAnchor.masterEndOffset ? 1 :
@@ -390,6 +393,27 @@ public class SyncScrollSupport {
 
       int deltaHeaderOffset = getHeaderOffset(slave) - getHeaderOffset(master);
       doScrollVertically(slave, offset + deltaHeaderOffset, animated, onlyMajorForward, onlyMajorBackward);
+    }
+
+    private int transferVisualLine(int masterVisualLine) {
+      Editor master = getMaster();
+      Editor slave = getSlave();
+
+      int masterCenterLine = master.visualToLogicalPosition(new VisualPosition(masterVisualLine, 0)).line;
+      Range range = myScrollable.getRange(mySide, masterCenterLine);
+
+      int masterStart = logicalToVisualLine(master, range.start1);
+      int masterEnd = range.start1 == range.end1 ? masterStart : logicalToVisualLine(master, range.end1);
+
+      int slaveStart = logicalToVisualLine(slave, range.start2);
+      int slaveEnd = range.start2 == range.end2 ? slaveStart : logicalToVisualLine(slave, range.end2);
+
+      Range visualRange = new Range(masterStart, masterEnd, slaveStart, slaveEnd);
+      return BaseSyncScrollable.transferLine(masterVisualLine, visualRange);
+    }
+
+    private static int logicalToVisualLine(@NotNull Editor editor, int line) {
+      return editor.logicalToVisualPosition(new LogicalPosition(line, 0)).line;
     }
 
     private void syncHorizontalScroll(boolean animated) {
