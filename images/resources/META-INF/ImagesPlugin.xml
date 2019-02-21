@@ -27,49 +27,47 @@
   </extensions>
 
   <actions>
-    <action class="org.intellij.images.actions.EditExternallyAction"
-            id="Images.EditExternally"
-            text="Open Image in External Editor">
-      <keyboard-shortcut first-keystroke="control alt F4" keymap="$default"/>
-      <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="EditSource"/>
-    </action>
-    <action class="org.intellij.images.actions.ConvertSvgToPngAction"
-            id="Images.ConvertSvgToPng"
-            text="Convert to PNG">
-      <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="EditSource"/>
-    </action>
-    <action class="org.intellij.images.actions.ShowThumbnailsAction"
-            id="Images.ShowThumbnails" text="Show Image Thumbnails">
-      <keyboard-shortcut first-keystroke="shift control T" keymap="$default"/>
-      <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="AddToFavorites"/>
-      <add-to-group anchor="after" group-id="NavbarPopupMenu" relative-to-action="AddToFavorites"/>
-    </action>
-    <action class="org.intellij.images.actions.ToggleTransparencyChessboardAction"
-            id="Images.ToggleTransparencyChessboard"
-            icon="ImagesIcons.ToggleTransparencyChessboard"
-            text="Show Chessboard"
-            description="Show a chessboard on transparent image parts">
-    </action>
-    <action class="org.intellij.images.editor.actions.SetBackgroundImageAction"
-            id="Images.SetBackgroundImage"
-            text="Set Background Image">
-      <add-to-group group-id="ProjectViewPopupMenu"/>
-      <add-to-group group-id="EditorPopupMenu3"/>
-    </action>
-    <group id="Images.EditorToolbar">
-      <reference id="Images.ToggleTransparencyChessboard"/>
+    <group text="Images">
+      <action class="org.intellij.images.actions.EditExternallyAction"
+              id="Images.EditExternally"
+              text="Open Image in External Editor">
+        <keyboard-shortcut first-keystroke="control alt F4" keymap="$default"/>
+        <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="EditSource"/>
+      </action>
+      <action class="org.intellij.images.actions.ConvertSvgToPngAction"
+              id="Images.ConvertSvgToPng"
+              text="Convert to PNG">
+        <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="EditSource"/>
+      </action>
+      <action class="org.intellij.images.actions.ShowThumbnailsAction"
+              id="Images.ShowThumbnails" text="Show Image Thumbnails">
+        <keyboard-shortcut first-keystroke="shift control T" keymap="$default"/>
+        <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="AddToFavorites"/>
+        <add-to-group anchor="after" group-id="NavbarPopupMenu" relative-to-action="AddToFavorites"/>
+      </action>
+      <action class="org.intellij.images.actions.ToggleTransparencyChessboardAction"
+              id="Images.ToggleTransparencyChessboard"
+              icon="ImagesIcons.ToggleTransparencyChessboard"
+              text="Show Chessboard"
+              description="Show a chessboard on transparent image parts">
+      </action>
+      <action class="org.intellij.images.editor.actions.SetBackgroundImageAction"
+              id="Images.SetBackgroundImage"
+              text="Set Background Image">
+        <add-to-group group-id="ProjectViewPopupMenu"/>
+        <add-to-group group-id="EditorPopupMenu3"/>
+      </action>
       <action class="org.intellij.images.editor.actions.ToggleGridAction"
               id="Images.Editor.ToggleGrid"
               icon="AllIcons.Graph.Grid"
               text="Show Grid">
         <keyboard-shortcut first-keystroke="control QUOTE" keymap="$default"/>
       </action>
-      <separator/>
       <action class="org.intellij.images.editor.actions.ZoomInAction"
               id="Images.Editor.ZoomIn"
               icon="AllIcons.Graph.ZoomIn"
               text="Zoom In"
-              use-shortcut-of="ExpandAll" />
+              use-shortcut-of="ExpandAll"/>
       <action class="org.intellij.images.editor.actions.ZoomOutAction"
               id="Images.Editor.ZoomOut"
               icon="AllIcons.Graph.ZoomOut"
@@ -86,26 +84,8 @@
               id="Images.Editor.FitZoomToWindow"
               icon="AllIcons.Graph.FitContent"
               text="Fit Zoom to Window"/>
-      <reference id="ShowColorPicker" />
-    </group>
-    <group id="Images.EditorPopupMenu">
-      <reference id="CutCopyPasteGroup"/>
       <separator/>
-      <reference id="FindUsages"/>
-      <reference id="RefactoringMenu"/>
-      <separator/>
-      <reference id="Images.EditorToolbar"/>
-      <separator/>
-      <reference id="Images.SetBackgroundImage"/>
-      <separator/>
-      <reference id="AddToFavorites"/>
-      <separator/>
-      <reference id="VersionControlsGroup"/>
-      <separator/>
-      <reference id="Images.EditExternally"/>
-      <reference id="ExternalToolsGroup"/>
-    </group>
-    <group id="Images.ThumbnailsToolbar">
+
       <action class="org.intellij.images.thumbnail.actions.UpFolderAction"
               id="Images.Thumbnails.UpFolder"
               text="Parent Folder"
@@ -120,22 +100,18 @@
               icon="AllIcons.ObjectBrowser.FlattenPackages">
         <keyboard-shortcut first-keystroke="alt MULTIPLY" keymap="$default"/>
       </action>
-      <separator/>
-      <reference id="Images.ToggleTransparencyChessboard"/>
       <action class="org.intellij.images.thumbnail.actions.ToggleFileSizeAction"
               id="Images.Thumbnails.ToggleFileSize"
               text="File Size"
               description="Toggle whether to show the image size information"
               icon="AllIcons.FileTypes.Any_type">
-      </action> 
+      </action>
       <action class="org.intellij.images.thumbnail.actions.ToggleFileNameAction"
               id="Images.Thumbnails.ToggleFileName"
               text="File Name"
               description="Toggle whether to show the image name"
               icon="AllIcons.Actions.ShowImportStatements">
       </action>
-      <separator/>
-      
       <action class="org.intellij.images.thumbnail.actions.FilterByThemeComboBoxAction"
               internal="true"
               id="Images.Thumbnails.FilterByTheme"
@@ -159,14 +135,59 @@
               text="Hide"
               description="Hide image thumbnails"
               icon="AllIcons.Actions.Cancel" use-shortcut-of="CloseContent"/>
-    </group>
-    <group id="Images.ThumbnailsPopupMenu">
-      <reference id="CutCopyPasteGroup"/>
-      <reference id="EditSource"/>
+
       <action class="org.intellij.images.thumbnail.actions.EnterAction"
               id="Images.Thumbnails.EnterAction">
         <keyboard-shortcut first-keystroke="ENTER" keymap="$default"/>
       </action>
+
+      <add-to-group group-id="Other.KeymapGroup"/>
+    </group>
+    <group id="Images.EditorToolbar">
+      <reference id="Images.ToggleTransparencyChessboard"/>
+      <reference id="Images.Editor.ToggleGrid"/>
+      <separator/>
+      <reference id="Images.Editor.ZoomIn"/>
+      <reference id="Images.Editor.ZoomOut"/>
+      <reference id="Images.Editor.ActualSize"/>
+      <reference id="Images.Editor.FitZoomToWindow"/>
+      <reference id="ShowColorPicker"/>
+    </group>
+    <group id="Images.EditorPopupMenu">
+      <reference id="CutCopyPasteGroup"/>
+      <separator/>
+      <reference id="FindUsages"/>
+      <reference id="RefactoringMenu"/>
+      <separator/>
+      <reference id="Images.EditorToolbar"/>
+      <separator/>
+      <reference id="Images.SetBackgroundImage"/>
+      <separator/>
+      <reference id="AddToFavorites"/>
+      <separator/>
+      <reference id="VersionControlsGroup"/>
+      <separator/>
+      <reference id="Images.EditExternally"/>
+      <reference id="ExternalToolsGroup"/>
+    </group>
+    <group id="Images.ThumbnailsToolbar">
+      <reference id="Images.Thumbnails.UpFolder"/>
+      <reference id="Images.Thumbnails.ToggleRecursive"/>
+      <separator/>
+      <reference id="Images.ToggleTransparencyChessboard"/>
+      <reference id="Images.Thumbnails.ToggleFileSize"/>
+      <reference id="Images.Thumbnails.ToggleFileName"/>
+      <separator/>
+
+      <reference id="Images.Thumbnails.FilterByTheme"/>
+      <reference id="Images.Thumbnails.FilterByTag"/>
+      <reference id="Images.Thumbnails.ToggleTagsPanelName"/>
+      <reference id="Images.Thumbnails.Hide"/>
+    </group>
+    <group id="Images.ThumbnailsPopupMenu">
+      <reference id="CutCopyPasteGroup"/>
+      <reference id="EditSource"/>
+      <reference id="Images.Thumbnails.EnterAction"/>
       <separator/>
       <reference id="Images.ThumbnailsToolbar"/>
       <separator/>
