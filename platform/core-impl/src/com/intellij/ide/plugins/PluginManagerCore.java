@@ -88,6 +88,7 @@ public class PluginManagerCore {
   private static List<String> ourDisabledPlugins;
   private static MultiMap<String, String> ourBrokenPluginVersions;
   private static IdeaPluginDescriptor[] ourPlugins;
+  private static List<IdeaPluginDescriptor> ourLoadedPlugins;
   private static boolean ourUnitTestWithBundledPlugins = SystemProperties.getBooleanProperty("idea.run.tests.with.bundled.plugins", false);
 
   static String myPluginError;
@@ -128,12 +129,25 @@ public class PluginManagerCore {
     return ourPlugins;
   }
 
+  /**
+   * Returns descriptors of plugins which are successfully loaded into IDE. The result is sorted in a way that if each plugin comes after
+   * the plugins it depends on.
+   */
+  @NotNull
+  public static synchronized List<IdeaPluginDescriptor> getLoadedPlugins(@Nullable StartupProgress progress) {
+    if (ourLoadedPlugins == null) {
+      initPlugins(progress);
+    }
+    return ourLoadedPlugins;
+  }
+
   static synchronized boolean arePluginsInitialized() {
     return ourPlugins != null;
   }
 
   public static synchronized void setPlugins(@NotNull IdeaPluginDescriptor[] descriptors) {
     ourPlugins = descriptors;
+    ourLoadedPlugins = Collections.unmodifiableList(ContainerUtil.findAll(descriptors, (p) -> !shouldSkipPlugin(p)));
   }
 
   public static void loadDisabledPlugins(@NotNull String configPath, @NotNull Collection<String> disabledPlugins) {
@@ -485,6 +499,7 @@ public class PluginManagerCore {
 
   public static void invalidatePlugins() {
     ourPlugins = null;
+    ourLoadedPlugins = null;
     ourDisabledPlugins = null;
   }
 
@@ -1444,6 +1459,7 @@ public class PluginManagerCore {
       }
     });
 
+    ourLoadedPlugins = Collections.unmodifiableList(result);
     ourPlugins = pluginDescriptors;
   }
 
