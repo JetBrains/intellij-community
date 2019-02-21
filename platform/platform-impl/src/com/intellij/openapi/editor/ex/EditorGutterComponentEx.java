@@ -17,7 +17,10 @@ import java.awt.*;
 import java.util.List;
 
 public abstract class EditorGutterComponentEx extends JComponent implements EditorGutter {
-  public static final DataKey<Integer> GUTTER_ARROW_LOGICAL_LINE = DataKey.create("EditorGutterComponentEx.GUTTER_ARROW_LOGICAL_LINE");
+  /**
+   * The key to retrieve a logical editor line position of a latest actionable click inside the gutter
+   */
+  public static final DataKey<Integer> LOGICAL_LINE_AT_CURSOR = DataKey.create("EditorGutter.LOGICAL_LINE_AT_CURSOR");
 
   @Nullable
   public abstract FoldRegion findFoldingAnchorAt(int x, int y);

@@ -80,8 +80,6 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.openapi.util.DataManagerUtil.saveDataByComponent;
-
 /**
  * Gutter content (left to right):
  * <ul>
@@ -123,6 +121,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private static final JBValue GAP_BETWEEN_ANNOTATIONS = JBVG.value(5);
   private static final TooltipGroup GUTTER_TOOLTIP_GROUP = new TooltipGroup("GUTTER_TOOLTIP_GROUP", 0);
 
+  private int myLogicalLineAtCursor;
   private final EditorImpl myEditor;
   private final FoldingAnchorsOverlayStrategy myAnchorsDisplayStrategy;
   @Nullable private TIntObjectHashMap<List<GutterMark>> myLineToGutterRenderers;
@@ -641,6 +640,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
     if (CommonDataKeys.EDITOR.is(dataId)) {
       return myEditor;
+    }
+    if (EditorGutterComponentEx.LOGICAL_LINE_AT_CURSOR.is(dataId)) {
+      return myLogicalLineAtCursor;
     }
     return null;
   }
@@ -1936,8 +1938,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private void invokePopup(MouseEvent e) {
-    int line = EditorUtil.yPositionToLogicalLine(myEditor, e);
-    saveDataByComponent(this, GUTTER_ARROW_LOGICAL_LINE, line);
+    myLogicalLineAtCursor = EditorUtil.yPositionToLogicalLine(myEditor, e);
     final ActionManager actionManager = ActionManager.getInstance();
     if (myEditor.getMouseEventArea(e) == EditorMouseEventArea.ANNOTATIONS_AREA) {
       final List<AnAction> addActions = new ArrayList<>();
@@ -1945,7 +1946,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       //if (line >= myEditor.getDocument().getLineCount()) return;
 
       for (TextAnnotationGutterProvider gutterProvider : myTextAnnotationGutters) {
-        final List<AnAction> list = gutterProvider.getPopupActions(line, myEditor);
+        final List<AnAction> list = gutterProvider.getPopupActions(myLogicalLineAtCursor, myEditor);
         if (list != null) {
           for (AnAction action : list) {
             if (! addActions.contains(action)) {
