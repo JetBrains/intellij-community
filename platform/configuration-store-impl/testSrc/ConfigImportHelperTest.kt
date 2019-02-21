@@ -88,12 +88,35 @@ class ConfigImportHelperTest {
       """.trimIndent())
   }
 
-  private fun writeStorageFile(version: String, lastModified: Long, isMacOs: Boolean) {
-    val path = fsRule.fs.getPath("/data/" + (constructConfigPath(version, isMacOs)),
-                                 PathManager.OPTIONS_DIRECTORY + '/' + StoragePathMacros.NOT_ROAMABLE_FILE)
-    Files.setLastModifiedTime(path.write(version), FileTime.fromMillis(lastModified))
+  @Test
+  fun `sort if no anchor files`() {
+    val isMacOs = true
+    fun writeStorageDir(version: String) {
+      val dir = fsRule.fs.getPath("/data/" + (constructConfigPath(version, isMacOs)))
+      dir.createDirectories()
+    }
+
+    val fs = fsRule.fs
+    writeStorageDir("2022.1")
+    writeStorageDir("2021.1")
+    writeStorageDir("2020.1")
+
+    val newConfigPath = fs.getPath("/data/${constructConfigPath("2022.3", isMacOs)}")
+    // create new config dir to test that it will be not suggested too (as on start of new version config dir can be created)
+    newConfigPath.createDirectories()
+
+    assertThat(ConfigImportHelper.findRecentConfigDirectory(newConfigPath, isMacOs).joinToString("\n")).isEqualTo("""
+        /data/${constructConfigPath("2022.1", isMacOs)}
+        /data/${constructConfigPath("2021.1", isMacOs)}
+        /data/${constructConfigPath("2020.1", isMacOs)}
+      """.trimIndent())
   }
 
+  private fun writeStorageFile(version: String, lastModified: Long, isMacOs: Boolean) {
+    val dir = fsRule.fs.getPath("/data/" + (constructConfigPath(version, isMacOs)))
+    val file = dir.resolve(PathManager.OPTIONS_DIRECTORY + '/' + StoragePathMacros.NOT_ROAMABLE_FILE)
+    Files.setLastModifiedTime(file.write(version), FileTime.fromMillis(lastModified))
+  }
 }
 
 private fun constructConfigPath(version: String, isMacOs: Boolean): String {

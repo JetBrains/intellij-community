@@ -197,7 +197,13 @@ public class ConfigImportHelper {
     for (Object key : fileToLastModified.keys()) {
       result.add((Path)key);
     }
-    result.sort((o1, o2) -> (int)(fileToLastModified.get(o2) - fileToLastModified.get(o1)));
+    result.sort((o1, o2) -> {
+      int diff = (int)(fileToLastModified.get(o2) - fileToLastModified.get(o1));
+      if (diff == 0) {
+        return StringUtil.naturalCompare(o2.toString(), o1.toString());
+      }
+      return diff;
+    });
     return result;
   }
 
