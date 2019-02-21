@@ -100,7 +100,7 @@ public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
         public void onSuccess() {
           new Notification("Project Template",
                            "Template Created",
-                           FileUtil.getNameWithoutExtension(file.getFileName().toString()) + " was successfully created.\n" +
+                           FileUtil.getNameWithoutExtension(file.getFileName().toString()) + " was successfully created.<br>" +
                            "It's available now in Project Wizard",
                            NotificationType.INFORMATION
                            ).notify(getProject());
