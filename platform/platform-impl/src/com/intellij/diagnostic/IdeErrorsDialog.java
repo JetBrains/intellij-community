@@ -71,6 +71,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private static final String STACKTRACE_ATTACHMENT = "stacktrace.txt";
   private static final String ACCEPTED_NOTICES_KEY = "exception.accepted.notices";
   private static final String ACCEPTED_NOTICES_SEPARATOR = ":";
+  private static final String EA_PLUGIN_ID = "com.intellij.sisyphus";
 
   private final MessagePool myMessagePool;
   private final Project myProject;
@@ -97,7 +98,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     super(project, true);
     myMessagePool = messagePool;
     myProject = project;
-    myInternalMode = ApplicationManager.getApplication().isInternal();
+    myInternalMode = ApplicationManager.getApplication().isInternal() || PluginManager.isPluginInstalled(PluginId.getId(EA_PLUGIN_ID));
 
     setTitle(DiagnosticBundle.message("error.list.title"));
     setModal(false);
