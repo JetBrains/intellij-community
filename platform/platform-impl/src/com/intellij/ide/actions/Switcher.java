@@ -437,7 +437,10 @@ public class Switcher extends AnAction implements DumbAware {
                                      }, AnAction::getTemplateText);
       actionAds.setEmptyText("");
 
-      myLeftPanel = new JBPanel<>(new VerticalFlowLayout().withProhibitSecondColumn(true)).withBorder(JBUI.Borders.empty(5, 5, 5, 20));
+      myLeftPanel = new JBPanel<>(new VerticalFlowLayout().withProhibitSecondColumn(true))
+        .withBorder(JBUI.Borders.empty(5, 5, 5, 20))
+        .withBackground(toolWindows.getBackground());
+
       myLeftPanel.add(toolWindows);
       adsSeparator = new JBPanel<>()
                       .withBorder(new CustomLineBorder(SEPARATOR_COLOR, JBUI.insetsBottom(1)))
