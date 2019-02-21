@@ -39,12 +39,12 @@ public class YamlJsonSchemaDeprecationInspection extends YamlJsonSchemaInspectio
         super.visitKeyValue(keyValue);
       }
 
-      private void annotate(@NotNull YAMLKeyValue o) {
-        PsiElement key = o.getKey();
+      private void annotate(@NotNull YAMLKeyValue keyValue) {
+        PsiElement key = keyValue.getKey();
         if (key == null) {
           return;
         }
-        JsonPointerPosition position = walker.findPosition(o, true);
+        JsonPointerPosition position = walker.findPosition(keyValue, true);
         if (position == null) {
           return;
         }
@@ -53,7 +53,7 @@ public class YamlJsonSchemaDeprecationInspection extends YamlJsonSchemaInspectio
         for (JsonSchemaObject object : result.mySchemas) {
           String message = object.getDeprecationMessage();
           if (message != null) {
-            holder.registerProblem(key, YAMLBundle.message("inspections.schema.deprecation.text", o.getName(), message));
+            holder.registerProblem(key, YAMLBundle.message("inspections.schema.deprecation.text", keyValue.getName(), message));
             return;
           }
         }
