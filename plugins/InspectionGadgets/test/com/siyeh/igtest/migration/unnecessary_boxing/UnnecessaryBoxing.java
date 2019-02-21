@@ -32,10 +32,8 @@ public class UnnecessaryBoxing {
       long l = <warning descr="Redundant boxing inside 'Long.valueOf(str)'">Long.valueOf(str)</warning>;
       double d = <warning descr="Redundant boxing inside 'Double.valueOf(str)'">Double.valueOf(str)</warning>;
       float f = <warning descr="Redundant boxing inside 'Float.valueOf(str)'">Float.valueOf(str)</warning>;
-      // shoudn't report
-      boolean bool = Boolean.valueOf(str);
-      // shoudn't report
-      byte b = Byte.valueOf(str);
+      boolean bool = <warning descr="Redundant boxing inside 'Boolean.valueOf(str)'">Boolean.valueOf(str)</warning>;
+      byte b = <warning descr="Redundant boxing inside 'Byte.valueOf(str)'">Byte.valueOf(str)</warning>;
     }
 
     short parseShort(String id) {
@@ -59,13 +57,11 @@ public class UnnecessaryBoxing {
     }
 
     boolean parseBoolean(String id) {
-      // shouldn't report
-      return Boolean.valueOf(id);
+      return <warning descr="Redundant boxing inside 'Boolean.valueOf(id)'">Boolean.valueOf(id)</warning>;
     }
 
     byte parseByte(String id) {
-      // shouldn't report
-      return Byte.valueOf(id);
+      return <warning descr="Redundant boxing inside 'Byte.valueOf(id)'">Byte.valueOf(id)</warning>;
     }
 
     void noUnboxing(Object val) {

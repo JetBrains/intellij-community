@@ -22,8 +22,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -255,11 +255,11 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
         return;
       }
       final String canonicalText = aClass.getQualifiedName();
-      if (PsiTypesUtil.unboxIfPossible(canonicalText) == canonicalText) {
+      if (!TypeConversionUtil.isPrimitiveWrapper(canonicalText)) {
         return;
       }
       final PsiType boxedExpressionType = boxedExpression.getType();
-      if (boxedExpressionType != null && boxedExpressionType.getCanonicalText().equals("java.lang.String")) {
+      if (TypeUtils.isJavaLangString(boxedExpressionType)) {
         final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false, true);
         final PsiType methodReturnType = method.getReturnType();
         if (expectedType instanceof PsiPrimitiveType && getParseMethod(methodReturnType) != null) {
@@ -356,9 +356,6 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       return null;
     }
     final String typeText = type.getCanonicalText();
-    if (CommonClassNames.JAVA_LANG_BOOLEAN.equals(typeText) || CommonClassNames.JAVA_LANG_BYTE.equals(typeText)) {
-      return null;
-    }
     return JavaPsiBoxingUtils.getParseMethod(typeText);
   }
 }
