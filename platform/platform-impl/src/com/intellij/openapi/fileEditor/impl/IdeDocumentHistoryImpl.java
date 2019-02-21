@@ -14,7 +14,9 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.EditorEventListener;
@@ -209,10 +211,13 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     if (fileEditor instanceof TextEditor && fileEditor.isValid()) {
       VirtualFile file = fileEditor.getFile();
       if (file != null) {
+
+        Editor editor = ((TextEditor)fileEditor).getEditor();
+        int offset = editor.getCaretModel().getOffset();
         return new PlaceInfo(file,
                              fileEditor.getState(FileEditorStateLevel.NAVIGATION),
                              TextEditorProvider.getInstance().getEditorTypeId(),
-                             null);
+                             null, editor.getDocument().createRangeMarker(offset, offset));
       }
     }
     return null;
@@ -499,7 +504,19 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     final VirtualFile file = editorManager.getFile(fileEditor);
     LOG.assertTrue(file != null);
     FileEditorState state = fileEditor.getState(FileEditorStateLevel.NAVIGATION);
-    return new PlaceInfo(file, state, fileProvider.getEditorTypeId(), editorManager.getCurrentWindow());
+
+    return new PlaceInfo(file, state, fileProvider.getEditorTypeId(), editorManager.getCurrentWindow(), createRangeMarker(fileEditor, file));
+  }
+
+  @Nullable
+  private RangeMarker createRangeMarker(@NotNull FileEditor fileEditor, @NotNull VirtualFile file) {
+    Document document = getFileDocumentManager().getDocument(file);
+    if (!(fileEditor instanceof TextEditor) || document == null) {
+      return null;
+    }
+    int offset = ((TextEditor)fileEditor).getEditor().getCaretModel().getOffset();
+
+    return document.createRangeMarker(offset, offset);
   }
 
   private void putLastOrMerge(@NotNull PlaceInfo next, int limit, boolean isChanged) {
@@ -534,15 +551,18 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     private final FileEditorState myNavigationState;
     private final String myEditorTypeId;
     private final Reference<EditorWindow> myWindow;
+    @Nullable private final RangeMarker myRangeMarker;
 
     public PlaceInfo(@NotNull VirtualFile file,
                      @NotNull FileEditorState navigationState,
                      @NotNull String editorTypeId,
-                     @Nullable EditorWindow window) {
+                     @Nullable EditorWindow window,
+                     @Nullable RangeMarker rangeMarker) {
       myNavigationState = navigationState;
       myFile = file;
       myEditorTypeId = editorTypeId;
       myWindow = new WeakReference<>(window);
+      myRangeMarker = rangeMarker;
     }
 
     public EditorWindow getWindow() {
@@ -567,6 +587,11 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     @Override
     public String toString() {
       return getFile().getName() + " " + getNavigationState();
+    }
+
+    @Nullable
+    public RangeMarker getRangeMarker() {
+      return myRangeMarker;
     }
   }
 
