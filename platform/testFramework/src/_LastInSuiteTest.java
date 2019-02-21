@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.ThreadTracker;
 import junit.framework.TestCase;
 
 import java.util.concurrent.TimeUnit;
@@ -68,10 +67,6 @@ public class _LastInSuiteTest extends TestCase {
       PlatformTestUtil.captureMemorySnapshot();
       throw e;
     }
-  }
-  
-  public void testThreadLeak() {
-    ThreadTracker.Reporter.report();
   }
 
   public void testStatistics() {

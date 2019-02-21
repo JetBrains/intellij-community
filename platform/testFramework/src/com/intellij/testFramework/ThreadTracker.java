@@ -124,7 +124,7 @@ public class ThreadTracker {
   }
 
   @TestOnly
-  public void checkLeak(String testName) throws AssertionError {
+  public void checkLeak() throws AssertionError {
     ApplicationManager.getApplication().assertIsDispatchThread();
     NettyUtil.awaitQuiescenceOfGlobalEventExecutor(100, TimeUnit.SECONDS);
     ShutDownTracker.getInstance().waitFor(100, TimeUnit.SECONDS);
@@ -172,10 +172,9 @@ public class ThreadTracker {
         String trace = PerformanceWatcher.printStacktrace("", thread, stackTrace);
         String traceBefore = PerformanceWatcher.printStacktrace("", thread, traceBeforeWait);
 
-        Reporter.ourReports.add("Test name: " + testName +
-                                "\nThread leaked: " + traceBefore + (trace.equals(traceBefore) ? "" : "(its trace after "+WAIT_SEC+" seconds wait:) "+trace) +
-                                "\n\nLeaking threads dump:\n" + dumpThreadsToString(after, stackTraces) +
-                                "\n----\nAll other threads dump:\n" + dumpThreadsToString(all, otherStackTraces));
+        Assert.fail("Thread leaked: " +traceBefore + (trace.equals(traceBefore) ? "" : "(its trace after "+WAIT_SEC+" seconds wait:) "+trace)+
+                    "\n\nLeaking threads dump:\n" + dumpThreadsToString(after, stackTraces) +
+                    "\n----\nAll other threads dump:\n" + dumpThreadsToString(all, otherStackTraces));
       }
     }
     finally {
@@ -267,21 +266,6 @@ public class ThreadTracker {
       catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
-    }
-  }
-
-  /**
-   * Separate class to hold reports, so we don't perform ThreadTracker static initialization
-   * if it was actually never called within the suite
-   */
-  public static class Reporter {
-    private static final List<String> ourReports = Collections.synchronizedList(new ArrayList<>());
-    
-    private Reporter() {}
-
-    public static void report() {
-      if (ourReports.isEmpty()) return;
-      Assert.fail("Tests with leaked threads: " + ourReports.size() + "\n" + String.join("\n===============\n", ourReports));
     }
   }
 }

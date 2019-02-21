@@ -139,7 +139,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       })
       .append(() -> {
         if (myThreadTracker != null) {
-          myThreadTracker.checkLeak(myName);
+          myThreadTracker.checkLeak();
         }
       })
       .append(LightPlatformTestCase::checkEditorsReleased)

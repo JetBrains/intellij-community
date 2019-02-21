@@ -560,7 +560,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       })
       .append(() -> {
         if (myThreadTracker != null) {
-          myThreadTracker.checkLeak(getClass().getName()+"."+getName());
+          myThreadTracker.checkLeak();
         }
       })
       .append(() -> LightPlatformTestCase.checkEditorsReleased())
