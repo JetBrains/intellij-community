@@ -29,7 +29,7 @@ import java.util.List;
  * @author dsl
  */
 public class SafeDeleteRefactoringImpl extends RefactoringImpl<SafeDeleteProcessor> implements SafeDeleteRefactoring {
-  SafeDeleteRefactoringImpl(Project project, PsiElement[] elements) {
+  public SafeDeleteRefactoringImpl(Project project, PsiElement[] elements) {
     super(SafeDeleteProcessor.createInstance(project, EmptyRunnable.INSTANCE, elements, true, true));
   }
 
