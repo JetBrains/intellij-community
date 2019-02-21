@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.log
 
 import com.intellij.openapi.vcs.Executor.echo
@@ -9,10 +9,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails
 import git4idea.GitCommit
 import git4idea.config.GitVersion
 import git4idea.history.GitLogUtil
-import git4idea.test.GitSingleRepoTest
-import git4idea.test.add
-import git4idea.test.addCommit
-import git4idea.test.last
+import git4idea.test.*
 import org.junit.Assume.assumeTrue
 
 class GitLogUtilTest : GitSingleRepoTest() {
@@ -56,5 +53,40 @@ class GitLogUtilTest : GitSingleRepoTest() {
     ) { detail -> detail.id.asString() }
 
     assertEquals(expected, actualHashes)
+  }
+
+  @Throws(Exception::class)
+  fun `test readFullDetails without renames`() {
+    val details = ContainerUtil.newArrayList<VcsFullCommitDetails>()
+    touch("fileToRename.txt", "content")
+    repo.addCommit("Add fileToRename.txt")
+    git("mv fileToRename.txt renamedFile.txt")
+    repo.addCommit("Rename fileToRename.txt")
+
+    GitLogUtil.readFullDetails(myProject, repo.root, CollectConsumer(details), true, true, true, false, true)
+    val lastCommit = ContainerUtil.getFirstItem(details)
+    assertNotNull(lastCommit)
+    assertTrue(lastCommit!!.changes.all { !it.isRenamed })
+  }
+
+  @Throws(Exception::class)
+  fun `test readFullDetails without fullMergeDiff`() {
+    repo.checkoutNew("testBranch")
+    touch("fileToMerge1.txt", "content")
+    repo.addCommit("Add fileToMerge1.txt")
+    repo.checkout("master")
+    touch("fileToMerge2.txt", "content")
+    repo.addCommit("Add fileToMerge2.txt")
+    val success = git.merge(repo, "testBranch", mutableListOf("--no-ff")).success()
+    if (!success) {
+      fail("Could not do a merge")
+    }
+
+    val details = ContainerUtil.newArrayList<VcsFullCommitDetails>()
+    GitLogUtil.readFullDetails(myProject, repo.root, CollectConsumer(details), true, true, true, true, false)
+    val lastCommit = ContainerUtil.getFirstItem(details)
+
+    assertNotNull(lastCommit)
+    assertTrue(lastCommit!!.changes.isEmpty())
   }
 }
