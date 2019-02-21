@@ -357,21 +357,24 @@ public class SyncScrollSupport {
     }
 
     private void syncVerticalScroll(boolean animated) {
-      if (getMaster().getDocument().getTextLength() == 0) return;
+      Editor master = getMaster();
+      Editor slave = getSlave();
 
-      Rectangle viewRect = getMaster().getScrollingModel().getVisibleArea();
+      if (master.getDocument().getTextLength() == 0) return;
+
+      Rectangle viewRect = master.getScrollingModel().getVisibleArea();
       int middleY = viewRect.height / 3;
-      int lineHeight = getMaster().getLineHeight();
+      int lineHeight = master.getLineHeight();
 
       boolean onlyMajorForward = false;
       boolean onlyMajorBackward = false;
       int offset;
       if (myAnchor == null) {
-        LogicalPosition masterPos = getMaster().xyToLogicalPosition(new Point(viewRect.x, viewRect.y + middleY));
+        LogicalPosition masterPos = master.xyToLogicalPosition(new Point(viewRect.x, viewRect.y + middleY));
         int masterCenterLine = masterPos.line;
         int convertedCenterLine = convertLine(masterCenterLine);
 
-        Point point = getSlave().logicalPositionToXY(new LogicalPosition(convertedCenterLine, masterPos.column));
+        Point point = slave.logicalPositionToXY(new LogicalPosition(convertedCenterLine, masterPos.column));
         int correction = (viewRect.y + middleY) % lineHeight;
         offset = point.y - middleY + correction;
 
@@ -385,8 +388,8 @@ public class SyncScrollSupport {
         offset = myAnchor.slaveStartOffset + (int)((myAnchor.slaveEndOffset - myAnchor.slaveStartOffset) * progress);
       }
 
-      int deltaHeaderOffset = getHeaderOffset(getSlave()) - getHeaderOffset(getMaster());
-      doScrollVertically(getSlave(), offset + deltaHeaderOffset, animated, onlyMajorForward, onlyMajorBackward);
+      int deltaHeaderOffset = getHeaderOffset(slave) - getHeaderOffset(master);
+      doScrollVertically(slave, offset + deltaHeaderOffset, animated, onlyMajorForward, onlyMajorBackward);
     }
 
     private void syncHorizontalScroll(boolean animated) {
