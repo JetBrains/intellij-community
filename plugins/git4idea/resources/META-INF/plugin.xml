@@ -141,7 +141,6 @@
     </group>
 
     <group id="Git.Log.ContextMenu">
-      <separator/>
       <reference id="Git.Reset.In.Log"/>
       <reference id="Git.Revert.In.Log"/>
       <reference id="Git.Uncommit"/>
@@ -156,7 +155,7 @@
       <reference id="Git.CreateNewTag"/>
       <separator/>
 
-      <add-to-group group-id="Vcs.Log.ContextMenu"/>
+      <add-to-group group-id="Vcs.Log.ContextMenu" relative-to-action="Vcs.Log.GoToChild" anchor="before"/>
     </group>
 
     <group id="Git.Log.Toolbar">

@@ -156,6 +156,10 @@
       <separator/>
       <reference id="Vcs.Log.CompareRevisions"/>
       <reference id="Vcs.ShowDiffWithLocal"/>
+      <separator/>
+      <reference id="Vcs.Log.GoToChild"/>
+      <reference id="Vcs.Log.GoToParent"/>
+      <separator/>
     </group>
     <group id="Vcs.Log.LayoutConfiguration" class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
            icon="AllIcons.Debugger.RestoreLayout" text="Configure Layout" description="Configure Layout" popup="true">

@@ -24,7 +24,11 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
     }
 
     e.presentation.isVisible = true
-    e.presentation.isEnabled = ui.table.isFocusOwner && (e.inputEvent is KeyEvent || getRowsToJump(ui).isNotEmpty())
+    if (e.inputEvent is KeyEvent) {
+      e.presentation.isEnabled = ui.table.isFocusOwner
+    } else {
+      e.presentation.isEnabled = getRowsToJump(ui).isNotEmpty()
+    }
   }
 
   override fun actionPerformed(e: AnActionEvent) {
