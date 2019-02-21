@@ -31,7 +31,7 @@ import java.util.Map;
 public class FileIncludeIndex extends FileBasedIndexExtension<String, List<FileIncludeInfoImpl>> {
   public static final ID<String,List<FileIncludeInfoImpl>> INDEX_ID = ID.create("fileIncludes");
 
-  private static final int BASE_VERSION = 5;
+  private static final int BASE_VERSION = 6;
 
   @NotNull
   public static List<FileIncludeInfo> getIncludes(@NotNull VirtualFile file,

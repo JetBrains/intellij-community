@@ -162,7 +162,7 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
 
   @Override
   public int getVersion() {
-    return 7;
+    return 8;
   }
 
   @Nullable
