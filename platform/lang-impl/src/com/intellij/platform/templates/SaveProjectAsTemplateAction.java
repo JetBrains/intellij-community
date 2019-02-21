@@ -328,7 +328,11 @@ public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
       }
 
       char c = input.charAt(i);
-      if (c == '$' || c == '#') {
+      if (c == '$') {
+        builder.append("#[[\\$]]#");
+        continue;
+      }
+      if (c == '#') {
         builder.append('\\');
       }
       builder.append(c);
