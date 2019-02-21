@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -188,4 +189,38 @@ public class InheritanceUtil {
     return true;
   }
 
+  @Nullable
+  private static PsiClass getCircularClass(@NotNull PsiClass aClass, @NotNull Collection<? super PsiClass> usedClasses) {
+    if (usedClasses.contains(aClass)) {
+      return aClass;
+    }
+    try {
+      usedClasses.add(aClass);
+      PsiClass[] superTypes = aClass.getSupers();
+      for (PsiElement superType : superTypes) {
+        while (superType instanceof PsiClass) {
+          if (!CommonClassNames.JAVA_LANG_OBJECT.equals(((PsiClass)superType).getQualifiedName())) {
+            PsiClass circularClass = getCircularClass((PsiClass)superType, usedClasses);
+            if (circularClass != null) return circularClass;
+          }
+          // check class qualifier
+          superType = superType.getParent();
+        }
+      }
+    }
+    finally {
+      usedClasses.remove(aClass);
+    }
+    return null;
+  }
+
+  /**
+   * Detects a circular inheritance
+   * @param aClass a class to check
+   * @return a class which is a part of the inheritance loop; null if no circular inheritance was detected
+   */
+  @Nullable
+  public static PsiClass getCircularClass(@NotNull PsiClass aClass) {
+    return getCircularClass(aClass, new HashSet<>());
+  }
 }
