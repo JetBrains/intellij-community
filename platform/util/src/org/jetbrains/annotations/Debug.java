@@ -20,21 +20,21 @@ public class Debug {
     /**
      * Expression to be evaluated and used as the textual representation of the object
      */
-    @Language(value = "JAVA", prefix = "class Renderer{String text(){return ", suffix = ";}}")
+    @Language(value = "JAVA", prefix = "class Renderer{String $text(){return ", suffix = ";}}")
     String text() default "";
 
     /**
      * Expression to be evaluated to obtain an array of object's children.<br>
      * Usually the result is an array of elements in a collection, or an array of entries in a map
      */
-    @Language(value = "JAVA", prefix = "class Renderer{Object[] childrenArray(){return ", suffix = ";}}")
+    @Language(value = "JAVA", prefix = "class Renderer{Object[] $childrenArray(){return ", suffix = ";}}")
     String childrenArray() default "";
 
     /**
      * Expression to be evaluated to check if the object has any children at all.<br>
      * This should work faster than {@link #childrenArray()} and return boolean
      */
-    @Language(value = "JAVA", prefix = "class Renderer{boolean hasChildren(){return ", suffix = ";}}")
+    @Language(value = "JAVA", prefix = "class Renderer{boolean $hasChildren(){return ", suffix = ";}}")
     String hasChildren() default "";
   }
 }
