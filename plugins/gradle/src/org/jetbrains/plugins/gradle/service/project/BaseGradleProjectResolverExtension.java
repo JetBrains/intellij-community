@@ -41,7 +41,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.*;
+import com.intellij.util.Consumer;
+import com.intellij.util.PathUtil;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.net.HttpConfigurable;
@@ -74,7 +77,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -438,6 +440,8 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   public void populateModuleCompileOutputSettings(@NotNull IdeaModule gradleModule,
                                                   @NotNull DataNode<ModuleData> ideModule) {
     ModuleData moduleData = ideModule.getData();
+    moduleData.useExternalCompilerOutput(resolverCtx.isDelegatedBuild());
+
     File ideaOutDir = new File(moduleData.getLinkedExternalProjectPath(), "out");
 
     ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
@@ -456,20 +460,24 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
             gradleOutputMap = MultiMap.create();
             dataNode.putUserData(GradleProjectResolver.GRADLE_OUTPUTS, gradleOutputMap);
           }
+          final ModuleData moduleData = dataNode.getData();
+          moduleData.useExternalCompilerOutput(resolverCtx.isDelegatedBuild());
           for (Map.Entry<IExternalSystemSourceType, ExternalSourceDirectorySet> directorySetEntry : sourceSet.getSources().entrySet()) {
             ExternalSystemSourceType sourceType = ExternalSystemSourceType.from(directorySetEntry.getKey());
             ExternalSourceDirectorySet sourceDirectorySet = directorySetEntry.getValue();
-            final ModuleData moduleData = dataNode.getData();
-            File outputDir = getOutputDir(sourceDirectorySet);
-            moduleData.setCompileOutputPath(sourceType, outputDir == null ? null : outputDir.getAbsolutePath());
+            File ideOutputDir = getIdeOutputDir(sourceDirectorySet);
+            File gradleOutputDir = getGradleOutputDir(sourceDirectorySet);
+            File outputDir = resolverCtx.isDelegatedBuild() ? gradleOutputDir : ideOutputDir;
+            moduleData.setCompileOutputPath(sourceType, ideOutputDir == null ? null : ideOutputDir.getAbsolutePath());
+            moduleData.setExternalCompilerOutputPath(sourceType, gradleOutputDir == null ? null : gradleOutputDir.getAbsolutePath());
             moduleData.setInheritProjectCompileOutputPath(sourceDirectorySet.isCompilerOutputPathInherited());
 
             if (outputDir != null) {
               outputDirs.add(outputDir.getPath());
-              for (File gradleOutputDir : sourceDirectorySet.getGradleOutputDirs()) {
-                String gradleOutputPath = ExternalSystemApiUtil.toCanonicalPath(gradleOutputDir.getAbsolutePath());
+              for (File file : sourceDirectorySet.getGradleOutputDirs()) {
+                String gradleOutputPath = ExternalSystemApiUtil.toCanonicalPath(file.getAbsolutePath());
                 gradleOutputMap.putValue(sourceType, gradleOutputPath);
-                if (!gradleOutputDir.getPath().equals(outputDir.getPath())) {
+                if (!file.getPath().equals(outputDir.getPath())) {
                   moduleOutputsMap.put(gradleOutputPath, Pair.create(moduleData.getId(), sourceType));
                 }
               }
@@ -484,37 +492,51 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     }
 
     IdeaCompilerOutput moduleCompilerOutput = gradleModule.getCompilerOutput();
-    Map<ExternalSystemSourceType, File> compileOutputPaths = ContainerUtil.newHashMap();
     boolean inheritOutputDirs = moduleCompilerOutput != null && moduleCompilerOutput.getInheritOutputDirs();
 
     if (moduleCompilerOutput != null) {
       File outputDir = moduleCompilerOutput.getOutputDir();
-       if (outputDir == null && resolverCtx.isDelegatedBuild() && externalProject != null) {
-        outputDir = getOutputDir(externalProject, "main", ExternalSystemSourceType.SOURCE);
+      if (outputDir != null) {
+        moduleData.setCompileOutputPath(ExternalSystemSourceType.SOURCE, outputDir.getAbsolutePath());
+        moduleData.setCompileOutputPath(ExternalSystemSourceType.RESOURCE, outputDir.getAbsolutePath());
+        moduleData.setExternalCompilerOutputPath(ExternalSystemSourceType.SOURCE, outputDir.getAbsolutePath());
+        moduleData.setExternalCompilerOutputPath(ExternalSystemSourceType.RESOURCE, outputDir.getAbsolutePath());
       }
-      File classesOutputDir = ObjectUtils.chooseNotNull(outputDir, new File(ideaOutDir, "production/classes"));
-      compileOutputPaths.put(ExternalSystemSourceType.SOURCE, classesOutputDir);
-      File resourcesOutputDir = ObjectUtils.chooseNotNull(outputDir, new File(ideaOutDir, "production/resources"));
-      compileOutputPaths.put(ExternalSystemSourceType.RESOURCE, resourcesOutputDir);
+      else {
+        moduleData.setCompileOutputPath(ExternalSystemSourceType.SOURCE, new File(ideaOutDir, "production/classes").getAbsolutePath());
+        moduleData.setCompileOutputPath(ExternalSystemSourceType.RESOURCE, new File(ideaOutDir, "production/resources").getAbsolutePath());
+        if (externalProject != null) {
+          File gradleOutputDir = getGradleOutputDir(externalProject, "main", ExternalSystemSourceType.SOURCE);
+          moduleData.setExternalCompilerOutputPath(ExternalSystemSourceType.SOURCE,
+                                                   gradleOutputDir == null ? null : gradleOutputDir.getAbsolutePath());
+          File gradleResourceOutputDir = getGradleOutputDir(externalProject, "main", ExternalSystemSourceType.RESOURCE);
+          moduleData.setExternalCompilerOutputPath(ExternalSystemSourceType.RESOURCE,
+                                                   gradleResourceOutputDir == null ? null : gradleResourceOutputDir.getAbsolutePath());
+        }
+      }
 
       File testOutputDir = moduleCompilerOutput.getTestOutputDir();
-      if (testOutputDir == null && resolverCtx.isDelegatedBuild() && externalProject != null) {
-        testOutputDir = getOutputDir(externalProject, "test", ExternalSystemSourceType.TEST);
+      if (testOutputDir != null) {
+        moduleData.setCompileOutputPath(ExternalSystemSourceType.TEST, testOutputDir.getAbsolutePath());
+        moduleData.setCompileOutputPath(ExternalSystemSourceType.TEST_RESOURCE, testOutputDir.getAbsolutePath());
+        moduleData.setExternalCompilerOutputPath(ExternalSystemSourceType.TEST, testOutputDir.getAbsolutePath());
+        moduleData.setExternalCompilerOutputPath(ExternalSystemSourceType.TEST_RESOURCE, testOutputDir.getAbsolutePath());
       }
-      File testClassesOutputDir = ObjectUtils.chooseNotNull(testOutputDir, new File(ideaOutDir, "test/classes"));
-      compileOutputPaths.put(ExternalSystemSourceType.TEST, testClassesOutputDir);
-      File testResourcesOutputDir = ObjectUtils.chooseNotNull(testOutputDir, new File(ideaOutDir, "test/resources"));
-      compileOutputPaths.put(ExternalSystemSourceType.TEST_RESOURCE, testResourcesOutputDir);
+      else {
+        moduleData.setCompileOutputPath(ExternalSystemSourceType.TEST, new File(ideaOutDir, "test/classes").getAbsolutePath());
+        moduleData.setCompileOutputPath(ExternalSystemSourceType.TEST_RESOURCE, new File(ideaOutDir, "test/resources").getAbsolutePath());
+        if (externalProject != null) {
+          File gradleOutputDir = getGradleOutputDir(externalProject, "test", ExternalSystemSourceType.TEST);
+          moduleData.setExternalCompilerOutputPath(ExternalSystemSourceType.TEST,
+                                                   gradleOutputDir == null ? null : gradleOutputDir.getAbsolutePath());
+          File gradleResourceOutputDir = getGradleOutputDir(externalProject, "test", ExternalSystemSourceType.TEST_RESOURCE);
+          moduleData.setExternalCompilerOutputPath(ExternalSystemSourceType.TEST_RESOURCE,
+                                                   gradleResourceOutputDir == null ? null : gradleResourceOutputDir.getAbsolutePath());
+        }
+      }
 
-      if (!inheritOutputDirs && (outputDir == null || testOutputDir == null)) {
+      if (!resolverCtx.isDelegatedBuild() && !inheritOutputDirs && (outputDir == null || testOutputDir == null)) {
         excludeOutDir(ideModule, ideaOutDir);
-      }
-    }
-
-    for (Map.Entry<ExternalSystemSourceType, File> sourceTypeFileEntry : compileOutputPaths.entrySet()) {
-      final File outputPath = sourceTypeFileEntry.getValue();
-      if (outputPath != null) {
-        moduleData.setCompileOutputPath(sourceTypeFileEntry.getKey(), outputPath.getAbsolutePath());
       }
     }
 
@@ -522,28 +544,24 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   }
 
   @Nullable
-  private File getOutputDir(@NotNull ExternalProject externalProject,
-                            @NotNull String sourceSetName,
-                            @NotNull ExternalSystemSourceType sourceType) {
+  private static File getGradleOutputDir(@NotNull ExternalProject externalProject,
+                                         @NotNull String sourceSetName,
+                                         @NotNull ExternalSystemSourceType sourceType) {
     ExternalSourceSet sourceSet = externalProject.getSourceSets().get(sourceSetName);
     if (sourceSet == null) return null;
-    return getOutputDir(sourceSet.getSources().get(sourceType));
+    return getGradleOutputDir(sourceSet.getSources().get(sourceType));
   }
 
   @Nullable
-  private File getOutputDir(@Nullable ExternalSourceDirectorySet sourceDirectorySet) {
+  private static File getIdeOutputDir(@Nullable ExternalSourceDirectorySet sourceDirectorySet) {
     if (sourceDirectorySet == null) return null;
+    return sourceDirectorySet.getOutputDir();
+  }
 
-    AtomicReference<File> result = new AtomicReference<>();
-    if (resolverCtx.isDelegatedBuild()) {
-      sourceDirectorySet.getGradleOutputDirs().stream()
-        .findFirst()
-        .ifPresent(file -> result.set(file));
-    }
-    else {
-      result.set(sourceDirectorySet.getOutputDir());
-    }
-    return result.get();
+  @Nullable
+  private static File getGradleOutputDir(@Nullable ExternalSourceDirectorySet sourceDirectorySet) {
+    if (sourceDirectorySet == null) return null;
+    return sourceDirectorySet.getGradleOutputDirs().stream().findFirst().orElse(null);
   }
 
   private static void excludeOutDir(@NotNull DataNode<ModuleData> ideModule, File ideaOutDir) {

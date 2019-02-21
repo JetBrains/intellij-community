@@ -26,12 +26,17 @@ import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.plugins.gradle.GradleManager;
 import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getManager;
 
 /**
  * @author Vladislav.Soroka
@@ -45,7 +50,24 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     importProject(
       "apply plugin: 'java'"
     );
+    assertNotDelegatedBaseJavaProject();
 
+    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
+    importProject();
+    assertNotDelegatedMergedBaseJavaProject();
+
+    getCurrentExternalProjectSettings().setDelegatedBuild(ThreeState.YES);
+    importProject();
+    assertDelegatedMergedBaseJavaProject();
+
+    getCurrentExternalProjectSettings().setDelegatedBuild(ThreeState.NO);
+    // subscribe to the GradleSettings changes topic
+    ((GradleManager)getManager(GradleConstants.SYSTEM_ID)).runActivity(myProject);
+    GradleSettings.getInstance(myProject).getPublisher().onBuildDelegationChange(false, getProjectPath());
+    assertNotDelegatedMergedBaseJavaProject();
+  }
+
+  private void assertNotDelegatedBaseJavaProject() {
     assertModules("project", "project.main", "project.test");
     assertContentRoots("project", getProjectPath());
 
@@ -63,8 +85,9 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
     assertModuleOutput("project.main", getProjectPath() + mainClassesOutputPath, "");
     assertModuleOutput("project.test", "", getProjectPath() + testClassesOutputPath);
+  }
 
-    importProjectUsingSingeModulePerGradleProject();
+  private void assertNotDelegatedMergedBaseJavaProject() {
     assertModules("project");
     assertDefaultGradleJavaProjectFoldersForMergedModule("project");
 
@@ -75,10 +98,9 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
                         getProjectPath() + "/out/test/resources");
 
     assertModuleOutput("project", getProjectPath() + "/out/production/classes", getProjectPath() + "/out/test/classes");
+  }
 
-    getCurrentExternalProjectSettings().setDelegatedBuild(ThreeState.YES);
-
-    importProject();
+  private void assertDelegatedMergedBaseJavaProject() {
     if (isGradle40orNewer()) {
       assertModuleOutputs("project",
                           getProjectPath() + "/build/classes/java/main",
