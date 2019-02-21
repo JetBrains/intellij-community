@@ -41,22 +41,22 @@ static def splitJreBuild(String jreBuild, String version) {
 
 def createJbreTasks(String defaultBuild, int version, String targetOs) {
   def isModular = version >= 9
-  def jbsdkPrefix = isModular ? 'jbrsdk-' : 'jbrx-'
+  def prefix = isModular ? 'jbr-' : 'jbrx-'
   jrePlatformsToDownload(targetOs).each { platform ->
     archToDownload(platform, !isModular).each { arch ->
       def jreBuild = project.ext.has("jreBuild_$platform") ? project.ext["jreBuild_$platform"] : defaultBuild
       def (update, buildNumber) = splitJreBuild(jreBuild.toString(), version.toString())
-      def jbsdkArtifactName = "$jbsdkPrefix$update-$platform-$arch-$buildNumber".toString()
-      def jbreArtifactName = "jbr-$update-$platform-$arch-$buildNumber"
-      def download = createDownloadJbreTask(jbsdkArtifactName, jreBuild.toString(), !isModular)
+      def jbrxArtifactName = "$prefix$update-$platform-$arch-$buildNumber".toString()
+      def download = createDownloadJbreTask(jbrxArtifactName, jreBuild.toString(), !isModular)
       if (!isModular) {
-        def untarTask = createUntarJbreTask(download, jbsdkArtifactName.capitalize(), platform)
-        createTarJbreTask("tar${jbreArtifactName.capitalize()}", untarTask, platform, jbreArtifactName, false)
-        setupJbre.dependsOn("tar${jbreArtifactName.capitalize()}")
-        cleanSetupJbre.dependsOn("cleanTar${jbreArtifactName.capitalize()}")
-        createTarJbreTask("tar${jbsdkArtifactName.capitalize()}", untarTask, platform, jbsdkArtifactName, true)
-        setupJbre.dependsOn("tar${jbsdkArtifactName.capitalize()}")
-        cleanSetupJbre.dependsOn("cleanTar${jbsdkArtifactName.capitalize()}")
+        def jbrArtifactName = "jbr-$update-$platform-$arch-$buildNumber"
+        def untarTask = createUntarJbreTask(download, jbrxArtifactName.capitalize(), platform)
+        createTarJbreTask("tar${jbrArtifactName.capitalize()}", untarTask, platform, jbrArtifactName, false)
+        setupJbre.dependsOn("tar${jbrArtifactName.capitalize()}")
+        cleanSetupJbre.dependsOn("cleanTar${jbrArtifactName.capitalize()}")
+        createTarJbreTask("tar${jbrxArtifactName.capitalize()}", untarTask, platform, jbrxArtifactName, true)
+        setupJbre.dependsOn("tar${jbrxArtifactName.capitalize()}")
+        cleanSetupJbre.dependsOn("cleanTar${jbrxArtifactName.capitalize()}")
       }
     }
   }
