@@ -50,6 +50,8 @@ class BuildOptions {
   static final String MAC_SIGN_STEP = "mac_sign"
   /** Build Linux artifacts. */
   static final String LINUX_ARTIFACTS_STEP = "linux_artifacts"
+  /** Build Linux tar.gz artifact without bundled JRE. */
+  static final String LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP = "linux_tar_gz_without_jre"
   /** Build *.exe installer for Windows distribution. If skipped, only .zip archive will be produced. */
   static final String WINDOWS_EXE_INSTALLER_STEP = "windows_exe_installer"
   /** Build Frankenstein artifacts. */
