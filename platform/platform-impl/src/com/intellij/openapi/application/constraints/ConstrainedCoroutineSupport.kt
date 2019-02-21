@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.constraints
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.Runnable
 import java.util.concurrent.Executor
 import kotlin.LazyThreadSafetyMode.PUBLICATION
 import kotlin.coroutines.AbstractCoroutineContextElement
@@ -12,11 +14,9 @@ import kotlin.coroutines.CoroutineContext
 /**
  * @author eldar
  */
-class ConstrainedCoroutineSupport internal constructor(private val constrainedExecution: ConstrainedExecutionEx<*>) : CoroutineScope {
-  override val coroutineContext: CoroutineContext by lazy(PUBLICATION) {
-    val continuationInterceptor = createContinuationInterceptor()
-    val coroutineName = CoroutineName("${javaClass.simpleName}($continuationInterceptor)")
-    coroutineName + continuationInterceptor
+class ConstrainedCoroutineSupport internal constructor(private val constrainedExecution: ConstrainedExecutionEx<*>) {
+  val continuationInterceptor: ContinuationInterceptor by lazy(PUBLICATION) {
+    createContinuationInterceptor()
   }
 
   private fun composeDispatchers(): CoroutineDispatcher =

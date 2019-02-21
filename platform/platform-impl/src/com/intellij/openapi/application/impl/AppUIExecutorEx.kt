@@ -13,7 +13,7 @@ import kotlin.coroutines.CoroutineContext
  * @author eldar
  */
 interface AppUIExecutorEx : AppUIExecutor, ConstrainedExecution<AppUIExecutorEx> {
-  fun asCoroutineContext(): CoroutineContext
+  fun asCoroutineDispatcher(): ContinuationInterceptor
   fun inUndoTransparentAction(): AppUIExecutor
   fun inWriteAction(): AppUIExecutor
 }
@@ -32,8 +32,8 @@ fun AppUIExecutor.withConstraint(constraint: ConstrainedExecution.ContextConstra
  * A [context][CoroutineContext] to be used with the standard [launch], [async], [withContext] coroutine builders.
  * Contains: [ContinuationInterceptor].
  */
-fun AppUIExecutor.coroutineDispatchingContext(): CoroutineContext =
-  (this as AppUIExecutorEx).asCoroutineContext()
+fun AppUIExecutor.coroutineDispatchingContext(): ContinuationInterceptor =
+  (this as AppUIExecutorEx).asCoroutineDispatcher()
 
 
 @Throws(CancellationException::class)
