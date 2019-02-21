@@ -2,7 +2,10 @@
 package com.intellij.testGuiFramework.fixtures
 
 import com.intellij.testGuiFramework.framework.Timeouts
-import com.intellij.testGuiFramework.impl.*
+import com.intellij.testGuiFramework.impl.GuiTestCase
+import com.intellij.testGuiFramework.impl.actionButton
+import com.intellij.testGuiFramework.impl.button
+import com.intellij.testGuiFramework.impl.jTree
 import com.intellij.testGuiFramework.util.Predicate
 import com.intellij.testGuiFramework.util.step
 import org.fest.swing.core.Robot
@@ -18,11 +21,9 @@ class ChooseJpaClassesPackageDialog(robot: Robot, dialog: JDialog) : JDialogFixt
 
   fun GuiTestCase.addPackage(name: String, timeout: Timeout = Timeouts.defaultTimeout) {
     actionButton("New Package...").click()
-    findDialog("New Package", false, timeout).apply {
-      message("New Package") {
-        typeText(name)
-        button("OK").clickWhenEnabled(Timeouts.seconds01)
-      }
+    dialog("New Package", false, timeout = timeout) {
+      typeText(name)
+      button("OK").clickWhenEnabled(Timeouts.seconds01)
     }
   }
 
