@@ -375,8 +375,8 @@ public class SyncScrollSupport {
         int correction = (viewRect.y + middleY) % lineHeight;
         offset = point.y - middleY + correction;
 
-        onlyMajorBackward = convertedCenterLine == convertLine(masterCenterLine - 1) && correction < lineHeight / 2;
-        onlyMajorForward = convertedCenterLine == convertLine(masterCenterLine + 1) && correction > lineHeight / 2;
+        onlyMajorBackward = correction < lineHeight / 2 && convertedCenterLine == convertLine(masterCenterLine - 1);
+        onlyMajorForward = correction > lineHeight / 2 && convertedCenterLine == convertLine(masterCenterLine + 1);
       }
       else {
         double progress = myAnchor.masterStartOffset == myAnchor.masterEndOffset || viewRect.y == myAnchor.masterEndOffset ? 1 :
