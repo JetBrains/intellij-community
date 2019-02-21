@@ -341,4 +341,16 @@ public abstract class AnAction implements PossiblyDumbAware {
   void markAsGlobal() {
     myIsGlobal = true;
   }
+
+  /**
+   * Returns default action text.
+   * This method must be overridden in case template presentation contains user data like Project name,
+   * Run Configuration name, etc
+   *
+   * @return action presentable text without private user data
+   */
+  @Nullable
+  public String getTemplateText() {
+    return getTemplatePresentation().getText();
+  }
 }

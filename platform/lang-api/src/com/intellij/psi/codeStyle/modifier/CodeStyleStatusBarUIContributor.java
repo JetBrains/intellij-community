@@ -60,4 +60,13 @@ public interface CodeStyleStatusBarUIContributor {
   default Icon getIcon() {
     return null;
   }
+
+  /**
+   * @param psiFile The currently open {@code PsiFile}.
+   * @return A status text to be shown in code style widget for the given {@code PsiFile}
+   */
+  @NotNull
+  default String getStatusText(@NotNull PsiFile psiFile) {
+    return "*";
+  }
 }

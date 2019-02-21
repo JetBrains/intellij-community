@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
@@ -27,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.StartUpMeasurer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
@@ -75,18 +77,43 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     bootstrapPicoContainer(name);
   }
 
-  protected final void init(@Nullable ProgressIndicator indicator, @Nullable Runnable componentsRegistered) {
+  @Nullable
+  protected String measureTokenNamePrefix() {
+    return null;
+  }
+
+  protected final void init(@Nullable ProgressIndicator indicator, @Nullable Runnable componentsRegistered, boolean isNeededToMeasure) {
+    StartUpMeasurer.MeasureToken totalMeasureToken = isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix() + StartUpMeasurer.Phases.INITIALIZE_COMPONENTS_SUFFIX) : null;
     List<ComponentConfig> componentConfigs = getComponentConfigs(indicator);
+
+    String measureTokenNamePrefix = StringUtil.notNullize(measureTokenNamePrefix());
+    StartUpMeasurer.MeasureToken measureToken = isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix + StartUpMeasurer.Phases.REGISTER_COMPONENTS_SUFFIX) : null;
     for (ComponentConfig config : componentConfigs) {
       registerComponents(config);
+    }
+    if (measureToken != null) {
+      measureToken.end();
     }
     myComponentConfigCount = componentConfigs.size();
 
     if (componentsRegistered != null) {
+      measureToken = isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix + StartUpMeasurer.Phases.COMPONENTS_REGISTERED_CALLBACK_SUFFIX) : null;
       componentsRegistered.run();
+      if (measureToken != null) {
+        measureToken.end();
+      }
     }
+
+    measureToken = isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix + StartUpMeasurer.Phases.CREATE_COMPONENTS_SUFFIX) : null;
     createComponents(indicator);
+    if (measureToken != null) {
+      measureToken.end();
+    }
+
     myComponentsCreated = true;
+    if (isNeededToMeasure) {
+      totalMeasureToken.end("component count: " + getComponentConfigCount());
+    }
   }
 
   protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
@@ -280,7 +307,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @NotNull
-  private List<ComponentConfig> getComponentConfigs(final ProgressIndicator indicator) {
+  private List<ComponentConfig> getComponentConfigs(@Nullable ProgressIndicator indicator) {
     boolean isDefaultProject = this instanceof Project && ((Project)this).isDefault();
     boolean headless = ApplicationManager.getApplication().isHeadlessEnvironment();
     StartupProgress startupProgress = null;
@@ -361,10 +388,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return component.getClass().getName();
   }
 
-  protected boolean logSlowComponents() {
-    return LOG.isDebugEnabled();
-  }
-
   private void registerComponents(@NotNull ComponentConfig config) {
     ClassLoader loader = config.getClassLoader();
     try {
@@ -409,7 +432,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       // component may have been already loaded by PicoContainer, so fire error only if components are really different
       if (!instance.equals(loadedComponent)) {
         String errorMessage = "Component name collision: " + componentName + " " + (loadedComponent == null ? "null" : loadedComponent.getClass()) + " and " + instance.getClass();
-        LOG.error(PluginManagerCore.createPluginException(errorMessage, null, instance.getClass()));
+        PluginException.logPluginError(LOG, errorMessage, null, instance.getClass());
       }
     }
     else {
@@ -457,7 +480,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
             return instance;
           }
 
-          long startTime = System.nanoTime();
+          long startTime = System.currentTimeMillis();
 
           instance = super.getComponentInstance(picoContainer);
 
@@ -486,9 +509,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
               ((BaseComponent)instance).initComponent();
             }
 
-            long ms = (System.nanoTime() - startTime) / 1000000;
-            if (ms > 10 && logSlowComponents()) {
-              LOG.info(instance.getClass().getName() + " initialized in " + ms + " ms");
+            long endTime = System.currentTimeMillis();
+            if ((endTime - startTime) > 10 && (LOG.isDebugEnabled() || ApplicationInfoImpl.getShadowInstance().isEAP())) {
+              StartUpMeasurer.reportComponentInitialized(instance.getClass(), startTime, endTime);
             }
           }
           finally {

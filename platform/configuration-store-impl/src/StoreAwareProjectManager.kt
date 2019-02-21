@@ -1,12 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
+import com.intellij.configurationStore.schemeManager.SchemeChangeApplicator
 import com.intellij.configurationStore.schemeManager.SchemeChangeEvent
-import com.intellij.configurationStore.schemeManager.SchemeFileTracker
 import com.intellij.configurationStore.schemeManager.useSchemeLoader
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.ComponentManager
@@ -24,31 +23,33 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter
+import com.intellij.openapi.vfs.VirtualFileManagerListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.ui.AppUIUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.SingleAlarm
 import com.intellij.util.containers.MultiMap
 import gnu.trove.THashSet
+import kotlinx.coroutines.withContext
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
-private val CHANGED_FILES_KEY = Key.create<MultiMap<ComponentStoreImpl, StateStorage>>("CHANGED_FILES_KEY")
-private val CHANGED_SCHEMES_KEY = Key.create<MultiMap<SchemeFileTracker, SchemeChangeEvent>>("CHANGED_SCHEMES_KEY")
+private val CHANGED_FILES_KEY = Key<MultiMap<ComponentStoreImpl, StateStorage>>("CHANGED_FILES_KEY")
+private val CHANGED_SCHEMES_KEY = Key<MultiMap<SchemeChangeApplicator, SchemeChangeEvent>>("CHANGED_SCHEMES_KEY")
 
 /**
  * Should be a separate service, not closely related to ProjectManager, but it requires some cleanup/investigation.
  */
-class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressManager: ProgressManager) : ProjectManagerImpl(progressManager) {
+class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressManager: ProgressManager) : ProjectManagerImpl(progressManager), ConfigurationStorageReloader {
   private val reloadBlockCount = AtomicInteger()
   private val blockStackTrace = AtomicReference<String?>()
   private val changedApplicationFiles = LinkedHashSet<StateStorage>()
 
-  private val restartApplicationOrReloadProjectTask = Runnable {
+  private val changedFilesAlarm = SingleAlarm(Runnable {
     if (!isReloadUnblocked() || !tryToReloadApplication()) {
       return@Runnable
     }
@@ -59,16 +60,8 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
         continue
       }
 
-      val changedSchemes = project.getUserData(CHANGED_SCHEMES_KEY)
-      if (changedSchemes != null) {
-        CHANGED_SCHEMES_KEY.set(project, null)
-      }
-
-      val changedStorages = project.getUserData(CHANGED_FILES_KEY)
-      if (changedStorages != null) {
-        CHANGED_FILES_KEY.set(project, null)
-      }
-
+      val changedSchemes = CHANGED_SCHEMES_KEY.getAndClear(project as UserDataHolderEx)
+      val changedStorages = CHANGED_FILES_KEY.getAndClear(project as UserDataHolderEx)
       if ((changedSchemes == null || changedSchemes.isEmpty) && (changedStorages == null || changedStorages.isEmpty)) {
         continue
       }
@@ -101,14 +94,12 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
     }
 
     for (project in projectsToReload) {
-      ProjectManagerImpl.doReloadProject(project)
+      doReloadProject(project)
     }
-  }
-
-  private val changedFilesAlarm = SingleAlarm(restartApplicationOrReloadProjectTask, 300, this)
+  }, delay = 300, parentDisposable = this)
 
   init {
-    ApplicationManager.getApplication().messageBus.connect().subscribe(STORAGE_TOPIC, object : StorageManagerListener {
+    ApplicationManager.getApplication().messageBus.connect(this).subscribe(STORAGE_TOPIC, object : StorageManagerListener {
       override fun storageFileChanged(event: VFileEvent, storage: StateStorage, componentManager: ComponentManager) {
         if (event.requestor is ProjectManagerEx) {
           return
@@ -118,7 +109,7 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
       }
     })
 
-    virtualFileManager.addVirtualFileManagerListener(object : VirtualFileManagerAdapter() {
+    virtualFileManager.addVirtualFileManagerListener(object : VirtualFileManagerListener {
       override fun beforeRefreshStart(asynchronous: Boolean) {
         blockReloadingProjectOnExternalChanges()
       }
@@ -160,19 +151,20 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
     }
 
     blockStackTrace.set(null)
-    if (changedFilesAlarm.isEmpty) {
-      if (ApplicationManager.getApplication().isUnitTestMode) {
-        // todo fix test to handle invokeLater
-        changedFilesAlarm.request(true)
-      }
-      else {
-        ApplicationManager.getApplication().invokeLater(restartApplicationOrReloadProjectTask, ModalityState.NON_MODAL)
-      }
-    }
+    changedFilesAlarm.request()
   }
 
   override fun flushChangedProjectFileAlarm() {
     changedFilesAlarm.drainRequestsInTest()
+  }
+
+  override suspend fun reloadChangedStorageFiles() {
+    val unfinishedRequest = changedFilesAlarm.getUnfinishedRequest() ?: return
+    withContext(storeEdtCoroutineContext) {
+      unfinishedRequest.run()
+      // just to be sure
+      changedFilesAlarm.getUnfinishedRequest()?.run()
+    }
   }
 
   override fun reloadProject(project: Project) {
@@ -198,12 +190,7 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
       }
     }
     else {
-      var changes = CHANGED_FILES_KEY.get(project)
-      if (changes == null) {
-        changes = MultiMap.createLinkedSet()
-        CHANGED_FILES_KEY.set(project, changes)
-      }
-
+      val changes = CHANGED_FILES_KEY.get(project) ?: (project as UserDataHolderEx).putUserDataIfAbsent(CHANGED_FILES_KEY, MultiMap.createLinkedSet())
       synchronized (changes) {
         changes.putValue(componentManager.stateStore as ComponentStoreImpl, storage)
       }
@@ -218,19 +205,14 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
     }
   }
 
-  internal fun registerChangedScheme(event: SchemeChangeEvent, schemeFileTracker: SchemeFileTracker, project: Project) {
+  internal fun registerChangedSchemes(events: List<SchemeChangeEvent>, schemeFileTracker: SchemeChangeApplicator, project: Project) {
     if (LOG.isDebugEnabled) {
-      LOG.debug("[RELOAD] Registering scheme to reload: $event", Exception())
+      LOG.debug("[RELOAD] Registering scheme to reload: $events", Exception())
     }
 
-    var changes = CHANGED_SCHEMES_KEY.get(project)
-    if (changes == null) {
-      changes = MultiMap.createLinkedSet()
-      CHANGED_SCHEMES_KEY.set(project, changes)
-    }
-
+    val changes = CHANGED_SCHEMES_KEY.get(project) ?: (project as UserDataHolderEx).putUserDataIfAbsent(CHANGED_SCHEMES_KEY, MultiMap.createLinkedSet())
     synchronized(changes) {
-      changes.putValue(schemeFileTracker, event)
+      changes.putValues(schemeFileTracker, events)
     }
 
     if (isReloadUnblocked()) {
@@ -337,9 +319,15 @@ fun askToRestart(store: IComponentStore, notReloadableComponents: Collection<Str
   return false
 }
 
-enum class ReloadComponentStoreStatus {
+internal enum class ReloadComponentStoreStatus {
   RESTART_AGREED,
   RESTART_CANCELLED,
   ERROR,
   SUCCESS
+}
+
+private fun <T : Any> Key<T>.getAndClear(holder: UserDataHolderEx): T? {
+  val value = holder.getUserData(this) ?: return null
+  holder.replace(this, value, null)
+  return value
 }

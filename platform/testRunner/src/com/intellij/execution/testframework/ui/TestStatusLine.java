@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -132,10 +133,13 @@ public class TestStatusLine extends NonOpaquePanel {
   }
 
   public void onTestsDone(@Nullable TestStateInfo.Magnitude info) {
-    myProgressPanel.remove(myProgressBar);
-    if (info != null) {
-      myState.setIcon(TestIconMapper.getToolbarIcon(info));
-    }
+    EdtInvocationManager.getInstance().invokeLater(() -> {
+      myProgressPanel.remove(myProgressBar);
+      if (info != null) {
+        myState.setIcon(TestIconMapper.getToolbarIcon(info));
+      }
+    });
+    
   }
 
   private static String getTestsTotalMessage(int testsTotal) {

@@ -4,8 +4,8 @@ package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiWildcardType
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.findCall
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
@@ -14,8 +14,8 @@ import org.jetbrains.plugins.groovy.lang.sam.findSingleAbstractSignature
 
 open class ClosureAsAnonymousParameterEnhancer : AbstractClosureParameterEnhancer() {
 
-  override fun getClosureParameterType(closure: GrClosableBlock, index: Int): PsiType? {
-    val type = expectedType(closure) as? PsiClassType ?: return null
+  override fun getClosureParameterType(expression: GrFunctionalExpression, index: Int): PsiType? {
+    val type = expectedType(expression) as? PsiClassType ?: return null
     val result = type.resolveGenerics()
     val clazz = result.element ?: return null
     val substitutor = result.substitutor
@@ -23,22 +23,22 @@ open class ClosureAsAnonymousParameterEnhancer : AbstractClosureParameterEnhance
     return sam.parameterTypes.getOrNull(index)?.let(substitutor::substitute)?.let(::unwrapBound)
   }
 
-  private fun expectedType(closure: GrClosableBlock): PsiType? {
-    val parent = closure.parent
+  private fun expectedType(expression: GrFunctionalExpression): PsiType? {
+    val parent = expression.parent
     if (parent is GrSafeCastExpression) {
       return parent.castTypeElement?.type
     }
     else {
-      return fromMethodCall(closure)
+      return fromMethodCall(expression)
     }
   }
 
-  private fun fromMethodCall(closure: GrClosableBlock): PsiType? {
-    val call = findCall(closure) ?: return null
+  private fun fromMethodCall(expression: GrFunctionalExpression): PsiType? {
+    val call = findCall(expression) ?: return null
     val variant = call.advancedResolve() as? GroovyMethodResult ?: return null
     val candidate = variant.candidate ?: return null
     val mapping = candidate.argumentMapping ?: return null
-    val expectedType = mapping.expectedType(ExpressionArgument(closure)) ?: return null
+    val expectedType = mapping.expectedType(ExpressionArgument(expression)) ?: return null
     val substitutor = GroovyInferenceSessionBuilder(call, candidate, variant.contextSubstitutor)
       .skipClosureIn(call)
       .resolveMode(false)

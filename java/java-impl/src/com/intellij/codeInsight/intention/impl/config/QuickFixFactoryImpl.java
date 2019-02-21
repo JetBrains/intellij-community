@@ -584,8 +584,8 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createAddReturnFix(@NotNull PsiMethod method) {
-    return new AddReturnFix(method);
+  public IntentionAction createAddReturnFix(@NotNull PsiParameterListOwner methodOrLambda) {
+    return new AddReturnFix(methodOrLambda);
   }
 
   @NotNull

@@ -20,7 +20,6 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +29,7 @@ public class ShowRecentlyEditedFilesAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project != null) {
-      Switcher.createAndShowSwitcher(e, "Recently Edited Files", true, IdeDocumentHistory.getInstance(project).getChangedFiles());
+      Switcher.createAndShowSwitcher(e, "Recently Edited Files", "RecentChangedFiles", true, true);
     }
   }
 

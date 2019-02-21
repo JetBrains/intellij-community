@@ -207,9 +207,7 @@ public class BackgroundTaskUtil {
     ProgressIndicator indicator = new EmptyProgressIndicator();
     indicator.start();
 
-    CompletableFuture<?> future = CompletableFuture.runAsync(() -> {
-      ProgressManager.getInstance().runProcess(runnable, indicator);
-    }, AppExecutorUtil.getAppExecutorService());
+    CompletableFuture<?> future = CompletableFuture.runAsync(() -> ProgressManager.getInstance().runProcess(runnable, indicator), AppExecutorUtil.getAppExecutorService());
 
     Disposable disposable = () -> {
       if (indicator.isRunning()) indicator.cancel();

@@ -47,7 +47,7 @@ public class Key<T> {
 
   @NotNull
   public static <T> Key<T> create(@NotNull String name) {
-    return new Key<T>(name);
+    return new Key<>(name);
   }
 
   public T get(@Nullable UserDataHolder holder) {
@@ -55,8 +55,8 @@ public class Key<T> {
   }
 
   public T get(@Nullable Map<Key, ?> holder) {
-    @SuppressWarnings("unchecked") T t = holder == null ? null : (T)holder.get(this);
-    return t;
+    //noinspection unchecked
+    return holder == null ? null : (T)holder.get(this);
   }
 
   @Contract("_, !null -> !null")
@@ -91,8 +91,8 @@ public class Key<T> {
 
   @Nullable("can become null if the key has been gc-ed")
   public static <T> Key<T> getKeyByIndex(int index) {
-    @SuppressWarnings("unchecked") Key<T> key = (Key<T>)allKeys.get(index);
-    return key;
+    //noinspection unchecked
+    return (Key<T>)allKeys.get(index);
   }
 
   /** @deprecated access to a key via its name is a dirty hack; use Key instance directly instead */

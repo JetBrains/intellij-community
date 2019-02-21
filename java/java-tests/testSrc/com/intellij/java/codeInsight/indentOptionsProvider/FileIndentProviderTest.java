@@ -1,26 +1,10 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.indentOptionsProvider;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.actions.IndentSelectionAction;
 import com.intellij.openapi.editor.actions.UnindentSelectionAction;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -44,27 +28,16 @@ public class FileIndentProviderTest extends LightPlatformCodeInsightFixtureTestC
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    ExtensionPoint<FileIndentOptionsProvider> extensionPoint =
-      Extensions.getRootArea().getExtensionPoint(FileIndentOptionsProvider.EP_NAME);
-    extensionPoint.registerExtension(TEST_FILE_INDENT_OPTIONS_PROVIDER);
+
+    FileIndentOptionsProvider.EP_NAME.getPoint(null).registerExtension(TEST_FILE_INDENT_OPTIONS_PROVIDER, getTestRootDisposable());
     myTestIndentOptions = new CommonCodeStyleSettings.IndentOptions();
   }
 
   @Override
   protected void tearDown() throws Exception {
-    try {
-      ExtensionPoint<FileIndentOptionsProvider> extensionPoint =
-        Extensions.getRootArea().getExtensionPoint(FileIndentOptionsProvider.EP_NAME);
-      extensionPoint.unregisterExtension(TEST_FILE_INDENT_OPTIONS_PROVIDER);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      myTestIndentOptions = null;
-      myUseOnFullReformat = false;
-      super.tearDown();
-    }
+    myTestIndentOptions = null;
+    myUseOnFullReformat = false;
+    super.tearDown();
   }
 
   @Override

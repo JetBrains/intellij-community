@@ -99,13 +99,6 @@ public abstract class DiffRequest {
     myHints.remove(hint);
   }
 
-  /**
-   * <B>Work in progress. Don't rely on this functionality</B><br>
-   */
-  public interface ToolbarAddons {
-    void customize(DiffToolbar toolbar);
-  }
-
   public Runnable getOnOkRunnable() {
     return myOnOkRunnable;
   }

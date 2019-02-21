@@ -18,7 +18,7 @@ def display(data):
         repr_display_attr = getattr(data, '_repr_display_', None)
         if callable(repr_display_attr):
             message_spec = repr_display_attr()
-            assert len(message_spec) == 2, 'Tuple length expected is 2 but was {len(message_spec)}'
+            assert len(message_spec) == 2, 'Tuple length expected is 2 but was %d' % len(message_spec)
 
             message_spec = _standardize_value(message_spec)
             _send_display_message({

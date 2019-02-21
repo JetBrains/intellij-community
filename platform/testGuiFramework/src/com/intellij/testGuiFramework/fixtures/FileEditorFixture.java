@@ -58,21 +58,27 @@ public class FileEditorFixture extends EditorFixture {
    */
   @Nullable
   public VirtualFile getCurrentFile() {
-    VirtualFile[] selectedFiles = myManager.getSelectedFiles();
-    if (selectedFiles.length > 0) {
+    return execute(new GuiQuery<VirtualFile>() {
+      @javax.annotation.Nullable
+      @Override
+      protected VirtualFile executeInEDT() throws Throwable {
+        VirtualFile[] selectedFiles = myManager.getSelectedFiles();
+        if (selectedFiles.length > 0) {
 
-      // we should be sure that EditorComponent is already showing
-      VirtualFile selectedFile = selectedFiles[0];
-      if (myManager.getEditors(selectedFile).length == 0) {
+          // we should be sure that EditorComponent is already showing
+          VirtualFile selectedFile = selectedFiles[0];
+          if (myManager.getEditors(selectedFile).length == 0) {
+            return null;
+          }
+          else {
+            FileEditor editor = myManager.getEditors(selectedFile)[0];
+            return editor.getComponent().isShowing() ? selectedFile : null;
+          }
+        }
+
         return null;
       }
-      else {
-        FileEditor editor = myManager.getEditors(selectedFile)[0];
-        return editor.getComponent().isShowing() ? selectedFile : null;
-      }
-    }
-
-    return null;
+    });
   }
 
   /**

@@ -135,6 +135,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   }
 
   private static void runReadWrites(final int readIterations, final int writeIterations, int expectedMs) {
+    NonBlockingReadActionImpl.cancelAllTasks(); // someone might've submitted a task depending on app events which we disable now
     final ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
     Disposable disposable = Disposer.newDisposable();
     application.disableEventsUntil(disposable);
@@ -172,7 +173,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   private static void joinWithTimeout(List<Thread> threads) throws TimeoutException {
     for (Thread thread : threads) {
       try {
-        thread.join(10_000);
+        thread.join(20_000);
       }
       catch (InterruptedException e) {
         throw new RuntimeException(e);

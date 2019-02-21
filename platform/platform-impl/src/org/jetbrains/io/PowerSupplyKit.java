@@ -20,7 +20,7 @@ import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.lang.UrlClassLoader;
+import com.intellij.util.loader.NativeLibraryLoader;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
@@ -36,7 +36,7 @@ public class PowerSupplyKit {
 
     static {
         if (shouldCheckCordUnplug) {
-            UrlClassLoader.loadPlatformLibrary("MacNativeKit");
+            NativeLibraryLoader.loadPlatformLibrary("MacNativeKit");
         }
     }
 

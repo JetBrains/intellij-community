@@ -10,8 +10,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.util.ThreeState;
 import org.jetbrains.plugins.gradle.config.GradleResourceCompilerConfigurationGenerator;
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase;
+import org.junit.Before;
 
 import java.io.File;
 
@@ -19,6 +21,14 @@ import java.io.File;
  * @author Vladislav.Soroka
  */
 public abstract class GradleCompilingTestCase extends GradleImportingTestCase {
+
+  @Before
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    getCurrentExternalProjectSettings().setDelegatedBuild(ThreeState.NO);
+  }
+
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();

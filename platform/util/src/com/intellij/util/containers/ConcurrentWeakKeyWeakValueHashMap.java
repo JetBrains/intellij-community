@@ -65,7 +65,7 @@ class ConcurrentWeakKeyWeakValueHashMap<K, V> extends ConcurrentWeakKeySoftValue
   @NotNull
   KeyReference<K,V> createKeyReference(@NotNull K k, @NotNull final V v) {
     final ValueReference<K, V> valueReference = createValueReference(v, myValueQueue);
-    WeakKey<K, V> keyReference = new WeakKey<K, V>(k, valueReference, myHashingStrategy, myKeyQueue);
+    WeakKey<K, V> keyReference = new WeakKey<>(k, valueReference, myHashingStrategy, myKeyQueue);
     if (valueReference instanceof WeakValue) {
       ((WeakValue)valueReference).myKeyReference = keyReference;
     }
@@ -75,6 +75,6 @@ class ConcurrentWeakKeyWeakValueHashMap<K, V> extends ConcurrentWeakKeySoftValue
   @Override
   @NotNull
   protected ValueReference<K, V> createValueReference(@NotNull V value, @NotNull ReferenceQueue<? super V> queue) {
-    return new WeakValue<K, V>(value, queue);
+    return new WeakValue<>(value, queue);
   }
 }

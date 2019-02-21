@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
@@ -8,7 +8,6 @@ import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.internal.performance.LatenciometerKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -154,6 +153,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final FocusModeModel myFocusModeModel;
   private volatile long myLastTypedActionTimestamp = -1;
   private String myLastTypedAction;
+  private final LatencyListener myLatencyPublisher;
 
   private static final Cursor EMPTY_CURSOR;
   private final Map<Object, Cursor> myCustomCursors = new LinkedHashMap<>();
@@ -551,6 +551,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myFocusModeModel = new FocusModeModel(this);
     myPopupHandlers.add(new DefaultPopupHandler());
+
+    myLatencyPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(LatencyListener.TOPIC);
   }
 
   public void applyFocusMode() {
@@ -625,8 +627,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myDocument.isInEventsHandling() || myDocument.isInBulkUpdate()) return;
     validateSize();
     int offset = inlay.getOffset();
-    if (inlay.getVerticalAlignment() == Inlay.VerticalAlignment.INLINE) {
+    Inlay.Placement placement = inlay.getPlacement();
+    if (placement == Inlay.Placement.INLINE) {
       repaint(offset, offset, false);
+    }
+    else if (placement == Inlay.Placement.AFTER_LINE_END) {
+      int lineEndOffset = DocumentUtil.getLineEndOffset(offset, myDocument);
+      repaint(lineEndOffset, lineEndOffset, false);
     }
     else {
       int visualLine = offsetToVisualLine(offset);
@@ -2066,6 +2073,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
            + ", caret model: " + getCaretModel().dumpState()
            + ", soft wraps data: " + getSoftWrapModel().dumpState()
            + "\n\nfolding data: " + getFoldingModel().dumpState()
+           + "\ninlay model: " + getInlayModel().dumpState()
            + (myDocument instanceof DocumentImpl ? "\n\ndocument info: " + ((DocumentImpl)myDocument).dumpState() : "")
            + "\nfont preferences: " + myScheme.getFontPreferences()
            + "\npure painting mode: " + myPurePaintingMode
@@ -3379,7 +3387,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   void measureTypingLatency() {
     if (myLastTypedActionTimestamp != -1) {
-      LatenciometerKt.recordTypingLatency(this, myLastTypedAction, System.currentTimeMillis() - myLastTypedActionTimestamp);
+      myLatencyPublisher.recordTypingLatency(this, myLastTypedAction, System.currentTimeMillis() - myLastTypedActionTimestamp);
       myLastTypedActionTimestamp = -1;
     }
   }
@@ -4248,7 +4256,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myFontsMap.put(EditorFontType.CONSOLE_BOLD_ITALIC, new Font(consoleFontName, Font.BOLD | Font.ITALIC, consoleFontSize));
     }
 
-    private void updatePreferences(FontPreferencesImpl preferences, String fontName, int fontSize, FontPreferences delegatePreferences) {
+    private void updatePreferences(@NotNull FontPreferencesImpl preferences, @NotNull String fontName, int fontSize, @Nullable FontPreferences delegatePreferences) {
       preferences.clear();
       preferences.register(fontName, fontSize);
       if (delegatePreferences != null) {

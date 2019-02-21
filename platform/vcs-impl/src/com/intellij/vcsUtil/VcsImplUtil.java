@@ -3,27 +3,33 @@ package com.intellij.vcsUtil;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.NotificationAction;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.VcsApplicationSettings;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.openapi.vcs.changes.IgnoredFileContentProvider;
 import com.intellij.openapi.vcs.changes.IgnoredFileGenerator;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+
+import static com.intellij.openapi.vcs.FileStatus.IGNORED;
+import static com.intellij.openapi.vcs.FileStatus.UNKNOWN;
+import static com.intellij.vcsUtil.VcsUtil.isFileUnderVcs;
 
 /**
  * <p>{@link VcsUtil} extension that needs access to the {@code intellij.platform.vcs.impl} module.</p>
@@ -105,9 +111,7 @@ public class VcsImplUtil {
         applicationSettings.MANAGE_IGNORE_FILES = true;
         notification.expire();
       }),
-      NotificationAction.create(VcsBundle.message("ignored.file.manage.notnow"), (event, notification) -> {
-        notification.expire();
-      }));
+      NotificationAction.create(VcsBundle.message("ignored.file.manage.notnow"), (event, notification) -> notification.expire()));
   }
 
   public static boolean generateIgnoreFileIfNeeded(@NotNull Project project,
@@ -156,5 +160,23 @@ public class VcsImplUtil {
     VcsApplicationSettings applicationSettings = VcsApplicationSettings.getInstance();
 
     return applicationSettings.MANAGE_IGNORE_FILES || propertiesComponent.getBoolean(MANAGE_IGNORE_FILES_PROPERTY, false);
+  }
+
+  private static boolean isFileSharedInVcs(@NotNull Project project, @NotNull ChangeListManagerEx changeListManager, @NotNull String filePath) {
+    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(filePath);
+    if (file == null) return false;
+    FileStatus fileStatus = changeListManager.getStatus(file);
+    return isFileUnderVcs(project, filePath) &&
+           (fileStatus != UNKNOWN && fileStatus != IGNORED);
+  }
+
+  public static boolean isProjectSharedInVcs(@NotNull Project project) {
+    return ReadAction.compute(() -> {
+      if (project.isDisposed()) return false;
+      @SystemIndependent String projectFilePath = project.getProjectFilePath();
+      ChangeListManagerEx changeListManager = (ChangeListManagerEx)ChangeListManager.getInstance(project);
+      return !changeListManager.isInUpdate()
+             && (projectFilePath != null && isFileSharedInVcs(project, changeListManager, projectFilePath));
+    });
   }
 }

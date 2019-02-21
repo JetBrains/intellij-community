@@ -1,60 +1,77 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.pivotal;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tasks.*;
+import com.intellij.tasks.CustomTaskState;
+import com.intellij.tasks.Task;
 import com.intellij.tasks.impl.BaseRepository;
-import com.intellij.tasks.impl.BaseRepositoryImpl;
-import com.intellij.tasks.impl.SimpleComment;
-import com.intellij.tasks.impl.TaskUtil;
-import com.intellij.util.NullableFunction;
+import com.intellij.tasks.impl.gson.TaskGsonUtil;
+import com.intellij.tasks.impl.httpclient.NewBaseRepositoryImpl;
+import com.intellij.tasks.impl.httpclient.TaskResponseUtil.GsonMultipleObjectsDeserializer;
+import com.intellij.tasks.impl.httpclient.TaskResponseUtil.GsonSingleObjectDeserializer;
+import com.intellij.tasks.pivotal.model.PivotalTrackerStory;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.net.HTTPMethod;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.PutMethod;
-import org.jdom.Element;
-import org.jdom.input.SAXBuilder;
+import org.apache.http.HttpException;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpRequestInterceptor;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.protocol.HttpContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.io.InputStream;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Date;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Dennis.Ushakov
- *
- * TODO: update to REST APIv5
- */
 @Tag("PivotalTracker")
-public class PivotalTrackerRepository extends BaseRepositoryImpl {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.tasks.pivotal.PivotalTrackerRepository");
-  private static final String API_URL = "/services/v3";
+public class PivotalTrackerRepository extends NewBaseRepositoryImpl {
+  private static final Logger LOG = Logger.getInstance(PivotalTrackerRepository.class);
 
-  private Pattern myPattern;
+  private static final String API_V5_PATH = "/services/v5";
+  private static final String TOKEN_HEADER = "X-TrackerToken";
+  private static final Pattern TASK_ID_REGEX = Pattern.compile("(?<projectId>\\d+)-(?<storyId>\\d+)");
+
+  private static final List<String> STANDARD_STORY_STATES = Arrays.asList("accepted",
+                                                                          "delivered",
+                                                                          "finished",
+                                                                          "started",
+                                                                          "rejected",
+                                                                          "planned",
+                                                                          "unstarted",
+                                                                          "unscheduled");
+
+  // @formatter:off
+  private static final TypeToken<List<PivotalTrackerStory>> LIST_OF_STORIES_TYPE = new TypeToken<List<PivotalTrackerStory>>() {};
+  // @formatter:on
+
+  public static final Gson ourGson = TaskGsonUtil.createDefaultBuilder().create();
+
   private String myProjectId;
   private String myAPIKey;
 
-  //private boolean myTasksSupport = false;
-
   {
+    // Don't move it to PivotalTrackerRepository(PivotalTrackerRepositoryType) because in this case
+    // for already existing trackers URL will be uninitialized since it was absent in configs.
+    // TODO Remove this field from the editor altogether
     if (StringUtil.isEmpty(getUrl())) {
       setUrl("https://www.pivotaltracker.com");
     }
   }
-
+  
   /** for serialization */
   @SuppressWarnings({"UnusedDeclaration"})
   public PivotalTrackerRepository() {
@@ -68,220 +85,105 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
   private PivotalTrackerRepository(final PivotalTrackerRepository other) {
     super(other);
     setProjectId(other.myProjectId);
-    setAPIKey(other.myAPIKey);
   }
 
+  @NotNull
   @Override
-  public void testConnection() throws Exception {
-    getIssues("", 10, 0);
+  public String getRestApiPathPrefix() {
+    return API_V5_PATH;
+  }
+
+  @Nullable
+  @Override
+  protected HttpRequestInterceptor createRequestInterceptor() {
+    return new HttpRequestInterceptor() {
+      @Override
+      public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
+        request.addHeader(TOKEN_HEADER, getPassword());
+      }
+    };
+  }
+
+  @Nullable
+  @Override
+  public CancellableConnection createCancellableConnection() {
+    return new HttpTestConnection(new HttpGet()) {
+      @Override
+      protected void doTest() throws Exception {
+        myCurrentRequest = createStoriesRequest("", 0, 10, false);
+        super.doTest();
+      }
+    };
   }
 
   @Override
   public boolean isConfigured() {
     return super.isConfigured() &&
            StringUtil.isNotEmpty(getProjectId()) &&
-           StringUtil.isNotEmpty(getAPIKey());
+           StringUtil.isNotEmpty(getPassword());
   }
 
   @Override
-  public Task[] getIssues(@Nullable final String query, final int max, final long since) throws Exception {
-    List<Element> children = getStories(query, max);
+  public Task[] getIssues(@Nullable String query, int offset, int limit, boolean withClosed) throws Exception {
+    final List<PivotalTrackerStory> stories = getHttpClient().execute(createStoriesRequest(query, offset, limit, withClosed),
+                                                                      new GsonMultipleObjectsDeserializer<>(ourGson, LIST_OF_STORIES_TYPE));
 
-    final List<Task> tasks = ContainerUtil.mapNotNull(children, (NullableFunction<Element, Task>)o -> createIssue(o));
-    return tasks.toArray(Task.EMPTY_ARRAY);
+    return ContainerUtil.map2Array(stories, PivotalTrackerTask.class, story -> new PivotalTrackerTask(this, story));
   }
 
-  private List<Element> getStories(@Nullable final String query, final int max) throws Exception {
-    String url = API_URL + "/projects/" + myProjectId + "/stories";
-    url += "?filter=" + encodeUrl("state:started,unstarted,unscheduled,rejected");
-    if (!StringUtil.isEmpty(query)) {
-      url += encodeUrl(" \"" + query + '"');
-    }
-    if (max >= 0) {
-      url += "&limit=" + encodeUrl(String.valueOf(max));
-    }
-    LOG.info("Getting all the stories with url: " + url);
-    final HttpMethod method = doREST(url, HTTPMethod.GET);
-    final InputStream stream = method.getResponseBodyAsStream();
-    final Element element = new SAXBuilder(false).build(stream).getRootElement();
+  @NotNull
+  protected HttpGet createStoriesRequest(@Nullable String query, int offset, int limit, boolean withClosed) throws URISyntaxException {
+    URI endpointUrl = new URIBuilder(getRestApiUrl("projects", myProjectId, "stories"))
+      .addParameter("filter", (withClosed ? "" : "state:started,unstarted,unscheduled,rejected") +
+                              (StringUtil.isEmpty(query) ? "" : " \"" + query + "\""))
+      .addParameter("offset", String.valueOf(offset))
+      .addParameter("limit", String.valueOf(limit))
+      .build();
 
-    if (!"stories".equals(element.getName())) {
-      LOG.warn("Error fetching issues for: " + url + ", HTTP status code: " + method.getStatusCode());
-      throw new Exception("Error fetching issues for: " + url + ", HTTP status code: " + method.getStatusCode() +
-                          "\n" + element.getText());
-    }
-
-    return element.getChildren("story");
-  }
-
-  @Nullable
-  private Task createIssue(final Element element) {
-    final String id = element.getChildText("id");
-    if (id == null) {
-      return null;
-    }
-    final String summary = element.getChildText("name");
-    if (summary == null) {
-      return null;
-    }
-    final String type = element.getChildText("story_type");
-    if (type == null) {
-      return null;
-    }
-    final Comment[] comments = parseComments(element.getChild("notes"));
-    final boolean isClosed = "accepted".equals(element.getChildText("state")) ||
-                             "delivered".equals(element.getChildText("state")) ||
-                             "finished".equals(element.getChildText("state"));
-    final String description = element.getChildText("description");
-    final Ref<Date> updated = new Ref<>();
-    final Ref<Date> created = new Ref<>();
-    try {
-      updated.set(parseDate(element, "updated_at"));
-      created.set(parseDate(element, "created_at"));
-    } catch (ParseException e) {
-      LOG.warn(e);
-    }
-
-    return new Task() {
-      @Override
-      public boolean isIssue() {
-        return true;
-      }
-
-      @Override
-      public String getIssueUrl() {
-        final String id = getRealId(getId());
-        return id != null ? getUrl() + "/story/show/" + id : null;
-      }
-
-      @NotNull
-      @Override
-      public String getId() {
-        return myProjectId + "-" + id;
-      }
-
-      @NotNull
-      @Override
-      public String getSummary() {
-        return summary;
-      }
-
-      @Override
-      public String getDescription() {
-        return description;
-      }
-
-      @NotNull
-      @Override
-      public Comment[] getComments() {
-        return comments;
-      }
-
-      @NotNull
-      @Override
-      public Icon getIcon() {
-        return IconLoader.getIcon(getCustomIcon(), PivotalTrackerRepository.class);
-      }
-
-      @NotNull
-      @Override
-      public TaskType getType() {
-        return TaskType.OTHER;
-      }
-
-      @Override
-      public Date getUpdated() {
-        return updated.get();
-      }
-
-      @Override
-      public Date getCreated() {
-        return created.get();
-      }
-
-      @Override
-      public boolean isClosed() {
-        return isClosed;
-      }
-
-      @Override
-      public TaskRepository getRepository() {
-        return PivotalTrackerRepository.this;
-      }
-
-      @Override
-      public String getPresentableName() {
-        return getId() + ": " + getSummary();
-      }
-
-      @NotNull
-      @Override
-      public String getCustomIcon() {
-        return "/icons/pivotal/" + type + ".png";
-      }
-    };
-  }
-
-  private static Comment[] parseComments(Element notes) {
-    if (notes == null) return Comment.EMPTY_ARRAY;
-    final List<Comment> result = new ArrayList<>();
-    for (Element note : notes.getChildren("note")) {
-      final String text = note.getChildText("text");
-      if (text == null) continue;
-      final Ref<Date> date = new Ref<>();
-      try {
-        date.set(parseDate(note, "noted_at"));
-      } catch (ParseException e) {
-        LOG.warn(e);
-      }
-      final String author = note.getChildText("author");
-      result.add(new SimpleComment(date.get(), author, text));
-    }
-    return result.toArray(Comment.EMPTY_ARRAY);
-  }
-
-  @Nullable
-  private static Date parseDate(final Element element, final String name) throws ParseException {
-    String date = element.getChildText(name);
-    return TaskUtil.parseDate(date);
-  }
-
-  private HttpMethod doREST(final String request, final HTTPMethod type) throws Exception {
-    final HttpClient client = getHttpClient();
-    client.getParams().setContentCharset("UTF-8");
-    final String uri = getUrl() + request;
-    final HttpMethod method = type == HTTPMethod.POST ? new PostMethod(uri) :
-                              type == HTTPMethod.PUT ? new PutMethod(uri) : new GetMethod(uri);
-    configureHttpMethod(method);
-    client.executeMethod(method);
-    return method;
+    return new HttpGet(endpointUrl);
   }
 
   @Nullable
   @Override
   public Task findTask(@NotNull final String id) throws Exception {
-    final String realId = getRealId(id);
-    if (realId == null) return null;
-    final String url = API_URL + "/projects/" + myProjectId + "/stories/" + realId;
-    LOG.info("Retrieving issue by id: " + url);
-    final HttpMethod method = doREST(url, HTTPMethod.GET);
-    final InputStream stream = method.getResponseBodyAsStream();
-    final Element element = new SAXBuilder(false).build(stream).getRootElement();
-    return element.getName().equals("story") ? createIssue(element) : null;
-  }
-
-  @Nullable
-  private String getRealId(final String id) {
-    final String[] split = id.split("\\-");
-    final String projectId = split[0];
-    return Comparing.strEqual(projectId, myProjectId) ? split[1] : null;
+    final Matcher matcher = TASK_ID_REGEX.matcher(id);
+    if (!matcher.matches()) {
+      LOG.warn("Illegal PivotalTracker ID pattern " + id);
+      return null;
+    }
+    final String projectId = matcher.group("projectId");
+    final String storyId = matcher.group("storyId");
+    final PivotalTrackerStory story = getHttpClient().execute(new HttpGet(getRestApiUrl("projects", projectId, "stories", storyId)),
+                                                              new GsonSingleObjectDeserializer<>(ourGson, PivotalTrackerStory.class, true));
+    return story != null ? new PivotalTrackerTask(this, story) : null;
   }
 
   @Override
   @Nullable
   public String extractId(@NotNull final String taskName) {
-    Matcher matcher = myPattern.matcher(taskName);
-    return matcher.find() ? matcher.group(1) : null;
+    Matcher matcher = TASK_ID_REGEX.matcher(taskName);
+    return matcher.matches() ? taskName : null;
+  }
+
+  @Override
+  public void setTaskState(@NotNull Task task, @NotNull CustomTaskState state) throws Exception {
+    final Matcher matcher = TASK_ID_REGEX.matcher(task.getId());
+    if (!matcher.matches()) {
+      LOG.warn("Illegal PivotalTracker ID pattern " + task.getId());
+      return;
+    }
+    final String projectId = matcher.group("projectId");
+    final String storyId = matcher.group("storyId");
+    final HttpPut request = new HttpPut(getRestApiUrl("projects", projectId, "stories", storyId));
+    String payload = ourGson.toJson(ContainerUtil.newHashMap(Pair.create("current_state", state.getId())));
+    request.setEntity(new StringEntity(payload, ContentType.APPLICATION_JSON));
+    getHttpClient().execute(request);
+  }
+
+  @NotNull
+  @Override
+  public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
+    return ContainerUtil.map2Set(STANDARD_STORY_STATES, name -> new CustomTaskState(name, name));
   }
 
   @NotNull
@@ -290,27 +192,34 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
     return new PivotalTrackerRepository(this);
   }
 
-  @Override
-  protected void configureHttpMethod(final HttpMethod method) {
-    method.addRequestHeader("X-TrackerToken", myAPIKey);
-    //method.setFollowRedirects(true);
-  }
-
   public String getProjectId() {
     return myProjectId;
   }
 
   public void setProjectId(final String projectId) {
     myProjectId = projectId;
-    myPattern = Pattern.compile("(" + projectId + "\\-\\d+):\\s+");
   }
 
+  /**
+   * Don't use this getter, it's left only to preserve compatibility with existing settings.
+   * Actual API token is saved in Password Safe and accessible via {@link #getPassword()}.
+   *
+   * @deprecated Use {@link #getPassword()}
+   */
+  @Deprecated
   public String getAPIKey() {
-    return myAPIKey;
+    return null;
   }
 
+  /**
+   * Don't use this setter, it's left only to preserve compatibility with existing settings.
+   * Actual API token is saved in Password Safe and accessible via {@link #getPassword()}.
+   *
+   * @deprecated Use {@link #setPassword(String)}
+   */
+  @Deprecated
   public void setAPIKey(final String APIKey) {
-    myAPIKey = APIKey;
+    setPassword(APIKey);
   }
 
   @Override
@@ -319,67 +228,14 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
     return name + (!StringUtil.isEmpty(getProjectId()) ? "/" + getProjectId() : "");
   }
 
-  @Nullable
-  @Override
-  public String getTaskComment(@NotNull final Task task) {
-    if (isShouldFormatCommitMessage()) {
-      final String id = task.getId();
-      final String realId = getRealId(id);
-      return realId != null ?
-             myCommitMessageFormat.replace("{id}", realId).replace("{project}", myProjectId) + " " + task.getSummary() :
-             null;
-    }
-    return super.getTaskComment(task);
-  }
-
-  @Override
-  public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
-    final String realId = getRealId(task.getId());
-    if (realId == null) return;
-    final String stateName;
-    switch (state) {
-      case IN_PROGRESS:
-        stateName = "started";
-        break;
-      case RESOLVED:
-        stateName = "finished";
-        break;
-      // may add some others in future
-      default:
-        return;
-    }
-    String url = API_URL + "/projects/" + myProjectId + "/stories/" + realId;
-    url += "?" + encodeUrl("story[current_state]") + "=" + encodeUrl(stateName);
-    LOG.info("Updating issue state by id: " + url);
-    final HttpMethod method = doREST(url, HTTPMethod.PUT);
-    final InputStream stream = method.getResponseBodyAsStream();
-    final Element element = new SAXBuilder(false).build(stream).getRootElement();
-    if (!element.getName().equals("story")) {
-      if (element.getName().equals("errors")) {
-        throw new Exception(extractErrorMessage(element));
-      } else {
-        // unknown error, probably our fault
-        LOG.warn("Error setting state for: " + url + ", HTTP status code: " + method.getStatusCode());
-        throw new Exception(String.format("Cannot set state '%s' for issue.", stateName));
-      }
-    }
-  }
-
-  @NotNull
-  private static String extractErrorMessage(@NotNull Element element) {
-    return StringUtil.notNullize(element.getChild("error").getText());
-  }
-
   @Override
   public boolean equals(final Object o) {
     if (!super.equals(o)) return false;
     if (!(o instanceof PivotalTrackerRepository)) return false;
 
     final PivotalTrackerRepository that = (PivotalTrackerRepository)o;
-    if (getAPIKey() != null ? !getAPIKey().equals(that.getAPIKey()) : that.getAPIKey() != null) return false;
     if (getProjectId() != null ? !getProjectId().equals(that.getProjectId()) : that.getProjectId() != null) return false;
-    if (getCommitMessageFormat() != null ? !getCommitMessageFormat().equals(that.getCommitMessageFormat()) : that.getCommitMessageFormat() != null) return false;
-    return isShouldFormatCommitMessage() == that.isShouldFormatCommitMessage();
+    return true;
   }
 
   @Override

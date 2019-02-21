@@ -34,7 +34,8 @@ class Scratch {
   }
 
   void testDecl(Map<String, String> map) {
-      /*5*//*6*/
+      /*5*/
+      /*6*/
       String res = map.values(/*0*/).stream().filter(val1 -> {
           /*1*/
           return !val1./*2*/isEmpty();

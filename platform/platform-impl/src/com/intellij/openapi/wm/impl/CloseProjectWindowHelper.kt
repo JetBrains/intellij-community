@@ -1,9 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
-import com.intellij.configurationStore.StoreUtil
+import com.intellij.configurationStore.runInSaveOnFrameDeactivationDisabledMode
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.GeneralSettings
+import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.project.Project
@@ -39,13 +40,16 @@ open class CloseProjectWindowHelper {
   protected open fun getNumberOfOpenedProjects() = ProjectManager.getInstance().openProjects.size
 
   protected open fun closeProjectAndShowWelcomeFrameIfNoProjectOpened(project: Project?) {
-    if (project != null && project.isOpen) {
-      ProjectManagerEx.getInstanceEx().closeAndDispose(project)
-    }
+    runInSaveOnFrameDeactivationDisabledMode {
+      if (project != null && project.isOpen) {
+        ProjectManagerEx.getInstanceEx().closeAndDispose(project)
+      }
 
-    val app = ApplicationManager.getApplication()
-    app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectFrameClosed()
-    StoreUtil.saveSettings(app, true)
+      val app = ApplicationManager.getApplication()
+      app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectFrameClosed()
+      // app must be not saved as part of project closing because app settings maybe modified as result - e.g. RecentProjectsManager state
+      SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(app)
+    }
 
     WelcomeFrame.showIfNoProjectOpened()
   }

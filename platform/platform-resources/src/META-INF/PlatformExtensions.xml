@@ -132,6 +132,8 @@
     <defaultHighlightingSettingProvider id="GeneratedSourcesHighlightingSettingProvider"
                                         implementation="com.intellij.codeInsight.daemon.OutsidersPsiFileSupport$HighlightingSettingProvider"/>
 
+    <fileEditorProvider implementation="com.intellij.diff.editor.DiffEditorProvider"/>
+
     <applicationService serviceInterface="com.intellij.ui.SystemNotifications"
                         serviceImplementation="com.intellij.ui.SystemNotificationsImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.keymap.KeymapGroupFactory"
@@ -352,6 +354,8 @@
     <applicationConfigurable parentId="preferences.general" instance="com.intellij.util.net.HttpProxyConfigurable" id="http.proxy" displayName="HTTP Proxy"/>
     <applicationConfigurable parentId="preferences.general" instance="com.intellij.ide.gdpr.ConsentConfigurable" id="consents" displayName="Data Sharing"/>
     <applicationConfigurable groupId="tools" displayName="Server Certificates" id="http.certificates" instance="com.intellij.util.net.ssl.CertificateConfigurable"/>
+    <applicationService serviceInterface="com.intellij.diagnostic.PluginProblemReporter"
+                        serviceImplementation="com.intellij.diagnostic.PluginProblemReporterImpl"/>
 
     <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.PlatformFileTypeFactory"/>
     <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.InternalFileTypeFactory"/>
@@ -422,11 +426,9 @@
 
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.ProjectStructureUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.FacetTypeUsageCollector"/>
-    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ProductivityUsageCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.plugins.DisabledPluginsUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.plugins.NonBundledPluginsUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.EditorColorSchemesUsagesCollector"/>
-    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.jdk.JdkInfoUsageCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.FontSizeInfoUsageCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.HiDPIModeUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.LaFUsagesCollector"/>
@@ -438,19 +440,19 @@
     <applicationInitializedListener implementation="com.intellij.openapi.application.ImportOldConfigsUsagesCollector$Trigger"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.RegistryApplicationUsagesCollector"/>
 
-    <statistics.counterUsagesCollector group_id="vcs.diff.trigger" version="1"/>
-    <statistics.counterUsagesCollector group_id="vcs.back.forward.trigger" version="1"/>
-    <statistics.counterUsagesCollector group_id="ide.self.update" version="1"/>
-    <statistics.counterUsagesCollector group_id="import.old.config" version="1"/>
-    <statistics.counterUsagesCollector group_id="ui.tips" version="1"/>
+    <statistics.counterUsagesCollector groupId="vcs.diff.trigger" version="1"/>
+    <statistics.counterUsagesCollector groupId="vcs.back.forward.trigger" version="1"/>
+    <statistics.counterUsagesCollector groupId="ide.self.update" version="1"/>
+    <statistics.counterUsagesCollector groupId="import.old.config" version="1"/>
+    <statistics.counterUsagesCollector groupId="ui.tips" version="1"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsOptionsUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsStatsUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsNamesUsagesCollector"/>
 
     <applicationInitializedListener implementation="com.intellij.openapi.vcs.statistics.VcsBackForwardUsageTriggerCollector$Trigger"/>
+    <applicationInitializedListener implementation="com.intellij.openapi.application.Preloader"/>
 
-    <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.RegistryProjectUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.EAPUsageCollector"/>
     <statistic.eventLog.fusEventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.FeatureUsageFileEventLoggerProvider"/>
     <statistic.eventLog.fusStateEventTracker implementation="com.intellij.internal.statistic.eventLog.SystemStateMonitor"/>
@@ -495,11 +497,11 @@
     <iconLayerProvider implementation="com.intellij.ide.LockedIconLayerProvider"/>
 
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileEditorProvider"/>
-    <editorNotificationProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileNotificationProvider"/>
+    <editorNotificationProviderApp implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileNotificationProvider"/>
     <fileDocumentSynchronizationVetoer implementation="com.intellij.openapi.fileEditor.impl.LargeFileSavingVetoer"/>
     <frameEditorComponentProvider implementation="com.intellij.openapi.wm.ex.DefaultFrameEditorComponentProvider"/>
 
-    <editorNotificationProvider implementation="com.intellij.openapi.editor.impl.ForcedSoftWrapsNotificationProvider"/>
+    <editorNotificationProviderApp implementation="com.intellij.openapi.editor.impl.ForcedSoftWrapsNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.ide.FileChangedNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserEditorNotificationProvider"/>
 
@@ -538,7 +540,7 @@
     <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupLocalConfiguration"/>
     <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupSharedConfiguration"/>
     <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupTaskManager"/>
-    <projectConfigurable groupId="tools" instance="com.intellij.execution.startup.ProjectStartupConfigurable"
+    <projectConfigurable groupId="tools" provider="com.intellij.execution.startup.ProjectStartupConfigurable$ProjectStartupConfigurableProvider"
                          displayName="Startup Tasks"
                          id="preferences.startup.tasks" nonDefaultProject="true"/>
     <postStartupActivity implementation="com.intellij.execution.startup.ProjectStartupRunner"/>
@@ -557,10 +559,6 @@
     <credentialStore implementation="com.intellij.credentialStore.LinuxSecretCredentialStoreFactory" os="linux"/>
 
     <projectService serviceImplementation="com.intellij.tasks.context.WorkingContextManager"/>
-
-    <projectService
-        serviceInterface="com.intellij.psi.availability.PsiAvailabilityService"
-        serviceImplementation="com.intellij.psi.availability.PsiAvailabilityServiceImpl"/>
 
     <sdkType implementation="com.intellij.openapi.projectRoots.SimpleJavaSdkType"/>
 
@@ -594,6 +592,59 @@
       <description>Intergation with global menu in Linux</description>
     </experimentalFeature>
 
+    <experimentalFeature id="recent.and.edited.files.together" percentOfUsers="100">
+      <description>Second Cmd/Ctrl+E switches to Recently Edited Files</description>
+    </experimentalFeature>
+
     <rawEditorTypedHandler implementationClass="com.intellij.openapi.editor.impl.EditorFactoryImpl$MyRawTypedHandler"/>
+
+    <stalledStorage file="statistics.toolbar.clicks.xml">
+      <components>
+        <component>ToolbarClicksCollector</component>
+      </components>
+    </stalledStorage>
+    <stalledStorage file="statistics.main_menu.xml">
+      <components>
+        <component>MainMenuCollector</component>
+      </components>
+    </stalledStorage>
+    <stalledStorage file="statistics.shortcuts.xml">
+      <components>
+        <component>ShortcutsCollector</component>
+      </components>
+    </stalledStorage>
+    <stalledStorage file="statistics.application.usages.xml">
+      <components>
+        <component>StatisticsApplicationUsages</component>
+        <component>UsageTrigger</component>
+      </components>
+    </stalledStorage>
+    <stalledStorage file="usage.statistics.xml">
+      <components>
+        <component>StatisticsApplicationUsages</component>
+        <component>UsageTrigger</component>
+        <component>ToolWindowCollector</component>
+        <component>ToolWindowsCollector</component>
+        <component>ShortcutsCollector</component>
+        <component>ToolbarClicksCollector</component>
+        <component>MainMenuCollector</component>
+        <component>IntentionsCollector</component>
+        <component>ActionsCollector</component>
+        <component>FUSApplicationUsageTrigger</component>
+      </components>
+    </stalledStorage>
+
+    <stalledStorage file="usage.statistics.xml" isProjectLevel="true">
+      <components>
+        <component>FUSProjectUsageTrigger</component>
+      </components>
+    </stalledStorage>
+    <stalledStorage file="workspace.xml" isProjectLevel="true">
+      <components>
+        <component>FUSProjectUsageTrigger</component>
+      </components>
+    </stalledStorage>
+
+    <postStartupActivity implementation="com.intellij.ide.StartUpPerformanceReporter" order="last"/>
   </extensions>
 </idea-plugin>

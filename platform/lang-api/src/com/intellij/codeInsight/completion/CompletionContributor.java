@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -8,6 +8,7 @@ import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
@@ -129,6 +130,7 @@ import java.util.List;
  * @author peter
  */
 public abstract class CompletionContributor {
+  public static final ExtensionPointName<CompletionContributorEP> EP = new ExtensionPointName<>("com.intellij.completion.contributor");
 
   private final MultiMap<CompletionType, Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>> myMap =
     new MultiMap<>();
@@ -255,5 +257,5 @@ public abstract class CompletionContributor {
     return DumbService.getInstance(project).filterByDumbAwareness(forLanguage(language));
   }
 
-  private static final LanguageExtension<CompletionContributor> INSTANCE = new CompletionExtension<>("com.intellij.completion.contributor");
+  private static final LanguageExtension<CompletionContributor> INSTANCE = new CompletionExtension<>(EP.getName());
 }

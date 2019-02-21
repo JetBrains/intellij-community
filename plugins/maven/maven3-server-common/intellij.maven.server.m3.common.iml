@@ -12,7 +12,12 @@
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="module-library">
       <library name="org.sonatype.nexus:nexus-indexer-artifact:1.0.1" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.sonatype.nexus:nexus-indexer-artifact:1.0.1" />
+        <properties maven-id="org.sonatype.nexus:nexus-indexer-artifact:1.0.1">
+          <exclude>
+            <dependency maven-id="org.sonatype.spice:spice-inject-plexus" />
+            <dependency maven-id="org.sonatype.plugin:plugin-host-api" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/nexus/nexus-indexer-artifact/1.0.1/nexus-indexer-artifact-1.0.1.jar!/" />
         </CLASSES>
@@ -22,7 +27,19 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="org.sonatype.nexus:nexus-indexer:3.0.4" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.sonatype.nexus:nexus-indexer:3.0.4" />
+        <properties maven-id="org.sonatype.nexus:nexus-indexer:3.0.4">
+          <exclude>
+            <dependency maven-id="org.sonatype.nexus:nexus-indexer-artifact" />
+            <dependency maven-id="org.sonatype.plugin:plugin-host-api" />
+            <dependency maven-id="org.apache.maven:maven-artifact" />
+            <dependency maven-id="org.apache.maven:maven-model" />
+            <dependency maven-id="org.apache.maven.wagon:wagon-provider-api" />
+            <dependency maven-id="org.apache.maven.archetype:archetype-common" />
+            <dependency maven-id="org.sonatype.spice:spice-inject-plexus" />
+            <dependency maven-id="org.apache.lucene:lucene-core" />
+            <dependency maven-id="org.apache.lucene:lucene-highlighter" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/nexus/nexus-indexer/3.0.4/nexus-indexer-3.0.4.jar!/" />
         </CLASSES>
@@ -32,7 +49,11 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="org.apache.maven.shared:maven-dependency-tree:1.2" type="repository">
-        <properties maven-id="org.apache.maven.shared:maven-dependency-tree:1.2" />
+        <properties maven-id="org.apache.maven.shared:maven-dependency-tree:1.2">
+          <exclude>
+            <dependency maven-id="org.apache.maven:maven-project" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/shared/maven-dependency-tree/1.2/maven-dependency-tree-1.2.jar!/" />
         </CLASSES>

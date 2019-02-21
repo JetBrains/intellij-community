@@ -197,7 +197,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
     }
 
     private fun getHead(pack: DataPack): Hash? {
-      return pack.refsModel.findBranch("HEAD", root)?.commitHash
+      return pack.refsModel.findBranch(VcsLogUtil.HEAD, root)?.commitHash
     }
   }
 
@@ -231,7 +231,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       val revisionFilter = when {
         showAllBranches -> null
         revision != null -> VcsLogFilterObject.fromCommit(CommitId(revision, root))
-        else -> VcsLogFilterObject.fromBranch("HEAD")
+        else -> VcsLogFilterObject.fromBranch(VcsLogUtil.HEAD)
       }
       return VcsLogFilterObject.collection(fileFilter, revisionFilter)
     }

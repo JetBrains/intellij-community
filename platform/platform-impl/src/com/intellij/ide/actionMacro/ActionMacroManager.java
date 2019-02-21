@@ -486,6 +486,12 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
       super.update(e);
       e.getPresentation().setEnabled(!getInstance().isPlaying());
     }
+
+    @Nullable
+    @Override
+    public String getTemplateText() {
+      return "Invoke Macro";
+    }
   }
 
   private class MyKeyPostpocessor implements IdeEventQueue.EventDispatcher {

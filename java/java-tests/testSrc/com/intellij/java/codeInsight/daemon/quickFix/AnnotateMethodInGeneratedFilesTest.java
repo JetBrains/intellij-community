@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.registry.Registry;
@@ -31,20 +30,7 @@ public class AnnotateMethodInGeneratedFilesTest extends LightCodeInsightFixtureT
     super.setUp();
     Registry.get("idea.report.nullity.missing.in.generated.overriders").setValue(false, getTestRootDisposable());
     myFixture.enableInspections(NullableStuffInspection.class);
-    Extensions.getRootArea().getExtensionPoint(GeneratedSourcesFilter.EP_NAME).registerExtension(myGeneratedSourcesFilter);
-  }
-
-  @Override
-  public void tearDown() throws Exception {
-    try {
-      Extensions.getRootArea().getExtensionPoint(GeneratedSourcesFilter.EP_NAME).unregisterExtension(myGeneratedSourcesFilter);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+    GeneratedSourcesFilter.EP_NAME.getPoint(null).registerExtension(myGeneratedSourcesFilter, getTestRootDisposable());
   }
 
   public void testAnnotateOverriddenMethod() {

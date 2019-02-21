@@ -48,11 +48,13 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
         "KEEP_SIMPLE_BLOCKS_IN_ONE_LINE",
         "KEEP_SIMPLE_METHODS_IN_ONE_LINE",
         "KEEP_SIMPLE_CLASSES_IN_ONE_LINE",
+        "KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE",
 
         "WRAP_LONG_LINES",
 
         "CLASS_BRACE_STYLE",
         "METHOD_BRACE_STYLE",
+        "LAMBDA_BRACE_STYLE",
         "BRACE_STYLE",
 
         "EXTENDS_LIST_WRAP",
@@ -158,6 +160,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
                                    "SPACE_AROUND_ADDITIVE_OPERATORS",
                                    "SPACE_AROUND_MULTIPLICATIVE_OPERATORS",
                                    "SPACE_AROUND_SHIFT_OPERATORS",
+                                   "SPACE_AROUND_LAMBDA_ARROW",
                                    //"SPACE_AROUND_UNARY_OPERATOR",
                                    "SPACE_AFTER_COMMA",
                                    "SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS",
@@ -260,6 +263,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
     commonSettings.SPACE_WITHIN_BRACES = true;
     commonSettings.KEEP_SIMPLE_CLASSES_IN_ONE_LINE = true;
     commonSettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+    commonSettings.KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = true;
   }
 
   @Override

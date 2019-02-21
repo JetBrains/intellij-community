@@ -2,11 +2,11 @@
 package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StorageUtilKt;
-import com.intellij.configurationStore.StoreUtil;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.AppLifecycleListener;
+import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.StartupManagerEx;
@@ -246,6 +246,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     CHECK_START = currentTime;
 
     if (getLeakedProjectsCount() >= MAX_LEAKY_PROJECTS) {
+      //noinspection CallToSystemGC
       System.gc();
       Collection<Project> copy = getLeakedProjects();
       myProjects.clear();
@@ -372,7 +373,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @Override
   public boolean openProject(@NotNull final Project project) {
+    //noinspection TestOnlyProblems
     if (isLight(project)) {
+      //noinspection TestOnlyProblems
       ((ProjectImpl)project).setTemporarilyDisposed(false);
       boolean isInitialized = StartupManagerEx.getInstanceEx(project).startupActivityPassed();
       if (isInitialized) {
@@ -453,6 +456,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         return false;
       }
       myOpenProjects = ArrayUtil.append(myOpenProjects, project);
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
       ProjectCoreUtil.theProject = myOpenProjects.length == 1 ? project : null;
       myOpenProjectByHash.put(project.getLocationHash(), project);
     }
@@ -462,6 +466,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private void removeFromOpened(@NotNull Project project) {
     synchronized (lock) {
       myOpenProjects = ArrayUtil.remove(myOpenProjects, project);
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
       ProjectCoreUtil.theProject = myOpenProjects.length == 1 ? myOpenProjects[0] : null;
       myOpenProjectByHash.values().remove(project); // remove by value and not by key!
     }
@@ -652,12 +657,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
     if (isLight(project)) {
       // if we close project at the end of the test, just mark it closed; if we are shutting down the entire test framework, proceed to full dispose
-      if (!((ProjectImpl)project).isTemporarilyDisposed()) {
-        ((ProjectImpl)project).setTemporarilyDisposed(true);
+      ProjectImpl projectImpl = (ProjectImpl)project;
+      if (!projectImpl.isTemporarilyDisposed()) {
+        projectImpl.setTemporarilyDisposed(true);
         removeFromOpened(project);
         return true;
       }
-      ((ProjectImpl)project).setTemporarilyDisposed(false);
+      projectImpl.setTemporarilyDisposed(false);
     }
     else if (!isProjectOpened(project)) {
       return true;
@@ -674,17 +680,15 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
       if (isSaveProject) {
         FileDocumentManager.getInstance().saveAllDocuments();
-        StoreUtil.saveSettings(project, true);
-        if (isSaveApp) {
-          StoreUtil.saveSettings(app, true);
-        }
+        SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(project, isSaveApp);
       }
 
       if (checkCanClose && !ensureCouldCloseIfUnableToSave(project)) {
         return false;
       }
 
-      fireProjectClosing(project); // somebody can start progress here, do not wrap in write action
+      // somebody can start progress here, do not wrap in write action
+      fireProjectClosing(project);
 
       app.runWriteAction(() -> {
         removeFromOpened(project);
@@ -710,7 +714,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @Override
   public boolean closeAndDispose(@NotNull Project project) {
-    return closeProject(project, true /* save project */, false /* don't save app */, true /* dispose project */, true);
+    return closeProject(project, true /* save project */, false /* don't save app */, true /* dispose project */, true /* checkCanClose */);
   }
 
   private void fireProjectClosing(@NotNull Project project) {

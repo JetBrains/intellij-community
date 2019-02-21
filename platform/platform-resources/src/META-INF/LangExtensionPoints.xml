@@ -509,6 +509,8 @@
                     interface="com.intellij.execution.dashboard.RunDashboardContributor"/>
     <extensionPoint name="runDashboardGroupingRule"
                     interface="com.intellij.execution.dashboard.RunDashboardGroupingRule"/>
+    <extensionPoint name="serviceViewContributor"
+                    interface="com.intellij.execution.services.ServiceViewContributor"/>
 
     <extensionPoint name="hectorComponentProvider" interface="com.intellij.openapi.editor.HectorComponentPanelsProvider"
                     area="IDEA_PROJECT"/>
@@ -601,6 +603,8 @@
                     interface="com.intellij.codeInsight.navigation.actions.TypeDeclarationProvider"/>
     <extensionPoint name="gotoTargetRendererProvider"
                     interface="com.intellij.codeInsight.navigation.GotoTargetRendererProvider"/>
+    <extensionPoint name="gotoDeclaration"
+                    interface="com.intellij.codeInsight.navigation.GotoDeclarationProvider"/>
 
     <extensionPoint name="navbar" interface="com.intellij.ide.navigationToolbar.NavBarModelExtension"/>
 
@@ -889,8 +893,7 @@
 
     <extensionPoint name="predefinedCodeStyle" interface="com.intellij.psi.codeStyle.PredefinedCodeStyle"/>
 
-    <extensionPoint name="semContributor"
-                    beanClass="com.intellij.semantic.SemContributorEP" area="IDEA_PROJECT">
+    <extensionPoint name="semContributor" beanClass="com.intellij.semantic.SemContributorEP">
       <with attribute="implementation" implements="com.intellij.semantic.SemContributor"/>
     </extensionPoint>
 

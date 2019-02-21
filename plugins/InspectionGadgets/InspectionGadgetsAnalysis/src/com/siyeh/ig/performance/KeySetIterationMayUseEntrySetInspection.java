@@ -190,7 +190,8 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
         (PsiMethodCallExpression)new CommentTracker().replaceAndRestoreComments(iteratedValue, mapRef.getText() + "."+mode.myDisplayName);
       mapRef = (PsiReferenceExpression)newIterationValue.getMethodExpression().getQualifierExpression();
       PsiType collectionType = newIterationValue.getType();
-      PsiType newParameterType = PsiUtil.substituteTypeParameter(collectionType, CommonClassNames.JAVA_UTIL_COLLECTION, 0, true);
+      PsiType newParameterType = GenericsUtil
+        .getVariableTypeByExpressionType(PsiUtil.substituteTypeParameter(collectionType, CommonClassNames.JAVA_UTIL_COLLECTION, 0, true));
       boolean insertCast = false;
       if (newParameterType == null) {
         newParameterType = TypeUtils.getObjectType(foreachStatement);

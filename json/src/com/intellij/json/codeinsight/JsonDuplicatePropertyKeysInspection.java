@@ -37,6 +37,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +53,7 @@ import java.util.stream.Collectors;
  * @author Mikhail Golubev
  */
 public class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
+  private static final String COMMENT = "$comment";
   @Nls
   @NotNull
   @Override
@@ -62,6 +64,7 @@ public class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+    boolean isSchemaFile = JsonSchemaService.isSchemaFile(holder.getFile());
     return new JsonElementVisitor() {
       @Override
       public void visitObject(@NotNull JsonObject o) {
@@ -72,7 +75,7 @@ public class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
         for (Map.Entry<String, Collection<PsiElement>> entry : keys.entrySet()) {
           final Collection<PsiElement> sameNamedKeys = entry.getValue();
           final String entryKey = entry.getKey();
-          if (sameNamedKeys.size() > 1) {
+          if (sameNamedKeys.size() > 1 && (!isSchemaFile || !COMMENT.equalsIgnoreCase(entryKey))) {
             for (PsiElement element : sameNamedKeys) {
               holder.registerProblem(element, JsonBundle.message("inspection.duplicate.keys.msg.duplicate.keys", entryKey),
                                      new NavigateToDuplicatesFix(sameNamedKeys, element, entryKey));

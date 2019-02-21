@@ -10,7 +10,7 @@ import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.junit.InheritorChooser;
-import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -22,7 +22,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.util.ArrayUtil;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +31,6 @@ import org.jetbrains.plugins.gradle.util.TasksToRun;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.getMethodLocation;
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.applyTestConfiguration;
@@ -74,7 +72,6 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
 
     VirtualFile source = testClass.getContainingFile().getVirtualFile();
     TasksToRun tasksToRun = findTestsTaskToRun(source, context.getProject());
-    if (tasksToRun.isEmpty()) return false;
 
     configuration.getSettings().setExternalProjectPath(projectPath);
     configuration.getSettings().setTaskNames(tasksToRun);
@@ -149,7 +146,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
     final InheritorChooser inheritorChooser = new InheritorChooser() {
       @Override
       protected void runForClasses(List<PsiClass> classes, PsiMethod method, ConfigurationContext context, Runnable performRunnable) {
-        chooseTestClassConfiguration(fromContext, context, performRunnable, ArrayUtil.toObjectArray(classes, PsiClass.class));
+        chooseTestClassConfiguration(fromContext, context, performRunnable, classes.toArray(PsiClass.EMPTY_ARRAY));
       }
 
       @Override
@@ -158,32 +155,28 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
       }
     };
     if (inheritorChooser.runMethodInAbstractClass(context, performRunnable, null, (PsiClass)fromContext.getSourceElement())) return;
-    if (RunConfigurationProducer.getInstance(PatternGradleConfigurationProducer.class).isMultipleElementsSelected(context)) return;
-    Location contextLocation = context.getLocation();
-    if (contextLocation == null) return;
-    PsiClass psiClass = getPsiClassForLocation(contextLocation);
-    if (psiClass == null) return;
+    PsiClass psiClass = (PsiClass)fromContext.getSourceElement();
     chooseTestClassConfiguration(fromContext, context, performRunnable, psiClass);
   }
 
-  private static void chooseTestClassConfiguration(@NotNull ConfigurationFromContext fromContext,
+  private void chooseTestClassConfiguration(@NotNull ConfigurationFromContext fromContext,
                                                    @NotNull ConfigurationContext context,
                                                    @NotNull Runnable performRunnable,
                                                    @NotNull PsiClass... classes) {
-    String systemId = ExternalSystemModulePropertyManager.getInstance(context.getModule()).getExternalSystemId();
-    if (!StringUtil.equals(systemId, GradleConstants.SYSTEM_ID.toString())) return;
-    TasksChooser tasksChooser = new TasksChooser() {
-      @Override
-      protected void choosesTasks(@NotNull List<? extends Map<String, ? extends List<String>>> tasks) {
+    String locationName = classes.length == 1 ? classes[0].getName() : null;
+    DataContext dataContext = TestTasksChooser.contextWithLocationName(context.getDataContext(), locationName);
+    getTestTasksChooser().chooseTestTasks(context.getProject(), dataContext, classes, tasks -> {
         ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
         ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
         Function1<PsiClass, String> createFilter = (psiClass) -> createTestFilterFrom(psiClass, /*hasSuffix=*/true);
-        if (!applyTestConfiguration(settings, context.getProject(), tasks, classes, createFilter)) return;
+        if (!applyTestConfiguration(settings, context.getModule(), tasks, classes, createFilter)) {
+          LOG.warn("Cannot apply class test configuration, uses raw run configuration");
+          performRunnable.run();
+          return;
+        }
         configuration.setName(StringUtil.join(classes, aClass -> aClass.getName(), "|"));
         performRunnable.run();
-      }
-    };
-    tasksChooser.runTaskChoosing(context, classes);
+    });
   }
 
   @Deprecated

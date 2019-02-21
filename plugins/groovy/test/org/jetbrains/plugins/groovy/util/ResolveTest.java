@@ -35,18 +35,19 @@ public interface ResolveTest extends BaseTest {
     return referenceByText(text).resolve(false);
   }
 
-  default <T extends PsiElement> void resolveTest(@NotNull String text, @Nullable Class<T> clazz) {
-    resolveTest(referenceByText(text), clazz);
+  default <T extends PsiElement> T resolveTest(@NotNull String text, @Nullable Class<T> clazz) {
+    return resolveTest(referenceByText(text), clazz);
   }
 
-  default <T extends PsiElement> void resolveTest(@NotNull GroovyReference reference, @Nullable Class<T> clazz) {
+  default <T extends PsiElement> T resolveTest(@NotNull GroovyReference reference, @Nullable Class<T> clazz) {
     Collection<? extends GroovyResolveResult> results = reference.resolve(false);
     if (clazz == null) {
       assertEmpty(results);
+      return null;
     }
     else {
       PsiElement resolved = assertOneElement(results).getElement();
-      assertInstanceOf(resolved, clazz);
+      return assertInstanceOf(resolved, clazz);
     }
   }
 }

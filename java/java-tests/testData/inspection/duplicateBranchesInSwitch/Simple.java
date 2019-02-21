@@ -8,7 +8,7 @@ class C {
         bar("B");
         break;
       case 3:
-        <weak_warning descr="Duplicate branch in 'switch' statement">bar("A");</weak_warning>
+        <weak_warning descr="Duplicate branch in 'switch'">bar("A");</weak_warning>
         break;
     }
   }

@@ -101,9 +101,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
           if (selection >= 0) {
             myFilesTable.setRowSelectionInterval(selection, selection);
           }
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(myFilesTable, true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myFilesTable, true));
         }).setEditAction(button -> {
           final int selectedRow = myFilesTable.getSelectedRow();
           //noinspection ConstantConditions
@@ -385,9 +383,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
         showEditorDialog(myLogFileOptions);
         JTextField textField = getChildComponent();
         textField.setText(myLogFileOptions.getName());
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(textField, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(textField, true));
         myModel.fireTableDataChanged();
       });
     }

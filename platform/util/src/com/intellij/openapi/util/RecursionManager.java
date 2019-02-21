@@ -15,38 +15,56 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 
 /**
- * There are moments when a computation A requires the result of computation B, which in turn requires C, which (unexpectedly) requires A.
- * If there are no other ways to solve it, it helps to track all the computations in the thread stack and return some default value when
- * asked to compute A for the second time. {@link RecursionGuard#doPreventingRecursion(Object, boolean, Computable)} does precisely this.
+ * A utility to prevent endless recursion and ensure the caching returns stable results if such endless recursion is prevented.<p></p>
  *
- * It's quite useful to cache some computation results to avoid performance problems. But not everyone realises that in the above situation it's
- * incorrect to cache the results of B and C, because they all are based on the default incomplete result of the A calculation. If the actual
- * computation sequence were C->A->B->C, the result of the outer C most probably wouldn't be the same as in A->B->C->A, where it depends on
- * the null A result directly. The natural wish is that the program with cache enabled has the same results as the one without cache. In the above
- * situation the result of C would depend on the order of invocations of C and A, which can be hardly predictable in multi-threaded environments.
+ * Imagine a method {@code A()} calls method {@code B()}, which in turn calls {@code C()},
+ * which (unexpectedly) calls {@code A()} again (it's just an example; the loop could be shorter or longer).
+ * This would normally result in endless recursion and stack overflow. One should avoid situations like these at all cost,
+ * but if that's impossible (e.g. due to different plugins unaware of each other yet calling each other),
+ * {@code RecursionManager} is to the rescue.<p></p>
  *
- * Therefore if you use any kind of cache, it probably would make your program safer to cache only when it's safe to do this. See
+ * It helps to track all the computations in the thread stack and return some default value when
+ * asked to compute {@code A()} for the second time. {@link #doPreventingRecursion} does precisely this, returning {@code null} when
+ * endless recursion would otherwise happen.<p></p>
+ *
+ * Additionally, imagine all these methods {@code A()}, {@code B()} and {@code C()} cache their results.
+ * Note that if not {@code A()} is called first, but {@code B()} or {@code C()}, the endless recursion would stay just the same,
+ * but it would be prevented in different places ({@code B()} or {@code C()}, respectively). That'd mean there's 3 situations possible:
+ * <ol>
+ *   <li>{@code C()} calls {@code A()} and gets {@code null} as the result (if {@code A()} is first in the stack)</li>
+ *   <li>{@code C()} calls {@code A()} which calls {@code B()} and gets {@code null} as the result (if {@code B()} is first in the stack)</li>
+ *   <li>{@code C()} calls {@code A()} which calls {@code B()} which calls {@code C()} and gets {@code null} as the result (if {@code C()} is first in the stack)</li>
+ * </ol>
+ * Most likely, the results of {@code C()} would be different in those 3 cases, and it'd be unwise to cache just any of them randomly,
+ * whatever is calculated first. In a multithreaded environment, that'd lead to unpredictability.<p></p>
+ * 
+ * Of the 3 possible scenarios above, caching for {@code C()} makes sense only for the last one, because that's the result we'd get if there were no caching at all.
+ * Therefore, if you use any kind of caching in an endless-recursion-prone environment, please ensure you don't cache incomplete results
+ * that happen when you're inside the evil recursion loop.
+ * {@code RecursionManager} assists in distinguishing this situation and allowing caching outside that loop, but disallowing it inside.<p></p>
+ *
+ * To prevent caching incorrect values, please create a {@code private static final} field of {@link #createGuard} call, and then use
  * {@link RecursionGuard#markStack()} and {@link RecursionGuard.StackStamp#mayCacheNow()}
- * for the advice.
+ * on it.<p></p>
  *
- * @see RecursionGuard
- * @see RecursionGuard.StackStamp
+ * Note that the above only helps with idempotent recursion loops, that is, the ones that stabilize after one iteration, so that
+ * {@code A()->B()->C()->null} returns the same value as {@code A()->B()->C()->A()->B()->C()->null} etc. If your functions lack that quality
+ * (e.g. if they add items to some list), you won't get stable caching results ever, and your code will produce unpredictable results
+ * with hard-to-catch bugs. Therefore, please strive for idempotence.
+ *
  * @author peter
  */
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class RecursionManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.RecursionManager");
   private static final Object NULL = ObjectUtils.sentinel("RecursionManager.NULL");
-  private static final ThreadLocal<CalculationStack> ourStack = new ThreadLocal<CalculationStack>() {
-    @Override
-    protected CalculationStack initialValue() {
-      return new CalculationStack();
-    }
-  };
+  private static final ThreadLocal<CalculationStack> ourStack = ThreadLocal.withInitial(CalculationStack::new);
   private static boolean ourAssertOnPrevention;
 
   /**
-   * @see RecursionGuard#doPreventingRecursion(Object, boolean, Computable)
+   * Run the given computation, unless it's already running in this thread.
+   * This is same as {@link RecursionGuard#doPreventingRecursion(Object, boolean, Computable)},
+   * without a need to bother to create {@link RecursionGuard}.
    */
   @Nullable
   public static <T> T doPreventingRecursion(@NotNull Object key, boolean memoize, Computable<T> computation) {
@@ -131,7 +149,7 @@ public class RecursionManager {
       @NotNull
       @Override
       public List<Object> currentStack() {
-        ArrayList<Object> result = new ArrayList<Object>();
+        ArrayList<Object> result = new ArrayList<>();
         LinkedHashMap<MyKey, Integer> map = ourStack.get().progressMap;
         for (MyKey pair : map.keySet()) {
           if (pair.guardId.equals(id)) {
@@ -188,9 +206,9 @@ public class RecursionManager {
     private int reentrancyCount;
     private int memoizationStamp;
     private int depth;
-    private final LinkedHashMap<MyKey, Integer> progressMap = new LinkedHashMap<MyKey, Integer>();
-    private final Set<MyKey> toMemoize = new THashSet<MyKey>();
-    private final THashMap<MyKey, MyKey> key2ReentrancyDuringItsCalculation = new THashMap<MyKey, MyKey>();
+    private final LinkedHashMap<MyKey, Integer> progressMap = new LinkedHashMap<>();
+    private final Set<MyKey> toMemoize = new THashSet<>();
+    private final THashMap<MyKey, MyKey> key2ReentrancyDuringItsCalculation = new THashMap<>();
     private final Map<MyKey, Map<MyKey, Object>> intermediateCache = ContainerUtil.createSoftMap();
     private int enters;
     private int exits;
@@ -274,10 +292,10 @@ public class RecursionManager {
       if (depth == 0) {
         intermediateCache.clear();
         if (!key2ReentrancyDuringItsCalculation.isEmpty()) {
-          LOG.error("non-empty key2ReentrancyDuringItsCalculation: " + new HashMap<MyKey, MyKey>(key2ReentrancyDuringItsCalculation));
+          LOG.error("non-empty key2ReentrancyDuringItsCalculation: " + new HashMap<>(key2ReentrancyDuringItsCalculation));
         }
         if (!toMemoize.isEmpty()) {
-          LOG.error("non-empty toMemoize: " + new HashSet<MyKey>(toMemoize));
+          LOG.error("non-empty toMemoize: " + new HashSet<>(toMemoize));
         }
       }
 
@@ -292,7 +310,7 @@ public class RecursionManager {
 
     private void enableMemoization(MyKey realKey, Set<MyKey> loop) {
       toMemoize.addAll(loop);
-      List<MyKey> stack = new ArrayList<MyKey>(progressMap.keySet());
+      List<MyKey> stack = new ArrayList<>(progressMap.keySet());
 
       for (MyKey key : loop) {
         final MyKey existing = key2ReentrancyDuringItsCalculation.get(key);
@@ -309,9 +327,9 @@ public class RecursionManager {
         throw new AssertionError("zero1");
       }
 
-      Set<MyKey> loop = new THashSet<MyKey>();
+      Set<MyKey> loop = new THashSet<>();
       boolean inLoop = false;
-      for (Map.Entry<MyKey, Integer> entry: new ArrayList<Map.Entry<MyKey, Integer>>(progressMap.entrySet())) {
+      for (Map.Entry<MyKey, Integer> entry: new ArrayList<>(progressMap.entrySet())) {
         if (inLoop) {
           entry.setValue(reentrancyCount);
           loop.add(entry.getKey());

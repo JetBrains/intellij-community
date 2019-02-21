@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -112,7 +113,8 @@ public abstract class PluginTableModel extends AbstractTableModel implements Sor
     fireTableCellUpdated(rowIndex, columnIndex);
   }
 
-  public List<IdeaPluginDescriptorImpl> dependent(IdeaPluginDescriptorImpl plugin) {
+  @NotNull
+  public List<IdeaPluginDescriptorImpl> dependent(@NotNull IdeaPluginDescriptorImpl plugin) {
     List<IdeaPluginDescriptorImpl> list = new ArrayList<>();
     for (IdeaPluginDescriptor any : getAllPlugins()) {
       if (any instanceof IdeaPluginDescriptorImpl) {

@@ -117,7 +117,7 @@
     <runAnything.helpGroup implementation="org.jetbrains.plugins.gradle.execution.GradleRunAnythingHelpGroup"/>
 
     <statistics.projectUsagesCollector implementation="org.jetbrains.plugins.gradle.statistics.GradleSettingsCollector"/>
-    <statistics.counterUsagesCollector group_id="build.gradle.actions" version="1"/>
+    <statistics.counterUsagesCollector groupId="build.gradle.actions" version="1"/>
   </extensions>
 
   <actions>

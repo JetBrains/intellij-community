@@ -1,0 +1,7 @@
+public class X {
+  int f(boolean a, boolean b, boolean c) {
+    if (a && (<spot>b || c</spot>)) {
+      return 42;
+    }
+  }
+}

@@ -96,12 +96,12 @@ public class AutoPopupController implements Disposable {
     scheduleAutoPopup(editor, completionType, condition);
   }
 
-  public void scheduleAutoPopup(final Editor editor, CompletionType completionType, @Nullable final Condition<PsiFile> condition) {
+  public void scheduleAutoPopup(@NotNull Editor editor, @NotNull CompletionType completionType, @Nullable final Condition<PsiFile> condition) {
     if (ApplicationManager.getApplication().isUnitTestMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
       return;
     }
 
-    boolean alwaysAutoPopup = editor != null && Boolean.TRUE.equals(editor.getUserData(ALWAYS_AUTO_POPUP));
+    boolean alwaysAutoPopup = Boolean.TRUE.equals(editor.getUserData(ALWAYS_AUTO_POPUP));
     if (!CodeInsightSettings.getInstance().AUTO_POPUP_COMPLETION_LOOKUP && !alwaysAutoPopup) {
       return;
     }
@@ -118,21 +118,7 @@ public class AutoPopupController implements Disposable {
       currentCompletion.closeAndFinish(true);
     }
 
-    final CompletionPhase.CommittingDocuments phase = new CompletionPhase.CommittingDocuments(null, editor);
-    CompletionServiceImpl.setCompletionPhase(phase);
-    phase.ignoreCurrentDocumentChange();
-
-    runTransactionWithEverythingCommitted(myProject, () -> {
-      if (phase.checkExpired()) return;
-
-      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-      if (file != null && condition != null && !condition.value(file)) {
-        CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
-        return;
-      }
-
-      CompletionAutoPopupHandler.invokeCompletion(completionType, true, myProject, editor, 0, false);
-    });
+    CompletionPhase.CommittingDocuments.scheduleAsyncCompletion(editor, completionType, condition, myProject, null);
   }
 
   public void scheduleAutoPopup(final Editor editor) {
@@ -193,6 +179,10 @@ public class AutoPopupController implements Disposable {
   public void dispose() {
   }
 
+  /**
+   * @deprecated can be emulated with {@link AppUIExecutor}
+   */
+  @Deprecated
   public static void runTransactionWithEverythingCommitted(@NotNull final Project project, @NotNull final Runnable runnable) {
     AppUIExecutor.onUiThread().later().withDocumentsCommitted(project).inTransaction(project).execute(runnable);
   }

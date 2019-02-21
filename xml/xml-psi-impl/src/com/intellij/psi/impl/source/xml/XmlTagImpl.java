@@ -150,7 +150,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
       return CachedValuesManager
         .getCachedValue(this, () -> Result.create(getReferencesImpl(PsiReferenceService.Hints.NO_HINTS),
                                                   PsiModificationTracker.MODIFICATION_COUNT,
-                                                  externalResourceModificationTracker()));
+                                                  externalResourceModificationTracker())).clone();
     }
 
     return getReferencesImpl(hints);
@@ -471,13 +471,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   @Override
   public XmlElementDescriptor getDescriptor() {
     return CachedValuesManager.getCachedValue(this, () -> {
-      final RecursionGuard.StackStamp stamp = ourGuard.markStack();
-      final XmlElementDescriptor descriptor = ourGuard.doPreventingRecursion(this, true, this::computeElementDescriptor);
-      if (stamp.mayCacheNow()) {
-        return Result.create(descriptor, PsiModificationTracker.MODIFICATION_COUNT, externalResourceModificationTracker());
-      }
-      // = do not cache
-      return Result.create(descriptor, ModificationTracker.EVER_CHANGED);
+      XmlElementDescriptor descriptor = ourGuard.doPreventingRecursion(this, true, this::computeElementDescriptor);
+      return Result.create(descriptor, PsiModificationTracker.MODIFICATION_COUNT, externalResourceModificationTracker());
     });
   }
 
@@ -600,7 +595,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     if (attributes == null) {
       myAttributes = attributes = calculateAttributes();
     }
-    return attributes;
+    return attributes.clone();
   }
 
   @NotNull
@@ -675,7 +670,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   @Override
   @NotNull
   public XmlTag[] getSubTags() {
-    return CachedValuesManager.getManager(getProject()).getParameterizedCachedValue(this, SUBTAGS_KEY, CACHED_VALUE_PROVIDER, false, this);
+    return CachedValuesManager.getManager(getProject()).getParameterizedCachedValue(this, SUBTAGS_KEY, CACHED_VALUE_PROVIDER, false, this).clone();
   }
 
   protected void fillSubTags(final List<? super XmlTag> result) {

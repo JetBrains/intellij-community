@@ -49,12 +49,12 @@ public class JBZipFile implements Closeable {
   /**
    * A list of entries in the file.
    */
-  private final List<JBZipEntry> entries = new ArrayList<JBZipEntry>(HASH_SIZE);
+  private final List<JBZipEntry> entries = new ArrayList<>(HASH_SIZE);
 
   /**
    * A map of entry names.
    */
-  private final Map<String, JBZipEntry> nameMap = new HashMap<String, JBZipEntry>(HASH_SIZE);
+  private final Map<String, JBZipEntry> nameMap = new HashMap<>(HASH_SIZE);
 
   /**
    * The encoding to use for filenames and the file comment
@@ -438,7 +438,7 @@ public class JBZipFile implements Closeable {
     if (myOutputStream != null) {
       myOutputStream = null;
 
-      final Map<JBZipEntry, byte[]> existingEntries = new LinkedHashMap<JBZipEntry, byte[]>();
+      final Map<JBZipEntry, byte[]> existingEntries = new LinkedHashMap<>();
       for (JBZipEntry entry : entries) {
         existingEntries.put(entry, entry.getData());
       }

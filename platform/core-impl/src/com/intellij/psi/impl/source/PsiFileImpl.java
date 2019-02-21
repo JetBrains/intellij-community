@@ -44,7 +44,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.lang.reflect.Array;
 import java.util.*;
 
 public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiFileWithStubSupport, Queryable {
@@ -325,20 +324,19 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public void subtreeChanged() {
-    doClearCaches("subtreeChanged");
-    getViewProvider().rootChanged(this);
-  }
-
-  private void doClearCaches(String reason) {
-    final FileElement tree = getTreeElement();
+    FileElement tree = getTreeElement();
     if (tree != null) {
       tree.clearCaches();
     }
 
     synchronized (myPsiLock) {
-      updateTrees(myTrees.clearStub(reason));
+      if (myTrees.useSpineRefs()) {
+        LOG.error("Somebody has requested stubbed spine during PSI operations; not only is this expensive, but will also cause stub PSI invalidation");
+      }
+      updateTrees(myTrees.clearStub("subtreeChanged"));
     }
     clearCaches();
+    getViewProvider().rootChanged(this);
   }
 
   @Override
@@ -521,7 +519,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     for (PsiElement child : getChildren()) {
       if (aClass.isInstance(child)) result.add((T)child);
     }
-    return result.toArray((T[]) Array.newInstance(aClass, result.size()));
+    return result.toArray(ArrayUtil.newArray(aClass, result.size()));
   }
 
   @SuppressWarnings("unchecked")

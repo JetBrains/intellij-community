@@ -34,25 +34,31 @@ import java.util.List;
  */
 @SuppressWarnings("HardCodedStringLiteral")
 public class JDOMUtil {
-  private static final Condition<Attribute> NOT_EMPTY_VALUE_CONDITION = new Condition<Attribute>() {
-    @Override
-    public boolean value(Attribute attribute) {
-      return !StringUtil.isEmpty(attribute.getValue());
-    }
-  };
+  private static final Condition<Attribute> NOT_EMPTY_VALUE_CONDITION = attribute -> !StringUtil.isEmpty(attribute.getValue());
 
+  private static final String XML_INPUT_FACTORY_KEY = "javax.xml.stream.XMLInputFactory";
+  private static final String XML_INPUT_FACTORY_IMPL = "com.sun.xml.internal.stream.XMLInputFactoryImpl";
   private static final NotNullLazyValue<XMLInputFactory> XML_INPUT_FACTORY = new NotNullLazyValue<XMLInputFactory>() {
     @NotNull
     @Override
     protected XMLInputFactory compute() {
       // requests default JRE factory implementation instead of an incompatible one from the classpath
-      System.setProperty("javax.xml.stream.XMLInputFactory", "com.sun.xml.internal.stream.XMLInputFactoryImpl");
-      XMLInputFactory factory = XMLInputFactory.newFactory();
+      String property = System.setProperty(XML_INPUT_FACTORY_KEY, XML_INPUT_FACTORY_IMPL);
+      XMLInputFactory factory;
       try {
-        factory.setProperty("http://java.sun.com/xml/stream/properties/report-cdata-event", true);
+        factory = XMLInputFactory.newFactory();
       }
-      catch (Exception e) {
-        getLogger().error("cannot set \"report-cdata-event\" property for XMLInputFactory", e);
+      finally {
+        if (property != null) System.setProperty(XML_INPUT_FACTORY_KEY, property);
+        else System.clearProperty(XML_INPUT_FACTORY_KEY);
+      }
+      if (!SystemInfo.isIbmJvm) {
+        try {
+          factory.setProperty("http://java.sun.com/xml/stream/properties/report-cdata-event", true);
+        }
+        catch (Exception e) {
+          getLogger().error("cannot set \"report-cdata-event\" property for XMLInputFactory", e);
+        }
       }
       factory.setProperty(XMLInputFactory.IS_COALESCING, true);
       factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
@@ -65,7 +71,7 @@ public class JDOMUtil {
 
   @NotNull
   public static List<Element> getChildren(@Nullable Element parent) {
-    return parent == null ? Collections.<Element>emptyList() : parent.getChildren();
+    return parent == null ? Collections.emptyList() : parent.getChildren();
   }
 
   @NotNull
@@ -344,12 +350,8 @@ public class JDOMUtil {
   }
 
   public static void writeDocument(@NotNull Document document, @NotNull String filePath, String lineSeparator) throws IOException {
-    OutputStream stream = new BufferedOutputStream(new FileOutputStream(filePath));
-    try {
+    try (OutputStream stream = new BufferedOutputStream(new FileOutputStream(filePath))) {
       writeDocument(document, stream, lineSeparator);
-    }
-    finally {
-      stream.close();
     }
   }
 
@@ -363,12 +365,8 @@ public class JDOMUtil {
 
   public static void write(@NotNull Element element, @NotNull File file, @Nullable String lineSeparator) throws IOException {
     FileUtil.createParentDirs(file);
-    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), CharsetToolkit.UTF8_CHARSET));
-    try {
+    try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), CharsetToolkit.UTF8_CHARSET))) {
       writeElement(element, writer, createOutputter(lineSeparator));
-    }
-    finally {
-      writer.close();
     }
   }
 
@@ -379,12 +377,8 @@ public class JDOMUtil {
   public static void write(@NotNull Parent element, @NotNull File file, @NotNull String lineSeparator) throws IOException {
     FileUtil.createParentDirs(file);
 
-    OutputStream stream = new BufferedOutputStream(new FileOutputStream(file));
-    try {
+    try (OutputStream stream = new BufferedOutputStream(new FileOutputStream(file))) {
       write(element, stream, lineSeparator);
-    }
-    finally {
-      stream.close();
     }
   }
 
@@ -393,17 +387,13 @@ public class JDOMUtil {
   }
 
   public static void write(@NotNull Parent element, @NotNull OutputStream stream, @NotNull String lineSeparator) throws IOException {
-    OutputStreamWriter writer = new OutputStreamWriter(stream, CharsetToolkit.UTF8_CHARSET);
-    try {
+    try (OutputStreamWriter writer = new OutputStreamWriter(stream, CharsetToolkit.UTF8_CHARSET)) {
       if (element instanceof Document) {
         writeDocument((Document)element, writer, lineSeparator);
       }
       else {
         writeElement((Element)element, writer, lineSeparator);
       }
-    }
-    finally {
-      writer.close();
     }
   }
 
@@ -646,7 +636,7 @@ public class JDOMUtil {
       }
     }
 
-    List<String> writtenFilesPaths = new ArrayList<String>();
+    List<String> writtenFilesPaths = new ArrayList<>();
     for (int i = 0; i < newFilePaths.length; i++) {
       String newFilePath = newFilePaths[i];
 
@@ -706,7 +696,7 @@ public class JDOMUtil {
   @NotNull
   public static List<Attribute> getAttributes(@NotNull Element e) {
     // avoid AttributeList creation if no attributes
-    return e.hasAttributes() ? e.getAttributes() : Collections.<Attribute>emptyList();
+    return e.hasAttributes() ? e.getAttributes() : Collections.emptyList();
   }
 
   @Nullable

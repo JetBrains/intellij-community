@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
 abstract class Timed<T> implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.Timed");
-  private static final Map<Timed, Boolean> ourReferences = Collections.synchronizedMap(new WeakHashMap<Timed, Boolean>());
+  private static final Map<Timed, Boolean> ourReferences = Collections.synchronizedMap(new WeakHashMap<>());
   protected static final int SERVICE_DELAY = 60;
 
   private int myLastCheckedAccessCount;
@@ -65,15 +65,12 @@ abstract class Timed<T> implements Disposable {
   }
 
   static {
-    AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          disposeTimed();
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
+    AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
+      try {
+        disposeTimed();
+      }
+      catch (Throwable e) {
+        LOG.error(e);
       }
     }, SERVICE_DELAY, SERVICE_DELAY, TimeUnit.SECONDS);
   }

@@ -248,9 +248,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   }
 
   private static void notifyListenersAsync(@NotNull GitRepository repository) {
-    Runnable task = () -> {
-      syncPublisher(repository.getProject(), GIT_REPO_CHANGE).repositoryChanged(repository);
-    };
+    Runnable task = () -> syncPublisher(repository.getProject(), GIT_REPO_CHANGE).repositoryChanged(repository);
     BackgroundTaskUtil.executeOnPooledThread(repository, task);
   }
 

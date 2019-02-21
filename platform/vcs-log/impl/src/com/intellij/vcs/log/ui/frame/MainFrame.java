@@ -1,14 +1,20 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
+import com.intellij.diff.editor.DiffVirtualFile;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -18,16 +24,12 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.vcs.CommittedChangeListForRevision;
-import com.intellij.vcs.log.CommitId;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLog;
-import com.intellij.vcs.log.VcsLogFilterUi;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
@@ -50,10 +52,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.toVirtualFileArray;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -86,14 +86,15 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
                    @NotNull VcsLogUiImpl ui,
                    @NotNull MainVcsLogUiProperties uiProperties,
                    @NotNull VcsLog log,
-                   @NotNull VisiblePack initialDataPack) {
+                   @NotNull VisiblePack initialDataPack,
+                   @Nullable VcsLogFilterCollection filters) {
     // collect info
     myLogData = logData;
     myUi = ui;
     myLog = log;
     myUiProperties = uiProperties;
 
-    myFilterUi = new VcsLogClassicFilterUi(ui, logData, myUiProperties, initialDataPack);
+    myFilterUi = new VcsLogClassicFilterUi(ui, logData, myUiProperties, initialDataPack, filters);
 
     // initialize components
     myGraphTable = new MyVcsLogGraphTable(ui, logData, initialDataPack);
@@ -121,11 +122,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myToolbar = createActionsToolbar();
     myChangesBrowser.setToolbarHeightReferent(myToolbar);
     myPreviewDiff.getToolbarWrapper().setVerticalSizeReferent(myToolbar);
-
-    Runnable changesListener = () -> ApplicationManager.getApplication().invokeLater(
-      () -> myPreviewDiff.updatePreview(myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW)));
-    myChangesBrowser.getViewer().addSelectionListener(changesListener);
-    myChangesBrowser.setModelUpdateListener(changesListener);
 
     mySelectionListenerForDiff = new MyCommitSelectionListenerForDiff();
     myGraphTable.getSelectionModel().addListSelectionListener(mySelectionListenerForDiff);
@@ -171,6 +167,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   public void updateDataPack(@NotNull VisiblePack dataPack, boolean permGraphChanged) {
     myFilterUi.updateDataPack(dataPack);
     myGraphTable.updateDataPack(dataPack, permGraphChanged);
+    myChangesBrowser.setAffectedPaths(VcsLogUtil.getAffectedPaths(myUi));
   }
 
   @NotNull
@@ -205,6 +202,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     mainGroup.add(myFilterUi.createActionGroup());
     mainGroup.addSeparator();
     mainGroup.add(toolbarGroup);
+    if (Registry.is("show.diff.preview.as.editor.tab")) {
+      mainGroup.add(new ShowPreviewEditorAction());
+    }
     ActionToolbar toolbar = createActionsToolbar(mainGroup);
 
     Wrapper textFilter = new Wrapper(myTextFilter);
@@ -240,7 +240,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
     if (VcsDataKeys.CHANGES.is(dataId) || VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
-      return ArrayUtil.toObjectArray(myChangesBrowser.getDirectChanges(), Change.class);
+      return myChangesBrowser.getDirectChanges().toArray(new Change[0]);
     }
     else if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
       List<VcsFullCommitDetails> details = myLog.getSelectedDetails();
@@ -337,7 +337,10 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     @NotNull
     @Override
     protected List<Component> getOrderedComponents() {
-      return Arrays.asList(myGraphTable, myChangesBrowser.getPreferredFocusedComponent(), myTextFilter.getTextEditor());
+      return Arrays.asList(myGraphTable,
+                           myChangesBrowser.getPreferredFocusedComponent(),
+                           myPreviewDiff.getPreferredFocusedComponent(),
+                           myTextFilter.getTextEditor());
     }
   }
 
@@ -369,6 +372,54 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       else {
         statusText.setText(CHANGES_LOG_TEXT);
       }
+    }
+  }
+
+  private class ShowPreviewEditorAction extends DumbAwareAction {
+    private ShowPreviewEditorAction() {
+      super("Show Diff Preview in Editor", null, AllIcons.Actions.ChangeView);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      MyDiffVirtualFile file = new MyDiffVirtualFile(MainFrame.this);
+      FileEditorManager.getInstance(myLogData.getProject()).openFile(file, true);
+    }
+  }
+
+  private static class MyDiffVirtualFile extends DiffVirtualFile {
+    @NotNull private final MainFrame myFrame;
+
+    private MyDiffVirtualFile(@NotNull MainFrame frame) {
+      myFrame = frame;
+    }
+
+    @Override
+    public boolean isValid() {
+      return !Disposer.isDisposed(myFrame);
+    }
+
+    @NotNull
+    @Override
+    public Builder createProcessorAsync(@NotNull Project project) {
+      return () -> {
+        VcsLogChangeProcessor processor = new VcsLogChangeProcessor(myFrame.myLogData.getProject(), myFrame.myChangesBrowser, myFrame);
+        processor.updatePreview(true);
+        return processor;
+      };
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      MyDiffVirtualFile file = (MyDiffVirtualFile)o;
+      return myFrame.equals(file.myFrame);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myFrame);
     }
   }
 }

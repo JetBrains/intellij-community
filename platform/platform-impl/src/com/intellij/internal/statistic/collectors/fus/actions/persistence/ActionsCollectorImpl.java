@@ -16,6 +16,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -53,11 +54,11 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
   }
 
   @Override
-  public void record(@Nullable AnAction action, @Nullable AnActionEvent event) {
+  public void record(@Nullable Project project, @Nullable AnAction action, @Nullable AnActionEvent event) {
     if (action == null) return;
 
     final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(action.getClass());
-    final FeatureUsageData data = new FeatureUsageData().addOS().addPluginInfo(info);
+    final FeatureUsageData data = new FeatureUsageData().addOS().addProject(project).addPluginInfo(info);
 
     if (event != null) {
       data.addInputEvent(event).

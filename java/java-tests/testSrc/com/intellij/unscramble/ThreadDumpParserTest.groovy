@@ -309,6 +309,45 @@ Thread 7381: (state = BLOCKED)
     
   }
 
+  void 'test jdk 11 format'() {
+    String text = '''
+"main" #1 prio=5 os_prio=0 cpu=171.88ms elapsed=101.93s tid=0x0000026392746000 nid=0x3bc4 runnable  [0x000000d7ed0fe000]
+   java.lang.Thread.State: RUNNABLE
+\tat java.io.FileInputStream.readBytes(java.base@11.0.2/Native Method)
+\tat java.io.FileInputStream.read(java.base@11.0.2/FileInputStream.java:279)
+\tat java.io.BufferedInputStream.fill(java.base@11.0.2/BufferedInputStream.java:252)
+\tat java.io.BufferedInputStream.read(java.base@11.0.2/BufferedInputStream.java:271)
+\t- locked <0x000000062181e298> (a java.io.BufferedInputStream)
+\tat my.Endless.main(Endless.java:13)
+\tat jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(java.base@11.0.2/Native Method)
+\tat jdk.internal.reflect.NativeMethodAccessorImpl.invoke(java.base@11.0.2/NativeMethodAccessorImpl.java:62)
+\tat jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(java.base@11.0.2/DelegatingMethodAccessorImpl.java:43)
+\tat java.lang.reflect.Method.invoke(java.base@11.0.2/Method.java:566)
+\tat com.intellij.rt.execution.application.AppMainV2.main(AppMainV2.java:131)
+
+"Reference Handler" #2 daemon prio=10 os_prio=2 cpu=0.00ms elapsed=101.90s tid=0x00000263c01b5000 nid=0x34e4 waiting on condition  [0x000000d7ed7fe000]
+   java.lang.Thread.State: RUNNABLE
+\tat java.lang.ref.Reference.waitForReferencePendingList(java.base@11.0.2/Native Method)
+\tat java.lang.ref.Reference.processPendingReferences(java.base@11.0.2/Reference.java:241)
+\tat java.lang.ref.Reference$ReferenceHandler.run(java.base@11.0.2/Reference.java:213)
+
+"Finalizer" #3 daemon prio=8 os_prio=1 cpu=0.00ms elapsed=101.90s tid=0x00000263c01df000 nid=0x3ae4 in Object.wait()  [0x000000d7ed8ff000]
+   java.lang.Thread.State: WAITING (on object monitor)
+\tat java.lang.Object.wait(java.base@11.0.2/Native Method)
+\t- waiting on <0x0000000621808f10> (a java.lang.ref.ReferenceQueue$Lock)
+\tat java.lang.ref.ReferenceQueue.remove(java.base@11.0.2/ReferenceQueue.java:155)
+\t- waiting to re-lock in wait() <0x0000000621808f10> (a java.lang.ref.ReferenceQueue$Lock)
+\tat java.lang.ref.ReferenceQueue.remove(java.base@11.0.2/ReferenceQueue.java:176)
+\tat java.lang.ref.Finalizer$FinalizerThread.run(java.base@11.0.2/Finalizer.java:170)
+
+"Signal Dispatcher" #4 daemon prio=9 os_prio=2 cpu=0.00ms elapsed=101.89s tid=0x00000263c0236800 nid=0x3cac runnable  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+'''
+
+    def threads = ThreadDumpParser.parse(text)
+    assert threads.size() == 4
+  }
+
   @CompileStatic
   void "test very long line parsing performance"() {
     def spaces = ' ' * 1_000_000

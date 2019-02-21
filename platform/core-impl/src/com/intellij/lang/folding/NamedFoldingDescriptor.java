@@ -22,47 +22,42 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.Set;
 
 /**
- * A variant of {@link FoldingDescriptor} which keeps precalculated value of placeholder text. 
- * This makes 'apply' phase of code folding pass (executed in EDT) faster. 
+ * @deprecated Use {@link FoldingDescriptor} instead.
  */
+@Deprecated
 public class NamedFoldingDescriptor extends FoldingDescriptor {
-  private final String myPlaceholderText;
-  private final Boolean myCollapsedByDefault;
-
+  /**
+   * @deprecated Use {@link FoldingDescriptor#FoldingDescriptor(PsiElement, int, int, FoldingGroup, String)} instead.
+   */
+  @Deprecated
   public NamedFoldingDescriptor(@NotNull PsiElement e, int start, int end, @Nullable FoldingGroup group, @NotNull String placeholderText) {
-    this(e.getNode(), new TextRange(start, end), group, placeholderText, null, Collections.emptySet());
+    super(e, start, end, group, placeholderText);
   }
 
+  /**
+   * @deprecated Use {@link FoldingDescriptor#FoldingDescriptor(ASTNode, TextRange, FoldingGroup, String)} instead.
+   */
+  @Deprecated
   public NamedFoldingDescriptor(@NotNull ASTNode node,
                          @NotNull final TextRange range,
                          @Nullable FoldingGroup group,
                          @NotNull String placeholderText) {
-    this(node, range, group, placeholderText, null, Collections.emptySet());
+    super(node, range, group, placeholderText);
   }
 
+  /**
+   * @deprecated Use {@link FoldingDescriptor#FoldingDescriptor(ASTNode, TextRange, FoldingGroup, String, Boolean, Set)} instead.
+   */
+  @Deprecated
   public NamedFoldingDescriptor(@NotNull ASTNode node,
                                 @NotNull final TextRange range,
                                 @Nullable FoldingGroup group,
                                 @NotNull String placeholderText,
                                 @Nullable("null means unknown") Boolean collapsedByDefault,
                                 @NotNull Set<Object> dependencies) {
-    super(node, range, group, dependencies);
-    myPlaceholderText = placeholderText;
-    myCollapsedByDefault = collapsedByDefault;
-  }
-
-  @Override
-  @NotNull 
-  public String getPlaceholderText() {
-    return myPlaceholderText;
-  }
-
-  @Nullable("null means unknown, have to call com.intellij.lang.folding.FoldingBuilder.isCollapsedByDefault(PsiElement)")
-  public Boolean isCollapsedByDefault() {
-    return myCollapsedByDefault;
+    super(node, range, group, placeholderText, collapsedByDefault, dependencies);
   }
 }

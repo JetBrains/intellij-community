@@ -33,11 +33,10 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.ex.*;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
-import com.intellij.openapi.vcs.impl.PartialChangesUtil;
+import com.intellij.ui.InplaceButton;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.ThreeStateCheckBox;
 import org.jetbrains.annotations.CalledWithWriteLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -208,9 +207,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     }
 
 
-    List<Range> linesRanges = ContainerUtil.map(ranges, range -> {
-      return new Range(range.getVcsLine1(), range.getVcsLine2(), range.getLine1(), range.getLine2());
-    });
+    List<Range> linesRanges = ContainerUtil.map(ranges, range -> new Range(range.getVcsLine1(), range.getVcsLine2(), range.getLine1(), range.getLine2()));
 
     List<List<LineFragment>> newFragments = notNull(myTextDiffProvider.compare(vcsText, localText, linesRanges, indicator));
 
@@ -226,9 +223,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       boolean isSkipped = !isFromActiveChangelist;
       boolean isExcluded = !isFromActiveChangelist || (myAllowExcludeChangesFromCommit && isExcludedFromCommit);
 
-      changes.addAll(ContainerUtil.map(rangeFragments, fragment -> {
-        return new MySimpleDiffChange(fragment, isExcluded, isSkipped, localRange.getChangelistId(), isExcludedFromCommit);
-      }));
+      changes.addAll(ContainerUtil.map(rangeFragments, fragment -> new MySimpleDiffChange(fragment, isExcluded, isSkipped, localRange.getChangelistId(), isExcludedFromCommit)));
     }
 
     return apply(new CompareData(changes, isContentsEqual));
@@ -350,7 +345,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     protected String getText(@NotNull List<MySimpleDiffChange> selectedChanges) {
       if (!selectedChanges.isEmpty() && ContainerUtil.and(selectedChanges, change -> !change.isFromActiveChangelist())) {
         String shortChangeListName = StringUtil.trimMiddle(myChangelistName, 40);
-        return String.format("Move to '%s' Changelist", shortChangeListName);
+        return String.format("Move to '%s' Changelist", StringUtil.escapeMnemonics(shortChangeListName));
       }
       else {
         return ActionsBundle.message("action.ChangesView.Move.text");
@@ -505,15 +500,13 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   }
 
   private class ExcludeAllCheckboxPanel extends JPanel {
-    private final ThreeStateCheckBox myCheckbox;
+    private final InplaceButton myCheckbox;
 
     private ExcludeAllCheckboxPanel() {
-      myCheckbox = new ThreeStateCheckBox();
-      myCheckbox.setFocusable(false);
-      myCheckbox.addActionListener(e -> toggleState());
-
-      add(myCheckbox);
+      myCheckbox = new InplaceButton(null, AllIcons.Diff.GutterCheckBox, e -> toggleState());
+      myCheckbox.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       myCheckbox.setVisible(false);
+      add(myCheckbox);
 
       getEditor2().getGutterComponentEx().addComponentListener(new ComponentAdapter() {
         @Override
@@ -527,13 +520,9 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     public void doLayout() {
       Dimension size = myCheckbox.getPreferredSize();
       EditorGutterComponentEx gutter = getEditor2().getGutterComponentEx();
-      int gutterWidth = gutter.getLineMarkerFreePaintersAreaOffset();
-      int iconAreaWidth = gutter.getIconsAreaWidth();
-
       int y = (getHeight() - size.height) / 2;
-      int gap = (iconAreaWidth - AllIcons.Diff.GutterCheckBox.getIconWidth()) / 2;
-      int x = gutterWidth - gap - size.width;
-      myCheckbox.setBounds(Math.max(0, x), Math.max(0, y), size.width, size.height);
+      int x = gutter.getIconAreaOffset() + 2; // "+2" from EditorGutterComponentImpl.processIconsRow
+      myCheckbox.setBounds(Math.min(getWidth() - AllIcons.Diff.GutterCheckBox.getIconWidth(), x), Math.max(0, y), size.width, size.height);
     }
 
     @Override
@@ -561,15 +550,34 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     }
 
     public void refresh() {
-      PartialLocalLineStatusTracker tracker = getPartialTracker();
-      if (tracker != null && tracker.isValid()) {
-        ExclusionState exclusionState = tracker.getExcludedFromCommitState(myChangelistId);
-        myCheckbox.setState(PartialChangesUtil.convertExclusionState(exclusionState));
+      Icon icon = getIcon();
+      if (icon != null) {
+        myCheckbox.setIcon(icon);
         myCheckbox.setVisible(true);
       }
       else {
-        myCheckbox.setState(ThreeStateCheckBox.State.DONT_CARE);
         myCheckbox.setVisible(false);
+      }
+    }
+
+    @Nullable
+    private Icon getIcon() {
+      if (!myAllowExcludeChangesFromCommit) return null;
+
+      PartialLocalLineStatusTracker tracker = getPartialTracker();
+      if (tracker == null || !tracker.isValid()) return null;
+
+      ExclusionState exclusionState = tracker.getExcludedFromCommitState(myChangelistId);
+      switch (exclusionState) {
+        case ALL_INCLUDED:
+          return AllIcons.Diff.GutterCheckBoxSelected;
+        case ALL_EXCLUDED:
+          return AllIcons.Diff.GutterCheckBox;
+        case PARTIALLY:
+          return AllIcons.Diff.GutterCheckBoxIndeterminate;
+        case NO_CHANGES:
+        default:
+          return null;
       }
     }
   }

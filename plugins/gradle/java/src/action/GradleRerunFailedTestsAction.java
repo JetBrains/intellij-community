@@ -42,6 +42,7 @@ import java.util.List;
 import static com.intellij.util.containers.ContainerUtil.filterIsInstance;
 import static org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducer.findAllTestsTaskToRun;
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.applyTestConfiguration;
+import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.escapeIfNeeded;
 import static org.jetbrains.plugins.gradle.util.GradleRerunFailedTasksActionUtilsKt.containsSubSequenceInSequence;
 import static org.jetbrains.plugins.gradle.util.GradleRerunFailedTasksActionUtilsKt.containsTasksInScriptParameters;
 
@@ -76,15 +77,16 @@ public class GradleRerunFailedTestsAction extends JavaRerunFailedTestsAction {
         Function2<PsiClass, GradleSMTestProxy, String> createFilter = (psiClass, test) -> {
           String testName = test.getName();
           String className = test.getClassName();
-          return TestMethodGradleConfigurationProducer.createTestFilter(className, testName);
+          return TestMethodGradleConfigurationProducer.createTestFilter(className, testName)  ;
         };
         Function1<VirtualFile, List<List<String>>> getTestsTaskToRun = source -> {
           List<? extends List<String>> foundTasksToRun = findAllTestsTaskToRun(source, project);
           List<List<String>> tasksToRun = new ArrayList<>();
           boolean isSpecificTask = false;
           for (List<String> tasks : foundTasksToRun) {
-            if (containsSubSequenceInSequence(runProfile.getSettings().getTaskNames(), tasks) ||
-                containsTasksInScriptParameters(runProfile.getSettings().getScriptParameters(), tasks)) {
+            List<String> escapedTasks = ContainerUtil.map(tasks, it -> escapeIfNeeded(it));
+            if (containsSubSequenceInSequence(runProfile.getSettings().getTaskNames(), escapedTasks) ||
+                containsTasksInScriptParameters(runProfile.getSettings().getScriptParameters(), escapedTasks)) {
               ContainerUtil.addAllNotNull(tasksToRun, tasks);
               isSpecificTask = true;
             }
@@ -94,7 +96,8 @@ public class GradleRerunFailedTestsAction extends JavaRerunFailedTestsAction {
           }
           return tasksToRun;
         };
-        if (applyTestConfiguration(settings, project, tests, findPsiClass, createFilter, getTestsTaskToRun)) {
+        String projectPath = settings.getExternalProjectPath();
+        if (applyTestConfiguration(settings, projectPath, tests, findPsiClass, createFilter, getTestsTaskToRun)) {
           runProfile.getSettings().setFrom(settings);
         }
         return runProfile.getState(executor, environment);

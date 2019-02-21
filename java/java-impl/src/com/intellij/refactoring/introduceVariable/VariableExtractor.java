@@ -106,6 +106,11 @@ class VariableExtractor {
       highlight(var);
 
       PsiUtil.setModifierProperty(var, PsiModifier.FINAL, mySettings.isDeclareFinal());
+      if (mySettings.isDeclareVarType()) {
+        PsiTypeElement typeElement = var.getTypeElement();
+        LOG.assertTrue(typeElement != null);
+        IntroduceVariableBase.expandDiamondsAndReplaceExplicitTypeWithVar(typeElement, var);
+      }
       myFieldConflictsResolver.fix();
       return SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(var);
     }

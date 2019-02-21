@@ -32,8 +32,8 @@ class ApplicationStoreImpl(private val application: Application, pathMacroManage
     storageManager.addMacro(StoragePathMacros.CACHE_FILE, appSystemDir.resolve("workspace").resolve("app.xml").systemIndependentPath)
   }
 
-  override suspend fun doSave(result: SaveResult, isForceSavingAllSettings: Boolean) {
-    val saveSessionManager = saveSettingsSavingComponentsAndCommitComponents(result, isForceSavingAllSettings)
+  override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) {
+    val saveSessionManager = saveSettingsSavingComponentsAndCommitComponents(result, forceSavingAllSettings)
     // todo can we store default project in parallel to regular saving? for now only flush on disk is async, but not component committing
     coroutineScope {
       launch {
@@ -41,7 +41,7 @@ class ApplicationStoreImpl(private val application: Application, pathMacroManage
       }
       launch {
         // here, because no Project (and so, ProjectStoreImpl) on Welcome Screen
-        val r = serviceIfCreated<DefaultProjectExportableAndSaveTrigger>()?.save(isForceSavingAllSettings) ?: return@launch
+        val r = serviceIfCreated<DefaultProjectExportableAndSaveTrigger>()?.save(forceSavingAllSettings) ?: return@launch
         // ignore
         r.isChanged = false
         r.appendTo(result)

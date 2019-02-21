@@ -62,7 +62,7 @@ public class GradleRunnerUtil {
   public static Location<PsiMethod> getTestMethod(final Location<?> location) {
     for (Iterator<Location<PsiMethod>> iterator = location.getAncestors(PsiMethod.class, false); iterator.hasNext(); ) {
       final Location<PsiMethod> methodLocation = iterator.next();
-      if (TestFrameworks.getInstance().isTestMethod(methodLocation.getPsiElement())) return methodLocation;
+      if (TestFrameworks.getInstance().isTestMethod(methodLocation.getPsiElement(), false)) return methodLocation;
     }
     return null;
   }

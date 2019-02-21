@@ -87,26 +87,16 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
   private static WidgetState createWidgetState(@NotNull PsiFile psiFile,
                                                @NotNull final IndentOptions indentOptions,
                                                @Nullable CodeStyleStatusBarUIContributor uiContributor) {
-    String indentInfo = IndentStatusBarUIContributor.getTooltip(indentOptions);
-    StringBuilder widgetText = new StringBuilder();
-    widgetText.append(indentInfo);
-    IndentOptions projectIndentOptions = CodeStyle.getSettings(psiFile.getProject()).getLanguageIndentOptions(psiFile.getLanguage());
-    if (!projectIndentOptions.equals(indentOptions)) {
-      widgetText.append("*");
+    if (uiContributor != null) {
+      return new MyWidgetState(uiContributor.getTooltip(), uiContributor.getStatusText(psiFile), psiFile, indentOptions, uiContributor);
     }
-    return new MyWidgetState(getTooltip(uiContributor, indentInfo), widgetText.toString(), psiFile, indentOptions, uiContributor);
+    else {
+      String indentInfo = IndentStatusBarUIContributor.getIndentInfo(indentOptions);
+      String tooltip = IndentStatusBarUIContributor.createTooltip(indentInfo, null);
+      return new MyWidgetState(tooltip, indentInfo, psiFile, indentOptions, null);
+    }
   }
 
-  @NotNull
-  private static String getTooltip(@Nullable CodeStyleStatusBarUIContributor uiContributor, @NotNull String defaultTooltip) {
-    if (uiContributor != null) {
-      String contributorTooltip = uiContributor.getTooltip();
-      if (contributorTooltip != null) {
-        return contributorTooltip;
-      }
-    }
-    return defaultTooltip;
-  }
 
   @Nullable
   private PsiFile getPsiFile()  {
@@ -123,11 +113,11 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
   @Override
   protected ListPopup createPopup(DataContext context)
   {
-    MyWidgetState state = (MyWidgetState)getWidgetState(context.getData(CommonDataKeys.VIRTUAL_FILE));
+    WidgetState state = getWidgetState(context.getData(CommonDataKeys.VIRTUAL_FILE));
     Editor editor = getEditor();
     PsiFile psiFile = getPsiFile();
-    if (state != WidgetState.HIDDEN && editor != null && psiFile != null) {
-      AnAction[] actions = getActions(state.getContributor(), psiFile);
+    if (state instanceof MyWidgetState && editor != null && psiFile != null) {
+      AnAction[] actions = getActions(((MyWidgetState)state).getContributor(), psiFile);
       ActionGroup actionGroup = new ActionGroup() {
         @NotNull
         @Override

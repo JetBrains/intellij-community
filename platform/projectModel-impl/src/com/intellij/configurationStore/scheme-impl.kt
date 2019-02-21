@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.extensions.AbstractExtensionPointBean
@@ -69,11 +69,11 @@ abstract class LazySchemeProcessor<SCHEME, MUTABLE_SCHEME : SCHEME>(private val 
                             isBundled: Boolean = false): MUTABLE_SCHEME
   override fun writeScheme(scheme: MUTABLE_SCHEME): Element? = (scheme as SerializableScheme).writeScheme()
 
-  open fun isSchemeFile(name: CharSequence): Boolean = true
+  open fun isSchemeFile(name: CharSequence) = true
 
-  open fun isSchemeDefault(scheme: MUTABLE_SCHEME, digest: ByteArray): Boolean = false
+  open fun isSchemeDefault(scheme: MUTABLE_SCHEME, digest: ByteArray) = false
 
-  open fun isSchemeEqualToBundled(scheme: MUTABLE_SCHEME): Boolean = false
+  open fun isSchemeEqualToBundled(scheme: MUTABLE_SCHEME) = false
 }
 
 class DigestOutputStream(val digest: MessageDigest) : OutputStream() {
@@ -85,7 +85,7 @@ class DigestOutputStream(val digest: MessageDigest) : OutputStream() {
     digest.update(b, off, len)
   }
 
-  override fun toString(): String = "[Digest Output Stream] $digest"
+  override fun toString() = "[Digest Output Stream] $digest"
 }
 
 private val sha1Provider = java.security.Security.getProvider("SUN")
@@ -125,7 +125,7 @@ abstract class LazySchemeWrapper<T>(name: String, dataHolder: SchemeDataHolder<S
 class InitializedSchemeWrapper<out T : Scheme>(scheme: T, private val writer: (scheme: T) -> Element) : SchemeWrapper<T>(scheme.name) {
   override val lazyScheme: Lazy<T> = lazyOf(scheme)
 
-  override fun writeScheme(): Element = writer(scheme)
+  override fun writeScheme() = writer(scheme)
 }
 
 fun unwrapState(element: Element, project: Project, iprAdapter: SchemeManagerIprProvider?, schemeManager: SchemeManager<*>): Element? {

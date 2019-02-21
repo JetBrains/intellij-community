@@ -104,10 +104,13 @@ public class JsonSchemaObject {
   @Nullable private List<JsonSchemaObject> myAnyOf;
   @Nullable private List<JsonSchemaObject> myOneOf;
   @Nullable private JsonSchemaObject myNot;
+  @Nullable private List<IfThenElse> myIfThenElse;
   @Nullable private JsonSchemaObject myIf;
   @Nullable private JsonSchemaObject myThen;
   @Nullable private JsonSchemaObject myElse;
   private boolean myShouldValidateAgainstJSType;
+
+  @Nullable private String myDeprecationMessage;
 
   public boolean isValidByExclusion() {
     return myIsValidByExclusion;
@@ -123,6 +126,13 @@ public class JsonSchemaObject {
   private JsonSchemaObject() {
     myJsonObject = null;
     myProperties = new HashMap<>();
+  }
+
+  public void completeInitialization() {
+    if (myIf != null) {
+      myIfThenElse = ContainerUtil.newArrayList();
+      myIfThenElse.add(new IfThenElse(myIf, myThen, myElse));
+    }
   }
 
   @Nullable
@@ -268,9 +278,10 @@ public class JsonSchemaObject {
     myAnyOf = copyList(myAnyOf, other.myAnyOf);
     myOneOf = copyList(myOneOf, other.myOneOf);
     if (other.myNot != null) myNot = other.myNot;
-    if (other.myIf != null) myIf = other.myIf;
-    if (other.myThen != null) myThen = other.myThen;
-    if (other.myElse != null) myElse = other.myElse;
+    if (other.myIfThenElse != null) {
+      if (myIfThenElse == null) myIfThenElse = other.myIfThenElse;
+      else myIfThenElse = ContainerUtil.concat(myIfThenElse, other.myIfThenElse);
+    }
     myShouldValidateAgainstJSType |= other.myShouldValidateAgainstJSType;
   }
 
@@ -484,6 +495,15 @@ public class JsonSchemaObject {
   }
 
   @Nullable
+  public String getDeprecationMessage() {
+    return myDeprecationMessage;
+  }
+
+  public void setDeprecationMessage(@Nullable String deprecationMessage) {
+    myDeprecationMessage = deprecationMessage;
+  }
+
+  @Nullable
   public JsonSchemaObject getAdditionalItemsSchema() {
     return myAdditionalItemsSchema;
   }
@@ -636,26 +656,16 @@ public class JsonSchemaObject {
   }
 
   @Nullable
-  public JsonSchemaObject getIf() {
-    return myIf;
+  public List<IfThenElse> getIfThenElse() {
+    return myIfThenElse;
   }
 
   public void setIf(@Nullable JsonSchemaObject anIf) {
     myIf = anIf;
   }
 
-  @Nullable
-  public JsonSchemaObject getThen() {
-    return myThen;
-  }
-
   public void setThen(@Nullable JsonSchemaObject then) {
     myThen = then;
-  }
-
-  @Nullable
-  public JsonSchemaObject getElse() {
-    return myElse;
   }
 
   public void setElse(@Nullable JsonSchemaObject anElse) {

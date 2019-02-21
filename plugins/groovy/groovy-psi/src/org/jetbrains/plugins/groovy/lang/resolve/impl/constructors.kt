@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.psi.*
 import com.intellij.psi.scope.ElementClassHint
+import com.intellij.psi.scope.NameHint
 import com.intellij.psi.scope.ProcessorWithHints
 import com.intellij.util.SmartList
 import org.jetbrains.plugins.groovy.lang.psi.util.elementInfo
@@ -28,18 +29,22 @@ private fun classConstructors(clazz: PsiClass): List<PsiMethod> {
 }
 
 private fun runtimeConstructors(clazz: PsiClass, place: PsiElement): List<PsiMethod> {
-  val processor = ConstructorProcessor()
+  val name = clazz.name ?: return emptyList()
+  val processor = ConstructorProcessor(name)
   val qualifierType = JavaPsiFacade.getElementFactory(clazz.project).createType(clazz)
   processNonCodeMembers(qualifierType, processor, place, ResolveState.initial())
   return processor.candidates
 }
 
-private class ConstructorProcessor : ProcessorWithHints(), GroovyResolveKind.Hint, ElementClassHint {
+private class ConstructorProcessor(private val name: String) : ProcessorWithHints(), NameHint, GroovyResolveKind.Hint, ElementClassHint {
 
   init {
+    hint(NameHint.KEY, this)
     hint(GroovyResolveKind.HINT_KEY, this)
     hint(ElementClassHint.KEY, this)
   }
+
+  override fun getName(state: ResolveState): String? = name
 
   override fun shouldProcess(kind: GroovyResolveKind): Boolean = kind == GroovyResolveKind.METHOD
 

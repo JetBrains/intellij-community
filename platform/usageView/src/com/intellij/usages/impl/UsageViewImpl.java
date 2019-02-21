@@ -1092,9 +1092,7 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   public void refreshUsages() {
-    if (!myPresentation.isOpenInNewTab()) {
-      reset();
-    }
+    reset();
     doReRun();
   }
 
@@ -1105,8 +1103,10 @@ public class UsageViewImpl implements UsageViewEx {
   protected UsageView doReRun() {
     myChangesDetected = false;
     if (myRerunAction == null) {
+      UsageViewPresentation rerunPresentation = myPresentation.copy();
+      rerunPresentation.setOpenInNewTab(false);
       return UsageViewManager.getInstance(getProject()).
-        searchAndShowUsages(myTargets, myUsageSearcherFactory, true, false, myPresentation, null);
+        searchAndShowUsages(myTargets, myUsageSearcherFactory, true, false, rerunPresentation, null);
     }
     myRerunAction.actionPerformed(null);
     return this;

@@ -31,7 +31,7 @@ public class ListWithSelection<E> extends ArrayList<E> {
   }
 
   public ListWithSelection() {
-    this(new ArrayList<E>());
+    this(new ArrayList<>());
   }
 
   public boolean select(E object){

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python
 
 import com.intellij.openapi.module.Module
@@ -43,10 +43,8 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
       detectSystemWideSdks(module, existingSdks).firstOrNull()
   }
 
-  override fun configureProject(project: Project?, baseDir: VirtualFile, moduleRef: Ref<Module>?) {
-    if (project == null ||
-        project.pythonSdk != null ||
-        baseDir.children?.any { it.name != Project.DIRECTORY_STORE_FOLDER } == false) {
+  override fun configureProject(project: Project, baseDir: VirtualFile, moduleRef: Ref<Module>) {
+    if (project.pythonSdk != null || baseDir.children?.any { it.name != Project.DIRECTORY_STORE_FOLDER } == false) {
       return
     }
     val module = ModuleManager.getInstance(project).modules.firstOrNull() ?: return

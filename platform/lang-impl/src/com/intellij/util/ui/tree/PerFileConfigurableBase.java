@@ -539,7 +539,8 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   @NotNull
   private JPanel createActionPanel(@Nullable Object target, @NotNull Value<T> value, boolean editor) {
     AnAction changeAction = createValueAction(target, value);
-    JComponent comboComponent = ((CustomComponentAction)changeAction).createCustomComponent(changeAction.getTemplatePresentation());
+    JComponent comboComponent = ((CustomComponentAction)changeAction).createCustomComponent(
+      changeAction.getTemplatePresentation(), ActionPlaces.UNKNOWN);
     JPanel panel = new JPanel(new BorderLayout()) {
       @Override
       public Color getBackground() {

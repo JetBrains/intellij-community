@@ -20,6 +20,7 @@ import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentUtilKt;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
@@ -28,7 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
@@ -59,6 +59,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.intellij.psi.util.PsiUtil.extractIterableTypeParameter;
 import static org.jetbrains.plugins.groovy.codeInspection.type.GroovyTypeCheckVisitorHelper.*;
@@ -356,17 +357,19 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
         }
       }
       else if (results.length > 0) {
+        PsiType[] argumentTypes = info.getArgumentTypes();
+        boolean checkUnknownArgs = argumentTypes == null || ContainerUtil.or(argumentTypes, Objects::isNull);
         for (GroovyResolveResult result : results) {
           PsiElement current = result.getElement();
           if (current instanceof PsiMethod && !result.isInvokedOnProperty()) {
-            if (!checkMethodApplicability(result, false, info)) return;
+            if (!checkMethodApplicability(result, checkUnknownArgs, info)) return;
           }
           else {
-            if (!checkCallApplicability(referenceExpression.getType(), false, info)) return;
+            if (!checkCallApplicability(referenceExpression.getType(), checkUnknownArgs, info)) return;
           }
         }
 
-        registerError(info.getElementToHighlight(), GroovyBundle.message("method.call.is.ambiguous"));
+        registerError(info.getElementToHighlight(), ProblemHighlightType.GENERIC_ERROR, GroovyBundle.message("method.call.is.ambiguous"));
       }
     }
     else if (info.getInvokedExpression() != null) { //it checks in visitRefExpr(...)
@@ -866,11 +869,11 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   public void visitParameterList(@NotNull final GrParameterList parameterList) {
     super.visitParameterList(parameterList);
     PsiElement parent = parameterList.getParent();
-    if (!(parent instanceof GrClosableBlock)) return;
+    if (!(parent instanceof GrFunctionalExpression)) return;
 
     GrParameter[] parameters = parameterList.getParameters();
     if (parameters.length > 0) {
-      List<PsiType[]> signatures = ClosureParamsEnhancer.findFittingSignatures((GrClosableBlock)parent); // TODO: suspicious method call
+      List<PsiType[]> signatures = ClosureParamsEnhancer.findFittingSignatures((GrFunctionalExpression)parent); // TODO: suspicious method call
       final List<PsiType> paramTypes = ContainerUtil.map(parameters, parameter -> parameter.getType());
 
       if (signatures.size() > 1) {

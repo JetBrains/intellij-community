@@ -17,10 +17,8 @@ package com.intellij.openapi.util.objectTree;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,18 +55,17 @@ final class ObjectNode<T> {
     myOwnModification = modification;
   }
 
-  @SuppressWarnings("unchecked")
   @NotNull
   private ObjectNode<T>[] getChildrenArray() {
     List<ObjectNode<T>> children = myChildren;
-    if (children == null || children.isEmpty()) return EMPTY_ARRAY;
-    return children.toArray(new ObjectNode[0]);
+    //noinspection unchecked
+    return children == null || children.isEmpty() ? EMPTY_ARRAY : children.toArray(EMPTY_ARRAY);
   }
 
   void addChild(@NotNull ObjectNode<T> child) {
     List<ObjectNode<T>> children = myChildren;
     if (children == null) {
-      myChildren = new SmartList<ObjectNode<T>>(child);
+      myChildren = new SmartList<>(child);
     }
     else {
       children.add(child);
@@ -142,30 +139,12 @@ final class ObjectNode<T> {
           exceptions.add(e);
         }
         removeFromObjectTree();
-
-        handleExceptions(exceptions);
       }
 
       @Override
       public void beforeTreeExecution(@NotNull ObjectNode<T> parent) {
       }
     });
-  }
-
-  private static void handleExceptions(List<Throwable> exceptions) {
-    if (!exceptions.isEmpty()) {
-      for (Throwable exception : exceptions) {
-        if (!(exception instanceof ProcessCanceledException)) {
-          LOG.error(exception);
-        }
-      }
-
-      ProcessCanceledException pce = ContainerUtil.findInstance(exceptions, ProcessCanceledException.class);
-      if (pce != null) {
-        throw pce;
-      }
-      exceptions.clear();
-    }
   }
 
   void removeFromObjectTree() {

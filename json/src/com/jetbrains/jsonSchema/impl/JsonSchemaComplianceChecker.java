@@ -131,7 +131,7 @@ public class JsonSchemaComplianceChecker {
       myHolder.registerProblem(psiElement, range, value);
     }
     else {
-      myHolder.registerProblem(psiElement, range, value, fix);
+      myHolder.registerProblem(range.isEmpty() ? psiElement.getContainingFile() : psiElement, range, value, fix);
     }
   }
 
@@ -142,7 +142,7 @@ public class JsonSchemaComplianceChecker {
       if (!isTop) ref.set(el);
       return isTop;
     });
-    return ref.isNull() ? null : walker.createValueAdapter(ref.get());
+    return ref.isNull() ? (walker.acceptsEmptyRoot() ? walker.createValueAdapter(element) : null) : walker.createValueAdapter(ref.get());
   }
 
   private boolean checkIfAlreadyProcessed(@NotNull PsiElement property) {

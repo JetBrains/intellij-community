@@ -139,7 +139,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
 
   private static class BackendThreadPoolExecutor extends ThreadPoolExecutor {
     BackendThreadPoolExecutor(@NotNull ThreadFactory factory) {
-      super(1, Integer.MAX_VALUE, 1, TimeUnit.MINUTES, new SynchronousQueue<Runnable>(), factory);
+      super(1, Integer.MAX_VALUE, 1, TimeUnit.MINUTES, new SynchronousQueue<>(), factory);
     }
 
     @Override

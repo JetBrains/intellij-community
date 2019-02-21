@@ -50,6 +50,7 @@ public abstract class ValueContainer<Value> {
 
   public abstract int size();
 
+  @FunctionalInterface
   public interface ContainerAction<T> {
     boolean perform(int id, T value);
   }

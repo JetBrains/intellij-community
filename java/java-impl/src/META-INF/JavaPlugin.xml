@@ -196,6 +196,7 @@
     <java.refactoring.chainCallExtractor implementation="com.intellij.refactoring.chainCall.StreamChainCallExtractor"/>
     <java.inspection.bulkMethodInfo implementation="com.intellij.codeInspection.bulkOperation.JdkBulkMethodInfoProvider"/>
     <java.externalAnnotation implementation="com.intellij.codeInsight.externalAnnotation.DeprecationAnnotationProvider"/>
+    <java.externalAnnotation implementation="com.intellij.codeInsight.externalAnnotation.NonNlsAnnotationProvider"/>
     <java.externalAnnotation implementation="com.intellij.codeInsight.externalAnnotation.NotNullAnnotationProvider"/>
     <java.externalAnnotation implementation="com.intellij.codeInsight.externalAnnotation.NullableAnnotationProvider"/>
     <java.externalAnnotation implementation="com.intellij.codeInsight.externalAnnotation.UnmodifiableAnnotationProvider"/>
@@ -491,7 +492,7 @@
     <typedHandler implementation="com.intellij.codeInsight.editorActions.JavadocTypedHandler" id="javadoc"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.JavaTypedHandler" id="java"/>
     <quoteHandler fileType="JAVA" className="com.intellij.codeInsight.editorActions.JavaQuoteHandler"/>
-    <constructorBodyGenerator language="JAVA" implementationClass="com.intellij.codeInsight.generation.NewJavaConstructorBodyWithSuperCallGenerator"/>
+    <constructorBodyGenerator language="JAVA" implementationClass="com.intellij.codeInsight.generation.JavaConstructorBodyWithSuperCallGenerator"/>
     <lang.sliceProvider language="JAVA" implementationClass="com.intellij.slicer.JavaSliceProvider"/>
     <lang.lineWrapStrategy language="JAVA" implementationClass="com.intellij.psi.formatter.java.JavaLineWrapPositionStrategy"/>
     <langCodeStyleSettingsProvider implementation="com.intellij.ide.JavaLanguageCodeStyleSettingsProvider"/>
@@ -1214,6 +1215,11 @@
       <descriptionDirectoryName>EditContractIntention</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInspection.dataFlow.EditRangeIntention</className>
+      <category>Java/Annotations</category>
+      <descriptionDirectoryName>EditRangeIntention</descriptionDirectoryName>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AnnotateIntentionAction</className>
       <category>Java/Annotations</category>
     </intentionAction>
@@ -1252,6 +1258,14 @@
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ChangeUIDAction</className>
       <category>Serialization</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.SplitSwitchBranchWithSeveralCaseValuesAction</className>
+      <category>Java/Control Flow</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.WrapWithUnmodifiableAction</className>
+      <category>Java/Other</category>
     </intentionAction>
     <externalAnnotationsArtifactsResolver implementation="com.intellij.jarRepository.ExternalAnnotationsRepositoryResolver"/>
     <errorQuickFixProvider implementation="com.intellij.codeInsight.daemon.impl.analysis.JavaErrorQuickFixProvider"/>

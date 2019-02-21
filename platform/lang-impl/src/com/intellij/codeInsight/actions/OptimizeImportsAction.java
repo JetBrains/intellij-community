@@ -154,11 +154,20 @@ public class OptimizeImportsAction extends AnAction {
     }
 
     Presentation presentation = event.getPresentation();
+    boolean available = isActionAvailable(event);
+    if (event.isFromContextMenu()) {
+      presentation.setEnabledAndVisible(available);
+    }
+    else {
+      presentation.setEnabled(available);
+    }
+  }
+
+  private static boolean isActionAvailable(@NotNull AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null){
-      presentation.setEnabled(false);
-      return;
+      return false;
     }
 
     final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
@@ -167,8 +176,7 @@ public class OptimizeImportsAction extends AnAction {
     if (editor != null){
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file == null || !isOptimizeImportsAvailable(file)){
-        presentation.setEnabled(false);
-        return;
+        return false;
       }
     }
     else if (files != null && ReformatCodeAction.containsAtLeastOneFile(files)) {
@@ -176,16 +184,14 @@ public class OptimizeImportsAction extends AnAction {
       for (VirtualFile virtualFile : files) {
         PsiFile file = PsiManager.getInstance(project).findFile(virtualFile);
         if (file == null) {
-          presentation.setEnabled(false);
-          return;
+          return false;
         }
         if (isOptimizeImportsAvailable(file)) {
           anyHasOptimizeImports = true;
         }
       }
       if (!anyHasOptimizeImports) {
-        presentation.setEnabled(false);
-        return;
+        return false;
       }
     }
     else if (files != null && files.length == 1) {
@@ -195,20 +201,18 @@ public class OptimizeImportsAction extends AnAction {
              PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext) == null) {
       PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       if (element == null){
-        presentation.setEnabled(false);
-        return;
+        return false;
       }
 
       if (!(element instanceof PsiDirectory)){
         PsiFile file = element.getContainingFile();
         if (file == null || !isOptimizeImportsAvailable(file)){
-          presentation.setEnabled(false);
-          return;
+          return false;
         }
       }
     }
 
-    presentation.setEnabled(true);
+    return true;
   }
 
   private static boolean isOptimizeImportsAvailable(final PsiFile file) {

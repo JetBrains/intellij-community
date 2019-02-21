@@ -127,7 +127,8 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
           float bw = BW.getFloat();
           float lw = LW.getFloat();
-          float arc = COMPONENT_ARC.getFloat() - bw - lw;
+          float arc = COMPONENT_ARC.getFloat();
+          arc = arc > bw + lw ? arc - bw - lw : 0.0f;
 
           Path2D innerShape = new Path2D.Float();
           innerShape.moveTo(lw, bw + lw);
@@ -359,7 +360,9 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
           Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
           border.append(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc), false);
-          border.append(new RoundRectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2, arc - lw, arc - lw), false);
+
+          arc = arc > lw ? arc - lw : 0.0f;
+          border.append(new RoundRectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2, arc, arc), false);
 
           g2.setColor(getOutlineColor(c.isEnabled(), hasFocus));
           g2.fill(border);
@@ -395,7 +398,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return DarculaUIUtil.isTableCellEditor(c) ? JBUI.insets(2) : getDefaultComboBoxInsets();
+    return DarculaUIUtil.isTableCellEditor(c) || isCompact(c)? JBUI.insets(2, 3) : getDefaultComboBoxInsets();
   }
 
   @Override

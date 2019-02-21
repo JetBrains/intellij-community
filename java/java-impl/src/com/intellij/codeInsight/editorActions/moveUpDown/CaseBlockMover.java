@@ -25,17 +25,19 @@ public class CaseBlockMover extends LineMover {
 
     final Document document = editor.getDocument();
     int startOffset = document.getLineStartOffset(info.toMove.startLine);
-    int endOffset = document.getLineEndOffset(info.toMove.endLine);
+    int endOffset = getLineStartSafeOffset(document, info.toMove.endLine);
     List<PsiSwitchLabelStatement> statements = new SmartList<>();
+    PsiElement firstElement = null;
     for (PsiElement element : CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset)) {
       if (element instanceof PsiSwitchLabelStatement) {
         statements.add((PsiSwitchLabelStatement)element);
       }
       else if (statements.isEmpty()) {
-        return false;  // if first statement is not a label let the regular statement mover handle it.
+        firstElement = element;
       }
     }
     if (statements.isEmpty()) return false;
+    if (firstElement != null) return info.prohibitMove(); // nonsensical selection
 
     PsiSwitchLabelStatement firstToMove = getThisCaseBlockStart(statements.get(0));
     PsiSwitchLabelStatement lastStatement = statements.get(statements.size() - 1);

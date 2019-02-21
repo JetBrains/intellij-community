@@ -65,13 +65,14 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
     if (virtualFile instanceof VirtualFileWindow) {
       virtualFile = ((VirtualFileWindow)virtualFile).getDelegate();
     }
-    final String relativePath = getRelativePath(virtualFile, fileIndex, true, projectBaseDir);
+    String relativePath = getRelativePath(virtualFile, fileIndex, true, projectBaseDir);
     if (relativePath == null) {
       LOG.error("vFile: " + virtualFile + "; projectBaseDir: " + projectBaseDir + "; content File: "+fileIndex.getContentRootForFile(virtualFile));
     }
     if (StringUtil.isEmptyOrSpaces(relativePath) && !virtualFile.equals(projectBaseDir)) {
       return false;
     }
+    if (virtualFile.isDirectory()) relativePath += '/';
     return myFilePattern.matcher(relativePath).matches();
   }
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jps.impl;
 
 import com.intellij.openapi.extensions.*;
@@ -38,17 +24,13 @@ public class JpsIdePluginManagerImpl extends JpsPluginManager {
   public JpsIdePluginManagerImpl() {
     ExtensionsArea rootArea = Extensions.getRootArea();
     //todo[nik] get rid of this check: currently this class is used in intellij.platform.jps.build tests instead of JpsPluginManagerImpl because intellij.platform.ide.impl module is added to classpath via testFramework
-    if (rootArea.hasExtensionPoint(JpsPluginBean.EP_NAME.getName())) {
-      rootArea.getExtensionPoint(JpsPluginBean.EP_NAME).addExtensionPointListener(new ExtensionPointListener<JpsPluginBean>() {
+    if (rootArea.hasExtensionPoint(JpsPluginBean.EP_NAME)) {
+      JpsPluginBean.EP_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<JpsPluginBean>() {
         @Override
         public void extensionAdded(@NotNull JpsPluginBean extension, @Nullable PluginDescriptor pluginDescriptor) {
           ContainerUtil.addIfNotNull(myExternalBuildPlugins, pluginDescriptor);
         }
-
-        @Override
-        public void extensionRemoved(@NotNull JpsPluginBean extension, @Nullable PluginDescriptor pluginDescriptor) {
-        }
-      });
+      }, true, null);
     }
     if (rootArea.hasExtensionPoint("com.intellij.compileServer.plugin")) {
       ExtensionPoint extensionPoint = rootArea.getExtensionPoint("com.intellij.compileServer.plugin");
@@ -57,10 +39,6 @@ public class JpsIdePluginManagerImpl extends JpsPluginManager {
         @Override
         public void extensionAdded(@NotNull Object extension, @Nullable PluginDescriptor pluginDescriptor) {
           ContainerUtil.addIfNotNull(myExternalBuildPlugins, pluginDescriptor);
-        }
-
-        @Override
-        public void extensionRemoved(@NotNull Object extension, @Nullable PluginDescriptor pluginDescriptor) {
         }
       });
     }

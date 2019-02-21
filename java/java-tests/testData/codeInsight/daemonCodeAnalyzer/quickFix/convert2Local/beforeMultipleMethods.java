@@ -1,4 +1,4 @@
-// "Convert field to local variables in 2 methods" "true"
+// "Convert to local" "true"
 class Test {
   private int my<caret>Foo;
 

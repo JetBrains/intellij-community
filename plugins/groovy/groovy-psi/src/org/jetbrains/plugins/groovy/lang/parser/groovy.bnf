@@ -938,41 +938,44 @@ array_declaration ::= mandatory_expression optional_expression* { consumeTokenMe
 private mandatory_expression ::= '[' expression ']' { pin = 1 consumeTokenMethod = 'consumeTokenFast' }
 private optional_expression ::= '[' expression? ']' { pin = 1 consumeTokenMethod = 'consumeTokenFast' }
 
-private priority1_2 ::= method_call_expression | lazy_closure | parenthesized_lambda_expression | list_or_map
+private priority1_2 ::= method_call_expression | lazy_closure | lambda_expression | single_parameter_lambda_expression | list_or_map
 constructor_call_expression ::= &('this' | 'super') unqualified_reference_expression call_tail
 method_call_expression ::= expression call_tail
 private call_tail ::= call_argument_list (mb_nl lazy_closure)* | empty_argument_list <<closureArgumentSeparator lazy_closure+>>
 
-lambda_expression ::=  lambda_expression_base | clear_variants_and_fail
+//region Lambda expression
+lambda_expression ::= lambda_expression_base | clear_variants_and_fail
 private lambda_expression_base ::= lambda_expression_head mb_nl lambda_body { pin = 1 }
 private lambda_expression_head ::= lambda_parameter_list mb_nl '->' { consumeTokenMethod = 'consumeTokenFast' }
-private lambda_parameter_list ::= parenthesized_lambda_parameter_list | single_lambda_parameter_list
+lambda_parameter_list ::= empty_parens | '(' <<comma_list (mb_nl parse_parameter)>> ')' { elementType = parameter_list }
+private lambda_body ::=  (!<<isParameterizedClosure>> lazy_block_lambda_body) | expression_lambda_body
 
-parenthesized_lambda_expression ::= parenthesized_lambda_expression_base | clear_variants_and_fail { elementType = lambda_expression }
-private parenthesized_lambda_expression_base ::= parenthesized_lambda_expression_head mb_nl lambda_body { pin = 1 }
-private parenthesized_lambda_expression_head ::= parenthesized_lambda_parameter_list mb_nl '->'
-{
-  consumeTokenMethod = 'consumeTokenFast'
-}
+expression_lambda_body ::= expression_or_application
 
-parenthesized_lambda_parameter_list ::= empty_parens | '(' <<comma_list (mb_nl lambda_parameter)>> ')' { elementType = parameter_list }
-lambda_parameter ::= modifier_list mb_type_element var { elementType = parameter }
+single_parameter_lambda_expression::= single_parameter_lambda_expression_base | clear_variants_and_fail { elementType = lambda_expression }
+private single_parameter_lambda_expression_base ::= single_parameter_lambda_expression_head mb_nl single_parameter_lambda_body { pin = 1 }
+private single_parameter_lambda_expression_head ::= single_parameter_lambda_parameter_list mb_nl '->' { consumeTokenMethod = 'consumeTokenFast' }
 
-single_lambda_parameter_list ::= single_lambda_parameter { elementType = parameter_list }
-single_lambda_parameter ::= modifier_list IDENTIFIER {
+single_parameter_lambda_parameter_list ::= !<<isApplicationArguments>> single_parameter_lambda_parameter { elementType = parameter_list }
+single_parameter_lambda_parameter ::= modifier_list IDENTIFIER {
   elementType = parameter
 }
-
-private lambda_body ::=  (!<<isParameterizedClosure>> lazy_lambda_block) | expression_or_application
-
-lazy_lambda_block ::=  <<parseBlockLazy lambda_block 'LAMBDA_BLOCK'>> {
-  elementType = lambda_block
+private single_parameter_lambda_body ::= expression_single_parameter_lambda_body | lazy_block_lambda_body
+expression_single_parameter_lambda_body ::= <<isParameterizedClosure>> expression_or_application
+                                              | expression_or_application !<<isAfterClosure>>
+{
+  elementType = expression_lambda_body
 }
 
-lambda_block ::= '{' mb_nl block_levels '}' {
-  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrLambdaBlockElementType'
+lazy_block_lambda_body ::= <<parseBlockLazy block_lambda_body 'BLOCK_LAMBDA_BODY'>> {
+  elementType = block_lambda_body
+}
+
+block_lambda_body ::= '{' mb_nl block_levels '}' {
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrBlockLambdaBodyElementType'
   consumeTokenMethod = 'consumeTokenFast'
 }
+// endregion
 
 lazy_closure ::= <<parseBlockLazy closure 'CLOSURE'>>
 {
@@ -1103,7 +1106,7 @@ elvis_expression ::= expression mb_nl ('?:' mb_nl) expression
 
 private priority15 ::= assignment_expression | tuple_assignment_expression
 assignment_expression ::= expression assignment_expression_rvalue { rightAssociative = true }
-private assignment_expression_rvalue ::= (<<assignmentOperator>> mb_nl) enhanced_expression_or_application { pin = 1 }
+private assignment_expression_rvalue ::= (<<assignmentOperator>> mb_nl) expression_or_application { pin = 1 }
 
 tuple_assignment_expression ::= single_tuple_assignment | multi_tuple_assignment
 private single_tuple_assignment ::= single_tuple tuple_initializer // don't pin because "(foo)" may be a parenthesized expression
@@ -1120,7 +1123,6 @@ tuple ::= '(' unqualified_reference_expression (',' unqualified_reference_expres
 
 // region Applications
 expression_or_application ::= <<notApplicationArguments expression_or_application_inner>> { elementType = '' name = '' }
-private enhanced_expression_or_application ::=  lambda_expression | expression_or_application
 private expression_or_application_inner ::= expression application*
 private application ::= no_nl <<parseApplication application_ref application_expression application_call application_index>>
 {
@@ -1168,9 +1170,8 @@ application_argument_list ::= <<applicationArguments application_arguments>>
 private application_arguments ::= argument (',' mb_nl argument)*
 
 private parse_argument ::= <<parseArgument argument>>
-private argument ::= spread_list_argument | named_argument | lambda_argument | expression (map_argument_label map_argument)?
+private argument ::= spread_list_argument | named_argument | expression (map_argument_label map_argument)?
 
-private lambda_argument ::= !<<isApplicationArguments>> lambda_expression
 left map_argument_label ::= &':'
 {
  elementType = argument_label
@@ -1257,7 +1258,7 @@ left doc_reference_tail ::= '.' code_reference_part { elementType = code_referen
 
 // region Variables
 private var ::= IDENTIFIER mb_initializer
-private mb_initializer ::= ['=' mb_nl enhanced_expression_or_application]
+private mb_initializer ::= ['=' mb_nl expression_or_application]
 {
   pin('.*') = 1
   consumeTokenMethod = 'consumeTokenFast'

@@ -349,8 +349,13 @@ public class ExecutionHelper {
         indicator.setText2(title2);
       }
       Application application = ApplicationManager.getApplication();
-      if (application.isDispatchThread() && application.isInternal() && !application.isHeadlessEnvironment()) {
-        LOG.warn("Synchronous execution on EDT: " + processHandler, new Throwable());
+      if (application.isInternal() && !application.isHeadlessEnvironment()) {
+        if (application.isDispatchThread()) {
+          LOG.warn("Synchronous execution on EDT: " + processHandler, new Throwable());
+        }
+        else if (application.isReadAccessAllowed()) {
+          LOG.warn("Synchronous execution under ReadAction: " + processHandler, new Throwable());
+        }
       }
       process.run();
     }

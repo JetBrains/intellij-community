@@ -9,7 +9,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.NSDefaults;
-import com.intellij.util.lang.UrlClassLoader;
+import com.intellij.util.loader.NativeLibraryLoader;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +49,7 @@ public class NST {
         if (ourNSTLibrary != null) {
           // small check that loaded library works
           try {
-            final ID test = ourNSTLibrary.createTouchBar("test", (uid) -> { return ID.NIL; }, null);
+            final ID test = ourNSTLibrary.createTouchBar("test", (uid) -> ID.NIL, null);
             if (test == null || test == ID.NIL) {
               LOG.error("Failed to create native touchbar object, result is null");
               ourNSTLibrary = null;
@@ -89,7 +89,7 @@ public class NST {
   }
 
   static NSTLibrary loadLibrary() {
-    UrlClassLoader.loadPlatformLibrary("nst");
+    NativeLibraryLoader.loadPlatformLibrary("nst");
 
     // Set JNA to convert java.lang.String to char* using UTF-8, and match that with
     // the way we tell CF to interpret our char*

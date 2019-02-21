@@ -52,9 +52,7 @@ public class LibraryDependentToolWindowManager implements StartupActivity {
   private static void checkToolWindowStatuses(@NotNull final Project project) {
     final ModalityState currentModalityState = ModalityState.current();
 
-    ourExecutor.submit(() -> {
-      doCheckToolWindowStatuses(project, currentModalityState);
-    });
+    ourExecutor.submit(() -> doCheckToolWindowStatuses(project, currentModalityState));
   }
 
   private static void doCheckToolWindowStatuses(@NotNull final Project project,

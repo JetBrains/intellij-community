@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.LineTokenizer;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Enumerator;
 import org.jetbrains.annotations.NonNls;
@@ -61,7 +60,7 @@ public class Diff {
     if (changeRef != null) return changeRef.get();
 
     int trimmedLength = objects1.length + objects2.length - 2 * startShift - 2 * endCut;
-    Enumerator<T> enumerator = new Enumerator<T>(trimmedLength, ContainerUtil.<T>canonicalStrategy());
+    Enumerator<T> enumerator = new Enumerator<>(trimmedLength, ContainerUtil.canonicalStrategy());
     int[] ints1 = enumerator.enumerate(objects1, startShift, endCut);
     int[] ints2 = enumerator.enumerate(objects2, startShift, endCut);
     return doBuildChanges(ints1, ints2, new ChangeBuilder(startShift));
@@ -89,7 +88,7 @@ public class Diff {
     Change change = trimmedLength1 != 0 || trimmedLength2 != 0 ?
                     new Change(startShift, startShift, trimmedLength1, trimmedLength2, null) :
                     null;
-    return new Ref<Change>(change);
+    return new Ref<>(change);
   }
 
   private static Change doBuildChanges(@NotNull int[] ints1, @NotNull int[] ints2, @NotNull ChangeBuilder builder)
@@ -183,12 +182,7 @@ public class Diff {
 
   @NotNull
   private static String[] trim(@NotNull String[] lines) {
-    return ContainerUtil.map2Array(lines, String.class, new Function<String, String>() {
-      @Override
-      public String fun(String s) {
-        return s.trim();
-      }
-    });
+    return ContainerUtil.map2Array(lines, String.class, String::trim);
   }
 
   /**
@@ -257,7 +251,7 @@ public class Diff {
     }
 
     public ArrayList<Change> toList() {
-      ArrayList<Change> result = new ArrayList<Change>();
+      ArrayList<Change> result = new ArrayList<>();
       Change current = this;
       while (current != null) {
         result.add(current);

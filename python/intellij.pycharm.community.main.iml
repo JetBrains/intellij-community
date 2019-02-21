@@ -6,7 +6,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.bootstrap" />
     <orderEntry type="module" module-name="intellij.platform.colorSchemes" />
-    <orderEntry type="module" module-name="intellij.vcs.cvs" />
     <orderEntry type="module" module-name="intellij.vcs.hg" />
     <orderEntry type="module" module-name="intellij.vcs.svn" />
     <orderEntry type="module" module-name="intellij.vcs.git" />
@@ -19,7 +18,6 @@
     <orderEntry type="module" module-name="intellij.pycharm.community" />
     <orderEntry type="module" module-name="intellij.platform.main" />
     <orderEntry type="module" module-name="intellij.tasks.jira" />
-    <orderEntry type="module" module-name="intellij.python.ipnb" />
     <orderEntry type="module" module-name="intellij.settingsRepository" />
     <orderEntry type="module" module-name="intellij.python.terminal" />
     <orderEntry type="module" module-name="intellij.python.copyright" />

@@ -1,8 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search.scope.packageSet;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.util.ArrayUtil;
@@ -15,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -31,6 +34,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
     myProject = project;
   }
 
+  @NotNull
   public abstract String getDisplayName();
 
   public abstract Icon getIcon();
@@ -49,10 +53,17 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
 
   private final List<ScopeListener> myScopeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
+  @Deprecated
   public void addScopeListener(@NotNull ScopeListener scopeListener) {
     myScopeListeners.add(scopeListener);
   }
 
+  public void addScopeListener(@NotNull ScopeListener scopeListener, @NotNull Disposable parentDisposable) {
+    myScopeListeners.add(scopeListener);
+    Disposer.register(parentDisposable, () -> myScopeListeners.remove(scopeListener));
+  }
+
+  @Deprecated
   public void removeScopeListener(@NotNull ScopeListener scopeListener) {
     myScopeListeners.remove(scopeListener);
   }
@@ -83,6 +94,9 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
   }
 
   public void setScopes(@NotNull NamedScope[] scopes) {
+    if (ArrayUtil.contains(null, scopes)) {
+      throw new IllegalArgumentException("Must not pass null scopes, got: " + Arrays.toString(scopes));
+    }
     myScopes = scopes.clone();
     fireScopeListeners();
   }
@@ -123,7 +137,8 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
     return defaultHolder;
   }
 
-  private static Element writeScope(NamedScope scope) {
+  @NotNull
+  private static Element writeScope(@NotNull NamedScope scope) {
     Element setElement = new Element(SCOPE_TAG);
     setElement.setAttribute(NAME_ATT, scope.getName());
     PackageSet packageSet = scope.getValue();
@@ -132,7 +147,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
   }
 
   @NotNull
-  private NamedScope readScope(Element setElement) {
+  private NamedScope readScope(@NotNull Element setElement) {
     String name = setElement.getAttributeValue(NAME_ATT);
     PackageSet set;
     String attributeValue = setElement.getAttributeValue(PATTERN_ATT);

@@ -194,24 +194,28 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
       @Override
       public void fileTypesChanged(@NotNull final FileTypeEvent event) {
-        final Map<FileType, Set<String>> oldExtensions = myTypeToExtensionMap;
+        final Map<FileType, Set<String>> oldTypeToExtensionsMap = myTypeToExtensionMap;
         myTypeToExtensionMap = null;
-        if (oldExtensions != null) {
-          final Map<FileType, Set<String>> newExtensions = new THashMap<>();
+        if (oldTypeToExtensionsMap != null) {
+          final Map<FileType, Set<String>> newTypeToExtensionsMap = new THashMap<>();
           for (FileType type : myFileTypeManager.getRegisteredFileTypes()) {
-            newExtensions.put(type, getExtensions(type));
+            newTypeToExtensionsMap.put(type, getExtensions(type));
           }
           // we are interested only in extension changes or removals.
           // addition of an extension is handled separately by RootsChanged event
-          if (!newExtensions.keySet().containsAll(oldExtensions.keySet())) {
-            rebuildAllIndices();
+          if (!newTypeToExtensionsMap.keySet().containsAll(oldTypeToExtensionsMap.keySet())) {
+            Set<FileType> removedFileTypes = new HashSet<>(oldTypeToExtensionsMap.keySet());
+            removedFileTypes.removeAll(newTypeToExtensionsMap.keySet());
+            rebuildAllIndices("The following file types were removed/are no longer associated: " + removedFileTypes);
             return;
           }
-          for (Map.Entry<FileType, Set<String>> entry : oldExtensions.entrySet()) {
+          for (Map.Entry<FileType, Set<String>> entry : oldTypeToExtensionsMap.entrySet()) {
             FileType fileType = entry.getKey();
             Set<String> strings = entry.getValue();
-            if (!newExtensions.get(fileType).containsAll(strings)) {
-              rebuildAllIndices();
+            if (!newTypeToExtensionsMap.get(fileType).containsAll(strings)) {
+              Set<String> removedExtensions = new HashSet<>(strings);
+              removedExtensions.removeAll(newTypeToExtensionsMap.get(fileType));
+              rebuildAllIndices(fileType.getName() + " is no longer associated with extension(s) " + String.join(",", removedExtensions));
               return;
             }
           }
@@ -227,9 +231,9 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
         return set;
       }
 
-      private void rebuildAllIndices() {
+      private void rebuildAllIndices(@NotNull String reason) {
         doClearIndices();
-        scheduleIndexRebuild("File type change");
+        scheduleIndexRebuild("File type change" + ", " + reason);
       }
     });
 
@@ -346,6 +350,8 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       if (versionFileExisted) {
         versionChanged = true;
         LOG.info("Version has changed for index " + name + ". The index will be rebuilt.");
+      } else {
+        LOG.info("Index " + name + " will be built.");
       }
       if (extension.hasSnapshotMapping() && versionChanged) {
         FileUtil.deleteWithRenaming(IndexInfrastructure.getPersistentIndexRootDir(name));
@@ -460,20 +466,9 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
   private static <K, V> UpdatableIndex<K, V, FileContent> createIndex(@NotNull final FileBasedIndexExtension<K, V> extension,
                                                                @NotNull final MemoryIndexStorage<K, V> storage)
     throws StorageException, IOException {
-    final VfsAwareMapReduceIndex<K, V, FileContent> index;
-    if (extension instanceof CustomImplementationFileBasedIndexExtension) {
-      final UpdatableIndex<K, V, FileContent> custom =
-        ((CustomImplementationFileBasedIndexExtension<K, V, FileContent>)extension).createIndexImplementation(extension, storage);
-      if (!(custom instanceof VfsAwareMapReduceIndex)) {
-        return custom;
-      }
-      index = (VfsAwareMapReduceIndex<K, V, FileContent>)custom;
-    }
-    else {
-      index = new VfsAwareMapReduceIndex<>(extension, storage);
-    }
-
-    return index;
+    return extension instanceof CustomImplementationFileBasedIndexExtension
+           ? ((CustomImplementationFileBasedIndexExtension<K, V, FileContent>)extension).createIndexImplementation(extension, storage)
+           : new VfsAwareMapReduceIndex<>(extension, storage);
   }
 
   @Override
@@ -1021,7 +1016,6 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
         minMax[0] = minMax[1] = set.get(0);
       }
       set.forEach(value -> {
-        if (value < 0) value = -value;
         minMax[0] = Math.min(minMax[0], value);
         minMax[1] = Math.max(minMax[1], value);
         return true;
@@ -1030,7 +1024,6 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       myMinId = minMax[0];
       myBitMask = new long[((myMaxId - myMinId) >> SHIFT) + 1];
       set.forEach(value -> {
-        if (value < 0) value = -value;
         value -= myMinId;
         myBitMask[value >> SHIFT] |= (1L << (value & MASK));
         return true;
@@ -1806,9 +1799,6 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
         if (getInputFilter(indexId).acceptInput(file)) {
           if (fileContent == null) {
             fileContent = new FileContentImpl(file);
-            if (fileId < 0) {
-              fileId = -fileId;
-            }
           }
           updateSingleIndex(indexId, file, fileId, fileContent);
         }
@@ -2115,10 +2105,9 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
       for(VirtualFile file:files) {
         int fileId = ((VirtualFileWithId)file).getId();
-        if (fileId > 0) {
-          if (usedFileIds.get(fileId)) continue;
-          usedFileIds.set(fileId);
-        }
+        if (usedFileIds.get(fileId)) continue;
+        usedFileIds.set(fileId);
+        
         if (file.getFileSystem() instanceof LocalFileSystem) localFileSystemFiles.add(file);
         else archiveFiles.add(file);
       }

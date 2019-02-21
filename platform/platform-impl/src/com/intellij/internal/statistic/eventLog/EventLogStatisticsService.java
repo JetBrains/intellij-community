@@ -5,9 +5,9 @@ import com.intellij.internal.statistic.connect.StatServiceException;
 import com.intellij.internal.statistic.connect.StatisticsResult;
 import com.intellij.internal.statistic.connect.StatisticsResult.ResultCode;
 import com.intellij.internal.statistic.connect.StatisticsService;
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.openapi.application.PermanentInstallationID;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,8 +33,9 @@ public class EventLogStatisticsService implements StatisticsService {
   }
 
   public static StatisticsResult send(@NotNull EventLogSettingsService settings, @NotNull EventLogResultDecorator decorator) {
-    if (!FeatureUsageLogger.INSTANCE.isEnabled()) {
-      throw new StatServiceException("Event Log collector is not enabled");
+    if (!FeatureUsageLogger.INSTANCE.isEnabled() || !StatisticsUploadAssistant.isSendAllowed()) {
+      cleanupAllFiles();
+      return new StatisticsResult(ResultCode.NOTHING_TO_SEND, "Event Log collector is not enabled");
     }
 
     final List<File> logs = FeatureUsageLogger.INSTANCE.getLogFiles();

@@ -87,10 +87,14 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
 
   public static boolean hasErrorsInArgumentList(final PsiMethodCallExpression call) {
     Project project = call.getProject();
+    PsiExpressionList argumentList = call.getArgumentList();
+    for (PsiExpression expression : argumentList.getExpressions()) {
+      PsiType type = expression.getType();
+      if (type == null || PsiType.VOID.equals(type)) return true;
+    }
     Document document = PsiDocumentManager.getInstance(project).getDocument(call.getContainingFile());
     if (document == null) return true;
 
-    PsiExpressionList argumentList = call.getArgumentList();
     final TextRange argRange = argumentList.getTextRange();
     return !DaemonCodeAnalyzerEx.processHighlights(document, project, HighlightSeverity.ERROR,
                                                    //strictly inside arg list

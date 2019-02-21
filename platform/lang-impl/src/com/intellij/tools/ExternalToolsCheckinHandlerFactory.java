@@ -8,7 +8,6 @@ import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,8 +18,6 @@ import java.awt.*;
  * @author lene
  */
 public class ExternalToolsCheckinHandlerFactory extends CheckinHandlerFactory {
-  public static final Object NONE_TOOL = ObjectUtils.sentinel("NONE_TOOL");
-
   @NotNull
   @Override
   public CheckinHandler createHandler(@NotNull final CheckinProjectPanel panel, @NotNull CommitContext commitContext) {

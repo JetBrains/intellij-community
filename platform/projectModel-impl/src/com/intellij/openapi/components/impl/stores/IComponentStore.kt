@@ -24,7 +24,7 @@ interface IComponentStore {
 
   fun isReloadPossible(componentNames: Set<String>): Boolean
 
-  suspend fun save(isForceSavingAllSettings: Boolean = false)
+  suspend fun save(forceSavingAllSettings: Boolean = false)
 
   @TestOnly
   fun saveComponent(component: PersistentStateComponent<*>)

@@ -47,6 +47,11 @@
     <extensionPoint name="fileTypeFactory"
                     interface="com.intellij.openapi.fileTypes.FileTypeFactory"/>
 
+    <extensionPoint name="fileTypeUsageSchemaDescriptor"
+                    beanClass="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector$FileTypeUsageSchemaDescriptorEP">
+      <with attribute="implementationClass" implements="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageSchemaDescriptor"/>
+    </extensionPoint>
+
     <extensionPoint name="virtualFileSystem"
                     beanClass="com.intellij.util.KeyedLazyInstanceEP">
       <with attribute="implementationClass" implements="com.intellij.openapi.vfs.VirtualFileSystem"/>
@@ -192,7 +197,10 @@
 
     <extensionPoint name="writingAccessProvider" area="IDEA_PROJECT" interface="com.intellij.openapi.vfs.WritingAccessProvider"/>
     <extensionPoint name="nonProjectFileWritingAccessExtension" area="IDEA_PROJECT" interface="com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension"/>
+
     <extensionPoint name="editorNotificationProvider" area="IDEA_PROJECT" interface="com.intellij.ui.EditorNotifications$Provider"/>
+    <extensionPoint name="editorNotificationProviderApp" interface="com.intellij.ui.EditorNotifications$Provider"/>
+
     <extensionPoint name="featureStatBundle" interface="com.intellij.featureStatistics.FeatureStatisticsBundleProvider"/>
     <extensionPoint name="featureStatisticsBundle" beanClass="com.intellij.featureStatistics.FeatureStatisticsBundleEP"/>
 
@@ -336,5 +344,9 @@
     <extensionPoint qualifiedName="com.intellij.registryKey" beanClass="com.intellij.openapi.util.registry.RegistryKeyBean"/>
 
     <extensionPoint name="fileBreadcrumbsCollector" interface="com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector" area="IDEA_PROJECT"/>
+
+    <extensionPoint qualifiedName="com.intellij.search.traverseUiHelper" interface="com.intellij.ide.ui.search.TraverseUIHelper"/>
+
+    <extensionPoint name="stalledStorage" beanClass="com.intellij.configurationStore.StalledStorageBean"/>
   </extensionPoints>
 </idea-plugin>

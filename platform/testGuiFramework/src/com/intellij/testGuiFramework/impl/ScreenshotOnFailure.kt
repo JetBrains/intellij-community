@@ -19,7 +19,6 @@ import com.intellij.testGuiFramework.framework.GuiTestPaths
 import com.intellij.testGuiFramework.util.ScreenshotTaker
 import com.intellij.testGuiFramework.util.logError
 import com.intellij.testGuiFramework.util.logInfo
-import com.intellij.testGuiFramework.util.logWarning
 import org.fest.swing.core.BasicComponentPrinter
 import org.fest.swing.exception.ComponentLookupException
 import org.junit.rules.TestWatcher
@@ -43,7 +42,7 @@ class ScreenshotOnFailure: TestWatcher() {
     fun takeScreenshot(screenshotName: String, t: Throwable? = null) {
       try {
         val file = getOrCreateScreenshotFile(screenshotName)
-        if (t is ComponentLookupException) logWarning("${getHierarchy()} \n caused by:", t)
+        File(GuiTestPaths.failedTestScreenshotDir, "$screenshotName.hierarchy.txt").writeText(getHierarchy())
         myScreenshotTaker.safeTakeScreenshotAndSave(file)
         logInfo("Screenshot saved to '$file'")
       }

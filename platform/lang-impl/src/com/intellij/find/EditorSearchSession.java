@@ -510,7 +510,7 @@ public class EditorSearchSession implements SearchSession,
 
     @NotNull
     @Override
-    public JComponent createCustomComponent(@NotNull Presentation presentation) {
+    public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
       JButton button = new JButton(myTitle);
       button.setFocusable(false);
       if (!UISettings.getInstance().getDisableMnemonicsInControls()) {

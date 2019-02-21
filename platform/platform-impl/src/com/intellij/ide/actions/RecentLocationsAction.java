@@ -1,32 +1,22 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
-import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.CheckboxAction;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
-import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.editor.highlighter.LightHighlighterClient;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
-import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl.PlaceInfo;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -34,42 +24,39 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.DimensionService;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.FocusManagerImpl;
+import com.intellij.ui.CaptionPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.WindowMoveListener;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.breadcrumbs.Crumb;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearch;
-import com.intellij.util.CollectConsumer;
-import com.intellij.util.DocumentUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
-import java.util.*;
-import java.util.stream.Collectors;
 
-import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.COMPONENT_KEY;
 import static com.intellij.ui.speedSearch.SpeedSearchSupply.ENTERED_PREFIX_PROPERTY_NAME;
 
-public class RecentLocationsAction extends AnAction {
+public class RecentLocationsAction extends DumbAwareAction {
+  private static final String RECENT_LOCATIONS_ACTION_ID = "RecentLocations";
   private static final String LOCATION_SETTINGS_KEY = "recent.locations.popup";
   private static final String SHOW_RECENT_CHANGED_LOCATIONS = "SHOW_RECENT_CHANGED_LOCATIONS";
   private static final int DEFAULT_WIDTH = JBUI.scale(700);
@@ -77,38 +64,31 @@ public class RecentLocationsAction extends AnAction {
   private static final int MINIMUM_WIDTH = JBUI.scale(200);
   private static final int MINIMUM_HEIGHT = JBUI.scale(100);
   private static final Color SHORTCUT_FOREGROUND_COLOR = UIUtil.getContextHelpForeground();
-  private static final String SHORTCUT_HEX_COLOR = String.format("#%02x%02x%02x",
-                                                                 SHORTCUT_FOREGROUND_COLOR.getRed(),
-                                                                 SHORTCUT_FOREGROUND_COLOR.getGreen(),
-                                                                 SHORTCUT_FOREGROUND_COLOR.getBlue());
+  public static final String SHORTCUT_HEX_COLOR = String.format("#%02x%02x%02x",
+                                                                SHORTCUT_FOREGROUND_COLOR.getRed(),
+                                                                SHORTCUT_FOREGROUND_COLOR.getGreen(),
+                                                                SHORTCUT_FOREGROUND_COLOR.getBlue());
 
   static final String EMPTY_FILE_TEXT = IdeBundle.message("recent.locations.popup.empty.file.text");
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.recent.locations");
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(RECENT_LOCATIONS_ACTION_ID);
     Project project = getEventProject(e);
     if (project == null) {
       return;
     }
 
-    boolean showChanged = showChanged(project);
-
-    final Ref<List<RecentLocationItem>> changedPlaces = Ref.create();
-    final Ref<List<RecentLocationItem>> navigationPlaces = Ref.create();
-    Collection<Editor> editorsToRelease = ContainerUtil.newArrayList();
-
-    List<RecentLocationItem> items = cacheAndGetItems(project, showChanged, changedPlaces, navigationPlaces, editorsToRelease);
-    Ref<Map<PlaceInfo, String>> breadcrumbsMap = Ref.create(collectBreadcrumbs(project, items));
-
-    JBList<RecentLocationItem> list = new JBList<>(JBList.createDefaultListModel(items));
-    final JScrollPane scrollPane = ScrollPaneFactory
-      .createScrollPane(list, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    RecentLocationsDataModel model = new RecentLocationsDataModel(project, ContainerUtil.newArrayList());
+    JBList<RecentLocationItem> list = new JBList<>(JBList.createDefaultListModel(model.getPlaces(showChanged(project))));
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(list,
+                                                                      ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                                                      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
     scrollPane.setBorder(BorderFactory.createEmptyBorder());
 
-    ListWithFilter<RecentLocationItem> listWithFilter =
-      (ListWithFilter<RecentLocationItem>)ListWithFilter.wrap(list, scrollPane, getNamer(breadcrumbsMap), true);
+    ListWithFilter<RecentLocationItem> listWithFilter = (ListWithFilter<RecentLocationItem>)ListWithFilter
+      .wrap(list, scrollPane, getNamer(project, model), true);
 
     listWithFilter.setBorder(BorderFactory.createEmptyBorder());
 
@@ -117,21 +97,28 @@ public class RecentLocationsAction extends AnAction {
       evt -> {
         if (evt.getPropertyName().equals(ENTERED_PREFIX_PROPERTY_NAME)) {
           if (StringUtil.isEmpty(speedSearch.getFilter())) {
-            editorsToRelease.forEach(editor -> clearSelectionInEditor(editor));
+            model.getEditorsToRelease().forEach(editor -> clearSelectionInEditor(editor));
           }
         }
       });
 
-    RecentLocationsRenderer renderer = new RecentLocationsRenderer(project, speedSearch, breadcrumbsMap);
-    list.setCellRenderer(renderer);
+    list.setCellRenderer(new RecentLocationsRenderer(project, speedSearch, model));
     list.setEmptyText(IdeBundle.message("recent.locations.popup.empty.text"));
     list.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
     ScrollingUtil.installActions(list);
     ScrollingUtil.ensureSelectionExists(list);
 
-    JLabel title = createTitle(showChanged);
-    JPanel topPanel = createHeaderPanel(title, createCheckbox(project, listWithFilter, e, showChanged));
+    JLabel title = createTitle(showChanged(project));
+
+    ShortcutSet showChangedOnlyShortcutSet = KeymapUtil.getActiveKeymapShortcuts(RECENT_LOCATIONS_ACTION_ID);
+    JBCheckBox checkBox = createCheckbox(project, showChangedOnlyShortcutSet);
+
+    JPanel topPanel = createHeaderPanel(title, checkBox);
     JPanel mainPanel = createMainPanel(listWithFilter, topPanel);
+
+    Color borderColor = SystemInfoRt.isMac && LafManager.getInstance().getCurrentLookAndFeel() instanceof DarculaLookAndFeelInfo
+                        ? topPanel.getBackground()
+                        : null;
 
     Ref<Boolean> navigationRef = Ref.create(false);
     JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(mainPanel, list)
@@ -147,15 +134,27 @@ public class RecentLocationsAction extends AnAction {
       })
       .setResizable(true)
       .setMovable(true)
+      .setBorderColor(borderColor)
       .setDimensionServiceKey(project, LOCATION_SETTINGS_KEY, true)
       .setMinSize(new Dimension(DEFAULT_WIDTH, MINIMUM_HEIGHT))
       .setLocateWithinScreenBounds(false)
       .createPopup();
 
+    DumbAwareAction.create(event -> {
+      checkBox.setSelected(!checkBox.isSelected());
+      updateItems(project, model, listWithFilter, title, checkBox, popup);
+    }).registerCustomShortcutSet(showChangedOnlyShortcutSet, list, popup);
+
+    checkBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        updateItems(project, model, listWithFilter, title, checkBox, popup);
+      }
+    });
+
     Disposer.register(popup, () -> {
-      Dimension contentSize = popup.getContent().getSize();
       Dimension scrollPaneSize = calcScrollPaneSize(scrollPane, listWithFilter, topPanel, popup.getContent());
-      //scroll scrollPane
+      //save scrollPane size
       DimensionService.getInstance().setSize(LOCATION_SETTINGS_KEY, scrollPaneSize, project);
     });
 
@@ -163,6 +162,21 @@ public class RecentLocationsAction extends AnAction {
     if (scrollPaneSize == null) {
       scrollPaneSize = new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
     }
+
+    list.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent event) {
+        int clickCount = event.getClickCount();
+        if (clickCount > 1 && clickCount % 2 == 0) {
+          event.consume();
+          final int i = list.locationToIndex(event.getPoint());
+          if (i != -1) {
+            list.setSelectedIndex(i);
+            navigateToSelected(project, list, popup, navigationRef);
+          }
+        }
+      }
+    });
 
     scrollPane.setMinimumSize(new Dimension(MINIMUM_WIDTH, MINIMUM_HEIGHT));
 
@@ -177,42 +191,15 @@ public class RecentLocationsAction extends AnAction {
       }
     });
 
-    ApplicationManager.getApplication().invokeLater(() -> {
-      Dimension minSize = mainPanel.getMinimumSize();
-      JBInsets.addTo(minSize, popup.getContent().getInsets());
-      popup.setMinimumSize(minSize);
-
-      Dimension balloonFullSize = DimensionService.getInstance().getSize(LOCATION_SETTINGS_KEY, project);
-      if (balloonFullSize == null) {
-        DimensionService.getInstance().setSize(LOCATION_SETTINGS_KEY, mainPanel.getPreferredSize());
-        balloonFullSize = mainPanel.getPreferredSize();
-        JBInsets.addTo(balloonFullSize, popup.getContent().getInsets());
-      }
-      balloonFullSize.height = Integer.max(balloonFullSize.height, minSize.height);
-      balloonFullSize.width = Integer.max(balloonFullSize.width, minSize.width);
-      scrollPane.setPreferredSize(balloonFullSize);
-      popup.setSize(mainPanel.getPreferredSize());
-    });
-
-    project.getMessageBus().connect(popup).subscribe(ShowRecentChangedLocationListener.TOPIC, new ShowRecentChangedLocationListener() {
-      @Override
-      public void showChangedLocation(boolean state) {
-        updateModel(project, listWithFilter, editorsToRelease, state, changedPlaces, navigationPlaces, breadcrumbsMap);
-
-        updateTitleText(title, state);
-
-        popup.pack(false, true);
-      }
-    });
-
     popup.addListener(new JBPopupListener() {
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {
-        editorsToRelease.forEach(editor -> EditorFactory.getInstance().releaseEditor(editor));
+        model.getEditorsToRelease().forEach(editor -> EditorFactory.getInstance().releaseEditor(editor));
+        model.getProjectConnection().disconnect();
       }
     });
 
-    initSearchActions(project, list, popup, navigationRef);
+    initSearchActions(project, model, listWithFilter, list, popup, navigationRef);
 
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
 
@@ -228,6 +215,37 @@ public class RecentLocationsAction extends AnAction {
     showPopup(project, popup);
   }
 
+  private static void updateItems(@NotNull Project project,
+                                  @NotNull RecentLocationsDataModel data,
+                                  @NotNull ListWithFilter<RecentLocationItem> listWithFilter,
+                                  @NotNull JLabel title,
+                                  @NotNull JBCheckBox checkBox,
+                                  @NotNull JBPopup popup) {
+    boolean state = checkBox.isSelected();
+    PropertiesComponent.getInstance(project).setValue(SHOW_RECENT_CHANGED_LOCATIONS, state);
+    updateModel(listWithFilter, data, state);
+    updateTitleText(title, state);
+
+    FocusManagerImpl.getInstance().requestFocus(listWithFilter, false);
+
+    popup.pack(false, true);
+  }
+
+  @NotNull
+  public JBCheckBox createCheckbox(@NotNull Project project, @NotNull ShortcutSet checkboxShortcutSet) {
+    String text = "<html>"
+                  + IdeBundle.message("recent.locations.title.text")
+                  + " <font color=\"" + SHORTCUT_HEX_COLOR + "\">"
+                  + KeymapUtil.getShortcutsText(checkboxShortcutSet.getShortcuts()) + "</font>"
+                  + "</html>";
+    JBCheckBox checkBox = new JBCheckBox(text);
+    checkBox.setSelected(showChanged(project));
+    checkBox.setBorder(JBUI.Borders.empty());
+    checkBox.setOpaque(false);
+
+    return checkBox;
+  }
+
   @NotNull
   private static Dimension calcScrollPaneSize(@NotNull JScrollPane scrollPane,
                                               @NotNull ListWithFilter<RecentLocationItem> listWithFilter,
@@ -235,53 +253,14 @@ public class RecentLocationsAction extends AnAction {
                                               @NotNull JComponent content) {
     Dimension contentSize = content.getSize();
     int speedSearchHeight = listWithFilter.getSize().height - scrollPane.getSize().height;
-    return new Dimension(contentSize.width, contentSize.height - topPanel.getSize().height - speedSearchHeight);
-  }
-
-  @NotNull
-  private static Map<PlaceInfo, String> collectBreadcrumbs(@NotNull Project project, @NotNull List<RecentLocationItem> items) {
-    return items.stream().map(RecentLocationItem::getInfo).collect(Collectors.toMap(id -> id, info -> getBreadcrumbs(project, info)));
+    Dimension dimension = new Dimension(contentSize.width, contentSize.height - topPanel.getSize().height - speedSearchHeight);
+    JBInsets.removeFrom(dimension, content.getInsets());
+    return dimension;
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(getEventProject(e) != null);
-  }
-
-  @NotNull
-  static String getBreadcrumbs(@NotNull Project project, @NotNull PlaceInfo placeInfo) {
-    RangeMarker rangeMarker = RecentLocationManager.getInstance(project).getPositionOffset(placeInfo, showChanged(project));
-    String fileName = placeInfo.getFile().getName();
-    if (rangeMarker == null) {
-      return fileName;
-    }
-
-    FileBreadcrumbsCollector collector = FileBreadcrumbsCollector.findBreadcrumbsCollector(project, placeInfo.getFile());
-    Collection<Iterable<? extends Crumb>> breadcrumbs = ContainerUtil.emptyList();
-    if (collector != null) {
-      CollectConsumer<Iterable<? extends Crumb>> consumer = new CollectConsumer<>();
-      collector.updateCrumbs(placeInfo.getFile(),
-                             rangeMarker.getDocument(),
-                             rangeMarker.getStartOffset(),
-                             new ProgressIndicatorBase(),
-                             consumer,
-                             true);
-      breadcrumbs = consumer.getResult();
-    }
-
-    if (breadcrumbs.isEmpty()) {
-      return fileName;
-    }
-
-    Iterable<? extends Crumb> crumbs = ContainerUtil.getFirstItem(breadcrumbs);
-
-    if (crumbs == null) {
-      return fileName;
-    }
-
-    String breadcrumbsText = StringUtil.join(ContainerUtil.map(crumbs, crumb -> crumb.getText()), " > ");
-
-    return StringUtil.shortenTextWithEllipsis(breadcrumbsText, 50, 0);
   }
 
   static void clearSelectionInEditor(@NotNull Editor editor) {
@@ -299,38 +278,14 @@ public class RecentLocationsAction extends AnAction {
     }
   }
 
-  @NotNull
-  private static List<RecentLocationItem> cacheAndGetItems(@NotNull Project project,
-                                                           boolean showChanged,
-                                                           @NotNull Ref<List<RecentLocationItem>> changedPlaces,
-                                                           @NotNull Ref<List<RecentLocationItem>> navigationPlaces,
-                                                           @NotNull Collection<Editor> editorsToRelease) {
-    List<RecentLocationItem> items = getPlaceLinePairs(project, showChanged);
-    Ref<List<RecentLocationItem>> places = showChanged ? changedPlaces : navigationPlaces;
-    if (places.get() == null) {
-      places.set(items);
-    }
-
-    editorsToRelease.addAll(ContainerUtil.map(items, item -> item.getEditor()));
-
-    return items;
-  }
-
-  private static void updateModel(@NotNull Project project,
-                                  @NotNull ListWithFilter<RecentLocationItem> listWithFilter,
-                                  @NotNull Collection<Editor> editorsToRelease,
-                                  boolean changed,
-                                  @NotNull Ref<List<RecentLocationItem>> changedPlaces,
-                                  @NotNull Ref<List<RecentLocationItem>> navigationPlaces,
-                                  @NotNull Ref<Map<PlaceInfo, String>> breadcrumbsMap) {
+  private static void updateModel(@NotNull ListWithFilter<RecentLocationItem> listWithFilter,
+                                  @NotNull RecentLocationsDataModel data,
+                                  boolean changed) {
     NameFilteringListModel<RecentLocationItem> model = (NameFilteringListModel<RecentLocationItem>)listWithFilter.getList().getModel();
     DefaultListModel<RecentLocationItem> originalModel = (DefaultListModel<RecentLocationItem>)model.getOriginalModel();
 
-    List<RecentLocationItem> items = cacheAndGetItems(project, changed, changedPlaces, navigationPlaces, editorsToRelease);
-    breadcrumbsMap.set(collectBreadcrumbs(project, items));
-
     originalModel.removeAllElements();
-    items.forEach(item -> originalModel.addElement(item));
+    data.getPlaces(changed).forEach(item -> originalModel.addElement(item));
 
     listWithFilter.getSpeedSearch().reset();
   }
@@ -340,46 +295,25 @@ public class RecentLocationsAction extends AnAction {
     JPanel mainPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
     mainPanel.add(topPanel);
     mainPanel.add(listWithFilter);
-    mainPanel.setBorder(BorderFactory.createEmptyBorder());
     return mainPanel;
   }
 
   @NotNull
   private static JPanel createHeaderPanel(@NotNull JLabel title, @NotNull JComponent checkbox) {
-    JPanel topPanel = new NonOpaquePanel(new BorderLayout());
+    JPanel topPanel = new CaptionPanel();
     topPanel.add(title, BorderLayout.WEST);
     topPanel.add(checkbox, BorderLayout.EAST);
-    topPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-    topPanel.setBackground(JBUI.CurrentTheme.Popup.headerBackground(true));
+
+    Dimension size = topPanel.getPreferredSize();
+    size.height = JBUI.scale(29);
+    topPanel.setPreferredSize(size);
+    topPanel.setBorder(JBUI.Borders.empty(5, 8));
 
     WindowMoveListener moveListener = new WindowMoveListener(topPanel);
     topPanel.addMouseListener(moveListener);
     topPanel.addMouseMotionListener(moveListener);
 
     return topPanel;
-  }
-
-  @NotNull
-  private static JComponent createCheckbox(@NotNull Project project,
-                                           @NotNull ListWithFilter listWithFilter,
-                                           @NotNull AnActionEvent e,
-                                           boolean changed) {
-    CheckboxAction action = new RecentLocationsCheckboxAction(project);
-    CustomShortcutSet set = CustomShortcutSet.fromString(SystemInfo.isMac ? "meta L" : "control L");
-    action.registerCustomShortcutSet(set, listWithFilter);
-    action.getTemplatePresentation().setText("<html>" +
-                                             IdeBundle.message("recent.locations.title.text") +
-                                             " <font color=\"" + SHORTCUT_HEX_COLOR + "\">" +
-                                             KeymapUtil.getShortcutsText(set.getShortcuts()) + "</font>" +
-                                             "</html>");
-
-    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, e.getDataContext());
-    JComponent checkbox = action.createCustomComponent(action.getTemplatePresentation());
-    action.getTemplatePresentation().putClientProperty(COMPONENT_KEY, checkbox);
-    action.setSelected(event, changed);
-    checkbox.setBorder(BorderFactory.createEmptyBorder());
-
-    return checkbox;
   }
 
   @NotNull
@@ -397,108 +331,22 @@ public class RecentLocationsAction extends AnAction {
   }
 
   @NotNull
-  private static Function<RecentLocationItem, String> getNamer(@NotNull Ref<Map<PlaceInfo, String>> breadcrumbsMap) {
+  private static Function<RecentLocationItem, String> getNamer(@NotNull Project project, @NotNull RecentLocationsDataModel data) {
     return value -> {
-      String breadcrumb = breadcrumbsMap.get().get(value.getInfo());
+      String breadcrumb = data.getBreadcrumbsMap(showChanged(project)).get(value.getInfo());
       EditorEx editor = value.getEditor();
 
       return breadcrumb + " " + value.getInfo().getFile().getName() + " " + editor.getDocument().getText();
     };
   }
 
-  private static List<PlaceInfo> getPlaces(@NotNull Project project, boolean showChanged) {
-    List<PlaceInfo> infos = showChanged
-                            ? ContainerUtil.reverse(IdeDocumentHistory.getInstance(project).getChangePlaces())
-                            : ContainerUtil.reverse(IdeDocumentHistory.getInstance(project).getBackPlaces());
-
-    ArrayList<PlaceInfo> infosCopy = ContainerUtil.newArrayList();
-
-    for (PlaceInfo info : infos) {
-      if (infosCopy.stream().noneMatch(info1 -> IdeDocumentHistoryImpl.isSame(info, info1))) {
-        infosCopy.add(info);
-      }
-    }
-
-    return infosCopy;
-  }
-
-  @NotNull
-  private static List<RecentLocationItem> getPlaceLinePairs(@NotNull Project project, boolean changed) {
-    List<PlaceInfo> places = getPlaces(project, changed);
-    if (places.isEmpty()) {
-      return ContainerUtil.emptyList();
-    }
-
-    List<RecentLocationItem> caretsList = ContainerUtil.newArrayList();
-    for (PlaceInfo placeInfo : places) {
-      EditorEx editor = createEditor(project, placeInfo);
-      if (editor != null) {
-        caretsList.add(new RecentLocationItem(editor, placeInfo));
-      }
-    }
-
-    return caretsList;
-  }
-
-  @Nullable
-  private static EditorEx createEditor(@NotNull Project project, @NotNull PlaceInfo placeInfo) {
-    RangeMarker positionOffset = RecentLocationManager.getInstance(project).getPositionOffset(placeInfo, showChanged(project));
-    if (positionOffset == null || !positionOffset.isValid()) {
-      return null;
-    }
-    assert positionOffset.getStartOffset() == positionOffset.getEndOffset();
-
-    Document fileDocument = positionOffset.getDocument();
-    int lineNumber = fileDocument.getLineNumber(positionOffset.getStartOffset());
-    TextRange actualTextRange = getTrimmedRange(fileDocument, lineNumber);
-    String documentText = fileDocument.getText(actualTextRange);
-    if (actualTextRange.isEmpty()) {
-      documentText = EMPTY_FILE_TEXT;
-    }
-
-    EditorFactory editorFactory = EditorFactory.getInstance();
-    Document editorDocument = editorFactory.createDocument(documentText);
-    EditorEx editor = (EditorEx)editorFactory.createEditor(editorDocument, project);
-
-    EditorGutterComponentEx gutterComponentEx = editor.getGutterComponentEx();
-    int linesShift = fileDocument.getLineNumber(actualTextRange.getStartOffset());
-    gutterComponentEx.setLineNumberConvertor(index -> index + linesShift);
-    gutterComponentEx.setPaintBackground(false);
-    JScrollPane scrollPane = editor.getScrollPane();
-    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-
-    fillEditorSettings(editor.getSettings());
-    setHighlighting(project, editor, fileDocument, placeInfo, actualTextRange);
-
-    return editor;
-  }
-
-  @NotNull
-  private static TextRange getTrimmedRange(@NotNull Document document, int lineNumber) {
-    TextRange range = getLinesRange(document, lineNumber);
-    String text = document.getText(TextRange.create(range.getStartOffset(), range.getEndOffset()));
-
-    int newLinesBefore = StringUtil.countNewLines(Objects.requireNonNull(StringUtil.substringBefore(text, StringUtil.trimLeading(text))));
-    int newLinesAfter = StringUtil.countNewLines(Objects.requireNonNull(StringUtil.substringAfter(text, StringUtil.trimTrailing(text))));
-
-    int firstLine = document.getLineNumber(range.getStartOffset());
-    int firstLineAdjusted = firstLine + newLinesBefore;
-
-    int lastLine = document.getLineNumber(range.getEndOffset());
-    int lastLineAdjusted = lastLine - newLinesAfter;
-
-    int startOffset = document.getLineStartOffset(firstLineAdjusted);
-    int endOffset = document.getLineEndOffset(lastLineAdjusted);
-
-    return TextRange.create(startOffset, endOffset);
-  }
-
   private static void initSearchActions(@NotNull Project project,
+                                        @NotNull RecentLocationsDataModel data,
+                                        @NotNull ListWithFilter<RecentLocationItem> listWithFilter,
                                         @NotNull JBList<RecentLocationItem> list,
                                         @NotNull JBPopup popup,
                                         @NotNull Ref<Boolean> navigationRef) {
-    list.addMouseListener(new MouseAdapter() {
+    listWithFilter.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent event) {
         int clickCount = event.getClickCount();
@@ -510,7 +358,39 @@ public class RecentLocationsAction extends AnAction {
     });
 
     DumbAwareAction.create(e -> navigateToSelected(project, list, popup, navigationRef))
-      .registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), list, null);
+      .registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), listWithFilter, popup);
+
+    DumbAwareAction.create(e -> removePlaces(project, listWithFilter, list, data))
+      .registerCustomShortcutSet(CustomShortcutSet.fromString("DELETE", "BACK_SPACE"), listWithFilter, popup);
+  }
+
+  private static void removePlaces(@NotNull Project project,
+                                   @NotNull ListWithFilter<RecentLocationItem> listWithFilter,
+                                   @NotNull JBList<RecentLocationItem> list,
+                                   @NotNull RecentLocationsDataModel data) {
+    List<RecentLocationItem> selectedValue = list.getSelectedValuesList();
+    if (selectedValue.isEmpty()) {
+      return;
+    }
+
+    int index = list.getSelectedIndex();
+
+    boolean changed = showChanged(project);
+    IdeDocumentHistory ideDocumentHistory = IdeDocumentHistory.getInstance(project);
+    for (RecentLocationItem item : selectedValue) {
+      if (changed) {
+        ContainerUtil.filter(ideDocumentHistory.getChangePlaces(), info -> IdeDocumentHistoryImpl.isSame(info, item.getInfo()))
+          .forEach(info -> ideDocumentHistory.removeChangePlace(info));
+      }
+      else {
+        ContainerUtil.filter(ideDocumentHistory.getBackPlaces(), info -> IdeDocumentHistoryImpl.isSame(info, item.getInfo()))
+          .forEach(info -> ideDocumentHistory.removeBackPlace(info));
+      }
+    }
+
+    updateModel(listWithFilter, data, showChanged(project));
+
+    if (list.getModel().getSize() > 0) ScrollingUtil.selectItem(list, index < list.getModel().getSize() ? index : index - 1);
   }
 
   private static void navigateToSelected(@NotNull Project project,
@@ -523,163 +403,7 @@ public class RecentLocationsAction extends AnAction {
     popup.closeOk(null);
   }
 
-  private static boolean showChanged(@NotNull Project project) {
+  static boolean showChanged(@NotNull Project project) {
     return PropertiesComponent.getInstance(project).getBoolean(SHOW_RECENT_CHANGED_LOCATIONS, false);
-  }
-
-  @NotNull
-  private static TextRange getLinesRange(@NotNull Document document, int line) {
-    int lineCount = document.getLineCount();
-    if (lineCount == 0) {
-      return TextRange.EMPTY_RANGE;
-    }
-
-    int beforeAfterLinesCount = Registry.intValue("recent.locations.lines.before.and.after", 2);
-
-    int before = Math.min(beforeAfterLinesCount, line);
-    int after = Math.min(beforeAfterLinesCount, lineCount - line);
-
-    int linesBefore = before + beforeAfterLinesCount - after;
-    int linesAfter = after + beforeAfterLinesCount - before;
-
-    int startLine = Math.max(line - linesBefore, 0);
-    int endLine = Math.min(line + linesAfter, lineCount - 1);
-
-    int startOffset = document.getLineStartOffset(startLine);
-    int endOffset = document.getLineEndOffset(endLine);
-
-    return startOffset <= endOffset
-           ? TextRange.create(startOffset, endOffset)
-           : TextRange.create(DocumentUtil.getLineTextRange(document, line));
-  }
-
-  private static void setHighlighting(@NotNull Project project,
-                                      @NotNull EditorEx editor,
-                                      @NotNull Document document,
-                                      @NotNull PlaceInfo placeInfo,
-                                      @NotNull TextRange textRange) {
-    EditorColorsScheme colorsScheme = setupColorScheme(project, editor, placeInfo);
-
-    applySyntaxHighlighting(project, editor, document, colorsScheme, textRange, placeInfo);
-    applyHighlightingPasses(project, editor, document, colorsScheme, textRange);
-  }
-
-  @NotNull
-  private static EditorColorsScheme setupColorScheme(@NotNull Project project, @NotNull EditorEx editor, @NotNull PlaceInfo placeInfo) {
-    EditorColorsScheme colorsScheme = RecentLocationManager.getInstance(project).getColorScheme(placeInfo, showChanged(project));
-    if (colorsScheme == null) {
-      colorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    }
-    editor.setColorsScheme(colorsScheme);
-    return colorsScheme;
-  }
-
-  private static void applySyntaxHighlighting(@NotNull Project project,
-                                              @NotNull EditorEx editor,
-                                              @NotNull Document document,
-                                              @NotNull EditorColorsScheme colorsScheme,
-                                              @NotNull TextRange textRange,
-                                              @NotNull PlaceInfo placeInfo) {
-    EditorHighlighter editorHighlighter =
-      EditorHighlighterFactory.getInstance().createEditorHighlighter(placeInfo.getFile(), colorsScheme, project);
-    editorHighlighter.setEditor(new LightHighlighterClient(document, project));
-    editorHighlighter.setText(document.getText(TextRange.create(0, textRange.getEndOffset())));
-    int startOffset = textRange.getStartOffset();
-    HighlighterIterator iterator = editorHighlighter.createIterator(startOffset);
-
-    while (!iterator.atEnd() && iterator.getEnd() <= textRange.getEndOffset()) {
-      if (iterator.getStart() >= startOffset) {
-        editor.getMarkupModel().addRangeHighlighter(iterator.getStart() - startOffset,
-                                                    iterator.getEnd() - startOffset,
-                                                    HighlighterLayer.SYNTAX - 1,
-                                                    iterator.getTextAttributes(),
-                                                    HighlighterTargetArea.EXACT_RANGE);
-      }
-
-      iterator.advance();
-    }
-  }
-
-  private static void applyHighlightingPasses(@NotNull Project project,
-                                              @NotNull EditorEx editor,
-                                              @NotNull Document document,
-                                              @NotNull EditorColorsScheme colorsScheme,
-                                              @NotNull TextRange rangeMarker) {
-    int startOffset = rangeMarker.getStartOffset();
-    int endOffset = rangeMarker.getEndOffset();
-    DaemonCodeAnalyzerEx.processHighlights(document, project, null, startOffset, endOffset, info -> {
-      if (info.startOffset < startOffset || info.endOffset > endOffset) {
-        return true;
-      }
-
-      editor.getMarkupModel().addRangeHighlighter(
-        info.getActualStartOffset() - rangeMarker.getStartOffset(), info.getActualEndOffset() - rangeMarker.getStartOffset(),
-        HighlighterLayer.SYNTAX,
-        colorsScheme.getAttributes(info.forcedTextAttributesKey),
-        HighlighterTargetArea.EXACT_RANGE);
-
-      return true;
-    });
-  }
-
-  private static void fillEditorSettings(@NotNull EditorSettings settings) {
-    settings.setLineNumbersShown(true);
-    settings.setCaretRowShown(false);
-    settings.setLineMarkerAreaShown(false);
-    settings.setFoldingOutlineShown(false);
-    settings.setAdditionalColumnsCount(0);
-    settings.setAdditionalLinesCount(0);
-    settings.setRightMarginShown(false);
-  }
-
-  private static class RecentLocationsCheckboxAction extends CheckboxAction {
-    @NotNull private final Project myProject;
-
-    private RecentLocationsCheckboxAction(@NotNull Project project) {
-      myProject = project;
-
-      Presentation presentation = getTemplatePresentation();
-      presentation.setIcon(AllIcons.Actions.Diff);
-    }
-
-    @Override
-    public boolean isSelected(@NotNull AnActionEvent e) {
-      return showChanged(myProject);
-    }
-
-    @Override
-    public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      PropertiesComponent.getInstance(myProject).setValue(SHOW_RECENT_CHANGED_LOCATIONS, state);
-
-      update(AnActionEvent.createFromAnAction(this, e.getInputEvent(), ActionPlaces.UNKNOWN, e.getDataContext()));
-
-      myProject.getMessageBus().syncPublisher(ShowRecentChangedLocationListener.TOPIC).showChangedLocation(state);
-    }
-  }
-
-  static class RecentLocationItem {
-    @NotNull private final PlaceInfo myInfo;
-    @NotNull private final EditorEx myEditor;
-
-    RecentLocationItem(@NotNull EditorEx editor, @NotNull PlaceInfo info) {
-      myInfo = info;
-      myEditor = editor;
-    }
-
-    @NotNull
-    PlaceInfo getInfo() {
-      return myInfo;
-    }
-
-    @NotNull
-    EditorEx getEditor() {
-      return myEditor;
-    }
-  }
-
-  private interface ShowRecentChangedLocationListener {
-    Topic<ShowRecentChangedLocationListener> TOPIC = Topic.create("ShowRecentChangedLocation", ShowRecentChangedLocationListener.class);
-
-    void showChangedLocation(boolean state);
   }
 }

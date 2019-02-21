@@ -26,6 +26,48 @@ public class UnnecessaryBoxing {
         return foo == null ? <warning descr="Unnecessary boxing 'Integer.valueOf(0)'">Integer.valueOf(0)</warning> : bar;
     }
 
+    void additionalInnerBoxing(String str) {
+      short s = <warning descr="Redundant boxing inside 'Short.valueOf(str)'">Short.valueOf(str)</warning>;
+      int i = <warning descr="Redundant boxing inside 'Integer.valueOf(str)'">Integer.valueOf(str)</warning>;
+      long l = <warning descr="Redundant boxing inside 'Long.valueOf(str)'">Long.valueOf(str)</warning>;
+      double d = <warning descr="Redundant boxing inside 'Double.valueOf(str)'">Double.valueOf(str)</warning>;
+      float f = <warning descr="Redundant boxing inside 'Float.valueOf(str)'">Float.valueOf(str)</warning>;
+      // shoudn't report
+      boolean bool = Boolean.valueOf(str);
+      // shoudn't report
+      byte b = Byte.valueOf(str);
+    }
+
+    short parseShort(String id) {
+      return <warning descr="Redundant boxing inside 'Short.valueOf(id)'">Short.valueOf(id)</warning>;
+    }
+
+    int parseInt(String id) {
+      return <warning descr="Redundant boxing inside 'Integer.valueOf(id)'">Integer.valueOf(id)</warning>;
+    }
+
+    long parseLong(String id) {
+      return <warning descr="Redundant boxing inside 'Long.valueOf(id)'">Long.valueOf(id)</warning>;
+    }
+
+    double parseDouble(String id) {
+      return <warning descr="Redundant boxing inside 'Double.valueOf(id)'">Double.valueOf(id)</warning>;
+    }
+
+    float parseFloat(String id) {
+      return <warning descr="Redundant boxing inside 'Float.valueOf(id)'">Float.valueOf(id)</warning>;
+    }
+
+    boolean parseBoolean(String id) {
+      // shouldn't report
+      return Boolean.valueOf(id);
+    }
+
+    byte parseByte(String id) {
+      // shouldn't report
+      return Byte.valueOf(id);
+    }
+
     void noUnboxing(Object val) {
         if (val == Integer.valueOf(0)) {
 

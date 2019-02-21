@@ -25,6 +25,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
+import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.tree.treeTable.TreeTableModelWithColumns;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
@@ -338,7 +339,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         nodesMap.put(event.getId(), currentNode);
       }
       else {
-        LOG.warn("start event id collision found");
+        LOG.warn("start event id collision found:" + event.getId() + ", was also in node: " + currentNode.getTitle());
         return;
       }
 
@@ -420,8 +421,22 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
           scheduleUpdate(resultNode);
         }
       }
-      myTreeModel.invalidate();
+      myTreeModel.invalidate().onProcessed(o -> expand(myTree));
     }
+  }
+
+  protected void expand(TreeTableTree tree) {
+    TreeUtil.expand(tree,
+                    path -> {
+                      Object component = TreeUtil.getLastUserObject(path);
+                      ExecutionNode node = component instanceof ExecutionNode ? (ExecutionNode)component : null;
+                      if (node != null && node.isAutoExpandNode() && node.getChildCount() > 0) {
+                        return TreeVisitor.Action.CONTINUE;
+                      } else {
+                        return TreeVisitor.Action.SKIP_CHILDREN;
+                      }
+                    },
+                    path -> {});
   }
 
   void scheduleUpdate(ExecutionNode executionNode) {
@@ -429,8 +444,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     final Update update = new Update(node) {
       @Override
       public void run() {
-        myTreeModel.invalidate(node, true)
-          .onProcessed(p -> TreeUtil.expand(myTree, 2));
+        myTreeModel.invalidate(node, true).onProcessed(p -> expand(myTree));
       }
     };
     myLaterInvocator.queue(update);

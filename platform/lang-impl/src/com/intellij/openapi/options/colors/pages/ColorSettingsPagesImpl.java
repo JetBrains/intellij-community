@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.application.options.colors.ColorSettingsUtil;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.colors.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ConcurrentFactoryMap;
@@ -20,7 +19,7 @@ public class ColorSettingsPagesImpl extends ColorSettingsPages {
 
   @Override
   public void registerPage(ColorSettingsPage page) {
-    Extensions.getRootArea().getExtensionPoint(ColorSettingsPage.EP_NAME).registerExtension(page);
+    ColorSettingsPage.EP_NAME.getPoint(null).registerExtension(page);
   }
 
   @Override

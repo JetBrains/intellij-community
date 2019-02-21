@@ -41,6 +41,7 @@
     <applicationInitializedListener implementation="org.jetbrains.idea.maven.utils.MavenEnvironmentRegistrar"/>
     <customJavadocTagProvider implementation="org.jetbrains.idea.maven.javadoc.MojoClassAnnotationTagProvider"/>
     <fileTypeFactory implementation="org.jetbrains.idea.maven.utils.MavenFileTypeFactory"/>
+    <fileTypeUsageSchemaDescriptor schema="Maven" implementationClass="org.jetbrains.idea.maven.utils.MavenFileTypeFactory"/>
     <projectImportProvider implementation="org.jetbrains.idea.maven.wizards.MavenProjectImportProvider"/>
     <projectOpenProcessor implementation="org.jetbrains.idea.maven.wizards.MavenProjectOpenProcessor"/>
     <projectImportBuilder implementation="org.jetbrains.idea.maven.wizards.MavenProjectBuilder"/>
@@ -196,10 +197,13 @@
     <runAnything.helpGroup implementation="org.jetbrains.idea.maven.execution.MavenRunAnythingHelpGroup"/>
 
     <statistics.projectUsagesCollector implementation="org.jetbrains.idea.maven.statistics.MavenSettingsCollector"/>
-    <statistics.counterUsagesCollector group_id="build.maven.actions" version="1"/>
+    <statistics.counterUsagesCollector groupId="build.maven.actions" version="1"/>
 
     <registryKey key="maven.import.compiler.arguments" defaultValue="true"
                  description="Enable importing of the maven compiler plugin arguments"/>
+
+    <registryKey key="maven.build.tool.window.enabled" defaultValue="true"
+                 description="Enable Maven tasks to use Build Tool Window"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">

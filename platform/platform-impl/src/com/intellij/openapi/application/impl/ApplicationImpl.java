@@ -171,9 +171,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       WindowsCommandLineProcessor.LISTENER = (currentDirectory, args) -> {
         List<String> argsList = Arrays.asList(args);
         LOG.info("Received external Windows command line: current directory " + currentDirectory + ", command line " + argsList);
-        invokeLater(() -> {
-          CommandLineProcessor.processExternalCommandLine(argsList, currentDirectory);
-        });
+        invokeLater(() -> CommandLineProcessor.processExternalCommandLine(argsList, currentDirectory));
       };
     }
 
@@ -228,14 +226,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   private boolean disposeSelf(final boolean checkCanCloseProject) {
     final ProjectManagerEx manager = ProjectManagerEx.getInstanceEx();
-    if (manager == null) {
-      saveSettings(true);
-    }
-    else {
+    SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(this, /* isSaveAppAlso = */ false);
+    if (manager != null) {
       final boolean[] canClose = {true};
       try {
         CommandProcessor.getInstance().executeCommand(null, () -> {
-          saveSettings(true);
           if (!manager.closeAndDisposeAllProjects(checkCanCloseProject)) {
             canClose[0] = false;
           }
@@ -399,7 +394,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   public void load(@Nullable final String configPath) {
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
-      long start = System.currentTimeMillis();
       ProgressIndicator indicator = mySplash == null ? null : new EmptyProgressIndicator() {
         @Override
         public void setFraction(double fraction) {
@@ -432,8 +426,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
             LOG.error(e);
           }
         }
-      });
-      LOG.info(getComponentConfigCount() + " application components initialized in " + (System.currentTimeMillis() - start) + "ms");
+      }, true);
     }
     finally {
       token.finish();
@@ -1464,11 +1457,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return Restarter.isSupported();
   }
 
-  @Override
-  protected boolean logSlowComponents() {
-    return super.logSlowComponents() || ApplicationInfoImpl.getShadowInstance().isEAP();
-  }
-
   @TestOnly
   public void setDisposeInProgress(boolean disposeInProgress) {
     myDisposeInProgress = disposeInProgress;
@@ -1491,4 +1479,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     Disposer.register(disposable, () -> myDispatcher.getListeners().addAll(listeners));
   }
 
+  @Nullable
+  @Override
+  protected String measureTokenNamePrefix() {
+    return "app ";
+  }
 }

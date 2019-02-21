@@ -14,18 +14,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ResourceBundle;
 
-public class IntentionActionBean extends CustomLoadingExtensionPointBean {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.IntentionActionBean");
+public final class IntentionActionBean extends CustomLoadingExtensionPointBean {
+  private static final Logger LOG = Logger.getInstance(IntentionActionBean.class);
 
-  @Tag("className")
+  @Tag
   public String className;
-  @Tag("category")
+  @Tag
   public String category;
-  @Tag("categoryKey")
+  @Tag
   public String categoryKey;
-  @Tag("bundleName")
+  @Tag
   public String bundleName;
-  @Tag("descriptionDirectoryName")
+  @Tag
   public String descriptionDirectoryName;
 
   @Nullable
@@ -52,8 +52,8 @@ public class IntentionActionBean extends CustomLoadingExtensionPointBean {
   }
 
   @NotNull
-  public IntentionAction instantiate() throws ClassNotFoundException {
-    return (IntentionAction)instantiateExtension(className, ApplicationManager.getApplication().getPicoContainer());
+  public IntentionAction instantiate() {
+    return instantiateExtension(className, ApplicationManager.getApplication().getPicoContainer());
   }
 
   public ClassLoader getMetadataClassLoader() {

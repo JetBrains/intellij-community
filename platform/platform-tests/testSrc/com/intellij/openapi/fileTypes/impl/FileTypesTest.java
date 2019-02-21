@@ -1,24 +1,22 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,7 +34,6 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
-import com.intellij.util.JdomKt;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -296,7 +293,7 @@ public class FileTypesTest extends PlatformTestCase {
         return 0;
       }
     };
-    Extensions.getRootArea().getExtensionPoint(FileTypeRegistry.FileTypeDetector.EP_NAME).registerExtension(detector);
+    FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint(null).registerExtension(detector, getTestRootDisposable());
     myFileTypeManager.toLog = true;
 
     try {
@@ -318,7 +315,6 @@ public class FileTypesTest extends PlatformTestCase {
       log("T: ------");
     }
     finally {
-      Extensions.getRootArea().getExtensionPoint(FileTypeRegistry.FileTypeDetector.EP_NAME).unregisterExtension(detector);
       myFileTypeManager.toLog = false;
     }
   }
@@ -469,7 +465,7 @@ public class FileTypesTest extends PlatformTestCase {
     //String s = JDOMUtil.writeElement(element);
 
     final AbstractFileType typeFromPlugin = new AbstractFileType(new SyntaxTable());
-    PlatformTestUtil.registerExtension(FileTypeFactory.FILE_TYPE_FACTORY_EP, new FileTypeFactory() {
+    FileTypeFactory.FILE_TYPE_FACTORY_EP.getPoint(null).registerExtension(new FileTypeFactory() {
       @Override
       public void createFileTypes(@NotNull FileTypeConsumer consumer) {
         consumer.consume(typeFromPlugin, "fromPlugin");
@@ -533,9 +529,10 @@ public class FileTypesTest extends PlatformTestCase {
       }
     };
     Element element = myFileTypeManager.getState();
+    Disposable disposable = Disposer.newDisposable();
     try {
       myFileTypeManager.clearForTests();
-      Extensions.getRootArea().getExtensionPoint(FileTypeFactory.FILE_TYPE_FACTORY_EP).registerExtension(factory);
+      FileTypeFactory.FILE_TYPE_FACTORY_EP.getPoint(null).registerExtension(factory, disposable);
       myFileTypeManager.initStandardFileTypes();
       myFileTypeManager.loadState(element);
       myFileTypeManager.initComponent();
@@ -546,7 +543,8 @@ public class FileTypesTest extends PlatformTestCase {
       element = myFileTypeManager.getState();
       //log(JDOMUtil.writeElement(element));
 
-      Extensions.getRootArea().getExtensionPoint(FileTypeFactory.FILE_TYPE_FACTORY_EP).unregisterExtension(factory);
+      Disposer.dispose(disposable);
+      disposable = null;
       myFileTypeManager.clearForTests();
       myFileTypeManager.initStandardFileTypes();
       myFileTypeManager.loadState(element);
@@ -555,7 +553,8 @@ public class FileTypesTest extends PlatformTestCase {
       element = myFileTypeManager.getState();
       //log(JDOMUtil.writeElement(element));
 
-      Extensions.getRootArea().getExtensionPoint(FileTypeFactory.FILE_TYPE_FACTORY_EP).registerExtension(factory);
+      disposable = Disposer.newDisposable();
+      FileTypeFactory.FILE_TYPE_FACTORY_EP.getPoint(null).registerExtension(factory, disposable);
       myFileTypeManager.clearForTests();
       myFileTypeManager.initStandardFileTypes();
       myFileTypeManager.loadState(element);
@@ -567,7 +566,7 @@ public class FileTypesTest extends PlatformTestCase {
       assertEquals(typeFromPlugin, myFileTypeManager.getFileTypeByFileName("foo.foo"));
     }
     finally {
-      Extensions.getRootArea().getExtensionPoint(FileTypeFactory.FILE_TYPE_FACTORY_EP).unregisterExtension(factory);
+      Disposer.dispose(disposable);
     }
   }
 
@@ -577,7 +576,7 @@ public class FileTypesTest extends PlatformTestCase {
     myFileTypeManager.initStandardFileTypes();
     myFileTypeManager.initComponent();
 
-    Element element = JdomKt.loadElement(
+    Element element = JDOMUtil.load(
       "<component name=\"FileTypeManager\" version=\"13\">\n" +
       "   <extensionMap>\n" +
       "      <mapping ext=\"zip\" type=\"Velocity Template files\" />\n" +
@@ -642,7 +641,7 @@ public class FileTypesTest extends PlatformTestCase {
         return 0;
       }
     };
-    Extensions.getRootArea().getExtensionPoint(FileTypeRegistry.FileTypeDetector.EP_NAME).registerExtension(detector);
+    FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint(null).registerExtension(detector, getTestRootDisposable());
     myFileTypeManager.toLog = true;
 
     try {
@@ -667,7 +666,6 @@ public class FileTypesTest extends PlatformTestCase {
       log("T: ------");
     }
     finally {
-      Extensions.getRootArea().getExtensionPoint(FileTypeRegistry.FileTypeDetector.EP_NAME).unregisterExtension(detector);
       myFileTypeManager.toLog = false;
     }
   }

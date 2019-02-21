@@ -806,6 +806,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
     for (Shortcut each : shortcuts) {
+      if (each == null) throw new NullPointerException("unexpected shortcut of action: " + action.toString());
       if (!each.isKeyboard()) continue;
 
       if (each.startsWith(sc)) {

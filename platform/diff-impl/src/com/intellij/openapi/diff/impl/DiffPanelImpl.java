@@ -33,6 +33,7 @@ public class DiffPanelImpl implements DiffViewer {
     Disposer.register(disposable, myProcessor);
   }
 
+  @Override
   public JComponent getComponent() {
     return myProcessor.getComponent();
   }

@@ -382,12 +382,19 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
     @JvmStatic
     val shadowInstance: UISettings
       get() {
-        val app = ApplicationManager.getApplication()
-        return (if (app == null) null else instanceOrNull) ?: UISettings().withDefFont()
+        val uiSettings = if (ApplicationManager.getApplication() == null) null else instanceOrNull
+        return when {
+          uiSettings != null -> uiSettings
+          else -> {
+            val result = UISettings()
+            result.notRoamableOptions.state.initDefFont()
+            return result
+          }
+        }
       }
 
     @JvmField
-    val FORCE_USE_FRACTIONAL_METRICS: Boolean = SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", false)
+    val FORCE_USE_FRACTIONAL_METRICS = SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", false)
 
     @JvmStatic
     fun setupFractionalMetrics(g2d: Graphics2D) {
@@ -486,11 +493,6 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
     }
   }
 
-  private fun withDefFont(): UISettings {
-    notRoamableOptions.state.initDefFont()
-    return this
-  }
-
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Please use {@link UISettingsListener#TOPIC}")
   fun addUISettingsListener(listener: UISettingsListener, parentDisposable: Disposable) {
@@ -540,6 +542,9 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
     updateDeprecatedProperties()
 
     migrateOldSettings()
+    if (migrateOldFontSettings()) {
+      notRoamableOptions.fixFontSettings()
+    }
 
     // Check tab placement in editor
     val editorTabPlacement = state.editorTabPlacement
@@ -576,19 +581,27 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
       editorAAType = state.editorAAType
       state.editorAAType = AntialiasingType.SUBPIXEL
     }
+  }
 
-    if (state.fontSize != UISettingsState.defFontSize) {
-      fontSize = state.fontSize
-      state.fontSize = UISettingsState.defFontSize
+  @Suppress("DEPRECATION")
+  private fun migrateOldFontSettings(): Boolean {
+    var migrated = false
+    if (state.fontSize != 0) {
+      fontSize = restoreFontSize(state.fontSize, state.fontScale)
+      state.fontSize = 0
+      migrated = true
     }
     if (state.fontScale != 0f) {
       fontScale = state.fontScale
       state.fontScale = 0f
+      migrated = true
     }
     if (state.fontFace != null) {
       fontFace = state.fontFace
       state.fontFace = null
+      migrated = true
     }
+    return migrated
   }
 
   //<editor-fold desc="Deprecated stuff.">
@@ -646,7 +659,7 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
   @Transient
   var PRESENTATION_MODE = false
 
-  @Suppress("unused")
+  @Suppress("unused", "SpellCheckingInspection")
   @Deprecated("Use overrideLafFonts", replaceWith = ReplaceWith("overrideLafFonts"))
   @JvmField
   @Transient

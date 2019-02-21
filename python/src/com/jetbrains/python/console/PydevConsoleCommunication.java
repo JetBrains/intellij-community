@@ -205,9 +205,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   private boolean execIPythonEditor(String path) {
     final VirtualFile file = StringUtil.isEmpty(path) ? null : LocalFileSystem.getInstance().findFileByPath(path);
     if (file != null) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        FileEditorManager.getInstance(myProject).openFile(file, true);
-      });
+      ApplicationManager.getApplication().invokeLater(() -> FileEditorManager.getInstance(myProject).openFile(file, true));
 
       return true;
     }
@@ -551,7 +549,9 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   public XValueChildrenList loadVariable(PyDebugValue var) throws PyDebuggerException {
     if (!isCommunicationClosed()) {
       try {
-        List<DebugValue> ret = getPythonConsoleBackendClient().getVariable(GetVariableCommand.composeName(var));
+        final String name = var.getOffset() == 0 ? GetVariableCommand.composeName(var)
+                                                 : var.getOffset() + "\t" + GetVariableCommand.composeName(var);
+        List<DebugValue> ret = getPythonConsoleBackendClient().getVariable(name);
         return parseVars(ret, var, this);
       }
       catch (CommunicationClosedException | PyConsoleProcessFinishedException e) {

@@ -15,5 +15,6 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.testFramework" scope="TEST" />
   </component>
 </module>

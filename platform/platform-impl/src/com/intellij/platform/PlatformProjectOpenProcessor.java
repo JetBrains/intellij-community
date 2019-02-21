@@ -66,12 +66,12 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
   }
 
   @Override
-  public boolean canOpenProject(final VirtualFile file) {
+  public boolean canOpenProject(@NotNull final VirtualFile file) {
     return file.isDirectory();
   }
 
   @Override
-  public boolean isProjectFile(VirtualFile file) {
+  public boolean isProjectFile(@NotNull VirtualFile file) {
     return false;
   }
 

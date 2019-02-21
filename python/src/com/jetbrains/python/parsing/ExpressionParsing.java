@@ -545,6 +545,8 @@ public class ExpressionParsing extends Parsing {
     if (atToken(PyTokenTypes.DOT)) {
       final PsiBuilder.Marker maybeEllipsis = myBuilder.mark();
       myBuilder.advanceLexer();
+      //duplication is intended as matchToken advances the lexer
+      //noinspection DuplicateBooleanBranch
       if (matchToken(PyTokenTypes.DOT) && matchToken(PyTokenTypes.DOT)) {
         maybeEllipsis.done(PyElementTypes.NONE_LITERAL_EXPRESSION);
         return true;

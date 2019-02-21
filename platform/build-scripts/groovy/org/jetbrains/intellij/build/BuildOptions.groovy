@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import com.intellij.util.SystemProperties
@@ -136,4 +136,9 @@ class BuildOptions {
    * Specifies Jetbrains JDK version to be used by build scripts, 8 by default.
    */
   int jdkVersion = System.getProperty("intellij.build.jdk.version", "8").toInteger()
+
+  /**
+   * Specifies an algorithm to build distribution checksums.
+   */
+  String hashAlgorithm = "SHA-384"
 }

@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,7 +24,10 @@ import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.*;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.BitUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -44,6 +48,8 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.intellij.openapi.util.Pair.pair;
 
 /**
  * @author max
@@ -173,8 +179,9 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
       nameIds.add(nameId);
     }
     for (String newName : toAdd) {
-      int childId = makeChildRecord(file, id, newName, null, fs);
-      if (childId != -1) {
+      Pair<FileAttributes, String> childData = getChildData(fs, file, newName, null, null);
+      if (childData != null) {
+        int childId = makeChildRecord(id, newName, childData, fs);
         childrenIds.add(childId);
         nameIds.add(new FSRecords.NameId(childId, FileNameCache.storeName(newName), newName));
       }
@@ -186,7 +193,7 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     return nameIds.toArray(FSRecords.NameId.EMPTY_ARRAY);
   }
 
-  private static void setChildrenCached(int id) {
+  public static void setChildrenCached(int id) {
     int flags = FSRecords.getFlags(id);
     FSRecords.setFlags(id, flags | CHILDREN_CACHED_FLAG, true);
   }
@@ -270,11 +277,11 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
 
   private static boolean writeAttributesToRecord(int id,
                                                  int parentId,
-                                                 @NotNull VirtualFile file,
+                                                 @NotNull CharSequence name,
                                                  @NotNull NewVirtualFileSystem fs,
-                                                 @NotNull FileAttributes attributes) {
+                                                 @NotNull FileAttributes attributes,
+                                                 @Nullable String symlinkTarget) {
     assert id > 0 : id;
-    CharSequence name = file.getNameSequence();
     if (name.length() != 0) {
       if (namesEqual(fs, name, FSRecords.getNameSequence(id))) return false; // TODO: Handle root attributes change.
     }
@@ -283,6 +290,9 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     }
 
     FSRecords.writeAttributesToRecord(id, parentId, attributes, name.toString());
+    if (attributes.isSymLink()) {
+      FSRecords.storeSymlinkTarget(id, symlinkTarget);
+    }
 
     return true;
   }
@@ -305,7 +315,7 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
 
   @Override
   public boolean exists(@NotNull VirtualFile fileOrDirectory) {
-    return ((VirtualFileWithId)fileOrDirectory).getId() > 0;
+    return fileOrDirectory.exists();
   }
 
   @Override
@@ -335,7 +345,7 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
 
   @Override
   public String resolveSymLink(@NotNull VirtualFile file) {
-    throw new UnsupportedOperationException();
+    return FSRecords.readSymlinkTarget(getFileId(file));
   }
 
   @Override
@@ -377,8 +387,9 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
       if (namesEqual(fs, childName, FSRecords.getNameSequence(childId))) return childId;
     }
 
-    int childId = makeChildRecord(parent, parentId, childName, null, fs);
-    if (childId != -1) {
+    Pair<FileAttributes, String> childData = getChildData(fs, parent, childName, null, null);
+    if (childData != null) {
+      int childId = makeChildRecord(parentId, childName, childData, fs);
       FSRecords.updateList(parentId, ArrayUtil.append(children, childId));
       return childId;
     }
@@ -415,7 +426,7 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
   @Override
   public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile parent, @NotNull String dir) throws IOException {
     getDelegate(parent).createChildDirectory(requestor, parent, dir);
-    processEvent(new VFileCreateEvent(requestor, parent, dir, true, null, false, true));
+    processEvent(new VFileCreateEvent(requestor, parent, dir, true, null, null, false, true));
 
     final VirtualFile child = parent.findChild(dir);
     if (child == null) {
@@ -428,7 +439,7 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
   @Override
   public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String file) throws IOException {
     getDelegate(parent).createChildFile(requestor, parent, file);
-    processEvent(new VFileCreateEvent(requestor, parent, file, false, null, false, false));
+    processEvent(new VFileCreateEvent(requestor, parent, file, false, null, null, false, false));
 
     final VirtualFile child = parent.findChild(file);
     if (child == null) {
@@ -696,7 +707,8 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
       if (checkIfConflictingEvent(path, files, middleDirs)) {
         break;
       }
-      // some synthetic events really are composite events, e.g. VFileMoveEvent = VFileDeleteEvent+VFileCreateEvent, so both paths should be checked for conflicts
+      // some synthetic events really are composite events, e.g. VFileMoveEvent = VFileDeleteEvent+VFileCreateEvent,
+      // so both paths should be checked for conflicts
       String path2 = null;
       if (event instanceof VFilePropertyChangeEvent && ((VFilePropertyChangeEvent)event).getPropertyName().equals(VirtualFile.PROP_NAME)) {
         VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;
@@ -720,7 +732,9 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     return i;
   }
 
-  private static boolean checkIfConflictingEvent(@NotNull String path, @NotNull Set<? super String> files, @NotNull Set<? super String> middleDirs) {
+  private static boolean checkIfConflictingEvent(@NotNull String path,
+                                                 @NotNull Set<? super String> files,
+                                                 @NotNull Set<? super String> middleDirs) {
     if (!files.add(path) || middleDirs.contains(path)) {
       // conflicting event found for (non-strict) descendant, stop
       return true;
@@ -924,6 +938,19 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     }
   }
 
+  public static class ChildInfo {
+    public final int id;
+    public final String name;
+    public final FileAttributes attributes;
+    public final boolean isEmptyDirectory;
+
+    public ChildInfo(int id, String name, FileAttributes attributes, boolean isEmptyDirectory) {
+      this.id = id;
+      this.name = name;
+      this.attributes = attributes;
+      this.isEmptyDirectory = isEmptyDirectory;
+    }
+  }
   // add children to specified directories using VirtualDirectoryImpl.createAndAddChildren() optimised for bulk additions
   private void applyCreations(@NotNull MultiMap<VirtualDirectoryImpl, VFileCreateEvent> creations) {
     for (Map.Entry<VirtualDirectoryImpl, Collection<VFileCreateEvent>> entry : creations.entrySet()) {
@@ -934,21 +961,26 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
       TIntHashSet parentChildrenIds = new TIntHashSet(Math.max(createEvents.size(), oldIds.length));
       parentChildrenIds.addAll(oldIds);
 
-      List<FSRecords.NameId> childrenAdded = new ArrayList<>(createEvents.size());
+      List<ChildInfo> childrenAdded = new ArrayList<>(createEvents.size());
       final NewVirtualFileSystem delegate = replaceWithNativeFS(getDelegate(parent));
       delegate.list(parent); // cache children getAttributes
       for (VFileCreateEvent createEvent : createEvents) {
         createEvent.resetCache();
         String name = createEvent.getChildName();
-        int childId = makeChildRecord(parent, parentId, name, createEvent.getAttributes(), delegate);
-        if (childId != -1) {
-          childrenAdded.add(new FSRecords.NameId(childId, -1, name));
+        Pair<FileAttributes, String> childData = getChildData(delegate, parent, name, createEvent.getAttributes(), createEvent.getSymlinkTarget());
+        if (childData != null) {
+          int childId = makeChildRecord(parentId, name, childData, delegate);
+          childrenAdded.add(new ChildInfo(childId, name, childData.first, createEvent.isEmptyDirectory()));
           parentChildrenIds.add(childId);
         }
       }
       parent.createAndAddChildren(childrenAdded);
       if (ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest()) {
-        long count = Arrays.stream(parentChildrenIds.toArray()).mapToObj(this::findFileById).filter(Objects::nonNull).map(VirtualFile::getName).distinct().count();
+        long count = Arrays.stream(parentChildrenIds.toArray())
+          .mapToObj(this::findFileById)
+          .filter(Objects::nonNull)
+          .map(VirtualFile::getName)
+          .distinct().count();
         assert count == parentChildrenIds.size();
       }
       FSRecords.updateList(parentId, parentChildrenIds.toArray());
@@ -1006,14 +1038,15 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
       catch (VfsData.FileAlreadyCreatedException e) {
         for (Map.Entry<String, VirtualFileSystemEntry> entry : myRoots.entrySet()) {
           final VirtualFileSystemEntry existingRoot = entry.getValue();
-          if (Math.abs(existingRoot.getId()) == rootId) {
-            throw new RuntimeException("Duplicate FS roots: " + rootUrl + " and " + entry.getKey() + ", id=" + rootId + ", valid=" + existingRoot.isValid(), e);
+          if (existingRoot.getId() == rootId) {
+            String message = "Duplicate FS roots: " + rootUrl + " / " + entry.getKey() + " id=" + rootId + " valid=" + existingRoot.isValid();
+            throw new RuntimeException(message, e);
           }
         }
         throw new RuntimeException("No root duplication, roots=" + Arrays.toString(FSRecords.listAll(1)), e);
       }
       incStructuralModificationCount();
-      mark = writeAttributesToRecord(rootId, 0, newRoot, fs, attributes);
+      mark = writeAttributesToRecord(rootId, 0, rootName, fs, attributes, null);
 
       myRoots.put(rootUrl, newRoot);
       myIdToDirCache.put(rootId, newRoot);
@@ -1096,8 +1129,8 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     }
     try {
       if (event instanceof VFileCreateEvent) {
-        final VFileCreateEvent createEvent = (VFileCreateEvent)event;
-        executeCreateChild(createEvent.getParent(), createEvent.getChildName(), createEvent.getAttributes());
+        VFileCreateEvent ce = (VFileCreateEvent)event;
+        executeCreateChild(ce.getParent(), ce.getChildName(), ce.getAttributes(), ce.getSymlinkTarget(), ce.isEmptyDirectory());
       }
       else if (event instanceof VFileDeleteEvent) {
         final VFileDeleteEvent deleteEvent = (VFileDeleteEvent)event;
@@ -1119,8 +1152,8 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
         executeTouch(file, contentUpdateEvent.isFromRefresh(), contentUpdateEvent.getModificationStamp(), length, timestamp);
       }
       else if (event instanceof VFileCopyEvent) {
-        final VFileCopyEvent copyEvent = (VFileCopyEvent)event;
-        executeCreateChild(copyEvent.getNewParent(), copyEvent.getNewChildName(), null);
+        VFileCopyEvent ce = (VFileCopyEvent)event;
+        executeCreateChild(ce.getNewParent(), ce.getNewChildName(), null, null, ce.getFile().getChildren().length == 0);
       }
       else if (event instanceof VFileMoveEvent) {
         final VFileMoveEvent moveEvent = (VFileMoveEvent)event;
@@ -1163,29 +1196,45 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     return "PersistentFS";
   }
 
-  private void executeCreateChild(@NotNull VirtualFile parent, @NotNull String name, @Nullable FileAttributes attributes) {
+  private void executeCreateChild(@NotNull VirtualFile parent,
+                                  @NotNull String name,
+                                  @Nullable FileAttributes attributes,
+                                  @Nullable String symlinkTarget,
+                                  boolean isEmptyDirectory) {
     NewVirtualFileSystem delegate = getDelegate(parent);
     int parentId = getFileId(parent);
-    int childId = makeChildRecord(parent, parentId, name, attributes, delegate);
-    if (childId != -1) {
+    Pair<FileAttributes, String> childData = getChildData(delegate, parent, name, attributes, symlinkTarget);
+    if (childData != null) {
+      int childId = makeChildRecord(parentId, name, childData, delegate);
       appendIdToParentList(parentId, childId);
       assert parent instanceof VirtualDirectoryImpl : parent;
       VirtualDirectoryImpl dir = (VirtualDirectoryImpl)parent;
-      VirtualFileSystemEntry child = dir.createChild(name, childId, dir.getFileSystem());
+      VirtualFileSystemEntry child = dir.createChild(name, childId, dir.getFileSystem(), childData.first, isEmptyDirectory);
       dir.addChild(child);
       incStructuralModificationCount();
     }
   }
 
-  private static int makeChildRecord(VirtualFile parent, int parentId, String name, FileAttributes attributes, NewVirtualFileSystem fs) {
-    VirtualFile fake = new FakeVirtualFile(parent, name);
-    if (attributes == null) attributes = fs.getAttributes(fake);
-    if (attributes != null) {
-      int childId = FSRecords.createRecord();
-      writeAttributesToRecord(childId, parentId, fake, fs, attributes);
-      return childId;
+  private static int makeChildRecord(int parentId,
+                                     @NotNull String name,
+                                     @NotNull Pair<FileAttributes, String> childData,
+                                     @NotNull NewVirtualFileSystem fs) {
+    int childId = FSRecords.createRecord();
+    writeAttributesToRecord(childId, parentId, name, fs, childData.first, childData.second);
+    assert childId > 0 : childId;
+    return childId;
+  }
+
+  private static Pair<FileAttributes, String> getChildData(@NotNull NewVirtualFileSystem fs,
+                                                           @NotNull VirtualFile parent,
+                                                           @NotNull String name,
+                                                           @Nullable FileAttributes attributes,
+                                                           @Nullable String symlinkTarget) {
+    if (attributes == null) {
+      attributes = fs.getAttributes(new FakeVirtualFile(parent, name));
+      symlinkTarget = attributes != null && attributes.isSymLink() ? fs.resolveSymLink(new FakeVirtualFile(parent, name)) : null;
     }
-    return -1;
+    return attributes == null ? null : pair(attributes, symlinkTarget);
   }
 
   private static void appendIdToParentList(int parentId, int childId) {
@@ -1264,8 +1313,8 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     ((VirtualFileSystemEntry)file).updateProperty(VirtualFile.PROP_HIDDEN, hiddenFlag);
   }
 
-  private static void executeSetTarget(@NotNull VirtualFile file, String target) {
-    ((VirtualFileSystemEntry)file).setLinkTarget(target);
+  private static void executeSetTarget(@NotNull VirtualFile file, @Nullable String target) {
+    FSRecords.storeSymlinkTarget(getFileId(file), target);
   }
 
   private static void setFlag(@NotNull VirtualFile file, int mask, boolean value) {
@@ -1285,7 +1334,10 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     return BitUtil.isSet(FSRecords.getFlags(fileId), mask);
   }
 
-  private static void executeTouch(@NotNull VirtualFile file, boolean reloadContentFromDelegate, long newModificationStamp, long newLength,
+  private static void executeTouch(@NotNull VirtualFile file,
+                                   boolean reloadContentFromDelegate,
+                                   long newModificationStamp,
+                                   long newLength,
                                    long newTimestamp) {
     if (reloadContentFromDelegate) {
       setFlag(file, MUST_RELOAD_CONTENT, true);
@@ -1415,5 +1467,10 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
       start = i+1;
     }
     return true;
+  }
+
+  @Override
+  public boolean mayHaveChildren(int id) {
+    return FSRecords.mayHaveChildren(id);
   }
 }

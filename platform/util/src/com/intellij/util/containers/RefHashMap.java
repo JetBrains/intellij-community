@@ -29,7 +29,7 @@ import java.util.*;
  */
 abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   private final MyMap myMap;
-  private final ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<K>();
+  private final ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<>();
   private final HardKey myHardKeyInstance = new HardKey(); // "singleton"
   @NotNull
   private final TObjectHashingStrategy<? super K> myStrategy;
@@ -42,7 +42,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   }
 
   RefHashMap(int initialCapacity, float loadFactor) {
-    this(initialCapacity, loadFactor, ContainerUtil.<K>canonicalStrategy());
+    this(initialCapacity, loadFactor, ContainerUtil.canonicalStrategy());
   }
 
   RefHashMap(int initialCapacity) {
@@ -285,16 +285,12 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
       return ent.setValue(value);
     }
 
-    private static boolean valEqual(Object o1, Object o2) {
-      return o1 == null ? o2 == null : o1.equals(o2);
-    }
-
     @Override
     public boolean equals(Object o) {
       if (!(o instanceof Entry)) return false;
       //noinspection unchecked
       Entry<K,V> e = (Entry)o;
-      return keyEqual(key, e.getKey(), myStrategy) && valEqual(getValue(), e.getValue());
+      return keyEqual(key, e.getKey(), myStrategy) && Objects.equals(getValue(), e.getValue());
     }
 
     @Override
@@ -325,7 +321,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
               // weak key has been cleared by GC, ignore
               continue;
             }
-            next = new MyEntry<K, V>(ent, k, wk.hashCode(), myStrategy);
+            next = new MyEntry<>(ent, k, wk.hashCode(), myStrategy);
             return true;
           }
           return false;

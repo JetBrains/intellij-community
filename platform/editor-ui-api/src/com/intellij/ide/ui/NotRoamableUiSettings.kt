@@ -1,10 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui
 
-import com.intellij.openapi.components.BaseState
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.util.Pair
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.Accessor
@@ -12,7 +9,7 @@ import com.intellij.util.xmlb.SerializationFilter
 import com.intellij.util.xmlb.annotations.Property
 import java.awt.Font
 
-@State(name = "NotRoamableUiSettings", storages = [(Storage(Storage.NOT_ROAMABLE_FILE))], reportStatistic = true)
+@State(name = "NotRoamableUiSettings", storages = [(Storage(StoragePathMacros.NOT_ROAMABLE_FILE))], reportStatistic = true)
 class NotRoamableUiSettings : PersistentStateComponent<NotRoamableUiOptions> {
   private var state = NotRoamableUiOptions()
 
@@ -23,6 +20,11 @@ class NotRoamableUiSettings : PersistentStateComponent<NotRoamableUiOptions> {
 
     state.fontSize = UISettings.restoreFontSize(state.fontSize, state.fontScale)
     state.fontScale = UISettings.defFontScale
+    fixFontSettings()
+  }
+
+  internal fun fixFontSettings() {
+    val state = state
     state.initDefFont()
 
     // 1. Sometimes system font cannot display standard ASCII symbols. If so we have
@@ -93,12 +95,5 @@ private class FontFilter : SerializationFilter {
   }
 }
 
-internal val systemFontFaceAndSize: Pair<String, Int>
-  get() {
-    val fontData = UIUtil.getSystemFontData()
-    if (fontData != null) {
-      return fontData
-    }
-
-    return Pair.create("Dialog", 12)
-  }
+private val systemFontFaceAndSize: Pair<String, Int>
+  get() = UIUtil.getSystemFontData() ?: Pair.create("Dialog", 12)

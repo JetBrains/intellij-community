@@ -845,7 +845,10 @@ public class ExternalSystemUtil {
                              boolean activateToolWindowBeforeRun,
                              @Nullable UserDataHolderBase userData) {
     ExecutionEnvironment environment = createExecutionEnvironment(project, externalSystemId, taskSettings, executorId);
-    if (environment == null) return;
+    if (environment == null) {
+      LOG.warn("Execution environment for " + externalSystemId + " is null" );
+      return;
+    }
 
     RunnerAndConfigurationSettings runnerAndConfigurationSettings = environment.getRunnerAndConfigurationSettings();
     assert runnerAndConfigurationSettings != null;

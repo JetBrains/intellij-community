@@ -5,7 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
-import com.intellij.lang.folding.NamedFoldingDescriptor;
+import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,11 +32,11 @@ public final class CommentFoldingUtil {
    * @param isCustomRegionFunc determines whether element contains custom region tag
    */
   @Nullable
-  public static NamedFoldingDescriptor getCommentDescriptor(@NotNull PsiComment comment,
-                                                            @NotNull Document document,
-                                                            @NotNull Set<PsiElement> processedComments,
-                                                            @NotNull Predicate<PsiElement> isCustomRegionFunc,
-                                                            boolean isCollapse) {
+  public static FoldingDescriptor getCommentDescriptor(@NotNull PsiComment comment,
+                                                       @NotNull Document document,
+                                                       @NotNull Set<PsiElement> processedComments,
+                                                       @NotNull Predicate<PsiElement> isCustomRegionFunc,
+                                                       boolean isCollapse) {
     if (!processedComments.add(comment)) return null;
 
     final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(comment.getLanguage());
@@ -51,7 +51,7 @@ public final class CommentFoldingUtil {
     final String placeholder = getCommentPlaceholder(document, commentType, commentRange);
     if (placeholder == null) return null;
 
-    return new NamedFoldingDescriptor(comment.getNode(), commentRange, null, placeholder, isCollapse, Collections.emptySet());
+    return new FoldingDescriptor(comment.getNode(), commentRange, null, placeholder, isCollapse, Collections.emptySet());
   }
 
   @Nullable

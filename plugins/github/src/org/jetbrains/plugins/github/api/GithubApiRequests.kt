@@ -100,7 +100,7 @@ object GithubApiRequests {
       delete(getUrl(server, urlSuffix, "/$username/$repoName")).withOperationName("delete repository $username/$repoName")
 
     @JvmStatic
-    fun delete(url: String) = Delete(url).withOperationName("delete repository at $url")
+    fun delete(url: String) = Delete.json<Unit>(url).withOperationName("delete repository at $url")
 
     object Branches : Entity("/branches") {
       @JvmStatic
@@ -136,7 +136,49 @@ object GithubApiRequests {
       fun get(url: String) = Get.jsonPage<GithubRepo>(url).withOperationName("get forks")
     }
 
+    object Assignees : Entity("/assignees") {
+
+      @JvmStatic
+      fun pages(server: GithubServerPath, username: String, repoName: String) =
+        GithubApiPagesLoader.Request(get(server, username, repoName), ::get)
+
+      @JvmOverloads
+      @JvmStatic
+      fun get(server: GithubServerPath, username: String, repoName: String, pagination: GithubRequestPagination? = null) =
+        get(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, getQuery(pagination?.toString().orEmpty())))
+
+      @JvmStatic
+      fun get(url: String) = Get.jsonPage<GithubUser>(url).withOperationName("get assignees")
+    }
+
+    object Labels : Entity("/labels") {
+
+      @JvmStatic
+      fun pages(server: GithubServerPath, username: String, repoName: String) =
+        GithubApiPagesLoader.Request(get(server, username, repoName), ::get)
+
+      @JvmOverloads
+      @JvmStatic
+      fun get(server: GithubServerPath, username: String, repoName: String, pagination: GithubRequestPagination? = null) =
+        get(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, getQuery(pagination?.toString().orEmpty())))
+
+      @JvmStatic
+      fun get(url: String) = Get.jsonPage<GithubIssueLabel>(url).withOperationName("get assignees")
+    }
+
     object Collaborators : Entity("/collaborators") {
+
+      @JvmStatic
+      fun pages(server: GithubServerPath, username: String, repoName: String) =
+        GithubApiPagesLoader.Request(get(server, username, repoName), ::get)
+
+      @JvmOverloads
+      @JvmStatic
+      fun get(server: GithubServerPath, username: String, repoName: String, pagination: GithubRequestPagination? = null) =
+        get(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, getQuery(pagination?.toString().orEmpty())))
+
+      @JvmStatic
+      fun get(url: String) = Get.jsonPage<GithubUserWithPermissions>(url).withOperationName("get collaborators")
 
       @JvmStatic
       fun add(server: GithubServerPath, username: String, repoName: String, collaborator: String) =
@@ -180,6 +222,11 @@ object GithubApiRequests {
         Patch.json<GithubIssue>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/", id),
                                 GithubChangeIssueStateRequest(if (open) "open" else "closed"))
 
+      @JvmStatic
+      fun updateAssignees(server: GithubServerPath, username: String, repoName: String, id: String, assignees: Collection<String>) =
+        Patch.json<GithubIssue>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/", id),
+                                GithubAssigneesCollectionRequest(assignees))
+
       object Comments : Entity("/comments") {
         @JvmStatic
         fun create(server: GithubServerPath, username: String, repoName: String, issueId: String, body: String) =
@@ -202,6 +249,13 @@ object GithubApiRequests {
         @JvmStatic
         fun get(url: String) = Get.jsonPage<GithubIssueCommentWithHtml>(url, GithubApiContentHelper.V3_HTML_JSON_MIME_TYPE)
           .withOperationName("get comments for issue")
+      }
+
+      object Labels : Entity("/labels") {
+        @JvmStatic
+        fun replace(server: GithubServerPath, username: String, repoName: String, issueId: String, labels: Collection<String>) =
+          Put.jsonList<GithubIssueLabel>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", Issues.urlSuffix, "/", issueId, urlSuffix),
+                                         GithubLabelsCollectionRequest(labels))
       }
     }
 
@@ -265,6 +319,18 @@ object GithubApiRequests {
           .withOperationName("rebase and merge pull request ${pullRequest.number}")
 
       private fun getMergeUrl(pullRequest: GithubPullRequest) = pullRequest.url + "/merge"
+
+      object Reviewers : Entity("/requested_reviewers") {
+        @JvmStatic
+        fun add(server: GithubServerPath, username: String, repoName: String, number: Long, reviewers: Collection<String>) =
+          Post.json<Unit>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix),
+                          GithubReviewersCollectionRequest(reviewers, listOf<String>()))
+
+        @JvmStatic
+        fun remove(server: GithubServerPath, username: String, repoName: String, number: Long, reviewers: Collection<String>) =
+          Delete.json<Unit>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix),
+                            GithubReviewersCollectionRequest(reviewers, listOf<String>()))
+      }
     }
   }
 
@@ -280,7 +346,7 @@ object GithubApiRequests {
       .withOperationName("get gist $id")
 
     @JvmStatic
-    fun delete(server: GithubServerPath, id: String) = Delete(getUrl(server, urlSuffix, "/$id"))
+    fun delete(server: GithubServerPath, id: String) = Delete.json<Unit>(getUrl(server, urlSuffix, "/$id"))
       .withOperationName("delete gist $id")
   }
 

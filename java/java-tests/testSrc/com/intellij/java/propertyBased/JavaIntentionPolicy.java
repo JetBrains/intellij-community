@@ -64,14 +64,13 @@ class JavaIntentionPolicy extends IntentionPolicy {
            actionText.startsWith("Insert call to super method") || // super method can declare checked exceptions, unexpected at this point
            actionText.startsWith("Cast to ") || // produces uncompilable code by design
            actionText.startsWith("Unwrap 'else' branch (changes semantics)") || // might produce code with final variables are initialized several times
-           actionText.startsWith("Create missing 'switch' branches") || // if all existing branches do 'return something', we don't automatically generate compilable code for new branches
+           actionText.startsWith("Create missing branches: ") || // if all existing branches do 'return something', we don't automatically generate compilable code for new branches
            actionText.matches("Make .* default") || // can make interface non-functional and its lambdas incorrect
            actionText.startsWith("Unimplement") || // e.g. leaves red references to the former superclass methods
            actionText.startsWith("Add 'catch' clause for '") || // if existing catch contains "return value", new error "Missing return statement" may appear
            actionText.startsWith("Surround with try-with-resources block") || // if 'close' throws, we don't add a new 'catch' for that, see IDEA-196544
            actionText.equals("Split into declaration and initialization") || // TODO: remove when IDEA-179081 is fixed
-           //may break catches with explicit exceptions
-           actionText.matches("Replace with throws .*") ||
+           actionText.matches("Replace with throws .*") || //may break catches with explicit exceptions
            actionText.matches("Replace with '(new .+\\[]|.+\\[]::new)'"); // Suspicious toArray may introduce compilation error
   }
 
@@ -116,6 +115,7 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
                                      intentionText.matches("Simplify '.*' to .*") ||
                                      intentionText.matches("Move '.*' to Javadoc ''@throws'' tag") ||
                                      intentionText.matches("Remove '.*' from '.*' throws list") ||
+                                     intentionText.matches("Remove type arguments") ||
                                      intentionText.matches("Remove .+ suppression");
     return !isCommentChangingAction;
   }

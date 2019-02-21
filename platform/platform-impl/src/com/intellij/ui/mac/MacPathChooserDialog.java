@@ -106,9 +106,7 @@ public class MacPathChooserDialog implements PathChooserDialog, FileChooserDialo
         commandProcessor.leaveModal();
         LaterInvocator.leaveModal(myFileDialog);
         if (previousFocusOwner != null) {
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            previousFocusOwner.requestFocus();
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> previousFocusOwner.requestFocus());
         }
       }
     }

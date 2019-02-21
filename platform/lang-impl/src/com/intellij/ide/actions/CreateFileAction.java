@@ -21,6 +21,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.DumbAware;
@@ -231,10 +232,9 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
       final PsiDirectory psiDirectory = getDirectory();
 
       final Project project = psiDirectory.getProject();
-      final boolean[] result = {false};
-      FileTypeChooser.getKnownFileTypeOrAssociate(psiDirectory.getVirtualFile(), getFileName(inputString), project);
-      result[0] = super.canClose(getFileName(inputString));
-      return result[0];
+      FileType fileType = FileTypeChooser.getKnownFileTypeOrAssociate(psiDirectory.getVirtualFile(), getFileName(inputString), project);
+      if (fileType == null) return false;
+      return super.canClose(getFileName(inputString));
     }
   }
 }

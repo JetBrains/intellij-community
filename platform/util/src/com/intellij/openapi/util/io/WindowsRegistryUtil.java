@@ -70,7 +70,7 @@ public class WindowsRegistryUtil {
 
   @NotNull
   public static List<String> readRegistryBranch(@NotNull String location) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     StringBuilder output = doReadBranch(location);
     if (output != null) {
       for (int pos = output.indexOf(location); pos != -1; pos = output.indexOf(location, pos + location.length())) {
@@ -89,7 +89,7 @@ public class WindowsRegistryUtil {
   
   @NotNull
   public static List<String> readRegistryBranchValues(@NotNull String location) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     StringBuilder output = doReadBranch(location);
     if (output != null) {
       // there seem to be no way to get machine-readable list of value names.

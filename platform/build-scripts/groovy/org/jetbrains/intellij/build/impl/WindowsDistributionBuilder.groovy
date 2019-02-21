@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileFilters
@@ -79,8 +65,11 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       buildWinLauncher(it, winDistPath)
     }
     customizer.copyAdditionalFiles(buildContext, winDistPath)
-    new File(winDistPath, "bin").listFiles(FileFilters.filesWithExtension("exe"))?.each {
-      buildContext.signExeFile(it.absolutePath)
+    List<String> extensions = ["exe", "dll"]
+    for (String extension : extensions) {
+      new File(winDistPath, "bin").listFiles(FileFilters.filesWithExtension(extension))?.each {
+        buildContext.signExeFile(it.absolutePath)
+      }
     }
     return winDistPath
   }
@@ -88,6 +77,8 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   @Override
   void buildArtifacts(String winDistPath) {
     def arch = customizer.bundledJreArchitecture
+    //do not include win32 launcher into winzip with 9+ jbr bundled
+    def List<String> excludeList = ["bin/${buildContext.productProperties.baseFileName}.exe", "bin/${buildContext.productProperties.baseFileName}.exe.vmoptions"]
     def jreDirectoryPath64 = arch != null ? buildContext.bundledJreManager.extractWinJre(arch) : null
     List<String> jreDirectoryPaths = [jreDirectoryPath64]
 
@@ -107,11 +98,11 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 
     def jreSuffix = buildContext.bundledJreManager.jreSuffix()
     def secondJreBuild = buildContext.bundledJreManager.getSecondJreBuild()
-    def secondJreDirectoryPath = (secondJreBuild != null) ? buildContext.bundledJreManager.extractSecondJre("win", secondJreBuild) : null
+    def secondJreDirectoryPath = (secondJreBuild != null) ? buildContext.bundledJreManager.extractSecondJre("windows", secondJreBuild) : null
     if (customizer.buildZipArchive) {
       buildWinZip(jreDirectoryPaths.findAll { it != null }, "${jreSuffix}.win", winDistPath)
       if (secondJreDirectoryPath != null) {
-        buildWinZip([secondJreDirectoryPath], "-jdk${buildContext.bundledJreManager.getSecondJreVersion()}-bundled.win", winDistPath)
+        buildWinZip([secondJreDirectoryPath], "-jbr${buildContext.bundledJreManager.getSecondJreVersion()}.win", winDistPath, excludeList)
       }
     }
 
@@ -134,7 +125,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       if (secondJreDirectoryPath != null) {
         generateProductJson(productJsonDir, secondJreDirectoryPath != null)
         new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, secondJreDirectoryPath], [])
-        new WinExeInstallerBuilder(buildContext, customizer, secondJreDirectoryPath).buildInstaller(winDistPath, productJsonDir, "-jdk${buildContext.bundledJreManager.getSecondJreVersion()}-bundled")
+        new WinExeInstallerBuilder(buildContext, customizer, secondJreDirectoryPath).buildInstaller(winDistPath, productJsonDir, "-jbr${buildContext.bundledJreManager.getSecondJreVersion()}")
       }
     }
   }
@@ -269,9 +260,10 @@ IDS_VM_OPTIONS=$vmOptions
     return patchedFile
   }
 
-  private void buildWinZip(List<String> jreDirectoryPaths, String zipNameSuffix, String winDistPath) {
+  private void buildWinZip(List<String> jreDirectoryPaths, String zipNameSuffix, String winDistPath, List<String> excludeList = [] ) {
     buildContext.messages.block("Build Windows ${zipNameSuffix}.zip distribution") {
-      def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${zipNameSuffix}.zip"
+      def baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
+      def targetPath = "${buildContext.paths.artifacts}/${baseName}${zipNameSuffix}.zip"
       def zipPrefix = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
       def dirs = [buildContext.paths.distAll, winDistPath] + jreDirectoryPaths
       buildContext.messages.progress("Building Windows $targetPath archive")
@@ -280,9 +272,14 @@ IDS_VM_OPTIONS=$vmOptions
       dirs += [productJsonDir]
       buildContext.ant.zip(zipfile: targetPath) {
         dirs.each {
-          zipfileset(dir: it, prefix: zipPrefix)
+          zipfileset(dir: it, prefix: zipPrefix) {
+            excludeList.each {
+              exclude(name: it)
+            }
+          }
         }
       }
+
       new ProductInfoValidator(buildContext).checkInArchive(targetPath, zipPrefix)
       buildContext.notifyArtifactBuilt(targetPath)
     }

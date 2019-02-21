@@ -508,6 +508,12 @@
     <keyboard-shortcut first-keystroke="meta shift CLOSE_BRACKET"/>
     <keyboard-shortcut first-keystroke="control RIGHT"/>
   </action>
+  <action id="Diff.ApplyLeftSide">
+    <keyboard-shortcut first-keystroke="control shift LEFT"/>
+  </action>
+  <action id="Diff.ApplyRightSide">
+    <keyboard-shortcut first-keystroke="control shift RIGHT"/>
+  </action>
   <action id="EditorCodeBlockStart">
     <keyboard-shortcut first-keystroke="meta alt OPEN_BRACKET"/>
   </action>

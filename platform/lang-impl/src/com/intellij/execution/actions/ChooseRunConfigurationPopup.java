@@ -22,6 +22,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListSeparator;
@@ -151,6 +152,8 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
         if (speedSearch.isHoldingFilter()) {
           speedSearch.backspace();
           speedSearch.update();
+        } else {
+          popup.removeSelected();
         }
       }
     });
@@ -194,11 +197,36 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
   }
 
-  private static void deleteConfiguration(final Project project, @NotNull final RunnerAndConfigurationSettings configurationSettings) {
-    if (Messages.YES == Messages.showYesNoDialog(project,
-                                                    "Are you sure you want to delete " + configurationSettings.getName() + "?",
-                                                    "Confirmation",
-                                                    Messages.getQuestionIcon())) {
+  private static void deleteConfiguration(ChooseRunConfigurationPopup popup, final Project project, @NotNull final RunnerAndConfigurationSettings configurationSettings) {
+    RunManagerConfig runManagerConfig = RunManagerImpl.getInstanceImpl(project).getConfig();
+    boolean confirmed;
+    if (runManagerConfig.isDeletionFromPopupRequiresConfirmation()) {
+      popup.myPopup.cancel();
+      confirmed = Messages.YES == Messages.showYesNoDialog(project,
+                                                           "Are you sure you want to delete " + configurationSettings.getName() + "?",
+                                                           "Confirmation",
+                                                           Messages.getQuestionIcon(), new DialogWrapper.DoNotAskOption.Adapter() {
+          @Override
+          public void rememberChoice(boolean isSelected, int exitCode) {
+            runManagerConfig.setDeletionFromPopupRequiresConfirmation(!isSelected);
+          }
+
+          @NotNull
+          @Override
+          public String getDoNotShowMessage() {
+            return "Don't ask again";
+          }
+
+          @Override
+          public boolean shouldSaveOptionsOnCancel() {
+            return true;
+          }
+        });
+    }
+    else {
+      confirmed = true;
+    }
+    if (confirmed) {
       RunManager.getInstance(project).removeConfiguration(configurationSettings);
     }
   }
@@ -588,7 +616,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
       result.add(new ActionWrapper("Delete", AllIcons.Actions.Cancel) {
         @Override
         public void perform() {
-          deleteConfiguration(project, settings);
+          deleteConfiguration(action, project, settings);
         }
       });
 
@@ -806,7 +834,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
 
       final Object o = getListModel().get(index);
       if (o instanceof ItemWrapper && ((ItemWrapper)o).canBeDeleted()) {
-        deleteConfiguration(myProject, (RunnerAndConfigurationSettings)((ItemWrapper)o).getValue());
+        deleteConfiguration(ChooseRunConfigurationPopup.this, myProject, (RunnerAndConfigurationSettings)((ItemWrapper)o).getValue());
         getListModel().deleteItem(o);
         final List<Object> values = getListStep().getValues();
         values.remove(o);

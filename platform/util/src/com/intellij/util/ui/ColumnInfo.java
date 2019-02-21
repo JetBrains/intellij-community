@@ -21,6 +21,7 @@ import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.util.Comparator;
+import java.util.Objects;
 
 public abstract class ColumnInfo <Item, Aspect> {
   private String myName;
@@ -121,7 +122,7 @@ public abstract class ColumnInfo <Item, Aspect> {
 
     final ColumnInfo that = (ColumnInfo)o;
 
-    if (myName != null ? !myName.equals(that.myName) : that.myName != null) return false;
+    if (!Objects.equals(myName, that.myName)) return false;
 
     return true;
   }

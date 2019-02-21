@@ -26,6 +26,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
 
   @Nullable private String myLastAskedKeyPath = null;
   @Nullable private String myLastAskedUserName = null;
+  @Nullable private String myLastAskedConfirmationInput = null;
 
   GitNativeSshGuiAuthenticator(@NotNull Project project,
                                @NotNull GitAuthenticationGate authenticationGate,
@@ -111,7 +112,8 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
                                           SSHUtil.CONFIRM_CONNECTION_PROMPT + "?");
 
       String knownAnswer = myAuthenticationGate.getSavedInput(message);
-      if (knownAnswer != null) {
+      if (knownAnswer != null && myLastAskedConfirmationInput == null) {
+        myLastAskedConfirmationInput = knownAnswer;
         return knownAnswer;
       }
 
@@ -133,17 +135,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
 
   @Nullable
   private String askGenericInput(@NotNull String description) {
-    return askUser(() -> {
-      String knownAnswer = myAuthenticationGate.getSavedInput(description);
-      if (knownAnswer != null) {
-        return knownAnswer;
-      }
-      String answer = Messages.showPasswordDialog(myProject, description, GitBundle.message("ssh.keyboard.interactive.title"), null);
-      if (answer != null) {
-        myAuthenticationGate.saveInput(description, answer);
-      }
-      return answer;
-    });
+    return askUser(() -> Messages.showPasswordDialog(myProject, description, GitBundle.message("ssh.keyboard.interactive.title"), null));
   }
 
   @Nullable
@@ -151,9 +143,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
     if (myAuthenticationMode != FULL) return null;
 
     Ref<String> answerRef = new Ref<>();
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      answerRef.set(query.compute());
-    }, ModalityState.any());
+    ApplicationManager.getApplication().invokeAndWait(() -> answerRef.set(query.compute()), ModalityState.any());
     return answerRef.get();
   }
 }

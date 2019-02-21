@@ -1,29 +1,16 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.FileContentUtilCore;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
+import java.util.Objects;
 
 /**
  * @author max
@@ -80,8 +67,15 @@ public class VFilePropertyChangeEvent extends VFileEvent {
         }
         break;
       default:
-        throw new IllegalArgumentException("Unknown property name: '"+propertyName+"'. Must be one of: VirtualFile.PROP_NAME, VirtualFile.PROP_ENCODING, VirtualFile.PROP_WRITABLE, VirtualFile.PROP_HIDDEN, VirtualFile.PROP_SYMLINK_TARGET");
+        throw new IllegalArgumentException(
+          "Unknown property name '" + propertyName + "'. " +
+          "Must be one of VirtualFile.{PROP_NAME|PROP_ENCODING|PROP_WRITABLE|PROP_HIDDEN|PROP_SYMLINK_TARGET}");
     }
+  }
+
+  @ApiStatus.Experimental
+  public boolean isRename() {
+    return myPropertyName == VirtualFile.PROP_NAME && getRequestor() != FileContentUtilCore.FORCE_RELOAD_REQUESTOR;
   }
 
   @NotNull
@@ -135,8 +129,8 @@ public class VFilePropertyChangeEvent extends VFileEvent {
     VFilePropertyChangeEvent event = (VFilePropertyChangeEvent)o;
 
     if (!myFile.equals(event.myFile)) return false;
-    if (myNewValue != null ? !myNewValue.equals(event.myNewValue) : event.myNewValue != null) return false;
-    if (myOldValue != null ? !myOldValue.equals(event.myOldValue) : event.myOldValue != null) return false;
+    if (!Objects.equals(myNewValue, event.myNewValue)) return false;
+    if (!Objects.equals(myOldValue, event.myOldValue)) return false;
     if (!myPropertyName.equals(event.myPropertyName)) return false;
 
     return true;
@@ -151,12 +145,10 @@ public class VFilePropertyChangeEvent extends VFileEvent {
     return result;
   }
 
-  @Override
   @NotNull
-  @NonNls
+  @Override
   public String toString() {
-    return "VfsEvent[property(" + myPropertyName + ") changed for '" + myFile + "':" +
-           " oldValue = " + myOldValue + ", newValue = " + myNewValue + "]";
+    return "VfsEvent[property(" + myPropertyName + ") changed for '" + myFile + "': " + myOldValue + " -> " + myNewValue + ']';
   }
 
   @NotNull

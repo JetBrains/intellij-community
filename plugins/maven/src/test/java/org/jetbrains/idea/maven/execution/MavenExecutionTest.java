@@ -97,9 +97,7 @@ public class MavenExecutionTest extends MavenImportingTestCase {
     if (!hasMavenInstallation()) return;
 
     edt(() -> {
-      WriteAction.runAndWait(() -> {
-        VfsUtil.saveText(createProjectSubFile("src/main/java/A.java"), "public class A {}");
-      });
+      WriteAction.runAndWait(() -> VfsUtil.saveText(createProjectSubFile("src/main/java/A.java"), "public class A {}"));
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     });
 

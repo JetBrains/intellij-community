@@ -63,7 +63,7 @@ public interface EditorCustomElementRenderer {
    * @param targetRegion region where painting should be performed, location of this rectangle is calculated by editor implementation,
    *                     dimensions of the rectangle match element's width and height (provided by {@link #calcWidthInPixels(Inlay)}
    *                     and {@link #calcHeightInPixels(Inlay)})
-   * @param textAttributes for inline elements - attributes of surrounding text, for block elements - empty attributes
+   * @param textAttributes attributes of surrounding text
    */
   default void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle targetRegion, @NotNull TextAttributes textAttributes) {
     paint(inlay.getEditor(), g, targetRegion, textAttributes);

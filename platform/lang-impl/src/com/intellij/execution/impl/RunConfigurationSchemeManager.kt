@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.configurationStore.LazySchemeProcessor
@@ -54,7 +54,7 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
     var element = dataHolder.read()
 
     if (isShared && element.name == "component") {
-      element = element.getChild("configuration")
+      element = element.getChild("configuration") ?: throw RuntimeException("Unexpected element: " + JDOMUtil.write(element))
     }
 
     converters.any {

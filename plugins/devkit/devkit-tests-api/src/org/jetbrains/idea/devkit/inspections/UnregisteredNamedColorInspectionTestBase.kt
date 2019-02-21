@@ -1,14 +1,28 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections
 
-import org.jetbrains.idea.devkit.util.PsiUtil
+import com.intellij.openapi.application.PathManager
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import com.intellij.ui.components.JBList
+import com.intellij.util.PathUtil
 
-abstract class UnregisteredNamedColorInspectionTestBase : PluginModuleTestCase() {
+abstract class UnregisteredNamedColorInspectionTestBase : JavaCodeInsightFixtureTestCase() {
+
+  companion object {
+    const val themeMetadata = "/themes/metadata/IntelliJPlatform.themeMetadata.json"
+    const val knownNamedColor = "CompletionPopup.background"
+  }
+
+  override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>?) {
+    val resourceRoot = PathManager.getResourceRoot(javaClass, themeMetadata)
+    moduleBuilder!!.addLibrary("platform-resources", resourceRoot)
+    moduleBuilder.addLibrary("platform-api", PathUtil.getJarPathForClass(JBList::class.java))
+  }
 
   override fun setUp() {
     super.setUp()
     myFixture.enableInspections(UnregisteredNamedColorInspection())
-    PsiUtil.markAsIdeaProject(myFixture.project, true)
 
     //language=JAVA
     myFixture.addClass("""
@@ -18,27 +32,6 @@ abstract class UnregisteredNamedColorInspectionTestBase : PluginModuleTestCase()
         public static void namedColor(String s, int i) {}
       }
     """.trimIndent())
-
-    //language=JAVA
-    myFixture.addClass("""
-      package org.jetbrains.idea.devkit.completion;
-
-      public class UiDefaultsHardcodedKeys {
-        public static final Set<String> UI_DEFAULTS_KEYS = Sets.newHashSet();
-        public static final Set<String> NAMED_COLORS = Sets.newHashSet(
-          "RegisteredKey"
-        );
-        public static final Set<String> ALL_KEYS = Sets.union(UI_DEFAULTS_KEYS, NAMED_COLORS);
-      }
-    """.trimIndent())
   }
 
-  override fun tearDown() {
-    try {
-      PsiUtil.markAsIdeaProject(myFixture.project, false)
-    }
-    finally {
-      super.tearDown()
-    }
-  }
 }

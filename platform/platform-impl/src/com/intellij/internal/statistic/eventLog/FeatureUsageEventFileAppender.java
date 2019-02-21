@@ -145,7 +145,20 @@ public class FeatureUsageEventFileAppender extends FileAppender {
     oldestExistingFile = oldestFile;
   }
 
-  @NotNull
+  public void cleanUp() {
+    final List<File> logs = myFilesProducer.get();
+    if (logs == null || logs.isEmpty()) {
+      return;
+    }
+
+    for (File file : logs) {
+      if (!file.delete()) {
+        LogLog.error("Failed deleting old file " + file);
+      }
+    }
+  }
+
+    @NotNull
   private static File nextFile(@NotNull Path dir) {
     File file = dir.resolve(UUID.randomUUID() + ".log").toFile();
     while (file.exists()) {

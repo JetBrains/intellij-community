@@ -6,6 +6,7 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
@@ -271,7 +272,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
       return null;
     }
     try {
-      return instantiate(findClass(treeRendererClass), myPicoContainer, true);
+      return instantiate(findClass(treeRendererClass), myPicoContainer);
     }
     catch (ProcessCanceledException exception) {
       throw exception;
@@ -350,10 +351,13 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
     @Override
     protected Object createElement() {
       try {
-        return instantiate(myType, myContainer, true);
+        return instantiate(myType, myContainer);
       }
       catch (ProcessCanceledException exception) {
         throw exception;
+      }
+      catch (ExtensionNotApplicableException ignore) {
+        return null;
       }
       catch (AssertionError | LinkageError | Exception e) {
         LOG.error(e);

@@ -591,7 +591,7 @@ class Foo {{
     return s == null ? "" : s;
   }
 """)
-    assert c == ['null -> !null', '!null -> param1']
+    assert c == ['!null -> param1'] // NotNull annotation is also inferred, so 'null -> !null' is redundant
   }
 
   void "test coalesce"() {

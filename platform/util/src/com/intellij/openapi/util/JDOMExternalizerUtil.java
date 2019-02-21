@@ -93,7 +93,7 @@ public class JDOMExternalizerUtil {
     }
     if (children.size() == 1) {
       String value = children.iterator().next().getAttributeValue(Constants.VALUE);
-      return value == null ? Collections.<String>emptyList() : Collections.singletonList(value);
+      return value == null ? Collections.emptyList() : Collections.singletonList(value);
     }
     List<String> values = ContainerUtil.newArrayListWithCapacity(children.size());
     for (Element child : children) {

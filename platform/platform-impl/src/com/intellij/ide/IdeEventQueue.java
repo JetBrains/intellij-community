@@ -8,12 +8,15 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
@@ -43,6 +46,7 @@ import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.awt.event.*;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -191,6 +195,30 @@ public class IdeEventQueue extends EventQueue {
     abracadabraDaberBoreh();
 
     IdeKeyEventDispatcher.addDumbModeWarningListener(() -> flushDelayedKeyEvents());
+
+    if (Registry.is("skip.move.resize.events")) {
+      myPostEventListeners.addListener(IdeEventQueue::skipMoveResizeEvents);
+    }
+  }
+
+  private static boolean skipMoveResizeEvents(AWTEvent event) {
+    // JList, JTable and JTree paint every cell/row/column using the following method:
+    //   CellRendererPane.paintComponent(Graphics, Component, Container, int, int, int, int, boolean)
+    // This method sets bounds to a renderer component and invokes the following internal method:
+    //   Component.notifyNewBounds
+    // All default and simple renderers do not post specified events,
+    // but panel-based renderers have to post events by contract.
+    switch (event.getID()) {
+      case ComponentEvent.COMPONENT_MOVED:
+      case ComponentEvent.COMPONENT_RESIZED:
+      case HierarchyEvent.ANCESTOR_MOVED:
+      case HierarchyEvent.ANCESTOR_RESIZED:
+        Object source = event.getSource();
+        if (source instanceof Component && null != UIUtil.getParentOfType(CellRendererPane.class, (Component)source)) {
+          return true;
+        }
+    }
+    return false;
   }
 
   private void abracadabraDaberBoreh() {
@@ -1115,7 +1143,7 @@ public class IdeEventQueue extends EventQueue {
             && ((KeyboardShortcut)s).getSecondKeyStroke() == null
             && ((KeyboardShortcut)s).getFirstKeyStroke().equals(keyStrokeToFind));
 
-        if (thisShortcutMayShowPopup && KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof IdeFrame) {
+        if (!isActionPopupShown() && thisShortcutMayShowPopup && KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof IdeFrame) {
           if (TYPEAHEAD_LOG.isDebugEnabled()) {
             TYPEAHEAD_LOG.debug("Delay following events; Focused window is " +
                                 KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow().getClass().getName());
@@ -1140,7 +1168,7 @@ public class IdeEventQueue extends EventQueue {
               break;
             case TRIGGERED:
               long timeDelta = keyEvent.getWhen() - ourLastTimePressed.get();
-              if (timeDelta >= 100 && timeDelta <= 500) {
+              if (!isActionPopupShown() && timeDelta >= 100 && timeDelta <= 500) {
                 delayKeyEvents.set(true);
                 lastTypeaheadTimestamp = System.currentTimeMillis();
                 mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DETECTED;
@@ -1214,9 +1242,16 @@ public class IdeEventQueue extends EventQueue {
   }
 
   public void flushDelayedKeyEvents() {
-    if (delayKeyEvents.compareAndSet(true, false)) {
+    if (!isActionPopupShown() && delayKeyEvents.compareAndSet(true, false)) {
       postDelayedKeyEvents();
     }
+  }
+
+  private static boolean isActionPopupShown() {
+    ActionManager actionManager = ActionManager.getInstance();
+    return actionManager instanceof ActionManagerImpl &&
+           !((ActionManagerImpl)actionManager).isActionPopupStackEmpty() &&
+           !((ActionManagerImpl)actionManager).isToolWindowContextMenuVisible();
   }
 
   private SearchEverywhereTypeaheadState mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DEACTIVATED;
@@ -1228,6 +1263,7 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private final Set<Shortcut> shortcutsShowingPopups = new HashSet<>();
+  private WeakReference<Keymap> lastActiveKeymap = new WeakReference<Keymap>(null);
 
   private final List<String> actionsShowingPopupsList = new ArrayList<>();
   private long lastTypeaheadTimestamp = -1;
@@ -1235,16 +1271,22 @@ public class IdeEventQueue extends EventQueue {
   @NotNull
   private Set<Shortcut> getShortcutsShowingPopups () {
     KeymapManager keymapManager = KeymapManager.getInstance();
-    if (shortcutsShowingPopups.isEmpty() && keymapManager != null && keymapManager.getActiveKeymap() != null) {
-      String actionsAwareTypeaheadActionsList = Registry.get("action.aware.typeahead.actions.list").asString();
-      actionsShowingPopupsList.addAll(StringUtil.split(actionsAwareTypeaheadActionsList, ","));
-      actionsShowingPopupsList.forEach(actionId -> {
-        List<Shortcut> shortcuts = Arrays.asList(keymapManager.getActiveKeymap().getShortcuts(actionId));
-        if (TYPEAHEAD_LOG.isDebugEnabled()) {
-          shortcuts.forEach(s -> TYPEAHEAD_LOG.debug("Typeahead for " + actionId + " : Shortcuts: " + s));
+    if (keymapManager != null) {
+      Keymap keymap = keymapManager.getActiveKeymap();
+      if (keymap != null) {
+        if (!keymap.equals(lastActiveKeymap.get())) {
+          String actionsAwareTypeaheadActionsList = Registry.get("action.aware.typeahead.actions.list").asString();
+          actionsShowingPopupsList.addAll(StringUtil.split(actionsAwareTypeaheadActionsList, ","));
+          actionsShowingPopupsList.forEach(actionId -> {
+            List<Shortcut> shortcuts = Arrays.asList(keymap.getShortcuts(actionId));
+            if (TYPEAHEAD_LOG.isDebugEnabled()) {
+              shortcuts.forEach(s -> TYPEAHEAD_LOG.debug("Typeahead for " + actionId + " : Shortcuts: " + s));
+            }
+            shortcutsShowingPopups.addAll(shortcuts);
+          });
+          lastActiveKeymap = new WeakReference<>(keymap);
         }
-        shortcutsShowingPopups.addAll(shortcuts);
-      });
+      }
     }
     return shortcutsShowingPopups;
   }

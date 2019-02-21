@@ -5,9 +5,18 @@ public class IntegerMultiplicationImplicitCastToLong {
         // Shift operations are not subjected to binary promotion (JLS 15.19), operands are promoted separately using unary promotion rules
         long l = 1L << (step * 8);
     }
+
+    void leftArgOfShift(int i) {
+        long l = (<warning descr="i * i: integer multiplication implicitly cast to long">i * i</warning>) << 8;
+    }
     
     void testConcat(int step) {
         String res = "Result: "+(1L + <warning descr="1000*step: integer multiplication implicitly cast to long">1000*step</warning>);
+    }
+
+    void reportOnlyInnerMultInMultOrShift(int i) {
+        long l = (i * (<warning descr="i * i: integer multiplication implicitly cast to long">i * i</warning>));
+        long l1 = (<warning descr="i * i: integer multiplication implicitly cast to long">i * i</warning>) << 1;
     }
     
     public void foo() {
@@ -57,5 +66,9 @@ public class IntegerMultiplicationImplicitCastToLong {
     
     int explicitCast(int a, long b) {
         return (int)(a * 300 + b); 
+    }
+
+    long longCastAfterOverflow(int a, int b, int c) {
+        return (long) (<warning descr="a * b * c: integer multiplication implicitly cast to long">a * b * c</warning>);
     }
 }

@@ -1,32 +1,18 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi
 
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiModificationTracker
-import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
-import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.util.GroovyLatestTest
+import org.junit.Ignore
+import org.junit.Test
 
+@Ignore
 @CompileStatic
-class GroovyModificationTrackersTest extends LightGroovyTestCase {
+class GroovyModificationTrackersTest extends GroovyLatestTest {
 
-  LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
-
+  @Test
   void 'test class method'() {
     doTest '''\
 class A {
@@ -35,6 +21,7 @@ class A {
 ''', false
   }
 
+  @Test
   void 'test class initializer'() {
     doTest '''\
 class A {
@@ -45,6 +32,7 @@ class A {
 ''', false
   }
 
+  @Test
   void 'test class body'() {
     doTest '''\
 class A {
@@ -53,10 +41,12 @@ class A {
 ''', false, true
   }
 
+  @Test
   void 'test script body'() {
     doTest '<caret>', false
   }
 
+  @Test
   void 'test script variable'() {
     doTest 'def a<caret>= 1', false, true
   }
@@ -70,10 +60,10 @@ class A {
         def message = "java structure: $javaStructureCount, out of code block: $outOfCodeBlockCount"
         changeTraces << new Throwable(message)
       }
-      project.messageBus.connect myFixture.testRootDisposable subscribe PsiModificationTracker.TOPIC, listener
+      fixture.project.messageBus.connect fixture.testRootDisposable subscribe PsiModificationTracker.TOPIC, listener
     }
     fixture.type " "
-    PsiDocumentManager.getInstance(project).commitDocument(editor.document)
+    PsiDocumentManager.getInstance(fixture.project).commitDocument(fixture.editor.document)
     def (long afterStructure, long afterOutOfCodeBlock) = [javaStructureCount, outOfCodeBlockCount]
     try {
       if (structureShouldChange) {
@@ -95,7 +85,7 @@ class A {
     }
   }
 
-  private long getJavaStructureCount() { psiManager.modificationTracker.javaStructureModificationCount }
+  private long getJavaStructureCount() { fixture.psiManager.modificationTracker.javaStructureModificationCount }
 
-  private long getOutOfCodeBlockCount() { psiManager.modificationTracker.outOfCodeBlockModificationCount }
+  private long getOutOfCodeBlockCount() { fixture.psiManager.modificationTracker.outOfCodeBlockModificationCount }
 }

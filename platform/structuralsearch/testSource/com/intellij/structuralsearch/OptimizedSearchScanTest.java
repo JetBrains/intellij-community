@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.projectRoots.Sdk;
@@ -131,5 +131,10 @@ public class OptimizedSearchScanTest extends StructuralSearchTestCase {
  public void testLiterals() {
    final String plan = findWordsToBeUsedWhenSearchingFor("assert '_exp != null && true: \"'_exp is null\";");
    assertEquals("[in literals:null][in literals:is][in code:assert][in code:null][in code:true]", plan);
+ }
+
+ public void testClassObjectAccessExpression() {
+    final String plan = findWordsToBeUsedWhenSearchingFor("ArrayUtil.toObjectArray($var$, $class$.class)");
+    assertEquals("[in code:toObjectArray][in code:ArrayUtil][in code:class]", plan);
  }
 }

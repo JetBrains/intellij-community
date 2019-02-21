@@ -232,9 +232,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
         return;
       }
       if (elementToRename != null) {
-        WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(() -> {
-          renameSynthetic(newName);
-        });
+        WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(() -> renameSynthetic(newName));
       }
       for (AutomaticRenamerFactory renamerFactory : AutomaticRenamerFactory.EP_NAME.getExtensionList()) {
         if (elementToRename != null && renamerFactory.isApplicable(elementToRename)) {

@@ -16,10 +16,20 @@
 package com.intellij.openapi.compiler;
 
 /**
- * Describes a task to be executed before or after compilation.
+ * Describes a task to be executed before or after compilation in the IDE process. The implementation should be registered in plugin.xml file:
  *
- * @see CompilerManager#addAfterTask(CompileTask)
- * @see CompilerManager#addBeforeTask(CompileTask)
+ * <pre>
+ * &lt;extensions defaultExtensionNs="com.intellij"&gt;
+ * &nbsp;&nbsp;&lt;compiler.task execute="BEFORE" implementation="qualified-class-name"/&gt;
+ * &lt;/extensions&gt;
+ * </pre>
+ * or
+ * <pre>
+ * &lt;extensions defaultExtensionNs="com.intellij"&gt;
+ * &nbsp;&nbsp;&lt;compiler.task execute="AFTER" implementation="qualified-class-name"/&gt;
+ * &lt;/extensions&gt;
+ * </pre>
+ *
  */
 public interface CompileTask {
   /**

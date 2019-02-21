@@ -80,18 +80,20 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     CodeStyleScheme testScheme = createTestScheme();
     final CodeStyleSettings settings = testScheme.getCodeStyleSettings();
     final CommonCodeStyleSettings commonJavaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
+    settings.setSoftMargins(JavaLanguage.INSTANCE, Arrays.asList(11,22));
     commonJavaSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     commonJavaSettings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
     commonJavaSettings.WRAP_ON_TYPING = CommonCodeStyleSettings.WrapOnTyping.WRAP.intValue;
+    commonJavaSettings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
     final JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
     javaSettings.FIELD_NAME_PREFIX = "m_";
     javaSettings.STATIC_FIELD_NAME_SUFFIX = "_s";
+    javaSettings.setRepeatAnnotations(Arrays.asList("com.jetbrains.First", "com.jetbrains.Second"));
 
     CodeStyleSchemeJsonExporter exporter = new CodeStyleSchemeJsonExporter();
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     exporter.exportScheme(testScheme, outputStream, Collections.singletonList("java"));
-    String expected = loadExpected(j2eeProviderExists() ? "j2ee.json" : "json");
-    assertEquals(expected, outputStream.toString());
+    compareWithExpected(outputStream.toString(), j2eeProviderExists() ? "j2ee.json" : "json");
   }
 
   private static boolean j2eeProviderExists() {
@@ -115,6 +117,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     setSimple(mapper, "doc_align_param_comments", "true");
     setList(mapper, "imports_layout",
             Arrays.asList("com.jetbrains.*", "blank_line", "org.eclipse.bar", "static  **", "static org.eclipse.foo.**"));
+    mapper.getAccessor("repeat_annotations").setFromString(" com.jetbrains.First,  com.jetbrains.Second");
     final CommonCodeStyleSettings commonJavaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     final JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
     assertTrue(commonJavaSettings.ALIGN_GROUP_FIELD_DECLARATIONS);
@@ -128,6 +131,10 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     assertEquals(new PackageEntry(false, "org.eclipse.bar", false), importsTable.getEntryAt(2));
     assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, importsTable.getEntryAt(3));
     assertEquals(new PackageEntry(true, "org.eclipse.foo", true), importsTable.getEntryAt(4));
+    List<String> repeatAnno = javaSettings.getRepeatAnnotations();
+    assertEquals(2, repeatAnno.size());
+    assertEquals("com.jetbrains.First", repeatAnno.get(0));
+    assertEquals("com.jetbrains.Second", repeatAnno.get(1));
   }
   
   private static void setSimple(@NotNull AbstractCodeStylePropertyMapper mapper, @NotNull String name, @NotNull String value) {

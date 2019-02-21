@@ -123,7 +123,7 @@ public class HashSet<E> extends AbstractSet<E> implements Set<E> {
 
 
 
-    final Entry<E> e = new Entry<E>(key);
+    final Entry<E> e = new Entry<>(key);
 
     e.hashNext = table[index];
 

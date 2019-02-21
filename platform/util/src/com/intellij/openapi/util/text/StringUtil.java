@@ -21,8 +21,8 @@ import java.beans.Introspector;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
-import java.util.*;
 import java.util.StringTokenizer;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -100,33 +100,16 @@ public class StringUtil extends StringUtilRt {
 
   private static final MyHtml2Text html2TextParser = new MyHtml2Text(false);
 
-  public static final NotNullFunction<String, String> QUOTER = new NotNullFunction<String, String>() {
-    @Override
-    @NotNull
-    public String fun(String s) {
-      return "\"" + s + "\"";
-    }
-  };
+  public static final NotNullFunction<String, String> QUOTER = s -> "\"" + s + "\"";
 
-  public static final NotNullFunction<String, String> SINGLE_QUOTER = new NotNullFunction<String, String>() {
-    @Override
-    @NotNull
-    public String fun(String s) {
-      return "'" + s + "'";
-    }
-  };
+  public static final NotNullFunction<String, String> SINGLE_QUOTER = s -> "'" + s + "'";
 
   @NotNull
   @Contract(pure = true)
   public static List<String> getWordsInStringLongestFirst(@NotNull String find) {
     List<String> words = getWordsIn(find);
     // hope long words are rare
-    Collections.sort(words, new Comparator<String>() {
-      @Override
-      public int compare(@NotNull final String o1, @NotNull final String o2) {
-        return o2.length() - o1.length();
-      }
-    });
+    words.sort((o1, o2) -> o2.length() - o1.length());
     return words;
   }
 
@@ -139,22 +122,11 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static <T> Function<T, String> createToStringFunction(@SuppressWarnings("unused") @NotNull Class<T> cls) {
-    return new Function<T, String>() {
-      @Override
-      public String fun(@NotNull T o) {
-        return o.toString();
-      }
-    };
+    return Object::toString;
   }
 
   @NotNull
-  public static final Function<String, String> TRIMMER = new Function<String, String>() {
-    @Nullable
-    @Override
-    public String fun(@Nullable String s) {
-      return trim(s);
-    }
-  };
+  public static final Function<String, String> TRIMMER = StringUtil::trim;
 
   // Unlike String.replace(CharSequence,CharSequence) does not allocate intermediate objects on non-match
   // TODO revise when JDK9 arrives - its String.replace(CharSequence, CharSequence) is more optimized
@@ -565,14 +537,10 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static NotNullFunction<String, String> escaper(final boolean escapeSlash, @Nullable final String additionalChars) {
-    return new NotNullFunction<String, String>() {
-      @NotNull
-      @Override
-      public String fun(@NotNull String dom) {
-        final StringBuilder builder = new StringBuilder(dom.length());
-        escapeStringCharacters(dom.length(), dom, additionalChars, escapeSlash, builder);
-        return builder.toString();
-      }
+    return dom -> {
+      final StringBuilder builder = new StringBuilder(dom.length());
+      escapeStringCharacters(dom.length(), dom, additionalChars, escapeSlash, builder);
+      return builder.toString();
     };
   }
 
@@ -1224,6 +1192,7 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String repeat(@NotNull String s, int count) {
+    if (count == 0) return "";
     assert count >= 0 : count;
     StringBuilder sb = new StringBuilder(s.length() * count);
     for (int i = 0; i < count; i++) {
@@ -1258,8 +1227,8 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  @SuppressWarnings("unchecked")
   public static List<String> split(@NotNull String s, @NotNull String separator, boolean excludeSeparator, boolean excludeEmptyStrings) {
+    //noinspection unchecked
     return (List)split((CharSequence)s, separator, excludeSeparator, excludeEmptyStrings);
   }
 
@@ -1269,7 +1238,7 @@ public class StringUtil extends StringUtilRt {
     if (separator.length() == 0) {
       return Collections.singletonList(s);
     }
-    List<CharSequence> result = new ArrayList<CharSequence>();
+    List<CharSequence> result = new ArrayList<>();
     int pos = 0;
     while (true) {
       int index = indexOf(s, separator, pos);
@@ -1291,26 +1260,20 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static Iterable<String> tokenize(@NotNull String s, @NotNull String separators) {
     final com.intellij.util.text.StringTokenizer tokenizer = new com.intellij.util.text.StringTokenizer(s, separators);
-    return new Iterable<String>() {
-      @NotNull
+    return () -> new Iterator<String>() {
       @Override
-      public Iterator<String> iterator() {
-        return new Iterator<String>() {
-          @Override
-          public boolean hasNext() {
-            return tokenizer.hasMoreTokens();
-          }
+      public boolean hasNext() {
+        return tokenizer.hasMoreTokens();
+      }
 
-          @Override
-          public String next() {
-            return tokenizer.nextToken();
-          }
+      @Override
+      public String next() {
+        return tokenizer.nextToken();
+      }
 
-          @Override
-          public void remove() {
-            throw new UnsupportedOperationException();
-          }
-        };
+      @Override
+      public void remove() {
+        throw new UnsupportedOperationException();
       }
     };
   }
@@ -1318,26 +1281,20 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static Iterable<String> tokenize(@NotNull final StringTokenizer tokenizer) {
-    return new Iterable<String>() {
-      @NotNull
+    return () -> new Iterator<String>() {
       @Override
-      public Iterator<String> iterator() {
-        return new Iterator<String>() {
-          @Override
-          public boolean hasNext() {
-            return tokenizer.hasMoreTokens();
-          }
+      public boolean hasNext() {
+        return tokenizer.hasMoreTokens();
+      }
 
-          @Override
-          public String next() {
-            return tokenizer.nextToken();
-          }
+      @Override
+      public String next() {
+        return tokenizer.nextToken();
+      }
 
-          @Override
-          public void remove() {
-            throw new UnsupportedOperationException();
-          }
-        };
+      @Override
+      public void remove() {
+        throw new UnsupportedOperationException();
       }
     };
   }
@@ -1359,13 +1316,13 @@ public class StringUtil extends StringUtilRt {
       }
       if (isIdentifierPart && i == text.length() - 1) {
         if (result == null) {
-          result = new SmartList<String>();
+          result = new SmartList<>();
         }
         result.add(text.substring(start, i + 1));
       }
       else if (!isIdentifierPart && start != -1) {
         if (result == null) {
-          result = new SmartList<String>();
+          result = new SmartList<>();
         }
         result.add(text.substring(start, i));
         start = -1;
@@ -1392,7 +1349,7 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static List<TextRange> getWordIndicesIn(@NotNull String text, @Nullable Set<Character> separatorsSet) {
-    List<TextRange> result = new SmartList<TextRange>();
+    List<TextRange> result = new SmartList<>();
     int start = -1;
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
@@ -1738,7 +1695,7 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static List<String> findMatches(@NotNull String s, @NotNull Pattern pattern, int groupIndex) {
-    List<String> result = new SmartList<String>();
+    List<String> result = new SmartList<>();
     Matcher m = pattern.matcher(s);
     while (m.find()) {
       String group = m.group(groupIndex);
@@ -1815,15 +1772,7 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static boolean endsWith(@NotNull CharSequence text, @NotNull CharSequence suffix) {
-    int l1 = text.length();
-    int l2 = suffix.length();
-    if (l1 < l2) return false;
-
-    for (int i = l1 - 1; i >= l1 - l2; i--) {
-      if (text.charAt(i) != suffix.charAt(i + l2 - l1)) return false;
-    }
-
-    return true;
+    return StringUtilRt.endsWith(text, suffix);
   }
 
   @NotNull

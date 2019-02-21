@@ -1,24 +1,26 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.TObjectIdentityHashingStrategy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.CellRendererPane;
-import javax.swing.Icon;
-import javax.swing.Timer;
-import java.awt.Component;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
+import javax.swing.*;
+import java.awt.*;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.openapi.util.IconLoader.getDisabledIcon;
 import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.immutableList;
 import static java.awt.AlphaComposite.SrcAtop;
-import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * @author Sergey.Malenkov
@@ -48,7 +50,7 @@ public class AnimatedIcon implements Icon {
     }
 
     public static final int DELAY = 130;
-    public static final List<Icon> ICONS = asList(
+    public static final List<Icon> ICONS = immutableList(
       AllIcons.Process.Step_1,
       AllIcons.Process.Step_2,
       AllIcons.Process.Step_3,
@@ -65,7 +67,7 @@ public class AnimatedIcon implements Icon {
     }
 
     public static final int DELAY = 130;
-    public static final List<Icon> ICONS = asList(
+    public static final List<Icon> ICONS = immutableList(
       AllIcons.Process.Big.Step_1,
       AllIcons.Process.Big.Step_2,
       AllIcons.Process.Big.Step_3,
@@ -82,7 +84,7 @@ public class AnimatedIcon implements Icon {
     }
 
     public static final int DELAY = 250;
-    public static final List<Icon> ICONS = asList(
+    public static final List<Icon> ICONS = immutableList(
       AllIcons.Ide.Macro.Recording_1,
       AllIcons.Ide.Macro.Recording_2,
       AllIcons.Ide.Macro.Recording_3,
@@ -96,7 +98,7 @@ public class AnimatedIcon implements Icon {
     }
 
     public static final int DELAY = 130;
-    public static final List<Icon> ICONS = asList(
+    public static final List<Icon> ICONS = immutableList(
       AllIcons.Process.State.GreyProgr_1,
       AllIcons.Process.State.GreyProgr_2,
       AllIcons.Process.State.GreyProgr_3,
@@ -114,7 +116,7 @@ public class AnimatedIcon implements Icon {
     }
 
     public static final int DELAY = 50;
-    public static final List<Icon> ICONS = asList(
+    public static final List<Icon> ICONS = immutableList(
       AllIcons.Process.FS.Step_1,
       AllIcons.Process.FS.Step_2,
       AllIcons.Process.FS.Step_3,
@@ -193,7 +195,7 @@ public class AnimatedIcon implements Icon {
 
 
   private final Frame[] frames;
-  private boolean requested;
+  private final Set<Component> requested = new SmartHashSet<>(new TObjectIdentityHashingStrategy<>());
   private long time;
   private int index;
 
@@ -250,20 +252,18 @@ public class AnimatedIcon implements Icon {
     return index;
   }
 
-  private void requestRefresh(Component c) {
-    if (!requested && canRefresh(c)) {
+  private void requestRefresh(@Nullable Component c) {
+    if (c != null && !requested.contains(c) && canRefresh(c)) {
       Frame frame = frames[index];
       int delay = frame.getDelay();
       if (delay > 0) {
-        requested = true;
-        Timer timer = new Timer(delay, event -> {
-          requested = false;
+        requested.add(c);
+        EdtScheduledExecutorService.getInstance().schedule(() -> {
+          requested.remove(c);
           if (canRefresh(c)) {
             doRefresh(c);
           }
-        });
-        timer.setRepeats(false);
-        timer.start();
+        }, delay, MILLISECONDS);
       }
       else {
         doRefresh(c);
@@ -289,15 +289,16 @@ public class AnimatedIcon implements Icon {
     return getUpdatedIcon().getIconHeight();
   }
 
-  protected boolean canRefresh(Component component) {
-    return component != null && component.isShowing();
+  protected boolean canRefresh(@NotNull Component component) {
+    return component.isShowing();
   }
 
-  protected void doRefresh(Component component) {
-    if (component != null) component.repaint();
+  protected void doRefresh(@NotNull Component component) {
+    component.repaint();
   }
 
-  protected Component getRendererOwner(Component component) {
+  @Nullable
+  protected Component getRendererOwner(@Nullable Component component) {
     return UIUtil.isClientPropertyTrue(component, ANIMATION_IN_RENDERER_ALLOWED) ? component : null;
   }
 }

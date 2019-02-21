@@ -266,6 +266,9 @@
                     testServiceImplementation="com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier"/>
     <projectService serviceImplementation="com.intellij.openapi.module.impl.AutomaticModuleUnloader"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"
+                        serviceImplementation="com.intellij.openapi.module.impl.ModuleTypeManagerImpl"/>
+
     <moduleService serviceInterface="com.intellij.facet.FacetModificationTrackingService"
                    serviceImplementation="com.intellij.facet.impl.FacetModificationTrackingServiceImpl"/>
     <moduleService serviceImplementation="com.intellij.facet.FacetFromExternalSourcesStorage"/>
@@ -456,8 +459,8 @@
                     serviceImplementation="com.intellij.codeInsight.template.impl.TemplateManagerImpl"/>
 
     <!-- File Templates-->
-    <projectConfigurable groupId="editor" groupWeight="150" instance="com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable" id="fileTemplates"
-                             key="title.file.templates" bundle="messages.IdeBundle"/>
+    <projectConfigurable groupId="editor" groupWeight="150" provider="com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable$Provider" id="fileTemplates"
+                         key="title.file.templates" bundle="messages.IdeBundle"/>
 
     <!-- T.O.D.O -->
     <applicationConfigurable groupId="editor" instance="com.intellij.ide.todo.configurable.TodoConfigurable" id="preferences.toDoOptions" key="title.todo"
@@ -762,7 +765,6 @@
     <intentionMenuContributor implementation="com.intellij.codeInsight.daemon.impl.DoNotShowInspectionIntentionMenuContributor"/>
     <intentionMenuContributor implementation="com.intellij.codeInsight.daemon.impl.GutterIntentionMenuContributor"/>
     <intentionMenuContributor implementation="com.intellij.codeInsight.daemon.impl.CleanupIntentionMenuContributor"/>
-    <intentionMenuContributor implementation="com.intellij.codeInsight.daemon.impl.EditorNotificationActions"/>
 
     <!-- LookupManagerActions -->
     <editorActionHandler action="EditorUp" implementationClass="com.intellij.codeInsight.lookup.impl.LookupActionHandler$UpHandler"/>
@@ -857,6 +859,9 @@
     <toolWindow id="Run Dashboard" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowRun" canCloseContents="true"
                 factoryClass="com.intellij.execution.dashboard.RunDashboardToolWindowFactory"
                 conditionClass="com.intellij.execution.dashboard.RunDashboardToolWindowFactory" />
+    <toolWindow id="Services" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowRun" canCloseContents="true"
+                factoryClass="com.intellij.execution.services.ServiceViewToolWindowFactory"
+                conditionClass="com.intellij.execution.services.ServiceViewToolWindowFactory" />
 
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReferenceHelper"/>
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JarFileReferenceHelper"/>
@@ -954,8 +959,10 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.service.fus.collectors.KeymapUsageCollector" />
     <statistics.projectUsagesCollector implementation="com.intellij.execution.dashboard.RunDashboardUsagesCollector"/>
 
-    <statistics.counterUsagesCollector group_id="searchEverywhere" version="1"/>
-    <statistics.counterUsagesCollector group_id="actions.runAnything" version="1"/>
+    <statistics.counterUsagesCollector groupId="searchEverywhere" version="1"/>
+    <statistics.counterUsagesCollector groupId="actions.runAnything" version="1"/>
+
+    <applicationService serviceImplementation="com.intellij.internal.statistic.persistence.ApprovedGroupsCacheConfigurable" />
 
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor" order="last" id="renamePsiFile"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.RenameToIgnoredDirectoryFileInputValidator" order="last"/>
@@ -975,7 +982,7 @@
 
     <defaultHighlightingSettingProvider id="GeneratedSourcesHighlightingSettingProvider"
                                         implementation="com.intellij.codeInsight.daemon.impl.analysis.GeneratedSourcesHighlightingSettingProvider"/>
-    <editorNotificationProvider implementation="com.intellij.ide.GeneratedFileEditingNotificationProvider"/>
+    <editorNotificationProviderApp implementation="com.intellij.ide.GeneratedFileEditingNotificationProvider"/>
 
     <editorTabTitleProvider implementation="com.intellij.openapi.fileEditor.impl.UniqueNameEditorTabTitleProvider" order="last"/>
 
@@ -1047,6 +1054,7 @@
     <projectService serviceInterface="com.intellij.execution.ExecutionTargetManager" serviceImplementation="com.intellij.execution.ExecutionTargetManagerImpl"/>
 
     <projectService serviceInterface="com.intellij.execution.dashboard.RunDashboardManager" serviceImplementation="com.intellij.execution.dashboard.RunDashboardManagerImpl"/>
+    <projectService serviceInterface="com.intellij.execution.services.ServiceViewManager" serviceImplementation="com.intellij.execution.services.ServiceViewManagerImpl"/>
     <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.ConfigurationTypeDashboardGroupingRule"
                               id="type" order="first"/>
     <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.StatusDashboardGroupingRule"
@@ -1055,6 +1063,7 @@
                               id="folder" order="after status"/>
     <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.RunConfigurationDashboardGroupingRule"
                               id="runConfiguration" order="after folder"/>
+    <serviceViewContributor implementation="com.intellij.execution.dashboard.RunConfigurationsServiceViewContributor"/>
     <projectService serviceInterface="com.intellij.execution.ui.RunContentManager"
                     serviceImplementation="com.intellij.execution.ui.RunContentManagerImpl"/>
 
@@ -1131,6 +1140,7 @@
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.MoveRelatedFilesHandler"
                              order="before moveFileOrDir"/>
 
+    <gotoDeclaration implementation="com.intellij.codeInsight.navigation.actions.DefaultGotoDeclarationProvider" order="last"/>
     <!-- Search everywhere services/objects -->
     <projectService serviceInterface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager"
                     serviceImplementation="com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl"/>
@@ -1143,6 +1153,7 @@
 
     <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.actions.searcheverywhere.TrivialElementsEqualityProvider"/>
     <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.actions.searcheverywhere.PsiElementsEqualityProvider"/>
+    <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.actions.searcheverywhere.ClassAndFileEqualityProvider"/>
 
     <projectService serviceImplementation="com.intellij.ide.actions.runAnything.RunAnythingCache"/>
 
@@ -1184,7 +1195,7 @@
 
     <printHandler implementation="com.intellij.codeEditor.printing.TextPrintHandler"/>
 
-    <editorNotificationProvider implementation="com.intellij.internal.retype.RetypeEditorNotificationProvider"/>
+    <editorNotificationProviderApp implementation="com.intellij.internal.retype.RetypeEditorNotificationProvider"/>
 
     <fileBreadcrumbsCollector implementation="com.intellij.xml.breadcrumbs.PsiFileBreadcrumbsCollector" order="last"/>
 

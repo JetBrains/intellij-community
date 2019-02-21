@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.net;
 
 import com.github.markusbernhardt.proxy.ProxySearch;
@@ -60,43 +60,57 @@ public class IdeaWideProxySelector extends ProxySelector {
     }
 
     if (myHttpConfigurable.USE_PROXY_PAC) {
-      // It is important to avoid resetting Pac based ProxySelector unless option was changed
-      // New instance will download configuration file and interpret it before making the connection
-      String pacUrlForUse = myHttpConfigurable.USE_PAC_URL && !StringUtil.isEmpty(myHttpConfigurable.PAC_URL)? myHttpConfigurable.PAC_URL : null;
-      Pair<ProxySelector, String> pair = myPacProxySelector.get();
-      if (pair != null && !Comparing.equal(pair.second, pacUrlForUse)) {
-        pair = null;
+      try {
+        return selectUsingPac(uri);
       }
-
-      if (pair == null) {
-        ProxySelector newProxySelector;
-        if (pacUrlForUse != null) {
-          newProxySelector = new PacProxySelector(new UrlPacScriptSource(pacUrlForUse));
-        } else {
-          ProxySearch proxySearch = ProxySearch.getDefaultProxySearch();
-          proxySearch.setPacCacheSettings(32, 10 * 60 * 1000, BufferedProxySelector.CacheScope.CACHE_SCOPE_HOST); // Cache 32 urls for up to 10 min.
-          newProxySelector = proxySearch.getProxySelector();
-        }
-        pair = Pair.create(newProxySelector, pacUrlForUse);
-        myPacProxySelector.lazySet(pair);
-      }
-
-      ProxySelector pacProxySelector = pair.first;
-
-      if (pacProxySelector != null) {
-        try {
-          List<Proxy> select = pacProxySelector.select(uri);
-          LOG.debug("Autodetected proxies: ", select);
-          return select;
-        } catch (StackOverflowError ignore) {
-          LOG.debug("Too large PAC script (JRE-247)");
-        }
-      }
-      else {
-        LOG.debug("No proxies detected");
+      catch (Throwable e) {
+        throw new RuntimeException("Cannot select proxy for \"" + uri + "\" using PAC script", e);
       }
     }
 
+    return CommonProxy.NO_PROXY_LIST;
+  }
+
+  @NotNull
+  private List<Proxy> selectUsingPac(@NotNull URI uri) {
+    // It is important to avoid resetting Pac based ProxySelector unless option was changed
+    // New instance will download configuration file and interpret it before making the connection
+    String pacUrlForUse = myHttpConfigurable.USE_PAC_URL && !StringUtil.isEmpty(myHttpConfigurable.PAC_URL) ? myHttpConfigurable.PAC_URL : null;
+    Pair<ProxySelector, String> pair = myPacProxySelector.get();
+    if (pair != null && !Comparing.equal(pair.second, pacUrlForUse)) {
+      pair = null;
+    }
+
+    if (pair == null) {
+      ProxySelector newProxySelector;
+      if (pacUrlForUse == null) {
+        ProxySearch proxySearch = ProxySearch.getDefaultProxySearch();
+        // cache 32 urls for up to 10 min
+        proxySearch.setPacCacheSettings(32, 10 * 60 * 1000, BufferedProxySelector.CacheScope.CACHE_SCOPE_HOST);
+        newProxySelector = proxySearch.getProxySelector();
+      }
+      else {
+        newProxySelector = new PacProxySelector(new UrlPacScriptSource(pacUrlForUse));
+      }
+
+      pair = Pair.create(newProxySelector, pacUrlForUse);
+      myPacProxySelector.lazySet(pair);
+    }
+
+    ProxySelector pacProxySelector = pair.first;
+    if (pacProxySelector == null) {
+      LOG.debug("No proxies detected");
+    }
+    else {
+      try {
+        List<Proxy> select = pacProxySelector.select(uri);
+        LOG.debug("Autodetected proxies: ", select);
+        return select;
+      }
+      catch (StackOverflowError ignore) {
+        LOG.warn("Too large PAC script (JRE-247)");
+      }
+    }
     return CommonProxy.NO_PROXY_LIST;
   }
 

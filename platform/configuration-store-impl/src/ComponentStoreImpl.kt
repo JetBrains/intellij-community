@@ -2,11 +2,9 @@
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEvents
-import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.diagnostic.PluginException
 import com.intellij.notification.NotificationsManager
-import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.async.coroutineDispatchingContext
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
@@ -102,7 +100,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       throw e
     }
     catch (e: Exception) {
-      LOG.error(PluginManagerCore.createPluginException("Cannot init $componentName component state", e, component.javaClass))
+      PluginException.logPluginError(LOG, "Cannot init $componentName component state", e, component.javaClass)
     }
   }
 
@@ -127,36 +125,32 @@ abstract class ComponentStoreImpl : IComponentStore {
     return componentName
   }
 
-  override suspend fun save(isForceSavingAllSettings: Boolean) {
+  override suspend fun save(forceSavingAllSettings: Boolean) {
     val result = SaveResult()
-    doSave(result, isForceSavingAllSettings)
+    doSave(result, forceSavingAllSettings)
     result.throwIfErrored()
   }
 
-  internal abstract suspend fun doSave(result: SaveResult, isForceSavingAllSettings: Boolean)
+  internal abstract suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean)
 
-  internal suspend fun createSaveSessionManagerAndSaveComponents(saveResult: SaveResult, isForceSavingAllSettings: Boolean): SaveSessionProducerManager {
-    val uiExecutor = AppUIExecutor.onUiThread()
-    storageManager.componentManager?.let {
-      uiExecutor.inTransaction(it)
-    }
-    return withContext(uiExecutor.coroutineDispatchingContext()) {
+  internal suspend fun createSaveSessionManagerAndSaveComponents(saveResult: SaveResult, forceSavingAllSettings: Boolean): SaveSessionProducerManager {
+    return withContext(createStoreEdtCoroutineContext(listOfNotNull(storageManager.componentManager?.let { InTransactionRule(it) }))) {
       val errors = SmartList<Throwable>()
-      val manager = doCreateSaveSessionManagerAndSaveComponents(isForceSavingAllSettings, errors)
+      val manager = doCreateSaveSessionManagerAndCommitComponents(forceSavingAllSettings, errors)
       saveResult.addErrors(errors)
       manager
     }
   }
 
   @CalledInAwt
-  internal fun doCreateSaveSessionManagerAndSaveComponents(isForce: Boolean, errors: MutableList<Throwable>): SaveSessionProducerManager {
+  internal fun doCreateSaveSessionManagerAndCommitComponents(isForce: Boolean, errors: MutableList<Throwable>): SaveSessionProducerManager {
     val saveManager = createSaveSessionProducerManager()
-    saveComponents(isForce, saveManager, errors)
+    commitComponents(isForce, saveManager, errors)
     return saveManager
   }
 
   @CalledInAwt
-  private fun saveComponents(isForce: Boolean, session: SaveSessionProducerManager, errors: MutableList<Throwable>) {
+  internal open fun commitComponents(isForce: Boolean, session: SaveSessionProducerManager, errors: MutableList<Throwable>) {
     if (components.isEmpty()) {
       return
     }
@@ -357,7 +351,7 @@ abstract class ComponentStoreImpl : IComponentStore {
         }
 
         val storage = storageManager.getStateStorage(storageSpec)
-        val stateGetter = createStateGetter(isUseLoadedStateAsExistingForComponent(storage, name), storage, component, name, stateClass,
+        val stateGetter = createStateGetter(stateSpec.useLoadedStateAsExisting && isUseLoadedStateAsExistingForComponent(storage, name), storage, component, name, stateClass,
                                             reloadData = reloadData)
         var state = stateGetter.getState(defaultState)
         if (state == null) {
@@ -395,16 +389,12 @@ abstract class ComponentStoreImpl : IComponentStore {
   // use.loaded.state.as.existing used in upsource
   private fun isUseLoadedStateAsExistingForComponent(storage: StateStorage, name: String): Boolean {
     return isUseLoadedStateAsExisting(storage) &&
-           name != "AntConfiguration" &&
            name != "ProjectModuleManager" /* why after loadState we get empty state on getState, test CMakeWorkspaceContentRootsTest */ &&
            name != "FacetManager" &&
-           name != "ProjectRunConfigurationManager" && /* ProjectRunConfigurationManager is used only for IPR, avoid relatively cost call getState */
-           name != "NewModuleRootManager" /* will be changed only on actual user change, so, to speed up module loading, skip it */ &&
-           name != "DeprecatedModuleOptionManager" /* doesn't make sense to check it */ &&
            SystemProperties.getBooleanProperty("use.loaded.state.as.existing", true)
   }
 
-  protected open fun isUseLoadedStateAsExisting(storage: StateStorage): Boolean = (storage as? XmlElementStorage)?.roamingType != RoamingType.DISABLED
+  protected open fun isUseLoadedStateAsExisting(storage: StateStorage) = (storage as? XmlElementStorage)?.roamingType != RoamingType.DISABLED
 
   protected open fun getPathMacroManagerForDefaults(): PathMacroManager? = null
 
@@ -592,9 +582,13 @@ private fun notifyUnknownMacros(store: IComponentStore, project: Project, compon
 // to make sure that ApplicationStore or ProjectStore will not call incomplete doSave implementation
 // (because these stores combine several calls for better control/async instead of simple sequential delegation)
 abstract class ChildlessComponentStore : ComponentStoreImpl() {
-  override suspend fun doSave(result: SaveResult, isForceSavingAllSettings: Boolean) {
-    createSaveSessionManagerAndSaveComponents(result, isForceSavingAllSettings)
-      .save()
-      .appendTo(result)
+  override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) {
+    childlessSaveImplementation(result, forceSavingAllSettings)
   }
+}
+
+internal suspend fun ComponentStoreImpl.childlessSaveImplementation(result: SaveResult, forceSavingAllSettings: Boolean) {
+  createSaveSessionManagerAndSaveComponents(result, forceSavingAllSettings)
+    .save()
+    .appendTo(result)
 }

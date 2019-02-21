@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.server.impl;
 
 import com.intellij.compiler.server.BuildProcessParametersProvider;
@@ -149,7 +149,7 @@ public class BuildProcessClasspathManager {
 
   private static List<String> getDynamicClasspath(Project project) {
     final List<String> classpath = ContainerUtil.newArrayList();
-    for (BuildProcessParametersProvider provider : project.getExtensions(BuildProcessParametersProvider.EP_NAME)) {
+    for (BuildProcessParametersProvider provider : BuildProcessParametersProvider.EP_NAME.getExtensionList(project)) {
       classpath.addAll(provider.getClassPath());
     }
     return classpath;
@@ -157,7 +157,7 @@ public class BuildProcessClasspathManager {
 
   public static List<String> getLauncherClasspath(Project project) {
     final List<String> classpath = ContainerUtil.newArrayList();
-    for (BuildProcessParametersProvider provider : project.getExtensions(BuildProcessParametersProvider.EP_NAME)) {
+    for (BuildProcessParametersProvider provider : BuildProcessParametersProvider.EP_NAME.getExtensionList(project)) {
       classpath.addAll(provider.getLauncherClassPath());
     }
     return classpath;

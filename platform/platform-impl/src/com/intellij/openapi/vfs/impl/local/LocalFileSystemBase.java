@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.ide.GeneralSettings;
@@ -23,6 +23,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -618,7 +623,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   protected String extractRootPath(@NotNull String path) {
     if (path.isEmpty()) {
       try {
-        return extractRootPath(new File("").getCanonicalPath());
+        path = new File("").getCanonicalPath();
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -742,5 +747,28 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   public void refresh(boolean asynchronous) {
     RefreshQueue.getInstance().refresh(asynchronous, true, null, ManagingFS.getInstance().getRoots(this));
+  }
+
+  @Override
+  public boolean hasChildren(@NotNull VirtualFile file) {
+    try {
+      return file.getParent() == null || hasChildren(Paths.get(file.getPath()));
+    }
+    catch (InvalidPathException e) {
+      return true;
+    }
+  }
+
+  /**
+   * @return {@code true} if {@code path} represents a directory with at least one child.
+   */
+  public static boolean hasChildren(@NotNull Path path) {
+    // make sure to not load all children
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
+      return stream.iterator().hasNext();
+    }
+    catch (IOException | SecurityException e) {
+      return true;
+    }
   }
 }

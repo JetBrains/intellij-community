@@ -1,11 +1,2 @@
 deprecated: currentLine.png; to be removed in IDEA 2020 - use AllIcons.Actions.Forward
-deprecated: compare3LeftMiddle.png; to be removed in IDEA 2020
-deprecated: compare3LeftRight.png; to be removed in IDEA 2020
-deprecated: compare3MiddleRight.png; to be removed in IDEA 2020
-deprecated: compare4LeftBottom.png; to be removed in IDEA 2020
-deprecated: compare4LeftMiddle.png; to be removed in IDEA 2020
-deprecated: compare4LeftRight.png; to be removed in IDEA 2020
-deprecated: compare4MiddleBottom.png; to be removed in IDEA 2020
-deprecated: compare4MiddleRight.png; to be removed in IDEA 2020
-deprecated: compare4RightBottom.png; to be removed in IDEA 2020
 deprecated: Diff.png; to be removed in IDEA 2020 - use AllIcons.Actions.Diff

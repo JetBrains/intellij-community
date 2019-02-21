@@ -108,24 +108,25 @@ public class CodeCompletionHandlerBase {
   }
 
   public final void invokeCompletion(final Project project, final Editor editor) {
-    try {
-      invokeCompletion(project, editor, 1);
-    }
-    catch (IndexNotReadyException e) {
-      DumbService.getInstance(project).showDumbModeNotification("Code completion is not available here while indices are being built");
-    }
+    invokeCompletion(project, editor, 1);
   }
 
   public final void invokeCompletion(@NotNull final Project project, @NotNull final Editor editor, int time) {
-    invokeCompletion(project, editor, time, false, false);
+    invokeCompletion(project, editor, time, false);
   }
 
-  public final void invokeCompletion(@NotNull final Project project, @NotNull final Editor editor, int time, boolean hasModifiers, boolean restarted) {
+  /** todo remove once there's no plugins using this */
+  @Deprecated
+  public final void invokeCompletion(@NotNull Project project, @NotNull Editor editor, int time, boolean hasModifiers, boolean restarted) {
+    invokeCompletion(project, editor, time, hasModifiers);
+  }
+
+  public final void invokeCompletion(@NotNull Project project, @NotNull Editor editor, int time, boolean hasModifiers) {
     clearCaretMarkers(editor);
-    invokeCompletion(project, editor, time, hasModifiers, restarted, editor.getCaretModel().getPrimaryCaret());
+    invokeCompletion(project, editor, time, hasModifiers, editor.getCaretModel().getPrimaryCaret());
   }
 
-  public final void invokeCompletion(@NotNull final Project project, @NotNull final Editor editor, int time, boolean hasModifiers, boolean restarted, @NotNull final Caret caret) {
+  private void invokeCompletion(@NotNull Project project, @NotNull Editor editor, int time, boolean hasModifiers, @NotNull Caret caret) {
     markCaretAsProcessed(caret);
 
     if (invokedExplicitly) {
@@ -178,10 +179,17 @@ public class CodeCompletionHandlerBase {
 
       doComplete(context, hasModifiers, hasValidContext, startingTime);
     };
-    if (autopopup) {
-      CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
-    } else {
-      CommandProcessor.getInstance().executeCommand(project, initCmd, null, null, editor.getDocument());
+    try {
+      if (autopopup) {
+        CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
+      } else {
+        CommandProcessor.getInstance().executeCommand(project, initCmd, null, null, editor.getDocument());
+      }
+    }
+    catch (IndexNotReadyException e) {
+      if (invokedExplicitly) {
+        DumbService.getInstance(project).showDumbModeNotification("Code completion is not available here while indices are being built");
+      }
     }
   }
 
@@ -375,7 +383,7 @@ public class CodeCompletionHandlerBase {
 
       Caret nextCaret = getNextCaretToProcess(indicator.getEditor());
       if (nextCaret != null) {
-        invokeCompletion(indicator.getProject(), indicator.getEditor(), parameters.getInvocationCount(), hasModifiers, false, nextCaret);
+        invokeCompletion(indicator.getProject(), indicator.getEditor(), parameters.getInvocationCount(), hasModifiers, nextCaret);
       }
       else {
         indicator.handleEmptyLookup(true);

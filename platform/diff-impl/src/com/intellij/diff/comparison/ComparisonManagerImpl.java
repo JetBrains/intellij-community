@@ -628,9 +628,7 @@ public class ComparisonManagerImpl extends ComparisonManager {
       lineFragments = createInnerFragments(lineFragments, text1, text2, ComparisonPolicy.DEFAULT, fragmentsPolicy, indicator);
     }
 
-    return ContainerUtil.mapNotNull(lineFragments, fragment -> {
-      return trimIgnoredInnerFragments(fragment, ignored1, ignored2);
-    });
+    return ContainerUtil.mapNotNull(lineFragments, fragment -> trimIgnoredInnerFragments(fragment, ignored1, ignored2));
   }
 
   @NotNull

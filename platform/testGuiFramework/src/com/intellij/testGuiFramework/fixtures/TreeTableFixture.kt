@@ -2,6 +2,9 @@
 package com.intellij.testGuiFramework.fixtures
 
 import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt
+import com.intellij.testGuiFramework.util.logInfo
+import com.intellij.testGuiFramework.util.step
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import org.fest.swing.core.MouseButton
 import org.fest.swing.core.Robot
@@ -10,24 +13,56 @@ import org.fest.swing.driver.JTreeLocation
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.Rectangle
+import javax.swing.JTable
 
-class TreeTableFixture(val robot: Robot, val target: TreeTable) :
+class TreeTableFixture(robot: Robot, target: TreeTable) :
   ComponentFixture<TreeTableFixture, TreeTable>(TreeTableFixture::class.java, robot, target) {
 
-  @Suppress("unused")
+  private fun getRow(vararg pathStrings: String): Int {
+    return step("get row for path [${pathStrings.joinToString()}]") {
+      val tree = target().tree
+      val path = ExtendedJTreePathFinder(tree).findMatchingPath(pathStrings.toList())
+      return@step GuiTestUtilKt.computeOnEdt { tree.getRowForPath(path) }!!
+    }
+  }
+
+  fun getCheckboxState(vararg pathStrings: String): Boolean {
+    return step("get checkbox state, path [${pathStrings.joinToString()}]") {
+      val row = getRow(*pathStrings)
+      val value = GuiTestUtilKt.computeOnEdt { target().model.getValueAt(row, 0) }
+      logInfo("getCheckboxState: found $value")
+      return@step value as Boolean
+    }
+  }
+
   fun clickColumn(column: Int, vararg pathStrings: String) {
-    ComponentPreconditions.checkEnabledAndShowing(target)
+    step("click at column #$column with path ${pathStrings.joinToString(prefix = "[", postfix = "]")}") {
+      ComponentPreconditions.checkEnabledAndShowing(target())
 
-    val tree = target.tree
-    val path = ExtendedJTreePathFinder(tree).findMatchingPath(pathStrings.toList())
+      val tree = target().tree
+      val path = ExtendedJTreePathFinder(tree).findMatchingPath(pathStrings.toList())
 
-    var x = target.location.x + (0 until column).sumBy { target.columnModel.getColumn(it).width }
-    x += target.columnModel.getColumn(column).width / 3
-    val y = JTreeLocation().pathBoundsAndCoordinates(tree, path).second.y
+      var x = target().location.x + (0 until column).sumBy { target().columnModel.getColumn(it).width }
+      x += target().columnModel.getColumn(column).width / 3
+      val y = JTreeLocation().pathBoundsAndCoordinates(tree, path).second.y
 
-    val visibleHeight = target.visibleRect.height
-    target.scrollRectToVisible(Rectangle(Point(0, y + visibleHeight / 2), Dimension(0, 0)))
+      val visibleHeight = target().visibleRect.height
+      target().scrollRectToVisible(Rectangle(Point(0, y + visibleHeight / 2), Dimension(0, 0)))
 
-    robot.click(target, Point(x, y), MouseButton.LEFT_BUTTON, 1)
+      robot().click(target(), Point(x, y), MouseButton.LEFT_BUTTON, 1)
+    }
+  }
+}
+
+fun JTable.printModel() {
+  val myColCount = columnCount
+  val myRowCount = rowCount
+  for (r in 0 until myRowCount) {
+    print("$r: ")
+    for (c in 0 until myColCount) {
+      val value = GuiTestUtilKt.computeOnEdt { model.getValueAt(r, c) }
+      print("($c) $value, ")
+    }
+    println()
   }
 }

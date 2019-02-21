@@ -25,8 +25,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
-import git4idea.GitUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.*;
 import git4idea.repo.GitRepository;
@@ -132,8 +130,8 @@ class GitCheckoutOperation extends GitBranchOperation {
           notifySuccess();
         }
         else {
-          String mentionSuccess = getSuccessMessage() + GitUtil.mention(getSuccessfulRepositories(), 4);
-          String mentionSkipped = wereSkipped() ? "<br>Revision not found" + GitUtil.mention(getSkippedRepositories(), 4) : "";
+          String mentionSuccess = getSuccessMessage() + mention(getSuccessfulRepositories(), 4);
+          String mentionSkipped = wereSkipped() ? "<br>Revision not found" + mention(getSkippedRepositories(), 4) : "";
 
           VcsNotifier.getInstance(myProject).notifySuccess("",
                                                            mentionSuccess +
@@ -146,7 +144,7 @@ class GitCheckoutOperation extends GitBranchOperation {
       }
       else {
         LOG.assertTrue(!myRefShouldBeValid);
-        notifyError("Couldn't checkout " + myStartPointReference, "Revision not found" + GitUtil.mention(getSkippedRepositories(), 4));
+        notifyError("Couldn't checkout " + myStartPointReference, "Revision not found" + mention(getSkippedRepositories(), 4));
       }
     }
   }
@@ -159,7 +157,7 @@ class GitCheckoutOperation extends GitBranchOperation {
     List<GitRepository> allConflictingRepositories = conflictingRepositoriesAndAffectedChanges.getFirst();
     List<Change> affectedChanges = conflictingRepositoriesAndAffectedChanges.getSecond();
 
-    Collection<String> absolutePaths = GitUtil.toAbsolute(repository.getRoot(), localChangesOverwrittenByCheckout.getRelativeFilePaths());
+    Collection<String> absolutePaths = toAbsolute(repository.getRoot(), localChangesOverwrittenByCheckout.getRelativeFilePaths());
     GitSmartOperationDialog.Choice decision = myUiHandler.showSmartOperationDialog(myProject, affectedChanges, absolutePaths, "checkout",
                                                                                    "&Force Checkout");
     if (decision == SMART) {
@@ -179,8 +177,8 @@ class GitCheckoutOperation extends GitBranchOperation {
     else if (decision == FORCE) {
       boolean forceCheckoutSucceeded = checkoutOrNotify(allConflictingRepositories, myStartPointReference, myNewBranch, true);
       if (forceCheckoutSucceeded) {
-        markSuccessful(ArrayUtil.toObjectArray(allConflictingRepositories, GitRepository.class));
-        updateAndRefreshVfs(ArrayUtil.toObjectArray(allConflictingRepositories, GitRepository.class));
+        markSuccessful(allConflictingRepositories.toArray(new GitRepository[0]));
+        updateAndRefreshVfs(allConflictingRepositories.toArray(new GitRepository[0]));
       }
       return forceCheckoutSucceeded;
     }

@@ -29,10 +29,10 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
 
   @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     JCheckBox checkBox = new JCheckBox();
     updateCustomComponent(checkBox, presentation);
-    return createCheckboxComponent(checkBox, this);
+    return createCheckboxComponent(checkBox, this, place);
   }
 
   @Override
@@ -62,7 +62,7 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
   }
 
   @NotNull
-  static JComponent createCheckboxComponent(@NotNull JCheckBox checkBox, @NotNull AnAction action) {
+  static JComponent createCheckboxComponent(@NotNull JCheckBox checkBox, @NotNull AnAction action, @NotNull String place) {
     // this component cannot be stored right in AnAction because of action system architecture:
     // one action can be shown on multiple toolbars simultaneously
     checkBox.setOpaque(false);
@@ -75,7 +75,7 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
         ActionToolbar actionToolbar = UIUtil.getParentOfType(ActionToolbar.class, checkBox);
         DataContext dataContext =
           actionToolbar != null ? actionToolbar.getToolbarDataContext() : DataManager.getInstance().getDataContext(checkBox);
-        action.actionPerformed(AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, dataContext));
+        action.actionPerformed(AnActionEvent.createFromAnAction(action, null, place, dataContext));
       }
     });
 

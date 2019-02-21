@@ -1,14 +1,20 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.statistics;
 
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
-import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
+import com.intellij.internal.statistic.utils.PluginInfo;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class SearchEverywhereUsageTriggerCollector {
+
+  // this string will be used as ID for contributors from private
+  // plugins that mustn't be sent in statistics
+  private static final String NOT_REPORTABLE_CONTRIBUTOR_ID = "third.party";
 
   public static final String DIALOG_OPEN = "dialogOpen";
   public static final String TAB_SWITCHED = "tabSwitched";
@@ -18,12 +24,34 @@ public class SearchEverywhereUsageTriggerCollector {
   public static final String COMMAND_USED = "commandUsed";
   public static final String COMMAND_COMPLETED = "commandCompleted";
 
-  public static void trigger(@NotNull Project project, @NotNull String feature, @Nullable FUSUsageContext context) {
-    FUCounterUsageLogger.getInstance().logEvent(project, "searchEverywhere", feature, new FeatureUsageData().addFeatureContext(context));
+  public static final String CONTRIBUTOR_ID_FIELD = "contributorID";
+  public static final String SHORTCUT_FIELD = "shortcut";
+
+  public static void trigger(@NotNull Project project, @NotNull String feature) {
+    trigger(project, feature, new FeatureUsageData());
+  }
+
+  public static void trigger(@NotNull Project project, @NotNull String feature, @NotNull FeatureUsageData data) {
+    FUCounterUsageLogger.getInstance().logEvent(project, "searchEverywhere", feature, data);
   }
 
   @NotNull
-  public static FUSUsageContext createContext(@Nullable String contributorID, @Nullable String shortcut) {
-    return FUSUsageContext.create(contributorID, shortcut);
+  public static FeatureUsageData createData(@Nullable String contributorID, @Nullable String shortcut) {
+    FeatureUsageData res = new FeatureUsageData();
+    if (contributorID != null) {
+      res.addData(CONTRIBUTOR_ID_FIELD, contributorID);
+    }
+    if (shortcut != null) {
+      res.addData(SHORTCUT_FIELD, shortcut);
+    }
+
+    return res;
+  }
+
+  @NotNull
+  public static String getReportableContributorID(@NotNull SearchEverywhereContributor<?> contributor) {
+    Class<? extends SearchEverywhereContributor> clazz = contributor.getClass();
+    PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(clazz);
+    return pluginInfo.isDevelopedByJetBrains() ? contributor.getSearchProviderId() : NOT_REPORTABLE_CONTRIBUTOR_ID;
   }
 }

@@ -4,6 +4,7 @@ package org.editorconfig.configmanagement.extended;
 import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -13,7 +14,6 @@ import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
 import org.editorconfig.Utils;
 import org.editorconfig.configmanagement.EditorConfigNavigationActionsFactory;
-import org.editorconfig.configmanagement.EditorConfigStatusUIContributor;
 import org.editorconfig.core.EditorConfig;
 import org.editorconfig.core.EditorConfigException;
 import org.editorconfig.core.ParserCallback;
@@ -54,7 +54,7 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
   @Nullable
   @Override
   public CodeStyleStatusBarUIContributor getStatusBarUiContributor(@NotNull TransientCodeStyleSettings transientSettings) {
-    return new EditorConfigStatusUIContributor(transientSettings);
+    return new EditorConfigCodeStyleStatusBarUIContributor();
   }
 
   private static boolean applyCodeStyleSettings(@NotNull List<OutPair> editorConfigOptions,
@@ -74,20 +74,35 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
   private static boolean processOptions(@NotNull List<OutPair> editorConfigOptions,
                                         @NotNull AbstractCodeStylePropertyMapper mapper,
                                         boolean languageSpecific) {
-    String ideLangPrefix = EditorConfigIntellijNameUtil.getIdeLangPrefix(mapper);
+    String langPrefix = languageSpecific ? mapper.getLanguageDomainId() + "_" : null;
     boolean isModified = false;
     for (OutPair option : editorConfigOptions) {
-      if (!languageSpecific || option.getKey().startsWith(ideLangPrefix)) {
-        String intellijName = EditorConfigIntellijNameUtil.toIntellijName(mapper, option.getKey());
-        if (intellijName != null) {
-          CodeStylePropertyAccessor accessor = mapper.getAccessor(intellijName);
-          if (accessor != null) {
-            isModified |= accessor.setFromString(option.getVal());
-          }
-        }
+      String intellijName = EditorConfigIntellijNameUtil.toIntellijName(option.getKey());
+      CodeStylePropertyAccessor accessor = findAccessor(mapper, intellijName, langPrefix);
+      if (accessor != null) {
+        isModified |= accessor.setFromString(option.getVal());
       }
     }
     return isModified;
+  }
+
+  @Nullable
+  private static CodeStylePropertyAccessor findAccessor(@NotNull AbstractCodeStylePropertyMapper mapper,
+                                                        @NotNull String propertyName,
+                                                        @Nullable String langPrefix) {
+    if (langPrefix != null) {
+      if (propertyName.startsWith(langPrefix)) {
+        final String prefixlessName = StringUtil.trimStart(propertyName, langPrefix);
+        final EditorConfigPropertyKind propertyKind = IntellijPropertyKindMap.getPropertyKind(prefixlessName);
+        if (propertyKind == EditorConfigPropertyKind.LANGUAGE || propertyKind == EditorConfigPropertyKind.COMMON) {
+          return mapper.getAccessor(prefixlessName);
+        }
+      }
+    }
+    else {
+      return mapper.getAccessor(propertyName);
+    }
+    return null;
   }
 
   private static List<OutPair> getEditorConfigOptions(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull ParserCallback callback)

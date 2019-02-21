@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.scratch;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 
@@ -33,8 +34,8 @@ import java.util.*;
  * @author Eugene Zhuravlev
  */
 public class JavaScratchCompilationSupport implements CompileTask {
-  public JavaScratchCompilationSupport(CompilerManager compileManager) {
-    compileManager.addAfterTask(this);
+  public JavaScratchCompilationSupport(@NotNull Project project) {
+    CompilerManager.getInstance(project).addAfterTask(this);
   }
 
   @Nullable
@@ -137,8 +138,10 @@ public class JavaScratchCompilationSupport implements CompileTask {
                                                                          : () -> ProjectRootManager.getInstance(project).orderEntries();
 
       ApplicationManager.getApplication().runReadAction(() -> {
-        for (String s : orderEnumerator.compute().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().getPathList()) {
-          cp.add(new File(s));
+        if (module != null || scratchConfig.isBuildProjectOnEmptyModuleList()) {
+          for (String s : orderEnumerator.compute().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().getPathList()) {
+            cp.add(new File(s));
+          }
         }
         for (String s : orderEnumerator.compute().compileOnly().sdkOnly().getPathsList().getPathList()) {
           platformCp.add(new File(s));

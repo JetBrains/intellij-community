@@ -325,9 +325,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
 
     @Override public void mousePressed(MouseEvent e) {
       if (mySelectedContainer == null) return;
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(GridCaptionPanel.this, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(GridCaptionPanel.this, true));
       Point pnt = SwingUtilities.convertPoint(GridCaptionPanel.this, e.getPoint(),
                                               mySelectedContainer.getDelegee());
       if (canResizeCells()) {

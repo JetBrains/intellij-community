@@ -20,6 +20,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
@@ -44,9 +45,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author mike
@@ -204,26 +203,33 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
 
   @NotNull
   public static PsiMethod[] findMethods(@Nullable MethodSignature methodSignature,
-                                        @Nullable PsiElement scope,
+                                        @NotNull PsiClass scope,
                                         @Nullable String name,
                                         @NotNull PsiMethod[] allMethods) {
-    List<PsiMethod> methods = new ArrayList<>();
-    List<PsiMethod> exactMethods = new ArrayList<>();
+    final PsiClass superClass = scope.getSuperClass();
+    final PsiSubstitutor substitutor = superClass == null ? PsiSubstitutor.EMPTY :
+                                       TypeConversionUtil.getSuperClassSubstitutor(superClass, scope, PsiSubstitutor.EMPTY);
 
-    for (PsiMethod method : allMethods) {
-      if (!method.getName().equals(name) ||
-          methodSignature != null &&
-          !MethodSignatureUtil.areSignaturesErasureEqual(methodSignature, method.getSignature(PsiSubstitutor.EMPTY))) {
+    final List<PsiMethod> candidates = new ArrayList<>(Arrays.asList(allMethods));
+    final Set<PsiMethod> filteredMethods = new HashSet<>();
+
+    for (PsiMethod method : candidates) {
+      if (filteredMethods.contains(method)) {
         continue;
       }
 
-      if (scope == null || scope.equals(method.getContainingClass())) exactMethods.add(method);
+      if (!method.getName().equals(name) ||
+          methodSignature != null && !MethodSignatureUtil.areSignaturesErasureEqual(method.getSignature(substitutor), methodSignature)) {
+        filteredMethods.add(method);
+      }
 
-      methods.add(method);
+      PsiSuperMethodImplUtil.getHierarchicalMethodSignature(method)
+        .getSuperSignatures()
+        .forEach(signature -> filteredMethods.add(signature.getMethod()));
     }
 
-    List<PsiMethod> found = exactMethods.size() == 1 ? exactMethods : methods;
-    return found.toArray(PsiMethod.EMPTY_ARRAY);
+    candidates.removeAll(filteredMethods);
+    return candidates.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
   @NotNull

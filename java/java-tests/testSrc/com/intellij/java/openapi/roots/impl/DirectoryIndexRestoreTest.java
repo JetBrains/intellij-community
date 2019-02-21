@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.openapi.roots.impl;
 
 import com.intellij.openapi.roots.ContentIterator;
@@ -29,7 +15,6 @@ import com.intellij.testFramework.VfsTestUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -44,11 +29,11 @@ public class DirectoryIndexRestoreTest extends IdeaTestCase {
 
     LocalFileSystem fs = LocalFileSystem.getInstance();
     File temp = createTempDirectory();
-    myTempVFile = fs.findFileByIoFile(temp);
+    myTempVFile = fs.refreshAndFindFileByIoFile(temp);
     assertNotNull(myTempVFile);
     File root = new File(temp, "top/d1/d2/root");
     assertTrue(root.mkdirs());
-    VirtualFile rootVFile = fs.findFileByIoFile(root);
+    VirtualFile rootVFile = fs.refreshAndFindFileByIoFile(root);
     assertNotNull(rootVFile);
 
     VirtualFile moduleDir = createChildDirectory(rootVFile, "module");
@@ -72,22 +57,21 @@ public class DirectoryIndexRestoreTest extends IdeaTestCase {
       return !found;
     };
     File topFile = new File(myTempVFile.getPath(), "top");
+    assertTrue(topFile.exists());
     File bakFile = new File(myTempVFile.getPath(), "top.bak");
-    String topPath = FileUtil.toSystemIndependentName(topFile.getPath());
+    assertFalse(bakFile.exists());
 
     ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(iterator);
     assertEquals(1, counter.get());
 
     FileUtil.rename(topFile, bakFile);
     List<String> events1 = VfsTestUtil.print(VfsTestUtil.getEvents(() -> myTempVFile.refresh(false, true)));
-    assertEquals(Collections.singletonList("D : " + topPath), events1);
     ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(iterator);
-    assertEquals(1, counter.get());
+    assertEquals("Events recorded: "+events1, 1, counter.get());
 
     FileUtil.rename(bakFile, topFile);
     List<String> events2 = VfsTestUtil.print(VfsTestUtil.getEvents(() -> myTempVFile.refresh(false, true)));
-    assertEquals(Collections.singletonList("C : " + topPath), events2);
     ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(iterator);
-    assertEquals(2, counter.get());
+    assertEquals("Events recorded: "+events2, 2, counter.get());
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.editor.colors.impl;
 
@@ -412,7 +412,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     }
   }
 
-  private void readColors(Element childNode) {
+  public void readColors(@NotNull Element childNode) {
     for (Element colorElement : childNode.getChildren(OPTION_ELEMENT)) {
       String keyName = colorElement.getAttributeValue(NAME_ATTR);
       Color valueColor = myValueReader.read(Color.class, colorElement);
@@ -791,6 +791,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   }
 
   @Override
+  @NotNull
   public String getConsoleFontName() {
     return myConsoleFontPreferences.getFontFamily();
   }

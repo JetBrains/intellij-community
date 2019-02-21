@@ -18,14 +18,34 @@ package org.jetbrains.idea.maven.project;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.buildtool.BuildViewMavenConsole;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
 import org.jetbrains.idea.maven.server.MavenServerConsole;
 
 import java.text.MessageFormat;
+import java.util.List;
 
 public abstract class MavenConsole {
   private static final String LINE_SEPARATOR = System.getProperty("line.separator");
+  private List<ProcessListener> myProcessListeners = new SmartList<>();
+
+
+  public static MavenConsole createGuiMavenConsole(@NotNull Project project,
+                                                   @NotNull String title,
+                                                   @NotNull String workingDir,
+                                                   @NotNull String toolWindowId) {
+    if (Registry.is("maven.build.tool.window.enabled")) {
+      return new BuildViewMavenConsole(project, title, workingDir, toolWindowId);
+    } else {
+      return new MavenConsoleImpl(title, project);
+    }
+  }
 
   public enum OutputType {
     NORMAL, SYSTEM, ERROR
@@ -50,9 +70,14 @@ public abstract class MavenConsole {
     return level < myOutputLevel;
   }
 
+  public void addProcessListener(ProcessListener processListener) {
+    myProcessListeners.add(processListener);
+  }
+
   public boolean isSuppressed(String line) {
     return isSuppressed(getLevel(line));
   }
+
 
   public abstract boolean canPause();
 
@@ -68,7 +93,11 @@ public abstract class MavenConsole {
     isFinished = true;
   }
 
-  public abstract void attachToProcess(ProcessHandler processHandler);
+  public void attachToProcess(ProcessHandler processHandler) {
+    for(ProcessListener listener : myProcessListeners) {
+    processHandler.addProcessListener(listener);
+    }
+  }
 
   public void printException(Throwable throwable) {
     systemMessage(MavenServerConsole.LEVEL_ERROR, RunnerBundle.message("embedded.build.failed"), throwable);

@@ -75,25 +75,27 @@ class DirectoryPathMatcher {
 
     List<Pair<VirtualFile, String>> nextRoots = new ArrayList<>();
     MinusculeMatcher matcher = GotoFileItemProvider.getQualifiedNameMatcher(nextPattern);
+    List<VirtualFile> nonMatchingRoots = new ArrayList<>();
     for (Pair<VirtualFile, String> pair : files) {
       if (containsChar(pair.second, c) && matcher.matches(pair.second)) {
         nextRoots.add(pair);
       } else {
-        processProjectFilesUnder(pair.first, sub -> {
-          if (!sub.isDirectory()) return false;
-          if (!containsChar(sub.getName(), c)) return true; //go deeper
-
-          String fullName = myModel.getFullName(sub);
-          if (fullName == null) return true;
-          fullName = FileUtil.toSystemIndependentName(fullName);
-          if (matcher.matches(fullName)) {
-            nextRoots.add(Pair.create(sub, fullName));
-            return false;
-          }
-          return true;
-        });
+        nonMatchingRoots.add(pair.first);
       }
     }
+    processProjectFilesUnder(nonMatchingRoots, sub -> {
+      if (!sub.isDirectory()) return false;
+      if (!containsChar(sub.getNameSequence(), c)) return true; //go deeper
+
+      String fullName = myModel.getFullName(sub);
+      if (fullName == null) return true;
+      fullName = FileUtil.toSystemIndependentName(fullName);
+      if (matcher.matches(fullName)) {
+        nextRoots.add(Pair.create(sub, fullName));
+        return false;
+      }
+      return true;
+    });
 
     return nextRoots.isEmpty() ? null : new DirectoryPathMatcher(myModel, nextRoots, nextPattern);
   }
@@ -104,22 +106,25 @@ class DirectoryPathMatcher {
     List<Pair<VirtualFile, String>> files = getMatchingRoots();
     Set<String> names = new HashSet<>();
     AtomicInteger counter = new AtomicInteger();
-    BooleanSupplier tooMany = () -> counter.incrementAndGet() > 1000;
+    BooleanSupplier tooMany = () -> counter.get() > 1000;
+    List<VirtualFile> nonMatchingRoots = new ArrayList<>();
     for (Pair<VirtualFile, String> pair : files) {
       if (containsChar(pair.second, nextLetter) && matcher.matches(pair.second)) {
         names.add(pair.first.getName());
+      } else {
+        nonMatchingRoots.add(pair.first);
       }
-      processProjectFilesUnder(pair.first, sub -> {
-        counter.incrementAndGet();
-        if (tooMany.getAsBoolean()) return false;
-
-        String name = sub.getName();
-        if (containsChar(name, nextLetter) && matcher.matches(name)) {
-          names.add(name);
-        }
-        return true;
-      });
     }
+    processProjectFilesUnder(nonMatchingRoots, sub -> {
+      counter.incrementAndGet();
+      if (tooMany.getAsBoolean()) return false;
+
+      String name = sub.getName();
+      if (containsChar(name, nextLetter) && matcher.matches(name)) {
+        names.add(name);
+      }
+      return true;
+    });
     return tooMany.getAsBoolean() ? null : names;
   }
 
@@ -137,25 +142,28 @@ class DirectoryPathMatcher {
 
   }
 
-  private void processProjectFilesUnder(VirtualFile root, Processor<? super VirtualFile> consumer) {
+  private void processProjectFilesUnder(List<VirtualFile> roots, Processor<? super VirtualFile> consumer) {
+    Set<VirtualFile> visited = new HashSet<>(roots.size());
     GlobalSearchScope scope = GlobalSearchScope.allScope(myModel.getProject());
-    VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor<Object>() {
+    for (VirtualFile root : roots) {
+      VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor<Object>() {
 
-      @Override
-      public boolean visitFile(@NotNull VirtualFile file) {
-        return scope.contains(file) && consumer.process(file);
-      }
+        @Override
+        public boolean visitFile(@NotNull VirtualFile file) {
+          return visited.add(file) && scope.contains(file) && consumer.process(file);
+        }
 
-      @Nullable
-      @Override
-      public Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
-        return file instanceof NewVirtualFile ? ((NewVirtualFile)file).getCachedChildren() : null;
-      }
-    });
+        @Nullable
+        @Override
+        public Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
+          return file instanceof NewVirtualFile ? ((NewVirtualFile)file).getCachedChildren() : null;
+        }
+      });
+    }
   }
 
-  private static boolean containsChar(String name, char c) {
-    return StringUtil.indexOfIgnoreCase(name, c, 0) >= 0;
+  private static boolean containsChar(CharSequence name, char c) {
+    return StringUtil.indexOf(name, c, 0, name.length(), false) >= 0;
   }
 
   @NotNull

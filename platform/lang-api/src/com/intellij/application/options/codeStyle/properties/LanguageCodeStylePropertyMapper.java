@@ -4,6 +4,7 @@ package com.intellij.application.options.codeStyle.properties;
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.SmartIndentOptionsEditor;
 import com.intellij.lang.Language;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
@@ -22,6 +23,7 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
   private @NotNull final Language myLanguage;
   private @NotNull final String myLanguageDomainId;
   private @Nullable final LanguageCodeStyleSettingsProvider mySettingsProvider;
+  private @NotNull final List<CustomCodeStyleSettings> myCustomSettings;
 
   public LanguageCodeStylePropertyMapper(@NotNull CodeStyleSettings settings,
                                          @NotNull Language language,
@@ -30,6 +32,7 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
     myLanguage = language;
     myLanguageDomainId = languageDomainId == null ? myLanguage.getID().toLowerCase(Locale.ENGLISH) : languageDomainId;
     mySettingsProvider = LanguageCodeStyleSettingsProvider.forLanguage(language);
+    myCustomSettings = getCustomSettings();
   }
 
   @Nullable
@@ -42,6 +45,18 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
     return super.getAccessor(codeStyleObject, field);
   }
 
+  @Override
+  protected void addAdditionalAccessors(@NotNull Map<String, CodeStylePropertyAccessor> accessorMap) {
+    accessorMap.put(VisualGuidesAccessor.VISUAL_GUIDES_PROPERTY_NAME, new VisualGuidesAccessor(getRootSettings(), myLanguage));
+    if (mySettingsProvider != null) {
+      for (CustomCodeStyleSettings customSettings :  myCustomSettings) {
+        for (CodeStylePropertyAccessor accessor : mySettingsProvider.getAdditionalAccessors(customSettings)) {
+          accessorMap.put(accessor.getPropertyName(), accessor);
+        }
+      }
+    }
+  }
+
   @NotNull
   @Override
   protected List<CodeStyleObjectDescriptor> getSupportedFields() {
@@ -51,7 +66,7 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
       fieldsDescriptors.add(new CodeStyleObjectDescriptor(indentOptions, getSupportedIndentOptions()));
     }
     fieldsDescriptors.add(new CodeStyleObjectDescriptor(getRootSettings().getCommonSettings(myLanguage), getSupportedLanguageFields()));
-    for (CustomCodeStyleSettings customSettings : getCustomSettings()) {
+    for (CustomCodeStyleSettings customSettings : myCustomSettings) {
       fieldsDescriptors.add(new CodeStyleObjectDescriptor(customSettings, null));
     }
     return fieldsDescriptors;
@@ -111,4 +126,10 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
     return mySettingsProvider == null ? Collections.emptySet() : mySettingsProvider.getSupportedFields();
   }
 
+  @Nullable
+  @Override
+  public String getPropertyDescription(@NotNull String externalName) {
+    String key = "codestyle.property.description." + externalName;
+    return OptionsBundle.getBundle().containsKey(key) ? OptionsBundle.message(key) : null;
+  }
 }

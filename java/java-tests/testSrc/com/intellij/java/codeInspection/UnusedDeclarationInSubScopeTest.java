@@ -25,6 +25,10 @@ public class UnusedDeclarationInSubScopeTest extends AbstractUnusedDeclarationTe
     doTest();
   }
 
+  public void testConstructorUsedInOutOfScopeJava() {
+    doTest();
+  }
+
   @Override
   protected void doTest() {
     doTest("deadCode/" + getTestName(true), myToolWrapper);

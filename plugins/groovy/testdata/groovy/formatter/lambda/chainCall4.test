@@ -1,0 +1,13 @@
+foo( (a)->{
+  body
+})
+  .   bar( (b)->{
+  body
+}). baz (()->{})
+-----
+foo((a) -> {
+  body
+})
+.bar((b) -> {
+  body
+})

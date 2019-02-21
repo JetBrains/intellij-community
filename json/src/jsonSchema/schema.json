@@ -41,6 +41,10 @@
     "description": {
       "type": "string"
     },
+    "deprecationMessage" : {
+      "type": "string",
+      "description": "Non-standard: deprecation message for a property, if it is deprecated"
+    },
     "x-intellij-html-description": {
       "type": "string",
       "description": "Description in html format"

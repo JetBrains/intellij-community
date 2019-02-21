@@ -12,6 +12,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
@@ -30,7 +31,7 @@ import java.util.regex.Pattern;
 public final class IntentionManagerSettings implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(IntentionManagerSettings.class);
 
-  private static class MetaDataKey extends Pair<String, String> {
+  private static final class MetaDataKey extends Pair<String, String> {
     private static final StringInterner ourInterner = new WeakStringInterner();
     private MetaDataKey(@NotNull String[] categoryNames, @NotNull final String familyName) {
       super(StringUtil.join(categoryNames, ":"), ourInterner.intern(familyName));
@@ -56,7 +57,11 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
       if (descriptionDirectoryName == null) {
         descriptionDirectoryName = instance.getDescriptionDirectoryName();
       }
-      registerMetaData(new IntentionActionMetaData(instance, extension.getMetadataClassLoader(), categories, descriptionDirectoryName));
+      try {
+        registerMetaData(new IntentionActionMetaData(instance, extension.getMetadataClassLoader(), categories, descriptionDirectoryName));
+      }
+      catch (ExtensionNotApplicableException ignore) {
+      }
     }
   }
 
@@ -137,7 +142,7 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
     }
   }
 
-  public synchronized void registerMetaData(@NotNull IntentionActionMetaData metaData) {
+  private synchronized void registerMetaData(@NotNull IntentionActionMetaData metaData) {
     MetaDataKey key = new MetaDataKey(metaData.myCategory, metaData.getFamily());
     if (!myMetaData.containsKey(key)){
       processMetaData(metaData);

@@ -3,10 +3,7 @@ package com.intellij.codeInspection.deadCode;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.GlobalJavaInspectionContext;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.*;
@@ -344,34 +341,26 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   private static final String COMMENT_OUT_QUICK_FIX = InspectionsBundle.message("inspection.dead.code.comment.quickfix");
-  private static class CommentOutFix implements IntentionAction {
-    private final PsiElement myElement;
+  private static class CommentOutFix implements QuickFix {
+    private final RefElement myElement;
 
-    private CommentOutFix(final PsiElement element) {
+    private CommentOutFix(RefElement element) {
       myElement = element;
     }
 
     @Override
     @NotNull
-    public String getText() {
+    public String getFamilyName() {
       return COMMENT_OUT_QUICK_FIX;
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
-      return getText();
-    }
-
-    @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return true;
-    }
-
-    @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      if (myElement != null && myElement.isValid()) {
-        commentOutDead(PsiTreeUtil.getParentOfType(myElement, PsiModifierListOwner.class));
+    public void applyFix(@NotNull Project project, @NotNull CommonProblemDescriptor descriptor) {
+      if (myElement != null) {
+        PsiElement element = myElement.getPsiElement();
+        if (element != null) {
+          commentOutDead(element);
+        }
       }
     }
 
@@ -571,48 +560,41 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   @Override
   @Nullable
-  public IntentionAction findQuickFixes(@NotNull final CommonProblemDescriptor descriptor, final String hint) {
-    if (descriptor instanceof ProblemDescriptor) {
+  public QuickFix findQuickFixes(@NotNull final CommonProblemDescriptor descriptor,
+                                 RefEntity entity,
+                                 String hint) {
+    if (entity instanceof RefElement) {
       if (DELETE.equals(hint)) {
-        return new PermanentDeleteFix(((ProblemDescriptor)descriptor).getPsiElement());
+        return new PermanentDeleteFix((RefElement)entity);
       }
       if (COMMENT.equals(hint)) {
-        return new CommentOutFix(((ProblemDescriptor)descriptor).getPsiElement());
+        return new CommentOutFix((RefElement)entity);
       }
-      return super.findQuickFixes(descriptor, hint);
+      if (entity instanceof RefParameter) {
+        return super.findQuickFixes(descriptor, entity, hint);
+      }
     }
     return null;
   }
 
+  private static class PermanentDeleteFix implements QuickFix {
+    private final RefElement myElement;
 
-  private static class PermanentDeleteFix implements IntentionAction {
-    private final PsiElement myElement;
-
-    private PermanentDeleteFix(final PsiElement element) {
+    private PermanentDeleteFix(@Nullable RefElement element) {
       myElement = element;
     }
 
     @Override
     @NotNull
-    public String getText() {
+    public String getFamilyName() {
       return DELETE_QUICK_FIX;
     }
 
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getText();
-    }
 
     @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return true;
-    }
-
-    @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    public void applyFix(@NotNull Project project, @NotNull CommonProblemDescriptor descriptor) {
       if (myElement != null && myElement.isValid()) {
-        SafeDeleteHandler.invoke(myElement.getProject(), new PsiElement[]{PsiTreeUtil.getParentOfType(myElement, PsiModifierListOwner.class)}, false);
+        SafeDeleteHandler.invoke(project, new PsiElement[]{myElement.getPsiElement()}, false);
       }
     }
 

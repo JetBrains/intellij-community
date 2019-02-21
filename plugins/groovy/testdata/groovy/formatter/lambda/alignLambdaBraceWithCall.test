@@ -1,0 +1,11 @@
+fooooo(longParameter,
+   reallyLongParameter, ()->{
+
+  }
+  )
+-----
+fooooo(longParameter,
+    reallyLongParameter, () -> {
+
+}
+)

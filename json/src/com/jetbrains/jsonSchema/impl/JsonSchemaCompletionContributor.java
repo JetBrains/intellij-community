@@ -199,7 +199,8 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                                                    @NotNull Collection<String> properties,
                                                    @Nullable JsonPropertyAdapter adapter,
                                                    Set<String> knownNames) {
-      if (schema.getIf() == null) return;
+      List<IfThenElse> ifThenElseList = schema.getIfThenElse();
+      if (ifThenElseList == null) return;
 
       JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(myPosition, schema);
       JsonPropertyAdapter propertyAdapter = walker == null ? null : walker.getParentPropertyAdapter(myPosition);
@@ -208,18 +209,20 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       JsonObjectValueAdapter object = propertyAdapter.getParentObject();
       if (object == null) return;
 
-      JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker(JsonComplianceCheckerOptions.RELAX_ENUM_CHECK);
-      checker.checkByScheme(object, schema.getIf());
-      if (checker.isCorrect()) {
-        JsonSchemaObject then = schema.getThen();
-        if (then != null) {
-          addAllPropertyVariants(insertComma, hasValue, properties, adapter, then.getProperties(), knownNames);
+      for (IfThenElse ifThenElse : ifThenElseList) {
+        JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker(JsonComplianceCheckerOptions.RELAX_ENUM_CHECK);
+        checker.checkByScheme(object, ifThenElse.getIf());
+        if (checker.isCorrect()) {
+          JsonSchemaObject then = ifThenElse.getThen();
+          if (then != null) {
+            addAllPropertyVariants(insertComma, hasValue, properties, adapter, then.getProperties(), knownNames);
+          }
         }
-      }
-      else {
-        JsonSchemaObject schemaElse = schema.getElse();
-        if (schemaElse != null) {
-          addAllPropertyVariants(insertComma, hasValue, properties, adapter, schemaElse.getProperties(), knownNames);
+        else {
+          JsonSchemaObject schemaElse = ifThenElse.getElse();
+          if (schemaElse != null) {
+            addAllPropertyVariants(insertComma, hasValue, properties, adapter, schemaElse.getProperties(), knownNames);
+          }
         }
       }
     }
@@ -409,8 +412,13 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
           builder = builder.withInsertHandler(createDefaultPropertyInsertHandler(hasValue, insertComma));
         }
       }
-      else if (!hasValue) {
-        builder = builder.withInsertHandler(createDefaultPropertyInsertHandler(false, insertComma));
+      else {
+        builder = builder.withInsertHandler(createDefaultPropertyInsertHandler(hasValue, insertComma));
+      }
+
+      String deprecationMessage = jsonSchemaObject.getDeprecationMessage();
+      if (deprecationMessage != null) {
+        builder = builder.withTailText(" (deprecated)", true).withStrikeoutness(true);
       }
 
       myVariants.add(builder);
@@ -463,12 +471,20 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
           Project project = context.getProject();
 
           if (handleInsideQuotesInsertion(context, editor, hasValue)) return;
-
           int offset = editor.getCaretModel().getOffset();
+          int initialOffset = offset;
           CharSequence docChars = context.getDocument().getCharsSequence();
           while (offset < docChars.length() && Character.isWhitespace(docChars.charAt(offset))) {
             offset++;
           }
+          if (hasValue) {
+            // fix colon for YAML and alike
+            if (offset < docChars.length() && docChars.charAt(offset) != ':') {
+              editor.getDocument().insertString(initialOffset, ":");
+            }
+            return;
+          }
+
           if (offset < docChars.length() && docChars.charAt(offset) == ':') {
             if (offset + 1 < docChars.length() && docChars.charAt(offset + 1) == ' ') {
               editor.getCaretModel().moveToOffset(offset + 2);

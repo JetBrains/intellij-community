@@ -227,10 +227,11 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
-  private void fireOnTestFrameworkAttached() {
+  private void fireOnTestFrameworkAttached(@NotNull final TestDurationStrategy strategy) {
     final GeneralTestEventsProcessor processor = myProcessor;
     if (processor != null) {
       processor.onTestsReporterAttached();
+      processor.onDurationStrategyChanged(strategy);
     }
   }
 
@@ -608,7 +609,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
         }
       }
       else if (TEST_REPORTER_ATTACHED.equals(name)) {
-        fireOnTestFrameworkAttached();
+        fireOnTestFrameworkAttached(TestDurationStrategyKt.getDurationStrategy(msg.getAttributes().get("durationStrategy")));
       }
       else if (SUITE_TREE_STARTED.equals(name)) {
         fireOnSuiteTreeStarted(msg.getAttributes().get("name"),

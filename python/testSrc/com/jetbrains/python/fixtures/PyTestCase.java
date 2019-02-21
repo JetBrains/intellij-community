@@ -138,9 +138,9 @@ public abstract class PyTestCase extends UsefulTestCase {
     final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture,
                                                                                     createTempDirFixture());
+    myFixture.setTestDataPath(getTestDataPath());
     myFixture.setUp();
 
-    myFixture.setTestDataPath(getTestDataPath());
     PythonDialectsTokenSetProvider.reset();
   }
 

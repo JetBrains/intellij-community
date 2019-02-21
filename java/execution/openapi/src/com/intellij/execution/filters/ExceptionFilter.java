@@ -19,7 +19,9 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiElementFilter;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +47,8 @@ public class ExceptionFilter implements Filter, DumbAware {
   private static PsiElementFilter getRefinerFromException(@NotNull String line) {
     String exceptionName = getExceptionFromMessage(line);
     if (exceptionName == null) return null;
-    PsiElementFilter throwFilter = e -> {
+    PsiElementFilter exceptionCreationFilter = e -> {
+      // We look for new Exception() expression rather than throw statement, because stack-trace is filled in exception constructor
       if (!(e instanceof PsiKeyword) || !(e.textMatches(PsiKeyword.NEW))) return false;
       PsiNewExpression newExpression = ObjectUtils.tryCast(e.getParent(), PsiNewExpression.class);
       if (newExpression == null) return false;
@@ -53,8 +56,8 @@ public class ExceptionFilter implements Filter, DumbAware {
       return type != null && type.equalsToText(exceptionName);
     };
     PsiElementFilter specificFilter = getExceptionSpecificFilter(exceptionName);
-    if (specificFilter == null) return throwFilter;
-    return element -> throwFilter.isAccepted(element) || specificFilter.isAccepted(element);
+    if (specificFilter == null) return exceptionCreationFilter;
+    return element -> exceptionCreationFilter.isAccepted(element) || specificFilter.isAccepted(element);
   }
 
   @Nullable
@@ -72,6 +75,44 @@ public class ExceptionFilter implements Filter, DumbAware {
           }
           return false;
         };
+      case "java.lang.AssertionError":
+        return e -> e instanceof PsiKeyword && e.textMatches(PsiKeyword.ASSERT);
+      case "java.lang.ArithmeticException":
+        return e -> {
+          if (e instanceof PsiJavaToken && (e.textMatches("%") || e.textMatches("/")) &&
+              e.getParent() instanceof PsiPolyadicExpression) {
+            PsiExpression prevOperand = PsiTreeUtil.getPrevSiblingOfType(e, PsiExpression.class);
+            PsiExpression nextOperand = PsiUtil.skipParenthesizedExprDown(PsiTreeUtil.getNextSiblingOfType(e, PsiExpression.class));
+            if (prevOperand != null && TypeConversionUtil.isIntegralNumberType(prevOperand.getType()) &&
+                nextOperand != null && TypeConversionUtil.isIntegralNumberType(nextOperand.getType())) {
+              while (nextOperand instanceof PsiUnaryExpression && ((PsiUnaryExpression)nextOperand).getOperationTokenType().equals(
+                JavaTokenType.MINUS)) {
+                nextOperand = PsiUtil.skipParenthesizedExprDown(((PsiUnaryExpression)nextOperand).getOperand());
+              }
+              if (nextOperand instanceof PsiLiteral) {
+                Object value = ((PsiLiteral)nextOperand).getValue();
+                if (value instanceof Number && ((Number)value).longValue() != 0) return false;
+              }
+              return true;
+            }
+          }
+          return false;
+        };
+      case "java.lang.NegativeArraySizeException":
+        return e -> {
+          if (e instanceof PsiKeyword && e.textMatches(PsiKeyword.NEW) && e.getParent() instanceof PsiNewExpression) {
+            PsiExpression[] dimensions = ((PsiNewExpression)e.getParent()).getArrayDimensions();
+            for (PsiExpression dimension : dimensions) {
+              if (dimension != null) {
+                PsiLiteral literal = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(dimension), PsiLiteral.class);
+                // Explicit negative number like -1 cannot be literal, it's unary expression
+                if (literal != null && literal.getValue() instanceof Integer) continue;
+              }
+              return true;
+            }
+          }
+          return false;
+        };
       default:
         return null;
     }
@@ -81,23 +122,31 @@ public class ExceptionFilter implements Filter, DumbAware {
   private static String getExceptionFromMessage(String line) {
     int firstSpace = line.indexOf(' ');
     if (firstSpace == -1) {
-      return getExceptionFromMessage(line, 0, line.length());
+      return getExceptionFromMessage(line, 0, getLength(line));
     }
     if (firstSpace == "Caused".length() && line.startsWith(CAUSED_BY)) {
       int colonPos = line.indexOf(':', CAUSED_BY.length());
-      return getExceptionFromMessage(line, CAUSED_BY.length(), colonPos == -1 ? line.length() : colonPos);
+      return getExceptionFromMessage(line, CAUSED_BY.length(), colonPos == -1 ? getLength(line) : colonPos);
     }
     if (firstSpace == "Exception".length() && line.startsWith(EXCEPTION_IN_THREAD)) {
       int nextQuotePos = line.indexOf("\" ", EXCEPTION_IN_THREAD.length());
       if (nextQuotePos == -1) return null;
       int start = nextQuotePos + "\" ".length();
       int colonPos = line.indexOf(':', start);
-      return getExceptionFromMessage(line, start, colonPos == -1 ? line.length() : colonPos);
+      return getExceptionFromMessage(line, start, colonPos == -1 ? getLength(line) : colonPos);
     }
     if (firstSpace > 2 && line.charAt(firstSpace - 1) == ':') {
       return getExceptionFromMessage(line, 0, firstSpace - 1);
     }
     return null;
+  }
+
+  private static int getLength(String line) {
+    int length = line.length();
+    while (length > 2 && Character.isWhitespace(line.charAt(length - 1))) {
+      length--;
+    }
+    return length;
   }
 
   /**

@@ -124,9 +124,14 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
         if (BitUtil.isSet(e.getChangeFlags(), HierarchyEvent.DISPLAYABILITY_CHANGED)) {
           boolean visible = myToolWindow.isVisible();
           LOG.debug("displayability changed: " + visible);
-          if (!visible) return; // do nothing on hide
-          loggedRun("update file", StructureViewWrapperImpl.this::checkUpdate);
-          scheduleRebuild();
+          if (visible) {
+            loggedRun("update file", StructureViewWrapperImpl.this::checkUpdate);
+            scheduleRebuild();
+          }
+          else if (!myProject.isDisposed()) {
+            myFile = null;
+            loggedRun("clear a structure on hide", StructureViewWrapperImpl.this::rebuild);
+          }
         }
       }
     });

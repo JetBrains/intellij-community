@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
@@ -12,6 +12,7 @@ import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -20,10 +21,10 @@ public class VcsLogTabsManager {
   @NotNull private final VcsLogProjectTabsProperties myUiProperties;
   private boolean myIsLogDisposing = false;
 
-  public VcsLogTabsManager(@NotNull Project project,
-                           @NotNull MessageBus messageBus,
-                           @NotNull VcsLogProjectTabsProperties uiProperties,
-                           @NotNull Disposable parent) {
+  VcsLogTabsManager(@NotNull Project project,
+                    @NotNull MessageBus messageBus,
+                    @NotNull VcsLogProjectTabsProperties uiProperties,
+                    @NotNull Disposable parent) {
     myProject = project;
     myUiProperties = uiProperties;
 
@@ -45,7 +46,7 @@ public class VcsLogTabsManager {
   private void createLogTabs(@NotNull VcsLogManager manager) {
     List<String> tabIds = myUiProperties.getTabs();
     for (String tabId : tabIds) {
-      openLogTab(manager, tabId, false, false);
+      openLogTab(manager, tabId, false, null);
     }
   }
 
@@ -55,20 +56,18 @@ public class VcsLogTabsManager {
     return myUiProperties.getTabs();
   }
 
-  public void openAnotherLogTab(@NotNull VcsLogManager manager) {
-    openAnotherLogTab(manager, false);
+  @NotNull
+  public VcsLogUiImpl openAnotherLogTab(@NotNull VcsLogManager manager, @Nullable VcsLogFilterCollection filters) {
+    return openLogTab(manager, VcsLogContentUtil.generateTabId(myProject), true, filters);
   }
 
   @NotNull
-  public VcsLogUiImpl openAnotherLogTab(@NotNull VcsLogManager manager, boolean resetFilters) {
-    return openLogTab(manager, VcsLogContentUtil.generateTabId(myProject), true, resetFilters);
-  }
+  private VcsLogUiImpl openLogTab(@NotNull VcsLogManager manager, @NotNull String tabId, boolean focus,
+                                  @Nullable VcsLogFilterCollection filters) {
+    if (filters != null) myUiProperties.resetState(tabId);
 
-  @NotNull
-  private VcsLogUiImpl openLogTab(@NotNull VcsLogManager manager, @NotNull String tabId, boolean focus, boolean resetFilters) {
-    if (resetFilters) myUiProperties.resetState(tabId);
-
-    VcsLogManager.VcsLogUiFactory<? extends VcsLogUiImpl> factory = new PersistentVcsLogUiFactory(manager.getMainLogUiFactory(tabId));
+    VcsLogManager.VcsLogUiFactory<? extends VcsLogUiImpl> factory =
+      new PersistentVcsLogUiFactory(manager.getMainLogUiFactory(tabId, filters));
     VcsLogUiImpl ui = VcsLogContentUtil.openLogTab(myProject, manager, VcsLogContentProvider.TAB_NAME, tabId, factory, focus);
     updateTabName(ui);
     ui.addFilterListener(() -> updateTabName(ui));

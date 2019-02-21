@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.ExternalLanguageAnnotators;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.Annotation;
@@ -241,8 +240,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     String path = file != null ? file.getPath() : root.getName();
 
     final PluginException pluginException =
-      PluginManagerCore.createPluginException("annotator: " + annotator + " (" + annotator.getClass() + ")",
-                                              t, annotator.getClass());
+      PluginException.createByClass("annotator: " + annotator + " (" + annotator.getClass() + ")", t, annotator.getClass());
     LOG.error("ExternalToolPass: ", pluginException, new Attachment("root_path.txt", path));
   }
 }

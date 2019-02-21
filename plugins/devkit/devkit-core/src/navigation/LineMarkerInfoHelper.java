@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
@@ -45,7 +31,6 @@ class LineMarkerInfoHelper {
   private static final NotNullFunction<PointableCandidate, Collection<? extends GotoRelatedItem>> RELATED_ITEM_PROVIDER =
     candidate -> GotoRelatedItem.createItems(Collections.singleton(candidate.pointer.getElement()), "DevKit");
 
-
   private static final NullableFunction<PointableCandidate, String> EXTENSION_NAMER =
     createNamer("line.marker.tooltip.extension.declaration", XmlTag::getName);
 
@@ -61,26 +46,24 @@ class LineMarkerInfoHelper {
 
   private static final String MODULE_SUFFIX_PATTERN = " <font color='" + ColorUtil.toHex(UIUtil.getInactiveTextColor()) + "'>[{0}]</font>";
 
-
   private LineMarkerInfoHelper() {
   }
 
-
   @NotNull
-  static RelatedItemLineMarkerInfo<PsiElement> createExtensionLineMarkerInfo(List<? extends PointableCandidate> targets,
-                                                                             PsiElement element) {
+  static RelatedItemLineMarkerInfo<PsiElement> createExtensionLineMarkerInfo(@NotNull List<? extends PointableCandidate> targets,
+                                                                             @NotNull PsiElement element) {
     return createPluginLineMarkerInfo(targets, element, "Choose Extension", EXTENSION_NAMER);
   }
 
   @NotNull
-  static RelatedItemLineMarkerInfo<PsiElement> createExtensionPointLineMarkerInfo(List<? extends PointableCandidate> targets,
-                                                                                  PsiElement element) {
+  static RelatedItemLineMarkerInfo<PsiElement> createExtensionPointLineMarkerInfo(@NotNull List<? extends PointableCandidate> targets,
+                                                                                  @NotNull PsiElement element) {
     return createPluginLineMarkerInfo(targets, element, "Choose Extension Point", EXTENSION_POINT_NAMER);
   }
 
   @NotNull
-  private static RelatedItemLineMarkerInfo<PsiElement> createPluginLineMarkerInfo(List<? extends PointableCandidate> targets,
-                                                                                  PsiElement element, String popup,
+  private static RelatedItemLineMarkerInfo<PsiElement> createPluginLineMarkerInfo(@NotNull List<? extends PointableCandidate> targets,
+                                                                                  @NotNull PsiElement element, String popup,
                                                                                   NullableFunction<PointableCandidate, String> namer) {
     return NavigationGutterIconBuilder
       .create(DevkitIcons.Gutter.Plugin, CONVERTER, RELATED_ITEM_PROVIDER)

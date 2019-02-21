@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -25,8 +11,6 @@ import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
@@ -151,13 +135,13 @@ public class MyTestInjector {
     if (ql == null || js == null) return;
     final Language ecma4 = Language.findLanguageByID("ECMA Script Level 4");
 
-    final MultiHostInjector myMultiHostInjector = new MultiHostInjector() {
+    InjectedLanguageManager.getInstance(psiManager.getProject()).registerMultiHostInjector(new MultiHostInjector() {
       @Override
       public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
         XmlAttributeValue value = (XmlAttributeValue)context;
-        PsiElement parent = value.getParent();
-        if (parent instanceof XmlAttribute) {
-          @NonNls String attrName = ((XmlAttribute)parent).getLocalName();
+        PsiElement parent1 = value.getParent();
+        if (parent1 instanceof XmlAttribute) {
+          @NonNls String attrName = ((XmlAttribute)parent1).getLocalName();
           if ("jsInBraces".equals(attrName)) {
             registrar.startInjecting(js);
             String text = value.getText();
@@ -178,8 +162,7 @@ public class MyTestInjector {
       public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
         return Collections.singletonList(XmlAttributeValue.class);
       }
-    };
-    InjectedLanguageManager.getInstance(psiManager.getProject()).registerMultiHostInjector(myMultiHostInjector, parent);
+    }, parent);
 
     final LanguageInjector myInjector = (host, placesToInject) -> {
       if (host instanceof XmlAttributeValue) {
@@ -321,9 +304,9 @@ public class MyTestInjector {
       }
     };
 
-    final ExtensionPoint<LanguageInjector> extensionPoint = Extensions.getRootArea().getExtensionPoint(LanguageInjector.EXTENSION_POINT_NAME);
-    extensionPoint.registerExtension(myInjector);
-    Disposer.register(parent, () -> extensionPoint.unregisterExtension(myInjector));
+    // cannot use maskAll here because of InjectedLanguageEditingTest (ok for all other tests)
+    //((ExtensionPointImpl<LanguageInjector>)LanguageInjector.EXTENSION_POINT_NAME.getPoint(null)).maskAll(Collections.singletonList(myInjector), parent);
+    LanguageInjector.EXTENSION_POINT_NAME.getPoint(null).registerExtension(myInjector, parent);
   }
 
   private static void inject(final PsiLanguageInjectionHost host, final InjectedLanguagePlaces placesToInject, final Language language) {

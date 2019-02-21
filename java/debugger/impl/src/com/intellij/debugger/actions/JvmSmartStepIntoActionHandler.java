@@ -1,58 +1,101 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
-import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.MethodFilter;
-import com.intellij.debugger.engine.SuspendContextImpl;
-import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.frame.XSuspendContext;
+import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
+import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
-public class JvmSmartStepIntoActionHandler extends DebuggerActionHandler {
-  @Override
-  public void perform(@NotNull final Project project, final AnActionEvent event) {
-    final DebuggerContextImpl debuggerContext = (DebuggerManagerEx.getInstanceEx(project)).getContext();
-    final DebuggerSession session = debuggerContext.getDebuggerSession();
-    if (session != null) {
-      doStep(project, debuggerContext.getSourcePosition(), session);
-    }
+import javax.swing.*;
+import java.util.List;
+
+public class JvmSmartStepIntoActionHandler extends XSmartStepIntoHandler<JvmSmartStepIntoActionHandler.JvmSmartStepIntoVariant> {
+  private final DebuggerSession mySession;
+
+  public JvmSmartStepIntoActionHandler(@NotNull DebuggerSession session) {
+    mySession = session;
   }
 
-  private static void doStep(final @NotNull Project project, final @Nullable SourcePosition position, final @NotNull DebuggerSession session) {
-    final VirtualFile file = position != null ? position.getFile().getVirtualFile() : null;
-    final FileEditor fileEditor = file != null? FileEditorManager.getInstance(project).getSelectedEditor(file) : null;
-    if (fileEditor instanceof TextEditor) {
-      for (JvmSmartStepIntoHandler handler : JvmSmartStepIntoHandler.EP_NAME.getExtensionList()) {
-        if (handler.isAvailable(position) && handler.doSmartStep(position, session, (TextEditor)fileEditor)) {
-          return;
-        }
+  @NotNull
+  @Override
+  public Promise<List<JvmSmartStepIntoVariant>> computeSmartStepVariantsAsync(@NotNull XSourcePosition position) {
+    return findVariants(position, true);
+  }
+
+  @NotNull
+  @Override
+  public Promise<List<JvmSmartStepIntoVariant>> computeStepIntoVariants(@NotNull XSourcePosition position) {
+    return findVariants(position, false);
+  }
+
+  private Promise<List<JvmSmartStepIntoVariant>> findVariants(@NotNull XSourcePosition xPosition, boolean smart) {
+    SourcePosition position = DebuggerUtilsEx.toSourcePosition(xPosition, mySession.getProject());
+    for (JvmSmartStepIntoHandler handler : JvmSmartStepIntoHandler.EP_NAME.getExtensionList()) {
+      if (handler.isAvailable(position)) {
+        Promise<List<SmartStepTarget>> targets =
+          smart ? handler.findSmartStepTargetsAsync(position, mySession) : handler.findStepIntoTargets(position, mySession);
+        return targets.then(results -> ContainerUtil.map(results, target -> new JvmSmartStepIntoVariant(target, handler)));
       }
     }
-    doStepInto(session, Registry.is("debugger.single.smart.step.force"), null);
+    return Promises.rejectedPromise();
   }
 
-  static void doStepInto(DebuggerSession session, boolean force, MethodFilter filter) {
-    session.sessionResumed();
-    session.stepInto(force, filter);
+  @NotNull
+  @Override
+  public List<JvmSmartStepIntoVariant> computeSmartStepVariants(@NotNull XSourcePosition position) {
+    throw new IllegalStateException("Should not be called");
   }
 
   @Override
-  public boolean isEnabled(@NotNull final Project project, final AnActionEvent event) {
-    final DebuggerContextImpl context = (DebuggerManagerEx.getInstanceEx(project)).getContext();
-    DebuggerSession debuggerSession = context.getDebuggerSession();
-    final boolean isPaused = debuggerSession != null && debuggerSession.isPaused();
-    final SuspendContextImpl suspendContext = context.getSuspendContext();
-    final boolean hasCurrentThread = suspendContext != null && suspendContext.getThread() != null;
-    return isPaused && hasCurrentThread;
+  public String getPopupTitle(@NotNull XSourcePosition position) {
+    return DebuggerBundle.message("title.smart.step.popup");
+  }
+
+  @Override
+  public void stepIntoEmpty(XDebugSession session) {
+    session.forceStepInto();
+  }
+
+  @Override
+  public void startStepInto(@NotNull JvmSmartStepIntoVariant variant, @Nullable XSuspendContext context) {
+    mySession.stepInto(true, variant.myHandler.createMethodFilter(variant.myTarget));
+  }
+
+  static class JvmSmartStepIntoVariant extends XSmartStepIntoVariant {
+    private final SmartStepTarget myTarget;
+    private final JvmSmartStepIntoHandler myHandler;
+
+    JvmSmartStepIntoVariant(SmartStepTarget target, JvmSmartStepIntoHandler handler) {
+      myTarget = target;
+      myHandler = handler;
+    }
+
+    @Override
+    public String getText() {
+      return myTarget.getPresentation();
+    }
+
+    @Nullable
+    @Override
+    public Icon getIcon() {
+      return myTarget.getIcon();
+    }
+
+    @Nullable
+    @Override
+    public PsiElement getHighlightElement() {
+      return myTarget.getHighlightElement();
+    }
   }
 }

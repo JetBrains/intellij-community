@@ -100,16 +100,16 @@ public final class TextEditorState implements FileEditorState {
     return result;
   }
 
-  @NotNull
+  @Nullable
   @Contract(pure = true)
   public Collection<Integer> getCaretLines() {
-    return ContainerUtil.map(CARETS, caret -> caret.LINE);
+    return CARETS == null ? null : ContainerUtil.map(CARETS, caret -> caret.LINE);
   }
 
-  @NotNull
+  @Nullable
   @Contract(pure = true)
   public Collection<Integer> getCaretColumns() {
-    return ContainerUtil.map(CARETS, caret -> caret.COLUMN);
+    return CARETS == null ? null : ContainerUtil.map(CARETS, caret -> caret.COLUMN);
   }
 
   @Override

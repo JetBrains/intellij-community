@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -11,11 +10,11 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -26,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -69,6 +69,7 @@ public class GroovyPsiManager {
     return ServiceManager.getService(project, GroovyPsiManager.class);
   }
 
+  @NotNull
   public PsiClassType createTypeByFQClassName(@NotNull String fqName, @NotNull GlobalSearchScope resolveScope) {
     if (ourPopularClasses.contains(fqName)) {
       PsiClass result = JavaPsiFacade.getInstance(myProject).findClass(fqName, resolveScope);
@@ -81,19 +82,14 @@ public class GroovyPsiManager {
   }
 
   public boolean isCompileStatic(@NotNull PsiMember member) {
-    Boolean aBoolean = myCompileStatic.get(member);
-    if (aBoolean == null) {
-      aBoolean = ConcurrencyUtil.cacheOrGet(myCompileStatic, member, isCompileStaticInner(member));
-    }
-    return aBoolean;
+    return myCompileStatic.computeIfAbsent(member, this::isCompileStaticInner);
   }
 
   private boolean isCompileStaticInner(@NotNull PsiMember member) {
     PsiAnnotation annotation = getCompileStaticAnnotation(member);
     if (annotation != null) return checkForPass(annotation);
-    PsiClass aClass = member.getContainingClass();
-    if (aClass != null) return isCompileStatic(aClass);
-    return false;
+    PsiMember enclosingMember = PsiTreeUtil.getParentOfType(member, PsiMember.class, true);
+    return enclosingMember != null && isCompileStatic(enclosingMember);
   }
 
   @Nullable

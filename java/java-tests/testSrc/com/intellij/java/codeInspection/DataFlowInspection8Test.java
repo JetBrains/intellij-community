@@ -214,6 +214,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testPrimitiveGetters() { doTest(); }
   public void testUnknownOnStack() { doTest(); }
   public void testMapUpdateInlining() { doTestWithCustomAnnotations(); }
+  public void testHashMapImplementation() { doTest(); }
 
   public void testOptionalTooComplex() { doTest(); }
 
@@ -249,4 +250,5 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testFlatMapSideEffect() { doTest(); }
   public void testOptionalValueTracking() { doTest(); }
   public void testClearZeroesSize() { doTest(); }
+  public void testLambdaInlineReassignReturnWithDeeperEquality() { doTest(); }
 }

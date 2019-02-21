@@ -20,7 +20,6 @@ import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionConfigTr
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
@@ -339,15 +338,14 @@ public class ScopesAndSeveritiesTable extends JBTable {
     }
 
     private void refreshAggregatedScopes() {
-      final LinkedHashSet<String> scopesNames = new LinkedHashSet<>();
-      for (final String keyName : myKeyNames) {
-        final List<ScopeToolState> nonDefaultTools = myInspectionProfile.getNonDefaultTools(keyName, myProject);
-        for (final ScopeToolState tool : nonDefaultTools) {
-          scopesNames.add(tool.getScopeName());
-        }
-      }
-      myScopeNames = ArrayUtil.toStringArray(scopesNames);
-      Arrays.sort(myScopeNames, myScopeComparator);
+      myScopeNames = myKeyNames.stream()
+          .map(keyName -> myInspectionProfile.getNonDefaultTools(keyName, myProject))
+          .flatMap(Collection::stream)
+          .map(state -> state.getScope(myProject))
+          .filter(Objects::nonNull)
+          .map(NamedScope::getName)
+          .sorted(myScopeComparator)
+          .toArray(String[]::new);
     }
 
     private int lastRowIndex() {

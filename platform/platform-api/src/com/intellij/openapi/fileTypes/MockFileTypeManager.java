@@ -31,7 +31,7 @@ import java.util.List;
 
 public class MockFileTypeManager extends FileTypeManager {
   @Override
-  public void registerFileType(@NotNull FileType type, @NotNull List<FileNameMatcher> defaultAssociations) {
+  public void registerFileType(@NotNull FileType type, @NotNull List<? extends FileNameMatcher> defaultAssociations) {
     throw new UnsupportedOperationException();
   }
 

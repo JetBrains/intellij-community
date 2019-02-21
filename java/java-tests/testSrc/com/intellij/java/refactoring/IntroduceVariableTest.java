@@ -9,6 +9,7 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.introduceVariable.InputValidator;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
@@ -257,6 +258,14 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
 
   public void testEnsureCodeBlockForThrowsJava12Preview() {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING));
+  }
+
+  public void testFromSwitchStatementJava12Preview() {
+    doTest(new MockIntroduceVariableHandler("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING));
+  }
+
+  public void testVarTypeExtractedJava10() {
+    doTestWithVarType(new MockIntroduceVariableHandler("temp", true, false, false, "java.util.ArrayList<java.lang.String>"));
   }
 
   public void testDeclareTernary() {
@@ -677,6 +686,17 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   public void testChooseTypeExpressionWhenNotDenotable() { doTest(new MockIntroduceVariableHandler("m", false, false, false, "Foo")); }
   public void testChooseTypeExpressionWhenNotDenotable1() { doTest(new MockIntroduceVariableHandler("m", false, false, false, "Foo<?>")); }
 
+  private void doTestWithVarType(IntroduceVariableBase testMe) {
+    Boolean asVarType = JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE;
+    try {
+      JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE = true;
+      doTest(testMe);
+    }
+    finally {
+      JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE = asVarType;
+    }
+  }
+  
   private void doTest(IntroduceVariableBase testMe) {
     String baseName = "/refactoring/introduceVariable/" + getTestName(false);
     configureByFile(baseName + ".java");

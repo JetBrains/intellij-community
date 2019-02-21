@@ -42,7 +42,7 @@ object GuiTestOptions {
   val debugPort: Int by lazy { getSystemProperty("idea.gui.test.debug.port", 5009) }
   val bootClasspath: String by lazy { getSystemProperty("idea.gui.test.bootclasspath", "../out/classes/production/intellij.platform.boot") }
   val encoding: String by lazy { getSystemProperty("idea.gui.test.encoding", "UTF-8") }
-  val xmxSize: Int by lazy { getSystemProperty("idea.gui.test.xmx", 512) }
+  val xmxSize: Int by lazy { getSystemProperty("idea.gui.test.xmx", 2048) }
 
   //used for restarted and resumed test to qualify from what point to start
   val resumeInfo: String by lazy { getSystemProperty(RESUME_LABEL, "DEFAULT") }

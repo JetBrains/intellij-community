@@ -279,7 +279,7 @@ public class PluginManagerConfigurableNew
     actions.add(new DumbAwareAction("Install Plugin from Disk...") {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        InstalledPluginsManagerMain.chooseAndInstall(myPluginsModel, pair -> {
+        InstalledPluginsManagerMain.chooseAndInstall(myPluginsModel, panel, pair -> {
           myPluginsModel.appendOrUpdateDescriptor(pair.second);
 
           boolean select = myInstalledPanel == null;
@@ -300,7 +300,7 @@ public class PluginManagerConfigurableNew
               }
             }
           }
-        }, panel);
+        });
       }
     });
 

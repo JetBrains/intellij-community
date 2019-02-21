@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.util.Pair;
@@ -13,6 +13,7 @@ import org.jetbrains.idea.svn.history.LogHierarchyNode;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
+import org.jetbrains.idea.svn.mergeinfo.MergeCheckResult;
 import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 import org.jetbrains.idea.svn.mergeinfo.OneShotMergeInfoHelper;
 
@@ -22,7 +23,6 @@ import static com.intellij.openapi.progress.ProgressManager.progress;
 import static com.intellij.openapi.progress.ProgressManager.progress2;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static org.jetbrains.idea.svn.SvnBundle.message;
-import static org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache.MergeCheckResult;
 
 public class MergeCalculatorTask extends BaseMergeTask {
 

@@ -295,11 +295,11 @@ public class PsiTestUtil {
   }
 
   public static void addLibrary(@NotNull Module module, String libName, @NotNull String libPath, @NotNull String... jarArr) {
-    ModuleRootModificationUtil.updateModel(module, model -> addLibrary(module, model, libName, libPath, jarArr));
+    ModuleRootModificationUtil.updateModel(module, model -> addLibrary(model, libName, libPath, jarArr));
   }
   public static void addLibrary(@NotNull Disposable parent, @NotNull Module module, String libName, @NotNull String libPath, @NotNull String... jarArr) {
     Ref<Library> ref = new Ref<>();
-    ModuleRootModificationUtil.updateModel(module, model -> ref.set(addLibrary(module, model, libName, libPath, jarArr)));
+    ModuleRootModificationUtil.updateModel(module, model -> ref.set(addLibrary(model, libName, libPath, jarArr)));
     Disposer.register(parent, () -> {
       Library library = ref.get();
       ModuleRootModificationUtil.updateModel(module, model -> {
@@ -383,8 +383,7 @@ public class PsiTestUtil {
   }
 
   @NotNull
-  public static Library addLibrary(@NotNull Module module,
-                                   @NotNull ModifiableRootModel model,
+  public static Library addLibrary(@NotNull ModifiableRootModel model,
                                    String libName,
                                    @NotNull String libPath,
                                    @NotNull String... jarArr) {
@@ -415,10 +414,10 @@ public class PsiTestUtil {
     String proto = (classRoots.length > 0 ? classRoots[0] : sourceRoots[0]).endsWith(".jar!/") ? JarFileSystem.PROTOCOL : LocalFileSystem.PROTOCOL;
     String parentUrl = VirtualFileManager.constructUrl(proto, libDir);
     List<String> classesUrls = new ArrayList<>();
-    List<String> sourceUrls = new ArrayList<>();
     for (String classRoot : classRoots) {
       classesUrls.add(parentUrl + classRoot);
     }
+    List<String> sourceUrls = new ArrayList<>();
     for (String sourceRoot : sourceRoots) {
       sourceUrls.add(parentUrl + sourceRoot);
     }

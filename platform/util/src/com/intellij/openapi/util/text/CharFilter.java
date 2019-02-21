@@ -22,6 +22,7 @@ package com.intellij.openapi.util.text;
  * @see StringUtil#strip(String, CharFilter)
  * @see StringUtil#findFirst(CharSequence, CharFilter)
 */
+@FunctionalInterface
 public interface CharFilter {
   CharFilter WHITESPACE_FILTER = new CharFilter() {
     @Override

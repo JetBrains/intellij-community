@@ -32,21 +32,26 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
 
   @Override
   public synchronized void reset() {
-    for (Object extensionAdapter : myExtensionAdapters) {
-      myOwner.getPicoContainer().unregisterComponent(((ComponentAdapter)extensionAdapter).getComponentKey());
+    // we don't check myLoadedAdapters because programmatically loaded extensions are not registered in pico container
+    //noinspection NonPrivateFieldAccessedInSynchronizedContext
+    for (ExtensionComponentAdapter adapter : myAdapters) {
+      if (adapter instanceof ComponentAdapter) {
+        myOwner.getPicoContainer().unregisterComponent(((ComponentAdapter)adapter).getComponentKey());
+      }
     }
+
     super.reset();
   }
 
   @Override
   @NotNull
   protected ExtensionComponentAdapter createAdapter(@NotNull Element extensionElement, @NotNull PluginDescriptor pluginDescriptor) {
-    String implClass = extensionElement.getAttributeValue("implementation");
-    if (implClass == null) {
+    String implementationClassName = extensionElement.getAttributeValue("implementation");
+    if (implementationClassName == null) {
       throw new RuntimeException("'implementation' attribute not specified for '" + getName() + "' extension in '"
                                  + pluginDescriptor.getPluginId() + "' plugin");
     }
-    return doCreateAdapter(implClass, extensionElement, shouldDeserializeInstance(extensionElement), pluginDescriptor, true);
+    return doCreateAdapter(implementationClassName, extensionElement, shouldDeserializeInstance(extensionElement), pluginDescriptor, true);
   }
 
   private static boolean shouldDeserializeInstance(@NotNull Element extensionElement) {

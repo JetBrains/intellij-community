@@ -17,10 +17,12 @@ package com.siyeh.ig.logging;
 
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.JavaLoggingUtils;
 import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -37,11 +39,7 @@ public class ClassWithMultipleLoggersInspection extends BaseInspection {
    * @noinspection PublicField
    */
   @NonNls
-  public String loggerNamesString = "java.util.logging.Logger" + ',' +
-                                    "org.slf4j.Logger" + ',' +
-                                    "org.apache.commons.logging.Log" + ',' +
-                                    "org.apache.log4j.Logger" + ',' +
-                                    "org.apache.logging.log4j.Logger";
+  public String loggerNamesString = StringUtil.join(JavaLoggingUtils.DEFAULT_LOGGERS, ",");
 
   public ClassWithMultipleLoggersInspection() {
     parseString(loggerNamesString, loggerNames);
@@ -88,9 +86,7 @@ public class ClassWithMultipleLoggersInspection extends BaseInspection {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      //no recursion to avoid drilldown
-      if (aClass.isInterface() || aClass.isEnum() ||
-          aClass.isAnnotationType()) {
+      if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
         return;
       }
       if (aClass instanceof PsiTypeParameter) {
@@ -100,8 +96,7 @@ public class ClassWithMultipleLoggersInspection extends BaseInspection {
         return;
       }
       int numLoggers = 0;
-      final PsiField[] fields = aClass.getFields();
-      for (PsiField field : fields) {
+      for (PsiField field : aClass.getFields()) {
         if (isLogger(field)) {
           numLoggers++;
         }

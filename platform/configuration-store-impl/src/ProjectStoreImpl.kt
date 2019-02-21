@@ -3,9 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.highlighter.WorkspaceFileType
-import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.async.coroutineDispatchingContext
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
@@ -129,7 +127,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
       storageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, workspacePath)
 
       if (isRefreshVfs) {
-        withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+        withContext(storeEdtCoroutineContext) {
           VfsUtil.markDirtyAndRefresh(false, true, false, fs.refreshAndFindFileByPath(filePath), fs.refreshAndFindFileByPath(workspacePath))
         }
       }
@@ -153,7 +151,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
       }
 
       if (isRefreshVfs) {
-        withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+        withContext(storeEdtCoroutineContext) {
           VfsUtil.markDirtyAndRefresh(false, true, true, fs.refreshAndFindFileByPath(configDir))
         }
       }
@@ -322,15 +320,15 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
     }
   }
 
-  final override suspend fun doSave(result: SaveResult, isForceSavingAllSettings: Boolean) {
+  final override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) {
     coroutineScope {
       launch {
         // save modules before project
         val errors = SmartList<Throwable>()
-        val moduleSaveSessions = saveModules(errors, isForceSavingAllSettings)
+        val moduleSaveSessions = saveModules(errors, forceSavingAllSettings)
         result.addErrors(errors)
 
-        (saveSettingsSavingComponentsAndCommitComponents(result, isForceSavingAllSettings) as ProjectSaveSessionProducerManager)
+        (saveSettingsSavingComponentsAndCommitComponents(result, forceSavingAllSettings) as ProjectSaveSessionProducerManager)
           .saveWithAdditionalSaveSessions(moduleSaveSessions)
           .appendTo(result)
       }
@@ -346,10 +344,6 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
 
         projectSaved.duringSave(project)
       }
-      launch(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
-        @Suppress("DEPRECATION")
-        projectSaved.saved(project)
-      }
     }
   }
 
@@ -358,6 +352,12 @@ private open class ProjectStoreImpl(project: Project, private val pathMacroManag
   }
 
   final override fun createSaveSessionProducerManager() = ProjectSaveSessionProducerManager(project)
+
+  final override fun commitStalledComponents(session: SaveSessionProducerManager, isProjectLevel: Boolean) {
+    if (isDirectoryBased) {
+      super.commitStalledComponents(session, true)
+    }
+  }
 }
 
 private class ProjectWithModulesStoreImpl(project: Project, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
@@ -367,14 +367,14 @@ private class ProjectWithModulesStoreImpl(project: Project, pathMacroManager: Pa
       return emptyList()
     }
 
-    return withContext(AppUIExecutor.onUiThread().inTransaction(project).coroutineDispatchingContext()) {
+    return withContext(createStoreEdtCoroutineContext(listOf(InTransactionRule(project)))) {
       // do no create with capacity because very rarely a lot of modules will be modified
       val saveSessions: MutableList<SaveSession> = SmartList<SaveSession>()
       // commit components
       for (module in modules) {
         val moduleStore = ModuleServiceManager.getService(module, IComponentStore::class.java) as ComponentStoreImpl
         // collectSaveSessions is very cheap, so, do it in EDT
-        moduleStore.doCreateSaveSessionManagerAndSaveComponents(isForceSavingAllSettings, errors).collectSaveSessions(saveSessions)
+        moduleStore.doCreateSaveSessionManagerAndCommitComponents(isForceSavingAllSettings, errors).collectSaveSessions(saveSessions)
       }
       saveSessions
     }
@@ -399,7 +399,7 @@ private fun composeFileBasedProjectWorkSpacePath(filePath: String) = "${FileUtil
 
 @CalledInAny
 internal suspend fun ensureFilesWritable(project: Project, files: Collection<VirtualFile>): ReadonlyStatusHandler.OperationStatus {
-  return withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+  return withContext(storeEdtCoroutineContext) {
     ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files)
   }
 }

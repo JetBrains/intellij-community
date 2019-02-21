@@ -136,9 +136,13 @@ public class DFAType {
       types.add(primary);
     }
     for (Mixin mixin : mixins) {
-      if (!mixin.myNegated) {
-        types.add(mixin.myType);
+      if (mixin.myNegated) {
+        continue;
       }
+      if (mixin.myType.equals(PsiType.NULL)) {
+        continue;
+      }
+      types.add(mixin.myType);
     }
     if (types.isEmpty()) return null;
     return PsiIntersectionType.createIntersection(types.toArray(PsiType.createArray(types.size())));

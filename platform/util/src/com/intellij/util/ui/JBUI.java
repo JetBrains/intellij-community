@@ -166,19 +166,14 @@ public class JBUI {
 
     // The cache radically reduces potentially thousands of equal Scale instances.
     private static final ThreadLocal<EnumMap<ScaleType, TDoubleObjectHashMap<Scale>>> cache =
-      new ThreadLocal<EnumMap<ScaleType, TDoubleObjectHashMap<Scale>>>() {
-        @Override
-        protected EnumMap<ScaleType, TDoubleObjectHashMap<Scale>> initialValue() {
-          return new EnumMap<ScaleType, TDoubleObjectHashMap<Scale>>(ScaleType.class);
-        }
-      };
+      ThreadLocal.withInitial(() -> new EnumMap<>(ScaleType.class));
 
     @NotNull
     public static Scale create(double value, @NotNull ScaleType type) {
       EnumMap<ScaleType, TDoubleObjectHashMap<Scale>> emap = cache.get();
       TDoubleObjectHashMap<Scale> map = emap.get(type);
       if (map == null) {
-        emap.put(type, map = new TDoubleObjectHashMap<Scale>());
+        emap.put(type, map = new TDoubleObjectHashMap<>());
       }
       Scale scale = map.get(value);
       if (scale != null) return scale;
@@ -262,7 +257,7 @@ public class JBUI {
         }
       }
       else if (Registry.is("ide.ui.scale.override")) {
-        return Float.valueOf((float)Registry.get("ide.ui.scale").asDouble());
+        return (float)Registry.get("ide.ui.scale").asDouble();
       }
       return null;
     }
@@ -561,8 +556,8 @@ public class JBUI {
   }
 
   @NotNull
-  @SuppressWarnings("unchecked")
   public static <T extends JBIcon> T scale(@NotNull T icon) {
+    //noinspection unchecked
     return (T)icon.withIconPreScaled(false);
   }
 
@@ -941,13 +936,7 @@ public class JBUI {
 
     @Override
     public int hashCode() {
-      return hash(usrScale.value) * 31 + hash(objScale.value);
-    }
-
-    private static int hash(double value) {
-      // todo replace with Double.hashCode(double) when language level goes up to 8
-      long bits = Double.doubleToLongBits(value);
-      return (int)(bits ^ (bits >>> 32));
+      return Double.hashCode(usrScale.value) * 31 + Double.hashCode(objScale.value);
     }
 
     /**
@@ -965,7 +954,7 @@ public class JBUI {
     }
 
     public void addUpdateListener(@NotNull UpdateListener l) {
-      if (listeners == null) listeners = new ArrayList<UpdateListener>(1);
+      if (listeners == null) listeners = new ArrayList<>(1);
       listeners.add(l);
     }
 
@@ -1012,7 +1001,7 @@ public class JBUI {
      */
     public static class Cache<D, S extends BaseScaleContext> {
       private final Function<? super S, ? extends D> myDataProvider;
-      private final AtomicReference<Pair<Double, D>> myData = new AtomicReference<Pair<Double, D>>(null);
+      private final AtomicReference<Pair<Double, D>> myData = new AtomicReference<>(null);
 
       /**
        * @param dataProvider provides a data object matching the passed scale context
@@ -1097,7 +1086,7 @@ public class JBUI {
     @NotNull
     public static ScaleContext create(@Nullable Component comp) {
       final ScaleContext ctx = new ScaleContext(SYS_SCALE.of(sysScale(comp)));
-      if (comp != null) ctx.compRef = new WeakReference<Component>(comp);
+      if (comp != null) ctx.compRef = new WeakReference<>(comp);
       return ctx;
     }
 
@@ -1244,7 +1233,7 @@ public class JBUI {
 
     @Override
     public int hashCode() {
-      return Double.valueOf(sysScale.value).hashCode() * 100 + super.hashCode();
+      return Double.hashCode(sysScale.value) * 31 + super.hashCode();
     }
 
     @Override

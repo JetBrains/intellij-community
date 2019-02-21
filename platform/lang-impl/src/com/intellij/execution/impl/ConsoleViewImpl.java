@@ -1042,30 +1042,30 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myJLayeredPane.startUpdating();
     final int currentValue = myHeavyUpdateTicket;
     myHeavyAlarm.addRequest(() -> {
-        if (!myFilters.shouldRunHeavy()) return;
-        try {
-          myFilters.applyHeavyFilter(documentCopy, startOffset, startLine, additionalHighlight ->
-              addFlushRequest(0, new FlushRunnable(true) {
-                @Override
-                public void doRun() {
-                  if (myHeavyUpdateTicket != currentValue) return;
-                  TextAttributes additionalAttributes = additionalHighlight.getTextAttributes(null);
-                  if (additionalAttributes != null) {
-                    ResultItem item = additionalHighlight.getResultItems().get(0);
-                    myHyperlinks.addHighlighter(item.getHighlightStartOffset(), item.getHighlightEndOffset(), additionalAttributes);
-                  }
-                  else {
-                    myHyperlinks.highlightHyperlinks(additionalHighlight, 0);
-                  }
-                }
-              })
-          );
+      if (!myFilters.shouldRunHeavy()) return;
+      try {
+        myFilters.applyHeavyFilter(documentCopy, startOffset, startLine, additionalHighlight ->
+          addFlushRequest(0, new FlushRunnable(true) {
+            @Override
+            public void doRun() {
+              if (myHeavyUpdateTicket != currentValue) return;
+              TextAttributes additionalAttributes = additionalHighlight.getTextAttributes(null);
+              if (additionalAttributes != null) {
+                ResultItem item = additionalHighlight.getResultItems().get(0);
+                myHyperlinks.addHighlighter(item.getHighlightStartOffset(), item.getHighlightEndOffset(), additionalAttributes);
+              }
+              else {
+                myHyperlinks.highlightHyperlinks(additionalHighlight, 0);
+              }
+            }
+          })
+        );
+      }
+      finally {
+        if (myHeavyAlarm.getActiveRequestCount() <= 1) { // only the current request
+          UIUtil.invokeLaterIfNeeded(() -> myJLayeredPane.finishUpdating());
         }
-        finally {
-          if (myHeavyAlarm.getActiveRequestCount() <= 1) { // only the current request
-            UIUtil.invokeLaterIfNeeded(() -> myJLayeredPane.finishUpdating());
-          }
-        }
+      }
     }, 0);
   }
 
@@ -1182,11 +1182,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      boolean enabled = e.getData(LangDataKeys.CONSOLE_VIEW) != null;
-      Editor editor = e.getData(CommonDataKeys.EDITOR);
-      if (editor != null && editor.getDocument().getTextLength() == 0) {
-        enabled = false;
-      }
+      ConsoleView data = e.getData(LangDataKeys.CONSOLE_VIEW);
+      boolean enabled = data != null && data.getContentSize() > 0;
       e.getPresentation().setEnabled(enabled);
     }
 

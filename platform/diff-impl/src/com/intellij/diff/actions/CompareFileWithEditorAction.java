@@ -3,11 +3,10 @@
  */
 package com.intellij.diff.actions;
 
-import com.intellij.diff.DiffRequestFactory;
+import com.intellij.diff.actions.impl.MutableDiffRequestChain;
+import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
-import com.intellij.diff.requests.ContentDiffRequest;
-import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -70,24 +69,24 @@ public class CompareFileWithEditorAction extends BaseShowDiffAction {
 
   @Nullable
   @Override
-  protected DiffRequest getDiffRequest(@NotNull AnActionEvent e) {
+  protected DiffRequestChain getDiffRequestChain(@NotNull AnActionEvent e) {
     Project project = e.getProject();
 
     VirtualFile selectedFile = getSelectedFile(e);
     VirtualFile currentFile = getEditingFile(e);
-
     assert selectedFile != null && currentFile != null;
 
-    ContentDiffRequest request = DiffRequestFactory.getInstance().createFromFiles(project, selectedFile, currentFile);
+    MutableDiffRequestChain chain = createMutableChainFromFiles(project, selectedFile, currentFile);
 
-    DiffContent editorContent = request.getContents().get(1);
+    DiffContent editorContent = chain.getContent2();
     if (editorContent instanceof DocumentContent) {
       Editor[] editors = EditorFactory.getInstance().getEditors(((DocumentContent)editorContent).getDocument());
       if (editors.length != 0) {
-        request.putUserData(DiffUserDataKeys.SCROLL_TO_LINE, Pair.create(Side.RIGHT, editors[0].getCaretModel().getLogicalPosition().line));
+        int currentLine = editors[0].getCaretModel().getLogicalPosition().line;
+        chain.putRequestUserData(DiffUserDataKeys.SCROLL_TO_LINE, Pair.create(Side.RIGHT, currentLine));
       }
     }
 
-    return request;
+    return chain;
   }
 }

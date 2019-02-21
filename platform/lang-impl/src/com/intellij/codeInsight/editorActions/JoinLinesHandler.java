@@ -88,11 +88,16 @@ public class JoinLinesHandler extends EditorActionHandler {
         Ref<Integer> caretRestoreOffset = new Ref<>(-1);
         CodeEditUtil.setNodeReformatStrategy(node -> node.getTextRange().getStartOffset() >= startReformatOffset);
         try {
-          for (int count = 0; count < lineCount; count++) {
+          int count = 0;
+          while (count < lineCount) {
             indicator.checkCanceled();
             indicator.setFraction(((double)count) / lineCount);
+            int beforeLines = doc.getLineCount();
             ProgressManager.getInstance().executeNonCancelableSection(
               () -> doJoinTwoLines(doc, project, docManager, psiFile, line, caretRestoreOffset));
+            int afterLines = doc.getLineCount();
+            // Single Join two lines procedure could join more than two (e.g. if it removes braces)
+            count += Math.max(beforeLines - afterLines, 1);
           }
         }
         finally {
@@ -182,12 +187,15 @@ public class JoinLinesHandler extends EditorActionHandler {
         if (rc != CANNOT_JOIN) break;
       }
     }
-    docManager.doPostponedOperationsAndUnblockDocument(doc);
 
     if (rc != CANNOT_JOIN) {
+      RangeMarker marker = doc.createRangeMarker(rc, rc);
+      docManager.doPostponedOperationsAndUnblockDocument(doc);
+      rc = marker.getStartOffset();
       if (caretRestoreOffset.get() == CANNOT_JOIN) caretRestoreOffset.set(rc);
       return;
     }
+    docManager.doPostponedOperationsAndUnblockDocument(doc);
 
     int replaceStart = start == offsets.lineEndOffset ? start : start + 1;
     if (caretRestoreOffset.get() == CANNOT_JOIN) caretRestoreOffset.set(replaceStart);

@@ -155,12 +155,7 @@ class RepositoryContentHandler extends DefaultHandler {
   @NotNull
   private String buildCategoryName() {
     if (categoryName == null) {
-      StringBuilder builder = new StringBuilder();
-      for (int i = 0; i < categories.size(); i++) {
-        if (i > 0) builder.append('/');
-        builder.append(categories.get(i));
-      }
-      categoryName = builder.toString();
+      categoryName = String.join("/", categories);
     }
     return categoryName;
   }

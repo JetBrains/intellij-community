@@ -53,20 +53,12 @@ public abstract class BaseDataReader {
       LOG.warn(new Throwable("Must provide not-empty presentable name"));
     }
     if (myFinishedFuture == null) {
-      myFinishedFuture = executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          if (StringUtil.isEmptyOrSpaces(presentableName)) {
-            doRun();
-          }
-          else {
-            ConcurrencyUtil.runUnderThreadName("BaseDataReader: " + presentableName, new Runnable() {
-              @Override
-              public void run() {
-                doRun();
-              }
-            });
-          }
+      myFinishedFuture = executeOnPooledThread(() -> {
+        if (StringUtil.isEmptyOrSpaces(presentableName)) {
+          doRun();
+        }
+        else {
+          ConcurrencyUtil.runUnderThreadName("BaseDataReader: " + presentableName, this::doRun);
         }
       });
     }

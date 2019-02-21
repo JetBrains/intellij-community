@@ -16,7 +16,7 @@ import java.lang.ref.WeakReference;
  * @author eldar
  */
 public class WeaklyReferencedDisposable extends WeakReference<Disposable> implements Disposable {
-  private static final ReferenceQueue<Disposable> ourRefQueue = new ReferenceQueue<Disposable>();
+  private static final ReferenceQueue<Disposable> ourRefQueue = new ReferenceQueue<>();
 
   public WeaklyReferencedDisposable(@NotNull Disposable disposable) {
     super(disposable, ourRefQueue);

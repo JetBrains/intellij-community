@@ -144,7 +144,7 @@ public class JavaDocUtil {
   }
 
   @Nullable
-  private static PsiElement findReferencedMember(PsiClass aClass, String memberRefText, PsiElement context) {
+  private static PsiElement findReferencedMember(@NotNull PsiClass aClass, @NotNull String memberRefText, PsiElement context) {
     int parenthIndex = memberRefText.indexOf('(');
     if (parenthIndex < 0) {
       String name = memberRefText;
@@ -197,7 +197,7 @@ public class JavaDocUtil {
         allMethods = aClass.findMethodsByName(name, true);
       }
 
-      PsiMethod[] methods = PsiDocMethodOrFieldRef.findMethods(methodSignature, context, name, allMethods);
+      PsiMethod[] methods = PsiDocMethodOrFieldRef.findMethods(methodSignature, aClass, name, allMethods);
 
       if (methods.length == 0) return null;
 

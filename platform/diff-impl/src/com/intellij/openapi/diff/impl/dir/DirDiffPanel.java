@@ -69,10 +69,9 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static com.intellij.util.ArrayUtil.toObjectArray;
 
 /**
  * @author Konstantin Bulenkov
@@ -424,7 +423,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
     myDiffRequestProcessor.updateRequest(force);
   }
 
-  private void registerCustomShortcuts(DirDiffToolbarActions actions, JComponent component) {
+  private static void registerCustomShortcuts(DirDiffToolbarActions actions, JComponent component) {
     for (AnAction action : actions.getChildren(null)) {
       if (action instanceof ShortcutProvider) {
         final ShortcutSet shortcut = ((ShortcutProvider)action).getShortcut();
@@ -514,7 +513,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
     return null;
   }
 
-  @Nullable
+  @NotNull
   private Navigatable[] getNavigatableArray() {
     Project project = myModel.getProject();
     List<DirDiffElementImpl> elements = myModel.getSelectedElements();
@@ -527,7 +526,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
       if (navigatable1 != null) navigatables.add(navigatable1);
       if (navigatable2 != null) navigatables.add(navigatable2);
     }
-    return toObjectArray(navigatables, Navigatable.class);
+    return navigatables.toArray(new Navigatable[0]);
   }
 
   private static class MyJBTable extends JBTable {
@@ -671,11 +670,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
       if (o == null || getClass() != o.getClass()) return false;
 
       ElementWrapper wrapper = (ElementWrapper)o;
-
-      if (sourceElement != null ? !sourceElement.equals(wrapper.sourceElement) : wrapper.sourceElement != null) return false;
-      if (targetElement != null ? !targetElement.equals(wrapper.targetElement) : wrapper.targetElement != null) return false;
-
-      return true;
+      return Objects.equals(sourceElement, wrapper.sourceElement) && Objects.equals(targetElement, wrapper.targetElement);
     }
 
     @Override

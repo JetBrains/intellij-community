@@ -31,6 +31,7 @@
     <orderEntry type="library" name="XmlBeans" level="project" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="library" scope="TEST" name="mockito" level="project" />
     <orderEntry type="module" module-name="intellij.java.testFramework" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy" />
     <orderEntry type="library" name="Guava" level="project" />
@@ -66,6 +67,8 @@
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="module" module-name="intellij.maven.errorProne.compiler" scope="RUNTIME" />
     <orderEntry type="library" name="NanoXML" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="hamcrest" level="project" />
   </component>
   <component name="copyright">
     <Base>

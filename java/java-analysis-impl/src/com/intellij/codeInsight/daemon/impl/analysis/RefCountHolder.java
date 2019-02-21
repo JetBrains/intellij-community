@@ -34,8 +34,7 @@ import com.intellij.psi.util.PsiMatcherImpl;
 import com.intellij.psi.util.PsiMatchers;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.Predicate;
+import com.intellij.util.containers.*;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -43,10 +42,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 class RefCountHolder {
@@ -119,25 +115,35 @@ class RefCountHolder {
     VirtualFile virtualFile = viewProvider.getVirtualFile();
     boolean inLibrary = fileIndex.isInLibrary(virtualFile);
 
-    boolean myDeadCodeEnabled = deadCodeInspection != null && isUnusedToolEnabled && deadCodeInspection.isGlobalEnabledInEditor();
-    Predicate<PsiElement> myIsEntryPointPredicate = (@NotNull PsiElement member) -> !myDeadCodeEnabled || deadCodeInspection.isEntryPoint(member);
+    boolean isDeadCodeEnabled = deadCodeInspection != null && isUnusedToolEnabled && deadCodeInspection.isGlobalEnabledInEditor();
+    if (isDeadCodeEnabled && !inLibrary) {
+      return new GlobalUsageHelperBase() {
+        final Map<PsiMember, Boolean> myEntryPointCache = FactoryMap.create((PsiMember member) -> {
+          if (isEntryPoint(member)) return true;
+          if (member instanceof PsiClass) {
+            return !JBTreeTraverser
+              .<PsiMember>from(m -> m instanceof PsiClass
+                                    ? JBIterable.from(PsiTreeUtil.getStubChildrenOfTypeAsList(m, PsiMember.class))
+                                    : JBIterable.empty())
+              .withRoot(member)
+              .traverse()
+              .skip(1)
+              .processEach(this::shouldCheckUsages);
+          }
+          return false;
+        });
 
-    return new GlobalUsageHelper() {
-      @Override
-      public boolean shouldCheckUsages(@NotNull PsiMember member) {
-        return !inLibrary && !myIsEntryPointPredicate.apply(member);
-      }
+        @Override
+        public boolean shouldCheckUsages(@NotNull PsiMember member) {
+          return !myEntryPointCache.get(member);
+        }
 
-      @Override
-      public boolean isCurrentFileAlreadyChecked() {
-        return true;
-      }
-
-      @Override
-      public boolean isLocallyUsed(@NotNull PsiNamedElement member) {
-        return isReferenced(member);
-      }
-    };
+        private boolean isEntryPoint(@NotNull PsiElement element) {
+          return deadCodeInspection.isEntryPoint(element);
+        }
+      };
+    }
+    return new GlobalUsageHelperBase();
   }
 
   private void clear() {
@@ -163,6 +169,15 @@ class RefCountHolder {
     PsiElement resolveScope = resolveResult.getCurrentFileResolveScope();
     if (resolveScope instanceof PsiImportStatementBase) {
       registerImportStatement(ref, (PsiImportStatementBase)resolveScope);
+    }
+    else if (refElement == null && ref instanceof PsiJavaReference) {
+      for (JavaResolveResult result : ((PsiJavaReference)ref).multiResolve(true)) {
+        resolveScope = result.getCurrentFileResolveScope();
+        if (resolveScope instanceof PsiImportStatementBase) {
+          registerImportStatement(ref, (PsiImportStatementBase)resolveScope);
+          break;
+        }
+      }
     }
   }
 
@@ -361,5 +376,22 @@ class RefCountHolder {
 
   private static void log(@NonNls @NotNull Object... info) {
     FileStatusMap.log(info);
+  }
+
+  private class GlobalUsageHelperBase extends GlobalUsageHelper {
+    @Override
+    public boolean shouldCheckUsages(@NotNull PsiMember member) {
+      return false;
+    }
+
+    @Override
+    public boolean isCurrentFileAlreadyChecked() {
+      return true;
+    }
+
+    @Override
+    public boolean isLocallyUsed(@NotNull PsiNamedElement member) {
+      return isReferenced(member);
+    }
   }
 }

@@ -30,11 +30,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 
 import java.util.List;
+
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.BLOCK_LAMBDA_BODY;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.LAMBDA_EXPRESSION;
 
 /**
  * Block implementation for Groovy formatter
@@ -138,6 +140,12 @@ public class GroovyBlock implements Block, ASTBlock {
       return GroovyIndentProcessor.getChildSwitchIndent((GrCaseSection)psiParent, newChildIndex);
     }
 
+    if (astNode.getElementType() == LAMBDA_EXPRESSION) {
+      return new ChildAttributes(Indent.getNormalIndent(), null);
+    }
+    if (astNode.getElementType() == BLOCK_LAMBDA_BODY) {
+      return new ChildAttributes(Indent.getNormalIndent(), null);
+    }
     if (TokenSets.BLOCK_SET.contains(astNode.getElementType()) || GroovyElementTypes.SWITCH_STATEMENT.equals(astNode.getElementType())) {
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }

@@ -3,7 +3,6 @@ package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
-import com.intellij.debugger.engine.ReferringObjectsProvider;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
@@ -96,7 +95,7 @@ public class AgentLoader {
     }
 
     @Override
-    public List<Long> evaluateObjectsSizes(@NotNull List<ObjectReference> references) {
+    public long[] evaluateObjectsSizes(@NotNull List<ObjectReference> references) {
       throw new UnsupportedOperationException();
     }
 
@@ -105,8 +104,9 @@ public class AgentLoader {
       return false;
     }
 
+    @NotNull
     @Override
-    public ReferringObjectsProvider findGcRoots(@NotNull ObjectReference reference) {
+    public ReferringObjectsInfo findGcRoots(@NotNull ObjectReference reference, int limit) {
       throw new UnsupportedOperationException();
     }
   }

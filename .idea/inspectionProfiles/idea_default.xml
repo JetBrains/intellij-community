@@ -238,6 +238,7 @@
     <inspection_tool class="DoubleCheckedLocking" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="ignoreOnVolatileVariables" value="true" />
     </inspection_tool>
+    <inspection_tool class="DuplicateBooleanBranch" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="DuplicateCaseLabelJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="DuplicateCondition" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="ignoreSideEffectConditions" value="true" />
@@ -305,6 +306,9 @@
     <inspection_tool class="InspectionDescriptionNotFoundInspection" enabled="true" level="ERROR" enabled_by_default="true" />
     <inspection_tool class="InstanceofCatchParameter" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="InstanceofIncompatibleInterface" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="IntegerMultiplicationImplicitCastToLong" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoreNonOverflowingCompileTimeConstants" value="true" />
+    </inspection_tool>
     <inspection_tool class="InterceptionAnnotationWithoutRuntimeRetention" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="InvalidImplementedBy" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="InvalidProvidedBy" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -859,6 +863,17 @@
       </replaceConfiguration>
       <replaceConfiguration name="anonymous thread pools are discouraged" text="Executors.newSingleThreadExecutor()" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.ConcurrencyUtil.newSingleThreadExecutor()">
         <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="use explicit toArray() method" text="com.intellij.util.ArrayUtil.toObjectArray($collection$, $class$.class)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="$collection$.toArray(new $class$[0])">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="class" within="" contains="" />
+        <constraint name="collection" nameOfExprType="java\.util\.Collection" expressionTypes="java.util.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Arrays.asList() is not immutable" text="public static final $Type$ $Field$ = java.util.Arrays.asList($elements$);" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="public static final $Type$ $Field$ = com.intellij.util.containers.ContainerUtil.immutableList($elements$);">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Field" within="" contains="" />
+        <constraint name="Type" within="" contains="" />
+        <constraint name="elements" minCount="0" maxCount="2147483647" within="" contains="" />
       </replaceConfiguration>
     </inspection_tool>
     <inspection_tool class="SafeVarargsDetector" enabled="false" level="WARNING" enabled_by_default="false" />

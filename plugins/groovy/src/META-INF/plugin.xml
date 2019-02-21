@@ -10,7 +10,7 @@
   <depends optional="true" config-file="ant.xml">AntSupport</depends>
   <depends optional="true" config-file="groovy-byte-code-viewer.xml">ByteCodeViewer</depends>
   <depends optional="true" config-file="duplicates-groovy.xml">com.intellij.modules.ultimate</depends>
-  <depends optional="true" config-file="duplicates-detection-groovy.xml">com.intellij.modules.ultimate</depends>
+  <depends optional="true" config-file="duplicates-detection-groovy.xml">com.intellij.modules.duplicatesDetector</depends>
   <depends optional="true" config-file="groovy-structural-search.xml">com.intellij.modules.structuralsearch</depends>
 
   <resource-bundle>org.jetbrains.plugins.groovy.GroovyBundle</resource-bundle>
@@ -155,6 +155,7 @@
     <callTypeCalculator implementation="org.jetbrains.plugins.groovy.lang.typing.PredefinedReturnType"/>
     <callTypeCalculator implementation="org.jetbrains.plugins.groovy.lang.typing.WithTraitsTypeCalculator"/>
     <callTypeCalculator implementation="org.jetbrains.plugins.groovy.lang.typing.DgmCallTypeCalculator"/>
+    <callTypeCalculator implementation="org.jetbrains.plugins.groovy.lang.typing.DgmIteratorCallTypeCalculator"/>
     <callTypeCalculator implementation="org.jetbrains.plugins.groovy.lang.typing.ClosureMethodsCallTypeCalculator"/>
     <callTypeCalculator implementation="org.jetbrains.plugins.groovy.lang.typing.ObjectClassTypeCalculator"/>
 
@@ -248,6 +249,7 @@
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrContainerTypeConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.sam.ClosureToSamConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrContainerConverter"/>
+    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrCollectionToArrayConverter"/>
 
     <typeConverter implementation="org.jetbrains.plugins.groovy.gpp.GppTypeConverter"/>
 
@@ -528,7 +530,6 @@
              id="groovyReferenceListWeigher" order="before openedInEditor"/>
 
     <debuggerClassFilterProvider implementation="org.jetbrains.plugins.groovy.debugger.GroovyDebuggerClassFilterProvider"/>
-    <debugger.jvmSmartStepIntoHandler implementation="org.jetbrains.plugins.groovy.debugger.GroovySmartStepIntoHandler"/>
 
     <useScopeEnlarger implementation="org.jetbrains.plugins.groovy.lang.psi.impl.search.GrPrivateFieldScopeEnlarger"/>
 
@@ -683,7 +684,7 @@
 
     <postStartupActivity implementation="org.jetbrains.plugins.groovy.mvc.MvcProjectWithoutLibraryNotificator"/>
 
-    <editorNotificationProvider implementation="org.jetbrains.plugins.groovy.compiler.GroovyStubNotificationProvider"/>
+    <editorNotificationProviderApp implementation="org.jetbrains.plugins.groovy.compiler.GroovyStubNotificationProvider"/>
 
     <treeCopyHandler implementation="org.jetbrains.plugins.groovy.lang.GroovyChangeUtilSupport"/>
     <treeGenerator implementation="org.jetbrains.plugins.groovy.lang.psi.impl.source.impl.GroovyTreeGenerator" order="first"/>

@@ -274,9 +274,7 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
       if (index >= 0) {
         ScrollingUtil.selectItem(myPatterns.myPatternsList, index);
       }
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(myPatterns.myPatternsList, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myPatterns.myPatternsList, true));
     }
   }
 
@@ -308,9 +306,7 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
 
     myTempPatternsTable.addAssociation(matcher, type);
     myPatterns.addPatternAndSelect(pattern);
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(myPatterns.myPatternsList, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myPatterns.myPatternsList, true));
 
     return null;
   }
@@ -323,9 +319,7 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
     FileNameMatcher matcher = FileTypeManager.parseFromString(extension);
 
     myTempPatternsTable.removeAssociation(matcher, type);
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(myPatterns.myPatternsList, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myPatterns.myPatternsList, true));
   }
 
   @Override
@@ -478,9 +472,7 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
 
     public void selectFileType(FileType fileType) {
       myFileTypesList.setSelectedValue(fileType, true);
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(myFileTypesList, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myFileTypesList, true));
     }
   }
 

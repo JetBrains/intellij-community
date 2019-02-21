@@ -258,11 +258,8 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     if (identifiers.length > 1 && initializer != null) {
       text.append('(');
     }
-    for (int i = 0; i < identifiers.length; i++) {
-      if (i > 0) text.append(", ");
-      String identifier = identifiers[i];
-      text.append(identifier);
-    }
+
+    text.append(String.join(", ", identifiers));
 
     if (identifiers.length > 1 && initializer != null) {
       text.append(')');

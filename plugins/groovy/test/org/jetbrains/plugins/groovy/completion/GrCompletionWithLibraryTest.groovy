@@ -33,31 +33,6 @@ class GrCompletionWithLibraryTest extends GroovyCompletionTestBase {
 
   void testArrayLikeAccessForMap() throws Throwable { doBasicTest() }
 
-  void testEachMethodForList() throws Throwable { doBasicTest() }
-
-  void testEachMethodForMapWithKeyValue() throws Throwable { doBasicTest() }
-
-  void testEachMethodForMapWithEntry() throws Throwable { doBasicTest() }
-
-  void testWithMethod() throws Throwable { doBasicTest() }
-
-  void testInjectMethodForCollection() throws Throwable { doBasicTest() }
-
-  void testInjectMethodForArray() throws Throwable { doBasicTest() }
-
-  void testInjectMethodForMap() throws Throwable { doBasicTest() }
-
-  void testClosureDefaultParameterInEachMethod() throws Throwable { doBasicTest() }
-
-  void testEachMethodForRanges() throws Throwable { doBasicTest() }
-
-  void testEachMethodForEnumRanges() throws Throwable {
-    myFixture.configureByFile(getTestName(false) + ".groovy")
-    myFixture.completeBasic()
-    myFixture.type('\n')
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
-  }
-
   void testPrintlnSpace() { checkCompletion 'print<caret>', 'l ', "println <caret>" }
 
   void testHashCodeSpace() { checkCompletion 'if ("".h<caret>', ' ', 'if ("".hashCode() <caret>' }
@@ -72,10 +47,6 @@ class GrCompletionWithLibraryTest extends GroovyCompletionTestBase {
 
   void testGstringExtendsString() {
     doBasicTest()
-  }
-
-  void testCompletionInEachClosure() {
-    doHasVariantsTest('intValue', 'intdiv')
   }
 
   void testEllipsisTypeCompletion() {

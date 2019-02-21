@@ -34,8 +34,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.List;
 
-import static com.intellij.util.ArrayUtil.toObjectArray;
-
 public class MergeWindow {
   private static final Logger LOG = Logger.getInstance(MergeWindow.class);
 
@@ -136,7 +134,7 @@ public class MergeWindow {
       if (bottomActions.resolveAction != null) {
         bottomActions.resolveAction.putValue(DialogWrapper.DEFAULT_ACTION, true);
       }
-      return toObjectArray(actions, Action.class);
+      return actions.toArray(new Action[0]);
     }
 
     @NotNull
@@ -144,7 +142,7 @@ public class MergeWindow {
     protected Action[] createLeftSideActions() {
       MergeRequestProcessor.BottomActions bottomActions = myProcessor.getBottomActions();
       List<Action> actions = ContainerUtil.skipNulls(ContainerUtil.list(bottomActions.applyLeft, bottomActions.applyRight));
-      return toObjectArray(actions, Action.class);
+      return actions.toArray(new Action[0]);
     }
 
     @NotNull

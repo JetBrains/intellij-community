@@ -7,7 +7,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +38,7 @@ public class RefreshVFsSynchronously {
         filesToRefresh.add(vf);
       }
     }
-    VfsUtil.markDirtyAndRefresh(false, false, false, ArrayUtil.toObjectArray(filesToRefresh, VirtualFile.class));
+    VfsUtil.markDirtyAndRefresh(false, false, false, filesToRefresh.toArray(VirtualFile.EMPTY_ARRAY));
   }
 
   private static void refreshDeletedOrReplaced(@NotNull Collection<? extends File> deletedOrReplaced) {
@@ -51,7 +50,7 @@ public class RefreshVFsSynchronously {
         filesToRefresh.add(vf);
       }
     }
-    VfsUtil.markDirtyAndRefresh(false, true, false, ArrayUtil.toObjectArray(filesToRefresh, VirtualFile.class));
+    VfsUtil.markDirtyAndRefresh(false, true, false, filesToRefresh.toArray(VirtualFile.EMPTY_ARRAY));
   }
 
   @Nullable

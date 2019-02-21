@@ -1085,7 +1085,9 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 }
 
-@State(name = "ProjectRunConfigurationManager")
+const val PROJECT_RUN_MANAGER_COMPONENT_NAME = "ProjectRunConfigurationManager"
+
+@State(name = PROJECT_RUN_MANAGER_COMPONENT_NAME, useLoadedStateAsExisting = false /* ProjectRunConfigurationManager is used only for IPR, avoid relatively cost call getState */)
 internal class IprRunManagerImpl(private val project: Project) : PersistentStateComponent<Element> {
   val lastLoadedState = AtomicReference<Element>()
 

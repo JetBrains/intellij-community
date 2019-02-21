@@ -60,6 +60,6 @@ final class ConcurrentSoftValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,
   @NotNull
   @Override
   ValueReference<K, V> createValueReference(@NotNull K key, @NotNull V value) {
-    return new MySoftReference<K,V>(key, value, myQueue);
+    return new MySoftReference<>(key, value, myQueue);
   }
 }

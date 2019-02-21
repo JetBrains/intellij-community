@@ -7,7 +7,6 @@ import com.intellij.ide.ui.laf.TempUIThemeBasedLookAndFeelInfo;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -19,6 +18,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.FilenameIndex;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -37,15 +39,24 @@ public class ApplyThemeAction extends DumbAwareAction {
     Project project = e.getProject();
     if (project == null) return;
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    if (file == null || !UITheme.isThemeFile(file)) {
-      for (FileEditor fileEditor : FileEditorManager.getInstance(project).getSelectedEditors()) {
-        if (UITheme.isThemeFile(fileEditor.getFile())) {
-          file = fileEditor.getFile();
+    if (!UITheme.isThemeFile(file)) {
+      file = null;
+    }
+
+    if (file == null) {
+      for (VirtualFile virtualFile : FileEditorManager.getInstance(project).getOpenFiles()) {
+        if (UITheme.isThemeFile(virtualFile)) {
+          file = virtualFile;
           break;
         }
       }
     }
 
+    if (file == null) {
+        file = ContainerUtil.getFirstItem(
+          FilenameIndex.getAllFilesByExt(project, "theme.json", GlobalSearchScope.projectScope(project))
+        );
+    }
     if (file != null && UITheme.isThemeFile(file)) {
       applyTempTheme(file, project);
     }

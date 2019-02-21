@@ -8,7 +8,7 @@ cleanSetupJdks.dependsOn('cleanSetupJdk', 'cleanSetupJdk16', 'cleanDownloadJdk')
 
 project.ext.jdkRepo = 'https://cache-redirector.jetbrains.com/intellij-jdk'
 project.ext.jdkVersion = System.getProperty('intellij.build.jdk.version', '8').toInteger()
-project.ext.jdkArtifactPrefix = "jbsdk$jdkVersion"
+project.ext.jdkArtifactPrefix = 'jbrsdk-'
 
 def jdkDir = System.getProperty('intellij.build.jdks.target.dir')?.with {
   new File(it).mkdirs()
@@ -17,12 +17,36 @@ def jdkDir = System.getProperty('intellij.build.jdks.target.dir')?.with {
 
 project.ext.jdkOutputDir = System.getProperty("intellij.jdk.output.dir", "$jdkDir/${jdkVersion < 9 ? "1.$jdkVersion" : jdkVersion}")
 
+/**
+ * Update this method together with:
+ *  `setupJbre.gradle` 
+ *  `org/jetbrains/intellij/build/impl/BundledJreManager.groovy`
+ */
+static def splitJdkBuild(String jreBuild, String version) {
+  def split = jreBuild.split('b')
+  if (split.length > 2) {
+    throw new IllegalArgumentException(
+      "$jreBuild is expected in format <update>b<build_number>. Examples: u202b1483.24, 11_0_2b140, b96"
+    )
+  }
+  if (split.length == 2) {
+    def update = split[0]
+    if (update.startsWith(version)) update -= version
+    // [11_0_2, b140] or [8u202, b1483.24]
+    ["$version$update", "b${split[1]}"]
+  }
+  else {
+    // [11, b96]
+    [version, jreBuild]
+  }
+}
+
 task downloadJdk {
   def arch = jdkArch()
   def platform = currentPlatformName()
   def jdkUrl = jdkUrl()
-
-  def artifactName = "${jdkArtifactPrefix}${jdkBuild}_${platform}_${arch}.tar.gz"
+  def (update, buildNumber) = splitJdkBuild(jdkBuild.toString(), jdkVersion.toString())
+  def artifactName = "$jdkArtifactPrefix${update}-${platform}-${arch}-${buildNumber}.tar.gz"
   def outputFile = "$project.buildDir/jbsdk/${artifactName}"
 
   inputs.property('version', jdkVersion)
@@ -80,25 +104,20 @@ def unpackJdk(jdkArchive, outputDir) {
 
 static def jdkArch() {
   def arch = System.getProperty("intellij.jdk.arch", "")
-  if (arch == '32') return 'x86'
+  if (arch == '32') return 'i586'
   if (arch == '64') return 'x64'
   def os = OperatingSystem.current()
-  return !os.isWindows() || System.getenv("ProgramFiles(x86)") != null ? 'x64' : 'x86'
+  return !os.isWindows() || System.getenv("ProgramFiles(x86)") != null ? 'x64' : 'i586'
 }
 
+@SuppressWarnings("GrMethodMayBeStatic")
 def jdkUrl() {
   def arch = jdkArch()
-  def teamCityBuild = System.getProperty('intellij.jdk.teamcity.build')
-  if (teamCityBuild != null) {
-    def platform = OperatingSystem.current().with { os ->
-      os.isWindows() ? 'win' : os.isMacOsX() ? 'mac' : 'linux'
-    }
-    "${teamCityBuild}/${platform}/${jdkArtifactPrefix}${jdkBuild}_${arch}.tar.gz"
-  }
-  else {
-    def platform = currentPlatformName()
-    "${jdkRepo}/${jdkArtifactPrefix}${jdkBuild}_${platform}_${arch}.tar.gz"
-  }
+  def platform = currentPlatformName()
+  def (update, buildNumber) = splitJdkBuild(jdkBuild.toString(), jdkVersion.toString())
+  // base url of TeamCity build to download JDK from
+  def teamCityBuild = System.getProperty('intellij.jdk.teamcity.build.url')
+  "${teamCityBuild != null ? teamCityBuild : jdkRepo}/${jdkArtifactPrefix}${update}-${platform}-${arch}-${buildNumber}.tar.gz"
 }
 
 static def currentPlatformName() {

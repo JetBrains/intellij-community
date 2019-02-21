@@ -34,8 +34,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-import static com.intellij.util.ArrayUtil.toObjectArray;
-
 public class SyncScrollSupport {
   public interface SyncScrollable {
     @CalledInAwt
@@ -251,7 +249,7 @@ public class SyncScrollSupport {
       assert startLines.length == count;
       assert endLines.length == count;
 
-      final int[] offsets = getTargetOffsets(toObjectArray(editors, Editor.class), startLines, endLines, -1);
+      final int[] offsets = getTargetOffsets(editors.toArray(Editor.EMPTY_ARRAY), startLines, endLines, -1);
 
       final int[] startOffsets = new int[count];
       for (int i = 0; i < count; i++) {

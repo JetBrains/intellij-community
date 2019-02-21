@@ -19,6 +19,6 @@ class FeatureUsageFileEventLoggerProvider : FeatureUsageEventLoggerProvider {
   override fun isEnabled(): Boolean {
     return !ApplicationManager.getApplication().isUnitTestMode &&
            Registry.`is`("feature.usage.event.log.collect.and.upload") &&
-           StatisticsUploadAssistant.isSendAllowed()
+           StatisticsUploadAssistant.isCollectAllowed()
   }
 }

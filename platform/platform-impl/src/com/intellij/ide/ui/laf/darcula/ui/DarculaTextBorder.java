@@ -25,7 +25,7 @@ import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
 public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable {
   @Override
   public Insets getBorderInsets(Component c) {
-    return JBUI.insets(isTableCellEditor(c) || isCompact(c) ? 2 : 3).asUIResource();
+    return JBUI.insets(isTableCellEditor(c) || isCompact(c) ? 2 : 3, 3).asUIResource();
   }
 
   @Override
@@ -95,7 +95,7 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
       JBInsets.removeFrom(r, JBUI.insets(1));
       g2.translate(r.x, r.y);
 
-      float arc = JBUI.scale(6f);
+      float arc = COMPONENT_ARC.get();
       float lw = LW.getFloat();
       float bw = BW.getFloat();
       Shape outerShape = new RoundRectangle2D.Float(bw, bw, r.width - bw*2, r.height - bw*2, arc, arc);
@@ -110,7 +110,9 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
         }
         Path2D path = new Path2D.Float(Path2D.WIND_EVEN_ODD);
         path.append(outerShape, false);
-        path.append(new RoundRectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw)*2, r.height - (bw + lw)*2, arc-lw, arc-lw), false);
+
+        arc = arc > lw ? arc - lw : 0.0f;
+        path.append(new RoundRectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw)*2, r.height - (bw + lw)*2, arc, arc), false);
 
         g2.setColor(DarculaUIUtil.getOutlineColor(c.isEnabled() && c.isEditable(), c.hasFocus()));
         g2.fill(path);

@@ -56,12 +56,7 @@ public class ThreadLocalRandom {
     int threadLocalRandomProbe;
   }
 
-  private static final ThreadLocal<Tlr> tlr = new ThreadLocal<Tlr>() {
-    @Override
-    protected Tlr initialValue() {
-      return new Tlr();
-    }
-  };
+  private static final ThreadLocal<Tlr> tlr = ThreadLocal.withInitial(Tlr::new);
   private static final AtomicInteger probeGenerator = new AtomicInteger();
   /**
    * The increment for generating probe values

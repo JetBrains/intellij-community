@@ -4,14 +4,20 @@ package com.intellij.internal.statistic.service.fus.collectors;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.Nullable;
 
 public class CounterUsageCollectorEP extends AbstractExtensionPointBean {
   public static final ExtensionPointName<CounterUsageCollectorEP> EP_NAME =
     ExtensionPointName.create("com.intellij.statistics.counterUsagesCollector");
 
-  @Attribute("group_id")
+  @Attribute("groupId")
   public String groupID;
 
   @Attribute("version")
   public int version;
+
+  @Nullable
+  public String getGroupId() {
+    return groupID;
+  }
 }

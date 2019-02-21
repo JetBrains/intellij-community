@@ -18,6 +18,7 @@ import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.DelegatingGradleSettingsListenerAdapter;
+import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService;
 
 import java.util.Collection;
 import java.util.Set;
@@ -120,6 +121,14 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     ThreeState storeProjectFilesExternally = current.getStoreProjectFilesExternally();
     if (old.getStoreProjectFilesExternally() != storeProjectFilesExternally) {
       ExternalProjectsManagerImpl.getInstance(getProject()).setStoreExternally(storeProjectFilesExternally != ThreeState.NO);
+    }
+    if (!Comparing.equal(old.getDelegatedBuild(), current.getDelegatedBuild())) {
+      boolean delegatedBuild = GradleSettingsService.getInstance(getProject()).isDelegatedBuildEnabled(current.getExternalProjectPath());
+      getPublisher().onBuildDelegationChange(delegatedBuild, current.getExternalProjectPath());
+    }
+    if (!Comparing.equal(old.getTestRunner(), current.getTestRunner())) {
+      TestRunner testRunner = GradleSettingsService.getInstance(getProject()).getTestRunner(current.getExternalProjectPath());
+      getPublisher().onTestRunnerChange(testRunner, current.getExternalProjectPath());
     }
   }
 

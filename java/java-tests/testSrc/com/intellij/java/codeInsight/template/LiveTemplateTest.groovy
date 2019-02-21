@@ -1132,6 +1132,7 @@ class Foo {
     manager.startTemplate(myFixture.editor, template)
     
     assert myFixture.lookupElementStrings == ['1', '2', 'true']
+    myFixture.checkResult('1')
   }
 
   void "test unrelated command should not finish live template"() {

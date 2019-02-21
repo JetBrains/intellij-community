@@ -26,13 +26,11 @@ class ActionButtonFixture(robot: Robot, target: ActionButton) : JComponentFixtur
     }
 
     fun textMatcher(text: String): (ActionButton) -> Boolean = {
-      if (!it.isShowing || !it.isEnabled) false
-      else text == it.action.templatePresentation.text
+      it.isShowing && it.isEnabled && text == it.action.templatePresentation.text
     }
 
     fun textMatcherAnyState(text: String): (ActionButton) -> Boolean = {
-      if (!it.isShowing) false
-      else text == it.action.templatePresentation.text
+      it.isShowing && text == it.action.templatePresentation.text
     }
 
     fun fixtureByActionId(container: Container?, robot: Robot, actionId: String): ActionButtonFixture

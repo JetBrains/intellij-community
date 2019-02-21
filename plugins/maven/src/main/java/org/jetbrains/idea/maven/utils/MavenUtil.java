@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
@@ -37,6 +38,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiFile;
@@ -50,6 +52,7 @@ import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
 import gnu.trove.THashSet;
 import icons.MavenIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
@@ -85,6 +88,8 @@ import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.util.xml.NanoXmlBuilder.stop;
 
 public class MavenUtil {
+  @ApiStatus.Experimental
+  public static final ProjectSystemId SYSTEM_ID = new ProjectSystemId("MAVEN");
   public static final String MAVEN_NOTIFICATION_GROUP = "Maven";
   public static final String SETTINGS_XML = "settings.xml";
   public static final String DOT_M2_DIR = ".m2";
@@ -98,6 +103,7 @@ public class MavenUtil {
   public static final String LIB_DIR = "lib";
   public static final String CLIENT_ARTIFACT_SUFFIX = "-client";
   public static final String CLIENT_EXPLODED_ARTIFACT_SUFFIX = CLIENT_ARTIFACT_SUFFIX + " exploded";
+
 
   @SuppressWarnings("unchecked")
   private static final Pair<Pattern, String>[] SUPER_POM_PATHS = new Pair[]{
@@ -319,7 +325,8 @@ public class MavenUtil {
         VirtualFile modulePath = file.getParent();
         VirtualFile parentModulePath = parentFile.getParent();
 
-        if (!Comparing.equal(modulePath.getParent(), parentModulePath) || !FileUtil.namesEqual(MavenConstants.POM_XML, parentFile.getName())) {
+        if (!Comparing.equal(modulePath.getParent(), parentModulePath) ||
+            !FileUtil.namesEqual(MavenConstants.POM_XML, parentFile.getName())) {
           String relativePath = VfsUtilCore.findRelativePath(file, parentModulePath, '/');
           if (relativePath != null) {
             conditions.setProperty("HAS_RELATIVE_PATH", "true");
@@ -609,7 +616,7 @@ public class MavenUtil {
 
   @Nullable
   public static String getMavenVersion(@Nullable File mavenHome) {
-    if(mavenHome == null) return null;
+    if (mavenHome == null) return null;
     String[] libs = new File(mavenHome, "lib").list();
 
 
@@ -797,7 +804,7 @@ public class MavenUtil {
 
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
       parser.getXMLReader().setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-      parser.parse(in, new DefaultHandler(){
+      parser.parse(in, new DefaultHandler() {
 
         boolean textContentOccur = false;
         int spacesCrc;
@@ -1026,5 +1033,9 @@ public class MavenUtil {
   public static Stream<VirtualFile> streamPomFiles(@Nullable Project project, @Nullable VirtualFile root) {
     if (root == null) return Stream.empty();
     return Stream.of(root.getChildren()).filter(file -> isPomFile(project, file));
+  }
+
+  public static boolean isExternalBuildSystem() {
+    return Registry.is("MAVEN.experimental.externalBuild");
   }
 }

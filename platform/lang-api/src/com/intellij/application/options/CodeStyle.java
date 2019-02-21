@@ -4,7 +4,6 @@ package com.intellij.application.options;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -12,8 +11,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -23,8 +20,6 @@ import org.jetbrains.annotations.TestOnly;
  */
 @SuppressWarnings("unused") // Contains API methods which may be used externally
 public class CodeStyle {
-  private final static ExtensionPointName<CodeStyleSettingsModifier> CODE_STYLE_SETTINGS_MODIFIER_EP_NAME =
-    ExtensionPointName.create("com.intellij.codeStyleSettingsModifier");
 
   private CodeStyle() {
   }
@@ -75,24 +70,7 @@ public class CodeStyle {
    */
   @NotNull
   public static CodeStyleSettings getSettings(@NotNull PsiFile file) {
-    if (file.isValid()) {
-      Project project = file.getProject();
-      //noinspection deprecation
-      CodeStyleSettings currSettings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
-      CodeStyleSettings cachedSettings = CachedValuesManager.getCachedValue(
-        file,
-        () -> {
-          TransientCodeStyleSettings modifiableSettings = new TransientCodeStyleSettings(file, currSettings);
-          if(modifySettings(modifiableSettings, file)) {
-            return new CachedValueProvider.Result<>(modifiableSettings, modifiableSettings.getDependencies().toArray());
-          }
-          else {
-            return null;
-          }
-      });
-      return cachedSettings != null ? cachedSettings : currSettings;
-    }
-    return getDefaultSettings();
+    return CodeStyleCachingUtil.getCachedCodeStyle(file);
   }
 
 
@@ -329,15 +307,7 @@ public class CodeStyle {
     return !getSettings(file).getExcludedFiles().contains(file);
   }
 
-  private static boolean modifySettings(@NotNull TransientCodeStyleSettings transientSettings, @NotNull PsiFile file) {
-    for (CodeStyleSettingsModifier modifier : CODE_STYLE_SETTINGS_MODIFIER_EP_NAME.getExtensionList()) {
-      if (modifier.modifySettings(transientSettings, file)) {
-        transientSettings.setModifier(modifier);
-        return true;
-      }
-    }
-    return false;
-  }
+
 
 
 }

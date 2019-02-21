@@ -653,17 +653,6 @@ public class CustomizableActionsPanel {
     }
   }
 
-  private class AddGroupAction extends TreeSelectionAction {
-    private AddGroupAction() {
-      super(IdeBundle.message("button.add.group"));
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      //todo
-    }
-  }
-
   private class AddSeparatorAction extends TreeSelectionAction {
     private AddSeparatorAction() {
       super(IdeBundle.message("button.add.separator"));

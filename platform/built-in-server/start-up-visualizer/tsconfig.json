@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "moduleResolution": "node",
+    "target": "es2016",
+    "newLine": "LF",
+    "noEmitOnError": true,
+    "noUnusedParameters": true
+  },
+  "include": [
+    "src/*.ts"
+  ]
+}

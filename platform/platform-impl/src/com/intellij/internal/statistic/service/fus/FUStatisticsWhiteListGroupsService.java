@@ -3,17 +3,22 @@ package com.intellij.internal.statistic.service.fus;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.GsonBuilder;
+import com.intellij.internal.statistic.service.fus.FUSWhitelist.VersionRange;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Set;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+
+import static com.intellij.util.containers.ContainerUtil.emptyList;
+import static com.intellij.util.containers.ContainerUtil.map;
 
 /**
  * <ol>
@@ -25,7 +30,8 @@ import java.util.stream.Collectors;
  * "groups" : [
  *   {
  *    "id" : "productivity",
- *    "builds" : [{ "from" : "173.4127.37", "to": "182.124" }, { "from" : "183.12" }]
+ *    "builds" : [{ "from" : "173.4127.37", "to": "182.124" }, { "from" : "183.12" }],
+ *    "versions" : [{ "from" : "2", "to": "4" }, { "from" : "7" }]
  *   },
  *   {
  *    "id" : "spring-example"
@@ -39,8 +45,11 @@ public class FUStatisticsWhiteListGroupsService {
   private static final Logger LOG =
     Logger.getInstance("com.intellij.internal.statistic.service.whiteList.FUStatisticsWhiteListGroupsService");
 
-  @NotNull
-  public static Set<String> getApprovedGroups(@NotNull String serviceUrl, @NotNull BuildNumber current) {
+  /**
+   * @return null if error happened during groups fetching
+   */
+  @Nullable
+  public static FUSWhitelist getApprovedGroups(@NotNull String serviceUrl, @NotNull BuildNumber current) {
     String content = null;
     try {
       content = HttpRequests.request(serviceUrl)
@@ -50,14 +59,13 @@ public class FUStatisticsWhiteListGroupsService {
     catch (IOException e) {
       LOG.info(e);
     }
-    if (content == null) return Collections.emptySet();
 
-    return parseApprovedGroups(content, current);
+    return content != null ? parseApprovedGroups(content, current) : null;
   }
 
   @VisibleForTesting
   @NotNull
-  public static Set<String> parseApprovedGroups(String content, @NotNull BuildNumber build) {
+  public static FUSWhitelist parseApprovedGroups(String content, @NotNull BuildNumber build) {
     WLGroups groups = null;
     try {
       groups = new GsonBuilder().create().fromJson(content, WLGroups.class);
@@ -66,10 +74,19 @@ public class FUStatisticsWhiteListGroupsService {
       LOG.info(e);
     }
 
-    return groups == null ? Collections.emptySet() :
-           groups.groups.stream().
-             filter(group -> group.accepts(build)).
-             map(group -> group.id).collect(Collectors.toSet());
+    if (groups == null) {
+      return FUSWhitelist.empty();
+    }
+
+    final Map<String, List<VersionRange>> result = groups.groups.stream().
+      filter(group -> group.accepts(build)).
+      collect(Collectors.toMap(group -> group.id, group -> toVersionRanges(group.versions)));
+    return FUSWhitelist.create(result);
+  }
+
+  @NotNull
+  private static List<VersionRange> toVersionRanges(@Nullable ArrayList<WLVersion> versions) {
+    return versions == null || versions.isEmpty() ? emptyList() : map(versions, version -> VersionRange.create(version.from, version.to));
   }
 
   private static class WLGroups {
@@ -78,17 +95,39 @@ public class FUStatisticsWhiteListGroupsService {
   }
 
   private static class WLGroup {
-    @NotNull
+    @Nullable
     public final String id;
-    @NotNull
+    @Nullable
     public final ArrayList<WLBuild> builds = new ArrayList<>();
+    @Nullable
+    public final ArrayList<WLVersion> versions = new ArrayList<>();
 
-    WLGroup(@NotNull String id) {
+    WLGroup(@Nullable String id) {
       this.id = id;
     }
 
     public boolean accepts(BuildNumber current) {
-      return builds.stream().anyMatch(build -> build.contains(current));
+      if (!isValid()) {
+        return false;
+      }
+      final boolean hasBuilds = builds != null && !builds.isEmpty();
+      return !hasBuilds || builds.stream().anyMatch(build -> build.contains(current));
+    }
+
+    private boolean isValid() {
+      final boolean hasBuilds = builds != null && !builds.isEmpty();
+      final boolean hasVersions = versions != null && !versions.isEmpty();
+      return StringUtil.isNotEmpty(id) && (hasBuilds || hasVersions);
+    }
+  }
+
+  private static class WLVersion {
+    public final String from;
+    public final String to;
+
+    private WLVersion(String from, String to) {
+      this.from = from;
+      this.to = to;
     }
   }
 

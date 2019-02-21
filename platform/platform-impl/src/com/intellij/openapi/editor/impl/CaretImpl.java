@@ -358,6 +358,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
                                              boolean adjustForInlays,
                                              boolean fireListeners) {
     assertIsDispatchThread();
+    checkDisposal();
     updateCachedStateIfNeeded();
     if (debugBuffer != null) {
       debugBuffer.append("Start moveToLogicalPosition(). Locate before soft wrap: ").append(locateBeforeSoftWrap).append(", position: ")
@@ -569,6 +570,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
   void doMoveToVisualPosition(@NotNull VisualPosition pos, boolean fireListeners) {
     assertIsDispatchThread();
+    checkDisposal();
     validateCallContext();
     if (mySkipChangeRequests) {
       return;
@@ -1501,6 +1503,11 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     return myLogicalColumnAdjustment > 0;
   }
 
+  private void checkDisposal() {
+    if (myEditor.isDisposed()) myEditor.throwDisposalError("Editor is already disposed");
+    if (!isValid) throw new IllegalStateException("Caret is invalid");
+  }
+
   @TestOnly
   public void validateState() {
     LOG.assertTrue(!DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), getOffset()));
@@ -1523,7 +1530,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
   class PositionMarker extends RangeMarkerImpl {
     private PositionMarker(int offset) {
-      super(myEditor.getDocument(), offset, offset, false);
+      super(myEditor.getDocument(), offset, offset, false, true);
       myCaretModel.myPositionMarkerTree.addInterval(this, offset, offset, false, false, false, 0);
     }
 
@@ -1608,7 +1615,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     private int endVirtualOffset;
 
     private SelectionMarker(int start, int end) {
-      super(myEditor.getDocument(), start, end, false);
+      super(myEditor.getDocument(), start, end, false, true);
       myCaretModel.mySelectionMarkerTree.addInterval(this, start, end, false, false, false, 0);
     }
 

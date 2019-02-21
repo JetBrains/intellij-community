@@ -9,11 +9,10 @@ import org.jetbrains.annotations.NotNull;
 
 public class VcsLogUsageTriggerCollector {
 
-  public static void triggerUsage(@NotNull AnActionEvent e) {
-    String text = e.getPresentation().getText();
-    if (text != null) {
-      triggerUsage(e, text);
-    }
+  public static void triggerUsage(@NotNull AnActionEvent e, @NotNull Object action) {
+    String name = action.getClass().getName();
+    if (name.contains(".")) name = name.substring(name.lastIndexOf(".") + 1);
+    triggerUsage(e, name);
   }
 
   public static void triggerUsage(@NotNull AnActionEvent e, @NotNull String text) {

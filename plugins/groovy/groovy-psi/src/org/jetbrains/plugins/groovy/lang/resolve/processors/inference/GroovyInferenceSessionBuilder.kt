@@ -16,7 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
@@ -110,7 +110,7 @@ fun getMostTopLevelExpression(start: GrExpression): GrExpression {
 
 private fun getExpectedType(expression: GrExpression): PsiType? {
   val parent = expression.parent
-  val parentMethod = PsiTreeUtil.getParentOfType(parent, GrMethod::class.java, true, GrClosableBlock::class.java)
+  val parentMethod = PsiTreeUtil.getParentOfType(parent, GrMethod::class.java, true, GrFunctionalExpression::class.java)
 
   if (parent is GrReturnStatement && parentMethod != null) {
     return parentMethod.returnType
@@ -167,7 +167,7 @@ private fun collectExitPoints(place: GrExpression): List<GrStatement> {
 private fun canBeExitPoint(element: PsiElement?): Boolean {
   var place = element
   while (place != null) {
-    if (place is GrMethod || place is GrClosableBlock || place is GrClassInitializer) return true
+    if (place is GrMethod || place is GrFunctionalExpression || place is GrClassInitializer) return true
     if (place is GrThrowStatement || place is GrTypeDefinitionBody || place is GroovyFile) return false
     place = place.parent
   }

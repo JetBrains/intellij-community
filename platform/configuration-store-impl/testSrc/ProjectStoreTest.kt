@@ -4,6 +4,7 @@ package com.intellij.configurationStore
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
@@ -34,14 +35,12 @@ internal class ProjectStoreTest {
   companion object {
     @JvmField
     @ClassRule
-    val projectRule = ProjectRule()
+    val appRule = ApplicationRule()
   }
-
-  private val tempDirManager = TemporaryDirectory()
 
   @Rule
   @JvmField
-  val ruleChain = RuleChain(tempDirManager)
+  val tempDirManager = TemporaryDirectory()
 
   @Language("XML")
   private val iprFileContent =
@@ -58,7 +57,7 @@ internal class ProjectStoreTest {
     }
   }
 
-  data class TestState(var value: String = "default")
+  private data class TestState(var value: String = "default")
 
   @Test
   fun directoryBasedStorage() = runBlocking {
@@ -75,7 +74,7 @@ internal class ProjectStoreTest {
       file.write(file.readText().replace("""<option name="value" value="foo" />""", """<option name="value" value="newValue" />"""))
 
       LocalFileSystem.getInstance().findFileByPath(project.basePath!!)!!.refresh(false, true)
-      (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedProjectFileAlarm()
+      (ProjectManager.getInstance() as? ConfigurationStorageReloader)?.reloadChangedStorageFiles()
 
       assertThat(testComponent.state).isEqualTo(TestState("newValue"))
 
@@ -167,6 +166,52 @@ internal class ProjectStoreTest {
       project.setProjectName(name)
       project.stateStore.save()
       assertThat(store.nameFile).doesNotExist()
+    }
+  }
+
+  @Test
+  fun `remove stalled data`() = runBlocking {
+    loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
+      it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", iprFileContent)
+      it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/foo.xml", """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <project version="4">
+        <component name="ValidComponent" foo="some data" />
+        <component name="AppLevelLoser" foo="old?" />
+        <component name="ProjectLevelLoser" foo="old?" />
+      </project>
+    """.trimIndent())
+      it.path
+    }) { project ->
+      val stalledStorageBean = StalledStorageBean()
+      val storageFileName = "foo.xml"
+      stalledStorageBean.file = storageFileName
+      stalledStorageBean.components.addAll(listOf("AppLevelLoser"))
+
+      val projectStalledStorageBean = StalledStorageBean()
+      projectStalledStorageBean.file = storageFileName
+      projectStalledStorageBean.isProjectLevel = true
+      projectStalledStorageBean.components.addAll(listOf("ProjectLevelLoser"))
+      PlatformTestUtil.maskExtensions(STALLED_STORAGE_EP, listOf(stalledStorageBean, projectStalledStorageBean), project)
+
+      val componentStore = project.stateStore
+
+      @State(name = "ValidComponent", storages = [(Storage(value = "foo.xml"))])
+      class AOther : A()
+
+      val component = AOther()
+      componentStore.initComponent(component, false)
+      assertThat(component.options.foo).isEqualTo("some data")
+
+      componentStore.save()
+
+      assertThat(Paths.get(project.stateStore.storageManager.expandMacros(PROJECT_CONFIG_DIR)).resolve(stalledStorageBean.file)).isEqualTo("""
+      <?xml version="1.0" encoding="UTF-8"?>
+      <project version="4">
+        <component name="AppLevelLoser" foo="old?" />
+        <component name="ValidComponent" foo="some data" />
+      </project>
+    """.trimIndent())
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -95,6 +95,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     myWeight = ep.groupWeight;
   }
 
+  @Nullable
   private UnnamedConfigurable myConfigurable;
 
   @Nullable
@@ -171,7 +172,10 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
 
   @Override
   public void disposeUIResources() {
-    getConfigurable().disposeUIResources();
+    UnnamedConfigurable configurable = myConfigurable;
+    if (configurable != null) {
+      configurable.disposeUIResources();
+    }
   }
 
   @NotNull
@@ -288,7 +292,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
             }
           }
         }
-        myKids = ArrayUtil.toObjectArray(list, Configurable.class);
+        myKids = list.toArray(new Configurable[0]);
         isInitialized = true;
         ConfigurableCardPanel.warn(this, "children", time);
       }

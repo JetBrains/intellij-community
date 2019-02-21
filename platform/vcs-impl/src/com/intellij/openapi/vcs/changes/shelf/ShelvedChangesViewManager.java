@@ -45,7 +45,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.ui.*;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IconUtil.IconSizeWrapper;
 import com.intellij.util.PathUtil;
@@ -69,6 +68,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
@@ -82,6 +82,7 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.REPOSIT
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.util.containers.UtilKt.isEmpty;
 import static java.util.Comparator.comparing;
 
 public class ShelvedChangesViewManager implements Disposable {
@@ -93,6 +94,7 @@ public class ShelvedChangesViewManager implements Disposable {
   private final ShelveChangesManager myShelveChangesManager;
   private final Project myProject;
   final ShelfTree myTree;
+  @NotNull private final PropertyChangeListener myGroupingChangeListener;
   private MyShelfContent myContent = null;
   final DeleteProvider myDeleteProvider = new MyShelveDeleteProvider();
   private final MergingUpdateQueue myUpdateQueue;
@@ -129,6 +131,12 @@ public class ShelvedChangesViewManager implements Disposable {
     myTree = new ShelfTree(myProject);
     myTree.setEditable(true);
     myTree.setDragEnabled(true);
+    myTree.getGroupingSupport().setGroupingKeysOrSkip(myShelveChangesManager.getGrouping());
+    myGroupingChangeListener = e -> {
+      myShelveChangesManager.setGrouping(myTree.getGroupingSupport().getGroupingKeys());
+      myTree.rebuildTree();
+    };
+    myTree.addGroupingChangeListener(myGroupingChangeListener);
     DefaultTreeCellEditor treeCellEditor = new DefaultTreeCellEditor(myTree, null) {
       @Override
       public boolean isCellEditable(EventObject event) {
@@ -159,18 +167,16 @@ public class ShelvedChangesViewManager implements Disposable {
     editSourceAction.registerCustomShortcutSet(editSourceAction.getShortcutSet(), myTree);
 
     PopupHandler.installPopupHandler(myTree, "ShelvedChangesPopupMenu", SHELF_CONTEXT_MENU);
-    myTree.setDoubleClickHandler(() -> {
-      DataContext dc = DataManager.getInstance().getDataContext(myTree);
-      if (!getShelveChanges(dc).isEmpty() || !getBinaryShelveChanges(dc).isEmpty()) {
-        DiffShelvedChangesActionProvider.showShelvedChangesDiff(dc);
-      }
-    });
     myTree.addSelectionListener(() -> mySplitterComponent.updatePreview(false));
     if (startupManager == null) {
       LOG.error("Couldn't start loading shelved changes");
       return;
     }
     startupManager.registerPostStartupActivity((DumbAwareRunnable)() -> myUpdateQueue.queue(new MyContentUpdater()));
+  }
+
+  private boolean hasExactlySelectedChanges() {
+    return !isEmpty(VcsTreeModelData.exactlySelected(myTree).userObjectsStream(ShelvedWrapper.class));
   }
 
   @CalledInAwt
@@ -307,6 +313,7 @@ public class ShelvedChangesViewManager implements Disposable {
   @Override
   public void dispose() {
     myUpdateQueue.cancelAllUpdates();
+    myTree.removeGroupingChangeListener(myGroupingChangeListener);
   }
 
   public void updateOnVcsMappingsChanged() {
@@ -337,6 +344,29 @@ public class ShelvedChangesViewManager implements Disposable {
     @Override
     public boolean isPathEditable(TreePath path) {
       return isEditable() && myTree.getSelectionCount() == 1 && path.getLastPathComponent() instanceof ShelvedListNode;
+    }
+
+    @NotNull
+    @Override
+    protected ChangesGroupingSupport installGroupingSupport() {
+      return new ChangesGroupingSupport(myProject, this, false);
+    }
+
+    @Override
+    public int getToggleClickCount() {
+      return 2;
+    }
+
+    @Override
+    protected void installDoubleClickHandler() {
+      new DoubleClickListener() {
+        @Override
+        protected boolean onDoubleClick(MouseEvent e) {
+          if (!hasExactlySelectedChanges()) return false;
+          DiffShelvedChangesActionProvider.showShelvedChangesDiff(DataManager.getInstance().getDataContext(myTree));
+          return true;
+        }
+      }.installOn(this);
     }
 
     @Override
@@ -384,7 +414,7 @@ public class ShelvedChangesViewManager implements Disposable {
       else if (VcsDataKeys.CHANGES.is(dataId)) {
         List<ShelvedWrapper> shelvedChanges = VcsTreeModelData.selected(myTree).userObjects(ShelvedWrapper.class);
         if (!shelvedChanges.isEmpty()) {
-          return ArrayUtil.toObjectArray(map2List(shelvedChanges, s -> s.getChange(myProject)), Change.class);
+          return map2Array(shelvedChanges, Change.class, s -> s.getChange(myProject));
         }
       }
       else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
@@ -751,7 +781,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
       renderer.append(fileName, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, myShelvedChange.getFileStatus().getColor()));
       if (myAdditionalText != null) {
-        renderer.append(myAdditionalText, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        renderer.append(spaceAndThinSpace() + myAdditionalText, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
       if (renderer.isShowFlatten()) {
         renderer.append(spaceAndThinSpace() + FileUtil.toSystemDependentName(directory), SimpleTextAttributes.GRAYED_ATTRIBUTES);

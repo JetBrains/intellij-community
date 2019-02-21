@@ -43,15 +43,15 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
                                                     isAutoSave: Boolean): SchemeManager<T> {
     val path = checkPath(directoryName)
     val manager = SchemeManagerImpl(path,
-                                                                                  processor,
-                                                                                  streamProvider
-                                                                                  ?: (componentManager?.stateStore?.storageManager as? StateStorageManagerImpl)?.compoundStreamProvider,
-                                                                                  directoryPath ?: pathToFile(path),
-                                                                                  roamingType,
-                                                                                  presentableName,
-                                                                                  schemeNameToFileName,
-                                                                                  if (streamProvider != null && streamProvider.isApplicable(path, roamingType)) null
-                                                                                  else createFileChangeSubscriber())
+                                    processor,
+                                    streamProvider
+                                    ?: (componentManager?.stateStore?.storageManager as? StateStorageManagerImpl)?.compoundStreamProvider,
+                                    directoryPath ?: pathToFile(path),
+                                    roamingType,
+                                    presentableName,
+                                    schemeNameToFileName,
+                                    if (streamProvider != null && streamProvider.isApplicable(path, roamingType)) null
+                                    else createFileChangeSubscriber())
     if (isAutoSave) {
       @Suppress("UNCHECKED_CAST")
       managers.add(manager as SchemeManagerImpl<Scheme, Scheme>)
@@ -64,14 +64,9 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
   }
 
   open fun checkPath(originalPath: String): String {
-    fun error(message: String) {
-      // as error because it is not a new requirement
-      if (ApplicationManager.getApplication().isUnitTestMode) throw AssertionError(message) else LOG.error(message)
-    }
-
     when {
-      originalPath.contains('\\') -> error("Path must be system-independent, use forward slash instead of backslash")
-      originalPath.isEmpty() -> error("Path must not be empty")
+      originalPath.contains('\\') -> LOG.error("Path must be system-independent, use forward slash instead of backslash")
+      originalPath.isEmpty() -> LOG.error("Path must not be empty")
     }
     return originalPath
   }
@@ -117,8 +112,9 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
       return path
     }
 
-    override fun pathToFile(path: String) = Paths.get(ApplicationManager.getApplication().stateStore.storageManager.expandMacros(
-      ROOT_CONFIG), path)!!
+    override fun pathToFile(path: String): Path {
+      return Paths.get(ApplicationManager.getApplication().stateStore.storageManager.expandMacros(ROOT_CONFIG), path)!!
+    }
   }
 
   @Suppress("unused")

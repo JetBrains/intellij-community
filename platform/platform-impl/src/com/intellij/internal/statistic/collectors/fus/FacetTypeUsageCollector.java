@@ -5,6 +5,8 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
+import com.intellij.internal.statistic.utils.PluginInfo;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -17,14 +19,14 @@ public class FacetTypeUsageCollector extends ProjectUsagesCollector {
   @NotNull
   @Override
   public Set<UsageDescriptor> getUsages(@NotNull Project project) {
-    Set<UsageDescriptor> set = ContainerUtil.newHashSet();
+    final Set<String> facets = ContainerUtil.newHashSet();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
-      module.getModuleTypeName();
       for (Facet facet : FacetManager.getInstance(module).getAllFacets()) {
-        set.add(new UsageDescriptor(facet.getType().getStringId()));
+        final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(facet.getClass());
+        facets.add(info.isDevelopedByJetBrains() ? facet.getType().getStringId() : "third.party");
       }
     }
-    return set;
+    return ContainerUtil.map2Set(facets, facet -> new UsageDescriptor(facet, 1));
   }
 
   @NotNull

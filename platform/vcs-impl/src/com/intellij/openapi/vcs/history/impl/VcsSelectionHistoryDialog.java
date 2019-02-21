@@ -446,7 +446,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     }
     else if (VcsDataKeys.VCS_FILE_REVISIONS.is(dataId)) {
       List<VcsFileRevision> revisions = ContainerUtil.filter(myList.getSelectedObjects(), Conditions.notEqualTo(myLocalRevision));
-      return ArrayUtil.toObjectArray(revisions, VcsFileRevision.class);
+      return revisions.toArray(new VcsFileRevision[0]);
     }
     else if (VcsDataKeys.VCS.is(dataId)) {
       return myActiveVcs.getKeyInstanceMethod();

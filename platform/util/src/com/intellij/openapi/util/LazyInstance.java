@@ -36,16 +36,7 @@ public abstract class LazyInstance<T> extends NotNullLazyValue<T>{
       constructor.setAccessible(true);
       return tClass.newInstance();
     }
-    catch (InstantiationException e) {
-      throw new RuntimeException(e);
-    }
-    catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
-    catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
-    }
-    catch (NoSuchMethodException e) {
+    catch (InstantiationException | NoSuchMethodException | ClassNotFoundException | IllegalAccessException e) {
       throw new RuntimeException(e);
     }
   }

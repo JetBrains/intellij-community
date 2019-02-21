@@ -1,9 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
-import com.intellij.internal.statistic.utils.isDevelopedByJetBrains
+import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.ui.DialogWrapper
 
 private const val DIALOGS = "ui.dialogs"
@@ -30,28 +29,35 @@ class FeatureUsageUiEventsImpl : FeatureUsageUiEvents {
 
   override fun logShowDialog(name: String, context: Class<*>) {
     if (FeatureUsageLogger.isEnabled()) {
-      val report = toReport(context, name, DIALOGS_DEFAULT)
-      FUCounterUsageLogger.getInstance().logEvent(DIALOGS, report, SHOW_DIALOG_DATA)
+      val data = SHOW_DIALOG_DATA.copy()
+      val report = toReport(context, name, DIALOGS_DEFAULT, data)
+      FUCounterUsageLogger.getInstance().logEvent(DIALOGS, report, data)
     }
   }
 
   override fun logCloseDialog(name: String, exitCode: Int, context: Class<*>) {
     if (FeatureUsageLogger.isEnabled()) {
-      val report = toReport(context, name, DIALOGS_DEFAULT)
-      if (exitCode == DialogWrapper.OK_EXIT_CODE) {
-        FUCounterUsageLogger.getInstance().logEvent(DIALOGS, report, CLOSE_OK_DIALOG_DATA)
-      }
-      else if (exitCode == DialogWrapper.CANCEL_EXIT_CODE) {
-        FUCounterUsageLogger.getInstance().logEvent(DIALOGS, report, CLOSE_CANCEL_DIALOG_DATA)
-      }
-      else {
-        FUCounterUsageLogger.getInstance().logEvent(DIALOGS, report, CLOSE_CUSTOM_DIALOG_DATA)
-      }
+      val data = getDataForCloseDialog(exitCode).copy()
+      val report = toReport(context, name, DIALOGS_DEFAULT, data)
+      FUCounterUsageLogger.getInstance().logEvent(DIALOGS, report, data)
     }
   }
 
-  private fun toReport(context: Class<*>, name: String, defaultValue: String): String {
-    val pluginId = PluginManagerCore.getPluginByClassName(context.name)
-    return if (isDevelopedByJetBrains(pluginId)) name else defaultValue
+  private fun getDataForCloseDialog(exitCode: Int): FeatureUsageData {
+    if (exitCode == DialogWrapper.OK_EXIT_CODE) {
+      return CLOSE_OK_DIALOG_DATA
+    }
+    else if (exitCode == DialogWrapper.CANCEL_EXIT_CODE) {
+      return CLOSE_CANCEL_DIALOG_DATA
+    }
+    else {
+      return CLOSE_CUSTOM_DIALOG_DATA
+    }
+  }
+
+  private fun toReport(context: Class<*>, name: String, defaultValue: String, data: FeatureUsageData): String {
+    val info = getPluginInfo(context)
+    data.addPluginInfo(info)
+    return if (info.isDevelopedByJetBrains()) name else defaultValue
   }
 }

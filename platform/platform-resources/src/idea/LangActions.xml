@@ -333,7 +333,7 @@
       <action id="CopyElement" class="com.intellij.ide.actions.CopyElementAction"/>
       <action id="SafeDelete" class="com.intellij.refactoring.actions.SafeDeleteAction"/>
       <separator/>
-      <group id="IntroduceActionsGroup" popup="true">
+      <group id="IntroduceActionsGroup" popup="true" class="com.intellij.ide.actions.NonTrivialActionGroup">
         <action id="IntroduceVariable" class="com.intellij.refactoring.actions.IntroduceVariableAction"/>
         <action id="IntroduceConstant" class="com.intellij.refactoring.actions.IntroduceConstantAction"/>
         <action id="IntroduceField" class="com.intellij.refactoring.actions.IntroduceFieldAction"/>
@@ -465,11 +465,12 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
-    <group id="ProjectViewPopupMenuRefactoringGroup" class="com.intellij.ide.actions.NonTrivialActionGroup">
+    <group id="ProjectViewPopupMenuRefactoringGroup" class="com.intellij.openapi.actionSystem.DefaultCompactActionGroup">
       <reference ref="RefactoringMenu"/>
     </group>
 
     <group id="ProjectViewPopupMenuModifyGroup">
+      <reference ref="ReformatCode"/>
       <reference ref="$Delete"/>
       <reference ref="Scratch.ChangeLanguage"/>
       <group id="MarkFileAs" class="com.intellij.openapi.file.exclude.ui.MarkFileGroup">
@@ -493,7 +494,6 @@
       <action id="RestoreDefaultExtensionScripts" class="com.intellij.ide.extensionResources.RestoreBundledExtensionsAction"/>
       <separator/>
       <reference ref="CutCopyPasteGroup"/>
-      <reference ref="EditSource"/>
       <reference ref="ChangesView.ApplyPatch"/>
       <separator/>
       <reference ref="FindUsages"/>
@@ -692,9 +692,56 @@
     <action id="TypeHierarchyBase.BaseOnThisType" text="Base on This Type"
             class="com.intellij.ide.hierarchy.TypeHierarchyBrowserBase$BaseOnThisTypeAction"
             use-shortcut-of="TypeHierarchy"/>
+    <action id="MethodHierarchy.BaseOnThisMethod" text="Base on This Method"
+            class="com.intellij.ide.hierarchy.MethodHierarchyBrowserBase$BaseOnThisMethodAction"
+            use-shortcut-of="MethodHierarchy"/>
+    <action id="CallHierarchy.BaseOnThisMethod" text="Base on This Method"
+            class="com.intellij.ide.hierarchy.CallHierarchyBrowserBase$BaseOnThisMethodAction"
+            use-shortcut-of="CallHierarchy"/>
     <action id="TypeHierarchy.Class" class="com.intellij.ide.hierarchy.ViewClassHierarchyAction"/>
     <action id="TypeHierarchy.Subtypes" class="com.intellij.ide.hierarchy.ViewSubtypesHierarchyAction"/>
     <action id="TypeHierarchy.Supertypes" class="com.intellij.ide.hierarchy.ViewSupertypesHierarchyAction"/>
+
+    <group id="TypeHierarchyPopupMenu">
+      <reference ref="TypeHierarchyBase.BaseOnThisType"/>
+      <reference ref="TypeHierarchy.Class"/>
+      <reference ref="TypeHierarchy.Subtypes"/>
+      <reference ref="TypeHierarchy.Supertypes"/>
+      <separator/>
+    </group>
+
+    <group id="MethodHierarchyPopupMenu">
+      <reference ref="MethodHierarchy.BaseOnThisMethod"/>
+    </group>
+    <group id="CallHierarchyPopupMenu">
+      <reference ref="CallHierarchy.BaseOnThisMethod"/>
+    </group>
+
+    <group>
+      <add-to-group group-id="TypeHierarchyPopupMenu"/>
+      <add-to-group group-id="MethodHierarchyPopupMenu"/>
+      <add-to-group group-id="CallHierarchyPopupMenu"/>
+
+      <reference ref="EditSource"/>
+      <separator/>
+      <reference ref="FindUsages"/>
+      <reference ref="RefactoringMenu"/>
+      <separator/>
+      <reference ref="AddToFavorites"/>
+      <separator/>
+      <reference ref="RunContextPopupGroup"/>
+      <separator/>
+      <reference ref="ReformatCode"/>
+      <reference ref="OptimizeImports"/>
+      <reference ref="$Delete"/>
+      <separator/>
+      <reference ref="VersionControlsGroup"/>
+      <separator/>
+      <reference ref="ExternalToolsGroup"/>
+      <separator/>
+      <reference ref="CompareTwoFiles"/>
+      <reference ref="CompareFileWithEditor"/>
+    </group>
 
     <action id="EditBreakpoint" class="com.intellij.xdebugger.impl.actions.EditBreakpointAction"/>
     <group id="DebugMainMenu">
@@ -1075,25 +1122,46 @@
 
     <group id="RunDashboardContentToolbar">
       <!--suppress PluginXmlValidity -->
-      <action id="RunDashboard.Run" class="com.intellij.execution.dashboard.actions.RunAction" use-shortcut-of="RunClass"/>
+      <action id="RunDashboard.Run" class="com.intellij.execution.dashboard.actions.RunAction"
+              text="Run" icon="AllIcons.Actions.Execute"
+              use-shortcut-of="RunClass"/>
       <!--suppress PluginXmlValidity -->
-      <action id="RunDashboard.Debug" class="com.intellij.execution.dashboard.actions.DebugAction" use-shortcut-of="DebugClass"/>
-      <action id="RunDashboard.Stop" class="com.intellij.execution.dashboard.actions.StopAction" use-shortcut-of="Stop"/>
+      <action id="RunDashboard.Debug" class="com.intellij.execution.dashboard.actions.DebugAction"
+              text="Debug" icon="AllIcons.Actions.StartDebugger" use-shortcut-of="DebugClass"/>
+      <action id="RunDashboard.Stop" class="com.intellij.execution.dashboard.actions.StopAction"
+              text="Stop" icon="AllIcons.Actions.Suspend"
+              use-shortcut-of="Stop"/>
       <separator/>
-      <action id="RunDashboard.ShowConfigurations" class="com.intellij.execution.dashboard.actions.ShowConfigurationsAction"/>
+      <action id="RunDashboard.ShowConfigurations" class="com.intellij.execution.dashboard.actions.ShowConfigurationsAction"
+              text="Show Configurations" icon="AllIcons.Actions.ShowAsTree"/>
     </group>
     <group id="RunDashboardTreeToolbar"/>
     <group id="RunDashboardPopup">
       <action id="RunDashboard.EditConfiguration" class="com.intellij.execution.dashboard.actions.EditConfigurationAction"
+              text="Edit Configuration" icon="AllIcons.Actions.EditSource"
               use-shortcut-of="EditSource"/>
       <action id="RunDashboard.CopyConfiguration" class="com.intellij.execution.dashboard.actions.CopyConfigurationAction"
+              text="Copy Configuration" icon="AllIcons.Actions.Copy"
               use-shortcut-of="EditorDuplicate"/>
       <action id="RunDashboard.RemoveConfiguration" class="com.intellij.execution.dashboard.actions.RemoveConfigurationAction"
+              text="Remove Configuration" icon="AllIcons.General.Remove"
               use-shortcut-of="$Delete"/>
       <separator/>
-      <action id="RunDashboard.GroupConfigurations" class="com.intellij.execution.dashboard.actions.GroupConfigurationsAction"/>
+      <action id="RunDashboard.GroupConfigurations" class="com.intellij.execution.dashboard.actions.GroupConfigurationsAction"
+              text="Group Configurations" icon="AllIcons.Actions.GroupByPackage"/>
       <action id="RunDashboard.UngroupConfigurations" class="com.intellij.execution.dashboard.actions.UngroupConfigurationsActions"
+              text="Ungroup Configurations" icon="AllIcons.General.Remove"
               use-shortcut-of="$Delete"/>
+    </group>
+
+    <group id="ServiceViewTreeToolbar"/>
+    <group id="ServiceViewNodeToolbar">
+      <group class="com.intellij.execution.services.ServiceView$ItemToolbarActionGroup"/>
+      <separator/>
+    </group>
+    <group id="ServiceViewNodePopup">
+      <group class="com.intellij.execution.services.ServiceView$ItemPopupActionGroup"/>
+      <separator/>
     </group>
 
     <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction">

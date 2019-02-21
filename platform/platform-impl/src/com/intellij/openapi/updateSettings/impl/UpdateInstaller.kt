@@ -187,13 +187,13 @@ object UpdateInstaller {
   private fun getTempDir() = File(PathManager.getTempPath(), "patch-update")
 
   private fun getJdkSuffix(): String {
-    val jreHome = File(PathManager.getHomePath(), if (SystemInfo.isMac) "Contents/jdk" else "jre64")
-    if (!jreHome.exists()) return "-no-jdk"
+    val jreHome = File(PathManager.getHomePath(), if (SystemInfo.isMac) "jdk" else "jre64")
+    if (!jreHome.exists()) return "-no-jbr"
     val releaseFile = File(jreHome, if (SystemInfo.isMac) "Contents/Home/release" else "release")
     val version = try {
       releaseFile.readLines().first { it.startsWith("JAVA_VERSION=") }.let { JavaVersion.parse(it) }.feature
     }
     catch (e: Exception) { 0 }
-    return if (version == 11) "-jdk11-bundled" else ""
+    return if (version == 11) "-jbr11" else ""
   }
 }

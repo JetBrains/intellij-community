@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.text.MergingCharSequence;
@@ -28,7 +29,6 @@ import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -584,12 +584,11 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
   }
 
-  @SuppressWarnings("unchecked")
   @NotNull
   private static <T> T[] reallocateArray(@NotNull T[] array, int index) {
     if (index < array.length) return array;
 
-    T[] newArray = (T[])Array.newInstance(array.getClass().getComponentType(), SegmentArray.calcCapacity(array.length, index));
+    T[] newArray = ArrayUtil.newArray(ArrayUtil.getComponentType(array), SegmentArray.calcCapacity(array.length, index));
 
     System.arraycopy(array, 0, newArray, 0, array.length);
     return newArray;

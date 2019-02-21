@@ -180,6 +180,11 @@ public class VcsNotifier {
     return notify(STANDARD_NOTIFICATION, title, message, NotificationType.INFORMATION, actions);
   }
 
+  @NotNull
+  public Notification notifyMinorInfo(boolean sticky, @NotNull String title, @NotNull String message, NotificationAction... actions) {
+    return notify(sticky ? IMPORTANT_ERROR_NOTIFICATION : STANDARD_NOTIFICATION, title, message, NotificationType.INFORMATION, actions);
+  }
+
   public Notification logInfo(@NotNull String title, @NotNull String message) {
     return notify(SILENT_NOTIFICATION, title, message, NotificationType.INFORMATION);
   }

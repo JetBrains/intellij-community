@@ -32,9 +32,9 @@ public class GCUtil {
   @TestOnly
   public static void tryGcSoftlyReachableObjects() {
     //long started = System.nanoTime();
-    ReferenceQueue<Object> q = new ReferenceQueue<Object>();
-    SoftReference<Object> ref = new SoftReference<Object>(new Object(), q);
-    ArrayList<SoftReference<?>> list = new ArrayList<SoftReference<?>>(100 + useReference(ref));
+    ReferenceQueue<Object> q = new ReferenceQueue<>();
+    SoftReference<Object> ref = new SoftReference<>(new Object(), q);
+    ArrayList<SoftReference<?>> list = new ArrayList<>(100 + useReference(ref));
 
     System.gc();
     final long freeMemory = Runtime.getRuntime().freeMemory();

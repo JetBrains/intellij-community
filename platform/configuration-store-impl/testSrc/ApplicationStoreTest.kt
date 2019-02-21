@@ -7,11 +7,14 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.refreshVfs
-import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.io.lastModified
 import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.io.write
 import com.intellij.util.io.writeChild
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Attribute
@@ -37,12 +40,16 @@ internal class ApplicationStoreTest {
   companion object {
     @JvmField
     @ClassRule
-    val projectRule = ProjectRule()
+    val appRule = ApplicationRule()
   }
 
   @JvmField
   @Rule
   val tempDirManager = TemporaryDirectory()
+
+  @JvmField
+  @Rule
+  val disposableRule = DisposableRule()
 
   private var testAppConfig: Path by Delegates.notNull()
   private var componentStore: MyComponentStore by Delegates.notNull()
@@ -63,7 +70,7 @@ internal class ApplicationStoreTest {
 
     componentStore.initComponent(component, false)
     component.foo = "newValue"
-    saveStore()
+    componentStore.save()
 
     assertThat(streamProvider.data[RoamingType.DEFAULT]!!["new.xml"]).isEqualTo("<application>\n  <component name=\"A\" foo=\"newValue\" />\n</application>")
   }
@@ -113,7 +120,7 @@ internal class ApplicationStoreTest {
     assertThat(component.foo).isEqualTo("new")
 
     component.foo = "new2"
-    saveStore()
+    componentStore.save()
 
     assertThat(oldFile).doesNotExist()
   }
@@ -149,7 +156,7 @@ internal class ApplicationStoreTest {
 
     component.options.foo = "new"
 
-    saveStore()
+    componentStore.save()
 
     val storageManager = componentStore.storageManager
 
@@ -199,27 +206,11 @@ internal class ApplicationStoreTest {
     componentStore.initComponent(component, false)
     assertThat(component.foo).isEqualTo("new")
 
-    saveStore()
+    componentStore.save()
 
     assertThat(oldFile).hasContent("""<application>
   <component name="OtherComponent" foo="old" />
 </application>""")
-  }
-
-  @State(name = "A", storages = [(Storage("a.xml"))], additionalExportFile = "foo")
-  private open class A : PersistentStateComponent<TestState> {
-    var options = TestState()
-
-    var isThrowErrorOnLoadState = false
-
-    override fun getState() = options
-
-    override fun loadState(state: TestState) {
-      if (isThrowErrorOnLoadState) {
-        throw ProcessCanceledException()
-      }
-      this.options = state
-    }
   }
 
   @Test
@@ -233,14 +224,14 @@ internal class ApplicationStoreTest {
     componentStore.initComponent(component, false)
     assertThat(component.options).isEqualTo(TestState("old"))
 
-    saveStore()
+    componentStore.save()
 
     assertThat(file).hasContent(oldContent)
     assertThat(oldModificationTime).isEqualTo(file.lastModified())
 
     component.options.bar = "2"
     component.options.foo = "1"
-    saveStore()
+    componentStore.save()
 
     assertThat(file).hasContent("""
     <application>
@@ -280,7 +271,7 @@ internal class ApplicationStoreTest {
 
     try {
       setRoamableComponentSaveThreshold(-100)
-      saveStore()
+      componentStore.save()
     }
     finally {
       restoreDefaultNotRoamableComponentSaveThreshold()
@@ -294,20 +285,98 @@ internal class ApplicationStoreTest {
 
   @Test
   fun `other xml file as not-roamable without explicit roaming`() = runBlocking<Unit> {
-    @State(name = "A", storages = [(Storage(value = Storage.NOT_ROAMABLE_FILE))])
+    @State(name = "A", storages = [(Storage(value = StoragePathMacros.NOT_ROAMABLE_FILE))])
     class AOther : A()
 
     val component = AOther()
     componentStore.initComponent(component, false)
     component.options.foo = "old"
 
-    saveStore()
+    componentStore.save()
 
-    assertThat(testAppConfig.resolve(Storage.NOT_ROAMABLE_FILE)).doesNotExist()
+    assertThat(testAppConfig.resolve(StoragePathMacros.NOT_ROAMABLE_FILE)).doesNotExist()
   }
 
-  private suspend fun saveStore() {
+  @Test
+  fun `remove stalled data`() = runBlocking<Unit> {
+    val stalledStorageBean = StalledStorageBean()
+    stalledStorageBean.file = "i_do_not_want_to_be_deleted_but.xml"
+    stalledStorageBean.components.addAll(listOf("loser1", "loser2", "lucky"))
+    PlatformTestUtil.maskExtensions(STALLED_STORAGE_EP, listOf(stalledStorageBean), disposableRule.disposable)
+
+    @State(name = "loser1", storages = [(Storage(value = "i_do_not_want_to_be_deleted_but.xml"))])
+    class AOther : A()
+    @State(name = "loser2", storages = [(Storage(value = "i_do_not_want_to_be_deleted_but.xml"))])
+    class BOther : A()
+    @State(name = "lucky", storages = [(Storage(value = "i_do_not_want_to_be_deleted_but.xml"))])
+    class COther : A()
+
+    val component = AOther()
+    componentStore.initComponent(component, false)
+    component.options.foo = "old"
+
+    val component2 = BOther()
+    componentStore.initComponent(component2, false)
+    component2.options.foo = "old?"
+
+    val component3 = COther()
+    componentStore.initComponent(component3, false)
+    component3.options.bar = "foo"
+
     componentStore.save()
+
+    // all must be saved regardless of stalledStorageBean because we have such components
+    assertThat(testAppConfig.resolve(stalledStorageBean.file)).isEqualTo("""
+      <application>
+        <component name="loser1" foo="old" />
+        <component name="loser2" foo="old?" />
+        <component name="lucky" bar="foo" />
+      </application>
+    """.trimIndent())
+
+    component.options.foo = ""
+
+    // first looser is deleted since state equals to default (no committed component data)
+    componentStore.save()
+    assertThat(testAppConfig.resolve(stalledStorageBean.file)).isEqualTo("""
+      <application>
+        <component name="loser2" foo="old?" />
+        <component name="lucky" bar="foo" />
+      </application>
+    """.trimIndent())
+
+    component2.options.foo = ""
+
+    // second looser is deleted since state equals to default (no committed component data)
+    componentStore.save()
+    assertThat(testAppConfig.resolve(stalledStorageBean.file)).isEqualTo("""
+      <application>
+        <component name="lucky" bar="foo" />
+      </application>
+    """.trimIndent())
+  }
+
+  @Test
+  fun `remove stalled data - keep file if another unknown component`() = runBlocking<Unit> {
+    val stalledStorageBean = StalledStorageBean()
+    stalledStorageBean.file = "i_will_be_not_deleted.xml"
+    stalledStorageBean.components.addAll(listOf("Loser"))
+    PlatformTestUtil.maskExtensions(STALLED_STORAGE_EP, listOf(stalledStorageBean), disposableRule.disposable)
+
+    testAppConfig.resolve(stalledStorageBean.file).write("""
+      <application>
+        <component name="Unknown" data="some data" />
+        <component name="Loser" foo="old?" />
+      </application>
+    """.trimIndent())
+
+    componentStore.save()
+
+    assertThat(testAppConfig.resolve(stalledStorageBean.file)).isEqualTo("""
+      <application>
+        <component name="Unknown" data="some data" />
+      </application>
+    """.trimIndent())
   }
 
   private fun writeConfig(fileName: String, @Language("XML") data: String) = testAppConfig.writeChild(fileName, data)
@@ -339,7 +408,7 @@ internal class ApplicationStoreTest {
     }
   }
 
-  private class MyComponentStore(testAppConfigPath: String) : ChildlessComponentStore() {
+  private class MyComponentStore(testAppConfigPath: String) : ComponentStoreWithExtraComponents() {
     override val storageManager = ApplicationStorageManager(ApplicationManager.getApplication())
 
     init {
@@ -350,6 +419,10 @@ internal class ApplicationStoreTest {
       storageManager.addMacro(APP_CONFIG, path)
       // yes, in tests APP_CONFIG equals to ROOT_CONFIG (as ICS does)
       storageManager.addMacro(ROOT_CONFIG, path)
+    }
+
+    override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) {
+      childlessSaveImplementation(result, forceSavingAllSettings)
     }
   }
 
@@ -379,4 +452,20 @@ internal class ApplicationStoreTest {
   }
 }
 
-internal data class TestState @JvmOverloads constructor(@Attribute var foo: String = "", @Attribute var bar: String = "")
+internal data class TestState(@Attribute var foo: String = "", @Attribute var bar: String = "")
+
+@State(name = "A", storages = [(Storage("a.xml"))], additionalExportFile = "foo")
+internal open class A : PersistentStateComponent<TestState> {
+  var options = TestState()
+
+  var isThrowErrorOnLoadState = false
+
+  override fun getState() = options
+
+  override fun loadState(state: TestState) {
+    if (isThrowErrorOnLoadState) {
+      throw ProcessCanceledException()
+    }
+    this.options = state
+  }
+}

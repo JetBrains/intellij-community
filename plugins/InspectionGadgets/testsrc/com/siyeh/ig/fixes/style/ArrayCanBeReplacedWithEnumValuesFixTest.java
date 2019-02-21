@@ -27,6 +27,8 @@ public class ArrayCanBeReplacedWithEnumValuesFixTest extends IGQuickFixesTestCas
   public void testFooInit() {assertQuickfixNotAvailable();}
 
   public void testOuterEnumUse() {doTest("TestEnum");}
+  
+  public void testParentheses() {doTest("X");}
 
 
 

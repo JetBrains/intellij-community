@@ -4,6 +4,8 @@ package com.intellij.util.containers
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
 import gnu.trove.THashSet
+import java.io.FileInputStream
+import java.nio.file.Path
 import java.util.*
 import java.util.stream.Stream
 

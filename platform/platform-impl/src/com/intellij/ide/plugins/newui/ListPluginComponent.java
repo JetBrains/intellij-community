@@ -20,8 +20,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 
 /**
  * @author Alexander Lobas
@@ -130,7 +130,7 @@ public class ListPluginComponent extends CellPluginComponent {
     OneLineProgressIndicator indicator = new OneLineProgressIndicator();
     indicator.setCancelRunnable(() -> myPluginModel.finishInstall(myPlugin, false, false));
     myBaselinePanel.setProgressComponent(this, indicator.createBaselineWrapper());
-    myPluginModel.addProgress(myPlugin, indicator);
+    MyPluginModel.addProgress(myPlugin, indicator);
     myIndicator = indicator;
 
     if (repaint) {
@@ -149,7 +149,7 @@ public class ListPluginComponent extends CellPluginComponent {
     fullRepaint();
   }
 
-  public void clearProgress() {
+  void clearProgress() {
     myIndicator = null;
   }
 
@@ -259,7 +259,7 @@ public class ListPluginComponent extends CellPluginComponent {
     myBaselinePanel.doLayout();
   }
 
-  public void updateErrors() {
+  void updateErrors() {
     boolean errors = myPluginModel.hasErrors(myPlugin);
     updateIcon(errors, myUninstalled || !myPluginModel.isEnabled(myPlugin));
 
@@ -274,7 +274,7 @@ public class ListPluginComponent extends CellPluginComponent {
   }
 
   @Override
-  public void setListeners(@NotNull LinkListener<IdeaPluginDescriptor> listener,
+  public void setListeners(@NotNull LinkListener<? super IdeaPluginDescriptor> listener,
                            @NotNull LinkListener<String> searchListener,
                            @NotNull EventHandler eventHandler) {
     super.setListeners(listener, searchListener, eventHandler);
@@ -317,11 +317,11 @@ public class ListPluginComponent extends CellPluginComponent {
     }
   }
 
-  public boolean isEnabledState() {
+  private boolean isEnabledState() {
     return myPluginModel.isEnabled(myPlugin);
   }
 
-  public void updateAfterUninstall() {
+  void updateAfterUninstall() {
     myUninstalled = true;
     updateColors(mySelection);
 
@@ -332,7 +332,7 @@ public class ListPluginComponent extends CellPluginComponent {
     changeUpdateToRestart();
   }
 
-  public void changeUpdateToRestart() {
+  void changeUpdateToRestart() {
     boolean layout = false;
 
     if (myUpdateButton != null) {
@@ -350,7 +350,7 @@ public class ListPluginComponent extends CellPluginComponent {
     }
   }
 
-  public void updateEnabledState() {
+  void updateEnabledState() {
     if (!myUninstalled) {
       myEnableDisableButton.setSelected(isEnabledState());
     }
@@ -365,7 +365,7 @@ public class ListPluginComponent extends CellPluginComponent {
   }
 
   @Override
-  public void createPopupMenu(@NotNull DefaultActionGroup group, @NotNull List<CellPluginComponent> selection) {
+  public void createPopupMenu(@NotNull DefaultActionGroup group, @NotNull List<? extends CellPluginComponent> selection) {
     for (CellPluginComponent component : selection) {
       if (MyPluginModel.isInstallingOrUpdate(component.myPlugin)) {
         return;
@@ -430,7 +430,7 @@ public class ListPluginComponent extends CellPluginComponent {
   }
 
   @Override
-  public void handleKeyAction(int keyCode, @NotNull List<CellPluginComponent> selection) {
+  public void handleKeyAction(int keyCode, @NotNull List<? extends CellPluginComponent> selection) {
     for (CellPluginComponent component : selection) {
       if (MyPluginModel.isInstallingOrUpdate(component.myPlugin)) {
         return;
@@ -490,11 +490,11 @@ public class ListPluginComponent extends CellPluginComponent {
   }
 
   @NotNull
-  private static Pair<Boolean, IdeaPluginDescriptor[]> getSelectionNewState(@NotNull List<CellPluginComponent> selection) {
+  private static Pair<Boolean, IdeaPluginDescriptor[]> getSelectionNewState(@NotNull List<? extends CellPluginComponent> selection) {
     boolean state = ((ListPluginComponent)selection.get(0)).isEnabledState();
     boolean setTrue = false;
 
-    for (Iterator<CellPluginComponent> I = selection.listIterator(1); I.hasNext(); ) {
+    for (ListIterator<? extends CellPluginComponent> I = selection.listIterator(1); I.hasNext(); ) {
       if (state != ((ListPluginComponent)I.next()).isEnabledState()) {
         setTrue = true;
         break;
@@ -513,7 +513,7 @@ public class ListPluginComponent extends CellPluginComponent {
   @Override
   public void close() {
     if (myIndicator != null) {
-      myPluginModel.removeProgress(myPlugin, myIndicator);
+      MyPluginModel.removeProgress(myPlugin, myIndicator);
       myIndicator = null;
     }
     myPluginModel.removeComponent(this);

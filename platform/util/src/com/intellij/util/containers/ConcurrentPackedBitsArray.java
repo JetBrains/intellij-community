@@ -56,12 +56,7 @@ public class ConcurrentPackedBitsArray {
     }
     final int bitIndex = id/chunksPerWord * 64 + (id%chunksPerWord)*bitsPerChunk;
 
-    long prevChunk = bits.changeWord(bitIndex, new TLongFunction() {
-      @Override
-      public long execute(long word) {
-        return word & ~(mask << bitIndex) | (flags << bitIndex);
-      }
-    }) >> bitIndex;
+    long prevChunk = bits.changeWord(bitIndex, word -> word & ~(mask << bitIndex) | (flags << bitIndex)) >> bitIndex;
 
     return prevChunk;
   }

@@ -16,6 +16,7 @@
 package com.intellij.ide.todo;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 
@@ -210,8 +211,11 @@ final class FileTree {
     List<VirtualFile> children = myDirectory2Children.get(dir);
     if (children != null) {
       for (VirtualFile child : children) {
+        ProgressManager.checkCanceled();
         if (!child.isDirectory()) {
-          LOG.assertTrue(!filesList.contains(child));
+          if (LOG.isDebugEnabled()) {
+            LOG.assertTrue(!filesList.contains(child));
+          }
           filesList.add(child);
         }
         else {

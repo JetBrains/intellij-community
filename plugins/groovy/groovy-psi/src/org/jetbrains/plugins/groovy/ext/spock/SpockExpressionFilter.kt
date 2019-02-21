@@ -7,6 +7,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 class SpockExpressionFilter : GroovyExpressionFilter {
 
   override fun isFake(expression: GrExpression): Boolean {
-    return expression.isInteractionPart() && expression.isInsideSpecification()
+    return (expression.isInteractionPart() || expression.isTableColumnSeparator()) && expression.isInsideSpecification()
   }
 }

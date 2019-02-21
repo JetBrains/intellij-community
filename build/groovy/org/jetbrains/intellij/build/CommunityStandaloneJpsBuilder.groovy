@@ -21,6 +21,7 @@ class CommunityStandaloneJpsBuilder {
         jar("util.jar") {
           module("intellij.platform.util.rt")
           module("intellij.platform.util")
+          module("intellij.platform.util.classLoader")
         }
 
         jar("jps-launcher.jar") {

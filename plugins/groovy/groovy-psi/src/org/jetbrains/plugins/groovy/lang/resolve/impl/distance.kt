@@ -41,10 +41,13 @@ fun compare(left: ArgumentMapping, right: ArgumentMapping): Int {
     return -1
   }
 
-  // prefer one will less distance
   val leftDistance = (left as PositionalArgumentMapping).distance
   val rightDistance = (right as PositionalArgumentMapping).distance
-  return leftDistance.compareTo(rightDistance)
+  return when {
+    leftDistance == 0L -> -1
+    rightDistance == 0L -> 1
+    else -> leftDistance.compareTo(rightDistance) // prefer one with less distance
+  }
 }
 
 fun positionalParametersDistance(map: Map<Argument, PsiParameter>, context: PsiElement): Long {

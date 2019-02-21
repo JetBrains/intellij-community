@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -84,6 +85,13 @@ public class GrReassignedLocalVarsChecker {
           @Override
           public void visitClosure(@NotNull GrClosableBlock closure) {
             if (getUsedVarsInsideBlock(closure).contains(name)) {
+              isReassigned.set(true);
+            }
+          }
+
+          @Override
+          public void visitLambdaBody(@NotNull GrLambdaBody body) {
+            if (getUsedVarsInsideBlock(body).contains(name)) {
               isReassigned.set(true);
             }
           }
@@ -144,11 +152,11 @@ public class GrReassignedLocalVarsChecker {
   }
 
   @NotNull
-  private static Set<String> getUsedVarsInsideBlock(@NotNull final GrCodeBlock block) {
-      return CachedValuesManager.getCachedValue(block, () -> {
+  private static Set<String> getUsedVarsInsideBlock(@NotNull final GroovyPsiElement element) {
+      return CachedValuesManager.getCachedValue(element, () -> {
         final Set<String> result = ContainerUtil.newHashSet();
 
-        block.acceptChildren(new GroovyRecursiveElementVisitor() {
+        element.acceptChildren(new GroovyRecursiveElementVisitor() {
 
           @Override
           public void visitOpenBlock(@NotNull GrOpenBlock openBlock) {
@@ -161,13 +169,18 @@ public class GrReassignedLocalVarsChecker {
           }
 
           @Override
+          public void visitLambdaBody(@NotNull GrLambdaBody body) {
+            result.addAll(getUsedVarsInsideBlock(body));
+          }
+
+          @Override
           public void visitReferenceExpression(@NotNull GrReferenceExpression referenceExpression) {
             if (referenceExpression.getQualifier() == null && referenceExpression.getReferenceName() != null) {
               result.add(referenceExpression.getReferenceName());
             }
           }
         });
-        return CachedValueProvider.Result.create(result, block);
+        return CachedValueProvider.Result.create(result, element);
       });
   }
 

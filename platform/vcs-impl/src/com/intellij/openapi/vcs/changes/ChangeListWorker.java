@@ -186,9 +186,7 @@ public class ChangeListWorker {
       }
     }
     else {
-      Map.Entry<FilePath, PartialChangeTracker> entry = ContainerUtil.find(myPartialChangeTrackers.entrySet(), it -> {
-        return Comparing.equal(it.getValue(), tracker);
-      });
+      Map.Entry<FilePath, PartialChangeTracker> entry = ContainerUtil.find(myPartialChangeTrackers.entrySet(), it -> Comparing.equal(it.getValue(), tracker));
 
       if (entry != null) {
         LOG.error(String.format("Unregistered tracker with wrong path: tracker: %s", tracker));
@@ -861,12 +859,8 @@ public class ChangeListWorker {
 
   @Override
   public String toString() {
-    String lists = StringUtil.join(myLists, list -> {
-      return String.format("list: %s (%s) changes: %s", list.name, list.id, StringUtil.join(getChangesIn(list), ", "));
-    }, "\n");
-    String trackers = StringUtil.join(myPartialChangeTrackers.entrySet(), (entry) -> {
-      return entry.getKey() + " " + entry.getValue().getAffectedChangeListsIds();
-    }, ",");
+    String lists = StringUtil.join(myLists, list -> String.format("list: %s (%s) changes: %s", list.name, list.id, StringUtil.join(getChangesIn(list), ", ")), "\n");
+    String trackers = StringUtil.join(myPartialChangeTrackers.entrySet(), (entry) -> entry.getKey() + " " + entry.getValue().getAffectedChangeListsIds(), ",");
     return String.format("ChangeListWorker{ default = %s, lists = {\n%s }\ntrackers = %s\n}", myDefault.id, lists, trackers);
   }
 
@@ -1005,12 +999,8 @@ public class ChangeListWorker {
           addedChanges.put(changeList, added);
         }
       }
-      removedChanges.forEach((changeList, changes) -> {
-        dispatcher.changesRemoved(changes, changeList);
-      });
-      addedChanges.forEach((changeList, changes) -> {
-        dispatcher.changesAdded(changes, changeList);
-      });
+      removedChanges.forEach((changeList, changes) -> dispatcher.changesRemoved(changes, changeList));
+      addedChanges.forEach((changeList, changes) -> dispatcher.changesAdded(changes, changeList));
       for (ChangeList changeList : changedLists) {
         dispatcher.changeListChanged(changeList);
       }

@@ -28,7 +28,6 @@ import org.fest.swing.timing.Timeout
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
-import org.junit.rules.TemporaryFolder
 import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import java.awt.Component
@@ -87,10 +86,6 @@ open class GuiTestCase {
   @Rule
   @JvmField
   val testMethod = TestName()
-
-  @Rule
-  @JvmField
-  val logActionsDuringTest = LogActionsDuringTest()
 
   val projectFolder: String by lazy {
     val dir = File(projectsFolder, testMethod.methodName)
@@ -408,6 +403,7 @@ open class GuiTestCase {
       try {
         val dialog = GuiTestUtilKt.withPauseWhenNull(timeout = timeout) {
           val allMatchedDialogs = robot().finder().findAll(typeMatcher(JDialog::class.java) {
+            it.isFocused &&
             if (ignoreCaseTitle) predicate(it.title.toLowerCase(), title.toLowerCase()) else predicate(it.title, title)
           }).filter { it.isShowing && it.isEnabled && it.isVisible }
           if (allMatchedDialogs.size > 1) throw Exception(
@@ -425,9 +421,10 @@ open class GuiTestCase {
   /**
    * Finds JDialog with a specific title (if title is null showing dialog should be only one)
    */
-  private fun findDialog(title: String?, ignoreCaseTitle: Boolean, timeout: Timeout): JDialog =
+  fun findDialog(title: String?, ignoreCaseTitle: Boolean, timeout: Timeout, predicate: FinderPredicate = Predicate.equality): JDialog =
     waitUntilFound(null, JDialog::class.java, timeout) {
-      title?.equals(it.title, ignoreCaseTitle)?.and(it.isShowing && it.isEnabled && it.isVisible) ?: true
+      it.isShowing && it.isEnabled && it.isVisible
+      && if(title != null) predicate(it.title, title) else true
     }
 
   fun exists(fixture: () -> AbstractComponentFixture<*, *, *>): Boolean {

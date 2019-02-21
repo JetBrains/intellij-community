@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -28,7 +28,7 @@ import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender;
 import org.jetbrains.idea.devkit.util.ExtensionCandidate;
-import org.jetbrains.idea.devkit.util.ExtensionLocator;
+import org.jetbrains.idea.devkit.util.ExtensionLocatorKt;
 import org.jetbrains.idea.devkit.util.ExtensionPointCandidate;
 import org.jetbrains.idea.devkit.util.ExtensionPointLocator;
 
@@ -37,7 +37,6 @@ import java.util.List;
 import static com.intellij.patterns.PsiJavaPatterns.*;
 
 class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
-
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(
@@ -142,8 +141,7 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
       final DomElement extensionPointDomElement = manager.getDomElement(extensionPointCandidate.pointer.getElement());
       if (!(extensionPointDomElement instanceof ExtensionPoint)) return;
 
-      final ExtensionLocator locator = ExtensionLocator.byExtensionPoint((ExtensionPoint)extensionPointDomElement);
-      for (ExtensionCandidate candidate : locator.findCandidates()) {
+      for (ExtensionCandidate candidate : ExtensionLocatorKt.locateExtensionsByExtensionPoint((ExtensionPoint)extensionPointDomElement)) {
         final XmlTag element = candidate.pointer.getElement();
         final DomElement domElement = manager.getDomElement(element);
         if (domElement instanceof Extension) {

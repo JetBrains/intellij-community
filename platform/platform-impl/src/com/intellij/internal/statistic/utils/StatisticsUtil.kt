@@ -17,7 +17,6 @@ import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.ObjectIntHashMap
 import gnu.trove.THashSet
 import java.io.IOException
@@ -176,6 +175,9 @@ private fun addAll(result: ObjectIntHashMap<String>, usages: Set<UsageDescriptor
 private val safeToReportPluginIds: Set<String>
   get() {
     val project = DefaultProjectFactory.getInstance().defaultProject
+    if (project.isDisposed) {
+      return emptySet()
+    }
     return CachedValuesManager.getManager(project).getCachedValue(project) {
       val plugins = collectSafePluginDescriptors()
       val ids = mutableSetOf<String>()

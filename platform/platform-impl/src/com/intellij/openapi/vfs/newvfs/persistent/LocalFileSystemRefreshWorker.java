@@ -3,13 +3,13 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -35,9 +35,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-class LocalFileSystemRefreshWorker {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker");
+import static com.intellij.openapi.vfs.newvfs.persistent.VfsEventGenerationHelper.LOG;
 
+class LocalFileSystemRefreshWorker {
   private final boolean myIsRecursive;
   private final Queue<NewVirtualFile> myRefreshQueue = new Queue<>(100);
   private final VfsEventGenerationHelper myHelper = new VfsEventGenerationHelper();
@@ -89,9 +89,7 @@ class LocalFileSystemRefreshWorker {
 
     while (!myRefreshQueue.isEmpty()) {
       NewVirtualFile file = myRefreshQueue.pullFirst();
-      boolean fileDirty = file.isDirty();
-      if (LOG.isTraceEnabled()) LOG.trace("file=" + file + " dirty=" + fileDirty);
-      if (!fileDirty) continue;
+      if (!myHelper.checkDirty(file)) continue;
 
       checkCancelled(file);
 
@@ -272,7 +270,8 @@ class LocalFileSystemRefreshWorker {
         if (child == null) { // new file is created
           VirtualFile parent = myFileOrDir.isDirectory() ? myFileOrDir : myFileOrDir.getParent();
 
-          myHelper.scheduleCreation(parent, name, file, convert(file, attrs));
+          String symlinkTarget = attrs.isSymbolicLink() ? file.toRealPath().toString() : null;
+          myHelper.scheduleCreation(parent, name, convert(file, attrs), isEmptyDir(file, attrs), symlinkTarget);
           return FileVisitResult.CONTINUE;
         }
 
@@ -300,7 +299,8 @@ class LocalFileSystemRefreshWorker {
             oldIsSpecial != isSpecial) { // symlink or directory or special changed
           myHelper.scheduleDeletion(child);
           VirtualFile parent = myFileOrDir.isDirectory() ? myFileOrDir : myFileOrDir.getParent();
-          myHelper.scheduleCreation(parent, child.getName(), file, convert(file, attrs));
+          String symlinkTarget = isLink ? file.toRealPath().toString() : null;
+          myHelper.scheduleCreation(parent, child.getName(), convert(file, attrs), isEmptyDir(file, attrs), symlinkTarget);
           // ignore everything else
           child.markClean();
           return FileVisitResult.CONTINUE;
@@ -404,6 +404,10 @@ class LocalFileSystemRefreshWorker {
 
       return myHelper;
     }
+  }
+
+  private static boolean isEmptyDir(Path path, BasicFileAttributes a) {
+    return a.isDirectory() && !LocalFileSystemBase.hasChildren(path);
   }
 
   private static FileAttributes convert(Path path, BasicFileAttributes a) throws IOException {

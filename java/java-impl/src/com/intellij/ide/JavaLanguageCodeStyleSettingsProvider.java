@@ -16,7 +16,9 @@
 package com.intellij.ide;
 
 import com.intellij.application.options.*;
+import com.intellij.application.options.codeStyle.properties.CodeStyleFieldAccessor;
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
+import com.intellij.application.options.codeStyle.properties.ValueListPropertyAccessor;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -32,6 +34,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
+import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.application.options.JavaDocFormattingPanel.*;
 
@@ -331,11 +335,50 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   @Nullable
   @Override
-  public CodeStylePropertyAccessor getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
+  public CodeStyleFieldAccessor getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
     if (PackageEntryTable.class.isAssignableFrom(field.getType())) {
       return new JavaPackageEntryTableAccessor(codeStyleObject, field);
     }
     return super.getAccessor(codeStyleObject, field);
+  }
+
+  @Override
+  public List<CodeStylePropertyAccessor> getAdditionalAccessors(@NotNull Object codeStyleObject) {
+    if (codeStyleObject instanceof JavaCodeStyleSettings) {
+      return Collections.singletonList(new RepeatAnnotationsAccessor((JavaCodeStyleSettings)codeStyleObject));
+    }
+    return super.getAdditionalAccessors(codeStyleObject);
+  }
+
+  private static class RepeatAnnotationsAccessor extends CodeStylePropertyAccessor<List<String>> {
+
+    private final JavaCodeStyleSettings mySettings;
+
+    RepeatAnnotationsAccessor(@NotNull JavaCodeStyleSettings settings) {
+      mySettings = settings;
+    }
+
+    @Override
+    public boolean set(@NotNull List<String> extVal) {
+      mySettings.setRepeatAnnotations(extVal);
+      return true;
+    }
+
+    @Override
+    @Nullable
+    public List<String> get() {
+      return mySettings.getRepeatAnnotations();
+    }
+
+    @Override
+    protected List<String> parseString(@NotNull String string) {
+      return ValueListPropertyAccessor.getValueList(string);
+    }
+
+    @Override
+    public String getPropertyName() {
+      return "repeat_annotations";
+    }
   }
 
   private static final String GENERAL_CODE_SAMPLE =

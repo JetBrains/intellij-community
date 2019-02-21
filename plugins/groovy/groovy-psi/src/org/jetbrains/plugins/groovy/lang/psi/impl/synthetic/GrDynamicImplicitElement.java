@@ -29,12 +29,12 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface GrDynamicImplicitElement extends ItemPresentation, NavigationItem {
   @Nullable
-  public PsiClass getContainingClassElement();
+  PsiClass getContainingClassElement();
 
   @NotNull
-  public SearchScope getUseScope();
+  SearchScope getUseScope();
 
-  public PsiFile getContainingFile();
+  PsiFile getContainingFile();
 
-  public String getContainingClassName();
+  String getContainingClassName();
 }

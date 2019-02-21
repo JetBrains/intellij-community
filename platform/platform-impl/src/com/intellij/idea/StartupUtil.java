@@ -41,6 +41,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.Method;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
@@ -58,6 +59,7 @@ import java.util.Random;
  */
 public class StartupUtil {
   public static final String NO_SPLASH = "nosplash";
+  public static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
 
   private static SocketLock ourSocketLock;
 
@@ -80,6 +82,19 @@ public class StartupUtil {
     void start(boolean newConfigFolder);
 
     default void beforeImportConfigs() {}
+  }
+
+  private static void runPreAppClass(Logger log) {
+    String classBeforeAppProperty = System.getProperty(IDEA_CLASS_BEFORE_APPLICATION_PROPERTY);
+    if (classBeforeAppProperty != null) {
+      try {
+        Class<?> clazz = Class.forName(classBeforeAppProperty);
+        Method invokeMethod = clazz.getDeclaredMethod("invoke");
+        invokeMethod.invoke(null);
+      } catch (Exception ex) {
+        log.error("Failed pre-app class init for class " + classBeforeAppProperty, ex);
+      }
+    }
   }
 
   static void prepareAndStart(String[] args, AppStarter appStarter) {
@@ -132,13 +147,15 @@ public class StartupUtil {
     loadSystemLibraries(log);
     fixProcessEnvironment(log);
 
+    runPreAppClass(log);
+
     if (!Main.isHeadless()) {
       UIUtil.initDefaultLAF();
     }
 
     if (newConfigFolder) {
       appStarter.beforeImportConfigs();
-      ConfigImportHelper.importConfigsTo(PathManager.getConfigPath());
+      ConfigImportHelper.importConfigsTo(PathManager.getConfigPath(), log);
     }
     else {
       installPluginUpdates();

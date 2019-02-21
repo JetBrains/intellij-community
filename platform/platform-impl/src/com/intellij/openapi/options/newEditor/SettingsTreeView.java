@@ -58,9 +58,8 @@ import java.util.*;
 public class SettingsTreeView extends JComponent implements Accessible, Disposable, OptionsEditorColleague {
   private static final int ICON_GAP = 5;
   private static final String NODE_ICON = "settings.tree.view.icon";
-  private static final Color WRONG_CONTENT = JBColor.RED;
-  private static final Color MODIFIED_CONTENT = JBColor.BLUE;
-  public static final Color FOREGROUND = new JBColor(Gray.x1A, Gray.xBB);
+  private static final Color WRONG_CONTENT = JBColor.namedColor("Tree.errorForeground", JBColor.RED);
+  private static final Color MODIFIED_CONTENT = JBColor.namedColor("Tree.modifiedItemForeground", JBColor.BLUE);
 
   final SimpleTree myTree;
   final FilteringTreeBuilder myBuilder;
@@ -119,7 +118,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
         }
         if (myHeader == null) {
           myHeader = new JLabel();
-          myHeader.setForeground(FOREGROUND);
+          myHeader.setForeground(UIUtil.getTreeForeground());
           myHeader.setIconTextGap(ICON_GAP);
           myHeader.setBorder(BorderFactory.createEmptyBorder(1, 10 + getLeftMargin(0), 0, 0));
         }
@@ -559,7 +558,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       myTextLabel.setFont(isGroup ? myTree.getFont() : UIUtil.getLabelFont());
 
       // update font color for modified configurables
-      myTextLabel.setForeground(selected ? UIUtil.getTreeSelectionForeground() : FOREGROUND);
+      myTextLabel.setForeground(selected ? UIUtil.getTreeSelectionForeground(true) : UIUtil.getTreeForeground());
       if (!selected && node != null) {
         Configurable configurable = node.myConfigurable;
         if (configurable != null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler;
 
 import com.intellij.codeInspection.InspectionManager;
@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -42,11 +43,9 @@ import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.javac.*;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.net.URI;
 import java.util.*;
 import java.util.concurrent.Semaphore;
@@ -167,7 +166,7 @@ public class CompilerManagerImpl extends CompilerManager {
         compilers.add((T)item);
       }
     }
-    final T[] array = (T[])Array.newInstance(compilerClass, compilers.size());
+    final T[] array = ArrayUtil.newArray(compilerClass, compilers.size());
     return compilers.toArray(array);
   }
 
@@ -198,23 +197,24 @@ public class CompilerManagerImpl extends CompilerManager {
 
   @Override
   @NotNull
-  public CompileTask[] getBeforeTasks() {
+  public List<CompileTask> getBeforeTasks() {
     return getCompileTasks(myBeforeTasks, CompileTaskBean.CompileTaskExecutionPhase.BEFORE);
   }
 
-  private CompileTask[] getCompileTasks(List<CompileTask> taskList, CompileTaskBean.CompileTaskExecutionPhase phase) {
+  @NotNull
+  private List<CompileTask> getCompileTasks(@NotNull List<CompileTask> taskList, @NotNull CompileTaskBean.CompileTaskExecutionPhase phase) {
     List<CompileTask> beforeTasks = new ArrayList<>(taskList);
     for (CompileTaskBean extension : CompileTaskBean.EP_NAME.getExtensions(myProject)) {
       if (extension.myExecutionPhase == phase) {
-        beforeTasks.add(extension.getTaskInstance());
+        beforeTasks.add(extension.getTaskInstance(myProject));
       }
     }
-    return beforeTasks.toArray(new CompileTask[0]);
+    return beforeTasks;
   }
 
   @Override
   @NotNull
-  public CompileTask[] getAfterTasks() {
+  public List<CompileTask> getAfterTaskList() {
     return getCompileTasks(myAfterTasks, CompileTaskBean.CompileTaskExecutionPhase.AFTER);
   }
 

@@ -157,7 +157,10 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     final ModelListener modelListener = () -> queueUpdate();
     myTreeModelWrapper.addModelListener(modelListener);
 
-    Disposer.register(this, () -> myTreeModelWrapper.removeModelListener(modelListener));
+    Disposer.register(this, () -> {
+      storeState();
+      myTreeModelWrapper.removeModelListener(modelListener);
+    });
 
     setContent(ScrollPaneFactory.createScrollPane(myTree));
 
@@ -294,7 +297,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   @Override
   public void storeState() {
-    if (isDisposed()) return;
+    if (isDisposed() || !myProject.isOpen()) return;
     Object root = myTree.getModel().getRoot();
     if (root == null) return;
     TreeState state = TreeState.createOn(myTree, new TreePath(root));
@@ -346,9 +349,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         result.add(new TreeActionWrapper(provider, this));
       }
     }
-
-    result.add(new ExpandAllAction(getTree()));
-    result.add(new CollapseAllAction(getTree()));
 
     if (showScrollToFromSourceActions()) {
       result.addSeparator();

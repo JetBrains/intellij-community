@@ -16,7 +16,6 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
@@ -27,7 +26,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
-import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Type;
 import java.util.Arrays;
@@ -226,9 +224,7 @@ public class TreeIncrementalUpdateTest extends DomTestCase {
     final GenericAttributeValue<String> xxx = oldLeaf.getXxx();
     final XmlTag oldLeafTag = oldLeaf.getXmlTag();
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      oldLeafTag.delete();
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> oldLeafTag.delete());
 
     assertFalse(oldLeaf.isValid());
     assertFalse(xxx.isValid());

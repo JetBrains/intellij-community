@@ -487,6 +487,10 @@ public class AllIcons {
     /**
      * 16x16
      */
+    public static final Icon StepOutCodeBlock = IconLoader.getIcon("/actions/stepOutCodeBlock.svg");
+    /**
+     * 16x16
+     */
     public static final Icon Stub = IconLoader.getIcon("/actions/stub.svg");
     /**
      * 16x16
@@ -1043,6 +1047,10 @@ public class AllIcons {
     /**
      * 16x16
      */
+    public static final Icon EvaluationResult = IconLoader.getIcon("/debugger/evaluationResult.svg");
+    /**
+     * 16x16
+     */
     public static final Icon Frame = IconLoader.getIcon("/debugger/frame.svg");
     /**
      * 16x16
@@ -1087,6 +1095,14 @@ public class AllIcons {
      * 16x16
      */
     public static final Icon Overhead = IconLoader.getIcon("/debugger/overhead.svg");
+    /**
+     * 16x16
+     */
+    public static final Icon PromptInput = IconLoader.getIcon("/debugger/promptInput.svg");
+    /**
+     * 16x16
+     */
+    public static final Icon PromptInputHistory = IconLoader.getIcon("/debugger/promptInputHistory.svg");
     /**
      * 7x9
      */
@@ -1408,9 +1424,49 @@ public class AllIcons {
      */
     public static final Icon ArrowRightDown = IconLoader.getIcon("/diff/arrowRightDown.svg");
     /**
+     * 16x16
+     */
+    public static final Icon Compare3LeftMiddle = IconLoader.getIcon("/diff/compare3LeftMiddle.svg");
+    /**
+     * 16x16
+     */
+    public static final Icon Compare3LeftRight = IconLoader.getIcon("/diff/compare3LeftRight.svg");
+    /**
+     * 16x16
+     */
+    public static final Icon Compare3MiddleRight = IconLoader.getIcon("/diff/compare3MiddleRight.svg");
+    /**
+     * 16x16
+     */
+    public static final Icon Compare4LeftBottom = IconLoader.getIcon("/diff/compare4LeftBottom.svg");
+    /**
+     * 16x16
+     */
+    public static final Icon Compare4LeftMiddle = IconLoader.getIcon("/diff/compare4LeftMiddle.svg");
+    /**
+     * 16x16
+     */
+    public static final Icon Compare4LeftRight = IconLoader.getIcon("/diff/compare4LeftRight.svg");
+    /**
+     * 16x16
+     */
+    public static final Icon Compare4MiddleBottom = IconLoader.getIcon("/diff/compare4MiddleBottom.svg");
+    /**
+     * 16x16
+     */
+    public static final Icon Compare4MiddleRight = IconLoader.getIcon("/diff/compare4MiddleRight.svg");
+    /**
+     * 16x16
+     */
+    public static final Icon Compare4RightBottom = IconLoader.getIcon("/diff/compare4RightBottom.svg");
+    /**
      * 12x12
      */
     public static final Icon GutterCheckBox = IconLoader.getIcon("/diff/gutterCheckBox.svg");
+    /**
+     * 12x12
+     */
+    public static final Icon GutterCheckBoxIndeterminate = IconLoader.getIcon("/diff/gutterCheckBoxIndeterminate.svg");
     /**
      * 12x12
      */
@@ -1435,51 +1491,6 @@ public class AllIcons {
      * 12x12
      */
     public static final Icon Revert = IconLoader.getIcon("/diff/revert.svg");
-
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    public static final Icon Compare3LeftMiddle = IconLoader.getIcon("/diff/compare3LeftMiddle.png");
-
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    public static final Icon Compare3LeftRight = IconLoader.getIcon("/diff/compare3LeftRight.png");
-
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    public static final Icon Compare3MiddleRight = IconLoader.getIcon("/diff/compare3MiddleRight.png");
-
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    public static final Icon Compare4LeftBottom = IconLoader.getIcon("/diff/compare4LeftBottom.png");
-
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    public static final Icon Compare4LeftMiddle = IconLoader.getIcon("/diff/compare4LeftMiddle.png");
-
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    public static final Icon Compare4LeftRight = IconLoader.getIcon("/diff/compare4LeftRight.png");
-
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    public static final Icon Compare4MiddleBottom = IconLoader.getIcon("/diff/compare4MiddleBottom.png");
-
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    public static final Icon Compare4MiddleRight = IconLoader.getIcon("/diff/compare4MiddleRight.png");
-
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    public static final Icon Compare4RightBottom = IconLoader.getIcon("/diff/compare4RightBottom.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Forward */
     @SuppressWarnings("unused")

@@ -8,4 +8,4 @@ class ErrorInMultiDArray {
 
   public enum TestEnum {
     ONE, TWO, THREE;
-}
+}}

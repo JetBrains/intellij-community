@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide;
 
 import com.google.common.base.Supplier;
@@ -38,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.ui.AppIcon;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -141,7 +128,7 @@ public abstract class RestService extends HttpRequestHandler {
   protected abstract boolean isMethodSupported(@NotNull HttpMethod method);
 
   @Override
-  public final boolean process(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException {
+  public final boolean process(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) {
     try {
       AtomicInteger counter = abuseCounter.get(((InetSocketAddress)context.channel().remoteAddress()).getAddress());
       if (counter.incrementAndGet() > Registry.intValue("ide.rest.api.requests.per.minute", 30)) {
@@ -149,7 +136,7 @@ public abstract class RestService extends HttpRequestHandler {
         return true;
       }
 
-      if (!isHostTrusted(request)) {
+      if (!isHostTrusted(request, urlDecoder)) {
         Responses.send(Responses.orInSafeMode(HttpResponseStatus.FORBIDDEN, HttpResponseStatus.OK), context.channel(), request);
         return true;
       }
@@ -176,6 +163,16 @@ public abstract class RestService extends HttpRequestHandler {
     return true;
   }
 
+  @SuppressWarnings("deprecation")
+  protected boolean isHostTrusted(@NotNull FullHttpRequest request, @NotNull QueryStringDecoder urlDecoder) throws InterruptedException, InvocationTargetException {
+    return isHostTrusted(request);
+  }
+
+  /**
+   * @deprecated Use {@link #isHostTrusted(FullHttpRequest, QueryStringDecoder)}
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   // e.g. upsource trust to configured host
   protected boolean isHostTrusted(@NotNull FullHttpRequest request) throws InterruptedException, InvocationTargetException {
     if (BuiltInWebServerKt.isSignedRequest(request)) {
@@ -207,6 +204,7 @@ public abstract class RestService extends HttpRequestHandler {
 
     if (isTrusted.isNull()) {
       SwingUtilities.invokeAndWait(() -> {
+        AppIcon.getInstance().requestAttention(null, true);
         isTrusted.set(showYesNoDialog(
           IdeBundle.message("warning.use.rest.api", getServiceName(), ObjectUtils.chooseNotNull(host, "unknown host")),
           "title.use.rest.api"));

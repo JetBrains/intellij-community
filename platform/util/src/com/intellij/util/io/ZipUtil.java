@@ -75,12 +75,8 @@ public class ZipUtil {
     }
     zos.putNextEntry(e);
     if (!isDir) {
-      InputStream is = contentProcessor.getContent(file);
-      try {
+      try (InputStream is = contentProcessor.getContent(file)) {
         FileUtilRt.copy(is, zos);
-      }
-      finally {
-        is.close();
       }
     }
     zos.closeEntry();
@@ -156,8 +152,7 @@ public class ZipUtil {
 
   @SuppressWarnings("unused")
   public static boolean isZipContainsFolder(File zip) throws IOException {
-    ZipFile zipFile = new ZipFile(zip);
-    try {
+    try (ZipFile zipFile = new ZipFile(zip)) {
       Enumeration<? extends ZipEntry> en = zipFile.entries();
       while (en.hasMoreElements()) {
         ZipEntry zipEntry = en.nextElement();
@@ -170,26 +165,15 @@ public class ZipUtil {
       }
       return false;
     }
-    finally {
-      zipFile.close();
-    }
   }
 
   public static void compressFile(@NotNull File srcFile, @NotNull File zipFile) throws IOException {
-    InputStream is = new FileInputStream(srcFile);
-    try {
-      ZipOutputStream os = new ZipOutputStream(new FileOutputStream(zipFile));
-      try {
+    try (InputStream is = new FileInputStream(srcFile)) {
+      try (ZipOutputStream os = new ZipOutputStream(new FileOutputStream(zipFile))) {
         os.putNextEntry(new ZipEntry(srcFile.getName()));
         FileUtilRt.copy(is, os);
         os.closeEntry();
       }
-      finally {
-        os.close();
-      }
-    }
-    finally {
-      is.close();
     }
   }
 
@@ -212,12 +196,8 @@ public class ZipUtil {
       }
       else if (!outputFile.exists() || overwrite) {
         FileUtil.createParentDirs(outputFile);
-        FileOutputStream os = new FileOutputStream(outputFile);
-        try {
+        try (FileOutputStream os = new FileOutputStream(outputFile)) {
           FileUtilRt.copy(inputStream, os);
-        }
-        finally {
-          os.close();
         }
       }
     }

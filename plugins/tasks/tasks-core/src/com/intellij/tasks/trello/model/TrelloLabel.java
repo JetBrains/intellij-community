@@ -21,8 +21,9 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 /**
- * @author Mikhail Golubev
+ * This is a stub definition intended to be used with Google GSON. Its fields are initialized reflectively.
  */
+@SuppressWarnings("unused")
 public class TrelloLabel {
   public enum LabelColor {
 

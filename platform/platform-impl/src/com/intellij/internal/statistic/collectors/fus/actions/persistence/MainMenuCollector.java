@@ -68,7 +68,6 @@ public class MainMenuCollector implements PersistentStateComponent<MainMenuColle
 
       if (!StringUtil.isEmpty(path)) {
         final FeatureUsageData data = new FeatureUsageData().addOS().addPluginInfo(info);
-        FUCounterUsageLogger.getInstance().logEvent("main.menu", ConvertUsagesUtil.escapeDescriptorName(path), data);
       }
     }
     catch (Exception ignore) {
@@ -78,7 +77,7 @@ public class MainMenuCollector implements PersistentStateComponent<MainMenuColle
   protected String getPathFromMenuSelectionManager(@NotNull AnAction action) {
     List<String> groups = Arrays.stream(MenuSelectionManager.defaultManager().getSelectedPath())
       .filter(o -> o instanceof ActionMenu)
-      .map(o -> ((ActionMenu)o).getText())
+      .map(o -> ((ActionMenu)o).getAnAction().getTemplateText())
       .collect(Collectors.toList());
     if (groups.size() > 0) {
       String text = getActionText(action);
@@ -88,25 +87,12 @@ public class MainMenuCollector implements PersistentStateComponent<MainMenuColle
     return null;
   }
 
-  private static final HashMap<String, String> ourBlackList = new HashMap<>();
-
-  static {
-    ourBlackList.put("com.intellij.ide.ReopenProjectAction", "Reopen Project");
-    ourBlackList.put("com.intellij.openapi.wm.impl.ProjectWindowAction", "Switch Project");
-    ourBlackList.put("com.intellij.tools.ToolAction", "External Tool");
-    ourBlackList.put("com.intellij.ide.actionMacro.ActionMacroManager$InvokeMacroAction", "Invoke Macro");
-  }
-
   private static String getActionText(@NotNull AnAction action) {
-    String text = ourBlackList.get(action.getClass().getName());
-    if (text != null) {
-      return text;
-    }
     final String actionId = ActionManager.getInstance().getId(action);
     if (StringUtil.isEmpty(actionId)) {
       return "generated.on.runtime";
     }
-    return action.getTemplatePresentation().getText(); //avoid user data in Action Presentation
+    return action.getTemplateText(); //avoid user data in Action Presentation
   }
 
   @NotNull

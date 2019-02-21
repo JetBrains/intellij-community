@@ -2,9 +2,11 @@
 package org.jetbrains.uast.values
 
 open class UDependentValue protected constructor(
-  val value: UValue,
-  override val dependencies: Set<UDependency> = emptySet()
+  value: UValue,
+  final override val dependencies: Set<UDependency> = emptySet()
 ) : UValueBase() {
+
+  val value: UValue = value.unwrap().takeIf { it == UUndeterminedValue } ?: value
 
   private fun UValue.unwrap() = (this as? UDependentValue)?.unwrap() ?: this
 

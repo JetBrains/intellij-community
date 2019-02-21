@@ -58,7 +58,8 @@
     <directoryProjectConfigurator implementation="com.intellij.platform.PlatformInspectionProfileConfigurator"/>
 
     <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"
-                        serviceImplementation="com.jetbrains.python.PythonModuleTypeManager"/>
+                        serviceImplementation="com.jetbrains.python.PythonModuleTypeManager"
+                        overrides="true"/>
 
     <fileStructureGroupRuleProvider implementation="com.intellij.usages.impl.rules.FileGroupingRuleProvider" order="first"/>
     <fileStructureGroupRuleProvider implementation="com.jetbrains.python.findUsages.PyClassGroupingRuleProvider"
@@ -124,9 +125,6 @@
     </group>
 
     <action overrides="true" id="ForceStepInto" class="com.intellij.openapi.actionSystem.EmptyAction"/>
-
-    <group id="TypeHierarchyPopupMenu">
-    </group>
 
     <action id="RenameProject" class="com.intellij.platform.renameProject.RenameProjectAction">
       <add-to-group group-id="FileOpenGroup" anchor="after" relative-to-action="RenameFile"/>

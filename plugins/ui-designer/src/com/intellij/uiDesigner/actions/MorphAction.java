@@ -57,9 +57,7 @@ public class MorphAction extends AbstractGuiEditorAction {
         editor.refreshAndSave(true);
       };
       CommandProcessor.getInstance().executeCommand(editor.getProject(), runnable, UIDesignerBundle.message("morph.component.command"), null);
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(editor.getGlassLayer(), true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(editor.getGlassLayer(), true));
       return true;
     };
 

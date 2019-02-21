@@ -636,7 +636,7 @@ class LineStatusTrackerManager(
     }
 
     override fun propertyChanged(event: VirtualFilePropertyEvent) {
-      if (VirtualFile.PROP_NAME == event.propertyName) {
+      if (event.isRename) {
         handleFileMovement(event.file)
       }
     }

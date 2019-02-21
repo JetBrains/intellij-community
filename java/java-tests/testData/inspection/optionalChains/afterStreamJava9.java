@@ -15,7 +15,19 @@ public final class MyClass {
     p.name().stream().mapToInt(String::length).forEach(System.out::println);
     p.name().stream().flatMapToInt(String::chars).forEach(System.out::println);
     p.name().filter(n -> !n.isEmpty()).stream().forEach(System.out::println);
+    
+    p.name().stream().flatMap(MyClass::createStream);
+    p.name().map(m -> createStreamSideEffect(m)).orElse(Stream.empty());
 
     Stream<Integer> stream = opt.stream();
+  }
+  
+  static Stream<String> createStream(String s) {
+    return Stream.of(s, s);
+  }
+  
+  static Stream<String> createStreamSideEffect(String s) {
+    System.out.println(s);
+    return Stream.of(s, s);
   }
 }

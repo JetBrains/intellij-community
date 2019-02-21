@@ -8,7 +8,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.ide.util.gotoByName.*;
-import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,7 +39,6 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Author: msk
@@ -325,6 +324,10 @@ public abstract class GotoActionBase extends AnAction {
   }
 
   protected void showInSearchEverywherePopup(String searchProviderID, AnActionEvent evnt, boolean useEditorSelection) {
+    showInSearchEverywherePopup(searchProviderID, evnt, useEditorSelection, false);
+  }
+
+  protected void showInSearchEverywherePopup(String searchProviderID, AnActionEvent evnt, boolean useEditorSelection, boolean sendStatistics) {
     SearchEverywhereManager seManager = SearchEverywhereManager.getInstance(evnt.getProject());
     FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE + "." + searchProviderID);
 
@@ -334,15 +337,19 @@ public abstract class GotoActionBase extends AnAction {
       }
       else {
         seManager.setShownContributor(searchProviderID);
-        String shortcut = KeymapUtil.getEventCallerKeystrokeText(evnt);
-        FUSUsageContext context = SearchEverywhereUsageTriggerCollector.createContext(searchProviderID, shortcut);
-        SearchEverywhereUsageTriggerCollector.trigger(evnt.getProject(), SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, context);
+        if (sendStatistics) {
+          String shortcut = KeymapUtil.getEventCallerKeystrokeText(evnt);
+          FeatureUsageData data = SearchEverywhereUsageTriggerCollector.createData(searchProviderID, shortcut);
+          SearchEverywhereUsageTriggerCollector.trigger(evnt.getProject(), SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, data);
+        }
       }
       return;
     }
 
-    FUSUsageContext context = SearchEverywhereUsageTriggerCollector.createContext(searchProviderID, null);
-    SearchEverywhereUsageTriggerCollector.trigger(evnt.getProject(), SearchEverywhereUsageTriggerCollector.DIALOG_OPEN, context);
+    if (sendStatistics) {
+      FeatureUsageData data = SearchEverywhereUsageTriggerCollector.createData(searchProviderID, null);
+      SearchEverywhereUsageTriggerCollector.trigger(evnt.getProject(), SearchEverywhereUsageTriggerCollector.DIALOG_OPEN, data);
+    }
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
     String searchText = StringUtil.nullize(getInitialText(useEditorSelection, evnt).first);
     seManager.show(searchProviderID, searchText, evnt);

@@ -28,6 +28,7 @@ class IntelliJCoreArtifactsBuilder {
     "intellij.platform.projectModel",
     "intellij.platform.util",
     "intellij.platform.util.rt",
+    "intellij.platform.util.classLoader",
     "intellij.xml.analysis",
     "intellij.xml.psi",
     "intellij.xml.structureView",
@@ -77,6 +78,7 @@ class IntelliJCoreArtifactsBuilder {
       new LayoutBuilder(buildContext, false).layout(coreArtifactDir) {
         jar("intellij-core.jar") {
           module("intellij.platform.util.rt")
+          module("intellij.platform.util.classLoader")
           module("intellij.platform.util")
           module("intellij.platform.core")
           module("intellij.platform.core.impl")

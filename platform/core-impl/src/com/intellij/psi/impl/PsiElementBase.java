@@ -27,11 +27,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -293,7 +293,7 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (aClass.isInstance(cur)) result.add((T)cur);
     }
-    return result.toArray((T[]) Array.newInstance(aClass, result.size()));
+    return result.toArray(ArrayUtil.newArray(aClass, result.size()));
   }
 
   @Nullable

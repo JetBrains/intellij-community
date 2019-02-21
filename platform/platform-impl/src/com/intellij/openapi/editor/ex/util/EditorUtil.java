@@ -8,6 +8,9 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.CommandEvent;
+import com.intellij.openapi.command.CommandListener;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -878,5 +881,25 @@ public final class EditorUtil {
         return Pair.create(editor.getSelectionModel().getBlockSelectionStarts(), editor.getSelectionModel().getBlockSelectionEnds());
       }
     }, disposable);
+  }
+
+  /**
+   * If a command is currently executing (see {@link CommandProcessor}), schedules the execution of given task before the end of that
+   * command (so that it becomes part of it), otherwise does nothing.
+   */
+  public static void performBeforeCommandEnd(@NotNull Runnable task) {
+    if (CommandProcessor.getInstance().getCurrentCommand() == null) return;
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    connection.subscribe(CommandListener.TOPIC, new CommandListener() {
+      @Override
+      public void beforeCommandFinished(@NotNull CommandEvent event) {
+        task.run();
+      }
+
+      @Override
+      public void commandFinished(@NotNull CommandEvent event) {
+        connection.disconnect();
+      }
+    });
   }
 }

@@ -62,7 +62,7 @@ public class PyConsoleParsingContext extends ParsingContext {
       if (parseIPythonHelp()) {
         return;
       }
-      if (myStartsWithIPythonSymbol) {
+      if (shouldParseIPythonCommand()) {
         parseIPythonCommand();
       }
       else {
@@ -95,8 +95,8 @@ public class PyConsoleParsingContext extends ParsingContext {
       if (myBuilder.getTokenType() == PyConsoleTokenTypes.QUESTION_MARK) {
         myBuilder.advanceLexer();
         if (myBuilder.getTokenType() == PyTokenTypes.STATEMENT_BREAK || myBuilder.eof()) {
-          ipythonHelp.done(PyElementTypes.EMPTY_EXPRESSION);
           myBuilder.advanceLexer();
+          ipythonHelp.done(PyElementTypes.EMPTY_EXPRESSION);
           return true;
         }
       }
@@ -136,9 +136,17 @@ public class PyConsoleParsingContext extends ParsingContext {
       return true;
     }
 
+    protected boolean shouldParseIPythonCommand() {
+      return myStartsWithIPythonSymbol;
+    }
+
+    protected boolean continueParseIPythonCommand() {
+      return !myBuilder.eof();
+    }
+
     private void parseIPythonCommand() {
       PsiBuilder.Marker ipythonCommand = myBuilder.mark();
-      while (!myBuilder.eof()) {
+      while (continueParseIPythonCommand()) {
         myBuilder.advanceLexer();
       }
       ipythonCommand.done(PyElementTypes.EMPTY_EXPRESSION);

@@ -9,6 +9,6 @@ import javax.swing.border.Border;
 public class WinIntelliJTableSelectedCellHighlightBorder extends DarculaTableSelectedCellHighlightBorder {
   @Override
   protected Border createInsideBorder() {
-    return JBUI.Borders.empty(2);
+    return JBUI.Borders.empty(2, 3, 2, 2);
   }
 }

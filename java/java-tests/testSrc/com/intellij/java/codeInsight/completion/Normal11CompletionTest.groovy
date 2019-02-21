@@ -56,4 +56,10 @@ class Normal11CompletionTest extends NormalCompletionTestCase {
     myFixture.checkResult(fullText)
     return var
   }
+
+  void testToUnmodifiable() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'collect(Collectors.toUnmodifiableList())', 'collect(Collectors.toUnmodifiableSet())'
+  }
+
 }

@@ -50,7 +50,9 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   public abstract void refreshFiles(@NotNull Iterable<? extends VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
 
   public interface WatchRequest {
-    @NotNull @SystemIndependent String getRootPath();
+    @NotNull
+    @SystemIndependent
+    String getRootPath();
     boolean isToWatchRecursively();
   }
 
@@ -73,13 +75,11 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
     }
   }
 
-  public void removeWatchedRoot(@Nullable WatchRequest watchRequest) {
-    if (watchRequest != null) {
-      removeWatchedRoots(singleton(watchRequest));
-    }
+  public void removeWatchedRoot(@NotNull WatchRequest watchRequest) {
+    removeWatchedRoots(singleton(watchRequest));
   }
 
-  public void removeWatchedRoots(@NotNull Collection<WatchRequest> watchRequests) {
+  public void removeWatchedRoots(@NotNull Collection<? extends WatchRequest> watchRequests) {
     if (!watchRequests.isEmpty()) {
       replaceWatchedRoots(watchRequests, null, null);
     }
@@ -98,7 +98,7 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
    * May do nothing and return the same set of requests when it contains exactly the same paths.
    */
   @NotNull
-  public abstract Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests,
+  public abstract Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<? extends WatchRequest> watchRequests,
                                                         @Nullable Collection<String> recursiveRoots,
                                                         @Nullable Collection<String> flatRoots);
 

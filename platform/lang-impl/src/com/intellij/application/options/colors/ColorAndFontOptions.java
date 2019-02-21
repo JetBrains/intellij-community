@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options.colors;
 
@@ -34,6 +34,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -510,9 +511,13 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       initScheme(schemeDelegate);
       mySchemes.put(schemeDelegate.getName(), schemeDelegate);
     }
-
-    mySelectedScheme = mySchemes.get(EditorColorsManager.getInstance().getGlobalScheme().getName());
-    assert mySelectedScheme != null : EditorColorsManager.getInstance().getGlobalScheme().getName() + "; myschemes=" + mySchemes;
+    EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+    if (EditorColorsManagerImpl.isTempScheme(globalScheme)) {
+      mySelectedScheme = ContainerUtil.getFirstItem(mySchemes.values());
+    } else {
+      mySelectedScheme = mySchemes.get(globalScheme.getName());
+    }
+    assert mySelectedScheme != null : globalScheme.getName() + "; myschemes=" + mySchemes;
   }
 
   private static void initScheme(@NotNull MyColorScheme scheme) {

@@ -216,7 +216,7 @@ fun GuiTestCase.waitForGradleReimport(rootPath: String): Boolean {
           // second, check status in the Build tool window
           toolwindow(id = "Build") {
             content(tabName = "Sync") {
-              val tree = treeTable().target.tree
+              val tree = treeTable().target().tree
               val pathStrings = listOf(rootPath)
               val treePath = try {
                 ExtendedJTreePathFinder(tree).findMatchingPathByPredicate(pathStrings = pathStrings, predicate = Predicate.startWith)
@@ -343,6 +343,7 @@ fun GuiTestCase.checkGutterIcons(gutterIcon: GutterFixture.GutterIcon,
           waitUntilFileIsLoaded()
           waitUntilErrorAnalysisFinishes()
           gutter.waitUntilIconsShown(mapOf(gutterIcon to expectedNumberOfIcons))
+          moveToLine(expectedNumberOfIcons)
         }
         val gutterLinesWithIcon = gutter.linesWithGutterIcon(gutterIcon)
         val contents = this@editor.getCurrentFileContents(false)?.lines() ?: listOf()
@@ -405,5 +406,13 @@ fun GuiTestCase.createJdk(jdkPath: String, jdkName: String = ""): String{
       }
     } // ideFrame
     return@step installedJdkName
+  }
+}
+
+fun <T1, T2, R> combine(first: Iterable<T1>,
+                        second: Iterable<T2>,
+                        combiner: (T1, T2) -> R): List<R> = first.flatMap { firstItem ->
+  second.map { secondItem ->
+    combiner(firstItem, secondItem)
   }
 }

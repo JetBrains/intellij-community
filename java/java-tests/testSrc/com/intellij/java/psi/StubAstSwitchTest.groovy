@@ -107,7 +107,7 @@ class StubAstSwitchTest extends LightCodeInsightFixtureTestCase {
     latch.await()
   }
 
-  void "test external modification of a stubbed file with smart pointer switches the file to AST"() {
+  void "test smart pointer survives an external modification of a stubbed file"() {
     PsiFile file = myFixture.addFileToProject("A.java", "class A {}")
     def oldClass = JavaPsiFacade.getInstance(project).findClass("A", GlobalSearchScope.allScope(project))
     def pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(oldClass)
@@ -121,7 +121,6 @@ class StubAstSwitchTest extends LightCodeInsightFixtureTestCase {
 
     ApplicationManager.application.runWriteAction { VfsUtil.saveText(file.virtualFile, "import java.util.*; class A {}; class B {}") }
     assert pointer.element == oldClass
-    assert ((PsiFileImpl)file).treeElement
   }
 
   void "test do not parse when resolving references inside an anonymous class"() {
@@ -291,7 +290,7 @@ class B {
     List<PsiJavaFileImpl> files = fileNumbers.collect {
       (PsiJavaFileImpl)myFixture.addFileToProject("a${it}.java", "import foo.bar; class A{}")
     }
-    for (iteration in 0..3) {
+    for (iteration in 0..<1) {
       GCUtil.tryGcSoftlyReachableObjects()
       files.each { assert !it.treeElement }
 

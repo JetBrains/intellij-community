@@ -30,7 +30,7 @@ import java.util.Set;
 import static com.intellij.tasks.trello.model.TrelloLabel.LabelColor;
 
 /**
- * @author Mikhail Golubev
+ * This is a stub definition intended to be used with Google GSON. Its fields are initialized reflectively.
  */
 @SuppressWarnings("UnusedDeclaration")
 public class TrelloCard extends TrelloModel {

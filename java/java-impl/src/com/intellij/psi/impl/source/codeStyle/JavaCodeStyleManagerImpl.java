@@ -1069,6 +1069,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
             if (name.equals(variable.getName()) && !canBeReused.test(variable)) {
               throw new CancelException();
             }
+            super.visitVariable(variable);
           }
         });
       }

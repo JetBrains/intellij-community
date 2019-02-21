@@ -1,10 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.async.coroutineDispatchingContext
-import com.intellij.openapi.application.async.inUndoTransparentAction
-import com.intellij.openapi.application.async.inWriteAction
+import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -70,8 +67,8 @@ internal open class SaveSessionProducerManager : SaveExecutor {
     }
 
     if (isVfsRequired) {
-      return withContext(AppUIExecutor.onUiThread().inUndoTransparentAction().inWriteAction().coroutineDispatchingContext()) {
-        task()
+      return withContext(storeEdtCoroutineContext) {
+        runUndoTransparentWriteAction(task)
       }
     }
     else {

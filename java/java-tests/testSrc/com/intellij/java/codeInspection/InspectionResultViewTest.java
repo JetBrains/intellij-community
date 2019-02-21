@@ -88,7 +88,7 @@ public class InspectionResultViewTest extends LightJava9ModulesCodeInsightFixtur
     TreeUtil.expandAll(view.getTree());
     updateTree(view);
 
-    PlatformTestUtil.assertTreeEqual(view.getTree(), "-InspectionViewTree\n" +
+    PlatformTestUtil.assertTreeEqual(view.getTree(), ("-InspectionViewTree\n" +
                                                              " -Groovy\n" +
                                                              "  -Data flow\n" +
                                                              "   -Unused Assignment\n" +
@@ -99,7 +99,7 @@ public class InspectionResultViewTest extends LightJava9ModulesCodeInsightFixtur
                                                              "    -light_idea_test_case_m3\n" +
                                                              "     -src_m3/foo/bar\n" +
                                                              "      -Baz.groovy\n" +
-                                                             "       Assignment is not used".replace('/', File.separatorChar));
+                                                             "       Assignment is not used").replace('/', File.separatorChar));
 
   }
 

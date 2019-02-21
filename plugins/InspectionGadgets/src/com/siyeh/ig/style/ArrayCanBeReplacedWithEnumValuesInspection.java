@@ -6,18 +6,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author okli
@@ -101,10 +102,7 @@ public class ArrayCanBeReplacedWithEnumValuesInspection extends BaseInspection {
         return;
       }
 
-      final List<String> enumValues = Stream.of(initClass.getFields())
-        .filter(ev -> ev instanceof PsiEnumConstant)
-        .map(ev -> ev.getName())
-        .collect(Collectors.toList());
+      final List<PsiEnumConstant> enumValues = ContainerUtil.filterIsInstance(Arrays.asList(initClass.getFields()), PsiEnumConstant.class);
 
       final PsiExpression[] initializers = expression.getInitializers();
       if (enumValues.size() != initializers.length) {
@@ -112,11 +110,7 @@ public class ArrayCanBeReplacedWithEnumValuesInspection extends BaseInspection {
       }
 
       for (int i = 0; i < initializers.length; i++) {
-        if (!(initializers[i] instanceof PsiReferenceExpression &&
-              enumValues.get(i).equals(((PsiReferenceExpression)initializers[i]).getReferenceName()) &&
-              initExprType.equals(initializers[i].getType()))) {
-          return;
-        }
+        if (!ExpressionUtils.isReferenceTo(initializers[i], enumValues.get(i))) return;
       }
 
       final PsiElement parent = expression.getParent();

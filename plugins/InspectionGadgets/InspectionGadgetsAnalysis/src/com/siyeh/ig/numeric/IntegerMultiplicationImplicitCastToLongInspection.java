@@ -15,10 +15,12 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantEvaluationOverflowException;
@@ -27,12 +29,17 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -64,6 +71,12 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
       "integer.multiplication.implicit.cast.to.long.display.name");
   }
 
+  @Nullable
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new IntegerMultiplicationImplicitCastToLongInspectionFix();
+  }
+
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
@@ -88,6 +101,109 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
     return new IntegerMultiplicationImplicitlyCastToLongVisitor();
   }
 
+  private static boolean isNonLongInteger(PsiType type) {
+    if (type == null) return false;
+    final String text = type.getCanonicalText();
+    return s_typesToCheck.contains(text);
+  }
+
+  /**
+   * Checks whether one of operands of polyadic expression itself is polyadic expression with multiplication operator.
+   * For shift operations only first operand is considered.
+   */
+  private static boolean hasInnerMultiplication(@NotNull PsiPolyadicExpression expression) {
+    final IElementType tokenType = expression.getOperationTokenType();
+    if (isShiftToken(tokenType)) {
+      return hasMultiplication(expression.getOperands()[0]);
+    }
+
+    return Arrays.stream(expression.getOperands()).anyMatch(operand -> hasMultiplication(operand));
+  }
+
+  private static boolean hasMultiplication(PsiExpression expression) {
+    expression = PsiUtil.deparenthesizeExpression(expression);
+
+    if (expression instanceof PsiPrefixExpression) {
+      return hasMultiplication(((PsiPrefixExpression)expression).getOperand());
+    }
+
+    if (expression instanceof PsiPolyadicExpression) {
+      final PsiPolyadicExpression polyExpr = (PsiPolyadicExpression)expression;
+      final IElementType tokenType = polyExpr.getOperationTokenType();
+
+      if (tokenType == JavaTokenType.ASTERISK) {
+        return true;
+      }
+
+      return hasInnerMultiplication(polyExpr);
+    }
+
+    if (expression instanceof PsiConditionalExpression) {
+      final PsiConditionalExpression ternary = (PsiConditionalExpression)expression;
+      return hasMultiplication(ternary.getThenExpression()) || hasMultiplication(ternary.getElseExpression());
+    }
+
+    return false;
+  }
+
+  private static boolean isShiftToken(IElementType tokenType) {
+    return tokenType.equals(JavaTokenType.LTLT) ||
+           tokenType.equals(JavaTokenType.GTGT) ||
+           tokenType.equals(JavaTokenType.GTGTGT);
+  }
+
+  private static class IntegerMultiplicationImplicitCastToLongInspectionFix extends InspectionGadgetsFix {
+
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return InspectionGadgetsBundle.message("integer.multiplication.implicit.cast.to.long.quickfix");
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiPolyadicExpression expression = (PsiPolyadicExpression)descriptor.getPsiElement();
+
+      final PsiExpression[] operands = expression.getOperands();
+      if (operands.length < 2) {
+        return;
+      }
+
+      final PsiExpression exprToCast;
+      if (operands.length > 2 || expression.getOperationTokenType() == JavaTokenType.LTLT) {
+        exprToCast = operands[0];
+      }
+      else {
+        exprToCast = Arrays.stream(operands)
+          .map(operand -> PsiUtil.deparenthesizeExpression(operand))
+          .filter(operand -> operand instanceof PsiLiteralExpression ||
+                             operand instanceof PsiPrefixExpression && ((PsiPrefixExpression)operand).getOperand() instanceof PsiLiteral)
+          .findFirst()
+          .orElse(operands[0]);
+      }
+
+      addCast(exprToCast);
+    }
+
+    private static void addCast(@NotNull PsiExpression expression) {
+      if (expression instanceof PsiPrefixExpression) {
+        final PsiExpression operand = ((PsiPrefixExpression)expression).getOperand();
+        if (operand instanceof PsiLiteralExpression) expression = operand;
+      }
+
+      final String replacementText;
+      if (expression instanceof PsiLiteralExpression) {
+        replacementText = expression.getText() + "L";
+      }
+      else {
+        replacementText = "(long)" + expression.getText();
+      }
+
+      PsiReplacementUtil.replaceExpression(expression, replacementText);
+    }
+  }
+
   private class IntegerMultiplicationImplicitlyCastToLongVisitor
     extends BaseInspectionVisitor {
 
@@ -102,20 +218,24 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
       if (!isNonLongInteger(type)) {
         return;
       }
+      if (hasInnerMultiplication(expression)) {
+        return;
+      }
       PsiExpression[] operands = expression.getOperands();
       if (operands.length < 2 || expression.getLastChild() instanceof PsiErrorElement) {
         return;
       }
-      final PsiExpression context = getContainingExpression(expression);
+      PsiExpression context = getContainingExpression(expression);
       if (context == null) return;
-      if (!PsiType.LONG.equals(context.getType()) && 
-          !PsiType.LONG.equals(ExpectedTypeUtils.findExpectedType(context, true))) {
-        return;
-      }
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(context.getParent());
       if (parent instanceof PsiTypeCastExpression) {
         PsiType castType = ((PsiTypeCastExpression)parent).getType();
         if (isNonLongInteger(castType)) return;
+        if (PsiType.LONG.equals(castType)) context = (PsiExpression)parent;
+      }
+      if (!PsiType.LONG.equals(context.getType()) &&
+          !PsiType.LONG.equals(ExpectedTypeUtils.findExpectedType(context, true))) {
+        return;
       }
       if (ignoreNonOverflowingCompileTimeConstants) {
         try {
@@ -177,8 +297,9 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
       PsiExpression expression) {
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiPolyadicExpression && TypeConversionUtil.isNumericType(((PsiPolyadicExpression)parent).getType())) {
-        IElementType tokenType = ((PsiPolyadicExpression)parent).getOperationTokenType();
-        if (!tokenType.equals(JavaTokenType.LTLT) && !tokenType.equals(JavaTokenType.GTGT) && !tokenType.equals(JavaTokenType.GTGTGT)) {
+        final PsiPolyadicExpression polyParent = (PsiPolyadicExpression)parent;
+        final IElementType tokenType = polyParent.getOperationTokenType();
+        if (!isShiftToken(tokenType) || expression == polyParent.getOperands()[0]) {
           return getContainingExpression((PsiExpression)parent);
         }
       }
@@ -188,12 +309,6 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
         return getContainingExpression((PsiExpression)parent);
       }
       return expression;
-    }
-
-    private boolean isNonLongInteger(PsiType type) {
-      if (type == null) return false;
-      final String text = type.getCanonicalText();
-      return s_typesToCheck.contains(text);
     }
   }
 }

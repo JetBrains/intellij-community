@@ -1,6 +1,9 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.JavaCodeFragmentFactory;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -10,6 +13,15 @@ public class StringBufferReplaceableByStringInspectionTest extends LightInspecti
 
   public void testStringBufferReplaceableByString() {
     doTest();
+  }
+
+  public void testFragment() {
+    String text = "StringBuilder <warning descr=\"'StringBuilder sb' can be replaced with 'String'\">sb</warning> = new StringBuilder();\n" +
+                  "sb.append(\"foo\");\n" +
+                  "System.out.println(sb.toString());";
+    JavaCodeFragment fragment = JavaCodeFragmentFactory.getInstance(getProject()).createCodeBlockCodeFragment(text, null, true);
+    myFixture.configureFromExistingVirtualFile(fragment.getVirtualFile());
+    myFixture.testHighlighting(true, false, false);
   }
 
   @NotNull

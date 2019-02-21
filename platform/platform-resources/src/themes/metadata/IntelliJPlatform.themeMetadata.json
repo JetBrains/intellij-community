@@ -3,31 +3,39 @@
   "fixed": false,
   "ui": [
     {
-      "key": "Borders.color"
+      "key": "Borders.color",
+      "description": "Used in tables, lists, toolbars, tool windows, editor split mode"
     },
     {
-      "key": "Borders.ContrastBorderColor"
+      "key": "Borders.ContrastBorderColor",
+      "description": "Used in tool buttons bars and the navigation bar"
     },
     {
-      "key": "ComboPopup.border"
+      "key": "ComboPopup.border",
+      "description": "Combo box drop-down menu. Format: \"top, left, bottom, right, hex\", e.g. “1,1,1,1,FFFFFF\". Size in pixels"
     },
     {
       "key": "CompletionPopup.background"
     },
     {
-      "key": "CompletionPopup.foreground"
+      "key": "CompletionPopup.foreground",
+      "description": "Gray text at the right border. Completion suggestions foreground is Label.foreground."
     },
     {
-      "key": "CompletionPopup.infoForeground"
+      "key": "CompletionPopup.infoForeground",
+      "description": "Gray info text after each completion suggestion (not the gray text on the right)"
     },
     {
-      "key": "CompletionPopup.matchForeground"
+      "key": "CompletionPopup.matchForeground",
+      "description": "The string in the completion suggestions list that matches the entered string "
     },
     {
-      "key": "CompletionPopup.matchSelectionForeground"
+      "key": "CompletionPopup.matchSelectionForeground",
+      "description": "The string in the completion suggestions list that matches the entered string when selected"
     },
     {
-      "key": "CompletionPopup.nonFocusedState"
+      "key": "CompletionPopup.nonFocusedState",
+      "description": "Show completion popup as grayed-out until focused. Boolean. Default is \"true\""
     },
     {
       "key": "CompletionPopup.selectionBackground"
@@ -42,16 +50,26 @@
       "key": "CompletionPopup.selectionInfoForeground"
     },
     {
-      "key": "Counter.background"
+      "key": "Counter.background",
+      "description": "An oval with a number on the right of a tree item. For example, the number of updates in Plugins or problems in the Project Structure view."
     },
     {
       "key": "Counter.foreground"
     },
     {
-      "key": "DebuggerTabs.selectedBackground"
+      "key": "DebuggerPopup.background",
+      "description": "A breakpoint popup that opens on right-click"
     },
     {
-      "key": "Editor.background"
+      "key": "DebuggerPopup.borderColor"
+    },
+    {
+      "key": "DebuggerTabs.selectedBackground",
+      "description": "Background of the selected tab in the Debugger tool window. The foreground is EditorTabs.selectedForeground."
+    },
+    {
+      "key": "Editor.background",
+      "description": "Empty editor area"
     },
     {
       "key": "Editor.foreground"
@@ -60,22 +78,28 @@
       "key": "Editor.shortcutForeground"
     },
     {
-      "key": "EditorTabs.borderColor"
+      "key": "EditorTabs.borderColor",
+      "description": "The JBEditorTabs component"
     },
     {
-      "key": "EditorTabs.inactiveMaskColor"
+      "key": "EditorTabs.inactiveMaskColor",
+      "description": "Masks inactive tabs to make them darker"
     },
     {
-      "key": "EditorTabs.selectedBackground"
+      "key": "EditorTabs.selectedBackground",
+      "description": "Background for all tabs. Inactive tabs also use inactiveMaskColor."
     },
     {
-      "key": "EditorTabs.selectedForeground"
+      "key": "EditorTabs.selectedForeground",
+      "description": "Foreground of the selected tab when a file status color is not used. Inactive tabs use Label.foreground."
     },
     {
-      "key": "EditorTabs.underlineColor"
+      "key": "EditorTabs.underlineColor",
+      "description": "The line under the selected tab. Dark themes only"
     },
     {
-      "key": "FileColor.Blue"
+      "key": "FileColor.Blue",
+      "description": "Settings | Appearance & Behavior | File colors"
     },
     {
       "key": "FileColor.Green"
@@ -93,7 +117,8 @@
       "key": "FileColor.Yellow"
     },
     {
-      "key": "FlameGraph.frameForeground"
+      "key": "FlameGraph.frameForeground",
+      "description": "Java profiler flame graph"
     },
     {
       "key": "FlameGraph.JVMBackground"
@@ -150,40 +175,31 @@
       "key": "FlameGraph.parentSearchNotMatchedBackground"
     },
     {
-      "key": "Git.Log.Ref.Head"
-    },
-    {
-      "key": "Git.Log.Ref.LocalBranch"
-    },
-    {
-      "key": "Git.Log.Ref.Other"
-    },
-    {
-      "key": "Git.Log.Ref.RemoteBranch"
-    },
-    {
-      "key": "Git.Log.Ref.Tag"
-    },
-    {
       "key": "Group.disabledSeparatorColor"
     },
     {
-      "key": "Group.separatorColor"
+      "key": "Group.separatorColor",
+      "description": "Titled separator line color"
     },
     {
-      "key": "GutterTooltip.infoForeground"
+      "key": "GutterTooltip.infoForeground",
+      "description": "Gray info text in a tooltip for overrides/implements icons"
     },
     {
-      "key": "GutterTooltip.lineSeparatorColor"
+      "key": "GutterTooltip.lineSeparatorColor",
+      "description": "Separator line between lines of text"
     },
     {
-      "key": "HeaderColor.active"
+      "key": "HeaderColor.active",
+      "deprecated": true
     },
     {
-      "key": "HeaderColor.inactive"
+      "key": "HeaderColor.inactive",
+      "deprecated": true
     },
     {
-      "key": "HelpTooltip.background"
+      "key": "HelpTooltip.background",
+      "description": "Tooltips for toolbar buttons and other controls. To replace the current tooltip in future versions"
     },
     {
       "key": "HelpTooltip.borderColor"
@@ -195,52 +211,44 @@
       "key": "HelpTooltip.shortcutForeground"
     },
     {
-      "key": "Hg.Log.Ref.Bookmark"
-    },
-    {
-      "key": "Hg.Log.Ref.Branch"
-    },
-    {
-      "key": "Hg.Log.Ref.ClosedBranch"
-    },
-    {
-      "key": "Hg.Log.Ref.Head"
-    },
-    {
-      "key": "Hg.Log.Ref.LocalTag"
-    },
-    {
-      "key": "Hg.Log.Ref.MqTag"
-    },
-    {
-      "key": "Hg.Log.Ref.Tag"
-    },
-    {
-      "key": "Hg.Log.Ref.Tip"
-    },
-    {
       "key": "InformationHint.borderColor"
+    },
+    {
+      "key": "InplaceRefactoringPopup.background",
+      "description": "A popup in the editor with refactoring options"
+    },
+    {
+      "key": "InplaceRefactoringPopup.borderColor"
     },
     {
       "key": "Label.disabledText"
     },
     {
-      "key": "Label.errorForeground"
+      "key": "Label.errorForeground",
+      "description": "Red text color for inline error messages. See the \"Validation Dialog Test\" action in internal mode (press Enter for validation in the dialog)"
     },
     {
-      "key": "Label.infoForeground"
+      "key": "Label.infoForeground",
+      "description": "Gray info text appearing under UI controls. See the \"Show Standard Panels\" action in internal mode"
     },
     {
-      "key": "NavBar.borderColor"
+      "key": "Link.secondaryForeground",
+      "description": "Light-colored links. Used in the Variables tab of the Debugger tool window. Can be seen when a tree line is long, does not fit into the tab's width, and its popup on hover goes beyond the right monitor side."
     },
     {
-      "key": "Notification.background"
+      "key": "NavBar.borderColor",
+      "description": "Border above the navbar, visible when the toolbar is on"
+    },
+    {
+      "key": "Notification.background",
+      "description": "Notification that appears in in bottom-right corner. Use the \"Add Test Notification\" action in internal mode to show notifications on demand."
     },
     {
       "key": "Notification.borderColor"
     },
     {
-      "key": "Notification.errorBackground"
+      "key": "Notification.errorBackground",
+      "description": "Exception notifications. Use the \"Drop an error\" action in internal mode to show notifications on demand."
     },
     {
       "key": "Notification.errorBorderColor"
@@ -252,7 +260,8 @@
       "key": "Notification.foreground"
     },
     {
-      "key": "Notification.MoreButton.background"
+      "key": "Notification.MoreButton.background",
+      "description": "The \"# more\" area in a notification. Appears when there are several notifications of the same type"
     },
     {
       "key": "Notification.MoreButton.foreground"
@@ -261,7 +270,8 @@
       "key": "Notification.MoreButton.innerBorderColor"
     },
     {
-      "key": "Notification.ToolWindow.errorBackground"
+      "key": "Notification.ToolWindow.errorBackground",
+      "description": "Tool window balloon. Use the \"Add Test Notification\" action in internal mode to show notifications on demand."
     },
     {
       "key": "Notification.ToolWindow.errorBorderColor"
@@ -288,13 +298,15 @@
       "key": "Notification.ToolWindow.warningForeground"
     },
     {
-      "key": "ParameterInfo.background"
+      "key": "ParameterInfo.background",
+      "description": "Parameter info tooltip"
     },
     {
       "key": "ParameterInfo.borderColor"
     },
     {
-      "key": "ParameterInfo.currentOverloadBackground"
+      "key": "ParameterInfo.currentOverloadBackground",
+      "description": "Selection background"
     },
     {
       "key": "ParameterInfo.currentParameterForeground"
@@ -306,34 +318,41 @@
       "key": "ParameterInfo.foreground"
     },
     {
-      "key": "ParameterInfo.infoForeground"
+      "key": "ParameterInfo.infoForeground",
+      "description": "Context help text at the bottom of a tooltip"
     },
     {
-      "key": "ParameterInfo.lineSeparatorColor"
+      "key": "ParameterInfo.lineSeparatorColor",
+      "description": "Separator lines between text lines"
     },
     {
-      "key": "Plugins.background"
+      "key": "Plugins.background",
+      "description": "The Settings | Plugins dialog"
     },
     {
-      "key": "Plugins.Button.installBackground"
+      "key": "Plugins.Button.installBackground",
+      "description": "Install button in the Plugins | Marketplace tab"
     },
     {
       "key": "Plugins.Button.installBorderColor"
     },
     {
-      "key": "Plugins.Button.installFillBackground"
+      "key": "Plugins.Button.installFillBackground",
+      "description": "Install button in a plugin's page (click any plugin name)"
     },
     {
       "key": "Plugins.Button.installFillForeground"
     },
     {
-      "key": "Plugins.Button.installFocusedBackground"
+      "key": "Plugins.Button.installFocusedBackground",
+      "description": "Not used in custom themes. Works only in Windows theme: changes \"Install\" button background on hover/focus."
     },
     {
       "key": "Plugins.Button.installForeground"
     },
     {
-      "key": "Plugins.Button.updateBackground"
+      "key": "Plugins.Button.updateBackground",
+      "description": "Update button in the Plugins | Updates tab"
     },
     {
       "key": "Plugins.Button.updateBorderColor"
@@ -348,7 +367,8 @@
       "key": "Plugins.eapTagBackground"
     },
     {
-      "key": "Plugins.lightSelectionBackground"
+      "key": "Plugins.lightSelectionBackground",
+      "description": "Selection background"
     },
     {
       "key": "Plugins.SearchField.background"
@@ -357,13 +377,15 @@
       "key": "Plugins.SearchField.borderColor"
     },
     {
-      "key": "Plugins.SectionHeader.background"
+      "key": "Plugins.SectionHeader.background",
+      "description": "Section dividers, e.g. \"Featured\" or \"New and Updated\" in the Plugins | Marketplace tab"
     },
     {
       "key": "Plugins.SectionHeader.foreground"
     },
     {
-      "key": "Plugins.Tab.hoverBackground"
+      "key": "Plugins.Tab.hoverBackground",
+      "description": "Tabs at the top"
     },
     {
       "key": "Plugins.Tab.selectedBackground"
@@ -372,19 +394,23 @@
       "key": "Plugins.Tab.selectedForeground"
     },
     {
-      "key": "Plugins.tagBackground"
+      "key": "Plugins.tagBackground",
+      "description": "Plugin categories tags, e.g. \"Code tools\" or \"Languages\" under a plugin name"
     },
     {
       "key": "Plugins.tagForeground"
     },
     {
-      "key": "Popup.Advertiser.background"
+      "key": "Popup.Advertiser.background",
+      "description": "The hint text area at the bottom of a popup"
     },
     {
-      "key": "Popup.Advertiser.borderColor"
+      "key": "Popup.Advertiser.borderColor",
+      "description": "The top border"
     },
     {
-      "key": "Popup.Advertiser.borderInsets"
+      "key": "Popup.Advertiser.borderInsets",
+      "description": "Insets between text and borders. Format: \"top, left, bottom, right\" in pixels, e.g. \"3,8,5,0\""
     },
     {
       "key": "Popup.Advertiser.foreground"
@@ -393,19 +419,24 @@
       "key": "Popup.innerBorderColor"
     },
     {
-      "key": "Popup.paintBorder"
+      "key": "Popup.paintBorder",
+      "description": "On Mac, the popup border is not visible by default. Set to true to make it visible"
     },
     {
-      "key": "Popup.separatorColor"
+      "key": "Popup.separatorColor",
+      "description": "Separator line in lists and the vertical separator line in the Switcher and Recent Files popups"
     },
     {
-      "key": "Popup.separatorForeground"
+      "key": "Popup.separatorForeground",
+      "description": "Text over the separator line in lists"
     },
     {
-      "key": "ProgressBar.failedColor"
+      "key": "ProgressBar.failedColor",
+      "description": "Use the \"Test Progress Indicators\" action in internal mode to preview progress bars"
     },
     {
-      "key": "ProgressBar.failedEndColor"
+      "key": "ProgressBar.failedEndColor",
+      "description": "The lighter part in an indeterminate progress bar"
     },
     {
       "key": "ProgressBar.passedColor"
@@ -414,7 +445,8 @@
       "key": "ProgressBar.passedEndColor"
     },
     {
-      "key": "SearchEverywhere.Advertiser.background"
+      "key": "SearchEverywhere.Advertiser.background",
+      "description": "The hint text area at the bottom of a popup"
     },
     {
       "key": "SearchEverywhere.Advertiser.borderInsets"
@@ -423,13 +455,16 @@
       "key": "SearchEverywhere.Advertiser.foreground"
     },
     {
-      "key": "SearchEverywhere.Header.background"
+      "key": "SearchEverywhere.Header.background",
+      "description": "Tabs area background"
     },
     {
-      "key": "SearchEverywhere.List.separatorColor"
+      "key": "SearchEverywhere.List.separatorColor",
+      "description": "Section header line"
     },
     {
-      "key": "SearchEverywhere.List.separatorForeground"
+      "key": "SearchEverywhere.List.separatorForeground",
+      "description": "Section header text"
     },
     {
       "key": "SearchEverywhere.SearchField.background"
@@ -438,7 +473,8 @@
       "key": "SearchEverywhere.SearchField.borderColor"
     },
     {
-      "key": "SearchEverywhere.SearchField.infoForeground"
+      "key": "SearchEverywhere.SearchField.infoForeground",
+      "description": "Gray text on the right of the search field"
     },
     {
       "key": "SearchEverywhere.Tab.selectedBackground"
@@ -447,28 +483,33 @@
       "key": "SearchEverywhere.Tab.selectedForeground"
     },
     {
-      "key": "SearchMatch.endBackground"
+      "key": "SearchMatch.endBackground",
+      "description": "The yellow rectangle under the search match text"
     },
     {
       "key": "SearchMatch.startBackground"
     },
     {
-      "key": "SidePanel.background"
+      "key": "SidePanel.background",
+      "description": "Left-side tree background in the Settings and Project Structure dialogs"
     },
     {
-      "key": "SpeedSearch.background"
+      "key": "SpeedSearch.background",
+      "description": "A search box that appears on typing in lists, trees, and tables"
     },
     {
       "key": "SpeedSearch.borderColor"
     },
     {
-      "key": "SpeedSearch.errorForeground"
+      "key": "SpeedSearch.errorForeground",
+      "description": "Non-matching search text"
     },
     {
       "key": "SpeedSearch.foreground"
     },
     {
-      "key": "Table.lightSelectionBackground"
+      "key": "Table.lightSelectionBackground",
+      "description": "A lighter selection. See Settings | GitHub and the GitHub Pull Requests tool window"
     },
     {
       "key": "Table.lightSelectionForeground"
@@ -504,13 +545,16 @@
       "key": "ToggleButton.onForeground"
     },
     {
-      "key": "ToolTip.Actions.background"
+      "key": "ToolTip.Actions.background",
+      "description": "Actions in editor tooltips for inspection errors. Registry key \"ide.tooltip.show.with.actions\" should be on."
     },
     {
-      "key": "ToolTip.Actions.infoForeground"
+      "key": "ToolTip.Actions.infoForeground",
+      "description": "Action shortcuts"
     },
     {
-      "key": "ToolWindow.Button.hoverBackground"
+      "key": "ToolWindow.Button.hoverBackground",
+      "description": "Buttons in a tool window stripe"
     },
     {
       "key": "ToolWindow.Button.selectedBackground"
@@ -519,13 +563,15 @@
       "key": "ToolWindow.Button.selectedForeground"
     },
     {
-      "key": "ToolWindow.Header.background"
+      "key": "ToolWindow.Header.background",
+      "description": "Active tool window header"
     },
     {
       "key": "ToolWindow.Header.borderColor"
     },
     {
-      "key": "ToolWindow.Header.inactiveBackground"
+      "key": "ToolWindow.Header.inactiveBackground",
+      "description": "Inactive tool window header"
     },
     {
       "key": "ToolWindow.HeaderCloseButton.background"
@@ -537,40 +583,96 @@
       "key": "ToolWindow.HeaderTab.selectedInactiveBackground"
     },
     {
-      "key": "ToolWindow.HeaderTab.hoverBackground"
+      "key": "ToolWindow.HeaderTab.hoverBackground",
+      "description": "Tab in a tool window header"
     },
     {
       "key": "ToolWindow.HeaderTab.hoverInactiveBackground"
     },
     {
-      "key": "ValidationTooltip.errorBackground"
+      "key": "UiDesigner.Panel.background",
+      "description": "Android plugin: panels around the preview area"
+    },
+    {
+      "key": "UiDesigner.Preview.background",
+      "description": "Android plugin: the app preview area"
+    },
+    {
+      "key": "ValidationTooltip.errorBackground",
+      "description": "Error description tooltip above a control. See the \"Validation Dialog Test\" action in internal mode (press Enter for validation in the dialog)."
     },
     {
       "key": "ValidationTooltip.errorBorderColor"
     },
     {
-      "key": "ValidationTooltip.warningBackground"
+      "key": "ValidationTooltip.warningBackground",
+      "description": "Warning description tooltip above a control. See the \"Show Standard Panels\" action in internal mode (press Enter for validation in the dialog)."
     },
     {
       "key": "ValidationTooltip.warningBorderColor"
     },
     {
-      "key": "VersionControl.FileHistory.Commit.selectedBranchBackground"
+      "key": "VersionControl.FileHistory.Commit.selectedBranchBackground",
+      "description": "The VCS | Git | Show History action, the \"Show All Branches\" setting"
     },
     {
-      "key": "VersionControl.Log.Commit.currentBranchBackground"
+      "key": "VersionControl.GitLog.headIconColor",
+      "description": "A label-like icon in the ref label"
     },
     {
-      "key": "VersionControl.Log.Commit.unmatchedForeground"
+      "key": "VersionControl.GitLog.localBranchIconColor"
     },
     {
-      "key": "VersionControl.Ref.backgroundBase"
+      "key": "VersionControl.GitLog.otherIconColor"
     },
     {
-      "key": "VersionControl.Ref.backgroundBrightness"
+      "key": "VersionControl.GitLog.remoteBranchIconColor"
     },
     {
-      "key": "VersionControl.Ref.foreground"
+      "key": "VersionControl.GitLog.tagIconColor"
+    },
+    {
+      "key": "VersionControl.HgLog.bookmarkIconColor"
+    },
+    {
+      "key": "VersionControl.HgLog.branchIconColor"
+    },
+    {
+      "key": "VersionControl.HgLog.closedBranchIconColor"
+    },
+    {
+      "key": "VersionControl.HgLog.headIconColor"
+    },
+    {
+      "key": "VersionControl.HgLog.localTagIconColor"
+    },
+    {
+      "key": "VersionControl.HgLog.mqTagIconColor"
+    },
+    {
+      "key": "VersionControl.HgLog.tagIconColor"
+    },
+    {
+      "key": "VersionControl.HgLog.tipIconColor"
+    },
+    {
+      "key": "VersionControl.Log.Commit.currentBranchBackground",
+      "description": "Version Control tool window | Log tab, the \"Current branch\" setting under the \"eye\" icon"
+    },
+    {
+      "key": "VersionControl.Log.Commit.unmatchedForeground",
+      "description": "Version Control tool window | Log tab, the \"Merge commits\" setting under the \"eye\" icon"
+    },
+    {
+      "key": "VersionControl.RefLabel.backgroundBase",
+      "description": "Ref label background"
+    },
+    {
+      "key": "VersionControl.RefLabel.backgroundBrightness",
+      "description": "Transparency of the ref label. 0 is transparent, 1 is opaque."
+    },
+    {
+      "key": "VersionControl.RefLabel.foreground"
     },
     {
       "key": "WelcomeScreen.background"
@@ -612,7 +714,8 @@
       "key": "WelcomeScreen.separatorColor"
     },
     {
-      "key": "Window.border"
+      "key": "Window.border",
+      "description": "Dialog border. Format: \"top, left, bottom, right, hex\", e.g. \"1,1,1,1,FFFFFF\". Sizes in pixels"
     }
   ]
 }

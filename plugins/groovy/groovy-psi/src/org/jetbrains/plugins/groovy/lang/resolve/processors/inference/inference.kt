@@ -3,9 +3,9 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtil.extractIterableTypeParameter
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -19,6 +19,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.JustTypeArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.UnknownArgument
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
+import org.jetbrains.plugins.groovy.lang.typing.devoid
 
 fun getTopLevelType(expression: GrExpression): PsiType? {
   if (expression is GrMethodCall) {
@@ -27,12 +28,12 @@ fun getTopLevelType(expression: GrExpression): PsiType? {
       val session = GroovyInferenceSessionBuilder(expression, it, resolved.contextSubstitutor)
         .resolveMode(false)
         .build()
-      return session.inferSubst().substitute(PsiUtil.getSmartReturnType(it.method))
+      return session.inferSubst().substitute(PsiUtil.getSmartReturnType(it.method).devoid(expression))
     }
     return null
   }
 
-  if (expression is GrClosableBlock) {
+  if (expression is GrFunctionalExpression) {
     return TypesUtil.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, expression)
   }
 

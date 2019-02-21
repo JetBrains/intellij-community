@@ -116,9 +116,13 @@ public class TargetElementUtil extends TargetElementUtilBase {
     PsiReference ref = file.findReferenceAt(adjustOffset(file, document, offset));
     if (ref == null) return null;
     int elementOffset = ref.getElement().getTextRange().getStartOffset();
-    if (ref.getRangeInElement().shiftRight(elementOffset).containsOffset(offset)) {
-      return ref;
+
+    for (TextRange range : ReferenceRange.getRanges(ref)) {
+      if (range.shiftRight(elementOffset).containsOffset(offset)) {
+        return ref;
+      }
     }
+
     return null;
   }
 

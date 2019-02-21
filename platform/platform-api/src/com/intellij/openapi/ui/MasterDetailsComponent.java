@@ -815,8 +815,9 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     @NotNull
     public String getDisplayName() {
       final NamedConfigurable configurable = (NamedConfigurable)getUserObject();
-      LOG.assertTrue(configurable != null, "Tree was already disposed");
-      return configurable.getDisplayName();
+      if (configurable != null) return configurable.getDisplayName();
+      LOG.debug("Tree was already disposed"); // workaround for IDEA-206547
+      return "DISPOSED";
     }
 
     public NamedConfigurable getConfigurable() {

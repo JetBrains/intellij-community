@@ -1,4 +1,4 @@
-// "Convert to local" "true"
+// "Convert field to local variable in initializer section" "true"
 class TestInitializer {
 
   private boolean fie<caret>ld;

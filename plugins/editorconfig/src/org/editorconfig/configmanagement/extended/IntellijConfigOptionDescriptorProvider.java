@@ -13,7 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 public class IntellijConfigOptionDescriptorProvider implements EditorConfigOptionDescriptorProvider {
 
@@ -35,24 +34,24 @@ public class IntellijConfigOptionDescriptorProvider implements EditorConfigOptio
     List<EditorConfigOptionDescriptor> descriptors = ContainerUtil.newArrayList();
     List<AbstractCodeStylePropertyMapper> mappers = ContainerUtil.newArrayList();
     CodeStylePropertiesUtil.collectMappers(CodeStyle.getDefaultSettings(), mapper -> mappers.add(mapper));
-    Map<String, EditorConfigDescriptor> propertyMap = ContainerUtil.newHashMap();
     for (AbstractCodeStylePropertyMapper mapper : mappers) {
       for (String property : mapper.enumProperties()) {
+        if (IntellijPropertyKindMap.getPropertyKind(property) == EditorConfigPropertyKind.EDITOR_CONFIG_STANDARD) {
+          // Descriptions for standard properties are added separately
+          continue;
+        }
         List<String> ecNames = EditorConfigIntellijNameUtil.toEditorConfigNames(mapper, property);
-        final EditorConfigDescriptor descriptor = createValueDescriptor(property, mapper);
-        if (descriptor != null) {
+        final EditorConfigDescriptor valueDescriptor = createValueDescriptor(property, mapper);
+        if (valueDescriptor != null) {
           for (String ecName : ecNames) {
-            propertyMap.put(ecName, descriptor);
+            EditorConfigOptionDescriptor descriptor = new EditorConfigOptionDescriptor(
+              new EditorConfigConstantDescriptor(ecName, mapper.getPropertyDescription(property), null),
+              valueDescriptor,
+              null, null);
+            descriptors.add(descriptor);
           }
         }
       }
-    }
-    for (String property: propertyMap.keySet()) {
-      EditorConfigOptionDescriptor descriptor = new EditorConfigOptionDescriptor(
-        new EditorConfigConstantDescriptor(property, null, null),
-        propertyMap.get(property),
-        null, null);
-      descriptors.add(descriptor);
     }
     return descriptors;
   }
@@ -71,6 +70,9 @@ public class IntellijConfigOptionDescriptorProvider implements EditorConfigOptio
     }
     else if (accessor instanceof ExternalStringAccessor) {
       return new EditorConfigStringDescriptor(null, null);
+    }
+    else if (accessor instanceof VisualGuidesAccessor) {
+      return new EditorConfigListDescriptor(0, true, Collections.singletonList(new EditorConfigNumberDescriptor(null, null)), null,  null);
     }
     return null;
   }

@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
-import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StateStorage
@@ -69,7 +69,7 @@ private class StateGetterImpl<S : Any, T : Any>(private val component: Persisten
       throw e
     }
     catch (e: Throwable) {
-      LOG.error(PluginManagerCore.createPluginException("Cannot get state after load", e, component.javaClass))
+      PluginException.logPluginError(LOG, "Cannot get state after load", e, component.javaClass)
       null
     }
 

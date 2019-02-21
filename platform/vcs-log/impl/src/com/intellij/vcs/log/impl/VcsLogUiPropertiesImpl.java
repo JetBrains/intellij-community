@@ -21,7 +21,9 @@ import com.intellij.vcs.log.graph.PermanentGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Stores UI configuration based on user activity and preferences.
@@ -33,6 +35,7 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
                              MainVcsLogUiProperties.SHOW_LONG_EDGES,
                              MainVcsLogUiProperties.BEK_SORT_TYPE,
                              CommonUiProperties.SHOW_ROOT_NAMES,
+                             MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES,
                              MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE,
                              MainVcsLogUiProperties.TEXT_FILTER_REGEX,
                              CommonUiProperties.COLUMN_ORDER);
@@ -48,10 +51,7 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     public boolean LONG_EDGES_VISIBLE = false;
     public int BEK_SORT_TYPE = 0;
     public boolean SHOW_ROOT_NAMES = false;
-    @Deprecated
-    public Deque<UserGroup> RECENTLY_FILTERED_USER_GROUPS = new ArrayDeque<>();
-    @Deprecated
-    public Deque<UserGroup> RECENTLY_FILTERED_BRANCH_GROUPS = new ArrayDeque<>();
+    public boolean SHOW_ONLY_AFFECTED_CHANGES = false;
     public Map<String, Boolean> HIGHLIGHTERS = ContainerUtil.newTreeMap();
     public Map<String, List<String>> FILTERS = ContainerUtil.newTreeMap();
     public TextFilterSettings TEXT_FILTER_SETTINGS = new TextFilterSettings();
@@ -79,6 +79,9 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     }
     else if (CommonUiProperties.SHOW_ROOT_NAMES.equals(property)) {
       return (T)Boolean.valueOf(getState().SHOW_ROOT_NAMES);
+    }
+    else if (SHOW_ONLY_AFFECTED_CHANGES.equals(property)) {
+      return (T)Boolean.valueOf(getState().SHOW_ONLY_AFFECTED_CHANGES);
     }
     else if (BEK_SORT_TYPE.equals(property)) {
       return (T)PermanentGraph.SortType.values()[getState().BEK_SORT_TYPE];
@@ -123,6 +126,9 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     }
     else if (CommonUiProperties.SHOW_ROOT_NAMES.equals(property)) {
       getState().SHOW_ROOT_NAMES = (Boolean)value;
+    }
+    else if (SHOW_ONLY_AFFECTED_CHANGES.equals(property)) {
+      getState().SHOW_ONLY_AFFECTED_CHANGES = (Boolean)value;
     }
     else if (BEK_SORT_TYPE.equals(property)) {
       getState().BEK_SORT_TYPE = ((PermanentGraph.SortType)value).ordinal();
@@ -195,26 +201,6 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
   public void removeChangeListener(@NotNull PropertiesChangeListener listener) {
     myListeners.remove(listener);
     myAppSettings.removeChangeListener(listener);
-  }
-
-  // to remove after 2018.3 release
-  @Deprecated
-  public static class UserGroup {
-    public List<String> users = new ArrayList<>();
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      UserGroup group = (UserGroup)o;
-      if (!users.equals(group.users)) return false;
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return users.hashCode();
-    }
   }
 
   public static class TextFilterSettings {

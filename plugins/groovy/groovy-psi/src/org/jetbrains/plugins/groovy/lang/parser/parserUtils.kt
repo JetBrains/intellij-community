@@ -18,7 +18,7 @@ import com.intellij.psi.tree.TokenSet
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer
 import org.jetbrains.plugins.groovy.lang.parser.GroovyGeneratedParser.closure_header_with_arrow
-import org.jetbrains.plugins.groovy.lang.parser.GroovyGeneratedParser.parenthesized_lambda_expression_head
+import org.jetbrains.plugins.groovy.lang.parser.GroovyGeneratedParser.lambda_expression_head
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
 import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.*
 import org.jetbrains.plugins.groovy.util.get
@@ -417,6 +417,10 @@ private fun castOperandCheckInner(builder: PsiBuilder): Boolean {
   return false
 }
 
+fun isAfterClosure(builder: PsiBuilder, level: Int): Boolean {
+  return builder.latestDoneMarker?.tokenType == CLOSURE
+}
+
 fun isParameterizedClosure(builder: PsiBuilder, level: Int): Boolean {
   return builder.lookahead {
     isParameterizedClosureInner(this, level)
@@ -431,7 +435,7 @@ private fun isParameterizedClosureInner(builder: PsiBuilder, level: Int): Boolea
 
 fun isParameterizedLambda(builder: PsiBuilder, level: Int): Boolean {
   return builder.lookahead {
-    parenthesized_lambda_expression_head(builder, level)
+    lambda_expression_head(builder, level)
   }
 }
 

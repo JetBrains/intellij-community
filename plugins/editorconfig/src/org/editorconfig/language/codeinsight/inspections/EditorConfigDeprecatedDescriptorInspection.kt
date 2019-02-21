@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.codeinsight.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.application.ApplicationNamesInfo
 import org.editorconfig.language.codeinsight.quickfixes.EditorConfigRemoveDeprecatedElementQuickFix
+import org.editorconfig.language.codeinsight.quickfixes.EditorConfigRemoveOptionQuickFix
 import org.editorconfig.language.psi.EditorConfigVisitor
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
 import org.editorconfig.language.psi.interfaces.EditorConfigIdentifierElement
@@ -21,7 +22,8 @@ class EditorConfigDeprecatedDescriptorInspection : LocalInspectionTool() {
         element,
         message,
         ProblemHighlightType.LIKE_DEPRECATED,
-        EditorConfigRemoveDeprecatedElementQuickFix()
+        EditorConfigRemoveDeprecatedElementQuickFix(),
+        EditorConfigRemoveOptionQuickFix()
       )
     }
 

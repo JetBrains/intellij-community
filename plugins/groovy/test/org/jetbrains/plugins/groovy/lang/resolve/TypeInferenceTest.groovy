@@ -571,6 +571,16 @@ def foo(a) {
 ''', 'A'
   }
 
+  void 'test if null typed'() {
+    doTest '''\
+def foo(String a) {
+    if (a == null) {
+        <caret>a
+    }
+}
+''', JAVA_LANG_STRING
+  }
+
   void 'test null or instanceof'() {
     doTest '''\
 def foo(a) {
@@ -620,6 +630,26 @@ def foo(a) {
         <caret>a
     }
 }
+''', JAVA_LANG_STRING
+  }
+
+  void 'test while null'() {
+    doTest '''\
+def s = null
+while (s == null) {
+  s = ""
+}
+<caret>s
+''', JAVA_LANG_STRING
+  }
+
+  void 'test while null typed'() {
+    doTest '''\
+String s = null
+while (s == null) {
+  s = ""
+}
+<caret>s
 ''', JAVA_LANG_STRING
   }
 
@@ -1103,5 +1133,9 @@ def test() {
     }
 }
 ''', JAVA_LANG_STRING
+  }
+
+  void 'test spread list of classes'() {
+    doExprTest "[String, Integer]*.'class'", 'java.util.ArrayList<java.lang.Class<?>>'
   }
 }

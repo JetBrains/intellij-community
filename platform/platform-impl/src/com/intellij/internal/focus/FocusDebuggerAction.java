@@ -132,7 +132,8 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
 
     private void paintFocusBorders(boolean clean) {
       if (myCurrent != null) {
-        Graphics2D currentFocusGraphics = (Graphics2D)(myCurrent.getGraphics() != null ? myCurrent.getGraphics().create() : null);
+        Graphics graphics = myCurrent.getGraphics();
+        Graphics2D currentFocusGraphics = (Graphics2D)(graphics != null ? graphics.create() : null);
         try {
           if (currentFocusGraphics != null) {
             if (clean) {

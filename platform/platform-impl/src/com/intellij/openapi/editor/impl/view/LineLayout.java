@@ -595,11 +595,6 @@ abstract class LineLayout {
       this.endOffset = endOffset;
     }
 
-    @Override
-    public int hashCode() {
-      return startOffset * 31 + endOffset;
-    }
-
     private void ensureLayout(@NotNull EditorView view, BidiRun run, int line) {
       if (isReal()) {
         view.getTextLayoutCache().onChunkAccess(this);

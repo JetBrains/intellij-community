@@ -4,11 +4,9 @@ package com.jetbrains.extensions.python
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFileSystemItem
-import com.intellij.psi.PsiManager
+import com.intellij.psi.util.PsiUtilCore
 
 
 fun VirtualFile.toPsi(project: Project): PsiFileSystemItem? {
-  val manager = PsiManager.getInstance(project)
-  return if (this.isDirectory) manager.findDirectory(this) else manager.findFile(this)
-
+  return PsiUtilCore.findFileSystemItem(project, this)
 }

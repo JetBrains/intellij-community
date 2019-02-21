@@ -4,6 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
@@ -18,18 +19,10 @@ import java.util.Map;
  */
 public abstract class ActionsCollector {
   /**
-   * Only actions from platform and JB plugins are recorded.
-   * If no context class is provided then nothing will be recorded.
-   * @deprecated use {@link #record(String, Class)} instead
+   * @deprecated use {@link #record(Project, AnAction, AnActionEvent)} instead
    */
   @Deprecated
-  public void record(String actionId) {}
-
-  /**
-   * @deprecated use {@link #record(AnAction, AnActionEvent)} instead
-   */
-  @Deprecated
-  public void record(@Nullable String actionId, @NotNull Class context, @Nullable AnActionEvent event) {}
+  public void record(@Nullable AnAction action, @Nullable AnActionEvent event) {}
 
   /**
    * Records explicitly whitelisted actions
@@ -47,7 +40,7 @@ public abstract class ActionsCollector {
    * Records action id for global actions or action class name for actions generated on runtime.
    * Only actions from platform and JB plugins are recorded.
    */
-  public abstract void record(@Nullable AnAction action, @Nullable AnActionEvent event);
+  public abstract void record(@Nullable Project project, @Nullable AnAction action, @Nullable AnActionEvent event);
 
   public abstract State getState();
 

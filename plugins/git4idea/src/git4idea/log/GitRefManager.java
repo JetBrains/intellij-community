@@ -40,11 +40,11 @@ import static com.intellij.ui.JBColor.namedColor;
  * @author Kirill Likhodedov
  */
 public class GitRefManager implements VcsLogRefManager {
-  private static final JBColor HEAD_COLOR = namedColor("Git.Log.Ref.Head", VcsLogStandardColors.Refs.TIP);
-  private static final JBColor LOCAL_BRANCH_COLOR = namedColor("Git.Log.Ref.LocalBranch", VcsLogStandardColors.Refs.BRANCH);
-  private static final JBColor REMOTE_BRANCH_COLOR = namedColor("Git.Log.Ref.RemoteBranch", VcsLogStandardColors.Refs.BRANCH_REF);
-  private static final JBColor TAG_COLOR = namedColor("Git.Log.Ref.Tag", VcsLogStandardColors.Refs.TAG);
-  private static final JBColor OTHER_COLOR = namedColor("Git.Log.Ref.Other", VcsLogStandardColors.Refs.TAG);
+  private static final JBColor HEAD_COLOR = namedColor("VersionControl.GitLog.headIconColor", VcsLogStandardColors.Refs.TIP);
+  private static final JBColor LOCAL_BRANCH_COLOR = namedColor("VersionControl.GitLog.localBranchIconColor", VcsLogStandardColors.Refs.BRANCH);
+  private static final JBColor REMOTE_BRANCH_COLOR = namedColor("VersionControl.GitLog.remoteBranchIconColor", VcsLogStandardColors.Refs.BRANCH_REF);
+  private static final JBColor TAG_COLOR = namedColor("VersionControl.GitLog.tagIconColor", VcsLogStandardColors.Refs.TAG);
+  private static final JBColor OTHER_COLOR = namedColor("VersionControl.GitLog.otherIconColor", VcsLogStandardColors.Refs.TAG);
 
   public static final VcsRefType HEAD = new SimpleRefType("HEAD", true, HEAD_COLOR);
   public static final VcsRefType LOCAL_BRANCH = new SimpleRefType("LOCAL_BRANCH", true, LOCAL_BRANCH_COLOR);

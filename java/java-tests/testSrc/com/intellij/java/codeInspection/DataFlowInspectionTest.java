@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
@@ -23,7 +9,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,7 +24,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_1_7;
+    return JAVA_1_7_ANNOTATED;
   }
 
   @Override
@@ -211,7 +196,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testBoxedNaN() { doTest(); }
   public void testFloatEquality() { doTest(); }
   public void testLastConstantConditionInAnd() { doTest(); }
-  
+
   public void testCompileTimeConstant() { doTest(); }
   public void testNoParenthesesWarnings() { doTest(); }
 
@@ -286,8 +271,8 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testFinalGetter() { doTest(); }
   public void testGetterResultsNotSame() { doTest(); }
   public void testIntersectionTypeInstanceof() { doTest(); }
-  
-  public void testKeepComments() { 
+
+  public void testKeepComments() {
     doTest();
     checkIntentionResult("Simplify");
   }
@@ -324,7 +309,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testDontMakeUnrelatedVariableNotNullWhenMerging() { doTest(); }
   public void testDontMakeUnrelatedVariableFalseWhenMerging() { doTest(); }
   public void testDontLoseInequalityInformation() { doTest(); }
-  
+
   public void testNotEqualsTypo() { doTest(); }
   public void testAndEquals() { doTest(); }
   public void testXor() { doTest(); }
@@ -333,7 +318,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testEmptyCallDoesNotMakeNullable() { doTest(); }
   public void testGettersAndPureNoFlushing() { doTest(); }
   public void testFalseGetters() { doTest(); }
-  
+
   public void testNotNullAfterDereference() { doTest(); }
 
   public void testNullableBoolean() { doTest(); }
@@ -363,22 +348,22 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testParametersAreNonnullByDefault() {
     addJavaxNullabilityAnnotations(myFixture);
     addJavaxDefaultNullabilityAnnotations(myFixture);
-    
+
     myFixture.addClass("package foo; public class AnotherPackageNotNull { public static void foo(String s) {}}");
     myFixture.addFileToProject("foo/package-info.java", "@javax.annotation.ParametersAreNonnullByDefault package foo;");
-    
-    doTest(); 
+
+    doTest();
   }
 
   public void testNullabilityDefaultVsMethodImplementing() {
     addJavaxDefaultNullabilityAnnotations(myFixture);
-    
+
     DataFlowInspection inspection = new DataFlowInspection();
     inspection.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true;
     myFixture.enableInspections(inspection);
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
-  
+
   public void testTypeQualifierNickname() {
     myFixture.addClass("package javax.annotation.meta; public @interface TypeQualifierNickname {}");
     addJavaxNullabilityAnnotations(myFixture);
@@ -550,7 +535,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testFieldUsedBeforeInitialization() { doTest(); }
 
   public void testImplicitlyInitializedField() {
-    PlatformTestUtil.registerExtension(ImplicitUsageProvider.EP_NAME, new ImplicitUsageProvider() {
+    ImplicitUsageProvider.EP_NAME.getPoint(null).registerExtension(new ImplicitUsageProvider() {
       @Override
       public boolean isImplicitUsage(PsiElement element) {
         return false;

@@ -1609,10 +1609,12 @@ public class InferenceSession {
 
       if (methodContainingClass != null) {
         psiSubstitutor = JavaClassSupers.getInstance().getSuperClassSubstitutor(methodContainingClass, containingClass, reference.getResolveScope(), psiSubstitutor);
-        LOG.assertTrue(psiSubstitutor != null, "derived: " + containingClass +
-                                               "; super: " + methodContainingClass +
-                                               "; reference: " + reference.getText() +
-                                               "; containingFile: " + reference.getContainingFile().getName());
+        if (psiSubstitutor == null) {
+          LOG.error("derived: " + containingClass +
+                    "; super: " + methodContainingClass +
+                    "; reference: " + reference.getText() +
+                    "; containingFile: " + reference.getContainingFile().getName());
+        }
       }
 
       for (int i = 0; i < functionalMethodParameters.length; i++) {

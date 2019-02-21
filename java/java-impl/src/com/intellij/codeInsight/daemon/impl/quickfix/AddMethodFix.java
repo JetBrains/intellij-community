@@ -37,6 +37,12 @@ public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     ContainerUtil.addAll(myExceptions, exceptions);
   }
 
+  @Nullable
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+    return myStartElement.getContainingFile();
+  }
+
   @NotNull
   private static PsiMethod createMethod(final String methodText, final PsiClass implClass) {
     return JavaPsiFacade.getElementFactory(implClass.getProject()).createMethodFromText(methodText, implClass);

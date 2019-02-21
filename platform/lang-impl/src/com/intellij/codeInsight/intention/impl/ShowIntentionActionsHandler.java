@@ -65,7 +65,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
     letAutoImportComplete(editor, file, codeAnalyzer);
 
-    ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(editor, file);
+    ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(editor, file, true);
     IntentionsUI.getInstance(project).hide();
 
     if (HintManagerImpl.getInstanceImpl().performCurrentQuestionAction()) return;
@@ -83,8 +83,6 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     editor.getScrollingModel().runActionOnScrollingFinished(() -> showIntentionHint(project, finalEditor, finalFile, intentions));
   }
 
-  // added for override into Rider
-  @SuppressWarnings("WeakerAccess")
   protected void showIntentionHint(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
     if (!intentions.isEmpty()) {
       CachedIntentions cachedIntentions = CachedIntentions.createAndUpdateActions(project, file, editor, intentions);
@@ -197,7 +195,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   }
 
   private static void invokeIntention(@NotNull IntentionAction action, @Nullable Editor editor, @NotNull PsiFile file) {
-    IntentionsCollector.getInstance().record(action, file.getLanguage());
+    IntentionsCollector.getInstance().record(file.getProject(), action, file.getLanguage());
     PsiElement elementToMakeWritable = action.getElementToMakeWritable(file);
     if (elementToMakeWritable != null && !FileModificationService.getInstance().preparePsiElementsForWrite(elementToMakeWritable)) {
       return;

@@ -136,4 +136,10 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
            + " previous: " + myPrevious.getTemplatePresentation().getText()
            + " next: " + myNext.getTemplatePresentation().getText();
   }
+
+  @Nullable
+  @Override
+  public String getTemplateText() {
+    return "Switch Project";
+  }
 }

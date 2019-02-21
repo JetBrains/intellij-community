@@ -55,17 +55,13 @@ public class JBColor extends Color {
 
   @NotNull
   public static JBColor namedColor(@NotNull final String propertyName, @NotNull final Color defaultColor) {
-    return new JBColor(new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        Color color = notNull(UIManager.getColor(propertyName),
-                              notNull(findPatternMatch(propertyName), defaultColor));
-        if (UIManager.get(propertyName) == null) {
-          UIManager.put(propertyName, color);
-        }
-        return color;
+    return new JBColor(() -> {
+      Color color = notNull(UIManager.getColor(propertyName),
+                            notNull(findPatternMatch(propertyName), defaultColor));
+      if (UIManager.get(propertyName) == null) {
+        UIManager.put(propertyName, color);
       }
+      return color;
     });
   }
 
@@ -176,13 +172,7 @@ public class JBColor extends Color {
   @NotNull
   public Color brighter() {
     if (func != null) {
-      return new JBColor(new NotNullProducer<Color>() {
-        @NotNull
-        @Override
-        public Color produce() {
-          return func.produce().brighter();
-        }
-      });
+      return new JBColor(() -> func.produce().brighter());
     }
     return new JBColor(super.brighter(), getDarkVariant().brighter());
   }
@@ -191,13 +181,7 @@ public class JBColor extends Color {
   @NotNull
   public Color darker() {
     if (func != null) {
-      return new JBColor(new NotNullProducer<Color>() {
-        @NotNull
-        @Override
-        public Color produce() {
-          return func.produce().darker();
-        }
-      });
+      return new JBColor(() -> func.produce().darker());
     }
     return new JBColor(super.darker(), getDarkVariant().darker());
   }
@@ -323,24 +307,12 @@ public class JBColor extends Color {
 
   @NotNull
   public static Color foreground() {
-    return new JBColor(new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        return UIUtil.getLabelForeground();
-      }
-    });
+    return new JBColor(UIUtil::getLabelForeground);
   }
 
   @NotNull
   public static Color background() {
-    return new JBColor(new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        return UIUtil.getListBackground();
-      }
-    });
+    return new JBColor(UIUtil::getListBackground);
   }
 
   @NotNull
@@ -348,22 +320,18 @@ public class JBColor extends Color {
     return namedColor("Borders.color", new JBColor(Gray._192, Gray._50));
   }
 
-  private static final Map<String, Color> defaultThemeColors = new HashMap<String, Color>();
+  private static final Map<String, Color> defaultThemeColors = new HashMap<>();
 
   @NotNull 
   public static Color get(@NotNull final String colorId, @NotNull final Color defaultColor) {
-    return new JBColor(new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        Color color = defaultThemeColors.get(colorId);
-        if (color != null) {
-          return color;
-        }
-
-        defaultThemeColors.put(colorId, defaultColor);
-        return defaultColor;
+    return new JBColor(() -> {
+      Color color = defaultThemeColors.get(colorId);
+      if (color != null) {
+        return color;
       }
+
+      defaultThemeColors.put(colorId, defaultColor);
+      return defaultColor;
     });
   }
 }

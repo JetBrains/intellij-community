@@ -2,6 +2,7 @@
 package git4idea.vfs;
 
 import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolder;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -9,10 +10,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ObjectsConvertor;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsVFSListener;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
@@ -29,6 +28,7 @@ import git4idea.i18n.GitBundle;
 import git4idea.util.GitFileUtils;
 import git4idea.util.GitVcsConsoleWriter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.*;
@@ -90,6 +90,14 @@ public class GitVFSListener extends VcsVFSListener {
 
   @Override
   protected void executeAdd(@NotNull final List<VirtualFile> addedFiles, @NotNull final Map<VirtualFile, VirtualFile> copiedFiles) {
+    executeAddWithoutIgnores(addedFiles, copiedFiles,
+                             (notIgnoredAddedFiles, copiedFilesMap) -> originalExecuteAdd(notIgnoredAddedFiles, copiedFilesMap));
+  }
+
+  @Override
+  protected void executeAddWithoutIgnores(@NotNull List<VirtualFile> addedFiles,
+                                          @NotNull Map<VirtualFile, VirtualFile> copyFromMap,
+                                          @NotNull ExecuteAddCallback executeAddCallback) {
     saveUnsavedVcsIgnoreFiles();
     // Filter added files before further processing
     Map<VirtualFile, List<VirtualFile>> sortedFiles;
@@ -117,7 +125,7 @@ public class GitVFSListener extends VcsVFSListener {
         }
         addedFiles.retainAll(retainedFiles);
 
-        AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> originalExecuteAdd(addedFiles, copiedFiles));
+        AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> executeAddCallback.executeAdd(addedFiles, copyFromMap));
       }
     });
   }
@@ -332,6 +340,13 @@ public class GitVFSListener extends VcsVFSListener {
   private interface LongOperationPerRootExecutor {
     void execute(@NotNull VirtualFile root, @NotNull List<FilePath> files) throws VcsException;
     Collection<File> getFilesToRefresh();
+  }
+
+  @TestOnly
+  public void waitForAllEventsProcessedInTestMode() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    ((ChangeListManagerImpl)myChangeListManager).waitEverythingDoneInTestMode();
+    ((ExternallyAddedFilesProcessorImpl)myExternalFilesProcessor).waitForEventsProcessedInTestMode();
   }
 
 }

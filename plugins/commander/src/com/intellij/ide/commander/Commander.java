@@ -414,9 +414,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     final CommanderPanel inactivePanel = getInactivePanel();
     inactivePanel.setActive(true);
     activePanel.setActive(false);
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(getPreferredFocusedComponent(inactivePanel), true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(getPreferredFocusedComponent(inactivePanel), true));
   }
 
   public void enterElementInActivePanel(final PsiElement element) {

@@ -52,8 +52,8 @@ public interface ExternalSystemTaskManager<S extends ExternalSystemExecutionSett
                             @Nullable S settings,
                             @Nullable String jvmAgentSetup,
                             @NotNull ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
-    List<String> vmOptions = settings == null ? ContainerUtil.emptyList() : ContainerUtil.newArrayList(settings.getVmOptions());
-    List<String> arguments = settings == null ? ContainerUtil.emptyList() : ContainerUtil.newArrayList(settings.getArguments());
+    List<String> vmOptions = settings == null ? ContainerUtil.emptyList() : settings.getJvmArguments();
+    List<String> arguments = settings == null ? ContainerUtil.emptyList() : settings.getArguments();
     executeTasks(id, taskNames, projectPath, settings, vmOptions, arguments, jvmAgentSetup, listener);
   }
 

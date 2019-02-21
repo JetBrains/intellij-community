@@ -29,6 +29,7 @@ import com.intellij.testFramework.TestDataFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -108,13 +109,14 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
     doTest();
   }
 
-  public void testBigFilePerformance() {
+  public void testBigFilePerformance() throws IOException {
+    configureByFiles(null, getVirtualFile(getTestName(false) + ".xml"), getVirtualFile("buildserver.xml"), getVirtualFile("buildserver.properties"));
+
     try {
       myIgnoreInfos = true;
-      PlatformTestUtil.startPerformanceTest("Big ant file highlighting", 15_000, () -> {
-        configureByFiles(null, getVirtualFile(getTestName(false) + ".xml"), getVirtualFile("buildserver.xml"), getVirtualFile("buildserver.properties"));
-        doDoTest(true, false);
-      }).assertTiming();
+      PlatformTestUtil.startPerformanceTest("Big ant file highlighting", 15_000, () -> doDoTest(true, false))
+        .setup(getPsiManager()::dropPsiCaches)
+        .assertTiming();
     }
     finally {
       myIgnoreInfos = false;

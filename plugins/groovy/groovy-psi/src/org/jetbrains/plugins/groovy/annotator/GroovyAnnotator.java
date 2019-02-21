@@ -47,6 +47,8 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrBlockLambdaBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
@@ -1454,7 +1456,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     if (value == null) return false;
 
     if (value instanceof GrLiteral) return false;
-    if (value instanceof GrClosableBlock) return false;
+    if (value instanceof GrFunctionalExpression) return false;
     if (value instanceof GrAnnotation) return false;
 
     if (value instanceof GrReferenceExpression) {
@@ -1707,7 +1709,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
   private static void checkInnerMethod(AnnotationHolder holder, GrMethod grMethod) {
     final PsiElement parent = grMethod.getParent();
-    if (parent instanceof GrOpenBlock || parent instanceof GrClosableBlock) {
+    if (parent instanceof GrOpenBlock || parent instanceof GrClosableBlock || parent instanceof GrBlockLambdaBody) {
       holder.createErrorAnnotation(grMethod.getNameIdentifierGroovy(), GroovyBundle.message("Inner.methods.are.not.supported"));
     }
   }

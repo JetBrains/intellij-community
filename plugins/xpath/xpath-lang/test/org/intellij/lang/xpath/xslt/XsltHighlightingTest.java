@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.TimeoutUtil;
 import org.intellij.lang.xpath.TestBase;
 import org.intellij.lang.xpath.xslt.impl.XsltStuffProvider;
 
@@ -129,11 +130,8 @@ public class XsltHighlightingTest extends TestBase {
     final Project project = myFixture.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    return ReadAction.compute(() -> {
-      final long l = System.currentTimeMillis();
-      CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.getFile(), myFixture.getEditor(), ArrayUtil.EMPTY_INT_ARRAY, false);
-      return System.currentTimeMillis() - l;
-    });
+    return TimeoutUtil.measureExecutionTime(() -> ReadAction.run(
+      () -> CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.getFile(), myFixture.getEditor(), ArrayUtil.EMPTY_INT_ARRAY, false)));
   }
 
   private void doXsltHighlighting() {

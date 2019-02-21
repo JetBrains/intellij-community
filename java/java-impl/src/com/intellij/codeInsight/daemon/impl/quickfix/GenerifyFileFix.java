@@ -58,9 +58,7 @@ public class GenerifyFileFix implements IntentionAction, LocalQuickFix {
     final PsiFile file = element.getContainingFile();
     if (isAvailable(project, null, file)) {
       myFileName = file.getName();
-      WriteCommandAction.writeCommandAction(project).run(() -> {
-        invoke(project, FileEditorManager.getInstance(project).getSelectedTextEditor(), file);
-      });
+      WriteCommandAction.writeCommandAction(project).run(() -> invoke(project, FileEditorManager.getInstance(project).getSelectedTextEditor(), file));
     }
   }
 

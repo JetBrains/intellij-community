@@ -241,9 +241,9 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       DefaultActionGroup diffGroup = new DefaultActionGroup("Compare Contents", true);
       diffGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Diff);
       diffGroup.add(Separator.create("Compare Contents"));
-      diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_MIDDLE));
-      diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.RIGHT_MIDDLE));
-      diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_RIGHT));
+      diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_MIDDLE, true));
+      diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.RIGHT_MIDDLE, true));
+      diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_RIGHT, true));
       diffGroup.add(new ShowDiffWithBaseAction(ThreeSide.LEFT));
       diffGroup.add(new ShowDiffWithBaseAction(ThreeSide.BASE));
       diffGroup.add(new ShowDiffWithBaseAction(ThreeSide.RIGHT));
@@ -390,33 +390,31 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       // we need invokeLater() here because viewer is partially-initialized (ex: there are no toolbar or status panel)
       // user can see this state while we're showing progress indicator, so we want let init() to finish.
-      ApplicationManager.getApplication().invokeLater(() -> {
-        ProgressManager.getInstance().run(new Task.Modal(getProject(), "Computing Differences...", true) {
-          private Runnable myCallback;
+      ApplicationManager.getApplication().invokeLater(() -> ProgressManager.getInstance().run(new Task.Modal(getProject(), "Computing Differences...", true) {
+        private Runnable myCallback;
 
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            myCallback = doPerformRediff(indicator);
-          }
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          myCallback = doPerformRediff(indicator);
+        }
 
-          @Override
-          public void onCancel() {
-            myMergeContext.finishMerge(MergeResult.CANCEL);
-          }
+        @Override
+        public void onCancel() {
+          myMergeContext.finishMerge(MergeResult.CANCEL);
+        }
 
-          @Override
-          public void onThrowable(@NotNull Throwable error) {
-            LOG.error(error);
-            myMergeContext.finishMerge(MergeResult.CANCEL);
-          }
+        @Override
+        public void onThrowable(@NotNull Throwable error) {
+          LOG.error(error);
+          myMergeContext.finishMerge(MergeResult.CANCEL);
+        }
 
-          @Override
-          public void onSuccess() {
-            if (isDisposed()) return;
-            myCallback.run();
-          }
-        });
-      });
+        @Override
+        public void onSuccess() {
+          if (isDisposed()) return;
+          myCallback.run();
+        }
+      }));
     }
 
     @NotNull
@@ -436,9 +434,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         List<MergeLineFragment> lineFragments = manager.mergeLines(sequences.get(0), sequences.get(1), sequences.get(2),
                                                                    ignorePolicy.getComparisonPolicy(), indicator);
 
-        List<MergeConflictType> conflictTypes = ContainerUtil.map(lineFragments, fragment -> {
-          return DiffUtil.getLineMergeType(fragment, sequences, lineOffsets, ignorePolicy.getComparisonPolicy());
-        });
+        List<MergeConflictType> conflictTypes = ContainerUtil.map(lineFragments, fragment -> DiffUtil.getLineMergeType(fragment, sequences, lineOffsets, ignorePolicy.getComparisonPolicy()));
 
         return () -> apply(lineFragments, conflictTypes, ignorePolicy);
       }
@@ -616,9 +612,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         final List<InnerChunkData> data = ContainerUtil.map(scheduled, change -> new InnerChunkData(change, documents));
 
         int waitMillis = trySync ? ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS : 0;
-        ProgressIndicator progress = BackgroundTaskUtil.executeAndTryWait(indicator -> {
-          return performRediff(scheduled, data, indicator);
-        }, null, waitMillis, false);
+        ProgressIndicator progress = BackgroundTaskUtil.executeAndTryWait(indicator -> performRediff(scheduled, data, indicator), null, waitMillis, false);
 
         if (progress.isRunning()) {
           myProgress = progress;
@@ -945,9 +939,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       if (!canResolveChangeAutomatically(change, side)) return;
 
       if (change.isConflict()) {
-        List<CharSequence> texts = ThreeSide.map(it -> {
-          return DiffUtil.getLinesContent(getEditor(it).getDocument(), change.getStartLine(it), change.getEndLine(it));
-        });
+        List<CharSequence> texts = ThreeSide.map(it -> DiffUtil.getLinesContent(getEditor(it).getDocument(), change.getStartLine(it), change.getEndLine(it)));
 
         CharSequence newContent = ComparisonMergeUtil.tryResolveConflict(texts.get(0), texts.get(1), texts.get(2));
         if (newContent == null) {
@@ -1013,16 +1005,12 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
         String title = e.getPresentation().getText() + " in merge";
 
-        executeMergeCommand(title, selectedChanges.size() > 1, selectedChanges, () -> {
-          apply(side, selectedChanges);
-        });
+        executeMergeCommand(title, selectedChanges.size() > 1, selectedChanges, () -> apply(side, selectedChanges));
       }
 
       private boolean isSomeChangeSelected(@NotNull ThreeSide side) {
         EditorEx editor = getEditor(side);
-        return DiffUtil.isSomeRangeSelected(editor, lines -> {
-          return ContainerUtil.exists(getAllChanges(), change -> isChangeSelected(change, lines, side));
-        });
+        return DiffUtil.isSomeRangeSelected(editor, lines -> ContainerUtil.exists(getAllChanges(), change -> isChangeSelected(change, lines, side)));
       }
 
       @NotNull

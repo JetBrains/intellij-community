@@ -21,6 +21,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
  */
 class GradleProjectContributor : GradleMethodContextContributor {
   companion object {
+    val projectClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT,
+                                                                                  "project", "configure", "subprojects", "allprojects"))
     val copySpecClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "copy", "copySpec"))
     val fileTreeClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "fileTree"))
     val filesClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "files"))
@@ -29,6 +31,9 @@ class GradleProjectContributor : GradleMethodContextContributor {
   }
 
   override fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? {
+    if (projectClosure.accepts(closure)) {
+      return DelegatesToInfo(createType(GRADLE_API_PROJECT, closure), Closure.DELEGATE_FIRST)
+    }
     if (copySpecClosure.accepts(closure)) {
       return DelegatesToInfo(createType(GRADLE_API_FILE_COPY_SPEC, closure), Closure.DELEGATE_FIRST)
     }

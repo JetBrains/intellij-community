@@ -17,7 +17,7 @@ import java.util.prefs.Preferences
 object EventLogConfiguration {
   private val LOG = Logger.getInstance(EventLogConfiguration::class.java)
   private const val SALT_PREFERENCE_KEY = "feature_usage_event_log_salt"
-  const val version: Int = 6
+  const val version: Int = 9
 
   val sessionId: String = UUID.randomUUID().toString().shortedUUID()
 

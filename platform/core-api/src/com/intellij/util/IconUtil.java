@@ -29,6 +29,7 @@ import java.awt.image.RGBImageFilter;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 import static com.intellij.util.ui.JBUI.ScaleType.OBJ_SCALE;
 import static com.intellij.util.ui.JBUI.ScaleType.USR_SCALE;
@@ -740,7 +741,7 @@ public class IconUtil {
    * Creates new icon with the filter applied.
    */
   @Nullable
-  public static Icon filterIcon(@NotNull Icon icon, Producer<RGBImageFilter> filterSupplier, @Nullable Component ancestor) {
+  public static Icon filterIcon(@NotNull Icon icon, Supplier<RGBImageFilter> filterSupplier, @Nullable Component ancestor) {
     return IconLoader.filterIcon(icon, filterSupplier, ancestor);
   }
 }

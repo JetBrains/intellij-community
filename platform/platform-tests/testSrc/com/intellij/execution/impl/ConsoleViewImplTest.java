@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.concurrency.JobScheduler;
@@ -23,7 +23,6 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -263,12 +262,8 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
       }).assertTiming());
   }
 
-  private static void withCycleConsoleNoFolding(int capacityKB, Consumer<? super ConsoleViewImpl> runnable) {
-    ExtensionPoint<ConsoleFolding> point = Extensions.getRootArea().getExtensionPoint(ConsoleFolding.EP_NAME);
-    ConsoleFolding[] extensions = point.getExtensions();
-    for (ConsoleFolding extension : extensions) {
-      point.unregisterExtension(extension);
-    }
+  private void withCycleConsoleNoFolding(int capacityKB, Consumer<? super ConsoleViewImpl> runnable) {
+    ExtensionPoint<ConsoleFolding> point = ConsoleFolding.EP_NAME.getPoint(null);
 
     UISettings uiSettings = UISettings.getInstance();
     boolean oldUse = uiSettings.getOverrideConsoleCycleBufferSize();
@@ -287,8 +282,8 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
       uiSettings.setConsoleCycleBufferSizeKb(oldSize);
 
 
-      for (ConsoleFolding extension : extensions) {
-        point.registerExtension(extension);
+      for (ConsoleFolding extension : point.getExtensions()) {
+        point.registerExtension(extension, getTestRootDisposable());
       }
     }
   }
@@ -412,7 +407,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
         return Collections.singletonList(Pair.create("+!" + text + "-!", contentType));
       }
     };
-    PlatformTestUtil.registerExtension(ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS, crazyProvider, getTestRootDisposable());
+    ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS.getPoint(null).registerExtension(crazyProvider, getTestRootDisposable());
     myConsole = createConsole();
     StringBuilder expectedText = new StringBuilder();
     List<Pair<String, ConsoleViewContentType>> expectedRegisteredTokens = new ArrayList<>();

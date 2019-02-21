@@ -4,23 +4,20 @@ package org.jetbrains.plugins.gradle.execution.test.runner
 import com.intellij.execution.Location
 import com.intellij.execution.PsiLocation
 import com.intellij.execution.actions.ConfigurationContext
-import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation
-import com.intellij.idea.IdeaTestApplication
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.util.Computable
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.impl.PsiClassImplUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.MapDataContext
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
-import org.jetbrains.plugins.gradle.util.*
 import org.junit.runners.Parameterized
 
 abstract class GradleConfigurationProducerTestCase : GradleImportingTestCase() {
@@ -59,35 +56,6 @@ abstract class GradleConfigurationProducerTestCase : GradleImportingTestCase() {
         ?.map { configurationFromContext -> configurationFromContext.configuration as GradleRunConfiguration }
       ?: emptyList()
     })
-  }
-
-  fun assertTestPatternFilter(patternFilter: String, virtualFile: VirtualFile, vararg methodNames: String) {
-    ApplicationManager.getApplication().runReadAction {
-      val psiManager = PsiManager.getInstance(myProject)
-      val psiClass = psiManager.findFile(virtualFile)!!
-        .findChildByType<PsiClass>()
-      val psiMethods = psiClass
-        .findChildByElementType("CLASS_BODY")
-        .findChildrenByType<PsiMethod>()
-        .filter { it.name in methodNames }
-      val configurationProducer = RunConfigurationProducer.getInstance(PatternGradleConfigurationProducer::class.java)
-      val configurationContext = ConfigurationContext(psiClass)
-      val locations = psiMethods.map { PsiLocation.fromPsiElement(it) }.toTypedArray()
-      val module = ModuleUtilCore.findModuleForPsiElement(psiClass)
-      IdeaTestApplication.getInstance().setDataProvider {
-        when (it) {
-          CommonDataKeys.PROJECT.name -> myProject
-          LangDataKeys.MODULE.name -> module
-          Location.DATA_KEYS.name -> arrayOf(locations.first(), locations.last())
-          Location.DATA_KEY.name -> configurationContext.location
-          else -> null
-        }
-      }
-      val runConfiguration = configurationProducer.createLightConfiguration(configurationContext)
-      runConfiguration as ExternalSystemRunConfiguration
-      val scriptParameters = runConfiguration.settings.scriptParameters
-      assertEquals(patternFilter, scriptParameters)
-    }
   }
 
   companion object {

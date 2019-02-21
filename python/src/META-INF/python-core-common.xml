@@ -692,6 +692,8 @@
     <extensionPoint qualifiedName="Pythonid.inspectionExtension" interface="com.jetbrains.python.inspections.PyInspectionExtension"/>
     <extensionPoint qualifiedName="Pythonid.customTargetExpressionStubType"
                     interface="com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStubType"/>
+    <extensionPoint qualifiedName="Pythonid.customClassStubType"
+                    interface="com.jetbrains.python.psi.impl.stubs.PyCustomClassStubType"/>
     <extensionPoint qualifiedName="Pythonid.knownDecoratorProvider" interface="com.jetbrains.python.psi.PyKnownDecoratorProvider"/>
     <extensionPoint qualifiedName="Pythonid.documentationLinkProvider" interface="com.jetbrains.python.documentation.PythonDocumentationLinkProvider"/>
     <extensionPoint qualifiedName="Pythonid.importCandidateProvider" interface="com.jetbrains.python.codeInsight.imports.PyImportCandidateProvider"/>
@@ -743,6 +745,8 @@
     <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType"/>
     <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubType"/>
     <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PyTypingNewTypeStubType"/>
+
+    <customClassStubType implementation="com.jetbrains.python.psi.impl.stubs.PyDataclassStubType"/>
 
     <dialectsTokenSetContributor implementation="com.jetbrains.python.PythonTokenSetContributor"/>
     <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibClassMembersProvider"/>
@@ -828,52 +832,6 @@
   <actions>
     <action overrides="true" id="ForceStepInto" class="com.jetbrains.python.debugger.PyForceStepIntoAction" text="Fo_rce Step Into"
             icon="AllIcons.Debugger.Actions.Force_step_into" description="Step into, ignore stepping filters for libraries, constructors, etc."/>
-
-    <group id="PyTypeHierarchyPopupMenu">
-      <reference ref="TypeHierarchyBase.BaseOnThisType"/>
-      <reference ref="TypeHierarchy.Class"/>
-      <reference ref="TypeHierarchy.Subtypes"/>
-      <reference ref="TypeHierarchy.Supertypes"/>
-      <separator/>
-      <reference ref="EditSource"/>
-      <separator/>
-      <reference ref="FindUsages"/>
-      <reference ref="RefactoringMenu"/>
-      <separator/>
-      <reference ref="AddToFavorites"/>
-      <separator/>
-      <reference ref="ReformatCode"/>
-      <reference ref="OptimizeImports"/>
-      <reference ref="$Delete"/>
-      <separator/>
-      <reference ref="VersionControlsGroup"/>
-      <separator/>
-      <reference ref="ExternalToolsGroup"/>
-      <separator/>
-      <reference ref="CompareTwoFiles"/>
-      <reference ref="CompareFileWithEditor"/>
-    </group>
-
-    <group id="PyCallHierarchyPopupMenu">
-      <reference ref="EditSource"/>
-      <separator/>
-      <reference ref="FindUsages"/>
-      <reference ref="RefactoringMenu"/>
-      <separator/>
-      <reference ref="AddToFavorites"/>
-      <separator/>
-
-      <reference ref="ReformatCode"/>
-      <reference ref="OptimizeImports"/>
-      <separator/>
-      <reference ref="VersionControlsGroup"/>
-
-      <separator/>
-      <reference ref="ExternalToolsGroup"/>
-      <separator/>
-      <reference ref="CompareTwoFiles"/>
-      <reference ref="CompareFileWithEditor"/>
-    </group>
 
     <!-- Console -->
     <action id="com.jetbrains.python.console.RunPythonConsoleAction"

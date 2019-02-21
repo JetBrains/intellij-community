@@ -1016,7 +1016,7 @@ class PyDB:
                 frame = frame.f_back
         del frame
 
-    def prepare_to_run(self):
+    def prepare_to_run(self, enable_tracing_from_start=True):
         ''' Shared code to prepare debugging by installing traces and registering threads '''
         if self.signature_factory is not None or self.thread_analyser is not None:
             # we need all data to be sent to IDE even after program finishes
@@ -1025,9 +1025,8 @@ class PyDB:
             self.frame_eval_func = None
 
         self.patch_threads()
-        pydevd_tracing.SetTrace(self.trace_dispatch, self.frame_eval_func, self.dummy_trace_dispatch)
-        # There is no need to set tracing function if frame evaluation is available. Moreover, there is no need to patch thread
-        # functions, because frame evaluation function is set to all threads by default.
+        if enable_tracing_from_start:
+            pydevd_tracing.SetTrace(self.trace_dispatch, self.frame_eval_func, self.dummy_trace_dispatch)
 
         PyDBCommandThread(self).start()
 
@@ -1100,7 +1099,8 @@ class PyDB:
             while not self.ready_to_run:
                 time.sleep(0.1)  # busy wait until we receive run command
 
-            if self.break_on_caught_exceptions or (self.plugin and self.plugin.has_exception_breaks()) or self.signature_factory:
+            if self.break_on_caught_exceptions or self.has_plugin_line_breaks or self.has_plugin_exception_breaks \
+                    or self.signature_factory:
                 # disable frame evaluation if there are exception breakpoints with 'On raise' activation policy
                 # or if there are plugin exception breakpoints or if collecting run-time types is enabled
                 self.frame_eval_func = None

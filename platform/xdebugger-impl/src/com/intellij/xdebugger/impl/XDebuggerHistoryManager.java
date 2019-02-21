@@ -41,7 +41,7 @@ public class XDebuggerHistoryManager implements PersistentStateComponent<Element
   }
 
   public boolean addRecentExpression(@NotNull @NonNls String id, @Nullable XExpression expression) {
-    if (XDebuggerUtilImpl.isEmptyExpression(expression)) {
+    if (XDebuggerUtilImpl.isEmptyExpression(expression) || expression.getExpression().length() > 100000) {
       return false;
     }
 

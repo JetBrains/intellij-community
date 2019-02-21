@@ -6,7 +6,6 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorState;
@@ -58,12 +57,6 @@ public class RecentLocationManager implements ProjectComponent {
   RangeMarker getPositionOffset(@NotNull PlaceInfo placeInfo, boolean showChanged) {
     PlaceInfoPersistentItem item = getMap(showChanged).get(placeInfo);
     return item == null ? null : item.getPositionOffsetMarker();
-  }
-
-  @Nullable
-  EditorColorsScheme getColorScheme(@NotNull PlaceInfo placeInfo, boolean showChanged) {
-    PlaceInfoPersistentItem item = getMap(showChanged).get(placeInfo);
-    return item == null ? null : item.getScheme();
   }
 
   private void subscribeOnExternalChange(@NotNull MessageBusConnection connection) {
@@ -121,7 +114,7 @@ public class RecentLocationManager implements ProjectComponent {
     }
 
     int offset = editor.logicalPositionToOffset(logicalPosition);
-    items.put(changePlace, new PlaceInfoPersistentItem(editor.getDocument().createRangeMarker(offset, offset), editor.getColorsScheme()));
+    items.put(changePlace, new PlaceInfoPersistentItem(editor.getDocument().createRangeMarker(offset, offset)));
   }
 
   @Nullable
@@ -132,9 +125,12 @@ public class RecentLocationManager implements ProjectComponent {
     }
 
     Collection<Integer> lines = ((TextEditorState)navigationState).getCaretLines();
-    Integer line = ContainerUtil.getFirstItem(lines);
-
     Collection<Integer> caretColumns = ((TextEditorState)navigationState).getCaretColumns();
+    if (lines == null || caretColumns == null) {
+      return null;
+    }
+
+    Integer line = ContainerUtil.getFirstItem(lines);
     Integer column = ContainerUtil.getFirstItem(caretColumns);
 
     return line != null && column != null ? new LogicalPosition(line, column) : null;
@@ -177,16 +173,9 @@ public class RecentLocationManager implements ProjectComponent {
 
   private static class PlaceInfoPersistentItem {
     @NotNull private final RangeMarker myPositionOffsetMarker;
-    @NotNull private final EditorColorsScheme myScheme;
 
-    PlaceInfoPersistentItem(@NotNull RangeMarker positionOffsetMarker, @NotNull EditorColorsScheme scheme) {
+    PlaceInfoPersistentItem(@NotNull RangeMarker positionOffsetMarker) {
       myPositionOffsetMarker = positionOffsetMarker;
-      myScheme = scheme;
-    }
-
-    @NotNull
-    private EditorColorsScheme getScheme() {
-      return myScheme;
     }
 
     @NotNull

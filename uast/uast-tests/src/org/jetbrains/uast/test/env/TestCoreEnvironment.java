@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jetbrains.uast.test.env;
 
 import com.intellij.codeInsight.ContainerProvider;
@@ -57,7 +56,7 @@ public class TestCoreEnvironment extends AbstractCoreEnvironment {
   private final Disposable mDisposable;
   private volatile JavaCoreProjectEnvironment mProjectEnvironment = null;
 
-  public TestCoreEnvironment(Disposable disposable) {
+  public TestCoreEnvironment(@NotNull Disposable disposable) {
     mDisposable = disposable;
   }
 
@@ -173,8 +172,9 @@ public class TestCoreEnvironment extends AbstractCoreEnvironment {
   }
 
   private class TestJavaCoreProjectEnvironment extends JavaCoreProjectEnvironment {
-    TestJavaCoreProjectEnvironment(JavaCoreApplicationEnvironment coreEnvironment) {
-      super(TestCoreEnvironment.this.mDisposable, coreEnvironment);
+    TestJavaCoreProjectEnvironment(@NotNull JavaCoreApplicationEnvironment coreEnvironment) {
+      super(mDisposable, coreEnvironment);
+
       registerProjectExtensions();
     }
 
@@ -185,21 +185,18 @@ public class TestCoreEnvironment extends AbstractCoreEnvironment {
 
     private void registerProjectExtensionPoints() {
       ExtensionsArea area = Extensions.getArea(myProject);
+      CoreApplicationEnvironment.registerExtensionPoint(area, PsiTreeChangePreprocessor.EP, PsiTreeChangePreprocessor.class);
       CoreApplicationEnvironment.registerExtensionPoint(
-        area, PsiTreeChangePreprocessor.EP_NAME, PsiTreeChangePreprocessor.class);
-      CoreApplicationEnvironment.registerExtensionPoint(
-        area, PsiElementFinder.EP_NAME, PsiElementFinder.class);
+        area, PsiElementFinder.EP, PsiElementFinder.class);
     }
 
     private void registerProjectExtensions() {
-      ExtensionsArea area = Extensions.getArea(myProject);
-
       myProject.registerService(CoreJavaFileManager.class,
                                 ((CoreJavaFileManager)ServiceManager.getService(myProject, JavaFileManager.class)));
 
-      area.getExtensionPoint(PsiElementFinder.EP_NAME).registerExtension(
-        new PsiElementFinderImpl(myProject, ServiceManager
-          .getService(myProject, JavaFileManager.class)));
+      //noinspection TestOnlyProblems
+      PsiElementFinder.EP
+        .getPoint(null).registerExtension(new PsiElementFinderImpl(myProject, ServiceManager.getService(myProject, JavaFileManager.class)), mDisposable);
     }
   }
 }

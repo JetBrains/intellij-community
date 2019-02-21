@@ -377,9 +377,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
       if (tracker != null) {
         List<LocalRange> ranges = tracker.getRanges();
         if (ranges != null) {
-          int rangesToCommit = ContainerUtil.count(ranges, it -> {
-            return it.getChangelistId().equals(myChangeList.getId()) && !it.isExcludedFromCommit();
-          });
+          int rangesToCommit = ContainerUtil.count(ranges, it -> it.getChangelistId().equals(myChangeList.getId()) && !it.isExcludedFromCommit());
           if (rangesToCommit != 0 && rangesToCommit != ranges.size()) {
             renderer.append(String.format(spaceAndThinSpace() + "%s of %s changes", rangesToCommit, ranges.size()),
                             SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
@@ -619,9 +617,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
       @Nullable
       @Override
       protected Object findElementFor(@NotNull PartialLocalLineStatusTracker tracker) {
-        return getTrackableElementsStream().filter(change -> {
-          return tracker.getVirtualFile().equals(PartialChangesUtil.getVirtualFile(change));
-        }).findFirst().orElse(null);
+        return getTrackableElementsStream().filter(change -> tracker.getVirtualFile().equals(PartialChangesUtil.getVirtualFile(change))).findFirst().orElse(null);
       }
 
       @Nullable

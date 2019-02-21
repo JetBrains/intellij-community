@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.search;
 
 import com.intellij.application.options.SkipSelfSearchComponent;
@@ -46,8 +46,8 @@ public class SearchUtil {
     processConfigurables(ShowSettingsUtilImpl.getConfigurables(project, true), options);
   }
 
-  private static void processConfigurables(Configurable[] configurables, Map<SearchableConfigurable, Set<OptionDescription>> options) {
-    for (Configurable configurable : configurables) {
+  private static void processConfigurables(@NotNull List<Configurable> configurables, Map<SearchableConfigurable, Set<OptionDescription>> options) {
+    for (final Configurable configurable : configurables) {
       if (configurable instanceof SearchableConfigurable) {
         //ignore invisible root nodes
         //noinspection deprecation
@@ -55,24 +55,29 @@ public class SearchUtil {
           continue;
         }
 
+        final SearchableConfigurable searchableConfigurable = (SearchableConfigurable) configurable;
+
         Set<OptionDescription> configurableOptions = new TreeSet<>();
-        options.put((SearchableConfigurable)configurable, configurableOptions);
+        options.put(searchableConfigurable, configurableOptions);
+
+        for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions())
+          extension.beforeConfigurable(searchableConfigurable, configurableOptions);
 
         if (configurable instanceof MasterDetails) {
           final MasterDetails md = (MasterDetails)configurable;
           md.initUi();
-          processComponent(configurable, configurableOptions, md.getMaster());
-          processComponent(configurable, configurableOptions, md.getDetails().getComponent());
+          processComponent(searchableConfigurable, configurableOptions, md.getMaster());
+          processComponent(searchableConfigurable, configurableOptions, md.getDetails().getComponent());
         }
         else {
-          processComponent(configurable, configurableOptions, configurable.createComponent());
+          processComponent(searchableConfigurable, configurableOptions, configurable.createComponent());
           final Configurable unwrapped = unwrapConfigurable(configurable);
           if (unwrapped instanceof CompositeConfigurable) {
             //noinspection unchecked
             final List<? extends UnnamedConfigurable> children = ((CompositeConfigurable)unwrapped).getConfigurables();
             for (final UnnamedConfigurable child : children) {
               final Set<OptionDescription> childConfigurableOptions = new TreeSet<>();
-              options.put(new SearchableConfigurableAdapter((SearchableConfigurable)configurable, child), childConfigurableOptions);
+              options.put(new SearchableConfigurableAdapter(searchableConfigurable, child), childConfigurableOptions);
 
               if (child instanceof SearchableConfigurable) {
                 processUILabel(((SearchableConfigurable)child).getDisplayName(), childConfigurableOptions, null);
@@ -86,6 +91,9 @@ public class SearchUtil {
             }
           }
         }
+
+        for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions())
+          extension.afterConfigurable(searchableConfigurable, configurableOptions);
       }
     }
   }
@@ -108,10 +116,16 @@ public class SearchUtil {
     return configurable;
   }
 
-  private static void processComponent(Configurable configurable, Set<? super OptionDescription> configurableOptions, JComponent component) {
+  private static void processComponent(SearchableConfigurable configurable, Set<? super OptionDescription> configurableOptions, JComponent component) {
     if (component != null) {
+      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions())
+        extension.beforeComponent(configurable, component, configurableOptions);
+
       processUILabel(configurable.getDisplayName(), configurableOptions, null);
       processComponent(component, configurableOptions, null);
+
+      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions())
+        extension.afterComponent(configurable, component, configurableOptions);
     }
   }
 
@@ -262,20 +276,18 @@ public class SearchUtil {
     rootComponent.putClientProperty(HIGHLIGHT_WITH_BORDER, null);
 
     if (option == null || option.trim().length() == 0) return false;
-    boolean highlight = false;
-
     String label = getLabelFromComponent(rootComponent);
     if (label != null) {
       if (isComponentHighlighted(label, option, force, configurable)) {
-        highlight = true;
         highlightComponent(rootComponent, option);
+        return true; // do not visit children of highlighted component
       }
     }
     else if (rootComponent instanceof JComboBox) {
       List<String> labels = getItemsFromComboBox(((JComboBox)rootComponent));
       if (ContainerUtil.exists(labels, it -> isComponentHighlighted(it, option, force, configurable))) {
-        highlight = true;
         highlightComponent(rootComponent, option);
+        return true; // do not visit children of highlighted component
       }
     }
     else if (rootComponent instanceof JTabbedPane) {
@@ -301,27 +313,19 @@ public class SearchUtil {
       }
     }
 
-    final Component[] components = rootComponent.getComponents();
-    for (Component component : components) {
-      if (component instanceof JComponent) {
-        final boolean innerHighlight = traverseComponentsTree(configurable, (JComponent)component, option, force);
-
-        if (!highlight && !innerHighlight) {
-          final Border border = rootComponent.getBorder();
-          if (border instanceof TitledBorder) {
-            final String title = ((TitledBorder)border).getTitle();
-            if (isComponentHighlighted(title, option, force, configurable)) {
-              highlight = true;
-              highlightComponent(rootComponent, option);
-              rootComponent.putClientProperty(HIGHLIGHT_WITH_BORDER, Boolean.TRUE);
-            }
-          }
-        }
-
-
-        if (innerHighlight) {
-          highlight = true;
-        }
+    Border border = rootComponent.getBorder();
+    if (border instanceof TitledBorder) {
+      String title = ((TitledBorder)border).getTitle();
+      if (isComponentHighlighted(title, option, force, configurable)) {
+        highlightComponent(rootComponent, option);
+        rootComponent.putClientProperty(HIGHLIGHT_WITH_BORDER, Boolean.TRUE);
+        return true; // do not visit children of highlighted component
+      }
+    }
+    boolean highlight = false;
+    for (Component component : rootComponent.getComponents()) {
+      if (component instanceof JComponent && traverseComponentsTree(configurable, (JComponent)component, option, force)) {
+        highlight = true;
       }
     }
     return highlight;

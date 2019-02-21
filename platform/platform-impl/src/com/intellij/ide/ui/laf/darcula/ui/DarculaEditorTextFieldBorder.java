@@ -119,8 +119,8 @@ public class DarculaEditorTextFieldBorder extends DarculaTextBorder implements V
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return isTableCellEditor(c) || isCompact(c) ? JBUI.insets(2).asUIResource() :
-           isComboBoxEditor(c) ? JBUI.insets(2, 3).asUIResource() : JBUI.insets(6, 8).asUIResource();
+    return isTableCellEditor(c) || isCompact(c) || isComboBoxEditor(c) ?
+           JBUI.insets(2, 3).asUIResource() : JBUI.insets(6, 8).asUIResource();
   }
 
   @Override

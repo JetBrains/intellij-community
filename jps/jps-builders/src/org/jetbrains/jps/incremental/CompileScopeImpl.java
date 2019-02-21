@@ -93,10 +93,13 @@ public class CompileScopeImpl extends CompileScope {
   @Override
   public boolean isAffected(BuildTarget<?> target, @NotNull File file) {
     if (myFiles.isEmpty()) {//optimization
-      return isAffected(target);
+      return isWholeTargetAffected(target);
     }
     final Set<File> files = myFiles.get(target);
-    return files != null && files.contains(file);
+    if (files == null) {
+      return isWholeTargetAffected(target);
+    }
+    return files.contains(file);
   }
 
   private boolean isAffectedByAssociatedModule(BuildTarget<?> target) {

@@ -2,7 +2,6 @@
 
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
@@ -448,6 +447,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (!myLookup.addItem(item.getLookupElement(), item.getPrefixMatcher())) {
       return;
     }
+
+    myArranger.setLastLookupPrefix(myLookup.getAdditionalPrefix());
+
     //noinspection NonAtomicOperationOnVolatileField
     myCount++; // invoked from a single thread
 
@@ -674,6 +676,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return myInvocationCount == 0;
   }
 
+  int getInvocationCount() {
+    return myInvocationCount;
+  }
+
   @Override
   @NotNull
   public Project getProject() {
@@ -685,6 +691,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myRestartingPrefixConditions.add(Pair.create(startOffset, restartCondition));
   }
 
+  @Override
   public void prefixUpdated() {
     final int caretOffset = myEditor.getCaretModel().getOffset();
     if (caretOffset < myStartCaret) {
@@ -709,6 +716,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     hideAutopopupIfMeaningless();
   }
 
+  @Override
   public void scheduleRestart() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (ApplicationManager.getApplication().isUnitTestMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
@@ -732,18 +740,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       ((CompletionPhase.CommittingDocuments)oldPhase).replaced = true;
     }
 
-    final CompletionPhase.CommittingDocuments phase = new CompletionPhase.CommittingDocuments(this, myEditor);
-    CompletionServiceImpl.setCompletionPhase(phase);
-    phase.ignoreCurrentDocumentChange();
-
-    final Project project = getProject();
-    AutoPopupController.runTransactionWithEverythingCommitted(project, () -> {
-      if (phase.checkExpired()) return;
-
-      CompletionAutoPopupHandler.invokeCompletion(myCompletionType,
-                                                  isAutopopupCompletion(), project, myEditor, myInvocationCount,
-                                                  true);
-    });
+    CompletionPhase.CommittingDocuments.scheduleAsyncCompletion(myEditor, myCompletionType, null, getProject(), this);
   }
 
   @Override

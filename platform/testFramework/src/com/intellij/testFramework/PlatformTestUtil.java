@@ -23,10 +23,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -132,24 +130,33 @@ public class PlatformTestUtil {
     return uppercaseChars >= 3;
   }
 
+  /**
+   * @see ExtensionPointImpl#maskAll(List, Disposable)
+   */
+  public static <T> void maskExtensions(@NotNull ExtensionPointName<T> pointName, @NotNull List<T> newExtensions, @NotNull Disposable parentDisposable) {
+    ((ExtensionPointImpl<T>)pointName.getPoint(null)).maskAll(newExtensions, parentDisposable);
+  }
+
+  /**
+   * @see ExtensionPointImpl#maskAll(List, Disposable)
+   */
+  public static <T> void maskExtensions(@NotNull ProjectExtensionPointName<T> pointName, @NotNull Project project, @NotNull List<T> newExtensions, @NotNull Disposable parentDisposable) {
+    ((ExtensionPointImpl<T>)pointName.getPoint(project)).maskAll(newExtensions, parentDisposable);
+  }
+
+  /**
+   * @deprecated Use {@link ExtensionPointName#getPoint(AreaInstance)} and {@link ExtensionPoint#registerExtension(Object, Disposable)}.
+   */
+  @Deprecated
   public static <T> void registerExtension(@NotNull ExtensionPointName<T> name, @NotNull T t, @NotNull Disposable parentDisposable) {
     registerExtension(Extensions.getRootArea(), name, t, parentDisposable);
   }
 
   public static <T> void registerExtension(@NotNull ExtensionsArea area,
-                                           @NotNull ExtensionPointName<T> name,
+                                           @NotNull BaseExtensionPointName name,
                                            @NotNull T t,
                                            @NotNull Disposable parentDisposable) {
-    ExtensionPoint<T> extensionPoint = area.getExtensionPoint(name.getName());
-    extensionPoint.registerExtension(t);
-    Disposer.register(parentDisposable, () -> extensionPoint.unregisterExtension(t));
-  }
-
-  public static <T> void unregisterAllExtensions(@NotNull ExtensionPointName<T> name, @NotNull Disposable parentDisposable) {
-    ExtensionPoint<T> extensionPoint = Extensions.getRootArea().getExtensionPoint(name.getName());
-    T[] extensions = name.getExtensions();
-    Arrays.stream(extensions).forEach(extensionPoint::unregisterExtension);
-    Disposer.register(parentDisposable, () -> Arrays.stream(extensions).forEach(extensionPoint::registerExtension));
+    area.<T>getExtensionPoint(name.getName()).registerExtension(t, parentDisposable);
   }
 
   @Nullable
@@ -798,6 +805,7 @@ public class PlatformTestUtil {
   }
 
   public static void withEncoding(@NotNull String encoding, @NotNull ThrowableRunnable r) {
+    Charset.forName(encoding); // check the encoding exists
     try {
       Charset oldCharset = Charset.defaultCharset();
       try {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.scopeView;
 
@@ -15,6 +15,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -37,6 +38,7 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -64,48 +66,58 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   private final IdeView myIdeView = new IdeViewForProjectViewPane(() -> this);
   private final NamedScopesHolder myDependencyValidationManager;
   private final NamedScopesHolder myNamedScopeManager;
-  private final NamedScopesHolder.ScopeListener myScopeListener = new NamedScopesHolder.ScopeListener() {
-    private final AtomicLong counter = new AtomicLong();
-
-    @Override
-    public void scopesChanged() {
-      if (myProject.isDisposed()) return;
-      long count = counter.incrementAndGet();
-      getScheduledExecutorInstance().schedule(() -> {
-        // is this request still actual after 10 ms?
-        if (count == counter.get()) {
-          ProjectView view = myProject.isDisposed() ? null : ProjectView.getInstance(myProject);
-          if (view == null) return;
-          myFilters = map(myDependencyValidationManager, myNamedScopeManager);
-          String currentId = view.getCurrentViewId();
-          String currentSubId = getSubId();
-          // update changes subIds if needed
-          view.removeProjectPane(ScopeViewPane.this);
-          view.addProjectPane(ScopeViewPane.this);
-          if (currentId == null) return;
-          if (currentId.equals(getId())) {
-            // try to restore selected subId
-            view.changeView(currentId, currentSubId);
-          }
-          else {
-            view.changeView(currentId);
-          }
-        }
-      }, 10, MILLISECONDS);
-    }
-  };
   private ScopeViewTreeModel myTreeModel;
   private Comparator<? super NodeDescriptor> myComparator;
   private LinkedHashMap<String, NamedScopeFilter> myFilters;
   private JScrollPane myScrollPane;
 
+  private static Project checkApplicability(@NotNull Project project) {
+    if (PlatformUtils.isPyCharmEducational()) {
+      throw ExtensionNotApplicableException.INSTANCE;
+    }
+    return project;
+  }
+
   public ScopeViewPane(@NotNull Project project, @NotNull DependencyValidationManager dvm, @NotNull NamedScopeManager nsm) {
-    super(project);
+    super(checkApplicability(project));
+
     myDependencyValidationManager = dvm;
     myNamedScopeManager = nsm;
     myFilters = map(myDependencyValidationManager, myNamedScopeManager);
-    myDependencyValidationManager.addScopeListener(myScopeListener);
-    myNamedScopeManager.addScopeListener(myScopeListener);
+
+    NamedScopesHolder.ScopeListener scopeListener = new NamedScopesHolder.ScopeListener() {
+      private final AtomicLong counter = new AtomicLong();
+
+      @Override
+      public void scopesChanged() {
+        if (myProject.isDisposed()) return;
+        long count = counter.incrementAndGet();
+        getScheduledExecutorInstance().schedule(() -> {
+          // is this request still actual after 10 ms?
+          if (count == counter.get()) {
+            ProjectView view = myProject.isDisposed() ? null : ProjectView.getInstance(myProject);
+            if (view == null) return;
+            myFilters = map(myDependencyValidationManager, myNamedScopeManager);
+            String currentId = view.getCurrentViewId();
+            String currentSubId = getSubId();
+            // update changes subIds if needed
+            view.removeProjectPane(ScopeViewPane.this);
+            view.addProjectPane(ScopeViewPane.this);
+            if (currentId == null) return;
+            if (currentId.equals(getId())) {
+              // try to restore selected subId
+              view.changeView(currentId, currentSubId);
+            }
+            else {
+              view.changeView(currentId);
+            }
+          }
+        }, 10, MILLISECONDS);
+      }
+    };
+
+    myDependencyValidationManager.addScopeListener(scopeListener, this);
+    myNamedScopeManager.addScopeListener(scopeListener, this);
     ChangeListManager.getInstance(project).addChangeListListener(new ChangeListAdapter() {
       @Override
       public void changeListAdded(ChangeList list) {
@@ -137,9 +149,9 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   @Override
   public void dispose() {
     JTree tree = myTree;
-    if (tree != null) tree.setModel(null);
-    myDependencyValidationManager.removeScopeListener(myScopeListener);
-    myNamedScopeManager.removeScopeListener(myScopeListener);
+    if (tree != null) {
+      tree.setModel(null);
+    }
     super.dispose();
   }
 

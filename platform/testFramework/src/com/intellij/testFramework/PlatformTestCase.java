@@ -3,7 +3,6 @@ package com.intellij.testFramework;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.ide.GeneratedSourceFileChangeTracker;
 import com.intellij.ide.GeneratedSourceFileChangeTrackerImpl;
 import com.intellij.ide.highlighter.ModuleFileType;
@@ -17,6 +16,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.DocumentReferenceManagerImpl;
@@ -24,7 +24,6 @@ import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.impl.text.AsyncHighlighterUpdater;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.EmptyModuleType;
@@ -458,7 +457,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       ((PsiManagerImpl)PsiManager.getInstance(defaultProject)).cleanupForNextTest();
     }
 
-    AsyncHighlighterUpdater.completeAsyncTasks();
+    NonBlockingReadActionImpl.cancelAllTasks();
 
     ((FileBasedIndexImpl) FileBasedIndex.getInstance()).cleanupForNextTest();
 
@@ -561,7 +560,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       })
       .append(() -> {
         if (myThreadTracker != null) {
-          myThreadTracker.checkLeak();
+          myThreadTracker.checkLeak(getClass().getName()+"."+getName());
         }
       })
       .append(() -> LightPlatformTestCase.checkEditorsReleased())
@@ -965,7 +964,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   public static void waitForProjectLeakingThreads(@NotNull Project project, long timeout, @NotNull TimeUnit timeUnit) throws Exception {
-    DaemonCodeAnalyzerImpl.waitForAllEditorsFinallyLoaded(project, timeout, timeUnit);
+    NonBlockingReadActionImpl.cancelAllTasks();
     GeneratedSourceFileChangeTrackerImpl tracker = (GeneratedSourceFileChangeTrackerImpl)project.getComponent(GeneratedSourceFileChangeTracker.class);
     if (tracker != null) {
       tracker.cancelAllAndWait(timeout, timeUnit);

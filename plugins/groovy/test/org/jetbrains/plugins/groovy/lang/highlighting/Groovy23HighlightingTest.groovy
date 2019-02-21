@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil
@@ -49,7 +49,7 @@ public <T> void exec(T t, Action<T> f) {
 
 def foo() {
     exec('foo') {print it.toUpperCase() ;print 2 }
-    exec('foo') {print <warning descr="Method call is ambiguous">it.<warning descr="Cannot resolve symbol 'intValue'">intValue</warning>()</warning> ;print 2 }
+    exec('foo') {print <weak_warning descr="Cannot infer argument types">it.<warning descr="Cannot resolve symbol 'intValue'">intValue</warning>()</weak_warning> ;print 2 }
 }
 ''')
   }

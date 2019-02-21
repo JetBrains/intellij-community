@@ -22,6 +22,12 @@
       <loadForDefaultProject/>
     </component>
   </project-components>
+  <project-components>
+     <component>
+       <implementation-class>com.intellij.profile.codeInspection.ProjectInspectionProfileManager</implementation-class>
+       <loadForDefaultProject/>
+     </component>
+   </project-components>
 
   <xi:include href="/componentSets/Platform.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/componentSets/UICore.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -30,7 +36,6 @@
   <xi:include href="/componentSets/VCS.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/componentSets/Lang.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/componentSets/ProjectView.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/componentSets/Profiles.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/componentSets/Execution.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <application-components>

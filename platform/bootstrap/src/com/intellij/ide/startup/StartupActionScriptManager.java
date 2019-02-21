@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.startup;
 
 import com.intellij.openapi.application.PathManager;
@@ -9,6 +9,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -35,7 +38,7 @@ public class StartupActionScriptManager {
     }
   }
 
-  public static synchronized void executeActionScript(@NotNull File scriptFile, @NotNull File oldTarget, @NotNull File newTarget) throws IOException {
+  public static synchronized void executeActionScript(@NotNull Path scriptFile, @NotNull Path oldTarget, @NotNull File newTarget) throws IOException {
     List<ActionCommand> commands = loadActionScript(scriptFile);
     for (ActionCommand command : commands) {
       ActionCommand toExecute = mapPaths(command, oldTarget, newTarget);
@@ -70,49 +73,48 @@ public class StartupActionScriptManager {
     }
   }
 
-  private static File getActionScriptFile() {
-    return new File(PathManager.getPluginTempPath(), ACTION_SCRIPT_FILE);
+  @NotNull
+  private static Path getActionScriptFile() {
+    return Paths.get(PathManager.getPluginTempPath(), ACTION_SCRIPT_FILE);
   }
 
-  private static List<ActionCommand> loadActionScript(File scriptFile) throws IOException {
-    if (scriptFile.isFile()) {
-      try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(scriptFile))) {
-        Object data = ois.readObject();
-        if (data instanceof ActionCommand[]) {
-          return new ArrayList<>(Arrays.asList((ActionCommand[])data));
-        }
-        else if (data instanceof List && ((List)data).size() == 0) {
-          return new ArrayList<>();
-        }
-        else {
-          throw new IOException("Unexpected object: " + data + "/" + data.getClass());
-        }
-      }
-      catch (ReflectiveOperationException e) {
-        throw (StreamCorruptedException)new StreamCorruptedException("Stream error: " + scriptFile).initCause(e);
-      }
+  @NotNull
+  private static List<ActionCommand> loadActionScript(@NotNull Path scriptFile) throws IOException {
+    if (!Files.isRegularFile(scriptFile)) {
+      return new ArrayList<>();
     }
 
-    return new ArrayList<>();
+    try (ObjectInputStream ois = new ObjectInputStream(Files.newInputStream(scriptFile))) {
+      Object data = ois.readObject();
+      if (data instanceof ActionCommand[]) {
+        return new ArrayList<>(Arrays.asList((ActionCommand[])data));
+      }
+      else if (data instanceof List && ((List)data).size() == 0) {
+        return new ArrayList<>();
+      }
+      else {
+        throw new IOException("Unexpected object: " + data + "/" + data.getClass());
+      }
+    }
+    catch (ReflectiveOperationException e) {
+      throw (StreamCorruptedException)new StreamCorruptedException("Stream error: " + scriptFile).initCause(e);
+    }
   }
 
   private static void saveActionScript(@Nullable List<ActionCommand> commands) throws IOException {
-    File scriptFile = getActionScriptFile();
+    Path scriptFile = getActionScriptFile();
     if (commands != null) {
-      File tempDir = scriptFile.getParentFile();
-      if (!(tempDir.exists() || tempDir.mkdirs())) {
-        throw new IOException("Cannot create directory: " + tempDir);
-      }
-      try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(scriptFile, false))) {
+      Files.createDirectories(scriptFile.getParent());
+      try (ObjectOutputStream oos = new ObjectOutputStream(Files.newOutputStream(scriptFile))) {
         oos.writeObject(commands.toArray(ActionCommand.EMPTY_ARRAY));
       }
     }
-    else if (scriptFile.exists()) {
-      FileUtilRt.delete(scriptFile);
+    else if (Files.exists(scriptFile)) {
+      FileUtilRt.delete(scriptFile.toFile());
     }
   }
 
-  private static ActionCommand mapPaths(ActionCommand command, File oldTarget, File newTarget) {
+  private static ActionCommand mapPaths(ActionCommand command, Path oldTarget, File newTarget) {
     if (command instanceof CopyCommand) {
       File destination = mapPath(((CopyCommand)command).myDestination, oldTarget, newTarget);
       if (destination != null) {
@@ -135,8 +137,8 @@ public class StartupActionScriptManager {
     return null;
   }
 
-  private static File mapPath(String path, File oldTarget, File newTarget) {
-    String oldTargetPath = oldTarget.getPath();
+  private static File mapPath(String path, Path oldTarget, File newTarget) {
+    String oldTargetPath = oldTarget.toString();
     if (path.startsWith(oldTargetPath)) {
       if (path.length() == oldTargetPath.length()) {
         return newTarget;

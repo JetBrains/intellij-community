@@ -368,10 +368,10 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
   internal fun chars_smart(f: TestBuilder.() -> Unit): Unit = doTest(TestType.CHAR_SMART, f)
 
   internal fun splitter(squash: Boolean = false, trim: Boolean = false, f: TestBuilder.() -> Unit) {
-    doTest(TestType.SPLITTER, {
+    doTest(TestType.SPLITTER) {
       postprocess(squash, trim)
       f()
-    })
+    }
   }
 
   private fun doTest(type: TestType, f: TestBuilder.() -> Unit) {

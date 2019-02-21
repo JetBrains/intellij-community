@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -28,9 +28,9 @@ public abstract class ProjectOpenProcessor {
     return getIcon();
   }
 
-  public abstract boolean canOpenProject(VirtualFile file);
+  public abstract boolean canOpenProject(@NotNull VirtualFile file);
 
-  public boolean isProjectFile(VirtualFile file) {
+  public boolean isProjectFile(@NotNull VirtualFile file) {
     return canOpenProject(file);
   }
 
@@ -56,7 +56,7 @@ public abstract class ProjectOpenProcessor {
    *                                  (e.g. PlatformProjectOpenProcessor)
    */
   @Nullable
-  public static ProjectOpenProcessor getImportProvider(VirtualFile file, boolean onlyIfExistingProjectFile) {
+  public static ProjectOpenProcessor getImportProvider(@NotNull VirtualFile file, boolean onlyIfExistingProjectFile) {
     for (ProjectOpenProcessor provider : EXTENSION_POINT_NAME.getExtensionList()) {
       if (provider.canOpenProject(file) && (!onlyIfExistingProjectFile || provider.isProjectFile(file))) {
         return provider;
@@ -66,7 +66,7 @@ public abstract class ProjectOpenProcessor {
   }
 
   @Nullable
-  public static ProjectOpenProcessor getStrongImportProvider(VirtualFile file) {
+  public static ProjectOpenProcessor getStrongImportProvider(@NotNull VirtualFile file) {
     for (ProjectOpenProcessor provider : EXTENSION_POINT_NAME.getExtensionList()) {
       if (provider.isStrongProjectInfoHolder() && provider.canOpenProject(file)) {
         return provider;

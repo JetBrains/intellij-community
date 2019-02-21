@@ -577,6 +577,11 @@ print <warning descr="Cannot resolve symbol 'abc'">abc</warning>
 @CompileStatic
 def bar() {
 print <error descr="Cannot resolve symbol 'abc'">abc</error>
+  new Object() {
+    def baz() {
+      print(<error descr="Cannot resolve symbol 'unknown'">unknown</error>)
+    }
+  }
 }
 }
 ''', true, false, false, GrUnresolvedAccessInspection)
@@ -1430,8 +1435,8 @@ def bar() {
 
 def testConfig = bar()
 print testConfig.list[0]
-print <warning descr="Method call is ambiguous">testConfig.foo<warning descr="'testConfig.foo' cannot be applied to '()'">()</warning></warning>
-''', true, false, false, GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection)
+print <weak_warning descr="Cannot infer argument types">testConfig.foo<warning descr="'testConfig.foo' cannot be applied to '()'">()</warning></weak_warning>
+''', true, false, true, GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection)
   }
 
   void testGStringInjectionLFs() {
@@ -2179,5 +2184,21 @@ import java.util.Map<error descr="Type argument list is not allowed here"><Integ
 import static java.util.Map<error descr="Type argument list is not allowed here"><Integer, String></error>.*
 import java.util.List<error descr="Type argument list is not allowed here"><String></error> as Foo
 ''', false
+  }
+
+  void 'test assign collection to an array in @CS'() {
+    testHighlighting '''\
+Collection<? extends Runnable> foo() {}
+
+@groovy.transform.CompileStatic
+def usage() {
+  Runnable[] ar = foo()
+}
+
+@groovy.transform.CompileStatic
+def usage(Collection<? extends Runnable> cr) {
+  Runnable[] ar = cr //https://issues.apache.org/jira/browse/GROOVY-8983
+}
+'''
   }
 }

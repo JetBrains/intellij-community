@@ -10,15 +10,11 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.util" />
-    <orderEntry type="library" name="JDOM" level="project" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="library" name="jna" level="project" />
-    <orderEntry type="library" name="pty4j" level="project" />
     <orderEntry type="module-library" scope="RUNTIME">
       <library name="sqlite" type="repository">
         <properties maven-id="org.xerial:sqlite-jdbc:3.20.1" />

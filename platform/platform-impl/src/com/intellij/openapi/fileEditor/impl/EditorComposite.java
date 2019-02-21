@@ -71,7 +71,7 @@ public abstract class EditorComposite implements Disposable {
   /**
    * Editors which are opened in the composite
    */
-  protected FileEditor[] myEditors;
+  protected volatile FileEditor[] myEditors;
   /**
    * This is initial timestamp of the file. It uses to implement
    * "close non modified editors first" feature.
@@ -448,9 +448,7 @@ public abstract class EditorComposite implements Disposable {
     @Override
     public void requestFocus() {
       if (myFocusComponent != null) {
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(myFocusComponent, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myFocusComponent, true));
       }
     }
 

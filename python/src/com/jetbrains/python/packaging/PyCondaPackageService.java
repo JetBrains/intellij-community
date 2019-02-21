@@ -79,7 +79,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
     if (conda != null) {
       final VirtualFile condaFile = LocalFileSystem.getInstance().findFileByPath(conda);
       if (condaFile != null) {
-        final VirtualFile condaDir = condaFile.getParent().getParent();
+        final VirtualFile condaDir = SystemInfo.isWindows ? condaFile.getParent().getParent() : condaFile.getParent();
         final VirtualFile python = condaDir.findChild(pythonName);
         if (python != null) {
           return python.getPath();

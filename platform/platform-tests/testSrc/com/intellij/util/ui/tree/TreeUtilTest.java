@@ -118,7 +118,7 @@ public class TreeUtilTest extends TestCase {
     TreePath path2a = new TreePath(new Object[]{e1, e2});
     TreePath path3 = new TreePath("d");
     TreePath[] maximals = TreeUtil.selectMaximals(new TreePath[]{path1, path2, path3});
-    CHECK.compareUnordered(maximals, new TreePath[]{path2, path3});
+    Assertion.compareUnordered(maximals, new TreePath[]{path2, path3});
     assertEquals(1, TreeUtil.selectMaximals(new TreePath[]{path2, path2a}).length);
   }
 

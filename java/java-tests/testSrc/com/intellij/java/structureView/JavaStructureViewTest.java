@@ -286,6 +286,26 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     );
   }
 
+  public void testCustomRegionsIdea205350() {
+    doTest(
+      "// region Test\n" +
+      "package com.company;\n" +
+      "\n" +
+      "class CustRegionTest {\n" +
+      "   // region Another\n" +
+      "   void foo () { }\n" +
+      "   // endregion\n" +
+      "}\n" +
+      "//endregion",
+
+      "-Test.java\n" +
+      " -Test\n" +
+      "  -CustRegionTest\n" +
+      "   -Another\n" +
+      "    foo(): void"
+    );
+  }
+
   public void testRecursive() {
     myFixture.configureByText("I.java", "interface I {" +
                                         "  class Impl implements I {" +

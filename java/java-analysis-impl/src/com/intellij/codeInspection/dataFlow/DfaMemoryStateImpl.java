@@ -1530,7 +1530,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private void removeEquivalence(DfaValue var) {
     int varID = var.getID();
     Integer varClassIndex = myIdToEqClassesIndices.get(varID);
-    if (varClassIndex == null) return;
+    if (varClassIndex == null) {
+      var = canonicalize(var);
+      varID = var.getID();
+      varClassIndex = myIdToEqClassesIndices.get(varID);
+      if (varClassIndex == null) return;
+    }
 
     EqClass varClass = myEqClasses.get(varClassIndex);
 
@@ -1563,7 +1568,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     else {
       DfaVariableValue newCanonical = varClass.getCanonicalVariable();
       if (newCanonical != null && previousCanonical != null && previousCanonical != newCanonical && 
-          (ControlFlowAnalyzer.isTempVariable(previousCanonical) || newCanonical.getDepth() <= previousCanonical.getDepth())) {
+          (ControlFlowAnalyzer.isTempVariable(previousCanonical) && !newCanonical.dependsOn(previousCanonical) || 
+           newCanonical.getDepth() <= previousCanonical.getDepth())) {
         // Do not transfer to deeper qualifier. E.g. if we have two classes like (a, b.c) (a.d, e),
         // and flushing `a`, we do not convert `a.d` to `b.c.d`. Otherwise infinite qualifier explosion is possible.
         boolean successfullyConverted = convertQualifiers(previousCanonical, newCanonical);

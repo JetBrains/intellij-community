@@ -25,6 +25,7 @@ import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,10 +48,11 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
                       @NotNull VcsLogData logData,
                       @NotNull VcsLogColorManager manager,
                       @NotNull MainVcsLogUiProperties uiProperties,
-                      @NotNull VisiblePackRefresher refresher) {
+                      @NotNull VisiblePackRefresher refresher,
+                      @Nullable VcsLogFilterCollection filters) {
     super(id, logData, manager, refresher);
     myUiProperties = uiProperties;
-    myMainFrame = new MainFrame(logData, this, uiProperties, myLog, myVisiblePack);
+    myMainFrame = new MainFrame(logData, this, uiProperties, myLog, myVisiblePack, filters);
 
     for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensions(myProject)) {
       getTable().addHighlighter(factory.createHighlighter(logData, this));
@@ -130,7 +132,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
       runnables.add(new NamedRunnable("View in New Tab") {
         @Override
         public void run() {
-          VcsLogUiImpl ui = projectLog.getTabsManager().openAnotherLogTab(logManager, true);
+          VcsLogUiImpl ui = projectLog.getTabsManager().openAnotherLogTab(logManager, VcsLogFilterObject.collection());
           ui.invokeOnChange(() -> ui.jumpTo(commitId, rowGetter, SettableFuture.create()),
                             pack -> pack.getFilters().isEmpty());
         }
@@ -226,10 +228,6 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
       }
       else if (MainVcsLogUiProperties.BEK_SORT_TYPE.equals(property)) {
         myRefresher.onSortTypeChange(myUiProperties.get(MainVcsLogUiProperties.BEK_SORT_TYPE));
-      }
-      else if (MainVcsLogUiProperties.TEXT_FILTER_REGEX.equals(property) ||
-               MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE.equals(property)) {
-        applyFiltersAndUpdateUi(myMainFrame.getFilterUi().getFilters());
       }
       else if (CommonUiProperties.COLUMN_ORDER.equals(property)) {
         myMainFrame.getGraphTable().onColumnOrderSettingChanged();

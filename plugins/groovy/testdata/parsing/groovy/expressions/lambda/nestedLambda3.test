@@ -12,16 +12,18 @@ Groovy script
     PsiWhiteSpace(' ')
     PsiElement(->)('->')
     PsiWhiteSpace(' ')
-    Lambda expression
-      Parameter list
-        PsiElement(()('(')
-        Parameter
-          Modifiers
-            <empty list>
-          PsiElement(identifier)('b')
-        PsiElement())(')')
-      PsiWhiteSpace(' ')
-      PsiElement(->)('->')
-      PsiWhiteSpace(' ')
-      Reference expression
-        PsiElement(identifier)('b')
+    Lambda body
+      Lambda expression
+        Parameter list
+          PsiElement(()('(')
+          Parameter
+            Modifiers
+              <empty list>
+            PsiElement(identifier)('b')
+          PsiElement())(')')
+        PsiWhiteSpace(' ')
+        PsiElement(->)('->')
+        PsiWhiteSpace(' ')
+        Lambda body
+          Reference expression
+            PsiElement(identifier)('b')

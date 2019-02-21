@@ -235,8 +235,7 @@ public class EditorFactoryImpl extends EditorFactory implements BaseComponent {
   public Editor[] getEditors(@NotNull Document document, Project project) {
     List<Editor> list = null;
     for (Editor editor : myEditors) {
-      Project project1 = editor.getProject();
-      if (editor.getDocument().equals(document) && (project == null || project1 == null || project1.equals(project))) {
+      if (editor.getDocument().equals(document) && (project == null || project.equals(editor.getProject()))) {
         if (list == null) list = new SmartList<>();
         list.add(editor);
       }

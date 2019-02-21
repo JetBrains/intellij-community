@@ -8,7 +8,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ExtensionAreas;
@@ -259,19 +258,11 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   public void init() {
     Application application = ApplicationManager.getApplication();
 
-    long start = System.currentTimeMillis();
-
     ProgressIndicator progressIndicator = isDefault() ? null : ProgressIndicatorProvider.getGlobalProgressIndicator();
-    init(progressIndicator,
-         () -> application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this));
-
-    long time = System.currentTimeMillis() - start;
-    String message = getComponentConfigCount() + " project components initialized in " + time + " ms";
-    if (application.isUnitTestMode()) {
-      LOG.debug(message);
-    } else {
-      LOG.info(message);
-    }
+    //noinspection CodeBlock2Expr
+    init(progressIndicator, application.isUnitTestMode() ? () -> {
+      application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this);
+    } : null, true);
 
     if (!isDefault() && !application.isHeadlessEnvironment()) {
       distributeProgress();
@@ -381,8 +372,9 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
            " " + getName();
   }
 
+  @Nullable
   @Override
-  protected boolean logSlowComponents() {
-    return super.logSlowComponents() || ApplicationInfoImpl.getShadowInstance().isEAP();
+  protected String measureTokenNamePrefix() {
+    return "project ";
   }
 }

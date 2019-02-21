@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@FunctionalInterface
 public interface CustomScopesProvider {
   ExtensionPointName<CustomScopesProvider> CUSTOM_SCOPES_PROVIDER = ExtensionPointName.create("com.intellij.customScopesProvider");
 

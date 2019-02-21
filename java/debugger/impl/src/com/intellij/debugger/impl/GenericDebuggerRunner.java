@@ -161,7 +161,7 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
     }
     return new RemoteConnectionBuilder(debuggerSettings.LOCAL, debuggerSettings.getTransport(), debuggerSettings.getDebugPort())
       .asyncAgent(beforeExecution)
-      .memoryAgent(beforeExecution && Registry.is("debugger.enable.memory.agent"))
+      .memoryAgent(beforeExecution && DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT)
       .create(javaParameters);
   }
 

@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.actions.JavaMarkObjectActionHandler;
-import com.intellij.debugger.actions.JvmSmartStepIntoActionHandler;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
@@ -13,7 +12,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.impl.DebuggerSupport;
-import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.actions.MarkObjectActionHandler;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
@@ -27,19 +25,12 @@ import java.util.Collection;
 public class JavaDebuggerSupport extends DebuggerSupport {
   private final JavaBreakpointPanelProvider myBreakpointPanelProvider = new JavaBreakpointPanelProvider();
   //private final QuickEvaluateActionHandler myQuickEvaluateHandler = new QuickEvaluateActionHandler();
-  private final DebuggerActionHandler mySmartStepIntoHandler = new JvmSmartStepIntoActionHandler();
   private final JavaMarkObjectActionHandler myMarkObjectActionHandler = new JavaMarkObjectActionHandler();
 
   @Override
   @NotNull
   public BreakpointPanelProvider<?> getBreakpointPanelProvider() {
     return myBreakpointPanelProvider;
-  }
-
-  @Override
-  @NotNull
-  public DebuggerActionHandler getSmartStepIntoHandler() {
-    return mySmartStepIntoHandler;
   }
 
   @NotNull

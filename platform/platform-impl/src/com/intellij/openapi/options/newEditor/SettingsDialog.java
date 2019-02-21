@@ -2,8 +2,8 @@
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.CommonBundle;
-import com.intellij.configurationStore.StoreUtil;
 import com.intellij.ide.HelpTooltip;
+import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -168,8 +168,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   @Override
   public void doOKAction() {
     if (myEditor.apply()) {
-      //SaveAndSyncHandler.getInstance().scheduleSaveDocumentsAndProjectsAndApp(null);
-      StoreUtil.saveDocumentsAndProjectsAndApp(true);
+      SaveAndSyncHandler.getInstance().scheduleSaveDocumentsAndProjectsAndApp(null);
       super.doOKAction();
     }
   }

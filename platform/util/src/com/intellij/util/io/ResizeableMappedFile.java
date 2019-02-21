@@ -85,7 +85,7 @@ public class ResizeableMappedFile implements Forceable {
     long suggestedSize;
 
     if (realSize == 0) {
-      suggestedSize = myInitialSize;
+      suggestedSize = doRoundToFactor(Math.max(myInitialSize, max));
     } else {
       suggestedSize = Math.max(realSize + 1, 2); // suggestedSize should increase with int multiplication on 1.625 factor
 
@@ -99,10 +99,7 @@ public class ResizeableMappedFile implements Forceable {
         }
       }
 
-      int roundFactor = myRoundFactor;
-      if (suggestedSize % roundFactor != 0) {
-        suggestedSize = (suggestedSize / roundFactor + 1) * roundFactor;
-      }
+      suggestedSize = doRoundToFactor(suggestedSize);
     }
 
     try {
@@ -111,6 +108,14 @@ public class ResizeableMappedFile implements Forceable {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private long doRoundToFactor(long suggestedSize) {
+    int roundFactor = myRoundFactor;
+    if (suggestedSize % roundFactor != 0) {
+      suggestedSize = (suggestedSize / roundFactor + 1) * roundFactor;
+    }
+    return suggestedSize;
   }
 
   private File getLengthFile() {

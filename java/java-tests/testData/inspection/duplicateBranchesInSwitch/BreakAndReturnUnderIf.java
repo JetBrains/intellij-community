@@ -14,7 +14,7 @@ class C {
           break;
         }
       case 3:
-        <weak_warning descr="Duplicate branch in 'switch' statement">if(b) {
+        <weak_warning descr="Duplicate branch in 'switch'">if(b) {
           return bar("A");
         } else {
           break;

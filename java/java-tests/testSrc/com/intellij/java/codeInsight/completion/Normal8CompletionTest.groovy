@@ -245,7 +245,7 @@ class Test88 {
 
   void testAllCollectors() {
     configureByTestName()
-    myFixture.assertPreferredCompletionItems 0, 'collect', 'collect', 'collect(Collectors.toCollection())', 'collect(Collectors.toList())', 'collect(Collectors.toSet())'
+    assert myFixture.lookupElementStrings == ['collect', 'collect', 'collect(Collectors.toCollection())', 'collect(Collectors.toList())', 'collect(Collectors.toSet())']
     selectItem(myItems.find { it.lookupString.contains('toCollection') })
     checkResultByFileName()
   }

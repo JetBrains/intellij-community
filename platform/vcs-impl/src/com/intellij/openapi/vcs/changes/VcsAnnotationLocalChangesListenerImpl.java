@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -24,6 +23,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.diagnostic.Logger.getInstance;
@@ -67,9 +67,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
 
   @TestOnly
   public void calmDown() {
-    while (!myUpdater.isEmpty()) {
-      TimeoutUtil.sleep(1);
-    }
+    myUpdater.waitForAllExecuted(10, TimeUnit.SECONDS);
     // wait for FileAnnotation.close()/reload() to be called - see invalidateAnnotations()
     if (getApplication().isDispatchThread()) {
       dispatchAllInvocationEvents();
@@ -177,9 +175,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
   private void closeForVcs(final Set<VcsKey> refresh) {
     if (refresh.isEmpty()) return;
     synchronized (myLock) {
-      List<FileAnnotation> copy = ContainerUtil.filter(myFileAnnotationMap.values(), it -> {
-        return it.getVcsKey() != null && refresh.contains(it.getVcsKey());
-      });
+      List<FileAnnotation> copy = ContainerUtil.filter(myFileAnnotationMap.values(), it -> it.getVcsKey() != null && refresh.contains(it.getVcsKey()));
       invalidateAnnotations(copy, false);
     }
   }
@@ -226,9 +222,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
   @Override
   public void reloadAnnotationsForVcs(@NotNull VcsKey key) {
     synchronized (myLock) {
-      List<FileAnnotation> copy = ContainerUtil.filter(myFileAnnotationMap.values(), it -> {
-        return key.equals(it.getVcsKey());
-      });
+      List<FileAnnotation> copy = ContainerUtil.filter(myFileAnnotationMap.values(), it -> key.equals(it.getVcsKey()));
       invalidateAnnotations(copy, true);
     }
   }

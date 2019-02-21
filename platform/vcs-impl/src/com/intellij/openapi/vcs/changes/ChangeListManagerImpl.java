@@ -241,10 +241,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
     ChangeListRemoveConfirmation.deleteEmptyInactiveLists(myProject, listsToBeDeletedSilently, toAsk -> true);
 
-    ChangeListRemoveConfirmation.deleteEmptyInactiveLists(myProject, listsToBeDeleted, toAsk -> {
-      return myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY ||
-             showRemoveEmptyChangeListsProposal(myProject, myConfig, toAsk);
-    });
+    ChangeListRemoveConfirmation.deleteEmptyInactiveLists(myProject, listsToBeDeleted, toAsk -> myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS == Value.DO_ACTION_SILENTLY ||
+                                                                                              showRemoveEmptyChangeListsProposal(myProject, myConfig, toAsk));
   }
 
   /**
@@ -446,6 +444,25 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public void unfreeze() {
     myUpdater.go();
     myFreezeName = null;
+  }
+
+  @Override
+  public void waitForUpdate(@Nullable String operationName) {
+    assert !ApplicationManager.getApplication().isDispatchThread();
+    CountDownLatch waiter = new CountDownLatch(1);
+    invokeAfterUpdate(() -> waiter.countDown(), InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, operationName, ModalityState.NON_MODAL);
+
+    boolean success = false;
+    while (!success) {
+      ProgressManager.checkCanceled();
+      try {
+        success = waiter.await(50, TimeUnit.MILLISECONDS);
+      }
+      catch (InterruptedException e) {
+        LOG.warn(e);
+        throw new ProcessCanceledException(e);
+      }
+    }
   }
 
   @Override
@@ -1503,7 +1520,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @TestOnly
   public void waitUntilRefreshed() {
     assert ApplicationManager.getApplication().isUnitTestMode();
-    VcsDirtyScopeVfsListener.getInstance(myProject).flushDirt();
+    VcsDirtyScopeVfsListener.getInstance(myProject).waitForAsyncTaskCompletion();
     myUpdater.waitUntilRefreshed();
     waitUpdateAlarm();
   }
@@ -1554,7 +1571,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       updateImmediately();
       return true;
     }
-    VcsDirtyScopeVfsListener.getInstance(myProject).flushDirt();
+    VcsDirtyScopeVfsListener.getInstance(myProject).waitForAsyncTaskCompletion();
     myUpdater.waitUntilRefreshed();
     waitUpdateAlarm();
     return true;

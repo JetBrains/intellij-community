@@ -207,7 +207,7 @@ public class OutputChecker {
         result = StringUtil.replace(result, "Process finished with exit code 255", "Process finished with exit code -1");
 
         result = result.replaceAll(" -javaagent:.*debugger-agent\\.jar", "");
-        result = result.replaceAll(" -agentpath:.*memory_agent\\.\\w*", "");
+        result = result.replaceAll(" -agentpath:[^\\s]*memory_agent([\\w^\\s]*)?\\.[^\\s]+", "");
         result = result.replaceAll("!HOST_NAME!:\\d*", "!HOST_NAME!:!HOST_PORT!");
         result = result.replaceAll("at '.*?'", "at '!HOST_NAME!:PORT_NAME!'");
         result = result.replaceAll("address: '.*?'", "address: '!HOST_NAME!:PORT_NAME!'");

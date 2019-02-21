@@ -5,6 +5,7 @@ import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.internal.statistic.connect.StatisticsResult;
 import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.service.fus.FUSWhitelist;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -78,7 +79,8 @@ public class SendEventLogAction extends AnAction {
     @NotNull
     @Override
     public LogEventFilter getEventFilter() {
-      return LogEventTrueFilter.INSTANCE;
+      final FUSWhitelist whitelist = getWhitelistedGroups();
+      return new LogEventWhitelistFilter(whitelist != null ? whitelist : FUSWhitelist.empty());
     }
 
     @Override

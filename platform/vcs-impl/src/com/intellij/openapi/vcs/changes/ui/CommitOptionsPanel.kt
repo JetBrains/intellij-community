@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
@@ -9,13 +9,13 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcsesForFiles
 import com.intellij.openapi.vcs.changes.LocalChangeList
-import com.intellij.openapi.vcs.changes.PseudoMap
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.IdeBorderFactory.createTitledBorder
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
+import com.intellij.util.PairConsumer
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil.removeMnemonic
@@ -32,14 +32,19 @@ private val VCS_COMPARATOR = compareBy<AbstractVcs<*>, String>(String.CASE_INSEN
 
 class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel,
                          private val myHandlers: Collection<CheckinHandler>,
-                         vcses: Collection<AbstractVcs<*>>) : BorderLayoutPanel(), Disposable {
+                         vcses: Collection<AbstractVcs<*>>,
+                         private val additionalData: PairConsumer<Any, Any>) : BorderLayoutPanel(), Disposable {
   private val myPerVcsOptionsPanels = mutableMapOf<AbstractVcs<*>, JPanel>()
   private val myAdditionalComponents = mutableListOf<RefreshableOnComponent>()
-  private val myCheckinChangeListSpecificComponents = mutableSetOf<CheckinChangeListSpecificComponent>()
-  val additionalData = PseudoMap<Any, Any>()
-  val isEmpty = init(vcses)
 
+  private val changeListSpecificOptions get() = myAdditionalComponents.filterIsInstance<CheckinChangeListSpecificComponent>()
+
+  val isEmpty: Boolean get() = myAdditionalComponents.isEmpty()
   val additionalComponents: List<RefreshableOnComponent> get() = unmodifiableList(myAdditionalComponents)
+
+  init {
+    init(vcses)
+  }
 
   fun saveState() = myAdditionalComponents.forEach { it.saveState() }
 
@@ -54,15 +59,15 @@ class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel,
       panel.isVisible = affectedVcses.contains(vcs)
     }
 
-    myCheckinChangeListSpecificComponents.forEach { it.onChangeListSelected(changeList) }
+    changeListSpecificOptions.forEach { it.onChangeListSelected(changeList) }
   }
 
-  fun saveChangeListComponentsState() = myCheckinChangeListSpecificComponents.forEach { it.saveState() }
+  fun saveChangeListComponentsState() = changeListSpecificOptions.forEach { it.saveState() }
 
   override fun dispose() {
   }
 
-  private fun init(vcses: Collection<AbstractVcs<*>>): Boolean {
+  private fun init(vcses: Collection<AbstractVcs<*>>) {
     var hasVcsOptions = false
     val vcsCommitOptions = Box.createVerticalBox()
     for (vcs in vcses.sortedWith(VCS_COMPARATOR)) {
@@ -71,9 +76,6 @@ class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel,
         vcsCommitOptions.add(vcsOptions)
         myPerVcsOptionsPanels[vcs] = vcsOptions
         myAdditionalComponents.add(options)
-        if (options is CheckinChangeListSpecificComponent) {
-          myCheckinChangeListSpecificComponents.add(options)
-        }
         hasVcsOptions = true
       }
     }
@@ -94,7 +96,7 @@ class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel,
       }
     }
 
-    if (!hasVcsOptions && !beforeVisible && !afterVisible) return true
+    if (!hasVcsOptions && !beforeVisible && !afterVisible) return
 
     val optionsBox = Box.createVerticalBox()
     if (hasVcsOptions) {
@@ -113,15 +115,11 @@ class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel,
     optionsBox.add(Box.createVerticalGlue())
     val optionsPane = createScrollPane(simplePanel().addToTop(optionsBox), true)
     addToCenter(optionsPane).withBorder(JBUI.Borders.emptyLeft(10))
-    return false
   }
 
   private fun addCheckinHandlerComponent(component: RefreshableOnComponent, container: JComponent) {
     container.add(component.component)
     myAdditionalComponents.add(component)
-    if (component is CheckinChangeListSpecificComponent) {
-      myCheckinChangeListSpecificComponents.add(component)
-    }
   }
 
   companion object {

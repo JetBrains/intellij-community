@@ -8,6 +8,8 @@ import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.GuiRobotHolder
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.isComponentShowing
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.repeatUntil
 import com.intellij.testGuiFramework.util.FinderPredicate
 import com.intellij.testGuiFramework.util.Predicate
 import org.fest.swing.core.MouseButton
@@ -16,6 +18,7 @@ import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.LocationUnavailableException
 import org.fest.swing.fixture.JTreeFixture
+import javax.swing.JPopupMenu
 import javax.swing.JTree
 import javax.swing.tree.TreePath
 
@@ -89,7 +92,9 @@ import javax.swing.tree.TreePath
 
   fun doubleClickPath(): Unit = myDriver.clickPath(tree, path, MouseButton.LEFT_BUTTON, 2)
 
-  fun rightClickPath(): Unit = myDriver.clickPath(tree, path, MouseButton.RIGHT_BUTTON, 1)
+  fun rightClickPath(): Unit = repeatUntil({ isComponentShowing(JPopupMenu::class.java) }, {
+    myDriver.clickPath(tree, path, MouseButton.RIGHT_BUTTON, 1)
+  })
 
   fun expandPath() {
     myDriver.expandPath(tree, path)

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.externalAnnotation;
 
+import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiModifierListOwner;
@@ -18,5 +19,11 @@ public interface AnnotationProvider {
   @NotNull
   default String[] getAnnotationsToRemove(Project project) {
     return ArrayUtil.EMPTY_STRING_ARRAY;
+  }
+
+  @NotNull
+  default AddAnnotationFix createFix(@NotNull PsiModifierListOwner owner) {
+    Project project = owner.getProject();
+    return new AddAnnotationFix(getName(project), owner, getAnnotationsToRemove(project));
   }
 }

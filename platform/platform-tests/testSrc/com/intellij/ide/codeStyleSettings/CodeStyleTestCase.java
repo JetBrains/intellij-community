@@ -13,6 +13,7 @@ import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeXmlImporter;
+import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jdom.Element;
@@ -80,9 +81,12 @@ public abstract class CodeStyleTestCase extends LightPlatformTestCase {
     return importer.importScheme(getProject(), vFile, targetScheme, schemeFactory).getCodeStyleSettings();
   }
 
-  protected String loadExpected(@NotNull String ext) throws IOException {
-    return FileUtilRt
-      .loadFile(new File(getBasePath() + File.separator + getTestDir() + File.separator + getTestName(true) + "." + ext), true);
+  protected void compareWithExpected(String actual, String fileName) throws IOException {
+    String filePath = getBasePath() + File.separator + getTestDir() + File.separator + getTestName(true) + "." + fileName;
+    String expected = FileUtilRt.loadFile(new File(filePath), true);
+    if (!expected.equals(actual)) {
+      throw new FileComparisonFailure("Settings don't match", expected, actual, filePath);
+    }
   }
 
   protected CodeStyleScheme createTestScheme() {

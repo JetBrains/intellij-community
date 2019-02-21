@@ -14,7 +14,8 @@ class SwitchExpressionMigration {
               /*16*/
           case 2:
               return 2 +/*17*/ 2;
-          case 3, 4:
+          case 3 /*in1*/ + 1:
+          case 4 /*in2*/ + 33:
               System.out.println("asda");
               return 3;
           /*19*/

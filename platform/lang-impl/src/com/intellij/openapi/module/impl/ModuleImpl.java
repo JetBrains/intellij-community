@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl;
 
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.ModuleServiceManagerImpl;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
@@ -78,7 +77,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
       if (beforeComponentCreation != null) {
         beforeComponentCreation.run();
       }
-    });
+    }, false /* do not measure because there are a lot of modules and no need to measure each one (currently measurer is not suitable for it) */);
   }
 
   @Nullable
@@ -311,11 +310,6 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     return Extensions.getArea(this).getExtensionPoint(extensionPointName).getExtensions();
   }
 
-  @Override
-  protected boolean logSlowComponents() {
-    return super.logSlowComponents() || ApplicationInfoImpl.getShadowInstance().isEAP();
-  }
-
   @NotNull
   @Override
   protected MutablePicoContainer createPicoContainer() {
@@ -327,7 +321,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     return getOptionManager().getModificationCount();
   }
 
-  @State(name = "DeprecatedModuleOptionManager")
+  @State(name = "DeprecatedModuleOptionManager", useLoadedStateAsExisting = false /* doesn't make sense to check it */)
   static class DeprecatedModuleOptionManager extends SimpleModificationTracker implements PersistentStateComponent<DeprecatedModuleOptionManager.State>,
                                                                                           ProjectModelElement {
     private final Module module;

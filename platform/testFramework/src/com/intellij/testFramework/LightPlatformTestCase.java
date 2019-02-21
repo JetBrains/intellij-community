@@ -392,7 +392,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       () -> checkEditorsReleased(),
       () -> myOldSdks.checkForJdkTableLeaks(),
       super::tearDown,
-      () -> myThreadTracker.checkLeak(),
+      () -> myThreadTracker.checkLeak(getClass().getName()+"."+getName()),
       () -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project),
       () -> myVirtualFilePointerTracker.assertPointersAreDisposed()
     ).run();
@@ -525,7 +525,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     runBareImpl(this::startRunAndTear);
   }
 
-  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   protected void runBareImpl(ThrowableRunnable<?> start) throws Exception {
     if (!shouldRunTest()) {
       return;

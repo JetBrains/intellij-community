@@ -107,6 +107,7 @@ public class JsonSchemaReader {
       }
 
       if (currentSchema.getId() != null) myIds.put(currentSchema.getId(), currentSchema);
+      currentSchema.completeInitialization();
     }
     return root;
   }
@@ -137,6 +138,10 @@ public class JsonSchemaReader {
     });
     READERS_MAP.put("description", (element, object, queue) -> {
       if (element instanceof JsonStringLiteral) object.setDescription(StringUtil.unquoteString(element.getText()));
+    });
+    // non-standard deprecation property used by VSCode
+    READERS_MAP.put("deprecationMessage", (element, object, queue) -> {
+      if (element instanceof JsonStringLiteral) object.setDeprecationMessage(StringUtil.unquoteString(element.getText()));
     });
     READERS_MAP.put(JsonSchemaObject.X_INTELLIJ_HTML_DESCRIPTION, (element, object, queue) -> {
       if (element instanceof JsonStringLiteral) object.setHtmlDescription(StringUtil.unquoteString(element.getText()));
@@ -408,9 +413,9 @@ public class JsonSchemaReader {
   private static MyReader createRequired() {
     return (element, object, queue) -> {
       if (element instanceof JsonArray) {
-        object.setRequired(((JsonArray)element).getValueList().stream()
+        object.setRequired(ContainerUtil.newLinkedHashSet(((JsonArray)element).getValueList().stream()
                              .filter(notEmptyString())
-                             .map(el -> StringUtil.unquoteString(el.getText())).collect(Collectors.toSet()));
+                             .map(el -> StringUtil.unquoteString(el.getText())).collect(Collectors.toList())));
       }
     };
   }

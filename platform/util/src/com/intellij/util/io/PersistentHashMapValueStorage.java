@@ -57,10 +57,10 @@ public class PersistentHashMapValueStorage {
 
   public static class CreationTimeOptions {
     public static final ThreadLocal<ExceptionalIOCancellationCallback> EXCEPTIONAL_IO_CANCELLATION =
-      new ThreadLocal<ExceptionalIOCancellationCallback>();
-    public static final ThreadLocal<Boolean> READONLY = new ThreadLocal<Boolean>();
-    public static final ThreadLocal<Boolean> COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION = new ThreadLocal<Boolean>();
-    public static final ThreadLocal<Boolean> HAS_NO_CHUNKS = new ThreadLocal<Boolean>();
+      new ThreadLocal<>();
+    public static final ThreadLocal<Boolean> READONLY = new ThreadLocal<>();
+    public static final ThreadLocal<Boolean> COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION = new ThreadLocal<>();
+    public static final ThreadLocal<Boolean> HAS_NO_CHUNKS = new ThreadLocal<>();
 
     static final ThreadLocal<Boolean> DO_COMPRESSION = new ThreadLocal<Boolean>() {
       @Override
@@ -280,12 +280,8 @@ public class PersistentHashMapValueStorage {
   private long compactValuesWithoutChunks(@NotNull List<? extends PersistentHashMap.CompactionRecordInfo> infos, @NotNull PersistentHashMapValueStorage storage)
     throws IOException {
     //infos = new ArrayList<PersistentHashMap.CompactionRecordInfo>(infos);
-    Collections.sort(infos, new Comparator<PersistentHashMap.CompactionRecordInfo>() {
-      @Override
-      public int compare(PersistentHashMap.CompactionRecordInfo info, PersistentHashMap.CompactionRecordInfo info2) {
-        return Comparing.compare(info.valueAddress, info2.valueAddress);
-      }
-    });
+    infos
+      .sort((Comparator<PersistentHashMap.CompactionRecordInfo>)(info, info2) -> Comparing.compare(info.valueAddress, info2.valueAddress));
 
     final int fileBufferLength = 256 * 1024;
     final byte[] buffer = new byte[fileBufferLength];
@@ -351,13 +347,8 @@ public class PersistentHashMapValueStorage {
       return compactValuesWithoutChunks(infos, storage);
     }
 
-    PriorityQueue<PersistentHashMap.CompactionRecordInfo> records = new PriorityQueue<PersistentHashMap.CompactionRecordInfo>(
-      infos.size(), new Comparator<PersistentHashMap.CompactionRecordInfo>() {
-      @Override
-      public int compare(PersistentHashMap.CompactionRecordInfo info, PersistentHashMap.CompactionRecordInfo info2) {
-        return Comparing.compare(info2.valueAddress, info.valueAddress);
-      }
-    });
+    PriorityQueue<PersistentHashMap.CompactionRecordInfo> records = new PriorityQueue<>(
+      infos.size(), (info, info2) -> Comparing.compare(info2.valueAddress, info.valueAddress));
 
     records.addAll(infos);
 

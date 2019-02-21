@@ -3,8 +3,11 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.*;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ThreeState;
 import org.intellij.lang.annotations.Language;
 
@@ -82,6 +85,11 @@ public class ReorderingUtilsTest extends LightCodeInsightTestCase {
     checkCanBeReordered("str != null ? /*<*/str.trim()/*>*/ : \"\"", ThreeState.NO);
     checkCanBeReordered("str != null ? \"\" : /*<*/str.trim()/*>*/", ThreeState.UNSURE);
     checkCanBeReordered("str == null ? /*<*/str.trim()/*>*/ : \"\"", ThreeState.UNSURE);
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk9());
   }
 
   private static void checkCanBeReordered(@Language(value = "JAVA", prefix = PREFIX, suffix = SUFFIX) String expressionText,

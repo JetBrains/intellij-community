@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.PsiElementNavigatable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -33,6 +34,7 @@ import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.SingleAlarm;
@@ -184,6 +186,10 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   protected abstract JPanel createLegendPanel();
 
   protected abstract boolean isApplicableElement(@NotNull PsiElement element);
+
+  protected boolean isApplicableElementForBaseOn(@NotNull PsiElement element) {
+    return isApplicableElement(element);
+  }
 
   @Nullable
   protected abstract HierarchyTreeStructure createHierarchyTreeStructure(@NotNull String type, @NotNull PsiElement psiElement);
@@ -627,7 +633,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       if (browser == null) return;
 
       final PsiElement selectedElement = browser.getSelectedElement();
-      if (selectedElement == null || !browser.isApplicableElement(selectedElement)) return;
+      if (selectedElement == null || !browser.isApplicableElementForBaseOn(selectedElement)) return;
 
       final String currentViewType = browser.getCurrentViewType();
       Disposer.dispose(browser);
@@ -659,26 +665,20 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       presentation.setVisible(true);
 
       final PsiElement selectedElement = browser.getSelectedElement();
-      if (selectedElement == null || !browser.isApplicableElement(selectedElement)) {
-        presentation.setEnabled(false);
-        presentation.setVisible(false);
-        return;
+      if (selectedElement == null || !browser.isApplicableElementForBaseOn(selectedElement)) {
+        presentation.setEnabledAndVisible(false);
       }
-
-      presentation.setEnabled(isEnabled(browser, selectedElement));
-      String nonDefaultText = getNonDefaultText(browser, selectedElement);
-      if (nonDefaultText != null) {
-        presentation.setText(nonDefaultText);
+      else {
+        String typeName = ElementDescriptionUtil.getElementDescription(selectedElement, UsageViewTypeLocation.INSTANCE);
+        if (StringUtil.isNotEmpty(typeName)) {
+          presentation.setText(IdeBundle.message("action.base.on.this.0", StringUtil.capitalize(typeName)));
+        }
+        presentation.setEnabled(isEnabled(browser, selectedElement));
       }
     }
 
     protected boolean isEnabled(@NotNull HierarchyBrowserBaseEx browser, @NotNull PsiElement element) {
       return !element.equals(browser.mySmartPsiElementPointer.getElement()) && element.isValid();
-    }
-
-    @Nullable
-    protected String getNonDefaultText(@NotNull HierarchyBrowserBaseEx browser, @NotNull PsiElement element) {
-      return null;
     }
   }
 
@@ -756,11 +756,11 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
     @NotNull
     @Override
-    public final JComponent createCustomComponent(@NotNull final Presentation presentation) {
+    public final JComponent createCustomComponent(@NotNull final Presentation presentation, @NotNull String place) {
       final JPanel panel = new JPanel(new GridBagLayout());
       panel.add(new JLabel(IdeBundle.message("label.scope")),
                 new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.BOTH, JBUI.insetsLeft(5), 0, 0));
-      panel.add(super.createCustomComponent(presentation),
+      panel.add(super.createCustomComponent(presentation, place),
                 new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0));
       return panel;
     }

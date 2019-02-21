@@ -34,10 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -156,7 +152,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         myData.addAdoptedName(name, caseSensitive);
         return null;
       }
-      child = createChild(FileNameCache.storeName(name), id, delegate);
+
+      FileAttributes attributes = PersistentFS.toFileAttributes(ourPersistence.getFileAttributes(id));
+      boolean isEmptyDirectory = attributes.isDirectory() && !ourPersistence.mayHaveChildren(id);
+      child = createChild(FileNameCache.storeName(name), id, delegate, attributes, isEmptyDirectory);
 
       addChild(child);
 
@@ -209,21 +208,27 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @NotNull
-  public VirtualFileSystemEntry createChild(@NotNull String name, int id, @NotNull NewVirtualFileSystem delegate) {
+  public VirtualFileSystemEntry createChild(@NotNull String name,
+                                            int id,
+                                            @NotNull NewVirtualFileSystem delegate,
+                                            @NotNull FileAttributes attributes,
+                                            boolean isEmptyDirectory) {
     synchronized (myData) {
-      return createChild(FileNameCache.storeName(name), id, delegate);
+      return createChild(FileNameCache.storeName(name), id, delegate, attributes, isEmptyDirectory);
     }
   }
 
   @NotNull
-  private VirtualFileSystemEntry createChild(int nameId, int id, @NotNull NewVirtualFileSystem delegate) {
+  private VirtualFileSystemEntry createChild(int nameId,
+                                             int id,
+                                             @NotNull NewVirtualFileSystem delegate,
+                                             @NotNull FileAttributes attributes,
+                                             boolean isEmptyDirectory) {
     FileLoadingTracker.fileLoaded(this, nameId);
 
-    final int attributes = ourPersistence.getFileAttributes(id);
     VfsData.Segment segment = mySegment.vfsData.getSegment(id, true);
     try {
-      VfsData.initFile(id, segment, nameId,
-                       PersistentFS.isDirectory(attributes) ? new VfsData.DirectoryData() : KeyFMap.EMPTY_MAP);
+      VfsData.initFile(id, segment, nameId, attributes.isDirectory() ? new VfsData.DirectoryData() : KeyFMap.EMPTY_MAP);
     }
     catch (VfsData.FileAlreadyCreatedException e) {
       throw new RuntimeException("dir=" + myId + "; dir.children=" + Arrays.toString(FSRecords.listAll(myId)), e);
@@ -232,14 +237,23 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     VirtualFileSystemEntry child = mySegment.vfsData.getFileById(id, this);
     assert child != null;
-    segment.setFlag(id, IS_SYMLINK_FLAG, PersistentFS.isSymLink(attributes));
-    segment.setFlag(id, IS_SPECIAL_FLAG, PersistentFS.isSpecialFile(attributes));
-    segment.setFlag(id, IS_WRITABLE_FLAG, PersistentFS.isWritable(attributes));
-    segment.setFlag(id, IS_HIDDEN_FLAG, PersistentFS.isHidden(attributes));
+    segment.setFlag(id, IS_SYMLINK_FLAG, attributes.isSymLink());
+    segment.setFlag(id, IS_SPECIAL_FLAG, attributes.isSpecial());
+    segment.setFlag(id, IS_WRITABLE_FLAG, attributes.isWritable());
+    segment.setFlag(id, IS_HIDDEN_FLAG, attributes.isHidden());
     child.updateLinkStatus();
 
     if (delegate.markNewFilesAsDirty()) {
       child.markDirty();
+    }
+    if (attributes.isDirectory() && child instanceof VirtualDirectoryImpl && isEmptyDirectory) {
+      // when creating empty directory we need to make sure
+      // every file crested inside will fire "file created" event
+      // in order to virtual file pointer manager get those events
+      // to update its pointers properly
+      // (because currently VirtualFilePointerManager ignores empty directory creation events for performance reasons)
+      ((VirtualDirectoryImpl)child).setChildrenLoaded();
+      PersistentFSImpl.setChildrenCached(id);
     }
 
     return child;
@@ -252,9 +266,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (attributes == null) return null;
     final String realName = delegate.getCanonicallyCasedName(fake);
     boolean isDirectory = attributes.isDirectory();
-    boolean isEmptyDirectory = isDirectory && !hasChildren(Paths.get(fake.getPath()));
-
-    final VFileCreateEvent event = new VFileCreateEvent(null, this, realName, isDirectory, attributes, true, isEmptyDirectory);
+    boolean isEmptyDirectory = isDirectory && !delegate.hasChildren(fake);
+    String symlinkTarget = attributes.isSymLink() ? delegate.resolveSymLink(fake) : null;
+    VFileCreateEvent event = new VFileCreateEvent(null, this, realName, isDirectory, attributes, symlinkTarget, true, isEmptyDirectory);
     RefreshQueue.getInstance().processSingleEvent(event);
     return findChild(realName);
   }
@@ -357,7 +371,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           prevChildren.remove(child.id);
           VirtualFileSystemEntry file = mySegment.vfsData.getFileById(child.id, this);
           if (file == null) {
-            file = createChild(child.nameId, child.id, delegate);
+            FileAttributes attributes = PersistentFS.toFileAttributes(ourPersistence.getFileAttributes(child.id));
+            boolean isEmptyDirectory = attributes.isDirectory() && !ourPersistence.mayHaveChildren(child.id);
+            file = createChild(child.nameId, child.id, delegate, attributes, isEmptyDirectory);
           }
           files[i] = file;
         }
@@ -368,13 +384,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         }
       }
 
-      if (getId() > 0) {
-        myData.clearAdoptedNames();
-        myData.myChildrenIds = result;
-        setChildrenLoaded();
-        if (CHECK) {
-          assertConsistency(caseSensitive, Arrays.asList(childrenIds));
-        }
+      myData.clearAdoptedNames();
+      myData.myChildrenIds = result;
+      setChildrenLoaded();
+      if (CHECK) {
+        assertConsistency(caseSensitive, Arrays.asList(childrenIds));
       }
 
       return files;
@@ -456,10 +470,14 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   // optimisation: works faster than added.forEach(this::addChild)
-  public void createAndAddChildren(@NotNull List<? extends FSRecords.NameId> added) {
+  public void createAndAddChildren(@NotNull List<? extends PersistentFSImpl.ChildInfo> added) {
     if (added.size()<=1) {
-      for (FSRecords.NameId pair : added) {
-        VirtualFileSystemEntry file = createChild(pair.name.toString(), pair.id, getFileSystem());
+      for (int i = 0; i < added.size(); i++) {
+        PersistentFSImpl.ChildInfo pair = added.get(i);
+        FileAttributes attributes = pair.attributes;
+        String name = pair.name;
+        boolean isEmptyDirectory = pair.isEmptyDirectory;
+        VirtualFileSystemEntry file = createChild(name, pair.id, getFileSystem(), attributes, isEmptyDirectory);
         addChild(file);
       }
       return;
@@ -467,27 +485,33 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     // merge sorted added and existing lists just like in merge sort
     final boolean caseSensitive = getFileSystem().isCaseSensitive();
-    Comparator<FSRecords.NameId> pairComparator = (p1, p2) -> compareNames(p1.name, p2.name, caseSensitive);
+    Comparator<PersistentFSImpl.ChildInfo> pairComparator = (p1, p2) -> compareNames(p1.name, p2.name, caseSensitive);
     added.sort(pairComparator);
+
     TIntArrayList mergedIds = new TIntArrayList(myData.myChildrenIds.length + added.size());
     synchronized (myData) {
-      for (FSRecords.NameId pair : added) {
-        myData.removeAdoptedName(pair.name);
-        createChild(pair.name.toString(), pair.id, getFileSystem());
+      for (int i = 0; i < added.size(); i++) {
+        PersistentFSImpl.ChildInfo pair = added.get(i);
+        FileAttributes attributes = pair.attributes;
+        String name = pair.name;
+        boolean isEmptyDirectory = pair.isEmptyDirectory;
+        myData.removeAdoptedName(name);
+        createChild(name, pair.id, getFileSystem(), attributes, isEmptyDirectory);
       }
-      ContainerUtil.processSortedListsInOrder(added, new AbstractList<FSRecords.NameId>() {
+      List<PersistentFSImpl.ChildInfo> existingChildren = new AbstractList<PersistentFSImpl.ChildInfo>() {
         @Override
-        public FSRecords.NameId get(int index) {
+        public PersistentFSImpl.ChildInfo get(int index) {
           int id = myData.myChildrenIds[index];
           CharSequence name = ObjectUtils.assertNotNull(mySegment.vfsData.getNameByFileId(id));
-          return new FSRecords.NameId(id, -1, name);
+          return new PersistentFSImpl.ChildInfo(id, name.toString(), null, false);
         }
 
         @Override
         public int size() {
           return myData.myChildrenIds.length;
         }
-      }, pairComparator, true, pair -> mergedIds.add(pair.id));
+      };
+      ContainerUtil.processSortedListsInOrder(added, existingChildren, pairComparator, true, pair -> mergedIds.add(pair.id));
       myData.myChildrenIds = mergedIds.toNativeArray();
 
       assertConsistency(caseSensitive, added);
@@ -572,7 +596,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
     boolean caseSensitive = getFileSystem().isCaseSensitive();
 
-    Set<CharSequence> existingNames = new THashSet<>(myData.myChildrenIds.length, caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
+    CharSequenceHashingStrategy strategy = caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE;
+    Set<CharSequence> existingNames = new THashSet<>(myData.myChildrenIds.length, strategy);
     for (int id : myData.myChildrenIds) {
       existingNames.add(mySegment.vfsData.getNameByFileId(id));
     }
@@ -698,19 +723,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       if (key != null && newMap.get(key) instanceof PsiCachedValue) {
         throw new AssertionError("Don't store CachedValue in VFS user data, since it leads to memory leaks");
       }
-    }
-  }
-
-  /**
-   * @return true if {@code path} represents a directory which has children.
-   */
-  public static boolean hasChildren(@NotNull Path path) {
-    // make sure to not load all children
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
-      return stream.iterator().hasNext();
-    }
-    catch (IOException | SecurityException e) {
-      return false;
     }
   }
 }

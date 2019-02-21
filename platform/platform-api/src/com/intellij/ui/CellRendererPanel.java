@@ -32,6 +32,7 @@ public class CellRendererPanel extends JPanel {
   public CellRendererPanel() {
     super(null); // we do the layout ourselves
     super.setOpaque(false); // to be consistent with #isOpaque
+    super.setFont(null);
   }
 
   public final boolean isSelected() {
@@ -40,6 +41,13 @@ public class CellRendererPanel extends JPanel {
 
   public final void setSelected(boolean isSelected) {
     mySelected = isSelected;
+  }
+
+  public void setForcedBackground(Color bg) {
+    super.setBackground(bg);
+    if (bg != null && !mySelected) {
+      setSelected(true);
+    }
   }
 
   // property change support ----------------
@@ -158,26 +166,4 @@ public class CellRendererPanel extends JPanel {
   }
 
   // END no validation methods --------------
-
-  public static class SuperPreferredSize extends CellRendererPanel {
-    @Override
-    public Dimension getPreferredSize() {
-      return super_getPreferredSize();
-    }
-  }
-
-  public static class SuperPreferredSizeWithBackground extends SuperPreferredSize {
-    @Override
-    protected void paintComponent(Graphics g) {
-      g.setColor(getBackground());
-      g.fillRect(0, 0, getWidth(), getHeight());
-    }
-  }
-
-  public static class SuperValidate extends SuperPreferredSize {
-    @Override
-    public void validate() {
-      super_validate();
-    }
-  }
 }

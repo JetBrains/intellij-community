@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.EditorNotifications;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +41,7 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
   @NotNull
   @Override
   protected Runnable loadEditorInBackground() {
-    Runnable baseAction = super.loadEditorInBackground();
+    Runnable baseResult = super.loadEditorInBackground();
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(myFile);
     Document document = FileDocumentManager.getInstance().getDocument(myFile);
     boolean shouldBuildInitialFoldings =
@@ -54,7 +53,7 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
     List<? extends Segment> zones = FocusModePassFactory.calcFocusZones(psiFile);
 
     return () -> {
-      baseAction.run();
+      baseResult.run();
       Editor editor = getEditor();
 
       if (foldingState != null) {
@@ -71,7 +70,6 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
       if (psiFile != null && psiFile.isValid()) {
         DaemonCodeAnalyzer.getInstance(myProject).restart(psiFile);
       }
-      EditorNotifications.getInstance(myProject).updateNotifications(myFile);
     };
   }
 

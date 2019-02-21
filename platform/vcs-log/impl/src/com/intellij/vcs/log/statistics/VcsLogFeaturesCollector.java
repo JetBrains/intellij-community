@@ -4,6 +4,7 @@ package com.intellij.vcs.log.statistics;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Function;
@@ -49,8 +50,7 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
 
         for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensions(project)) {
           if (factory.showMenuItem()) {
-            addBooleanUsage(properties, defaultProperties, usages,
-                            "highlighter." + UsageDescriptorKeyValidator.ensureProperKey(factory.getId()),
+            addBooleanUsage(properties, defaultProperties, usages, "highlighter." + getFactoryIdSafe(factory),
                             VcsLogHighlighterProperty.get(factory.getId()));
           }
         }
@@ -62,6 +62,14 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
       }
     }
     return Collections.emptySet();
+  }
+
+  @NotNull
+  private static String getFactoryIdSafe(@NotNull VcsLogHighlighterFactory factory) {
+    if (PluginInfoDetectorKt.getPluginInfo(factory.getClass()).isDevelopedByJetBrains()) {
+      return UsageDescriptorKeyValidator.ensureProperKey(factory.getId());
+    }
+    return "THIRD_PARTY";
   }
 
   private static void addBooleanUsage(@NotNull VcsLogUiProperties properties,

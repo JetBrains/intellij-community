@@ -324,4 +324,6 @@ class TestFeatureUsageEventWriter : FeatureUsageEventWriter {
   override fun getFiles(): List<File> {
     return emptyList()
   }
+
+  override fun cleanup() = Unit
 }

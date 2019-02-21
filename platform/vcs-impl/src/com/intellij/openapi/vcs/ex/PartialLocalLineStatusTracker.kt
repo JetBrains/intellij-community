@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.ex
 
 import com.intellij.diff.util.Side
+import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -19,6 +20,7 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -29,7 +31,7 @@ import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.components.labels.ActionGroupLink
+import com.intellij.ui.components.labels.DropDownLink
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.WeakList
@@ -564,18 +566,22 @@ class ChangelistsLocalLineStatusTracker(project: Project,
       group.add(MoveToAnotherChangeListAction(editor, range, mousePosition))
 
 
-      val link = ActionGroupLink(rangeList.name, null, group)
+      val link = DropDownLink(rangeList.name) { linkLabel ->
+        val dataContext = DataManager.getInstance().getDataContext(linkLabel)
+        JBPopupFactory.getInstance()
+          .createActionGroupPopup(null, group, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
+      }
 
       val moveChangesShortcutSet = ActionManager.getInstance().getAction("Vcs.MoveChangedLinesToChangelist").shortcutSet
       object : DumbAwareAction() {
         override fun actionPerformed(e: AnActionEvent) {
-          link.linkLabel.doClick()
+          link.doClick()
         }
       }.registerCustomShortcutSet(moveChangesShortcutSet, editor.component, disposable)
 
       val shortcuts = moveChangesShortcutSet.shortcuts
       if (shortcuts.isNotEmpty()) {
-        link.linkLabel.toolTipText = "Move lines to another changelist (${KeymapUtil.getShortcutText(shortcuts.first())})"
+        link.toolTipText = "Move lines to another changelist (${KeymapUtil.getShortcutText(shortcuts.first())})"
       }
 
       val panel = JPanel(BorderLayout())
@@ -602,7 +608,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     private inner class MoveToChangeListAction(editor: Editor, range: Range, val mousePosition: Point?, val changelist: LocalChangeList)
       : RangeMarkerAction(editor, range, null) {
       init {
-        templatePresentation.text = StringUtil.trimMiddle(changelist.name, 60)
+        templatePresentation.setText(StringUtil.trimMiddle(changelist.name, 60), false)
       }
 
       override fun isEnabled(editor: Editor, range: Range): Boolean = range is LocalRange

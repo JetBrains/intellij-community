@@ -19,7 +19,6 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox;
@@ -408,14 +407,14 @@ public class PushLog extends JPanel implements DataProvider {
   public Object getData(@NotNull String id) {
     if (VcsDataKeys.CHANGES.is(id)) {
       List<CommitNode> commitNodes = getSelectedCommitNodes();
-      return ArrayUtil.toObjectArray(collectAllChanges(commitNodes), Change.class);
+      return collectAllChanges(commitNodes).toArray(new Change[0]);
     }
     else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(id)) {
       List<CommitNode> commitNodes = getSelectedCommitNodes();
-      return ArrayUtil.toObjectArray(ContainerUtil.map(commitNodes, commitNode -> {
+      return ContainerUtil.map2Array(commitNodes, VcsRevisionNumber.class, commitNode -> {
         Hash hash = commitNode.getUserObject().getId();
         return new TextRevisionNumber(hash.asString(), hash.toShortString());
-      }), VcsRevisionNumber.class);
+      });
     }
     return null;
   }

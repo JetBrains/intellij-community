@@ -127,7 +127,7 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
       externalProjectDataCache.findExternalProject(externalRootProject, rootModel.getModule());
     if (externalSourceSets.isEmpty()) return false;
 
-    boolean isDelegatedBuildEnabled = GradleSettingsService.getInstance(project).isDelegatedBuildEnabled(rootModel.getModule());
+    boolean isDelegatedBuildEnabled = GradleSettingsService.isDelegatedBuildEnabled(rootModel.getModule());
     for (ExternalSourceSet sourceSet : externalSourceSets.values()) {
       if (includeTests) {
         if (isDelegatedBuildEnabled) {

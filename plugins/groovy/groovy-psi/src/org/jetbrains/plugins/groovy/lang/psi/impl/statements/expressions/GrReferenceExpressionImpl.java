@@ -57,6 +57,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.psi.util.PsiUtilCore.ensureValid;
 import static java.util.Collections.emptyList;
 import static kotlin.LazyKt.lazy;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.REFERENCE_DOTS;
@@ -246,12 +247,14 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         return method.getParameterList().getParameters()[0].getType();
       }
 
-      //'class' property with explicit generic
-      PsiClass containingClass = method.getContainingClass();
-      if (containingClass != null &&
-          CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName()) &&
-          "getClass".equals(method.getName())) {
-        return getTypeFromClassRef();
+      if (getDotTokenType() != GroovyTokenTypes.mSPREAD_DOT) {
+        //'class' property with explicit generic
+        PsiClass containingClass = method.getContainingClass();
+        if (containingClass != null &&
+            CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName()) &&
+            "getClass".equals(method.getName())) {
+          return getTypeFromClassRef();
+        }
       }
 
       return PsiUtil.getSmartReturnType(method);
@@ -327,16 +330,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     final PsiType inferred = getInferredTypes(refExpr, resolved);
     if (inferred == null) {
-      if (nominal != null) return nominal;
-      //inside nested closure we could still try to infer from variable initializer. Not sound, but makes sense
-      if (resolved instanceof GrVariable) {
-        if (PsiUtil.isCompileStatic(refExpr) && resolved instanceof GrField) {
-          return TypesUtil.getJavaLangObject(refExpr);
-        }
-        LOG.assertTrue(resolved.isValid());
-        return SpreadState.apply(((GrVariable)resolved).getTypeGroovy(), result.getSpreadState(), refExpr.getProject());
-      }
-      return null;
+      return nominal == null ? getDefaultType(refExpr, result) : nominal;
     }
 
     if (nominal == null) {
@@ -367,6 +361,33 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       return null;
     }
     return TypeInferenceHelper.getCurrentContext().getVariableType(refExpr);
+  }
+
+  @Nullable
+  private static PsiType getDefaultType(@NotNull GrReferenceExpression refExpr, @NotNull GroovyResolveResult result) {
+    final PsiElement resolved = result.getElement();
+    if (resolved instanceof GrField) {
+      ensureValid(resolved);
+      if (PsiUtil.isCompileStatic(refExpr)) {
+        return TypesUtil.getJavaLangObject(refExpr);
+      }
+      else {
+        return SpreadState.apply(((GrVariable)resolved).getTypeGroovy(), result.getSpreadState(), refExpr.getProject());
+      }
+    }
+    else if (resolved instanceof GrVariable) {
+      ensureValid(resolved);
+      PsiType typeGroovy = SpreadState.apply(((GrVariable)resolved).getTypeGroovy(), result.getSpreadState(), refExpr.getProject());
+      if (typeGroovy == null && PsiUtil.isCompileStatic(refExpr)) {
+        return TypesUtil.getJavaLangObject(refExpr);
+      }
+      else {
+        return typeGroovy;
+      }
+    }
+    else {
+      return null;
+    }
   }
 
   @Nullable

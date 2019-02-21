@@ -103,10 +103,10 @@ internal class DefaultProjectExportableAndSaveTrigger {
   @Volatile
   var project: Project? = null
 
-  suspend fun save(isForceSavingAllSettings: Boolean): SaveResult {
+  suspend fun save(forceSavingAllSettings: Boolean): SaveResult {
     val project = project ?: return SaveResult.EMPTY
     val result = SaveResult()
-    (project.stateStore as ComponentStoreImpl).doSave(result, isForceSavingAllSettings)
+    (project.stateStore as ComponentStoreImpl).doSave(result, forceSavingAllSettings)
     return result
   }
 }

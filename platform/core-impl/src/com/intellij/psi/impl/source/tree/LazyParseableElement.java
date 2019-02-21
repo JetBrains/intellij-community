@@ -19,7 +19,7 @@
  */
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.LogUtil;
@@ -223,7 +223,7 @@ public class LazyParseableElement extends CompositeElement {
       child = child.getTreeNext();
     }
     if (length != text.length()) {
-      LOG.error("Text mismatch in " + LogUtil.objectAndClass(getElementType()), PluginManagerCore.createPluginException("Text mismatch", null, getElementType().getClass()),
+      LOG.error("Text mismatch in " + LogUtil.objectAndClass(getElementType()), PluginException.createByClass("Text mismatch", null, getElementType().getClass()),
                 new Attachment("code.txt", text.toString()));
     }
   }

@@ -179,6 +179,10 @@
                      displayName="Using PsiElement string representation to generate new expression is incorrect"
                      groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PsiElementConcatenationInspection"/>
+    <localInspection language="UAST" shortName="NonDefaultConstructor" displayName="Non default constructors for bean extension class"
+                     groupKey="inspections.group.name"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.NonDefaultConstructorInspection"/>
     <localInspection language="UAST" shortName="PresentationAnnotation" displayName="Invalid icon path in @Presentation"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="ERROR"
@@ -237,7 +241,6 @@
     <codeInsight.implicitSubclassProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitSubclassProvider"/>
 
     <annotator language="Properties" implementationClass="org.jetbrains.idea.devkit.inspections.RegistryPropertiesAnnotator"/>
-    <annotator language="JSON" implementationClass="org.jetbrains.idea.devkit.themes.ThemeColorAnnotator"/>
 
     <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DefaultThemeFilter"/>
     <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DefaultHiDPIThemeFilter"/>
@@ -269,11 +272,16 @@
 
     <!-- themes -->
     <completion.contributor implementationClass="org.jetbrains.idea.devkit.themes.ThemeJsonCompletionContributor" language="JSON"/>
+    <annotator language="JSON" implementationClass="org.jetbrains.idea.devkit.themes.ThemeColorAnnotator"/>
+    <annotator language="JSON" implementationClass="org.jetbrains.idea.devkit.themes.ThemeAnnotator"/>
     <spellchecker.support language="JSON"
                           order="first"
                           implementationClass="org.jetbrains.idea.devkit.themes.ThemeSpellcheckingStrategy"/>
-    <editorNotificationProvider implementation="org.jetbrains.idea.devkit.themes.ThemeEditorToolbar"/>
+    <editorNotificationProviderApp implementation="org.jetbrains.idea.devkit.themes.ThemeEditorToolbar"/>
     <applicationService serviceImplementation="org.jetbrains.idea.devkit.themes.metadata.UIThemeMetadataService"/>
+    <lang.documentationProvider language="JSON"
+                                order="first"
+                                implementationClass="org.jetbrains.idea.devkit.themes.ThemeJsonDocumentationProvider"/>
   </extensions>
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="org.jetbrains.idea.devkit.themes.ThemeJsonSchemaProviderFactory"/>

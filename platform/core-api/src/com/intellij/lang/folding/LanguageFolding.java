@@ -65,7 +65,22 @@ public class LanguageFolding extends LanguageExtension<FoldingBuilder> {
   }
 
   @NotNull
-  public static FoldingDescriptor[] buildFoldingDescriptors(@Nullable FoldingBuilder builder, @NotNull PsiElement root, @NotNull Document document, boolean quick) {
+  public static FoldingDescriptor[] buildFoldingDescriptors(@Nullable FoldingBuilder builder,
+                                                            @NotNull PsiElement root,
+                                                            @NotNull Document document,
+                                                            boolean quick) {
+    FoldingDescriptor[] descriptors = buildFoldingDescriptorsNoPlaceholderCaching(builder, root, document, quick);
+    for (FoldingDescriptor descriptor : descriptors) {
+      descriptor.setPlaceholderText(descriptor.getPlaceholderText()); // cache placeholder text
+    }
+    return descriptors;
+  }
+
+  @NotNull
+  static FoldingDescriptor[] buildFoldingDescriptorsNoPlaceholderCaching(@Nullable FoldingBuilder builder,
+                                                                         @NotNull PsiElement root,
+                                                                         @NotNull Document document,
+                                                                         boolean quick) {
     try {
       if (!DumbService.isDumbAware(builder) && DumbService.getInstance(root.getProject()).isDumb()) {
         return FoldingDescriptor.EMPTY;

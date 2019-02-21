@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.CompletionMemory;
@@ -73,7 +73,7 @@ public class ExpectedTypesProvider {
       GlobalSearchScope sources = GlobalSearchScope.projectScope(project);
       GlobalSearchScope libraries = GlobalSearchScope.notScope(sources);
       PsiMethod[] sourceMethods = cache.getMethodsByNameIfNotMoreThan(name, sources, MAX_COUNT);
-      if (sourceMethods.length == MAX_COUNT) return sourceMethods;
+      if (sourceMethods.length >= MAX_COUNT) return sourceMethods;
       PsiMethod[] libraryMethods = cache.getMethodsByNameIfNotMoreThan(name, libraries, MAX_COUNT-sourceMethods.length);
       return ArrayUtil.mergeArrays(sourceMethods, libraryMethods);
     }
@@ -567,7 +567,7 @@ public class ExpectedTypesProvider {
 
         PsiExpression rExpr = assignment.getRExpression();
         if (rExpr != null) {
-          PsiType type = rExpr.getType();
+          PsiType type = MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(assignment, false, () -> rExpr.getType());
           if (type != null && type != PsiType.NULL) {
             if (type instanceof PsiClassType) {
               final PsiClass resolved = ((PsiClassType)type).resolve();

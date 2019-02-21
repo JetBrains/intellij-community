@@ -3,6 +3,7 @@ package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -18,38 +19,42 @@ public class CatchBlockMover extends LineMover {
     if (!super.checkAvailable(editor, file, info, down)) return false;
 
     final Document document = editor.getDocument();
-    int startOffset = document.getLineStartOffset(info.toMove.startLine);
-    int endOffset = document.getLineEndOffset(info.toMove.endLine);
-    PsiElement element = file.findElementAt(startOffset);
-    if (element == null) return false;
-    PsiKeyword keyword = null;
-    while (element != null && element.getTextOffset() < endOffset) {
-      if (element instanceof PsiKeyword) {
-        keyword = (PsiKeyword)element;
-        if (keyword.getTokenType() != JavaTokenType.CATCH_KEYWORD) {
-          return false;
-        }
-        break;
-      }
-      element = PsiTreeUtil.nextLeaf(element);
+    final SelectionModel selectionModel = editor.getSelectionModel();
+    final int startOffset;
+    final int endOffset;
+    if (selectionModel.hasSelection()) {
+      startOffset = selectionModel.getSelectionStart();
+      endOffset = selectionModel.getSelectionEnd();
     }
-    if (keyword == null) return false;
-    final PsiElement parent = keyword.getParent();
-    if (!(parent instanceof PsiCatchSection)) return false;
-    final PsiCatchSection firstToMove = (PsiCatchSection)parent;
-
+    else {
+      startOffset = document.getLineStartOffset(info.toMove.startLine);
+      endOffset = getLineStartSafeOffset(document, info.toMove.endLine);
+    }
+    final PsiElement element = file.findElementAt(startOffset);
+    if (element == null) return false;
+    final PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class, true, PsiMember.class);
+    if (tryStatement == null) return false;
+    PsiCatchSection firstToMove = null;
+    PsiCatchSection lastToMove = null;
+    for (PsiCatchSection catchSection : tryStatement.getCatchSections()) {
+      final int offset = catchSection.getTextOffset();
+      final PsiElement child = catchSection.getFirstChild();
+      if (!(child instanceof PsiKeyword)) return info.prohibitMove();
+      if (offset >= startOffset && offset < endOffset || child.getTextRange().contains(startOffset)) {
+        if (firstToMove == null) firstToMove = catchSection;
+        lastToMove = catchSection;
+      }
+    }
+    if (firstToMove == null) return false;
     if (!sanityCheck(firstToMove)) {
       return info.prohibitMove();
     }
-
-    PsiCatchSection lastToMove = firstToMove;
-    while (true) {
-      final PsiCatchSection next = PsiTreeUtil.getNextSiblingOfType(lastToMove, PsiCatchSection.class);
-      if (next == null || next.getTextRange().getStartOffset() >= endOffset) {
-        break;
-      }
-      lastToMove = next;
+    if (element instanceof PsiWhiteSpace && element.getNextSibling() instanceof PsiStatement
+        || PsiTreeUtil.getParentOfType(element, PsiStatement.class, true, PsiMember.class) != tryStatement) {
+      // nonsensical selection
+      return info.prohibitMove();
     }
+
     final PsiCatchSection sibling = down
                                     ? PsiTreeUtil.getNextSiblingOfType(lastToMove, PsiCatchSection.class)
                                     : PsiTreeUtil.getPrevSiblingOfType(firstToMove, PsiCatchSection.class);

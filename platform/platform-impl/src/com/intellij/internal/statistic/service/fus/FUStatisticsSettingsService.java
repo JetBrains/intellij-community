@@ -38,12 +38,7 @@ public class FUStatisticsSettingsService extends StatisticsConnectionService {
 
   @NotNull
   public Set<String> getApprovedGroups() {
-    final String approvedGroupsServiceUrl = getSettingValue(APPROVED_GROUPS_SERVICE);
-    if (approvedGroupsServiceUrl == null) {
-      return Collections.emptySet();
-    }
-    final BuildNumber build = ApplicationInfo.getInstance().getBuild();
-    return FUStatisticsWhiteListGroupsService.getApprovedGroups(getProductRelatedUrl(approvedGroupsServiceUrl), toReportedBuild(build));
+    return Collections.emptySet();
   }
   @Nullable
   public String getDictionaryServiceUrl() {

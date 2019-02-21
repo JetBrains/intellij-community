@@ -177,7 +177,7 @@ public class PatchApplier<Unused> {
     if (group.isEmpty()) return ApplyPatchStatus.SUCCESS; //?
     final Project project = group.iterator().next().myProject;
 
-    return PartialChangesUtil.computeUnderChangeListWithRefresh(project, targetChangeList, "Applying patch...", () -> {
+    return PartialChangesUtil.computeUnderChangeList(project, targetChangeList, "Applying patch...", () -> {
       ApplyPatchStatus result = ApplyPatchStatus.SUCCESS;
       for (PatchApplier patchApplier : group) {
         result = ApplyPatchStatus.and(result, patchApplier.nonWriteActionPreCheck());
@@ -188,23 +188,21 @@ public class PatchApplier<Unused> {
 
       final Ref<ApplyPatchStatus> refStatus = new Ref<>(result);
       try {
-        runWithDefaultConfirmations(project, silentAddDelete, () -> {
-          CommandProcessor.getInstance().executeCommand(project, () -> {
-            for (PatchApplier applier : group) {
-              refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.createFiles()));
-              applier.addSkippedItems(trigger);
-            }
-            trigger.prepare();
-            if (refStatus.get() == ApplyPatchStatus.SUCCESS) {
-              // all pre-check results are valuable only if not successful; actual status we can receive after executeWritable
-              refStatus.set(null);
-            }
-            for (PatchApplier applier : group) {
-              refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.executeWritable()));
-              if (refStatus.get() == ApplyPatchStatus.ABORT) break;
-            }
-          }, VcsBundle.message("patch.apply.command"), null);
-        });
+        runWithDefaultConfirmations(project, silentAddDelete, () -> CommandProcessor.getInstance().executeCommand(project, () -> {
+          for (PatchApplier applier : group) {
+            refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.createFiles()));
+            applier.addSkippedItems(trigger);
+          }
+          trigger.prepare();
+          if (refStatus.get() == ApplyPatchStatus.SUCCESS) {
+            // all pre-check results are valuable only if not successful; actual status we can receive after executeWritable
+            refStatus.set(null);
+          }
+          for (PatchApplier applier : group) {
+            refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.executeWritable()));
+            if (refStatus.get() == ApplyPatchStatus.ABORT) break;
+          }
+        }, VcsBundle.message("patch.apply.command"), null));
       }
       finally {
         VcsFileListenerContextHelper.getInstance(project).clearContext();
@@ -228,7 +226,7 @@ public class PatchApplier<Unused> {
 
       final Set<FilePath> directlyAffected = new HashSet<>();
       final Set<VirtualFile> indirectlyAffected = new HashSet<>();
-      for (PatchApplier applier : group) {
+      for (PatchApplier<?> applier : group) {
         directlyAffected.addAll(applier.getDirectlyAffected());
         indirectlyAffected.addAll(applier.getIndirectlyAffected());
       }
@@ -236,15 +234,13 @@ public class PatchApplier<Unused> {
       refreshPassedFiles(project, directlyAffected, indirectlyAffected);
 
       return result;
-    });
+    }, true);
   }
 
   private static void suggestRollback(@NotNull Project project, @NotNull Collection<PatchApplier> group, @NotNull Label beforeLabel) {
     Collection<FilePatch> allFailed = ContainerUtil.concat(group, applier -> applier.getFailedPatches());
     boolean shouldInformAboutBinaries = ContainerUtil.exists(group, applier -> !applier.getBinaryPatches().isEmpty());
-    List<FilePath> filePaths = ContainerUtil.map(allFailed, filePatch -> {
-      return VcsUtil.getFilePath(chooseNotNull(filePatch.getAfterName(), filePatch.getBeforeName()));
-    });
+    List<FilePath> filePaths = ContainerUtil.map(allFailed, filePatch -> VcsUtil.getFilePath(chooseNotNull(filePatch.getAfterName(), filePatch.getBeforeName())));
 
     final UndoApplyPatchDialog undoApplyPatchDialog = new UndoApplyPatchDialog(project, filePaths, shouldInformAboutBinaries);
     if (undoApplyPatchDialog.showAndGet()) {

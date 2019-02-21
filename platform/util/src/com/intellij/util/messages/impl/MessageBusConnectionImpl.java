@@ -59,17 +59,18 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
 
   @Override
   public <L> void subscribe(@NotNull Topic<L> topic) throws IllegalStateException {
-    if (myDefaultHandler == null) {
+    MessageHandler defaultHandler = myDefaultHandler;
+    if (defaultHandler == null) {
       throw new IllegalStateException("Connection must have default handler installed prior to any anonymous subscriptions. "
                                       + "Target topic: " + topic);
     }
-    if (topic.getListenerClass().isInstance(myDefaultHandler)) {
-      throw new IllegalStateException("Can't subscribe to the topic '" + topic +"'. Default handler has incompatible type - expected: '" +
-                                      topic.getListenerClass() + "', actual: '" + myDefaultHandler.getClass() + "'");
+    if (topic.getListenerClass().isInstance(defaultHandler)) {
+      throw new IllegalStateException("Can't subscribe to the topic '" + topic + "'. Default handler has incompatible type - expected: '" +
+                                      topic.getListenerClass() + "', actual: '" + defaultHandler.getClass() + "'");
     }
 
     //noinspection unchecked
-    subscribe(topic, (L)myDefaultHandler);
+    subscribe(topic, (L)defaultHandler);
   }
 
   @Override
@@ -79,12 +80,9 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
 
   @Override
   public void dispose() {
-    Queue<Message> jobs = myPendingMessages.get();
+    myPendingMessages.get();
     myPendingMessages.remove();
     myBus.notifyConnectionTerminated(this);
-    if (!jobs.isEmpty()) {
-      LOG.error("Not delivered events in the queue: " + jobs);
-    }
   }
 
   @Override
@@ -150,6 +148,7 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
     return false;
   }
 
+  @Override
   public String toString() {
     return mySubscriptions.toString();
   }

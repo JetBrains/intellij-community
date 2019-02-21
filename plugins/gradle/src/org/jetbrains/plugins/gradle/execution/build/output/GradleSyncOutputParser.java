@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.build.output;
 
+import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.impl.MessageEventImpl;
 import com.intellij.build.output.BuildOutputInstantReader;
@@ -17,7 +18,7 @@ public class GradleSyncOutputParser implements BuildOutputParser {
   private static final String WARNING_PREFIX = "[sync warning]";
 
   @Override
-  public boolean parse(String line, BuildOutputInstantReader reader, Consumer<? super MessageEvent> messageConsumer) {
+  public boolean parse(String line, BuildOutputInstantReader reader, Consumer<? super BuildEvent> messageConsumer) {
     MessageEvent.Kind kind = MessageEvent.Kind.ERROR;
     String prefix = ERROR_PREFIX;
     int prefixIndex = line.indexOf(ERROR_PREFIX);

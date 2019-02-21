@@ -11,10 +11,11 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.ToolWindowId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenConsole;
-import org.jetbrains.idea.maven.project.MavenConsoleImpl;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -55,7 +56,7 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
   public void run(final MavenRunnerParameters parameters, final MavenRunnerSettings settings, final Runnable onComplete) {
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    final MavenConsole console = createConsole();
+    final MavenConsole console = createConsole(StringUtil.join(parameters.getGoals(), ", "), parameters.getWorkingDirPath());
     try {
       final MavenExecutor executor = createExecutor(parameters, null, settings, console);
 
@@ -127,7 +128,7 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
     MavenConsole console = mavenConsole != null ? mavenConsole
       : ReadAction.compute(() -> {
           if (myProject.isDisposed()) return null;
-          return createConsole();
+          return createConsole("Maven Batch", myProject.getBasePath());
         });
     if (console == null) return false;
 
@@ -168,11 +169,11 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
     MavenProjectsManager.getInstance(myProject).updateProjectTargetFolders();
   }
 
-  private MavenConsole createConsole() {
+  private MavenConsole createConsole(@NotNull String title,@NotNull String workingDirPath) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return new SoutMavenConsole();
     }
-    return new MavenConsoleImpl("Maven Goal", myProject);
+    return MavenConsole.createGuiMavenConsole(myProject, title, workingDirPath, ToolWindowId.RUN);
   }
 
   private MavenExecutor createExecutor(MavenRunnerParameters taskParameters,

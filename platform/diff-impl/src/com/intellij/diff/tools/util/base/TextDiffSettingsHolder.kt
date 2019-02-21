@@ -144,14 +144,14 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
 
   fun getSettings(place: String?): TextDiffSettings {
     val placeKey = place ?: DiffPlaces.DEFAULT
-    val placeSettings = myState.PLACES_MAP.getOrPut(placeKey, { defaultPlaceSettings(placeKey) })
+    val placeSettings = myState.PLACES_MAP.getOrPut(placeKey) { defaultPlaceSettings(placeKey) }
     return TextDiffSettings(myState.SHARED_SETTINGS, placeSettings)
   }
 
   private fun copyStateWithoutDefaults(): State {
     val result = State()
     result.SHARED_SETTINGS = myState.SHARED_SETTINGS
-    result.PLACES_MAP = DiffUtil.trimDefaultValues(myState.PLACES_MAP, { defaultPlaceSettings(it) })
+    result.PLACES_MAP = DiffUtil.trimDefaultValues(myState.PLACES_MAP) { defaultPlaceSettings(it) }
     return result
   }
 

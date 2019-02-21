@@ -38,9 +38,9 @@
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.IgnoredFileGenerator"
                     serviceImplementation="com.intellij.openapi.vcs.changes.IgnoredFileGeneratorImpl"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.IgnoredFileGeneratorImpl$IgnoredFileRootStore"
-                        serviceImplementation="com.intellij.openapi.vcs.changes.IgnoredFileGeneratorImpl$IgnoredFileRootStore"/>
-    <projectService serviceInterface="com.intellij.openapi.vcs.ProjectConfigurationFilesProcessor"
-                    serviceImplementation="com.intellij.openapi.vcs.ProjectConfigurationFilesProcessorImpl"/>
+                    serviceImplementation="com.intellij.openapi.vcs.changes.IgnoredFileGeneratorImpl$IgnoredFileRootStore"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.ProjectConfigurationFilesStoreState"
+                    serviceImplementation="com.intellij.openapi.vcs.ProjectConfigurationFilesStoreState"/>
 
     <daemon.intentionActionFilter implementation="com.intellij.vcs.commit.BaseCommitMessageInspection$EmptyIntentionActionFilter"/>
 
@@ -99,7 +99,7 @@
 
     <vcs.fileStatusProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictFileStatusProvider"/>
     <writingAccessProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictAccessProvider"/>
-    <editorNotificationProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictNotificationProvider"/>
+    <editorNotificationProviderApp implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictNotificationProvider"/>
     <customFileDropHandler implementation="com.intellij.openapi.vcs.changes.patch.PatchFileDropHandler"/>
 
     <handleTypeFactory implementation="com.intellij.openapi.vcs.readOnlyHandler.VcsHandleTypeFactory"/>
@@ -123,6 +123,7 @@
     <getDataRule key="vcs.ChangesSelection" implementationClass="com.intellij.openapi.vcs.changes.VcsChangesSelectionRule"/>
     <jbProtocolCommand implementation="com.intellij.openapi.vcs.checkout.JBProtocolCheckoutCommand"/>
     <diff.DiffExtension implementation="com.intellij.openapi.vcs.actions.AnnotateDiffViewerAction$MyDiffExtension"/>
+    <diff.DiffExtension implementation="com.intellij.diff.actions.ShowBlankDiffWindowDiffExtension"/>
 
     <openapi.vcs.actions.AnnotateToggleAction.Provider implementation="com.intellij.openapi.vcs.actions.AnnotateLocalFileAction$Provider"/>
     <openapi.vcs.actions.AnnotateToggleAction.Provider implementation="com.intellij.openapi.vcs.actions.AnnotateVcsVirtualFileAction$Provider"/>

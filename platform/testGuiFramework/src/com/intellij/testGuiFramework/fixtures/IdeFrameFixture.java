@@ -56,6 +56,7 @@ import org.fest.swing.edt.GuiTask;
 import org.fest.swing.exception.ComponentLookupException;
 import org.fest.swing.exception.WaitTimedOutError;
 import org.fest.swing.fixture.ContainerFixture;
+import org.fest.swing.fixture.FrameFixture;
 import org.fest.swing.timing.Condition;
 import org.fest.swing.timing.Timeout;
 import org.jetbrains.annotations.Contract;
@@ -93,6 +94,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   private NavigationBarFixture myNavBar;
   private RunConfigurationListFixture myRCList;
   private GutterFixture myGutter;
+  private FrameFixture myFrameFixture;
 
   @NotNull
   public static IdeFrameFixture find(@NotNull final Robot robot,
@@ -135,6 +137,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
 
   public IdeFrameFixture(@NotNull Robot robot, @NotNull IdeFrameImpl target, @NotNull File projectPath) {
     super(IdeFrameFixture.class, robot, target);
+    myFrameFixture = new FrameFixture(robot, target);
     myProjectPath = projectPath;
     final Project project = getProject();
 
@@ -145,6 +148,10 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
 
     //GradleSyncState.subscribe(project, myGradleProjectEventListener);
     //PostProjectBuildTasksExecutor.subscribe(project, myGradleProjectEventListener);
+  }
+
+  public void maximize(){
+    myFrameFixture.maximize();
   }
 
   @NotNull

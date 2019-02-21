@@ -69,7 +69,7 @@ public class ProcessingContext {
   }
 
   private void checkMapInitialized() {
-    if (myMap == null) myMap = new HashMap<Object, Object>(1);
+    if (myMap == null) myMap = new HashMap<>(1);
   }
 
 }

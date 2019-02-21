@@ -166,9 +166,6 @@ public class ExceptionWorkerTest extends LightCodeInsightFixtureTestCase {
       "    r.run();\n" +
       "  }\n" +
       "}";
-    myFixture.configureByText("SomeClass.java", classText);
-    Editor editor = myFixture.getEditor();
-    assertEquals(classText, editor.getDocument().getText());
     List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
       Trinity.create("Exception in thread \"main\" java.lang.RuntimeException: java.lang.ArrayIndexOutOfBoundsException: Index 1 out of bounds for length 0\n", null, null),
       Trinity.create("\tat SomeClass$Inner.run(SomeClass.java:12)\n", 12, 15),
@@ -182,6 +179,73 @@ public class ExceptionWorkerTest extends LightCodeInsightFixtureTestCase {
       Trinity.create("\tat SomeClass.test(SomeClass.java:18)\n", 18, 9),
       Trinity.create("\tat SomeClass.access$000(SomeClass.java:2)\n", 2, 1),
       Trinity.create("\tat SomeClass$Inner.run(SomeClass.java:10)\n", 10, 54));
+    checkColumnFinder(classText, traceAndPositions);
+  }
+  
+  public void testColumnFinderAssert() {
+    @Language("JAVA") String classText =
+      "/** @noinspection ALL*/\n" +
+      "public class SomeClass {\n" +
+      "  public static void main(String[] args) {\n" +
+      "    assert false;\n" +
+      "  }\n" +
+      "}";
+    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
+      Trinity.create("Exception in thread \"main\" java.lang.AssertionError\n", null, null),
+      Trinity.create("\tat SomeClass.main(SomeClass.java:4)\n", 4, 5));
+    checkColumnFinder(classText, traceAndPositions);
+  }
+  
+  public void testColumnFinderArrayStore() {
+    @Language("JAVA") String classText =
+      "/** @noinspection ALL*/\n" +
+      "public class SomeClass {\n" +
+      "  public static void main(String[] args) {\n" +
+      "    Object[] arr = new String[1];\n" +
+      "    arr[0] = 1;\n" +
+      "  }\n" +
+      "}";
+    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
+      Trinity.create("Exception in thread \"main\" java.lang.ArrayStoreException: java.lang.Integer\n", null, null),
+      Trinity.create("\tat SomeClass.main(SomeClass.java:5)\n", 5, 12));
+    checkColumnFinder(classText, traceAndPositions);
+  }
+  
+  public void testColumnFinderNegativeArraySize() {
+    @Language("JAVA") String classText =
+      "/** @noinspection ALL*/\n" +
+      "public class SomeClass {\n" +
+      "  public static void main(String[] args) {\n" +
+      "    int a = -1;\n" +
+      "    Object[] arr = new String[1][a], arr2 = new String[] {\"foo\"}, arr3 = new String[(2)][1];\n" +
+      "  }\n" +
+      "}";
+    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
+      Trinity.create("Exception in thread \"main\" java.lang.NegativeArraySizeException\n", null, null),
+      Trinity.create("\tat SomeClass.main(SomeClass.java:5)\n", 5, 20));
+    checkColumnFinder(classText, traceAndPositions);
+  }
+  
+  public void testColumnFinderDivisionByZero() {
+    @Language("JAVA") String classText =
+      "/** @noinspection ALL*/\n" +
+      "public class SomeClass {\n" +
+      "  public static void main(String[] args) {\n" +
+      "    int a = 0;\n" +
+      "    double b = 1.1;\n" +
+      "    double res = 1 / a / -2 + a / 2 + b / 0;\n" +
+      "  }\n" +
+      "}";
+    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
+      Trinity.create("Exception in thread \"main\" java.lang.ArithmeticException: / by zero\n", null, null),
+      Trinity.create("\tat SomeClass.main(SomeClass.java:6)\n", 6, 20));
+    checkColumnFinder(classText, traceAndPositions);
+  }
+
+  private void checkColumnFinder(String classText, List<Trinity<String, Integer, Integer>> traceAndPositions) {
+    myFixture.configureByText("SomeClass.java", classText);
+    Editor editor = myFixture.getEditor();
+    assertEquals(classText, editor.getDocument().getText());
     ExceptionFilter filter = new ExceptionFilter(myFixture.getFile().getResolveScope());
     for (Trinity<String, Integer, Integer> line : traceAndPositions) {
       String stackLine = line.getFirst();

@@ -40,6 +40,9 @@ public class HintUtil {
 
   public static final Color QUESTION_UNDERSCORE_COLOR = JBColor.foreground();
 
+  public static final ColorKey RECENT_LOCATIONS_SELECTION_KEY = ColorKey
+    .createColorKey("RECENT_LOCATIONS_SELECTION", JBColor.namedColor("Table.lightSelectionBackground", new JBColor(0xE9EEF5, 0x464A4D)));
+
   private HintUtil() {
   }
 
@@ -56,6 +59,11 @@ public class HintUtil {
   @NotNull
   public static Color getErrorColor() {
     return notNull(getGlobalOrDefaultColor(ERROR_COLOR_KEY), ERROR_COLOR_KEY.getDefaultColor());
+  }
+
+  @NotNull
+  public static Color getRecentLocationsSelectionColor() {
+    return notNull(getGlobalOrDefaultColor(RECENT_LOCATIONS_SELECTION_KEY), RECENT_LOCATIONS_SELECTION_KEY.getDefaultColor());
   }
 
   public static JComponent createInformationLabel(@NotNull String text) {
@@ -197,12 +205,12 @@ public class HintUtil {
     }
     return label;
   }
-  
+
   @NotNull
   public static String prepareHintText(@NotNull String text, @NotNull HintHint hintHint) {
     return prepareHintText(new Html(text), hintHint);
   }
-  
+
   public static String prepareHintText(@NotNull Html text, @NotNull HintHint hintHint) {
     String htmlBody = UIUtil.getHtmlBody(text);
     return String.format(

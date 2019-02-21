@@ -230,7 +230,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
         }
       }
     };
-    myWeakListener = new WeakLestener(myAWTMouseListener);
+    myWeakListener = new WeakListener(myAWTMouseListener);
     myNSScrollerListener = new NSScrollerHelper.ScrollbarStyleListener() {
       @Override
       public void styleChanged() {
@@ -916,10 +916,10 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     }
   }
 
-  private static final class WeakLestener implements AWTEventListener {
+  private static final class WeakListener implements AWTEventListener {
     private final WeakReference<AWTEventListener> myReference;
 
-    private WeakLestener(AWTEventListener listener) {
+    private WeakListener(AWTEventListener listener) {
       myReference = new WeakReference<>(listener);
     }
 

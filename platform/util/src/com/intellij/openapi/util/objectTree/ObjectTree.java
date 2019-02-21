@@ -17,6 +17,7 @@ package com.intellij.openapi.util.objectTree;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -26,13 +27,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class ObjectTree<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectTree");
   
-  private static final ThreadLocal<Throwable> ourTopmostDisposeTrace = new ThreadLocal<Throwable>();
+  private static final ThreadLocal<Throwable> ourTopmostDisposeTrace = new ThreadLocal<>();
 
   private final List<ObjectTreeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -42,8 +46,8 @@ public final class ObjectTree<T> {
   // Disposable to trace or boolean marker (if trace unavailable)
   private final Map<T, Object> myDisposedObjects = ContainerUtil.createWeakMap(100, 0.5f, ContainerUtil.identityStrategy()); // guarded by treeLock
 
-  private final List<ObjectNode<T>> myExecutedNodes = new ArrayList<ObjectNode<T>>(); // guarded by myExecutedNodes
-  private final List<T> myExecutedUnregisteredObjects = new ArrayList<T>(); // guarded by myExecutedUnregisteredObjects
+  private final List<ObjectNode<T>> myExecutedNodes = new ArrayList<>(); // guarded by myExecutedNodes
+  private final List<T> myExecutedUnregisteredObjects = new ArrayList<>(); // guarded by myExecutedUnregisteredObjects
 
   final Object treeLock = new Object();
 
@@ -121,7 +125,7 @@ public final class ObjectTree<T> {
 
   @NotNull
   private ObjectNode<T> createNodeFor(@NotNull T object, @Nullable ObjectNode<T> parentNode) {
-    final ObjectNode<T> newNode = new ObjectNode<T>(this, parentNode, object, getNextModification());
+    final ObjectNode<T> newNode = new ObjectNode<>(this, parentNode, object, getNextModification());
     if (parentNode == null) {
       myRootObjects.add(object);
     }
@@ -150,21 +154,38 @@ public final class ObjectTree<T> {
         }
       }
       else {
+        SmartList<Throwable> exceptions = new SmartList<>();
         ObjectNode<T> parent;
         synchronized (treeLock) {
           parent = node.getParent();
         }
-        node.execute(action, new SmartList<Throwable>());
+        node.execute(action, exceptions);
         if (parent != null) {
           synchronized (treeLock) {
             parent.removeChild(node);
           }
         }
+        handleExceptions(exceptions);
       }
     }
     finally {
       if (needTrace) {
         ourTopmostDisposeTrace.remove();
+      }
+    }
+  }
+
+  private static void handleExceptions(List<Throwable> exceptions) {
+    if (!exceptions.isEmpty()) {
+      for (Throwable exception : exceptions) {
+        if (!(exception instanceof ProcessCanceledException)) {
+          LOG.error(exception);
+        }
+      }
+
+      ProcessCanceledException pce = ContainerUtil.findInstance(exceptions, ProcessCanceledException.class);
+      if (pce != null) {
+        throw pce;
       }
     }
   }
@@ -185,7 +206,7 @@ public final class ObjectTree<T> {
                                                   @NotNull final ObjectTreeAction<? super T> action) {
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (recursiveGuard) {
-      if (ArrayUtil.indexOf(recursiveGuard, object, ContainerUtil.<T>identityStrategy()) != -1) return;
+      if (ArrayUtil.indexOf(recursiveGuard, object, ContainerUtil.identityStrategy()) != -1) return;
       recursiveGuard.add(object);
     }
 
@@ -195,7 +216,7 @@ public final class ObjectTree<T> {
     finally {
       //noinspection SynchronizationOnLocalVariableOrMethodParameter
       synchronized (recursiveGuard) {
-        int i = ArrayUtil.lastIndexOf(recursiveGuard, object, ContainerUtil.<T>identityStrategy());
+        int i = ArrayUtil.lastIndexOf(recursiveGuard, object, ContainerUtil.identityStrategy());
         assert i != -1;
         recursiveGuard.remove(i);
       }

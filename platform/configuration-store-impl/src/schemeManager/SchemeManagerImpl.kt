@@ -35,6 +35,7 @@ import org.jdom.Document
 import org.jdom.Element
 import java.io.File
 import java.io.IOException
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -189,7 +190,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       val schemeLoader = createSchemeLoader(isDuringLoad = true)
       val isLoadOnlyFromProvider = provider != null && provider.processChildren(fileSpec, roamingType, { canRead(it) }) { name, input, readOnly ->
         catchAndLog(name) {
-          val scheme = schemeLoader.loadScheme(name, input)
+          val scheme = schemeLoader.loadScheme(name, input, null)
           if (readOnly && scheme != null) {
             schemeListManager.readOnlyExternalizableSchemes.put(processor.getSchemeKey(scheme), scheme)
           }
@@ -206,7 +207,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
 
             val fileName = file.fileName.toString()
             catchAndLog(fileName) {
-              file.inputStream().use { schemeLoader.loadScheme(fileName, it) }
+              schemeLoader.loadScheme(fileName, null, Files.readAllBytes(file))
             }
           }
         }
@@ -260,7 +261,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
 
   internal fun getFileName(scheme: T) = schemeToInfo.get(scheme)?.fileNameWithoutExtension
 
-  fun canRead(name: CharSequence): Boolean = (updateExtension && name.endsWith(DEFAULT_EXT, true) || name.endsWith(schemeExtension, ignoreCase = true)) && (processor !is LazySchemeProcessor || processor.isSchemeFile(name))
+  fun canRead(name: CharSequence) = (updateExtension && name.endsWith(DEFAULT_EXT, true) || name.endsWith(schemeExtension, ignoreCase = true)) && (processor !is LazySchemeProcessor || processor.isSchemeFile(name))
 
   override fun save(errors: MutableList<Throwable>) {
     if (isLoadingSchemes.get()) {

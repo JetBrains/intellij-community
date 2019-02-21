@@ -984,7 +984,8 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       if (operand == null) return null;
       PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(PsiUtil.skipParenthesizedExprDown(operand));
       if (assignment == null) return null;
-      PsiMethodCallExpression readerCall = tryCast(assignment.getRExpression(), PsiMethodCallExpression.class);
+      PsiMethodCallExpression readerCall =
+        tryCast(PsiUtil.skipParenthesizedExprDown(assignment.getRExpression()), PsiMethodCallExpression.class);
       if (!BUFFERED_READER_READ_LINE.test(readerCall)) return null;
       PsiExpression reader = readerCall.getMethodExpression().getQualifierExpression();
 

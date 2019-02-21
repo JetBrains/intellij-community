@@ -43,6 +43,7 @@ import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.OptionTag;
+import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.vcsUtil.FilesProgress;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -97,6 +98,8 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     public boolean myRemoveFilesFromShelf;
     @Attribute("show_recycled")
     public boolean myShowRecycled;
+    @XCollection
+    public Set<String> groupingKeys = newHashSet();
   }
 
   @Nullable
@@ -935,6 +938,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
                              shouldUnshelveAllList ? null : binariesForChangelist,
                              forcePredefinedOneChangelist != null ? forcePredefinedOneChangelist : getChangeListUnshelveTo(changeList),
                              true, removeFilesFromShelf);
+          ChangeListManagerImpl.getInstanceImpl(myProject).waitForUpdate(VcsBundle.getString("unshelve.changes.progress.title"));
         }
       }
     });
@@ -1241,5 +1245,14 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   public void setShowRecycled(final boolean showRecycled) {
     myState.myShowRecycled = showRecycled;
     notifyStateChanged();
+  }
+
+  @NotNull
+  public Set<String> getGrouping() {
+    return myState.groupingKeys;
+  }
+
+  public void setGrouping(@NotNull Set<String> grouping) {
+    myState.groupingKeys = grouping;
   }
 }

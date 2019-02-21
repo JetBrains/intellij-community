@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl
 
-import com.intellij.ProjectTopics
 import com.intellij.diff.DiffContentFactory
 import com.intellij.diff.DiffManager
 import com.intellij.diff.requests.SimpleDiffRequest
@@ -10,8 +9,6 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
-import com.intellij.openapi.roots.ModuleRootEvent
-import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
@@ -22,9 +19,7 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.LightColors
 
-class LibrarySourceNotificationProvider(private val project: Project, notifications: EditorNotifications) :
-    EditorNotifications.Provider<EditorNotificationPanel>() {
-
+class LibrarySourceNotificationProvider : EditorNotifications.Provider<EditorNotificationPanel>() {
   private companion object {
     private val KEY = Key.create<EditorNotificationPanel>("library.source.mismatch.panel")
     private val ANDROID_SDK_PATTERN = ".*/platforms/android-\\d+/android.jar!/.*".toRegex()
@@ -35,15 +30,9 @@ class LibrarySourceNotificationProvider(private val project: Project, notificati
     private const val CLASS = SHOW_NAME or SHOW_FQ_CLASS_NAMES or SHOW_EXTENDS_IMPLEMENTS or SHOW_RAW_TYPE
   }
 
-  init {
-    project.messageBus.connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
-      override fun rootsChanged(event: ModuleRootEvent) = notifications.updateAllNotifications()
-    })
-  }
-
   override fun getKey(): Key<EditorNotificationPanel> = KEY
 
-  override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor): EditorNotificationPanel? {
+  override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
     if (file.fileType is LanguageFileType && ProjectRootManager.getInstance(project).fileIndex.isInLibrarySource(file)) {
       val psiFile = PsiManager.getInstance(project).findFile(file)
       if (psiFile is PsiJavaFile) {

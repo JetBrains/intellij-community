@@ -128,7 +128,7 @@ public class JBTabsImpl extends JComponent
   private boolean myPaintBlocked;
   private BufferedImage myImage;
   private IdeFocusManager myFocusManager;
-  private final boolean myAdjustBorders = true;
+  private static final boolean myAdjustBorders = true;
 
   boolean myAddNavigationGroup = true;
 
@@ -699,14 +699,10 @@ public class JBTabsImpl extends JComponent
   public void requestFocus() {
     final JComponent toFocus = getToFocus();
     if (toFocus != null) {
-      getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        getGlobalInstance().requestFocus(toFocus, true);
-      });
+      getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(toFocus, true));
     }
     else {
-      getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        super.requestFocus();
-      });
+      getGlobalInstance().doWhenFocusSettlesDown(() -> super.requestFocus());
     }
   }
 
@@ -976,9 +972,7 @@ public class JBTabsImpl extends JComponent
     if (toFocus == null) return ActionCallback.DONE;
 
     if (myTestMode) {
-      getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        getGlobalInstance().requestFocus(toFocus, true);
-      });
+      getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(toFocus, true));
       return ActionCallback.DONE;
     }
 
@@ -1321,6 +1315,7 @@ public class JBTabsImpl extends JComponent
 
   @NotNull
   public List<TabInfo> getTabs() {
+    //ApplicationManager.getApplication().assertIsDispatchThread();
     if (myAllTabs != null) return myAllTabs;
 
     ArrayList<TabInfo> result = new ArrayList<>(myVisibleInfos);

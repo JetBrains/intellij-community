@@ -5,6 +5,7 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
@@ -15,6 +16,7 @@ import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Ref;
@@ -22,10 +24,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
@@ -45,6 +47,10 @@ import static org.jetbrains.plugins.gradle.settings.TestRunner.*;
  */
 public abstract class GradleTestRunConfigurationProducer extends RunConfigurationProducer<ExternalSystemRunConfiguration> {
   private static final List<String> TEST_SOURCE_SET_TASKS = ContainerUtil.list("cleanTest", "test");
+
+  protected static final Logger LOG = Logger.getInstance(GradleTestRunConfigurationProducer.class);
+
+  private TestTasksChooser testTasksChooser = new TestTasksChooser();
 
   /**
    * @deprecated Override {@link #getConfigurationFactory()}.
@@ -107,10 +113,18 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
     return GradleRunnerUtil.resolveProjectPath(module);
   }
 
+  protected TestTasksChooser getTestTasksChooser() {
+    return testTasksChooser;
+  }
+
+  @TestOnly
+  public void setTestTasksChooser(TestTasksChooser testTasksChooser) {
+    this.testTasksChooser = testTasksChooser;
+  }
 
   public static boolean hasTasksInConfiguration(VirtualFile source, Project project, ExternalSystemTaskExecutionSettings settings) {
     List<TasksToRun> tasksToRun = findAllTestsTaskToRun(source, project);
-    List<String> taskNames = settings.getTaskNames();
+    List<String> taskNames = ContainerUtil.map(settings.getTaskNames(), StringUtil::stripQuotesAroundValue);
     return tasksToRun.stream().anyMatch(taskNames::containsAll);
   }
 
@@ -146,7 +160,7 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
       List<String> tasks = provider.getTasks(module, source);
       if (!ContainerUtil.isEmpty(tasks)) {
         String testName = StringUtil.join(tasks, " ");
-        testTasks.add(new TasksToRun.Impl(source, module, testName, tasks));
+        testTasks.add(new TasksToRun.Impl(testName, tasks));
       }
     }
     DataNode<ModuleData> moduleDataNode = ExternalSystemApiUtil.findModuleData(module, GradleConstants.SYSTEM_ID);
@@ -161,7 +175,7 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
           String testTaskName = testData.getTestTaskName();
           String clearTestTaskName = testData.getCleanTestTaskName();
           List<String> tasks = ContainerUtil.newArrayList(clearTestTaskName, testTaskName);
-          testTasks.add(new TasksToRun.Impl(source, module, testName, tasks));
+          testTasks.add(new TasksToRun.Impl(testName, tasks));
         }
       }
     }
@@ -224,14 +238,8 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
   }
 
   private static TestRunner getTestRunner(@NotNull PsiElement sourceElement) {
-    PsiFile containingFile = sourceElement.getContainingFile();
-    if (containingFile != null) {
-      VirtualFile file = containingFile.getVirtualFile();
-      Module module = file == null ? null : ProjectFileIndex.SERVICE.getInstance(sourceElement.getProject()).getModuleForFile(file);
-      if (module != null) {
-        return GradleSettingsService.getTestRunner(module);
-      }
-    }
-    return PLATFORM;
+    Module module = ModuleUtilCore.findModuleForPsiElement(sourceElement);
+    if (module == null) return PLATFORM;
+    return GradleSettingsService.getTestRunner(module);
   }
 }

@@ -224,7 +224,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
       final VirtualFile virtualFile = file.getVirtualFile();
       final Project project = file.getProject();
       final IndentOptions projectOptions = CodeStyle.getSettings(project).getIndentOptions(file.getFileType());
-      final String projectOptionsTip = StringUtil.capitalizeWords(IndentStatusBarUIContributor.getTooltip(projectOptions), true);
+      final String projectOptionsTip = StringUtil.capitalizeWords(IndentStatusBarUIContributor.getIndentInfo(projectOptions), true);
       if (indentOptions instanceof TimeStampedIndentOptions) {
         if (((TimeStampedIndentOptions)indentOptions).isDetected()) {
           actions.add(
@@ -255,7 +255,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
           actions.add(
             DumbAwareAction.create(
               ApplicationBundle
-                .message("code.style.indent.detector.apply", IndentStatusBarUIContributor.getTooltip(discardedOptions),
+                .message("code.style.indent.detector.apply", IndentStatusBarUIContributor.getIndentInfo(discardedOptions),
                          ColorUtil.toHex(JBColor.GRAY)),
               e -> {
                 myDiscardedOptions.remove(virtualFile);
@@ -300,9 +300,9 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     @Override
     public String getAdvertisementText(@NotNull PsiFile psiFile) {
       if (areDetected(getIndentOptions()) && !hasBeenAdvertised) {
-        String actualOptionsHint = IndentStatusBarUIContributor.getTooltip(getIndentOptions());
+        String actualOptionsHint = IndentStatusBarUIContributor.getIndentInfo(getIndentOptions());
         IndentOptions projectOptions = CodeStyle.getSettings(psiFile.getProject()).getIndentOptions(psiFile.getFileType());
-        String projectOptionsHint = IndentStatusBarUIContributor.getTooltip(projectOptions);
+        String projectOptionsHint = IndentStatusBarUIContributor.getIndentInfo(projectOptions);
         hasBeenAdvertised = true;
         return ApplicationBundle.message("code.style.different.indent.size.detected", actualOptionsHint, projectOptionsHint);
       }

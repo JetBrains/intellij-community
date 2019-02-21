@@ -4,7 +4,7 @@ class C {
       case 0 ->{
         return null;
       }
-      case 1 -><weak_warning descr="Duplicate branch in 'switch' statement">{
+      case 1 -><weak_warning descr="Duplicate branch in 'switch'">{
         return (null);
       }</weak_warning>
     }

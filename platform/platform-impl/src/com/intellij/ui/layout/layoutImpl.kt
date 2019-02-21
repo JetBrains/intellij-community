@@ -1,9 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.migLayout.*
 import java.awt.Container
 import javax.swing.ButtonGroup
+import javax.swing.JComponent
 import javax.swing.JLabel
 
 @PublishedApi
@@ -26,4 +28,7 @@ interface LayoutBuilderImpl {
   fun noteRow(text: String, linkHandler: ((url: String) -> Unit)? = null)
 
   fun commentRow(text: String)
+
+  val preferredFocusedComponent: JComponent?
+  val validateCallbacks: List<() -> ValidationInfo?>
 }

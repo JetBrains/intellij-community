@@ -373,7 +373,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
   @Override
   public Dimension getPreferredSize() {
-    if (!myList.isEmpty()) {
+    if (myDisposed || !myList.isEmpty()) {
       return super.getPreferredSize();
     }
     else {

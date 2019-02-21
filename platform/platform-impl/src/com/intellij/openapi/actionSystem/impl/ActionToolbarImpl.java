@@ -357,7 +357,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     Presentation presentation = myPresentationFactory.getPresentation(action);
     JComponent customComponent = presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY);
     if (customComponent == null) {
-      customComponent = ((CustomComponentAction)action).createCustomComponent(presentation);
+      customComponent = ((CustomComponentAction)action).createCustomComponent(presentation, myPlace);
       presentation.putClientProperty(CustomComponentAction.COMPONENT_KEY, customComponent);
       UIUtil.putClientProperty(customComponent, CustomComponentAction.ACTION_KEY, action);
     }
@@ -1089,7 +1089,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   @MagicConstant(intValues = {SwingConstants.HORIZONTAL, SwingConstants.VERTICAL})
-  int getOrientation() {
+  public int getOrientation() {
     return myOrientation;
   }
 

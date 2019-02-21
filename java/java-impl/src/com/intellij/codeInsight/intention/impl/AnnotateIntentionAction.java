@@ -104,8 +104,7 @@ public class AnnotateIntentionAction extends BaseIntentionAction implements LowP
     assert owner != null;
     if (myAnnotationProvider != null) {
       if (alreadyAnnotated(owner, myAnnotationProvider, project)) return;
-      AddAnnotationFix fix =
-        new AddAnnotationFix(myAnnotationProvider.getName(project), owner, myAnnotationProvider.getAnnotationsToRemove(project));
+      AddAnnotationFix fix = myAnnotationProvider.createFix(owner);
       fix.invoke(project, editor, file);
     }
     else {
@@ -115,9 +114,7 @@ public class AnnotateIntentionAction extends BaseIntentionAction implements LowP
         new BaseListPopupStep<AnnotationProvider>(CodeInsightBundle.message("annotate.intention.chooser.title"), annotations) {
           @Override
           public PopupStep onChosen(final AnnotationProvider selectedValue, final boolean finalChoice) {
-            return doFinalStep(() -> {
-              new AddAnnotationFix(selectedValue.getName(project), owner, selectedValue.getAnnotationsToRemove(project)).invoke(project, editor, file);
-            });
+            return doFinalStep(() -> selectedValue.createFix(owner).invoke(project, editor, file));
           }
 
           @Override

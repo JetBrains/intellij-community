@@ -22,7 +22,7 @@ public class DisposableWrapper<T extends Disposable> implements Disposable {
 
   @NotNull
   protected DisposableWrapper<T> createNewWrapper(@Nullable T object, @NotNull Disposable parent) {
-    return new DisposableWrapper<T>(object, parent);
+    return new DisposableWrapper<>(object, parent);
   }
 
   @Override

@@ -212,14 +212,16 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
        });
 
     final List<PsiClass> result = new ArrayList<>();
-    for (Object value : classesWithFqn.values()) {
-      if (value instanceof PsiClass) {
-        result.add((PsiClass)value);
-      }
-      else {
-        @SuppressWarnings("unchecked")
-        List<PsiClass> list = (List<PsiClass>)value;
-        result.addAll(list);
+    synchronized (classesWithFqn) {
+      for (Object value : classesWithFqn.values()) {
+        if (value instanceof PsiClass) {
+          result.add((PsiClass)value);
+        }
+        else {
+          @SuppressWarnings("unchecked")
+          List<PsiClass> list = (List<PsiClass>)value;
+          result.addAll(list);
+        }
       }
     }
 

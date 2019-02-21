@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.google.common.collect.Lists;
@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.fixtures.PyMultiFileResolveTestCase;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
@@ -92,7 +91,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   }
 
   public void testCustomPackageIdentifier() {
-    PlatformTestUtil.registerExtension(PyCustomPackageIdentifier.EP_NAME, new PyCustomPackageIdentifier() {
+    PyCustomPackageIdentifier.EP_NAME.getPoint(null).registerExtension(new PyCustomPackageIdentifier() {
       @Override
       public boolean isPackage(PsiDirectory directory) {
         return true;
@@ -488,7 +487,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     runWithSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root")), () -> {
       final PsiFile extSource = myFixture.getPsiManager().findFile(vf);
       PyImportResolver foreignResolver = (name, context, withRoots) -> name.toString().equals("m1") ? extSource : null;
-      PlatformTestUtil.registerExtension(PyImportResolver.EP_NAME, foreignResolver, getTestRootDisposable());
+      PyImportResolver.EP_NAME.getPoint(null).registerExtension(foreignResolver, getTestRootDisposable());
 
       final PsiFile psiFile = myFixture.configureByFile("a.py");
       final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);

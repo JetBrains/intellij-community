@@ -117,7 +117,7 @@ internal fun addReviewer(projectId: String, review: Review, email: String) {
     }""")
   }
   catch (e: Exception) {
-    e.printStackTrace()
+    log("Unable to add $email to ${review.id} review: ${e.message}")
     if (email != DEFAULT_INVESTIGATOR) addReviewer(projectId, review, DEFAULT_INVESTIGATOR)
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history;
 
 import com.intellij.openapi.application.ReadAction;
@@ -29,7 +29,10 @@ import git4idea.log.GitRefManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
@@ -42,7 +45,7 @@ public class GitLogUtil {
   /**
    * A parameter to {@code git log} which is equivalent to {@code --all}, but doesn't show the stuff from index or stash.
    */
-  public static final List<String> LOG_ALL = Arrays.asList(GitUtil.HEAD, "--branches", "--remotes", "--tags");
+  public static final List<String> LOG_ALL = ContainerUtil.immutableList(GitUtil.HEAD, "--branches", "--remotes", "--tags");
   public static final String STDIN = "--stdin";
 
   @NotNull
@@ -104,8 +107,7 @@ public class GitLogUtil {
       options.add(REF_NAMES);
     }
 
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE,
-                                           ArrayUtil.toObjectArray(options, GitLogParser.GitLogOption.class));
+    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, options.toArray(new GitLogParser.GitLogOption[0]));
     handler.setStdoutSuppressed(true);
     handler.addParameters(parser.getPretty(), "--encoding=UTF-8");
     handler.addParameters("--decorate=full");

@@ -507,7 +507,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
     return surviveOnExternalChange
            ? new PersistentRangeMarker(this, startOffset, endOffset, true)
-           : new RangeMarkerImpl(this, startOffset, endOffset, true);
+           : new RangeMarkerImpl(this, startOffset, endOffset, true, false);
   }
 
   @Override
@@ -579,7 +579,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   @Override
   public void moveText(int srcStart, int srcEnd, int dstOffset) {
     assertBounds(srcStart, srcEnd);
-    if (dstOffset == srcEnd) return;
+    if (dstOffset == srcStart || dstOffset == srcEnd) return;
     ProperTextRange srcRange = new ProperTextRange(srcStart, srcEnd);
     assert !srcRange.containsOffset(dstOffset) : "Can't perform text move from range [" +srcStart+ "; " + srcEnd+ ") to offset "+dstOffset;
 

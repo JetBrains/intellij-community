@@ -6,7 +6,6 @@ intellij.platform.langInjection
 intellij.platform.remoteServers.git
 intellij.properties
 intellij.python.copyright
-intellij.python.ipnb
 intellij.python.langInjection
 intellij.python.reStructuredText
 intellij.python.terminal
@@ -14,7 +13,6 @@ intellij.reStructuredText
 intellij.settingsRepository
 intellij.tasks.core
 intellij.terminal
-intellij.vcs.cvs
 intellij.vcs.git
 intellij.vcs.github
 intellij.vcs.hg

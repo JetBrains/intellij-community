@@ -34,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.EditorTextField;
@@ -57,6 +58,7 @@ import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
+import java.awt.image.VolatileImage;
 import java.net.URL;
 import java.util.Set;
 
@@ -68,6 +70,8 @@ public class IdeBackgroundUtil {
   public static final String EDITOR_PROP = "idea.background.editor";
   public static final String FRAME_PROP = "idea.background.frame";
   public static final String TARGET_PROP = "idea.background.target";
+
+  public static final Key<Boolean> NO_BACKGROUND = Key.create("SUPPRESS_BACKGROUND");
 
   public enum Fill {
     PLAIN, SCALE, TILE
@@ -374,12 +378,14 @@ public class IdeBackgroundUtil {
 
     void runAllPainters(int x, int y, int width, int height, @Nullable Shape sourceShape, @Nullable Object reason) {
       if (width <= 1 || height <= 1) return;
-      // skip painters for transparent 'reasons'
-      if (reason instanceof Color && ((Color)reason).getAlpha() < 255) return;
-      if (reason instanceof Image) {
-        if (!(reason instanceof BufferedImage)) return;
-        if (((BufferedImage)reason).getColorModel().hasAlpha()) return;
-      }
+      boolean hasAlpha =
+        reason instanceof Color ? ((Color)reason).getAlpha() < 255 :
+        reason instanceof BufferedImage ? ((BufferedImage)reason).getColorModel().hasAlpha() :
+        reason instanceof VolatileImage ? ((VolatileImage)reason).getTransparency() != Transparency.OPAQUE :
+        true;
+      // skip painters when alpha is already present
+      if (hasAlpha) return;
+
       Shape prevClip = getClip();
       Shape tmpClip = calcTempClip(prevClip, sourceShape != null ? sourceShape : new Rectangle(x, y, width, height));
       if (tmpClip == null) return;
@@ -400,6 +406,7 @@ public class IdeBackgroundUtil {
   private static class MyTransform implements PairFunction<JComponent, Graphics2D, Graphics2D> {
     @Override
     public Graphics2D fun(JComponent c, Graphics2D g) {
+      if (Boolean.TRUE.equals(UIUtil.getClientProperty(c, NO_BACKGROUND))) return g;
       String type = getComponentType(c);
       if (type == null) return g;
       if ("frame".equals(type)) return withFrameBackground(g, c);

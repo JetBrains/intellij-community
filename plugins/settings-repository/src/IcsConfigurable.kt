@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.Disposable
@@ -22,6 +22,7 @@ internal class IcsConfigurableUi : ConfigurableUi<IcsSettings>, Disposable {
   private val repositoryListEditor = createRepositoryListEditor(icsManager)
   private val editors = listOf(repositoryListEditor, createReadOnlySourcesEditor())
   private val autoSync = JCheckBox("Auto Sync")
+  private val includeHostIntoCommitMessage = JCheckBox("Include hostname into commit message")
 
   override fun dispose() {
     icsManager.autoSyncManager.enabled = true
@@ -32,14 +33,20 @@ internal class IcsConfigurableUi : ConfigurableUi<IcsSettings>, Disposable {
     icsManager.autoSyncManager.enabled = false
 
     autoSync.isSelected = settings.autoSync
+    includeHostIntoCommitMessage.isSelected = settings.includeHostIntoCommitMessage
 
     editors.forEach { it.reset(settings) }
   }
 
-  override fun isModified(settings: IcsSettings) = autoSync.isSelected != settings.autoSync || editors.any { it.isModified(settings) }
+  override fun isModified(settings: IcsSettings): Boolean {
+    return autoSync.isSelected != settings.autoSync ||
+           includeHostIntoCommitMessage.isSelected != settings.includeHostIntoCommitMessage ||
+           editors.any { it.isModified(settings) }
+  }
 
   override fun apply(settings: IcsSettings) {
     settings.autoSync = autoSync.isSelected
+    settings.includeHostIntoCommitMessage = includeHostIntoCommitMessage.isSelected
 
     editors.forEach {
       if (it.isModified(settings)) {
@@ -53,6 +60,7 @@ internal class IcsConfigurableUi : ConfigurableUi<IcsSettings>, Disposable {
   override fun getComponent() = panel {
     repositoryListEditor.buildUi(this)
     row { autoSync(comment = "Use VCS -> Sync Settings to sync when you want") }
+    row { includeHostIntoCommitMessage() }
     row { panel("Read-only Sources", editors.get(1).component) }
   }
 }

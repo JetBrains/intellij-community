@@ -7,6 +7,7 @@ import com.intellij.util.IntIntFunction;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.*;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,8 +43,8 @@ public class TroveUtil {
     return IntStream.range(0, list.size()).map(list::get);
   }
 
-  @NotNull
-  public static Set<Integer> intersect(@NotNull TIntHashSet... sets) {
+  @Nullable
+  public static TIntHashSet intersect(@NotNull TIntHashSet... sets) {
     TIntHashSet result = null;
 
     Arrays.sort(sets, (set1, set2) -> {
@@ -55,8 +56,7 @@ public class TroveUtil {
       result = intersect(result, set);
     }
 
-    if (result == null) return ContainerUtil.newHashSet();
-    return createJavaSet(result);
+    return result;
   }
 
   public static boolean intersects(@NotNull TIntHashSet set1, @NotNull TIntHashSet set2) {
@@ -71,8 +71,9 @@ public class TroveUtil {
     return intersects(set2, set1);
   }
 
+  @Contract("null, null -> null; !null, _ -> !null; _, !null -> !null")
   @Nullable
-  private static TIntHashSet intersect(@Nullable TIntHashSet set1, @Nullable TIntHashSet set2) {
+  public static TIntHashSet intersect(@Nullable TIntHashSet set1, @Nullable TIntHashSet set2) {
     if (set1 == null) return set2;
     if (set2 == null) return set1;
 
@@ -98,7 +99,9 @@ public class TroveUtil {
   }
 
   @NotNull
-  private static Set<Integer> createJavaSet(@NotNull TIntHashSet set) {
+  public static Set<Integer> createJavaSet(@Nullable TIntHashSet set) {
+    if (set == null) return ContainerUtil.newHashSet();
+
     Set<Integer> result = ContainerUtil.newHashSet(set.size());
     set.forEach(value -> {
       result.add(value);
@@ -106,6 +109,16 @@ public class TroveUtil {
     });
     return result;
   }
+
+  @NotNull
+  public static TIntHashSet createTroveSet(@NotNull Set<Integer> set) {
+    TIntHashSet result = new TIntHashSet(set.size());
+    for (int i : set) {
+      result.add(i);
+    }
+    return result;
+  }
+
 
   public static void addAll(@NotNull TIntHashSet where, @NotNull TIntHashSet what) {
     what.forEach(value -> {

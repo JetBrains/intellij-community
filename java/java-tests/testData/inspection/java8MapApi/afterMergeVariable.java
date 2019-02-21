@@ -3,6 +3,6 @@ import java.util.Map;
 
 public class Main {
   public void testMerge(Map<String, Integer> map, String key) {
-      map.merge(key, 1, (a, b) -> b + a)
+      map.merge(key, 1, Integer::sum)
   }
 }

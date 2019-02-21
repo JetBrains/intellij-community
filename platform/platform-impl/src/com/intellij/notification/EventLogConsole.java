@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification;
 
 import com.intellij.execution.filters.HyperlinkInfo;
@@ -121,13 +121,14 @@ class EventLogConsole {
 
       @Override
       public String getConsoleFontName() {
-        return NotificationsUtil.getFontName();
+        String name = NotificationsUtil.getFontName();
+        return name == null ? super.getConsoleFontName() : name;
       }
 
       @Override
       public int getConsoleFontSize() {
-        Pair<String, Integer> data = NotificationsUtil.getFontData();
-        return data == null ? super.getConsoleFontSize() : data.second;
+        Integer size = NotificationsUtil.getFontSize();
+        return size == null ? super.getConsoleFontSize() : size;
       }
 
       @Override

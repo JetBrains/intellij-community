@@ -19,8 +19,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.TextEditorLocation;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -34,7 +34,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -133,7 +132,6 @@ public class FindUsagesManager {
         return false;
     }
 
-    //todo
     TextEditor textEditor = (TextEditor)editor;
     Document document = textEditor.getEditor().getDocument();
     PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
@@ -241,9 +239,10 @@ public class FindUsagesManager {
     checkNotNull(primaryElements, handler, "getPrimaryElements()");
     PsiElement[] secondaryElements = handler.getSecondaryElements();
     checkNotNull(secondaryElements, handler, "getSecondaryElements()");
-    if (singleFile) {
+    if (singleFile && editor instanceof TextEditor) {
       editor.putUserData(KEY_START_USAGE_AGAIN, null);
-      findUsagesInEditor(primaryElements, secondaryElements, handler, scopeFile, FileSearchScope.FROM_START, findUsagesOptions.clone(), editor);
+      findUsagesInEditor(primaryElements, secondaryElements, handler, scopeFile, FileSearchScope.FROM_START, findUsagesOptions.clone(),
+                         (TextEditor)editor);
     }
     else {
       boolean skipResultsWithOneUsage = FindSettings.getInstance().isSkipResultsWithOneUsage();
@@ -460,25 +459,28 @@ public class FindUsagesManager {
                                   @NotNull PsiFile scopeFile,
                                   @NotNull FileSearchScope direction,
                                   @NotNull final FindUsagesOptions findUsagesOptions,
-                                  @NotNull FileEditor fileEditor) {
+                                  @NotNull TextEditor fileEditor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     initLastSearchElement(findUsagesOptions, primaryElements, secondaryElements);
 
     clearStatusBar();
-
-    final FileEditorLocation currentLocation = fileEditor.getCurrentLocation();
 
     PsiElement2UsageTargetAdapter[] primaryTargets = PsiElement2UsageTargetAdapter.convert(primaryElements);
     PsiElement2UsageTargetAdapter[] secondaryTargets = PsiElement2UsageTargetAdapter.convert(primaryElements);
     final UsageSearcher usageSearcher = createUsageSearcher(primaryTargets, secondaryTargets, handler, findUsagesOptions, scopeFile);
     AtomicBoolean usagesWereFound = new AtomicBoolean();
 
+    TextEditorLocation location = (TextEditorLocation)fileEditor.getCurrentLocation();
+    // can't navigate in exotic file editors which don't support current location
+    if (location == null) return;
+    int startOffset = fileEditor.getEditor().logicalPositionToOffset(location.getPosition());
+
     new Task.Backgroundable(myProject, FindBundle.message("find.progress.searching.message", "editor")){
       private Usage myUsage;
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        myUsage = findSiblingUsage(usageSearcher, direction, currentLocation, usagesWereFound, fileEditor);
+        myUsage = findSiblingUsage(usageSearcher, direction, startOffset, usagesWereFound, fileEditor);
       }
 
       @Override
@@ -549,7 +551,7 @@ public class FindUsagesManager {
 
   private static Usage findSiblingUsage(@NotNull final UsageSearcher usageSearcher,
                                         @NotNull FileSearchScope dir,
-                                        final FileEditorLocation currentLocation,
+                                        int startOffset,
                                         @NotNull final AtomicBoolean usagesWereFound,
                                         @NotNull FileEditor fileEditor) {
     if (fileEditor.getUserData(KEY_START_USAGE_AGAIN) != null) {
@@ -561,32 +563,35 @@ public class FindUsagesManager {
     final AtomicReference<Usage> foundUsage = new AtomicReference<>();
     usageSearcher.generate(usage -> {
       usagesWereFound.set(true);
-      if (direction == FileSearchScope.FROM_START) {
-        foundUsage.compareAndSet(null, usage);
-        return false;
-      }
-      if (direction == FileSearchScope.FROM_END) {
-        foundUsage.set(usage);
-      }
-      else if (direction == FileSearchScope.AFTER_CARET) {
-        if (Comparing.compare(usage.getLocation(), currentLocation) > 0) {
+      int usageOffset = usage instanceof UsageInfo2UsageAdapter ? ((UsageInfo2UsageAdapter)usage).getNavigationRange().getStartOffset() : 0;
+      switch (direction) {
+        case FROM_START:
+          foundUsage.compareAndSet(null, usage);
+          return false;
+        case FROM_END:
           foundUsage.set(usage);
-          return false;
-        }
-      }
-      else if (direction == FileSearchScope.BEFORE_CARET) {
-        if (Comparing.compare(usage.getLocation(), currentLocation) >= 0) {
-          return false;
-        }
-        while (true) {
-          Usage found = foundUsage.get();
-          if (found == null) {
-            if (foundUsage.compareAndSet(null, usage)) break;
+          break;
+        case AFTER_CARET:
+          if (usageOffset > startOffset) {
+            foundUsage.set(usage);
+            return false;
           }
-          else {
-            if (Comparing.compare(found.getLocation(), usage.getLocation()) < 0 && foundUsage.compareAndSet(found, usage)) break;
+          break;
+        case BEFORE_CARET:
+          if (usageOffset >= startOffset) {
+            return false;
           }
-        }
+          while (true) {
+            Usage found = foundUsage.get();
+            if (found == null) {
+              if (foundUsage.compareAndSet(null, usage)) break;
+            }
+            else {
+              int foundOffset = found instanceof UsageInfo2UsageAdapter ? ((UsageInfo2UsageAdapter)found).getNavigationRange().getStartOffset() : 0;
+              if (foundOffset < usageOffset && foundUsage.compareAndSet(found, usage)) break;
+            }
+          }
+          break;
       }
 
       return true;

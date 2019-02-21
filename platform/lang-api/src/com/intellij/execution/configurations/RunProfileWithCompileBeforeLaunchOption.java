@@ -20,6 +20,17 @@ public interface RunProfileWithCompileBeforeLaunchOption extends RunProfile {
   }
 
   /**
+   * Modifies behavior for the case when {@link #getModules()} returns empty list.
+   * By default whole project will be built in this case.
+   * @return true if whole project is to be built when no particular module is selected,
+   *         false effectively skips project compilation
+   */
+  default boolean isBuildProjectOnEmptyModuleList() {
+    return true;
+  }
+
+
+  /**
    * @return true if "Build" Before Launch task should be added automatically on run configuration creation
    */
   default boolean isBuildBeforeLaunchAddedByDefault() {

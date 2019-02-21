@@ -197,7 +197,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
     // preserve items order as specified in xml (filterBadPlugins will not fail if module comes first)
     Set<PluginId> dependentPlugins = new LinkedHashSet<>();
-    Set<PluginId> optionalDependentPlugins = new LinkedHashSet<>();
+    Set<PluginId> nonOptionalDependentPlugins = new LinkedHashSet<>();
     if (pluginBean.dependencies != null) {
       myOptionalConfigs = new THashMap<>();
       for (PluginDependency dependency : pluginBean.dependencies) {
@@ -206,17 +206,24 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           PluginId id = PluginId.getId(text);
           dependentPlugins.add(id);
           if (dependency.optional) {
-            optionalDependentPlugins.add(id);
             if (!StringUtil.isEmptyOrSpaces(dependency.configFile)) {
               myOptionalConfigs.computeIfAbsent(id, it -> new SmartList<>()).add(dependency.configFile);
             }
+          }
+          else {
+            nonOptionalDependentPlugins.add(id);
           }
         }
       }
     }
 
     myDependencies = dependentPlugins.isEmpty() ? PluginId.EMPTY_ARRAY : dependentPlugins.toArray(PluginId.EMPTY_ARRAY);
-    myOptionalDependencies = optionalDependentPlugins.isEmpty() ? PluginId.EMPTY_ARRAY : optionalDependentPlugins.toArray(PluginId.EMPTY_ARRAY);
+    if (nonOptionalDependentPlugins.size() == dependentPlugins.size()) {
+      myOptionalDependencies = PluginId.EMPTY_ARRAY;
+    }
+    else {
+      myOptionalDependencies = ContainerUtil.filter(dependentPlugins, id -> !nonOptionalDependentPlugins.contains(id)).toArray(PluginId.EMPTY_ARRAY);
+    }
 
     if (pluginBean.helpSets == null || pluginBean.helpSets.length == 0) {
       myHelpSets = HelpSetPath.EMPTY;
@@ -696,6 +703,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myOptionalConfigs;
   }
 
+  @Nullable
   Map<PluginId, List<IdeaPluginDescriptorImpl>> getOptionalDescriptors() {
     return myOptionalDescriptors;
   }

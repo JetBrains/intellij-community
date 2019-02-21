@@ -40,9 +40,7 @@ public class TestModeFlags {
   public static <T> void set(Key<T> flag, T value, Disposable parentDisposable) {
     T oldValue = get(flag);
     set(flag, value);
-    Disposer.register(parentDisposable, () -> {
-      set(flag, oldValue);
-    });
+    Disposer.register(parentDisposable, () -> set(flag, oldValue));
   }
 
   public static <T> T get(Key<T> flag) {

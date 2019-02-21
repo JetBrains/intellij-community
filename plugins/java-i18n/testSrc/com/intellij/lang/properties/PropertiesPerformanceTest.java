@@ -47,7 +47,7 @@ public class PropertiesPerformanceTest extends CodeInsightTestCase {
 
   public void testTypingInBigFile() throws Exception {
     configureByFile(getTestName(true) + "/File1.properties");
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 100, () -> {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 300, () -> {
       type(' ');
       PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
       backspace();

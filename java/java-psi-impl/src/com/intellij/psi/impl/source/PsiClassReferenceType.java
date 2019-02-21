@@ -16,15 +16,13 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +34,7 @@ import java.util.List;
  * @author max
  */
 public class PsiClassReferenceType extends PsiClassType.Stub {
-  private final Computable<? extends PsiJavaCodeReferenceElement> myReference;
+  private final ClassReferencePointer myReference;
 
   public PsiClassReferenceType(@NotNull PsiJavaCodeReferenceElement reference, LanguageLevel level) {
     this(reference, level, collectAnnotations(reference));
@@ -44,14 +42,14 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
 
   public PsiClassReferenceType(@NotNull PsiJavaCodeReferenceElement reference, LanguageLevel level, @NotNull PsiAnnotation[] annotations) {
     super(level, annotations);
-    myReference = new Computable.PredefinedValueComputable<>(reference);
+    myReference = ClassReferencePointer.constant(reference);
   }
 
   public PsiClassReferenceType(@NotNull PsiJavaCodeReferenceElement reference, LanguageLevel level, @NotNull TypeAnnotationProvider provider) {
-    this(new Computable.PredefinedValueComputable<>(reference), level, provider);
+    this(ClassReferencePointer.constant(reference), level, provider);
   }
 
-  public PsiClassReferenceType(@NotNull Computable<? extends PsiJavaCodeReferenceElement> reference, LanguageLevel level, @NotNull TypeAnnotationProvider provider) {
+  PsiClassReferenceType(@NotNull ClassReferencePointer reference, LanguageLevel level, @NotNull TypeAnnotationProvider provider) {
     super(level, provider);
     myReference = reference;
   }
@@ -70,7 +68,7 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
 
   @Override
   public boolean isValid() {
-    PsiJavaCodeReferenceElement reference = myReference.compute();
+    PsiJavaCodeReferenceElement reference = myReference.retrieveReference();
     if (reference != null && reference.isValid()) {
       for (PsiAnnotation annotation : getAnnotations(false)) {
         if (!annotation.isValid()) return false;
@@ -103,7 +101,7 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
     PsiAnnotation[] annotations = super.getAnnotations();
 
     if (merge) {
-      PsiJavaCodeReferenceElement reference = myReference.compute();
+      PsiJavaCodeReferenceElement reference = myReference.retrieveReference();
       if (reference != null && reference.isValid() && reference.isQualified()) {
         PsiAnnotation[] embedded = collectAnnotations(reference);
         if (annotations.length > 0 && embedded.length > 0) {
@@ -189,7 +187,9 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
   @NotNull
   public ClassResolveResult resolveGenerics() {
     PsiJavaCodeReferenceElement reference = getReference();
-    PsiUtilCore.ensureValid(reference);
+    if (!reference.isValid()) {
+      throw new PsiInvalidElementAccessException(reference, myReference.toString() + "; augmenters=" + PsiAugmentProvider.EP_NAME.getExtensionList());
+    }
     final JavaResolveResult result = reference.advancedResolve(false);
     return result.getElement() == null ? ClassResolveResult.EMPTY : new DelegatingClassResolveResult(result);
   }
@@ -263,6 +263,6 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
 
   @NotNull
   public PsiJavaCodeReferenceElement getReference() {
-    return ObjectUtils.assertNotNull(myReference.compute());
+    return myReference.retrieveNonNullReference();
   }
 }

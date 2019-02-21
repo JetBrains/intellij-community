@@ -160,8 +160,6 @@ class GitDeleteTagOperation extends GitBranchOperation {
   }
 
   private void pushRemotesInBackground() {
-    GitBrancher.getInstance(myProject).deleteRemoteTag(myTagName, ContainerUtil.map2Map(getRepositories(), it -> {
-      return Pair.create(it, myDeletedTagTips.get(it));
-    }));
+    GitBrancher.getInstance(myProject).deleteRemoteTag(myTagName, ContainerUtil.map2Map(getRepositories(), it -> Pair.create(it, myDeletedTagTips.get(it))));
   }
 }

@@ -122,9 +122,9 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
                                                     commitMessage);
     if (!sessionDialog.showAndGet()) return;
 
-    preloadContent(project, changes);
-
-    commitSession.execute((Collection<Change>)changes, commitMessage);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      commitSession.execute((Collection<Change>)changes, commitMessage);
+    }, VcsBundle.message("create.patch.commit.action.progress"), true, project);
   }
 
   private static void createIntoClipboard(@NotNull Project project, @NotNull List<? extends Change> changes) {
@@ -140,31 +140,6 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
         VcsNotifier.getInstance(project).notifyWeakError("Patch creation failed");
       }
     }, VcsBundle.message("create.patch.commit.action.progress"), true, project);
-  }
-
-  private static void preloadContent(final Project project, final List<? extends Change> changes) {
-    // to avoid multiple progress dialogs, preload content under one progress
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        for (Change change : changes) {
-          checkLoadContent(change.getBeforeRevision());
-          checkLoadContent(change.getAfterRevision());
-        }
-      }
-
-      private void checkLoadContent(final ContentRevision revision) {
-        ProgressManager.checkCanceled();
-        if (revision != null && !(revision instanceof BinaryContentRevision)) {
-          try {
-            revision.getContent();
-          }
-          catch (VcsException e1) {
-            // ignore at the moment
-          }
-        }
-      }
-    }, VcsBundle.message("create.patch.loading.content.progress"), true, project);
   }
 
   @Override

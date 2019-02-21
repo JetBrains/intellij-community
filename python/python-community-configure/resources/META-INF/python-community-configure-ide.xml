@@ -18,5 +18,12 @@
                          provider="com.jetbrains.python.configuration.PyDependenciesConfigurableProvider"/>
 
     <filetype.prebuiltStubsProvider filetype="Python" implementationClass="com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider"/>
+
+    <!-- Status Bar -->
+    <statusBarWidgetProvider implementation="com.jetbrains.python.configuration.PySdkStatusBarWidgetProvider"/>
   </extensions>
+
+  <actions>
+    <action id="PySwitchSdkAction" class="com.jetbrains.python.configuration.PySwitchSdkAction"/>
+  </actions>
 </idea-plugin>

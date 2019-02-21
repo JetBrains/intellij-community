@@ -133,7 +133,7 @@ public abstract class PersistentEnumeratorBase<Data> implements Forceable, Close
     ENUMERATION_CACHE_SIZE = property == null ? 8192 : Integer.valueOf(property);
   }
 
-  private static final SLRUMap<Object, Integer> ourEnumerationCache = new SLRUMap<Object, Integer>(ENUMERATION_CACHE_SIZE, ENUMERATION_CACHE_SIZE);
+  private static final SLRUMap<Object, Integer> ourEnumerationCache = new SLRUMap<>(ENUMERATION_CACHE_SIZE, ENUMERATION_CACHE_SIZE);
 
   @TestOnly
   public static void clearCacheForTests() {
@@ -372,8 +372,8 @@ public abstract class PersistentEnumeratorBase<Data> implements Forceable, Close
 
   @NotNull
   public Collection<Data> getAllDataObjects(@Nullable final DataFilter filter) throws IOException {
-    final List<Data> values = new ArrayList<Data>();
-    processAllDataObject(new CommonProcessors.CollectProcessor<Data>(values), filter);
+    final List<Data> values = new ArrayList<>();
+    processAllDataObject(new CommonProcessors.CollectProcessor<>(values), filter);
     return values;
   }
 

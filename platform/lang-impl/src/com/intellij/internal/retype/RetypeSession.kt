@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.retype
 
 import com.intellij.codeInsight.CodeInsightSettings
@@ -122,6 +122,7 @@ class RetypeSession(
   private val threadDumpAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
 
   private val originalText = document.text
+  @Volatile
   private var pos = 0
   private val endPos: Int
   private val tailLength: Int
@@ -592,7 +593,7 @@ val RETYPE_SESSION_NOTIFICATION_KEY = Key.create<EditorNotificationPanel>("com.i
 class RetypeEditorNotificationProvider : EditorNotifications.Provider<EditorNotificationPanel>() {
   override fun getKey(): Key<EditorNotificationPanel> = RETYPE_SESSION_NOTIFICATION_KEY
 
-  override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor): EditorNotificationPanel? {
+  override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
     if (fileEditor !is PsiAwareTextEditorImpl) return null
 
     val retypeSession = fileEditor.editor.getUserData(RETYPE_SESSION_KEY)

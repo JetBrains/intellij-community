@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout.migLayout
 
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.ui.components.noteComponent
 import com.intellij.ui.layout.*
@@ -52,6 +53,9 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
    */
   private val componentConstraints: MutableMap<Component, CC> = ContainerUtil.newIdentityTroveMap()
   private val rootRow = MigLayoutRow(parent = null, componentConstraints = componentConstraints, builder = this, indent = 0)
+
+  override var preferredFocusedComponent: JComponent? = null
+  override var validateCallbacks: MutableList<() -> ValidationInfo?> = mutableListOf()
 
   val defaultComponentConstraintCreator = DefaultComponentConstraintCreator(spacing)
 
