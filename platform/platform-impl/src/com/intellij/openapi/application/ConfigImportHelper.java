@@ -159,7 +159,10 @@ public class ConfigImportHelper {
     }
 
     final List<Path> candidates;
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(configsHome, it -> StringUtil.startsWithIgnoreCase(it.getFileName().toString(), prefix))) {
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(configsHome, it -> {
+      //noinspection CodeBlock2Expr
+      return StringUtil.startsWithIgnoreCase(it.getFileName().toString(), prefix) && !it.equals(isMacOs ? newConfigDir : newConfigDir.getParent());
+    })) {
       candidates = ContainerUtilRt.newArrayList(stream);
     }
     catch (IOException ignore) {
