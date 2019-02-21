@@ -382,8 +382,8 @@ def should_update_skeleton(base_dir, mod_qname):
         with ignored_os_errors(errno.ENOENT):
             with fopen(path, 'r') as f:
                 used_version = read_generator_version(f)
-                if used_version and required_version and used_version >= required_version:
-                    return False
+                if used_version and required_version:
+                    return used_version < required_version
     return True
 
 
