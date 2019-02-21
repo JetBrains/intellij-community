@@ -474,7 +474,7 @@ public class TabLabel extends JPanel implements Accessible {
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
 
-//    paintBackground(g);
+    paintBackground(g);
   }
 
   private void paintBackground(Graphics g) {
@@ -495,7 +495,6 @@ public class TabLabel extends JPanel implements Accessible {
 
   @Override
   protected void paintChildren(final Graphics g) {
-    paintBackground(g);
     super.paintChildren(g);
 
     if (getLabelComponent().getParent() == null)
