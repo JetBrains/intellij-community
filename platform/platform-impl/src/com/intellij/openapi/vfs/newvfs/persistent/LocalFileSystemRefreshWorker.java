@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,18 +32,21 @@ import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.VfsEventGenerationHelper.LOG;
 
 class LocalFileSystemRefreshWorker {
   private final boolean myIsRecursive;
-  private final Queue<NewVirtualFile> myRefreshQueue = new Queue<>(100);
+  private final NewVirtualFile myRefreshRoot;
   private final VfsEventGenerationHelper myHelper = new VfsEventGenerationHelper();
   private volatile boolean myCancelled;
 
   LocalFileSystemRefreshWorker(@NotNull NewVirtualFile refreshRoot, boolean isRecursive) {
     myIsRecursive = isRecursive;
-    myRefreshQueue.addLast(refreshRoot);
+    myRefreshRoot = refreshRoot;
   }
 
   @NotNull
@@ -55,7 +59,7 @@ class LocalFileSystemRefreshWorker {
   }
 
   public void scan() {
-    NewVirtualFile root = myRefreshQueue.pullFirst();
+    NewVirtualFile root = myRefreshRoot;
     boolean rootDirty = root.isDirty();
     if (LOG.isDebugEnabled()) LOG.debug("root=" + root + " dirty=" + rootDirty);
     if (!rootDirty) return;
@@ -71,66 +75,118 @@ class LocalFileSystemRefreshWorker {
       fs = PersistentFS.replaceWithNativeFS(fs);
     }
 
-    myRefreshQueue.addLast(root);
-
-    processQueue(fs, PersistentFS.getInstance());
+    RefreshContext context = createRefreshContext(fs, PersistentFS.getInstance(), FilePathHashingStrategy.create(fs.isCaseSensitive()));
+    context.submitRefreshRequest(() -> processFile(root, context));
+    context.waitForRefreshToFinish();
   }
 
-  private void processQueue(@NotNull NewVirtualFileSystem fs, @NotNull PersistentFS persistence) {
-    TObjectHashingStrategy<String> strategy = FilePathHashingStrategy.create(fs.isCaseSensitive());
+  private RefreshContext createRefreshContext(NewVirtualFileSystem fs, PersistentFS persistentFS, TObjectHashingStrategy<String> strategy) {
+    int parallelism = Registry.intValue("vfs.use.nio-based.local.refresh.worker.parallelism", Runtime.getRuntime().availableProcessors() - 1);
+    
+    if (myIsRecursive && parallelism > 0) {
+      final ForkJoinPool pool = new ForkJoinPool(parallelism);
 
-    while (!myRefreshQueue.isEmpty()) {
-      NewVirtualFile file = myRefreshQueue.pullFirst();
-      if (!myHelper.checkDirty(file)) continue;
-
-      if(checkCancelled(file)) break;
-
-      if (file.isDirectory()) {
-        boolean fullSync = ((VirtualDirectoryImpl)file).allChildrenLoaded();
-        if (fullSync) {
-          fullDirRefresh(fs, persistence, strategy, (VirtualDirectoryImpl)file);
+      return new RefreshContext(fs, persistentFS, strategy) {
+        @Override
+        void submitRefreshRequest(Runnable action) {
+          pool.submit(action);
         }
-        else {
-          partialDirRefresh(fs, persistence, strategy, (VirtualDirectoryImpl)file);
+
+        @Override
+        void doWaitForRefreshToFinish() {
+          pool.awaitQuiescence(1, TimeUnit.DAYS);
+          pool.shutdown();
         }
+      };
+    }
+
+    return new RefreshContext(fs, persistentFS, strategy) {
+      final Queue<Runnable> myRefreshRequests = new Queue<>(100);
+      
+      @Override
+      void submitRefreshRequest(Runnable request) {
+        myRefreshRequests.addLast(request);
+      }
+
+      @Override
+      void doWaitForRefreshToFinish() {
+        while(!myRefreshRequests.isEmpty()) {
+          Runnable request = myRefreshRequests.pullFirst();
+          request.run();
+        }
+      }
+    };
+  }
+
+  private void processFile(NewVirtualFile file, RefreshContext refreshContext) {
+    if (!myHelper.checkDirty(file)) {
+      return;
+    }
+
+    if(checkCancelled(file, refreshContext)) return;
+
+    if (file.isDirectory()) {
+      boolean fullSync = ((VirtualDirectoryImpl)file).allChildrenLoaded();
+      if (fullSync) {
+        fullDirRefresh((VirtualDirectoryImpl)file, refreshContext);
       }
       else {
-        refreshFile(fs, persistence, strategy, file);
+        partialDirRefresh((VirtualDirectoryImpl)file, refreshContext);
       }
+    }
+    else {
+      refreshFile(file, refreshContext);
+    }
 
-      if(checkCancelled(file)) break;
+    if(checkCancelled(file, refreshContext)) return;
+    
+    if (myIsRecursive || !file.isDirectory()) {
+      file.markClean();
+    }
+  }
+  
+  private static abstract class RefreshContext {
+    final NewVirtualFileSystem fs;
+    final PersistentFS persistence;
+    final TObjectHashingStrategy<String> strategy;
+    final LinkedBlockingQueue<NewVirtualFile> filesToBecomeDirty = new LinkedBlockingQueue<>();
 
-      if (myIsRecursive || !file.isDirectory()) {
-        file.markClean();
+    RefreshContext(NewVirtualFileSystem fs, PersistentFS persistence, TObjectHashingStrategy<String> strategy) {
+      this.fs = fs;
+      this.persistence = persistence;
+      this.strategy = strategy;
+    }
+
+    abstract void submitRefreshRequest(Runnable action);
+    abstract void doWaitForRefreshToFinish();
+
+    final void waitForRefreshToFinish() {
+      doWaitForRefreshToFinish();
+
+      for (NewVirtualFile file : filesToBecomeDirty) {
+        forceMarkDirty(file);
       }
     }
   }
 
-  private void refreshFile(@NotNull NewVirtualFileSystem fs,
-                           @NotNull PersistentFS persistence,
-                           @NotNull TObjectHashingStrategy<String> strategy,
-                           @NotNull NewVirtualFile file) {
-    RefreshingFileVisitor refreshingFileVisitor = new RefreshingFileVisitor(file, persistence, fs,
-                                                                            null,
-                                                                            Collections.singletonList(file), strategy);
+  private void refreshFile(@NotNull NewVirtualFile file, RefreshContext refreshContext) {
+    RefreshingFileVisitor refreshingFileVisitor = new RefreshingFileVisitor(file, refreshContext, null,
+                                                                            Collections.singletonList(file));
 
     refreshingFileVisitor.visit(file);
     myHelper.addAllEventsFrom(refreshingFileVisitor.getHelper());
   }
 
-  private void fullDirRefresh(@NotNull NewVirtualFileSystem fs,
-                              @NotNull PersistentFS persistence,
-                              @NotNull TObjectHashingStrategy<String> strategy,
-                              @NotNull VirtualDirectoryImpl dir) {
+  private void fullDirRefresh(@NotNull VirtualDirectoryImpl dir, RefreshContext refreshContext) {
     while (true) {
       // obtaining directory snapshot
-      Pair<String[], VirtualFile[]> result = getDirectorySnapshot(persistence, dir);
+      Pair<String[], VirtualFile[]> result = getDirectorySnapshot(refreshContext.persistence, dir);
       if (result == null) return;
       String[] currentNames = result.getFirst();
       VirtualFile[] children = result.getSecond();
 
       RefreshingFileVisitor refreshingFileVisitor =
-        new RefreshingFileVisitor(dir, persistence, fs, null, Arrays.asList(children), strategy);
+        new RefreshingFileVisitor(dir, refreshContext, null, Arrays.asList(children));
 
       refreshingFileVisitor.visit(dir);
 
@@ -139,7 +195,7 @@ class LocalFileSystemRefreshWorker {
         if (ApplicationManager.getApplication().isDisposed()) {
           return true;
         }
-        if (!Arrays.equals(currentNames, persistence.list(dir)) || !Arrays.equals(children, dir.getChildren())) {
+        if (!Arrays.equals(currentNames, refreshContext.persistence.list(dir)) || !Arrays.equals(children, dir.getChildren())) {
           if (LOG.isDebugEnabled()) LOG.debug("retry: " + dir);
           return false;
         }
@@ -162,10 +218,7 @@ class LocalFileSystemRefreshWorker {
     });
   }
 
-  private void partialDirRefresh(@NotNull NewVirtualFileSystem fs,
-                                 @NotNull PersistentFS persistence,
-                                 @NotNull TObjectHashingStrategy<String> strategy,
-                                 @NotNull VirtualDirectoryImpl dir) {
+  private void partialDirRefresh(@NotNull VirtualDirectoryImpl dir, RefreshContext refreshContext) {
     while (true) {
       // obtaining directory snapshot
       Pair<List<VirtualFile>, List<String>> result =
@@ -175,7 +228,7 @@ class LocalFileSystemRefreshWorker {
       List<String> wanted = result.getSecond();
 
       if (cached.isEmpty() && wanted.isEmpty()) return;
-      RefreshingFileVisitor refreshingFileVisitor = new RefreshingFileVisitor(dir, persistence, fs, wanted, cached, strategy);
+      RefreshingFileVisitor refreshingFileVisitor = new RefreshingFileVisitor(dir, refreshContext, wanted, cached);
       refreshingFileVisitor.visit(dir);
 
       // generating events unless a directory was changed in between
@@ -195,15 +248,11 @@ class LocalFileSystemRefreshWorker {
     }
   }
 
-  private boolean checkCancelled(@NotNull NewVirtualFile stopAt) {
+  private boolean checkCancelled(@NotNull NewVirtualFile stopAt, RefreshContext refreshContext) {
     boolean myRequestedCancel = false;
     if (myCancelled || (myRequestedCancel = ourCancellingCondition != null && ourCancellingCondition.fun(stopAt))) {
       if (myRequestedCancel) myCancelled = true;
-      forceMarkDirty(stopAt);
-      while (!myRefreshQueue.isEmpty()) {
-        NewVirtualFile next = myRefreshQueue.pullFirst();
-        forceMarkDirty(next);
-      }
+      refreshContext.filesToBecomeDirty.offer(stopAt);
       return true;
     }
     return false;
@@ -228,20 +277,16 @@ class LocalFileSystemRefreshWorker {
     private final Set<String> myChildrenWeAreInterested; // null - no limit
 
     private final VirtualFile myFileOrDir;
-    private final PersistentFS myPersistence;
-    private final NewVirtualFileSystem myFs;
+    private final RefreshContext myRefreshContext;
 
     RefreshingFileVisitor(@NotNull VirtualFile fileOrDir,
-                          @NotNull PersistentFS persistence,
-                          @NotNull NewVirtualFileSystem fs,
+                          @NotNull RefreshContext refreshContext,
                           @Nullable("null means all") Collection<String> childrenToRefresh,
-                          @NotNull Collection<VirtualFile> existingPersistentChildren,
-                          @NotNull TObjectHashingStrategy<String> strategy) {
+                          @NotNull Collection<VirtualFile> existingPersistentChildren) {
       myFileOrDir = fileOrDir;
-      myPersistence = persistence;
-      myFs = fs;
-      myPersistentChildren = new THashMap<>(existingPersistentChildren.size(), strategy);
-      myChildrenWeAreInterested = childrenToRefresh != null ? new THashSet<>(childrenToRefresh, strategy) : null;
+      myRefreshContext = refreshContext;
+      myPersistentChildren = new THashMap<>(existingPersistentChildren.size(), refreshContext.strategy);
+      myChildrenWeAreInterested = childrenToRefresh != null ? new THashSet<>(childrenToRefresh, refreshContext.strategy) : null;
 
       for (VirtualFile child : existingPersistentChildren) {
         String name = child.getName();
@@ -266,7 +311,7 @@ class LocalFileSystemRefreshWorker {
           return FileVisitResult.CONTINUE;
         }
 
-        if(checkCancelled(child)) {
+        if(checkCancelled(child, myRefreshContext)) {
           return FileVisitResult.CONTINUE;
         }
 
@@ -305,16 +350,16 @@ class LocalFileSystemRefreshWorker {
         }
 
         if (!directory) {
-          myHelper.checkContentChanged(child, myPersistence.getTimeStamp(child), attrs.lastModifiedTime().toMillis(),
-                                       myPersistence.getLastRecordedLength(child), attrs.size());
+          myHelper.checkContentChanged(child, myRefreshContext.persistence.getTimeStamp(child), attrs.lastModifiedTime().toMillis(),
+                                       myRefreshContext.persistence.getLastRecordedLength(child), attrs.size());
         }
         else {
           if (myIsRecursive) {
-            myRefreshQueue.addLast(child);
+            myRefreshContext.submitRefreshRequest(() -> processFile(child, myRefreshContext));
           }
         }
 
-        boolean currentWritable = myPersistence.isWritable(child);
+        boolean currentWritable = myRefreshContext.persistence.isWritable(child);
         boolean isWritable;
 
         if (attrs instanceof DosFileAttributes) {
@@ -335,7 +380,7 @@ class LocalFileSystemRefreshWorker {
         }
 
         if (isLink) {
-          myHelper.checkSymbolicLinkChange(child, child.getCanonicalPath(), myFs.resolveSymLink(child));
+          myHelper.checkSymbolicLinkChange(child, child.getCanonicalPath(), myRefreshContext.fs.resolveSymLink(child));
         }
         if (!child.isDirectory()) child.markClean();
       }
