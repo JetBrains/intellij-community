@@ -1569,8 +1569,8 @@ public class JBUI {
 
 
       @NotNull
-      public static int underlineThickness() {
-        return getInt("DefaultTabs.underlineThickness", scale(2));
+      public static int underlineHeight() {
+        return getInt("DefaultTabs.underlineHeight", scale(2));
       }
 
       @NotNull
@@ -1589,8 +1589,8 @@ public class JBUI {
       }
 
       @NotNull
-      public static Color hoverOverlayColor() {
-        return JBColor.namedColor("DefaultTabs.hoverOverlayColor",
+      public static Color hoverMaskColor() {
+        return JBColor.namedColor("DefaultTabs.hoverMaskColor",
                                   new JBColor(ColorUtil.withAlpha(Color.BLACK, .10),
                                               ColorUtil.withAlpha(Color.BLACK, .35)));
       }
@@ -1603,8 +1603,8 @@ public class JBUI {
       }
 
       @NotNull
-      public static Color unselectedOverlayColor() {
-        return JBColor.namedColor("DefaultTabs.unselectedOverlayColor",
+      public static Color inactiveMaskColor() {
+        return JBColor.namedColor("DefaultTabs.inactiveMaskColor",
                                   new JBColor(ColorUtil.withAlpha(Color.BLACK, .07),
                                               ColorUtil.withAlpha(Color.BLACK, .13)));
 
@@ -1619,8 +1619,8 @@ public class JBUI {
       }
 
       @NotNull
-      public static int underlineThickness() {
-        return getInt("EditorTabs.underlineThickness", scale(3));
+      public static int underlineHeight() {
+        return getInt("EditorTabs.underlineHeight", scale(3));
       }
 
       @NotNull
@@ -1633,16 +1633,14 @@ public class JBUI {
         return JBColor.namedColor("EditorTabs.borderColor", DefaultTabs.borderColor());
       }
 
-      //TODO background
       @NotNull
       public static Color background() {
         return JBColor.namedColor("EditorTabs.background", DefaultTabs.background());
       }
 
-      //TODO mask
       @NotNull
-      public static Color hoverOverlayColor() {
-        return JBColor.namedColor("EditorTabs.hoverOverlayColor", DefaultTabs.hoverOverlayColor());
+      public static Color hoverMaskColor() {
+        return JBColor.namedColor("EditorTabs.hoverMaskColor", DefaultTabs.hoverMaskColor());
       }
 
       @NotNull
@@ -1652,8 +1650,8 @@ public class JBUI {
       }
 
       @NotNull
-      public static Color unselectedOverlayColor() {
-        return JBColor.namedColor("EditorTabs.unselectedOverlayColor", DefaultTabs.unselectedOverlayColor());
+      public static Color inactiveMaskColor() {
+        return JBColor.namedColor("EditorTabs.inactiveMaskColor", DefaultTabs.inactiveMaskColor());
       }
 
     }
@@ -1719,11 +1717,11 @@ public class JBUI {
       }
 
       public static int tabVerticalPaddingOld() {
-        return getInt("ToolWindow.tab.verticalPadding.old", 0);
+        return getInt("ToolWindow.tab.verticalPadding", 0);
       }
 
       public static int tabVerticalPadding() {
-        return getInt("ToolWindow.tab.verticalPadding", scale(6));
+        return getInt("ToolWindow.HeaderTab.verticalPadding", scale(6));
       }
 
       @NotNull
@@ -1734,12 +1732,12 @@ public class JBUI {
 
       @NotNull
       public static Border tabHeaderBorder() {
-        return getBorder("ToolWindow.tabHeaderBorder", Borders.empty(1, 0));
+        return getBorder("ToolWindow.HeaderTab.tabHeaderBorder", Borders.empty(1, 0));
       }
 
       @NotNull
-      public static int underlineThickness() {
-        return getInt("ToolWindow.underlineThickness", scale(3));
+      public static int underlineHeight() {
+        return getInt("ToolWindow.HeaderTab.underlineHeight", scale(3));
       }
 
 

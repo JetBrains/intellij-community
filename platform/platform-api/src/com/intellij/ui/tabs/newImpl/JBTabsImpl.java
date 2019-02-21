@@ -31,6 +31,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.LazyUiDisposable;
 import com.jetbrains.rd.util.lifetime.Lifetime;
+import com.jetbrains.rd.util.reactive.PropertyCombinatorsKt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,8 +49,8 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
 
+import static com.intellij.openapi.rd.RdIdeaKt.childAtMouse;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
-import static com.intellij.ui.tabs.newImpl.UtilsKt.getTabLabelUnderMouse;
 import static com.jetbrains.rdclient.util.idea.DisposableExKt.createLifetime;
 
 public class JBTabsImpl extends JComponent
@@ -230,10 +231,11 @@ public class JBTabsImpl extends JComponent
     mySingleRowLayout = createSingleRowLayout();
     myLayout = mySingleRowLayout;
 
-    getTabLabelUnderMouse(this).advise(lifetime, label -> {
+    PropertyCombinatorsKt.map(childAtMouse(this), it -> it instanceof TabLabel ? it : null).advise(lifetime, label -> {
       if (tabLabelAtMouse != null) tabLabelAtMouse.repaint();
 
-      tabLabelAtMouse = label;
+      tabLabelAtMouse = (TabLabel)label;
+
       if (tabLabelAtMouse != null) tabLabelAtMouse.repaint();
 
       return null;

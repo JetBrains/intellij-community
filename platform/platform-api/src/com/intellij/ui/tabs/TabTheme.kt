@@ -7,11 +7,11 @@ import java.awt.Color
 class TabTheme(
   val background: Color? = JBUI.CurrentTheme.DefaultTabs.background(),
   val borderColor: Color = JBUI.CurrentTheme.DefaultTabs.borderColor(),
-  val underline: Color = JBUI.CurrentTheme.DefaultTabs.underlineColor(),
-  val inactiveUnderline: Color = JBUI.CurrentTheme.DefaultTabs.inactiveUnderlineColor(),
-  val hoverOverlayColor: Color = JBUI.CurrentTheme.DefaultTabs.hoverOverlayColor(),
-  val unselectedOverlayColor: Color = JBUI.CurrentTheme.DefaultTabs.unselectedOverlayColor(),
-  val underlineThickness: Int = JBUI.CurrentTheme.DefaultTabs.underlineThickness()
+  val underlineColor: Color = JBUI.CurrentTheme.DefaultTabs.underlineColor(),
+  val inactiveUnderlineColor: Color = JBUI.CurrentTheme.DefaultTabs.inactiveUnderlineColor(),
+  val hoverMaskColor: Color = JBUI.CurrentTheme.DefaultTabs.hoverMaskColor(),
+  val inactiveMaskColor: Color = JBUI.CurrentTheme.DefaultTabs.inactiveMaskColor(),
+  val underlineHeight: Int = JBUI.CurrentTheme.DefaultTabs.underlineHeight()
 ) {
   companion object {
     @JvmField
@@ -19,16 +19,16 @@ class TabTheme(
                           JBUI.CurrentTheme.EditorTabs.borderColor(),
                           JBUI.CurrentTheme.EditorTabs.underlineColor(),
                           JBUI.CurrentTheme.EditorTabs.inactiveUnderlineColor(),
-                          JBUI.CurrentTheme.EditorTabs.hoverOverlayColor(),
-                          JBUI.CurrentTheme.EditorTabs.unselectedOverlayColor(),
-                          JBUI.CurrentTheme.EditorTabs.underlineThickness())
+                          JBUI.CurrentTheme.EditorTabs.hoverMaskColor(),
+                          JBUI.CurrentTheme.EditorTabs.inactiveMaskColor(),
+                          JBUI.CurrentTheme.EditorTabs.underlineHeight())
     @JvmField
     val TOOL_WINDOW = TabTheme(null,
                                JBUI.CurrentTheme.EditorTabs.borderColor(),
                                JBUI.CurrentTheme.EditorTabs.underlineColor(),
                                JBUI.CurrentTheme.EditorTabs.inactiveUnderlineColor(),
-                               JBUI.CurrentTheme.EditorTabs.hoverOverlayColor(),
-                               JBUI.CurrentTheme.EditorTabs.unselectedOverlayColor(),
-                               JBUI.CurrentTheme.ToolWindow.underlineThickness())
+                               JBUI.CurrentTheme.EditorTabs.hoverMaskColor(),
+                               JBUI.CurrentTheme.EditorTabs.inactiveMaskColor(),
+                               JBUI.CurrentTheme.ToolWindow.underlineHeight())
   }
 }

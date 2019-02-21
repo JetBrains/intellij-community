@@ -27,12 +27,12 @@ open class JBDefaultTabPainter(val theme : TabTheme = TabTheme()) : JBTabPainter
     }
 
     if(hovered) {
-      g.fillRect(rect, if(tabColor != null) theme.hoverOverlayColor else theme.borderColor)
+      g.fillRect(rect, if(tabColor != null) theme.hoverMaskColor else theme.borderColor)
       return
     }
 
     tabColor ?: return
-    g.fillRect(rect, theme.unselectedOverlayColor)
+    g.fillRect(rect, theme.inactiveMaskColor)
   }
 
   override fun paintSelectedTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, tabColor: Color?, active: Boolean, hovered: Boolean) {
@@ -46,11 +46,11 @@ open class JBDefaultTabPainter(val theme : TabTheme = TabTheme()) : JBTabPainter
     }
 
     if(hovered) {
-      g.fillRect(rect, if(tabColor != null) theme.hoverOverlayColor else theme.borderColor)
+      g.fillRect(rect, if(tabColor != null) theme.hoverMaskColor else theme.borderColor)
     }
 
-    val underline = underlineRectangle(position, rect, theme.underlineThickness)
-    g.fillRect(underline, if(active) theme.underline else theme.inactiveUnderline)
+    val underline = underlineRectangle(position, rect, theme.underlineHeight)
+    g.fillRect(underline, if(active) theme.underlineColor else theme.inactiveUnderlineColor)
   }
 
   override fun paintBorderLine(g: Graphics2D, thickness: Int, from: Point, to: Point) {
