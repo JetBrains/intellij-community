@@ -87,6 +87,8 @@ import java.util.*;
 
 import static com.intellij.psi.util.PsiTreeUtil.findChildOfType;
 import static com.intellij.util.ArrayUtil.contains;
+import static org.jetbrains.plugins.groovy.annotator.ImplKt.checkInnerClassReferenceFromInstanceContext;
+import static org.jetbrains.plugins.groovy.annotator.ImplKt.checkUnresolvedCodeReference;
 import static org.jetbrains.plugins.groovy.annotator.UtilKt.*;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.mayContainTypeArguments;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.findScriptField;
@@ -918,6 +920,8 @@ public class GroovyAnnotator extends GroovyElementVisitor {
         myHolder.createInfoAnnotation(refElement, null).setTextAttributes(GroovySyntaxHighlighter.ANNOTATION);
       }
     }
+    checkUnresolvedCodeReference(refElement, myHolder);
+    checkInnerClassReferenceFromInstanceContext(refElement, myHolder);
   }
 
   @Override
