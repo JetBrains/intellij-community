@@ -15,6 +15,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.uast.UastVisitorAdapter;
 import com.intellij.ui.ContextHelpLabel;
@@ -65,18 +66,47 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
         }
         PsiElement resolved = node.resolve();
         if (resolved instanceof PsiMember) {
-          checkAccess(node.getSelector(), (PsiMember)resolved, receiver);
+          checkAccess(node.getSelector(), (PsiMember)resolved, getAccessObjectType(receiver));
         }
         return true;
       }
 
       @Override
       public boolean visitSimpleNameReferenceExpression(@NotNull USimpleNameReferenceExpression node) {
-        PsiElement resolved = node.resolve();
-        if (resolved instanceof PsiMember) {
-          checkAccess(node, (PsiMember)resolved, null);
+        UElement uastParent = node.getUastParent();
+        //we should skip 'checkAccess' here if node is part of UQualifiedReferenceExpression or UCallExpression node,
+        // otherwise the same problem will be reported twice
+        if (!isSelectorOfQualifiedReference(node)
+            && !(uastParent instanceof UCallExpression && isMethodReferenceOfCallExpression(node, (UCallExpression)uastParent)
+                 && (((UCallExpression)uastParent).getKind() == UastCallKind.CONSTRUCTOR_CALL || isSelectorOfQualifiedReference((UExpression)uastParent)))) {
+          PsiElement resolved = node.resolve();
+          if (resolved instanceof PsiMember) {
+            checkAccess(node, (PsiMember)resolved, null);
+          }
         }
         return true;
+      }
+
+      private boolean isSelectorOfQualifiedReference(@Nullable UExpression expression) {
+        if (expression == null) return false;
+        UElement parent = expression.getUastParent();
+        return parent instanceof UQualifiedReferenceExpression
+               && referToSameSourceElement(expression, ((UQualifiedReferenceExpression)parent).getSelector());
+      }
+
+      private boolean isMethodReferenceOfCallExpression(@NotNull USimpleNameReferenceExpression expression, @NotNull UCallExpression parent) {
+        UElement methodIdentifier = parent.getMethodIdentifier();
+        UReferenceExpression classReference = parent.getClassReference();
+        if (methodIdentifier == null && classReference != null) {
+          methodIdentifier = classReference.getReferenceNameElement();
+        }
+        return referToSameSourceElement(expression.getReferenceNameElement(), methodIdentifier);
+      }
+
+      private boolean referToSameSourceElement(@Nullable UElement element1, @Nullable UElement element2) {
+        if (element1 == null || element2 == null) return false;
+        PsiElement sourcePsi1 = element1.getSourcePsi();
+        return sourcePsi1 != null && sourcePsi1.equals(element2.getSourcePsi());
       }
 
       @Override
@@ -86,18 +116,50 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
           PsiMember member = (PsiMember)resolve;
           UElement sourceNode = getReferenceNameElement(node);
           if (sourceNode != null) {
-            checkAccess(sourceNode, member, node.getQualifierExpression());
+            checkAccess(sourceNode, member, getAccessObjectType(node.getQualifierExpression()));
           }
         }
         return true;
       }
 
-      private void checkAccess(@NotNull UElement sourceNode, @NotNull PsiMember target, @Nullable UExpression receiver) {
+      @Override
+      public boolean visitTypeReferenceExpression(@NotNull UTypeReferenceExpression node) {
+        //in Kotlin implementation of UAST USimpleNameReferenceExpression::resolve returns null for reference to type in local variable declaration,
+        // so we need to have this case specifically
+        if (!(node.getSourcePsi() instanceof PsiTypeElement)) {
+          PsiClass resolved = PsiTypesUtil.getPsiClass(node.getType());
+          if (resolved != null) {
+            checkAccess(node, resolved, null);
+          }
+        }
+        return true;
+      }
+
+      @Override
+      public boolean visitCallExpression(@NotNull UCallExpression node) {
+        //regular method calls are handled by visitSimpleNameReferenceExpression or visitQualifiedReferenceExpression, but we need to handle
+        // constructor calls in a special way because they may refer to classes
+        if (!isSelectorOfQualifiedReference(node) && node.getKind() == UastCallKind.CONSTRUCTOR_CALL) {
+          PsiMethod resolved = node.resolve();
+          if (resolved != null) {
+            checkAccess(node, resolved, null);
+          }
+          else {
+            UReferenceExpression classReference = node.getClassReference();
+            PsiElement resolvedClass = classReference != null ? classReference.resolve() : null;
+            if (resolvedClass instanceof PsiClass) {
+              checkAccess(node, (PsiClass)resolvedClass, null);
+            }
+          }
+        }
+        return true;
+      }
+
+      private void checkAccess(@NotNull UElement sourceNode, @NotNull PsiMember target, @Nullable PsiClass accessObjectType) {
         if (target.hasModifier(JvmModifier.PACKAGE_LOCAL)) {
           checkPackageLocalAccess(sourceNode, target, "package-private");
         }
-        else if (target.hasModifier(JvmModifier.PROTECTED) && receiver != null
-                 && !(receiver instanceof UThisExpression) && !(receiver instanceof USuperExpression) && !canAccessProtectedMember(receiver, sourceNode, target)) {
+        else if (target.hasModifier(JvmModifier.PROTECTED) && !canAccessProtectedMember(sourceNode, target, accessObjectType)) {
           checkPackageLocalAccess(sourceNode, target, "protected and used not through a subclass here");
         }
       }
@@ -132,22 +194,26 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
     return node;
   }
 
-  private static boolean canAccessProtectedMember(UExpression receiver, UElement sourceNode, PsiMember member) {
-    PsiClass memberClass = member.getContainingClass();
-    if (memberClass == null) return false;
+  @Nullable
+  private static PsiClass getAccessObjectType(@Nullable UExpression receiver) {
+    if (receiver == null || receiver instanceof UThisExpression || receiver instanceof USuperExpression) {
+      return null;
+    }
 
-    PsiClass accessObjectType;
     PsiType type = receiver.getExpressionType();
     if (type != null) {
-      if (!(type instanceof PsiClassType)) return false;
-      accessObjectType = ((PsiClassType)type).resolve();
-      if (accessObjectType == null) return false;
+      if (!(type instanceof PsiClassType)) return null;
+      return ((PsiClassType)type).resolve();
     }
     else {
       PsiElement element = ((UReferenceExpression)receiver).resolve();
-      if (!(element instanceof PsiClass)) return false;
-      accessObjectType = (PsiClass)element;
+      return element instanceof PsiClass ? (PsiClass)element : null;
     }
+  }
+
+  private static boolean canAccessProtectedMember(UElement sourceNode, PsiMember member, PsiClass accessObjectType) {
+    PsiClass memberClass = member.getContainingClass();
+    if (memberClass == null) return false;
 
     PsiElement sourcePsi = sourceNode.getSourcePsi();
     UClass sourceClass = UastUtils.findContaining(sourcePsi, UClass.class);
