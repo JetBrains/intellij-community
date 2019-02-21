@@ -10,15 +10,12 @@ import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint
 import com.intellij.openapi.application.constraints.ExpirableConstrainedExecution
 import com.intellij.openapi.application.constraints.Expiration
-import com.intellij.openapi.application.constraints.LimitedAttemptConstraintSchedulingExecutor
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.concurrency.CancellablePromise
 import java.util.concurrent.Callable
-import java.util.concurrent.Executor
-import java.util.function.BooleanSupplier
 
 /**
  * @author peter
@@ -45,9 +42,6 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
 
   override fun dispatchLaterUnconstrained(runnable: Runnable) =
     ApplicationManager.getApplication().invokeLater(runnable, modality)
-
-  override fun createConstraintSchedulingExecutor(condition: BooleanSupplier?): Executor =
-    LimitedAttemptConstraintSchedulingExecutor(constraints, condition)
 
   override fun execute(command: Runnable): Unit = asTaskExecutor().execute(command)
   override fun submit(task: Runnable): CancellablePromise<*> = asTaskExecutor().submit(task)

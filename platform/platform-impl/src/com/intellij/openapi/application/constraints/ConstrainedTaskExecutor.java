@@ -2,28 +2,29 @@
 package com.intellij.openapi.application.constraints;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.Executor;
 import java.util.function.BooleanSupplier;
 
 /**
  * @author eldar
  */
 public class ConstrainedTaskExecutor {
-  private final @NotNull ConstrainedExecutionEx<?> myConstraintExecution;
+  private final @NotNull ConstrainedExecutionScheduler myExecutionScheduler;
+  private final @Nullable Expiration myExpiration;
 
-  public ConstrainedTaskExecutor(@NotNull ConstrainedExecutionEx<?> execution) {
-    myConstraintExecution = execution;
+  public ConstrainedTaskExecutor(@NotNull ConstrainedExecutionScheduler executionScheduler,
+                                 @Nullable Expiration expiration) {
+    myExecutionScheduler = executionScheduler;
+    myExpiration = expiration;
   }
 
   public void execute(@NotNull Runnable command) {
-    final Expiration expiration = myConstraintExecution.composeExpiration();
-    final BooleanSupplier condition = (expiration == null) ? null : () -> !expiration.isExpired();
-    final Executor executor = myConstraintExecution.createConstraintSchedulingExecutor(condition);
-    executor.execute(command);
+    final BooleanSupplier condition = (myExpiration == null) ? null : () -> !myExpiration.isExpired();
+    myExecutionScheduler.scheduleWithinConstraints(command, condition);
   }
 
   public CancellablePromise<Void> submit(@NotNull Runnable task) {
@@ -34,17 +35,14 @@ public class ConstrainedTaskExecutor {
   }
 
   public <T> CancellablePromise<T> submit(@NotNull Callable<? extends T> task) {
-    final Expiration expiration = myConstraintExecution.composeExpiration();
-
     final AsyncPromise<T> promise = new AsyncPromise<>();
-    if (expiration != null) {
-      final Expiration.Handle expirationHandle = expiration.invokeOnExpiration(promise::cancel);
+    if (myExpiration != null) {
+      final Expiration.Handle expirationHandle = myExpiration.invokeOnExpiration(promise::cancel);
       promise.onProcessed(value -> expirationHandle.unregisterHandler());
     }
 
-    final BooleanSupplier condition = () -> !(expiration != null && expiration.isExpired() || promise.isCancelled());
-    final Executor executor = myConstraintExecution.createConstraintSchedulingExecutor(condition);
-    executor.execute(() -> {
+    final BooleanSupplier condition = () -> !(myExpiration != null && myExpiration.isExpired() || promise.isCancelled());
+    myExecutionScheduler.scheduleWithinConstraints(() -> {
       try {
         final T result = task.call();
         promise.setResult(result);
@@ -52,7 +50,7 @@ public class ConstrainedTaskExecutor {
       catch (Throwable e){
         promise.setError(e);
       }
-    });
+    }, condition);
     return promise;
   }
 }

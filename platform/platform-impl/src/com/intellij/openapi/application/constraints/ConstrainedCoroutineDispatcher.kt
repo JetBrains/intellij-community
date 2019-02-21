@@ -4,24 +4,23 @@ package com.intellij.openapi.application.constraints
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Runnable
-import java.util.concurrent.Executor
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
 
-internal fun createConstrainedCoroutineDispatcher(executor: Executor,
+internal fun createConstrainedCoroutineDispatcher(executionScheduler: ConstrainedExecutionScheduler,
                                                   expiration: Expiration? = null): ContinuationInterceptor {
-  val dispatcher = ExecutorDispatcher(executor)
+  val dispatcher = ConstrainedCoroutineDispatcherImpl(executionScheduler)
   return when (expiration) {
     null -> dispatcher
     else -> ExpirableContinuationInterceptor(dispatcher, expiration)
   }
 }
 
-internal class ExecutorDispatcher(private val executor: Executor) : CoroutineDispatcher() {
-  override fun dispatch(context: CoroutineContext, block: Runnable) = executor.execute(block)
-  override fun toString(): String = executor.toString()
+internal class ConstrainedCoroutineDispatcherImpl(private val executionScheduler: ConstrainedExecutionScheduler) : CoroutineDispatcher() {
+  override fun dispatch(context: CoroutineContext, block: Runnable) = executionScheduler.scheduleWithinConstraints(block)
+  override fun toString(): String = executionScheduler.toString()
 }
 
 internal class ExpirableContinuationInterceptor(private val dispatcher: CoroutineDispatcher,

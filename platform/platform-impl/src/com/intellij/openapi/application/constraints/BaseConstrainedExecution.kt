@@ -1,11 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.constraints
 
-import com.intellij.openapi.application.constraints.BaseConstrainedExecution.ConstraintSchedulingExecutor
+import com.intellij.openapi.application.constraints.BaseConstrainedExecution.ReschedulingRunnable
 import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint
 import com.intellij.openapi.diagnostic.Logger
 import kotlinx.coroutines.Runnable
-import java.util.concurrent.Executor
 import java.util.function.BooleanSupplier
 import kotlin.coroutines.ContinuationInterceptor
 
@@ -15,56 +14,66 @@ import kotlin.coroutines.ContinuationInterceptor
  *
  * ## Implementation notes: ##
  *
- * So, the [ConstraintSchedulingExecutor.execute] starts checking the list of constraints, one by one, rescheduling and restarting itself
- * for each unsatisfied constraint ([ConstraintSchedulingExecutor.retrySchedule]), until at some point *all* of the constraints are
- * satisfied *at once*.
+ * The [scheduleWithinConstraints] starts checking the list of constraints, one by one, rescheduling and restarting itself
+ * for each unsatisfied constraint ([ReschedulingRunnable]), until at some point *all* of the constraints are satisfied *at once*.
  *
- * This ultimately ends up with [ContextConstraint.schedule] being called one by one for every constraint of the chain that needs to be
- * scheduled. Finally, the runnable is called, executing the task in the properly arranged context.
+ * This ultimately ends up with [ContextConstraint.schedule] being called one by one for every constraint that needs to be scheduled.
+ * Finally, the runnable is called, executing the task in the properly arranged context.
  *
  * @author eldar
  * @author peter
  */
 abstract class BaseConstrainedExecution<E : ConstrainedExecution<E>>(protected val constraints: Array<ContextConstraint>)
-  : ConstrainedExecutionEx<E> {
+  : ConstrainedExecution<E>, ConstrainedExecutionScheduler {
   protected abstract fun cloneWith(constraints: Array<ContextConstraint>): E
 
   override fun withConstraint(constraint: ContextConstraint): E = cloneWith(constraints + constraint)
 
-  fun asTaskExecutor() = ConstrainedTaskExecutor(this)
-  fun asCoroutineDispatcher(): ContinuationInterceptor =
-    createConstrainedCoroutineDispatcher(createConstraintSchedulingExecutor(), composeExpiration())
+  fun asTaskExecutor() = ConstrainedTaskExecutor(this, composeExpiration())
+  fun asCoroutineDispatcher(): ContinuationInterceptor = createConstrainedCoroutineDispatcher(this, composeExpiration())
+  protected open fun composeExpiration(): Expiration? = null
 
-  override fun createConstraintSchedulingExecutor(condition: BooleanSupplier?): Executor =
-    when (condition) {
-      null -> ConstraintSchedulingExecutor(constraints)
-      else -> ConditionalConstraintSchedulingExecutor(constraints, condition)
-    }
+  override fun scheduleWithinConstraints(runnable: Runnable, condition: BooleanSupplier?) = doSchedule(runnable, condition, null)
 
-  open class ConstraintSchedulingExecutor(private val constraints: Array<ContextConstraint>) : Executor {
-    override fun execute(runnable: Runnable) {
-      for (constraint in constraints) {
-        if (!constraint.isCorrectContext()) {
-          return constraint.schedule(Runnable {
-            LOG.assertTrue(constraint.isCorrectContext())
-            retrySchedule(runnable, causeConstraint = constraint)
-          })
-        }
+  private fun doSchedule(runnable: Runnable, condition: BooleanSupplier?,
+                         previousAttempt: ReschedulingAttempt?) {
+    if (condition?.asBoolean == false) return
+    for (constraint in constraints) {
+      if (!constraint.isCorrectContext()) {
+        return constraint.schedule(ReschedulingRunnable(runnable, condition, constraint, previousAttempt))
       }
-      runnable.run()
     }
-
-    protected open fun retrySchedule(runnable: Runnable, causeConstraint: ContextConstraint) {
-      execute(runnable)
-    }
+    runnable.run()
   }
 
-  open class ConditionalConstraintSchedulingExecutor(constraints: Array<ContextConstraint>,
-                                                     private val condition: BooleanSupplier?) : ConstraintSchedulingExecutor(constraints) {
-    override fun execute(runnable: Runnable) {
-      if (condition?.asBoolean != false) {
-        super.execute(runnable)
+  private inner class ReschedulingRunnable(private val runnable: Runnable,
+                                           private val condition: BooleanSupplier?,
+                                           constraint: ContextConstraint,
+                                           previousAttempt: ReschedulingAttempt?) : ReschedulingAttempt(constraint,
+                                                                                                        previousAttempt), Runnable {
+    override fun run() {
+      LOG.assertTrue(constraint.isCorrectContext())
+      doSchedule(runnable, condition, previousAttempt = this)
+    }
+
+    override fun toString(): String = "$runnable rescheduled due to " + super.toString()
+  }
+
+  private open class ReschedulingAttempt(val constraint: ContextConstraint,
+                                         private val previousAttempt: ReschedulingAttempt?) {
+    private val attemptChain: Sequence<ReschedulingAttempt> get() = generateSequence(this) { it.previousAttempt }
+    private val attemptNumber: Int = ((previousAttempt?.attemptNumber ?: 0) + 1).also { n ->
+      if (n > 3000) {
+        val lastConstraints = attemptChain.take(15).map { it.constraint }
+        LOG.error("Too many reschedule requests, probably constraints can't be satisfied all together: " + lastConstraints.joinToString())
       }
+    }
+
+    override fun toString(): String {
+      val limit = 5
+      val lastConstraints = attemptChain.take(limit).mapTo(mutableListOf()) { "[${it.attemptNumber}]${it.constraint}" }
+      if (lastConstraints.size == limit) lastConstraints[limit - 1] = "..."
+      return lastConstraints.joinToString(" <- ")
     }
   }
 
