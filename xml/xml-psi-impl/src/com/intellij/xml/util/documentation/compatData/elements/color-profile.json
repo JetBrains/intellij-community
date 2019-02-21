@@ -52,10 +52,10 @@
           "__compat": {
             "support": {
               "chrome": {
-                "version_added": null
+                "version_added": false
               },
               "chrome_android": {
-                "version_added": null
+                "version_added": false
               },
               "edge": {
                 "version_added": null
@@ -64,28 +64,28 @@
                 "version_added": null
               },
               "firefox": {
-                "version_added": null
+                "version_added": false
               },
               "firefox_android": {
-                "version_added": null
+                "version_added": false
               },
               "ie": {
                 "version_added": null
               },
               "opera": {
-                "version_added": null
+                "version_added": false
               },
               "opera_android": {
-                "version_added": null
+                "version_added": false
               },
               "safari": {
-                "version_added": null
+                "version_added": false
               },
               "safari_ios": {
-                "version_added": null
+                "version_added": false
               },
               "webview_android": {
-                "version_added": null
+                "version_added": false
               }
             },
             "status": {
@@ -99,10 +99,10 @@
           "__compat": {
             "support": {
               "chrome": {
-                "version_added": null
+                "version_added": false
               },
               "chrome_android": {
-                "version_added": null
+                "version_added": false
               },
               "edge": {
                 "version_added": null
@@ -111,28 +111,28 @@
                 "version_added": null
               },
               "firefox": {
-                "version_added": null
+                "version_added": false
               },
               "firefox_android": {
-                "version_added": null
+                "version_added": false
               },
               "ie": {
                 "version_added": null
               },
               "opera": {
-                "version_added": null
+                "version_added": false
               },
               "opera_android": {
-                "version_added": null
+                "version_added": false
               },
               "safari": {
-                "version_added": null
+                "version_added": false
               },
               "safari_ios": {
-                "version_added": null
+                "version_added": false
               },
               "webview_android": {
-                "version_added": null
+                "version_added": false
               }
             },
             "status": {
@@ -146,10 +146,10 @@
           "__compat": {
             "support": {
               "chrome": {
-                "version_added": null
+                "version_added": false
               },
               "chrome_android": {
-                "version_added": null
+                "version_added": false
               },
               "edge": {
                 "version_added": null
@@ -158,28 +158,28 @@
                 "version_added": null
               },
               "firefox": {
-                "version_added": null
+                "version_added": false
               },
               "firefox_android": {
-                "version_added": null
+                "version_added": false
               },
               "ie": {
                 "version_added": null
               },
               "opera": {
-                "version_added": null
+                "version_added": false
               },
               "opera_android": {
-                "version_added": null
+                "version_added": false
               },
               "safari": {
-                "version_added": null
+                "version_added": false
               },
               "safari_ios": {
-                "version_added": null
+                "version_added": false
               },
               "webview_android": {
-                "version_added": null
+                "version_added": false
               }
             },
             "status": {
@@ -194,10 +194,10 @@
             "description": "<code>xlink:href</code>",
             "support": {
               "chrome": {
-                "version_added": null
+                "version_added": false
               },
               "chrome_android": {
-                "version_added": null
+                "version_added": false
               },
               "edge": {
                 "version_added": null
@@ -206,28 +206,28 @@
                 "version_added": null
               },
               "firefox": {
-                "version_added": null
+                "version_added": false
               },
               "firefox_android": {
-                "version_added": null
+                "version_added": false
               },
               "ie": {
                 "version_added": null
               },
               "opera": {
-                "version_added": null
+                "version_added": false
               },
               "opera_android": {
-                "version_added": null
+                "version_added": false
               },
               "safari": {
-                "version_added": null
+                "version_added": false
               },
               "safari_ios": {
-                "version_added": null
+                "version_added": false
               },
               "webview_android": {
-                "version_added": null
+                "version_added": false
               }
             },
             "status": {
