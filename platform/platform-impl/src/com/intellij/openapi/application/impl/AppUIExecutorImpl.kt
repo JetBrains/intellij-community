@@ -43,9 +43,9 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
   override fun dispatchLaterUnconstrained(runnable: Runnable) =
     ApplicationManager.getApplication().invokeLater(runnable, modality)
 
-  override fun execute(command: Runnable): Unit = asTaskExecutor().execute(command)
-  override fun submit(task: Runnable): CancellablePromise<*> = asTaskExecutor().submit(task)
-  override fun <T : Any?> submit(task: Callable<T>): CancellablePromise<T> = asTaskExecutor().submit(task)
+  override fun execute(command: Runnable): Unit = asExecutor().execute(command)
+  override fun submit(task: Runnable): CancellablePromise<*> = asExecutor().submit(task)
+  override fun <T : Any?> submit(task: Callable<T>): CancellablePromise<T> = asExecutor().submit(task)
 
   override fun later(): AppUIExecutor {
     val edtEventCount = if (ApplicationManager.getApplication().isDispatchThread) IdeEventQueue.getInstance().eventCount else -1

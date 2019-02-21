@@ -13,7 +13,6 @@ import kotlin.coroutines.CoroutineContext
  * @author eldar
  */
 interface AppUIExecutorEx : AppUIExecutor, ConstrainedExecution<AppUIExecutorEx> {
-  fun asCoroutineDispatcher(): ContinuationInterceptor
   fun inUndoTransparentAction(): AppUIExecutor
   fun inWriteAction(): AppUIExecutor
 }

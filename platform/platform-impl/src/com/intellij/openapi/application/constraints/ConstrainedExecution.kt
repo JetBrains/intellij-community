@@ -2,11 +2,33 @@
 package com.intellij.openapi.application.constraints
 
 import com.intellij.openapi.Disposable
+import kotlinx.coroutines.*
+import java.util.concurrent.Executor
+import kotlin.coroutines.ContinuationInterceptor
 
 /**
  * @author eldar
  */
 interface ConstrainedExecution<E : ConstrainedExecution<E>> {
+  /**
+   * Use the returned dispatcher to run coroutines using the standard [withContext], [launch] and [async].
+   *
+   * Never use [kotlinx.coroutines.asCoroutineDispatcher] with [asExecutor]: the latter may violate the [Executor] contract.
+   */
+  fun asCoroutineDispatcher(): ContinuationInterceptor
+
+  /**
+   * TL;DR. Never use for scheduling coroutines, use the [asCoroutineDispatcher] instead.
+   *
+   * If there were any [Disposable]s registered using [expireWith], [withConstraint], or any specialized builder methods implying the
+   * execution may "expire" at some point, the returned object violates the contract of the [Executor] interface. Once the execution
+   * expires, it refuses to execute a runnable silently, without throwing the required [java.util.concurrent.RejectedExecutionException].
+   * While this behavior may seem to be convenient, and matches the behavior of other IDEA execution services taking [Disposable]s,
+   * such executor MUST NEVER be used for dispatching coroutines, as execution of a coroutine may hang at a suspension point forever
+   * without giving it a chance to handle cancellation and exit gracefully.
+   */
+  fun asExecutor(): Executor
+
   /**
    * The [constraint] MUST guarantee to execute a runnable passed to its [ContextConstraint.schedule] method at some point.
    * For dispatchers that may refuse to run the task based on some condition consider the [withConstraint] overload
