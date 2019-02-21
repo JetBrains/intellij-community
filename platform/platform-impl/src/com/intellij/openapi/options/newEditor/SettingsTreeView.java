@@ -19,6 +19,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.components.GradientViewport;
+import com.intellij.ui.tree.ui.Control;
+import com.intellij.ui.tree.ui.DefaultControl;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
@@ -75,6 +77,8 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   private Configurable myQueuedConfigurable;
   private boolean myPaintInternalInfo;
 
+  private MyControl myControl;
+
   public SettingsTreeView(SettingsFilter filter, ConfigurableGroup[] groups) {
     myFilter = filter;
     myRoot = new MyRoot(groups);
@@ -124,7 +128,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
           myHeader.setBorder(BorderFactory.createEmptyBorder(1, 10 + getLeftMargin(0), 0, 0));
         }
         myHeader.setFont(myTree.getFont());
-        myHeader.setIcon(myTree.getEmptyHandle());
+        myHeader.setIcon(getIcon(null));
         int height = myHeader.getPreferredSize().height;
         String group = findGroupNameAt(0, height + 3);
         if (group == null || !group.equals(findGroupNameAt(0, 0))) {
@@ -180,6 +184,48 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     myBuilder = new MyBuilder(new SimpleTreeStructure.Impl(myRoot));
     myBuilder.setFilteringMerge(300, null);
     Disposer.register(this, myBuilder);
+  }
+
+  @Override
+  public void updateUI() {
+    super.updateUI();
+    myControl = null;
+  }
+
+  private Icon getIcon(@Nullable DefaultMutableTreeNode node) {
+    if (myControl == null) myControl = new MyControl();
+    if (node == null || 0 == node.getChildCount()) return myControl.empty;
+    return myTree.isExpanded(new TreePath(node.getPath())) ? myControl.expanded : myControl.collapsed;
+  }
+
+  private static final class MyControl {
+    private final Control control = new DefaultControl();
+    private final Icon collapsed = new MyIcon(false);
+    private final Icon expanded = new MyIcon(true);
+    private final Icon empty = new MyIcon(null);
+
+    private final class MyIcon implements Icon {
+      private final Boolean expanded;
+
+      private MyIcon(@Nullable Boolean expanded) {
+        this.expanded = expanded;
+      }
+
+      @Override
+      public int getIconWidth() {
+        return control.getWidth();
+      }
+
+      @Override
+      public int getIconHeight() {
+        return control.getHeight();
+      }
+
+      @Override
+      public void paintIcon(Component c, Graphics g, int x, int y) {
+        if (expanded != null) control.paint(g, x, y, getIconWidth(), getIconHeight(), expanded, false);
+      }
+    }
   }
 
   private static void setComponentPopupMenuTo(JTree tree) {
@@ -585,15 +631,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       // configure node icon
       Icon nodeIcon = null;
       if (value instanceof DefaultMutableTreeNode) {
-        DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
-        if (0 == treeNode.getChildCount()) {
-          nodeIcon = myTree.getEmptyHandle();
-        }
-        else {
-          nodeIcon = myTree.isExpanded(new TreePath(treeNode.getPath()))
-                     ? myTree.getExpandedHandle()
-                     : myTree.getCollapsedHandle();
-        }
+        nodeIcon = getIcon((DefaultMutableTreeNode)value);
       }
       myNodeIcon.setIcon(nodeIcon);
       if (node != null && myPaintInternalInfo) {
