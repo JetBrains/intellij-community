@@ -9,7 +9,7 @@ import java.util.function.Consumer
  * @author nik
  */
 abstract class BaseIdeaProperties extends ProductProperties {
-  protected static final List<String> JAVA_API_MODULES = [
+  public static final List<String> JAVA_API_MODULES = [
     "intellij.java.compiler",
     "intellij.java.debugger",
     "intellij.xml.dom",
@@ -19,7 +19,17 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.platform.testFramework.core",
     "intellij.platform.uast.tests"
   ]
-  protected static final List<String> JAVA_IMPLEMENTATION_MODULES = [
+  public static final List<String> MAIN_JAVA_API_MODULES = [
+    "intellij.java.analysis",
+    "intellij.jvm.analysis",
+    "intellij.java.indexing",
+    "intellij.java.psi",
+    "intellij.java",
+    "intellij.jsp.base",
+    "intellij.jsp",
+    "intellij.platform.uast"
+  ]
+  public static final List<String> JAVA_IMPLEMENTATION_MODULES = [
     "intellij.java.compiler.impl",
     "intellij.java.debugger.impl",
     "intellij.java.debugger.memory.agent",
@@ -33,6 +43,15 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.platform.testFramework",
     "intellij.tools.testsBootstrap",
     "intellij.uiDesigner"
+  ]
+  public static final List<String> MAIN_JAVA_IMPLEMENTATION_MODULES = [
+    "intellij.java.analysis.impl",
+    "intellij.jvm.analysis.impl",
+    "intellij.java.indexing.impl",
+    "intellij.java.psi.impl",
+    "intellij.java.impl",
+    "intellij.jsp.spi",
+    "intellij.java.uast"
   ]
   protected static final List<String> BUNDLED_PLUGIN_MODULES = [
     "intellij.copyright",
@@ -121,30 +140,14 @@ abstract class BaseIdeaProperties extends ProductProperties {
     productLayout.additionalPlatformJars.
       putAll("javac2.jar", ["intellij.java.compiler.antTasks", "intellij.java.guiForms.compiler", "intellij.java.guiForms.rt", "intellij.java.compiler.instrumentationUtil", "intellij.java.compiler.instrumentationUtil.java8", "intellij.java.jps.javacRefScanner8"])
 
-    def JAVA_API_JAR = "java-api.jar"
-    def JAVA_IMPL_JAR = "java-impl.jar"
-    productLayout.additionalPlatformJars.putAll(JAVA_API_JAR, [])
-    productLayout.additionalPlatformJars.putAll(JAVA_IMPL_JAR, [])
-
     productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
       layout.customize {
-        def JAVA_RESOURCES_JAR = "java_resources_en.jar"
-        withModule("intellij.java.analysis", JAVA_API_JAR, JAVA_RESOURCES_JAR)
-        withModule("intellij.jvm.analysis", JAVA_API_JAR, JAVA_RESOURCES_JAR)
-        withModule("intellij.java.indexing", JAVA_API_JAR, JAVA_RESOURCES_JAR)
-        withModule("intellij.java.psi", JAVA_API_JAR, JAVA_RESOURCES_JAR)
-        withModule("intellij.java", JAVA_API_JAR, JAVA_RESOURCES_JAR)
-        withModule("intellij.jsp.base", JAVA_API_JAR, JAVA_RESOURCES_JAR)
-        withModule("intellij.jsp", JAVA_API_JAR, JAVA_RESOURCES_JAR)
-        withModule("intellij.platform.uast", JAVA_API_JAR, JAVA_RESOURCES_JAR)
-
-        withModule("intellij.java.analysis.impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
-        withModule("intellij.jvm.analysis.impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
-        withModule("intellij.java.indexing.impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
-        withModule("intellij.java.psi.impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
-        withModule("intellij.java.impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
-        withModule("intellij.jsp.spi", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
-        withModule("intellij.java.uast", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
+        MAIN_JAVA_API_MODULES.each {
+          withModule(it, "java-api.jar", "java_resources_en.jar")
+        }
+        MAIN_JAVA_IMPLEMENTATION_MODULES.each {
+          withModule(it, "java-impl.jar", "java_resources_en.jar")
+        }
 
         withModule("intellij.java.rt", "idea_rt.jar", null)
         withArtifact("debugger-agent", "rt")
