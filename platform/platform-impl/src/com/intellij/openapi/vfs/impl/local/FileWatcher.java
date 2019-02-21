@@ -46,24 +46,24 @@ public class FileWatcher {
     }
   };
 
-  public static class DirtyPaths {
-    public final Set<String> dirtyPaths = ContainerUtil.newTroveSet();
-    public final Set<String> dirtyPathsRecursive = ContainerUtil.newTroveSet();
-    public final Set<String> dirtyDirectories = ContainerUtil.newTroveSet();
+  static class DirtyPaths {
+    final Set<String> dirtyPaths = ContainerUtil.newTroveSet();
+    final Set<String> dirtyPathsRecursive = ContainerUtil.newTroveSet();
+    final Set<String> dirtyDirectories = ContainerUtil.newTroveSet();
 
-    public static final DirtyPaths EMPTY = new DirtyPaths();
+    static final DirtyPaths EMPTY = new DirtyPaths();
 
-    public boolean isEmpty() {
+    boolean isEmpty() {
       return dirtyPaths.isEmpty() && dirtyPathsRecursive.isEmpty() && dirtyDirectories.isEmpty();
     }
 
-    private void addDirtyPath(String path) {
+    private void addDirtyPath(@NotNull String path) {
       if (!dirtyPathsRecursive.contains(path)) {
         dirtyPaths.add(path);
       }
     }
 
-    private void addDirtyPathRecursive(String path) {
+    private void addDirtyPathRecursive(@NotNull String path) {
       dirtyPaths.remove(path);
       dirtyPathsRecursive.add(path);
     }
@@ -121,7 +121,7 @@ public class FileWatcher {
     waitForFuture(myFileWatcherExecutor.submit(EmptyRunnable.getInstance()));
   }
 
-  private void waitForFuture(Future<?> future) {
+  private void waitForFuture(@NotNull Future<?> future) {
     try {
       future.get();
     }
@@ -130,7 +130,7 @@ public class FileWatcher {
   }
 
   @NotNull
-  public DirtyPaths getDirtyPaths() {
+  DirtyPaths getDirtyPaths() {
     return myNotificationSink.getDirtyPaths();
   }
 
@@ -154,7 +154,7 @@ public class FileWatcher {
   /**
    * Clients should take care of not calling this method in parallel.
    */
-  public void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat) {
+  void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat) {
     CanonicalPathMap pathMap = new CanonicalPathMap(recursive, flat);
 
     myPathMap = pathMap;
@@ -182,6 +182,7 @@ public class FileWatcher {
     private final Object myLock = new Object();
     private DirtyPaths myDirtyPaths = new DirtyPaths();
 
+    @NotNull
     DirtyPaths getDirtyPaths() {
       DirtyPaths dirtyPaths = DirtyPaths.EMPTY;
 
@@ -206,7 +207,7 @@ public class FileWatcher {
     }
 
     @Override
-    public void notifyMapping(@NotNull Collection<Pair<String, String>> mapping) {
+    public void notifyMapping(@NotNull Collection<? extends Pair<String, String>> mapping) {
       if (!mapping.isEmpty()) {
         myPathMap.addMapping(mapping);
       }
@@ -295,7 +296,7 @@ public class FileWatcher {
   public static final String RESET = "(reset)";
   public static final String OTHER = "(other)";
 
-  private volatile Consumer<String> myTestNotifier = null;
+  private volatile Consumer<String> myTestNotifier;
 
   private void notifyOnEvent(String path) {
     Consumer<String> notifier = myTestNotifier;

@@ -272,17 +272,19 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     recursiveRoots = ObjectUtils.notNull(recursiveRoots, Collections.emptyList());
     flatRoots = ObjectUtils.notNull(flatRoots, Collections.emptyList());
 
-    Set<String> recursiveWatches = new HashSet<>();
-    Set<String> flatWatches = new HashSet<>();
+    Set<String> recursiveWatches = new HashSet<>(watchRequests.size());
+    Set<String> flatWatches = new HashSet<>(watchRequests.size());
     for (LocalFileSystem.WatchRequest watch : watchRequests) {
       (watch.isToWatchRecursively() ? recursiveWatches : flatWatches).add(watch.getRootPath());
     }
     if (recursiveWatches.equals(recursiveRoots) && flatWatches.equals(flatRoots)) {
-      if (LOG.isDebugEnabled()) LOG.debug("same requests: " + recursiveRoots + " / " + flatRoots);
+      if (LOG.isDebugEnabled()) LOG.debug("same requests:" +
+                                          " (recursive: "+recursiveRoots.size()+"; flat: "+flatRoots.size()+")\n" +
+                                          recursiveRoots + " / " + flatRoots);
       return watchRequests instanceof Set ? (Set<WatchRequest>)watchRequests : new HashSet<>(watchRequests);
     }
 
-    Set<WatchRequest> result = new HashSet<>();
+    Set<WatchRequest> result = new HashSet<>(recursiveRoots.size() + flatRoots.size());
     synchronized (myLock) {
       boolean update = doAddRootsToWatch(recursiveRoots, flatRoots, result);
       update |= doRemoveWatchedRoots(watchRequests);
@@ -294,7 +296,9 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     return result;
   }
 
-  private boolean doAddRootsToWatch(@NotNull Collection<String> recursiveRoots, @NotNull Collection<String> flatRoots, @NotNull Set<? super WatchRequest> result) {
+  private boolean doAddRootsToWatch(@NotNull Collection<String> recursiveRoots,
+                                    @NotNull Collection<String> flatRoots,
+                                    @NotNull Set<? super WatchRequest> result) {
     boolean update = false;
     for (String root : recursiveRoots) update |= watch(root, true, result);
     for (String root : flatRoots) update |= watch(root, false, result);
