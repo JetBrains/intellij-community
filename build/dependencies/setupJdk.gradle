@@ -8,14 +8,15 @@ cleanSetupJdks.dependsOn('cleanSetupJdk', 'cleanSetupJdk16', 'cleanDownloadJdk')
 
 project.ext.jdkRepo = 'https://cache-redirector.jetbrains.com/intellij-jdk'
 project.ext.jdkVersion = System.getProperty('intellij.build.jdk.version', '8').toInteger()
-project.ext.jdkArtifactPrefix = 'jbrsdk-'
+def isModular = jdkVersion > 8
+project.ext.jdkArtifactPrefix = isModular ? 'jbr-' : 'jbrsdk-'
 
 def jdkDir = System.getProperty('intellij.build.jdks.target.dir')?.with {
   new File(it).mkdirs()
   it
 } ?: "${intellijProjectDir()}/build/jdk"
 
-project.ext.jdkOutputDir = System.getProperty("intellij.jdk.output.dir", "$jdkDir/${jdkVersion < 9 ? "1.$jdkVersion" : jdkVersion}")
+project.ext.jdkOutputDir = System.getProperty("intellij.jdk.output.dir", "$jdkDir/${!isModular ? "1.$jdkVersion" : jdkVersion}")
 
 /**
  * Update this method together with:
