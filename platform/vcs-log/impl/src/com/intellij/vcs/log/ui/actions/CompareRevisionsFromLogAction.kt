@@ -22,8 +22,8 @@ class CompareRevisionsFromLogAction : DumbAwareAction() {
 
     val commits = log.selectedCommits
     
-    e.presentation.isVisible = true
-    e.presentation.isEnabled = commits.size == 2 && commits.first().root == commits.last().root
+    e.presentation.isVisible = commits.size == 2
+    e.presentation.isEnabled = commits.first().root == commits.last().root
   }
 
   override fun actionPerformed(e: AnActionEvent) {

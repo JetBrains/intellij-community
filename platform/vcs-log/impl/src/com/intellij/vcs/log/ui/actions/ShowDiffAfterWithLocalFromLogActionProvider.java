@@ -39,14 +39,13 @@ public class ShowDiffAfterWithLocalFromLogActionProvider implements AnActionExte
       return;
     }
 
-    e.getPresentation().setVisible(true);
-
     List<CommitId> commits = log.getSelectedCommits();
     if (commits.size() != 1) {
-      e.getPresentation().setEnabled(false);
+      e.getPresentation().setEnabledAndVisible(false);
       return;
     }
 
+    e.getPresentation().setVisible(true);
     e.getPresentation().setEnabled(e.getData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER) != null);
   }
 
