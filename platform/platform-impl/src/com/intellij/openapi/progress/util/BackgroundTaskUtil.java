@@ -223,7 +223,7 @@ public class BackgroundTaskUtil {
         }
       }
       catch (InterruptedException | TimeoutException e) {
-        LOG.error("Couldn't await background process on disposal: " + runnable);
+        LOG.debug("Couldn't await background process on disposal: " + runnable);
       }
     };
 
