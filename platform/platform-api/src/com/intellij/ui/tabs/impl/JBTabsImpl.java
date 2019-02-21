@@ -53,7 +53,6 @@ public class JBTabsImpl extends JComponent
   implements JBTabsEx, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation, Queryable,
              UISettingsListener, QuickActionProvider, Accessible {
 
-  public static final DataKey<JBTabsImpl> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
   @NonNls public static final Key<Integer> SIDE_TABS_SIZE_LIMIT_KEY = Key.create("SIDE_TABS_SIZE_LIMIT_KEY");
   static final int MIN_TAB_WIDTH = JBUI.scale(75);
   public static final int DEFAULT_MAX_TAB_WIDTH = JBUI.scale(300);
@@ -358,6 +357,7 @@ public class JBTabsImpl extends JComponent
     return ACTIVE_TAB_UNDERLINE_HEIGHT.get();
   }
 
+  @Override
   public boolean isEditorTabs() {
     return false;
   }
@@ -625,11 +625,13 @@ public class JBTabsImpl extends JComponent
     }
   }
 
+  @Override
   public boolean canShowMorePopup() {
     final SingleRowPassInfo lastLayout = mySingleRowLayout.myLastSingRowLayout;
     return lastLayout != null && lastLayout.moreRect != null;
   }
 
+  @Override
   public void showMorePopup(@Nullable final MouseEvent e) {
     final SingleRowPassInfo lastLayout = mySingleRowLayout.myLastSingRowLayout;
     if (lastLayout == null) {
@@ -2574,6 +2576,7 @@ public class JBTabsImpl extends JComponent
     myLastPaintedSelection = null;
   }
 
+  @Override
   @Nullable
   public TabInfo findInfo(Component component) {
     for (TabInfo each : getTabs()) {
@@ -2869,7 +2872,7 @@ public class JBTabsImpl extends JComponent
 
     @Override
     public final void update(@NotNull final AnActionEvent e) {
-      JBTabsImpl tabs = e.getData(NAVIGATION_ACTIONS_KEY);
+      JBTabsImpl tabs = (JBTabsImpl)e.getData(NAVIGATION_ACTIONS_KEY);
       e.getPresentation().setVisible(tabs != null);
       if (tabs == null) return;
 
@@ -2913,7 +2916,7 @@ public class JBTabsImpl extends JComponent
 
     @Override
     public final void actionPerformed(@NotNull final AnActionEvent e) {
-      JBTabsImpl tabs = e.getData(NAVIGATION_ACTIONS_KEY);
+      JBTabsImpl tabs = (JBTabsImpl)e.getData(NAVIGATION_ACTIONS_KEY);
       tabs = findNavigatableTabs(tabs);
       if (tabs == null) return;
 

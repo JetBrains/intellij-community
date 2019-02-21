@@ -69,6 +69,9 @@ public interface JBTabs {
   @Nullable
   TabInfo findInfo(Object object);
 
+  @Nullable
+  TabInfo findInfo(Component component);
+
   int getIndexOf(@Nullable final TabInfo tabInfo);
 
   void requestFocus();

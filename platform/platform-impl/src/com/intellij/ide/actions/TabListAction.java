@@ -3,7 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.ui.tabs.newImpl.JBTabsImpl;
+import com.intellij.ui.tabs.JBTabsEx;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 public class TabListAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    JBTabsImpl tabs = e.getData(JBTabsImpl.NAVIGATION_ACTIONS_KEY);
+    JBTabsEx tabs = e.getData(JBTabsEx.NAVIGATION_ACTIONS_KEY);
     if (tabs != null) {
       tabs.showMorePopup(null);
     }
@@ -26,7 +26,7 @@ public class TabListAction extends AnAction {
   }
 
   private static boolean isTabListAvailable(@NotNull AnActionEvent e) {
-    JBTabsImpl tabs = e.getData(JBTabsImpl.NAVIGATION_ACTIONS_KEY);
+    JBTabsEx tabs = e.getData(JBTabsEx.NAVIGATION_ACTIONS_KEY);
     if (tabs == null || !tabs.isEditorTabs()) {
       return false;
     }
