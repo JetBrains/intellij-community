@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger
 import kotlinx.coroutines.Runnable
 import java.util.concurrent.Executor
 import java.util.function.BooleanSupplier
+import kotlin.coroutines.CoroutineContext
 
 /**
  * This class is responsible for running a task in a proper context defined using various builder methods of this class and it's
@@ -28,8 +29,10 @@ abstract class BaseConstrainedExecution<E : ConstrainedExecution<E>>(protected v
   : ConstrainedExecutionEx<E> {
   protected abstract fun cloneWith(constraints: Array<ContextConstraint>): E
 
-  override fun withConstraint(constraint: ContextConstraint): E =
-    cloneWith(constraints + constraint)
+  override fun withConstraint(constraint: ContextConstraint): E = cloneWith(constraints + constraint)
+
+  fun asTaskExecutor() = ConstrainedTaskExecutor(this)
+  fun asCoroutineContext(): CoroutineContext = ConstrainedCoroutineSupport(this).coroutineContext
 
   override fun createConstraintSchedulingExecutor(condition: BooleanSupplier?): Executor =
     when (condition) {

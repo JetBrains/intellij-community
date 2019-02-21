@@ -7,8 +7,10 @@ import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
-import com.intellij.openapi.application.constraints.*
 import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint
+import com.intellij.openapi.application.constraints.ExpirableConstrainedExecution
+import com.intellij.openapi.application.constraints.Expiration
+import com.intellij.openapi.application.constraints.LimitedAttemptConstraintSchedulingExecutor
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -17,8 +19,6 @@ import org.jetbrains.concurrency.CancellablePromise
 import java.util.concurrent.Callable
 import java.util.concurrent.Executor
 import java.util.function.BooleanSupplier
-import kotlin.LazyThreadSafetyMode.PUBLICATION
-import kotlin.coroutines.CoroutineContext
 
 /**
  * @author peter
@@ -28,9 +28,6 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
                                                      constraints: Array<ContextConstraint>,
                                                      expirableHandles: Set<Expiration>)
   : ExpirableConstrainedExecution<AppUIExecutorEx>(constraints, expirableHandles), AppUIExecutorEx {
-
-  val taskExecutor: ConstrainedTaskExecutor by lazy(PUBLICATION) { ConstrainedTaskExecutor(this) }
-  override val coroutineContext: CoroutineContext by lazy(PUBLICATION) { ConstrainedCoroutineSupport(this).coroutineContext }
 
   constructor(modality: ModalityState) : this(modality, arrayOf(/* fallback */ object : ContextConstraint {
     override fun isCorrectContext(): Boolean =
@@ -52,9 +49,9 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
   override fun createConstraintSchedulingExecutor(condition: BooleanSupplier?): Executor =
     LimitedAttemptConstraintSchedulingExecutor(constraints, condition)
 
-  override fun execute(command: Runnable): Unit = taskExecutor.execute(command)
-  override fun submit(task: Runnable): CancellablePromise<*> = taskExecutor.submit(task)
-  override fun <T : Any?> submit(task: Callable<T>): CancellablePromise<T> = taskExecutor.submit(task)
+  override fun execute(command: Runnable): Unit = asTaskExecutor().execute(command)
+  override fun submit(task: Runnable): CancellablePromise<*> = asTaskExecutor().submit(task)
+  override fun <T : Any?> submit(task: Callable<T>): CancellablePromise<T> = asTaskExecutor().submit(task)
 
   override fun later(): AppUIExecutor {
     val edtEventCount = if (ApplicationManager.getApplication().isDispatchThread) IdeEventQueue.getInstance().eventCount else -1
