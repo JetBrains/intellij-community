@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -72,7 +71,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private static final String STACKTRACE_ATTACHMENT = "stacktrace.txt";
   private static final String ACCEPTED_NOTICES_KEY = "exception.accepted.notices";
   private static final String ACCEPTED_NOTICES_SEPARATOR = ":";
-  private static List<Developer> ourDevelopersList = Collections.emptyList();
 
   private final MessagePool myMessagePool;
   private final Project myProject;
@@ -121,8 +119,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private void loadDevelopersList() {
-    if (!ourDevelopersList.isEmpty()) {
-      myAssigneeCombo.setModel(new CollectionComboBoxModel<>(ourDevelopersList));
+    InternalErrorReportConfigurable internalConfigurable = InternalErrorReportConfigurable.getInstance();
+    if (internalConfigurable.isDevelopersListValid()) {
+      myAssigneeCombo.setModel(new CollectionComboBoxModel<>(internalConfigurable.getDevelopersList()));
     }
     else {
       new Task.Backgroundable(null, "Loading Developers List", true) {
@@ -130,15 +129,21 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         public void run(@NotNull ProgressIndicator indicator) {
           try {
             List<Developer> developers = ITNProxy.fetchDevelopers(indicator);
-            //noinspection AssignmentToStaticFieldFromInstanceMethod
-            ourDevelopersList = developers;
             UIUtil.invokeLaterIfNeeded(() -> {
+              internalConfigurable.setDevelopersList(developers);
               if (isShowing()) {
                 myAssigneeCombo.setModel(new CollectionComboBoxModel<>(developers));
               }
             });
           }
-          catch (UnknownHostException e) { LOG.debug(e); }
+          catch (UnknownHostException e) {
+            LOG.debug(e);
+            UIUtil.invokeLaterIfNeeded(() -> {
+              if (isShowing()) {
+                myAssigneeCombo.setModel(new CollectionComboBoxModel<>(internalConfigurable.getDevelopersList()));
+              }
+            });
+          }
           catch (IOException e) { LOG.warn(e); }
         }
       }.queue();
@@ -551,8 +556,20 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         myAssigneeCombo.setSelectedIndex(-1);
       }
       else {
-        Condition<Developer> lookup = d -> Objects.equals(assignee, d.getId());
-        myAssigneeCombo.setSelectedIndex(ContainerUtil.indexOf(ourDevelopersList, lookup));
+        int assigneeIndex = -1;
+        for (int i = 0; i < myAssigneeCombo.getItemCount(); i++) {
+          if (Objects.equals(assignee, myAssigneeCombo.getItemAt(i).getId())) {
+            assigneeIndex = i;
+            break;
+          }
+        }
+
+        if (assigneeIndex != -1) {
+          myAssigneeCombo.setSelectedIndex(assigneeIndex);
+        }
+        else {
+          cluster.first.setAssigneeId(null);
+        }
       }
     }
     else {
