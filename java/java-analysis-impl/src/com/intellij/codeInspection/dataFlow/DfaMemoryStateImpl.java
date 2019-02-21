@@ -1085,7 +1085,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     EqClass eqClass = getEqClass(value);
     if (eqClass != null) {
       if (!applyRelationRangeToClass(eqClass, appliedRange, RelationType.EQ)) return false;
-      for (DistinctPairSet.DistinctPair pair : getDistinctClassPairs()) {
+      for (DistinctPairSet.DistinctPair pair : getDistinctClassPairs().toArray(new DistinctPairSet.DistinctPair[0])) {
         if (pair.isOrdered()) {
           if (pair.getFirst() == eqClass) {
             if (!applyRelationRangeToClass(pair.getSecond(), appliedRange, RelationType.GT)) return false;
