@@ -13,6 +13,7 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +38,7 @@ public class WrapWithUnmodifiableAction extends BaseIntentionAction {
       PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
       if (psiClass != null) {
 
-        PsiClass expectedClass = PsiUtil.resolveClassInClassTypeOnly(PsiTypesUtil.getExpectedTypeByParent(expression));
+        PsiClass expectedClass = PsiUtil.resolveClassInClassTypeOnly(getExpectedType(expression));
         if (expectedClass != null) {
           GlobalSearchScope scope = psiClass.getResolveScope();
 
@@ -97,7 +98,7 @@ public class WrapWithUnmodifiableAction extends BaseIntentionAction {
       }
       PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
       if (psiClass != null) {
-        PsiClass expectedClass = PsiUtil.resolveClassInClassTypeOnly(PsiTypesUtil.getExpectedTypeByParent(expression));
+        PsiClass expectedClass = PsiUtil.resolveClassInClassTypeOnly(getExpectedType(expression));
 
         if (expectedClass != null) {
           GlobalSearchScope scope = psiClass.getResolveScope();
@@ -122,6 +123,14 @@ public class WrapWithUnmodifiableAction extends BaseIntentionAction {
     return false;
   }
 
+  private static PsiType getExpectedType(@NotNull PsiExpression expression) {
+    final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+    if (parent instanceof PsiConditionalExpression) {
+      return getExpectedType((PsiConditionalExpression)parent);
+    }
+    return PsiTypesUtil.getExpectedTypeByParent(expression);
+  }
+
   private static boolean isInheritorChain(PsiClass psiClass,
                                           String collectionClassName,
                                           PsiClass expectedClass,
@@ -133,13 +142,13 @@ public class WrapWithUnmodifiableAction extends BaseIntentionAction {
            InheritanceUtil.isInheritorOrSelf(collectionClass, expectedClass, true);
   }
 
-  private static boolean isUnmodifiable(PsiExpression expression) {
+  private static boolean isUnmodifiable(@NotNull PsiExpression expression) {
     PsiMethodCallExpression methodCall = tryCast(expression, PsiMethodCallExpression.class);
     if (isUnmodifiableCall(methodCall)) {
       return true;
     }
 
-    PsiExpressionList expressionList = tryCast(PsiUtil.skipParenthesizedExprUp(expression.getParent()), PsiExpressionList.class);
+    PsiExpressionList expressionList = tryCast(ExpressionUtils.getPassThroughParent(expression), PsiExpressionList.class);
     if (expressionList != null && expressionList.getExpressionCount() == 1) {
       methodCall = tryCast(expressionList.getParent(), PsiMethodCallExpression.class);
       if (isUnmodifiableCall(methodCall)) {
