@@ -79,6 +79,10 @@ class LibraryLicensesListGenerator {
         }
       }
     }
+
+    // Android Studio: enforce licenses for all libraries used by the modules we're actually distributing.
+    checkLibLicenses(usedLibraries, licensesList, messages)
+
     return licenses
   }
 
@@ -201,6 +205,29 @@ class LibraryLicensesListGenerator {
     file.parentFile.mkdirs()
     file.withWriter {
       new GsonBuilder().setPrettyPrinting().create().toJson(entries, it)
+    }
+  }
+
+  // Android Studio: this is basically the same check from LibraryLicensesTester.kt. We can't call that one directly because it's in the
+  // intellij.platform.buildscripts.testFramework module, and it would also require adding extra dependencies on the Kotlin runtime.
+  static void checkLibLicenses(Map<String, String> usedLibraries, List<LibraryLicense> licensesList, BuildMessages messages) {
+    def librariesWithLicenses = licensesList.collectMany { it.libraryNames } as Set<String>
+    List<String> withoutLicenses = []
+    usedLibraries.keySet().each { String name ->
+      if (!librariesWithLicenses.contains(name)) {
+        withoutLicenses << "$name (used in module ${usedLibraries[name]})".toString()
+      }
+    }
+    if (!withoutLicenses.isEmpty()) {
+      def errorMessage = []
+      errorMessage << "Licenses aren't specified for ${withoutLicenses.size()} libraries:"
+      withoutLicenses.sort(true, String.CASE_INSENSITIVE_ORDER)
+      withoutLicenses.each { errorMessage << it }
+      errorMessage <<
+      "If a library is packaged into IDEA installation information about its license must be added into one of *LibraryLicenses.groovy files"
+      errorMessage << "If a library is used in tests only change its scope to 'Test'"
+      errorMessage << "If a library is used for compilation only change its scope to 'Provided'"
+      messages.error(errorMessage.join("\n"))
     }
   }
 }
