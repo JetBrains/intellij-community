@@ -376,7 +376,7 @@ public class GitLogUtil {
                                               boolean includeRootChanges,
                                               boolean lowPriorityProcess,
                                               @NotNull DiffRenameLimit renameLimit) throws VcsException {
-    readFullDetailsForHashes(project, root, vcs, commitConsumer, hashes, includeRootChanges, lowPriorityProcess, true, renameLimit);
+    readFullDetailsForHashes(project, root, vcs, commitConsumer, hashes, includeRootChanges, lowPriorityProcess, true, false, renameLimit);
   }
 
   public static void readFullDetailsForHashes(@NotNull Project project,
@@ -387,12 +387,13 @@ public class GitLogUtil {
                                               boolean includeRootChanges,
                                               boolean lowPriorityProcess,
                                               boolean withFullMergeDiff,
+                                              boolean preserverOrder,
                                               @NotNull DiffRenameLimit renameLimit) throws VcsException {
     GitLineHandler handler =
       createGitHandler(project, root, createConfigParameters(true, includeRootChanges, renameLimit), lowPriorityProcess);
     sendHashesToStdin(vcs, hashes, handler);
 
-    readFullDetailsFromHandler(project, root, commitConsumer, renameLimit, handler, false, withFullMergeDiff,
+    readFullDetailsFromHandler(project, root, commitConsumer, renameLimit, handler, preserverOrder, withFullMergeDiff,
                                getNoWalkParameter(vcs), STDIN);
   }
 
