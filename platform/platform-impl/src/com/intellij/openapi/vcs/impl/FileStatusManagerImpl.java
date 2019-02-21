@@ -180,7 +180,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
       return;
     }
     if (!ApplicationManager.getApplication().isDispatchThread()) {
-      ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> fileStatusesChanged(), ModalityState.any());
+      ApplicationManager.getApplication().invokeLater(() -> fileStatusesChanged(), ModalityState.any());
       return;
     }
 
@@ -212,7 +212,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   public void fileStatusChanged(final VirtualFile file) {
     final Application application = ApplicationManager.getApplication();
     if (!application.isDispatchThread() && !application.isUnitTestMode()) {
-      ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> fileStatusChanged(file));
+      ApplicationManager.getApplication().invokeLater(() -> fileStatusChanged(file));
       return;
     }
 

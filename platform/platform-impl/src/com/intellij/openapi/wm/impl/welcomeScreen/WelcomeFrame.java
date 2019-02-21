@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -169,7 +168,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
       return;
     }
 
-    ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
       windowManager.disposeRootFrame();
       IdeFrameImpl[] frames = windowManager.getAllProjectFrames();

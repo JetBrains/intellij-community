@@ -26,7 +26,7 @@ public class PlatformVcsDetector implements ProjectComponent {
   @Override
   public void projectOpened() {
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
-      final DumbAwareRunnable runnable = () -> {
+      final Runnable runnable = () -> {
         VirtualFile file = ProjectBaseDirectory.getInstance(myProject).getBaseDir(myProject.getBaseDir());
         if (myVcsManager.needAutodetectMappings()) {
           AbstractVcs vcs = myVcsManager.findVersioningVcs(file);
