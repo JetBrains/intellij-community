@@ -32,7 +32,8 @@ abstract class BaseConstrainedExecution<E : ConstrainedExecution<E>>(protected v
   override fun withConstraint(constraint: ContextConstraint): E = cloneWith(constraints + constraint)
 
   fun asTaskExecutor() = ConstrainedTaskExecutor(this)
-  fun asCoroutineDispatcher(): ContinuationInterceptor = ConstrainedCoroutineSupport(this).continuationInterceptor
+  fun asCoroutineDispatcher(): ContinuationInterceptor =
+    createConstrainedCoroutineDispatcher(createConstraintSchedulingExecutor(), composeExpiration())
 
   override fun createConstraintSchedulingExecutor(condition: BooleanSupplier?): Executor =
     when (condition) {
