@@ -470,7 +470,9 @@
     </group>
 
     <group id="ProjectViewPopupMenuModifyGroup">
+      <reference ref="TypeHierarchy"/>
       <reference ref="ReformatCode"/>
+      <reference ref="OptimizeImports"/>
       <reference ref="$Delete"/>
       <reference ref="Scratch.ChangeLanguage"/>
       <group id="MarkFileAs" class="com.intellij.openapi.file.exclude.ui.MarkFileGroup">
