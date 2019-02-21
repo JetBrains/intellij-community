@@ -54,4 +54,9 @@ class MakeClosureCallExplicitIntentionTest extends GroovyLatestTest implements B
   void 'closure method'() {
     doTest 'Closure foo() {}; <caret>foo()', null
   }
+
+  @Test
+  void 'closure method call'() {
+    doTest 'Closure foo() {}; foo().<caret>call()', null
+  }
 }
