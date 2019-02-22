@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,58 +30,58 @@ class FlipCommutativeMethodCallPredicate implements PsiElementPredicate {
     if (ErrorUtil.containsError(element)) {
       return false;
     }
-    final PsiMethodCallExpression expression =
-      (PsiMethodCallExpression)element;
+    final PsiMethodCallExpression expression = (PsiMethodCallExpression)element;
     // do it only when there is just one argument.
-    final PsiExpressionList argumentList = expression.getArgumentList();
-    final PsiExpression[] args = argumentList.getExpressions();
-    if (args.length != 1) {
+    final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
+    if (arguments.length != 1) {
       return false;
     }
-    final PsiReferenceExpression methodExpression =
-      expression.getMethodExpression();
-    final PsiExpression qualifier =
-      methodExpression.getQualifierExpression();
-    // make sure that there is a caller and a caller
+    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+    final PsiExpression qualifier = methodExpression.getQualifierExpression();
+    final PsiType callerType;
     if (qualifier == null) {
-      return false;
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return false;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
+        return false;
+      }
+      callerType = JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass);
+    }
+    else {
+      callerType = qualifier.getType();
+      if (!(callerType instanceof PsiClassType)) {
+        return false;
+      }
     }
     final String methodName = methodExpression.getReferenceName();
-    // the logic is...
-    // if the argument takes a method of the same name with the caller
-    // as parameter then we can switch the argument and the caller.
-    final PsiType callerType = qualifier.getType();
-    final PsiType argumentType = args[0].getType();
+    final PsiType argumentType = arguments[0].getType();
     if (!(argumentType instanceof PsiClassType)) {
       return false;
     }
-    if (!(callerType instanceof PsiClassType)) {
-      return false;
+    if (callerType.equals(argumentType)) {
+      return true;
     }
     final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)argumentType).resolveGenerics();
     final PsiClass argumentClass = resolveResult.getElement();
     if (argumentClass == null) {
       return false;
     }
-    final PsiMethod[] methods =
-      argumentClass.findMethodsByName(methodName, true);
+    final PsiMethod[] methods = argumentClass.findMethodsByName(methodName, true);
     for (final PsiMethod testMethod : methods) {
-      final String testMethodName = testMethod.getName();
-      if (testMethodName.equals(methodName)) {
-        final PsiParameterList parameterList =
-          testMethod.getParameterList();
-        final PsiParameter[] parameters = parameterList.getParameters();
-        if (parameters.length == 1) {
-          final PsiParameter parameter = parameters[0];
-          final PsiClass containingClass = testMethod.getContainingClass();
-          if (containingClass != null) {
-            final PsiSubstitutor substitutor =
-              TypeConversionUtil.getClassSubstitutor(containingClass, argumentClass, resolveResult.getSubstitutor());
-            if (substitutor != null) {
-              final PsiType type = substitutor.substitute(parameter.getType());
-              if (type != null && type.isAssignableFrom(callerType)) {
-                return true;
-              }
+      final PsiParameterList parameterList = testMethod.getParameterList();
+      if (parameterList.getParametersCount() == 1) {
+        final PsiParameter parameter = parameterList.getParameters()[0];
+        final PsiClass containingClass = testMethod.getContainingClass();
+        if (containingClass != null) {
+          final PsiSubstitutor substitutor =
+            TypeConversionUtil.getClassSubstitutor(containingClass, argumentClass, resolveResult.getSubstitutor());
+          if (substitutor != null) {
+            final PsiType type = substitutor.substitute(parameter.getType());
+            if (type != null && type.isAssignableFrom(callerType)) {
+              return true;
             }
           }
         }

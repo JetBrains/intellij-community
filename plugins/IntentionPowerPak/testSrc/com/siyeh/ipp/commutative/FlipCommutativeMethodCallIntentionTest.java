@@ -20,6 +20,7 @@ import com.siyeh.ipp.IPPTestCase;
 
 public class FlipCommutativeMethodCallIntentionTest extends IPPTestCase {
     public void testSubstitution() { doTest(); }
+    public void testNoQualifier() { doTest(); }
 
     @Override
     protected String getIntentionName() {
