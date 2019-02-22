@@ -13,45 +13,45 @@ const groups = isCreateGroups ? [
 ] : null
 
 export class TimelineChartManager extends XYChartManager {
-  private lastData: InputData | null = null
-  // private readonly dateAxis: am4charts.DateAxis
-
   constructor(container: HTMLElement) {
     super(container)
 
     const chart = this.chart
 
-    const durationAxis = chart.xAxes.push(new am4charts.DurationAxis())
+    const levelAxis = this.configureAxes()
+    this.configureSeries()
+    this.addHeightAdjuster(levelAxis)
+  }
+
+  private configureAxes() {
+    const durationAxis = this.chart.xAxes.push(new am4charts.DurationAxis())
     durationAxis.durationFormatter.baseUnit = "millisecond"
     durationAxis.durationFormatter.durationFormat = "S"
     durationAxis.min = 0
     durationAxis.strictMinMax = true
     // durationAxis.renderer.grid.template.disabled = true
 
-    const levelAxis = chart.yAxes.push(new am4charts.CategoryAxis())
-    levelAxis.dataFields.category = "level"
+    const levelAxis = this.chart.yAxes.push(new am4charts.CategoryAxis())
+    levelAxis.dataFields.category = "rowIndex"
     levelAxis.renderer.grid.template.location = 0
     levelAxis.renderer.minGridDistance = 1
     levelAxis.renderer.labels.template.disabled = true
+    return levelAxis
+  }
 
-    const series = chart.series.push(new am4charts.ColumnSeries())
+  private configureSeries() {
+    const series = this.chart.series.push(new am4charts.ColumnSeries())
     // series.columns.template.width = am4core.percent(80)
-    series.columns.template.tooltipText = "{name}: {duration}"
+    series.columns.template.tooltipText = "{name}: {duration}\nlevel: {level}"
     series.dataFields.openDateX = "start"
     series.dataFields.openValueX = "start"
     series.dataFields.dateX = "end"
     series.dataFields.valueX = "end"
-    series.dataFields.categoryY = "level"
+    series.dataFields.categoryY = "rowIndex"
 
-    // series.columns.template.propertyFields.fill = "color"
-    // series.columns.template.propertyFields.stroke = "color";
-
-    // series.columns.template.adapter.add("fill", (fill, target) => {
-    //   return target.dataItem ? chart.colors.getIndex(target.dataItem.index) : fill
-    // })
     series.columns.template.propertyFields.fill = "color"
     series.columns.template.propertyFields.stroke = "color"
-    series.columns.template.strokeOpacity = 1
+    // series.columns.template.strokeOpacity = 1
 
     const valueLabel = series.bullets.push(new am4charts.LabelBullet())
     valueLabel.label.text = "{name}"
@@ -63,17 +63,6 @@ export class TimelineChartManager extends XYChartManager {
     // https://github.com/amcharts/amcharts4/issues/668#issuecomment-446655416
     valueLabel.interactionsEnabled = false
     // valueLabel.label.fontSize = 12
-
-    const isUseRealTimeElement = document.getElementById("isUseRealTime")
-    if (isUseRealTimeElement != null) {
-      isUseRealTimeElement.addEventListener("click", () => {
-        if (this.lastData != null) {
-          this.render(this.lastData)
-        }
-      })
-    }
-
-    this.addHeightAdjuster(levelAxis)
   }
 
   private addHeightAdjuster(levelAxis: am4charts.Axis) {
@@ -81,7 +70,7 @@ export class TimelineChartManager extends XYChartManager {
     // noinspection SpellCheckingInspection
     this.chart.events.on("datavalidated", () => {
       const chart = this.chart
-      const adjustHeight = chart.data.reduce((maxLevel, item) => Math.max(item.level, maxLevel), 0) * 35 - levelAxis.pixelHeight
+      const adjustHeight = chart.data.reduce((max, item) => Math.max(item.rowIndex, max), 0) * 35 - levelAxis.pixelHeight
 
       // get current chart height
       let targetHeight = chart.pixelHeight + adjustHeight
@@ -92,14 +81,7 @@ export class TimelineChartManager extends XYChartManager {
   }
 
   render(ijData: InputData) {
-    this.lastData = ijData
-
-    // const isUseRealTime = (document.getElementById("isUseRealTime") as HTMLInputElement).checked
-
-    // noinspection ES6ModulesDependencies
     const firstStart = new Date(ijData.items[0].start)
-    // hack to force timeline to start from 0
-    // const timeOffset = isUseRealTime ? 0 : (firstStart.getSeconds() * 1000) + firstStart.getMilliseconds()
     const timeOffset = ijData.items[0].start
 
     const data = transformIjData(ijData, timeOffset)
@@ -107,47 +89,36 @@ export class TimelineChartManager extends XYChartManager {
 
     const originalItems = ijData.items
     const durationAxis = this.chart.xAxes.getIndex(0) as am4charts.DurationAxis
-    // https://www.amcharts.com/docs/v4/concepts/axes/date-axis/
-    // this.dateAxis.dateFormats.setKey("second", isUseRealTime ? "HH:mm:ss" : "s")
-    // this.dateAxis.min = originalItems[0].start - timeOffset
-    // this.dateAxis.max = originalItems[originalItems.length - 1].end - timeOffset
     durationAxis.max = originalItems[originalItems.length - 1].end - timeOffset
   }
 }
 
-function computeTitle(item: any, _index: number) {
-  let result = item.name + (item.description == null ? "" : `<br/>${item.description}`) + `<br/>${item.duration} ms`
-  // debug
-  // result += `<br/>${index}`
-  return result
-}
-
-function computeLevels(input: InputData) {
-  let prevItem: Item | null = null
-  let level = 0
-  for (const item of input.items) {
-    if (prevItem != null) {
+function computeLevels(items: Array<Item>) {
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i]
+    let level = 0
+    for (let j = i - 1; j >= 0; j--) {
+      const prevItem = items[j] as TimeLineItem
       if (prevItem.end >= item.end) {
-        level++
+        level = prevItem.level + 1
+        break
       }
     }
+
     (item as TimeLineItem).level = level
-    prevItem = item
   }
 }
 
 function transformIjData(input: InputData, timeOffset: number): Array<any> {
   const colorSet = new am4core.ColorSet()
   const transformedItems = new Array<any>(input.items.length)
-
-  computeLevels(input)
+  computeLevels(input.items)
 
   // we cannot use actual level as row index because in this case labels will be overlapped, so,
   // row index simply incremented till empirical limit (6).
   let rowIndex = 0
   for (let i = 0; i < input.items.length; i++) {
     const item = input.items[i] as TimeLineItem
-
     const result: any = {
       name: item.name,
       start: item.start - timeOffset,
@@ -157,8 +128,9 @@ function transformIjData(input: InputData, timeOffset: number): Array<any> {
       // level: "l" + getLevel(i, input.items, transformedItems).toString(),
       // level: getLevel(i, input.items, transformedItems),
       // level: item.level,
-      level: rowIndex++,
-      color: colorSet.getIndex(item.level /* level from original item is correct */)
+      rowIndex: rowIndex++,
+      color: colorSet.getIndex(item.level),
+      level: item.level,
     }
 
     if (rowIndex > 6) {
@@ -167,10 +139,11 @@ function transformIjData(input: InputData, timeOffset: number): Array<any> {
     transformedItems[i] = result
   }
 
-  transformedItems.sort((a, b) => a.level - b.level)
+  transformedItems.sort((a, b) => a.rowIndex - b.rowIndex)
   return transformedItems
 }
 
 interface TimeLineItem extends Item {
   level: number
+  rowIndex: number
 }

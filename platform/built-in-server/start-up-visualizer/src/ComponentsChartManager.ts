@@ -20,8 +20,8 @@ export class ComponentsChartManager extends XYChartManager {
     nameAxisLabel.selectable = true
     nameAxisLabel.fontSize = 12
 
+    // https://github.com/amcharts/amcharts4/issues/997
     nameAxisLabel.rotation = -45
-    nameAxisLabel.location = 0.4
     nameAxisLabel.verticalCenter = "middle"
     nameAxisLabel.horizontalCenter = "right"
     nameAxis.renderer.minGridDistance = 1
