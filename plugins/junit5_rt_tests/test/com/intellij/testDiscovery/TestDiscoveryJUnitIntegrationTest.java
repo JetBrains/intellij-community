@@ -120,13 +120,9 @@ public class TestDiscoveryJUnitIntegrationTest extends AbstractTestFrameworkComp
 
   private void assertTestDiscoveryIndex(String className, String methodName, Pair<String, String>... expectedTests) {
     PsiClass aClass = myJavaFacade.findClass(className);
-    PsiMethod method;
-    if ("<init>".equals(methodName)) {
-      method = assertOneElement(aClass.getConstructors());
-    }
-    else {
-      method = assertOneElement(aClass.findMethodsByName(methodName, false));
-    }
+    PsiMethod method = "<init>".equals(methodName)
+                       ? assertOneElement(aClass.getConstructors())
+                       : assertOneElement(aClass.findMethodsByName(methodName, false));
     Couple<String> methodKey = ShowAffectedTestsAction.getMethodKey(method);
 
     TestDiscoveryIndex testDiscoveryIndex = TestDiscoveryIndex.getInstance(myProject);
