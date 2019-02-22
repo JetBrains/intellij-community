@@ -4546,14 +4546,15 @@ public class UIUtil {
     return UIManager.getColor("List.background");
   }
 
-  private static final JBValue SELECTED_ITEM_ALPHA = new JBValue.UIInteger("List.selectedItemAlpha", 75);
+  private static final JBValue SELECTED_ITEM_ALPHA = new JBValue.UIInteger("List.selectedItemAlpha", 60);
 
   @NotNull
   public static Color getListSelectionBackground(boolean focused) {
     if (!focused) return UnfocusedSelection.LIST_BACKGROUND;
     Color color = UIManager.getColor("List.selectionBackground");
-    double alpha = SELECTED_ITEM_ALPHA.get() / 100.0;
-    return isUnderDefaultMacTheme() && alpha <= 1.0 ? ColorUtil.withAlpha(color, alpha) : color;
+    double alpha = SELECTED_ITEM_ALPHA.getFloat() / 100.0;
+    //noinspection UseJBColor
+    return isUnderDefaultMacTheme() && alpha >= 0 && alpha <= 1.0 ? ColorUtil.mix(Color.WHITE, color, alpha) : color;
   }
 
   @NotNull
