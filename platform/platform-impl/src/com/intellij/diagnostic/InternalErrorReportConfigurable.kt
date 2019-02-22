@@ -29,6 +29,8 @@ internal class InternalErrorReportConfigurable : PersistentStateComponent<Intern
     return !developersListObsolete && myState.developersList.isNotEmpty()
   }
 
+  fun getDevelopersUpdateTimestamp(): Long = myState.developersUpdateTimestamp
+
   private companion object {
     private const val DEVELOPERS_OBSOLESCENCE_MILLIS = 24L * 60 * 60 * 1000 // 24 hours
 

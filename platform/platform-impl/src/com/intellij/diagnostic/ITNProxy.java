@@ -61,7 +61,7 @@ class ITNProxy {
   private static final NotNullLazyValue<Map<String, String>> TEMPLATE = AtomicNotNullLazyValue.createValue(() -> {
     Map<String, String> template = new LinkedHashMap<>();
 
-    template.put("protocol.version", "1");
+    template.put("protocol.version", "1.1");
     template.put("os.name", SystemInfo.OS_NAME);
     template.put("java.version", SystemInfo.JAVA_VERSION);
     template.put("java.vm.vendor", SystemInfo.JAVA_VENDOR);
@@ -253,6 +253,9 @@ class ITNProxy {
       }
       if (messageObj.getAssigneeId() != null) {
         append(builder, "assignee.id", Integer.toString(messageObj.getAssigneeId()));
+      }
+      if (messageObj.getDevelopersUpdateTimestamp() != null) {
+        append(builder, "assignee.list.timestamp", Long.toString(messageObj.getDevelopersUpdateTimestamp()));
       }
     }
 

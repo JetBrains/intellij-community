@@ -79,6 +79,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private final Set<String> myAcceptedNotices;
   private final List<MessageCluster> myMessageClusters = new ArrayList<>();  // exceptions with the same stacktrace
   private int myIndex, myLastIndex = -1;
+  private Long myUpdateDevelopersTimestamp;
 
   private JLabel myCountLabel;
   private HyperlinkLabel.Croppable myInfoLabel;
@@ -122,7 +123,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private void loadDevelopersList() {
     InternalErrorReportConfigurable internalConfigurable = InternalErrorReportConfigurable.getInstance();
     if (internalConfigurable.isDevelopersListValid()) {
-      myAssigneeCombo.setModel(new CollectionComboBoxModel<>(internalConfigurable.getDevelopersList()));
+      setDevelopers(internalConfigurable);
     }
     else {
       new Task.Backgroundable(null, "Loading Developers List", true) {
@@ -133,7 +134,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
             UIUtil.invokeLaterIfNeeded(() -> {
               internalConfigurable.setDevelopersList(developers);
               if (isShowing()) {
-                myAssigneeCombo.setModel(new CollectionComboBoxModel<>(developers));
+                setDevelopers(internalConfigurable);
               }
             });
           }
@@ -141,7 +142,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
             LOG.debug(e);
             UIUtil.invokeLaterIfNeeded(() -> {
               if (isShowing()) {
-                myAssigneeCombo.setModel(new CollectionComboBoxModel<>(internalConfigurable.getDevelopersList()));
+                setDevelopers(internalConfigurable);
               }
             });
           }
@@ -149,6 +150,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         }
       }.queue();
     }
+  }
+
+  private void setDevelopers(InternalErrorReportConfigurable internalConfigurable) {
+    myAssigneeCombo.setModel(new CollectionComboBoxModel<>(internalConfigurable.getDevelopersList()));
+    myUpdateDevelopersTimestamp = internalConfigurable.getDevelopersUpdateTimestamp();
   }
 
   private int selectMessage(@Nullable LogMessage defaultMessage) {
@@ -599,6 +605,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     if (submitter == null) return false;
     AbstractMessage message = cluster.first;
 
+    message.setDevelopersUpdateTimestamp(myUpdateDevelopersTimestamp);
     message.setSubmitting(true);
 
     String notice = submitter.getPrivacyNoticeText();

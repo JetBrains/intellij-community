@@ -20,6 +20,7 @@ public abstract class AbstractMessage {
   private SubmittedReportInfo mySubmissionInfo;
   private String myAdditionalInfo;
   private Integer myAssigneeId;
+  private Long myDevelopersUpdateTimestamp;
 
   public abstract @NotNull Throwable getThrowable();
   public abstract @NotNull String getThrowableText();
@@ -94,6 +95,14 @@ public abstract class AbstractMessage {
 
   public void setAssigneeId(@Nullable Integer assigneeId) {
     myAssigneeId = assigneeId;
+  }
+
+  public @Nullable Long getDevelopersUpdateTimestamp() {
+    return myDevelopersUpdateTimestamp;
+  }
+
+  public void setDevelopersUpdateTimestamp(@Nullable Long developersUpdateTimestamp) {
+    myDevelopersUpdateTimestamp = developersUpdateTimestamp;
   }
 
   /** @deprecated use {@link #getIncludedAttachments()} instead (to be removed in IDEA 2020) */
