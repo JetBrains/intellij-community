@@ -16,6 +16,7 @@
 package org.jetbrains.uast.test.java
 
 import com.intellij.psi.PsiCallExpression
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiLiteralExpression
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.UsefulTestCase
@@ -199,6 +200,14 @@ class JavaUastApiTest : AbstractJavaUastTest() {
   fun testCanFindAWayFromBrokenSwitch() = doTest("BrokenCode/Switch.java") { name, file ->
     val testClass = file.findElementByTextFromPsi<UElement>("""return;""")
     TestCase.assertEquals(7, testClass.withContainingElements.count())
+  }
+
+  @Test
+  fun testDefaultConstructorRef() = doTest("Simple/ComplexCalls.java") { name, file ->
+    val call = file.findElementByTextFromPsi<UCallExpression>("new A()")
+    TestCase.assertEquals(UastCallKind.CONSTRUCTOR_CALL, call.kind)
+    TestCase.assertEquals(null, call.resolve())
+    TestCase.assertEquals("A", (call.classReference?.resolve() as? PsiClass)?.qualifiedName)
   }
 
 }
