@@ -306,7 +306,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @NotNull
   private List<ComponentConfig> getComponentConfigs(@Nullable ProgressIndicator indicator) {
     boolean isDefaultProject = this instanceof Project && ((Project)this).isDefault();
-    boolean headless = ApplicationManager.getApplication().isHeadlessEnvironment();
     StartupProgress startupProgress = null;
     if (indicator != null) {
       startupProgress = (message, progress) -> indicator.setFraction(progress);
@@ -317,7 +316,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       List<ComponentConfig> configs = getMyComponentConfigsFromDescriptor(plugin);
       componentConfigs.ensureCapacity(componentConfigs.size() + configs.size());
       for (ComponentConfig config : configs) {
-        if ((!isDefaultProject || config.isLoadForDefaultProject()) && isComponentSuitable(config.options) && config.prepareClasses(headless)) {
+        if ((!isDefaultProject || config.isLoadForDefaultProject()) && isComponentSuitable(config.options)) {
           config.pluginDescriptor = plugin;
           componentConfigs.add(config);
         }
