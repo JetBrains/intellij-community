@@ -9,7 +9,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -34,6 +33,8 @@ public class IntellijPropertyKindMap {
     PROPERTY_KIND_MAP.put("formatter_tags_enabled", GENERIC);
     PROPERTY_KIND_MAP.put("visual_guides", GENERIC);
     PROPERTY_KIND_MAP.put("wrap_on_typing", GENERIC);
+    PROPERTY_KIND_MAP.put("smart_tabs", GENERIC);
+    PROPERTY_KIND_MAP.put("continuation_indent_size", GENERIC);
 
     PROPERTY_KIND_MAP.put("imports_layout", UNSUPPORTED);
     PROPERTY_KIND_MAP.put("packages_to_use_import_on_demand", UNSUPPORTED);
@@ -52,7 +53,10 @@ public class IntellijPropertyKindMap {
       @NotNull
       @Override
       protected List<CodeStyleObjectDescriptor> getSupportedFields() {
-        return Collections.singletonList(new CodeStyleObjectDescriptor(new CommonCodeStyleSettings(Language.ANY), null));
+        List<CodeStyleObjectDescriptor> descriptors = ContainerUtil.newArrayList();
+        descriptors.add(new CodeStyleObjectDescriptor(new CommonCodeStyleSettings(Language.ANY), null));
+        descriptors.add(new CodeStyleObjectDescriptor(new CommonCodeStyleSettings.IndentOptions(), null));
+        return descriptors;
       }
 
       @NotNull
