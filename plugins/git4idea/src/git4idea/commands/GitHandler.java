@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProcessEventListener;
 import com.intellij.openapi.vcs.RemoteFilePath;
@@ -141,6 +142,9 @@ public abstract class GitHandler {
     }
 
     List<String> toPass = new ArrayList<>();
+    boolean shouldResetCredentialHelper = Registry.is("git.reset.credential.helper") &&
+                                          GitVersionSpecialty.CAN_OVERRIDE_CREDENTIAL_HELPER_WITH_EMPTY.existsIn(project);
+    if (shouldResetCredentialHelper) toPass.add("credential.helper=");
     toPass.add("core.quotepath=false");
     toPass.add("log.showSignature=false");
     toPass.addAll(requestedConfigParameters);
