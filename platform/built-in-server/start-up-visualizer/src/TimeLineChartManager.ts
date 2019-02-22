@@ -18,25 +18,28 @@ export class TimelineChartManager extends XYChartManager {
 
     const chart = this.chart
 
-    const levelAxis = this.configureAxes()
+    this.configureDurationAxis()
+    const levelAxis = this.configureLevelAxis()
     this.configureSeries()
     this.addHeightAdjuster(levelAxis)
   }
 
-  private configureAxes() {
-    const durationAxis = this.chart.xAxes.push(new am4charts.DurationAxis())
-    durationAxis.durationFormatter.baseUnit = "millisecond"
-    durationAxis.durationFormatter.durationFormat = "S"
-    durationAxis.min = 0
-    durationAxis.strictMinMax = true
-    // durationAxis.renderer.grid.template.disabled = true
-
+  private configureLevelAxis() {
     const levelAxis = this.chart.yAxes.push(new am4charts.CategoryAxis())
     levelAxis.dataFields.category = "rowIndex"
     levelAxis.renderer.grid.template.location = 0
     levelAxis.renderer.minGridDistance = 1
     levelAxis.renderer.labels.template.disabled = true
     return levelAxis
+  }
+
+  private configureDurationAxis() {
+    const durationAxis = this.chart.xAxes.push(new am4charts.DurationAxis())
+    durationAxis.durationFormatter.baseUnit = "millisecond"
+    durationAxis.durationFormatter.durationFormat = "S"
+    durationAxis.min = 0
+    durationAxis.strictMinMax = true
+    // durationAxis.renderer.grid.template.disabled = true
   }
 
   private configureSeries() {
@@ -81,13 +84,14 @@ export class TimelineChartManager extends XYChartManager {
   }
 
   render(ijData: InputData) {
-    const firstStart = new Date(ijData.items[0].start)
-    const timeOffset = ijData.items[0].start
+    const items = ijData.items
+    const firstStart = new Date(items[0].start)
+    const timeOffset = items[0].start
 
     const data = transformIjData(ijData, timeOffset)
     this.chart.data = data
 
-    const originalItems = ijData.items
+    const originalItems = items
     const durationAxis = this.chart.xAxes.getIndex(0) as am4charts.DurationAxis
     durationAxis.max = originalItems[originalItems.length - 1].end - timeOffset
   }

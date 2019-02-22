@@ -82,18 +82,20 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   protected final void init(@Nullable ProgressIndicator indicator, @Nullable Runnable componentsRegistered, boolean isNeededToMeasure) {
-    StartUpMeasurer.MeasureToken totalMeasureToken = isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix() + StartUpMeasurer.Phases.INITIALIZE_COMPONENTS_SUFFIX) : null;
-
-    String measureTokenNamePrefix = StringUtil.notNullize(measureTokenNamePrefix());
-    StartUpMeasurer.MeasureToken measureToken = isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix + StartUpMeasurer.Phases.REGISTER_COMPONENTS_SUFFIX) : null;
-
     StartupProgress startupProgress = null;
     if (indicator != null) {
       startupProgress = (message, progress) -> indicator.setFraction(progress);
     }
 
+    // before totalMeasureToken to ensure that plugin loading is not part of this
+    List<IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins(startupProgress);
+
+    StartUpMeasurer.MeasureToken totalMeasureToken = isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix() + StartUpMeasurer.Phases.INITIALIZE_COMPONENTS_SUFFIX) : null;
+
+    String measureTokenNamePrefix = StringUtil.notNullize(measureTokenNamePrefix());
+    StartUpMeasurer.MeasureToken measureToken = isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix + StartUpMeasurer.Phases.REGISTER_COMPONENTS_SUFFIX) : null;
     int componentConfigCount = 0;
-    for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins(startupProgress)) {
+    for (IdeaPluginDescriptor plugin : plugins) {
       for (ComponentConfig config : getMyComponentConfigsFromDescriptor(plugin)) {
         if (isComponentSuitable(config)) {
           registerComponents(config, plugin);
