@@ -26,10 +26,4 @@ public class DiffUnifiedHunkImpl extends ASTWrapperPsiElement implements DiffUni
     else super.accept(visitor);
   }
 
-  @Override
-  @NotNull
-  public List<DiffUnifiedLine> getUnifiedLineList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, DiffUnifiedLine.class);
-  }
-
 }

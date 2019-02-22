@@ -29,36 +29,34 @@
   tokenTypeClass="de.thomasrosenau.diffplugin.psi.DiffTokenType"
 }
 
-// TODO: make stuff private if possible
-
 // https://www.gnu.org/software/diffutils/manual/diffutils.html#Imperfect
-diffFile ::= (leadingText (normalDiff | contextDiff | unifiedDiff))+ trailingText // TODO: handle indentation
+private diffFile ::= (leadingText (normalDiff | contextDiff | unifiedDiff))+ trailingText // TODO: handle indentation
 
 // TODO: Handle Prereq: and Index:
 // TODO: Handle git header, cf. https://git-scm.com/docs/git-diff#_generating_patches_with_p
-leadingText ::= anyLine* (consoleCommand anyLine*)?
+private leadingText ::= anyLine* (consoleCommand anyLine*)?
 consoleCommand ::= COMMAND
 // TODO: Handle git footer
-trailingText ::= anyLine*
-anyLine ::= WHITE_SPACE | OTHER
+private trailingText ::= anyLine*
+private anyLine ::= WHITE_SPACE | OTHER
 
 // https://www.gnu.org/software/diffutils/manual/diffutils.html#Detailed-Context
-contextDiff ::= CONTEXT_FROM_LABEL CONTEXT_TO_LABEL contextHunk+
+private contextDiff ::= CONTEXT_FROM_LABEL CONTEXT_TO_LABEL contextHunk+
 contextHunk ::= CONTEXT_HUNK_SEPARATOR contextHunkFrom contextHunkTo
 contextHunkFrom ::= CONTEXT_FROM_LINE_NUMBERS contextFromFileLine* (EOL_HINT)?
 contextHunkTo ::= CONTEXT_TO_LINE_NUMBERS contextToFileLine* (EOL_HINT)?
-contextFromFileLine ::= CONTEXT_COMMON_LINE | CONTEXT_CHANGED_LINE | CONTEXT_DELETED_LINE
-contextToFileLine ::= CONTEXT_COMMON_LINE | CONTEXT_CHANGED_LINE | CONTEXT_INSERTED_LINE
+private contextFromFileLine ::= CONTEXT_COMMON_LINE | CONTEXT_CHANGED_LINE | CONTEXT_DELETED_LINE
+private contextToFileLine ::= CONTEXT_COMMON_LINE | CONTEXT_CHANGED_LINE | CONTEXT_INSERTED_LINE
 
 // https://www.gnu.org/software/diffutils/manual/diffutils.html#Detailed-Unified
-unifiedDiff ::= UNIFIED_FROM_LABEL UNIFIED_TO_LABEL unifiedHunk+
+private unifiedDiff ::= UNIFIED_FROM_LABEL UNIFIED_TO_LABEL unifiedHunk+
 // TODO: Handle git binaries
 unifiedHunk ::= UNIFIED_LINE_NUMBERS (unifiedLine | WHITE_SPACE)+
-unifiedLine ::= UNIFIED_INSERTED_LINE | UNIFIED_DELETED_LINE | UNIFIED_COMMON_LINE | EOL_HINT
+private unifiedLine ::= UNIFIED_INSERTED_LINE | UNIFIED_DELETED_LINE | UNIFIED_COMMON_LINE | EOL_HINT
 
 // https://www.gnu.org/software/diffutils/manual/diffutils.html#Detailed-Normal
-normalDiff ::= normalHunk+
+private normalDiff ::= normalHunk+
 normalHunk ::= normalHunkAdd | normalHunkChange | normalHunkDelete
-normalHunkAdd ::= NORMAL_ADD_COMMAND NORMAL_TO_LINE+ EOL_HINT?
-normalHunkChange ::= NORMAL_CHANGE_COMMAND NORMAL_FROM_LINE+ EOL_HINT? NORMAL_SEPARATOR NORMAL_TO_LINE+ EOL_HINT?
-normalHunkDelete ::= NORMAL_DELETE_COMMAND NORMAL_FROM_LINE+ EOL_HINT?
+private normalHunkAdd ::= NORMAL_ADD_COMMAND NORMAL_TO_LINE+ EOL_HINT?
+private normalHunkChange ::= NORMAL_CHANGE_COMMAND NORMAL_FROM_LINE+ EOL_HINT? NORMAL_SEPARATOR NORMAL_TO_LINE+ EOL_HINT?
+private normalHunkDelete ::= NORMAL_DELETE_COMMAND NORMAL_FROM_LINE+ EOL_HINT?

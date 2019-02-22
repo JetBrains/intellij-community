@@ -90,8 +90,6 @@ class DiffFoldingBuilder extends FoldingBuilderEx {
             String toText = toNode.getText();
             return "@@ -" + fromText.substring(4, fromText.length() - 5) + " +" +
                     toText.substring(4, toText.length() - 5) + " @@";
-        } else if (psiNode instanceof DiffNormalHunkImpl) {
-            return psiNode.getFirstChild().getFirstChild().getText();
         } else {
             return psiNode.getFirstChild().getText();
         }

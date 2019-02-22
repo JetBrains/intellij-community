@@ -1,6 +1,6 @@
 # intellij-diff-plugin
 
-Syntax highlighting for .diff and .patch files in IntelliJ IDEA and [other JetBrains IDEs](https://www.jetbrains.com/products.html)
+Syntax highlighting for .diff and .patch files in IntelliJ IDEA and [other JetBrains IDEs](https://www.jetbrains.com/products.html).
 
 [Download from plugins.jetbrains.com](https://plugins.jetbrains.com/plugin/11957-diff--patch-file-support).
 

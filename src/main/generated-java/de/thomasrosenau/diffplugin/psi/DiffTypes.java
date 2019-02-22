@@ -8,24 +8,12 @@ import de.thomasrosenau.diffplugin.psi.impl.*;
 
 public interface DiffTypes {
 
-  IElementType ANY_LINE = new DiffElementType("ANY_LINE");
   IElementType CONSOLE_COMMAND = new DiffElementType("CONSOLE_COMMAND");
-  IElementType CONTEXT_DIFF = new DiffElementType("CONTEXT_DIFF");
-  IElementType CONTEXT_FROM_FILE_LINE = new DiffElementType("CONTEXT_FROM_FILE_LINE");
   IElementType CONTEXT_HUNK = new DiffElementType("CONTEXT_HUNK");
   IElementType CONTEXT_HUNK_FROM = new DiffElementType("CONTEXT_HUNK_FROM");
   IElementType CONTEXT_HUNK_TO = new DiffElementType("CONTEXT_HUNK_TO");
-  IElementType CONTEXT_TO_FILE_LINE = new DiffElementType("CONTEXT_TO_FILE_LINE");
-  IElementType LEADING_TEXT = new DiffElementType("LEADING_TEXT");
-  IElementType NORMAL_DIFF = new DiffElementType("NORMAL_DIFF");
   IElementType NORMAL_HUNK = new DiffElementType("NORMAL_HUNK");
-  IElementType NORMAL_HUNK_ADD = new DiffElementType("NORMAL_HUNK_ADD");
-  IElementType NORMAL_HUNK_CHANGE = new DiffElementType("NORMAL_HUNK_CHANGE");
-  IElementType NORMAL_HUNK_DELETE = new DiffElementType("NORMAL_HUNK_DELETE");
-  IElementType TRAILING_TEXT = new DiffElementType("TRAILING_TEXT");
-  IElementType UNIFIED_DIFF = new DiffElementType("UNIFIED_DIFF");
   IElementType UNIFIED_HUNK = new DiffElementType("UNIFIED_HUNK");
-  IElementType UNIFIED_LINE = new DiffElementType("UNIFIED_LINE");
 
   IElementType COMMAND = new DiffTokenType("COMMAND");
   IElementType CONTEXT_CHANGED_LINE = new DiffTokenType("CONTEXT_CHANGED_LINE");
@@ -56,17 +44,8 @@ public interface DiffTypes {
   class Factory {
     public static PsiElement createElement(ASTNode node) {
       IElementType type = node.getElementType();
-      if (type == ANY_LINE) {
-        return new DiffAnyLineImpl(node);
-      }
-      else if (type == CONSOLE_COMMAND) {
+      if (type == CONSOLE_COMMAND) {
         return new DiffConsoleCommandImpl(node);
-      }
-      else if (type == CONTEXT_DIFF) {
-        return new DiffContextDiffImpl(node);
-      }
-      else if (type == CONTEXT_FROM_FILE_LINE) {
-        return new DiffContextFromFileLineImpl(node);
       }
       else if (type == CONTEXT_HUNK) {
         return new DiffContextHunkImpl(node);
@@ -77,38 +56,11 @@ public interface DiffTypes {
       else if (type == CONTEXT_HUNK_TO) {
         return new DiffContextHunkToImpl(node);
       }
-      else if (type == CONTEXT_TO_FILE_LINE) {
-        return new DiffContextToFileLineImpl(node);
-      }
-      else if (type == LEADING_TEXT) {
-        return new DiffLeadingTextImpl(node);
-      }
-      else if (type == NORMAL_DIFF) {
-        return new DiffNormalDiffImpl(node);
-      }
       else if (type == NORMAL_HUNK) {
         return new DiffNormalHunkImpl(node);
       }
-      else if (type == NORMAL_HUNK_ADD) {
-        return new DiffNormalHunkAddImpl(node);
-      }
-      else if (type == NORMAL_HUNK_CHANGE) {
-        return new DiffNormalHunkChangeImpl(node);
-      }
-      else if (type == NORMAL_HUNK_DELETE) {
-        return new DiffNormalHunkDeleteImpl(node);
-      }
-      else if (type == TRAILING_TEXT) {
-        return new DiffTrailingTextImpl(node);
-      }
-      else if (type == UNIFIED_DIFF) {
-        return new DiffUnifiedDiffImpl(node);
-      }
       else if (type == UNIFIED_HUNK) {
         return new DiffUnifiedHunkImpl(node);
-      }
-      else if (type == UNIFIED_LINE) {
-        return new DiffUnifiedLineImpl(node);
       }
       throw new AssertionError("Unknown element type: " + type);
     }

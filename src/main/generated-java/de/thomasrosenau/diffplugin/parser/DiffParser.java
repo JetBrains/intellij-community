@@ -23,17 +23,8 @@ public class DiffParser implements PsiParser, LightPsiParser {
     boolean result_;
     builder_ = adapt_builder_(root_, builder_, this, null);
     Marker marker_ = enter_section_(builder_, 0, _COLLAPSE_, null);
-    if (root_ == ANY_LINE) {
-      result_ = anyLine(builder_, 0);
-    }
-    else if (root_ == CONSOLE_COMMAND) {
+    if (root_ == CONSOLE_COMMAND) {
       result_ = consoleCommand(builder_, 0);
-    }
-    else if (root_ == CONTEXT_DIFF) {
-      result_ = contextDiff(builder_, 0);
-    }
-    else if (root_ == CONTEXT_FROM_FILE_LINE) {
-      result_ = contextFromFileLine(builder_, 0);
     }
     else if (root_ == CONTEXT_HUNK) {
       result_ = contextHunk(builder_, 0);
@@ -44,38 +35,11 @@ public class DiffParser implements PsiParser, LightPsiParser {
     else if (root_ == CONTEXT_HUNK_TO) {
       result_ = contextHunkTo(builder_, 0);
     }
-    else if (root_ == CONTEXT_TO_FILE_LINE) {
-      result_ = contextToFileLine(builder_, 0);
-    }
-    else if (root_ == LEADING_TEXT) {
-      result_ = leadingText(builder_, 0);
-    }
-    else if (root_ == NORMAL_DIFF) {
-      result_ = normalDiff(builder_, 0);
-    }
     else if (root_ == NORMAL_HUNK) {
       result_ = normalHunk(builder_, 0);
     }
-    else if (root_ == NORMAL_HUNK_ADD) {
-      result_ = normalHunkAdd(builder_, 0);
-    }
-    else if (root_ == NORMAL_HUNK_CHANGE) {
-      result_ = normalHunkChange(builder_, 0);
-    }
-    else if (root_ == NORMAL_HUNK_DELETE) {
-      result_ = normalHunkDelete(builder_, 0);
-    }
-    else if (root_ == TRAILING_TEXT) {
-      result_ = trailingText(builder_, 0);
-    }
-    else if (root_ == UNIFIED_DIFF) {
-      result_ = unifiedDiff(builder_, 0);
-    }
     else if (root_ == UNIFIED_HUNK) {
       result_ = unifiedHunk(builder_, 0);
-    }
-    else if (root_ == UNIFIED_LINE) {
-      result_ = unifiedLine(builder_, 0);
     }
     else {
       result_ = parse_root_(root_, builder_, 0);
@@ -89,14 +53,12 @@ public class DiffParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // WHITE_SPACE | OTHER
-  public static boolean anyLine(PsiBuilder builder_, int level_) {
+  static boolean anyLine(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "anyLine")) return false;
-    if (!nextTokenIs(builder_, "<any line>", OTHER, WHITE_SPACE)) return false;
+    if (!nextTokenIs(builder_, "", OTHER, WHITE_SPACE)) return false;
     boolean result_;
-    Marker marker_ = enter_section_(builder_, level_, _NONE_, ANY_LINE, "<any line>");
     result_ = consumeToken(builder_, WHITE_SPACE);
     if (!result_) result_ = consumeToken(builder_, OTHER);
-    exit_section_(builder_, level_, marker_, result_, false, null);
     return result_;
   }
 
@@ -114,14 +76,14 @@ public class DiffParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // CONTEXT_FROM_LABEL CONTEXT_TO_LABEL contextHunk+
-  public static boolean contextDiff(PsiBuilder builder_, int level_) {
+  static boolean contextDiff(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "contextDiff")) return false;
     if (!nextTokenIs(builder_, CONTEXT_FROM_LABEL)) return false;
     boolean result_;
     Marker marker_ = enter_section_(builder_);
     result_ = consumeTokens(builder_, 0, CONTEXT_FROM_LABEL, CONTEXT_TO_LABEL);
     result_ = result_ && contextDiff_2(builder_, level_ + 1);
-    exit_section_(builder_, marker_, CONTEXT_DIFF, result_);
+    exit_section_(builder_, marker_, null, result_);
     return result_;
   }
 
@@ -142,14 +104,12 @@ public class DiffParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // CONTEXT_COMMON_LINE | CONTEXT_CHANGED_LINE | CONTEXT_DELETED_LINE
-  public static boolean contextFromFileLine(PsiBuilder builder_, int level_) {
+  static boolean contextFromFileLine(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "contextFromFileLine")) return false;
     boolean result_;
-    Marker marker_ = enter_section_(builder_, level_, _NONE_, CONTEXT_FROM_FILE_LINE, "<context from file line>");
     result_ = consumeToken(builder_, CONTEXT_COMMON_LINE);
     if (!result_) result_ = consumeToken(builder_, CONTEXT_CHANGED_LINE);
     if (!result_) result_ = consumeToken(builder_, CONTEXT_DELETED_LINE);
-    exit_section_(builder_, level_, marker_, result_, false, null);
     return result_;
   }
 
@@ -233,14 +193,12 @@ public class DiffParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // CONTEXT_COMMON_LINE | CONTEXT_CHANGED_LINE | CONTEXT_INSERTED_LINE
-  public static boolean contextToFileLine(PsiBuilder builder_, int level_) {
+  static boolean contextToFileLine(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "contextToFileLine")) return false;
     boolean result_;
-    Marker marker_ = enter_section_(builder_, level_, _NONE_, CONTEXT_TO_FILE_LINE, "<context to file line>");
     result_ = consumeToken(builder_, CONTEXT_COMMON_LINE);
     if (!result_) result_ = consumeToken(builder_, CONTEXT_CHANGED_LINE);
     if (!result_) result_ = consumeToken(builder_, CONTEXT_INSERTED_LINE);
-    exit_section_(builder_, level_, marker_, result_, false, null);
     return result_;
   }
 
@@ -294,13 +252,13 @@ public class DiffParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // anyLine* (consoleCommand anyLine*)?
-  public static boolean leadingText(PsiBuilder builder_, int level_) {
+  static boolean leadingText(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "leadingText")) return false;
     boolean result_;
-    Marker marker_ = enter_section_(builder_, level_, _NONE_, LEADING_TEXT, "<leading text>");
+    Marker marker_ = enter_section_(builder_);
     result_ = leadingText_0(builder_, level_ + 1);
     result_ = result_ && leadingText_1(builder_, level_ + 1);
-    exit_section_(builder_, level_, marker_, result_, false, null);
+    exit_section_(builder_, marker_, null, result_);
     return result_;
   }
 
@@ -346,17 +304,17 @@ public class DiffParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // normalHunk+
-  public static boolean normalDiff(PsiBuilder builder_, int level_) {
+  static boolean normalDiff(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "normalDiff")) return false;
     boolean result_;
-    Marker marker_ = enter_section_(builder_, level_, _NONE_, NORMAL_DIFF, "<normal diff>");
+    Marker marker_ = enter_section_(builder_);
     result_ = normalHunk(builder_, level_ + 1);
     while (result_) {
       int pos_ = current_position_(builder_);
       if (!normalHunk(builder_, level_ + 1)) break;
       if (!empty_element_parsed_guard_(builder_, "normalDiff", pos_)) break;
     }
-    exit_section_(builder_, level_, marker_, result_, false, null);
+    exit_section_(builder_, marker_, null, result_);
     return result_;
   }
 
@@ -375,7 +333,7 @@ public class DiffParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // NORMAL_ADD_COMMAND NORMAL_TO_LINE+ EOL_HINT?
-  public static boolean normalHunkAdd(PsiBuilder builder_, int level_) {
+  static boolean normalHunkAdd(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "normalHunkAdd")) return false;
     if (!nextTokenIs(builder_, NORMAL_ADD_COMMAND)) return false;
     boolean result_;
@@ -383,7 +341,7 @@ public class DiffParser implements PsiParser, LightPsiParser {
     result_ = consumeToken(builder_, NORMAL_ADD_COMMAND);
     result_ = result_ && normalHunkAdd_1(builder_, level_ + 1);
     result_ = result_ && normalHunkAdd_2(builder_, level_ + 1);
-    exit_section_(builder_, marker_, NORMAL_HUNK_ADD, result_);
+    exit_section_(builder_, marker_, null, result_);
     return result_;
   }
 
@@ -411,7 +369,7 @@ public class DiffParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // NORMAL_CHANGE_COMMAND NORMAL_FROM_LINE+ EOL_HINT? NORMAL_SEPARATOR NORMAL_TO_LINE+ EOL_HINT?
-  public static boolean normalHunkChange(PsiBuilder builder_, int level_) {
+  static boolean normalHunkChange(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "normalHunkChange")) return false;
     if (!nextTokenIs(builder_, NORMAL_CHANGE_COMMAND)) return false;
     boolean result_;
@@ -422,7 +380,7 @@ public class DiffParser implements PsiParser, LightPsiParser {
     result_ = result_ && consumeToken(builder_, NORMAL_SEPARATOR);
     result_ = result_ && normalHunkChange_4(builder_, level_ + 1);
     result_ = result_ && normalHunkChange_5(builder_, level_ + 1);
-    exit_section_(builder_, marker_, NORMAL_HUNK_CHANGE, result_);
+    exit_section_(builder_, marker_, null, result_);
     return result_;
   }
 
@@ -472,7 +430,7 @@ public class DiffParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // NORMAL_DELETE_COMMAND NORMAL_FROM_LINE+ EOL_HINT?
-  public static boolean normalHunkDelete(PsiBuilder builder_, int level_) {
+  static boolean normalHunkDelete(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "normalHunkDelete")) return false;
     if (!nextTokenIs(builder_, NORMAL_DELETE_COMMAND)) return false;
     boolean result_;
@@ -480,7 +438,7 @@ public class DiffParser implements PsiParser, LightPsiParser {
     result_ = consumeToken(builder_, NORMAL_DELETE_COMMAND);
     result_ = result_ && normalHunkDelete_1(builder_, level_ + 1);
     result_ = result_ && normalHunkDelete_2(builder_, level_ + 1);
-    exit_section_(builder_, marker_, NORMAL_HUNK_DELETE, result_);
+    exit_section_(builder_, marker_, null, result_);
     return result_;
   }
 
@@ -508,28 +466,26 @@ public class DiffParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // anyLine*
-  public static boolean trailingText(PsiBuilder builder_, int level_) {
+  static boolean trailingText(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "trailingText")) return false;
-    Marker marker_ = enter_section_(builder_, level_, _NONE_, TRAILING_TEXT, "<trailing text>");
     while (true) {
       int pos_ = current_position_(builder_);
       if (!anyLine(builder_, level_ + 1)) break;
       if (!empty_element_parsed_guard_(builder_, "trailingText", pos_)) break;
     }
-    exit_section_(builder_, level_, marker_, true, false, null);
     return true;
   }
 
   /* ********************************************************** */
   // UNIFIED_FROM_LABEL UNIFIED_TO_LABEL unifiedHunk+
-  public static boolean unifiedDiff(PsiBuilder builder_, int level_) {
+  static boolean unifiedDiff(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "unifiedDiff")) return false;
     if (!nextTokenIs(builder_, UNIFIED_FROM_LABEL)) return false;
     boolean result_;
     Marker marker_ = enter_section_(builder_);
     result_ = consumeTokens(builder_, 0, UNIFIED_FROM_LABEL, UNIFIED_TO_LABEL);
     result_ = result_ && unifiedDiff_2(builder_, level_ + 1);
-    exit_section_(builder_, marker_, UNIFIED_DIFF, result_);
+    exit_section_(builder_, marker_, null, result_);
     return result_;
   }
 
@@ -587,15 +543,13 @@ public class DiffParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // UNIFIED_INSERTED_LINE | UNIFIED_DELETED_LINE | UNIFIED_COMMON_LINE | EOL_HINT
-  public static boolean unifiedLine(PsiBuilder builder_, int level_) {
+  static boolean unifiedLine(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "unifiedLine")) return false;
     boolean result_;
-    Marker marker_ = enter_section_(builder_, level_, _NONE_, UNIFIED_LINE, "<unified line>");
     result_ = consumeToken(builder_, UNIFIED_INSERTED_LINE);
     if (!result_) result_ = consumeToken(builder_, UNIFIED_DELETED_LINE);
     if (!result_) result_ = consumeToken(builder_, UNIFIED_COMMON_LINE);
     if (!result_) result_ = consumeToken(builder_, EOL_HINT);
-    exit_section_(builder_, level_, marker_, result_, false, null);
     return result_;
   }
 

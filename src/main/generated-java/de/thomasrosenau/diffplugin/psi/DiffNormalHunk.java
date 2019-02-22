@@ -7,13 +7,4 @@ import com.intellij.psi.PsiElement;
 
 public interface DiffNormalHunk extends PsiElement {
 
-  @Nullable
-  DiffNormalHunkAdd getNormalHunkAdd();
-
-  @Nullable
-  DiffNormalHunkChange getNormalHunkChange();
-
-  @Nullable
-  DiffNormalHunkDelete getNormalHunkDelete();
-
 }

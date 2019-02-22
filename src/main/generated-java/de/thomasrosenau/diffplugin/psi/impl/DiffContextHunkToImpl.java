@@ -26,10 +26,4 @@ public class DiffContextHunkToImpl extends ASTWrapperPsiElement implements DiffC
     else super.accept(visitor);
   }
 
-  @Override
-  @NotNull
-  public List<DiffContextToFileLine> getContextToFileLineList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, DiffContextToFileLine.class);
-  }
-
 }

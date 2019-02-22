@@ -7,7 +7,4 @@ import com.intellij.psi.PsiElement;
 
 public interface DiffUnifiedHunk extends PsiElement {
 
-  @NotNull
-  List<DiffUnifiedLine> getUnifiedLineList();
-
 }

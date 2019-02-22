@@ -50,16 +50,16 @@ idea.module.generatedSourceDirs += genSrc
 def namespacePath = 'de/thomasrosenau/diffplugin'
 
 task generateDiffLexer(type: GenerateLexer) {
-    source 'src/main/java/' + namespacePath + '/lexer/Diff.flex'
-    targetDir genSrcPath + '/' + namespacePath
+    source "src/main/java/${namespacePath}/lexer/Diff.flex"
+    targetDir "${genSrcPath}/${namespacePath}"
     targetClass 'DiffLexer'
     purgeOldFiles true
 }
 
 task generateDiffParser(type: GenerateParser) {
-    source 'src/main/java/' + namespacePath + '/parser/Diff.bnf'
+    source "src/main/java/${namespacePath}/parser/Diff.bnf"
     targetRoot genSrcPath
     pathToParser 'DiffParser.java'
-    pathToPsiRoot namespacePath + '/psi'
+    pathToPsiRoot "${namespacePath}/psi"
     purgeOldFiles true
 }

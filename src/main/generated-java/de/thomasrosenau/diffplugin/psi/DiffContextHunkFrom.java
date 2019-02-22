@@ -7,7 +7,4 @@ import com.intellij.psi.PsiElement;
 
 public interface DiffContextHunkFrom extends PsiElement {
 
-  @NotNull
-  List<DiffContextFromFileLine> getContextFromFileLineList();
-
 }

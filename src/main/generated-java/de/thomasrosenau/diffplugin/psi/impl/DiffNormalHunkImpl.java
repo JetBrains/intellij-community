@@ -26,22 +26,4 @@ public class DiffNormalHunkImpl extends ASTWrapperPsiElement implements DiffNorm
     else super.accept(visitor);
   }
 
-  @Override
-  @Nullable
-  public DiffNormalHunkAdd getNormalHunkAdd() {
-    return findChildByClass(DiffNormalHunkAdd.class);
-  }
-
-  @Override
-  @Nullable
-  public DiffNormalHunkChange getNormalHunkChange() {
-    return findChildByClass(DiffNormalHunkChange.class);
-  }
-
-  @Override
-  @Nullable
-  public DiffNormalHunkDelete getNormalHunkDelete() {
-    return findChildByClass(DiffNormalHunkDelete.class);
-  }
-
 }
