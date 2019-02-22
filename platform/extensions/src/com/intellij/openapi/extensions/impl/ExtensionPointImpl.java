@@ -496,7 +496,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   @Override
   public synchronized boolean unregisterExtensions(@NotNull BiPredicate<String, ExtensionComponentAdapter> extensionClassFilter, boolean stopAfterFirstMatch) {
     boolean found = false;
-    for (int i = 0; i < myAdapters.size(); i++) {
+    for (int i = myAdapters.size() - 1; i >= 0; i--) {
       ExtensionComponentAdapter adapter = myAdapters.get(i);
       if (extensionClassFilter.test(adapter.getAssignableToClassName(), adapter)) {
         continue;
