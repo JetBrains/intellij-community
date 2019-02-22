@@ -173,6 +173,8 @@ public abstract class CachedValueBase<T> {
 
   public abstract boolean isFromMyProject(@NotNull Project project);
 
+  public abstract Object getValueProvider();
+
   protected static class Data<T> implements Getter<T> {
     private final T myValue;
     @NotNull
@@ -184,6 +186,10 @@ public abstract class CachedValueBase<T> {
       myValue = value;
       myDependencies = dependencies;
       myTimeStamps = timeStamps;
+    }
+
+    Object[] getDependencies() {
+      return myDependencies;
     }
 
     @Override
@@ -218,6 +224,9 @@ public abstract class CachedValueBase<T> {
   protected <P> T getValueWithLock(P param) {
     Data<T> data = getUpToDateOrNull();
     if (data != null) {
+      if (IdempotenceChecker.areRandomChecksEnabled()) {
+        IdempotenceChecker.applyForRandomCheck(data, getValueProvider(), () -> computeData(doCompute(param)));
+      }
       return data.getValue();
     }
 
@@ -232,6 +241,9 @@ public abstract class CachedValueBase<T> {
       while (true) {
         Data<T> alreadyComputed = getRawData();
         boolean reuse = alreadyComputed != null && isUpToDate(alreadyComputed);
+        if (reuse) {
+          IdempotenceChecker.checkEquivalence(alreadyComputed, data, getValueProvider().getClass());
+        }
         Data<T> toReturn = cacheOrGetData(alreadyComputed, reuse ? null : data);
         if (toReturn != null) {
           valueUpdated(toReturn.myDependencies);
