@@ -90,8 +90,8 @@ public class DigesterTest extends UpdaterTestCase {
     assumeFalse(Utils.IS_WINDOWS);
     File testFile = new File(tempDir.getRoot(), "idea.bat");
     Utils.copy(new File(dataDir, "bin/idea.bat"), testFile);
-    assertEquals(CHECKSUMS.IDEA_BAT, Digester.digestRegularFile(testFile, false));
+    assertEquals(CHECKSUMS.IDEA_BAT, new Digester(null).digestRegularFile(testFile, false));
     Utils.setExecutable(testFile);
-    assertEquals(CHECKSUMS.IDEA_BAT | Digester.EXECUTABLE, Digester.digestRegularFile(testFile, false));
+    assertEquals(CHECKSUMS.IDEA_BAT | Digester.EXECUTABLE, new Digester(null).digestRegularFile(testFile, false));
   }
 }
