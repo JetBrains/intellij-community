@@ -606,6 +606,7 @@
     <extensionPoint name="navbar" interface="com.intellij.ide.navigationToolbar.NavBarModelExtension"/>
 
     <extensionPoint name="renameHandler" interface="com.intellij.refactoring.rename.RenameHandler"/>
+    <extensionPoint name="renameElementProvider" interface="com.intellij.refactoring.rename.RenameElementProvider"/>
     <extensionPoint name="renamePsiElementProcessor" interface="com.intellij.refactoring.rename.RenamePsiElementProcessor"/>
     <extensionPoint name="updateAddedFileProcessor" interface="com.intellij.psi.impl.file.UpdateAddedFileProcessor"/>
     <extensionPoint name="moveFileHandler" interface="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler"/>

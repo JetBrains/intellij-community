@@ -37,6 +37,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.rename.RenameElementProvider;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -172,17 +173,14 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
       }
     }
     else {
-      PsiElement element = e.getData(CommonDataKeys.PSI_ELEMENT);
-      Language[] languages = e.getData(LangDataKeys.CONTEXT_LANGUAGES);
+      final PsiElement element = findElementForDataContext(dataContext);
       if (element == null || !isAvailableForLanguage(element.getLanguage())) {
-        if (file == null) {
-          hideAction(e);
-          return;
-        }
-        element = getElementAtCaret(editor, file);
+        hideAction(e);
+        return;
       }
 
-      if (element == null || element instanceof SyntheticElement || languages == null) {
+      Language[] languages = e.getData(LangDataKeys.CONTEXT_LANGUAGES);
+      if (element instanceof SyntheticElement || languages == null) {
         hideAction(e);
         return;
       }
@@ -198,6 +196,39 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
         hideAction(e);
       }
     }
+  }
+
+  /**
+   * There are 3 strategies to fetch PSI element from context.
+   * {@link CommonDataKeys#PSI_ELEMENT} (which may be <strong>slow</strong> because it resolves reference if element under
+   * caret has reference),
+   * {@link #getElementAtCaret(Editor, PsiFile)} which simply fetches element under caret and extension point
+   * {@link RenameElementProvider}
+   */
+  @Nullable
+  private static PsiElement findElementForDataContext(@NotNull final DataContext context) {
+
+    //Check EP
+    for (final RenameElementProvider provider : RenameElementProvider.EP_NAME.getExtensionList()) {
+      final PsiElement element = provider.getElement(context);
+      if (element != null) {
+        return element;
+      }
+    }
+
+    // No EP
+    final Editor editor = context.getData(CommonDataKeys.EDITOR);
+    final PsiFile file = context.getData(CommonDataKeys.PSI_FILE);
+    if (editor == null || file == null) {
+      // There is no editor nor file, so we can't use "getElementUnderCaret" anyway
+      return context.getData(CommonDataKeys.PSI_ELEMENT);
+    }
+
+    PsiElement result = context.getData(CommonDataKeys.PSI_ELEMENT);
+    if (result == null) {
+      result = getElementAtCaret(editor, file);
+    }
+    return result;
   }
 
   protected boolean disableOnCompiledElement() {
