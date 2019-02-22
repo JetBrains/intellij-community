@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -86,7 +86,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private final GitHistoryProvider myHistoryProvider;
   @NotNull private final Git myGit;
   private final GitVcsConsoleWriter myVcsConsoleWriter;
-  private final Configurable myConfigurable;
   private final RevisionSelector myRevSelector;
   private final GitCommittedChangeListProvider myCommittedChangeListProvider;
 
@@ -110,10 +109,8 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
                 @NotNull final GitDiffProvider gitDiffProvider,
                 @NotNull final GitHistoryProvider gitHistoryProvider,
                 @NotNull final GitRollbackEnvironment gitRollbackEnvironment,
-                @NotNull final GitVcsApplicationSettings gitSettings,
                 @NotNull final GitVcsSettings gitProjectSettings,
-                @NotNull GitExecutableManager executableManager,
-                @NotNull GitSharedSettings sharedSettings) {
+                @NotNull GitExecutableManager executableManager) {
     super(project, NAME);
     myGit = git;
     myVcsConsoleWriter = vcsConsoleWriter;
@@ -125,7 +122,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myRollbackEnvironment = gitRollbackEnvironment;
     myExecutableManager = executableManager;
     myRevSelector = new GitRevisionSelector();
-    myConfigurable = new GitVcsConfigurable(gitSettings, myProject, gitProjectSettings, sharedSettings, executableManager);
     myUpdateEnvironment = new GitUpdateEnvironment(myProject, gitProjectSettings);
     myCommittedChangeListProvider = new GitCommittedChangeListProvider(myProject);
     myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);
@@ -286,10 +282,10 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     }
   }
 
-  @NotNull
+
   @Override
-  public synchronized Configurable getConfigurable() {
-    return myConfigurable;
+  public Configurable getConfigurable() {
+    return null;
   }
 
   @Override
