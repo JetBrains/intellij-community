@@ -1889,9 +1889,13 @@ public class AllIcons {
      */
     public static final Icon Locate = IconLoader.getIcon("/general/locate.svg");
     /**
-     * 24x16
+     * 13x13
      */
     public static final Icon Modified = IconLoader.getIcon("/general/modified.svg");
+    /**
+     * 13x13
+     */
+    public static final Icon Modified_selected = IconLoader.getIcon("/general/modified_selected.svg");
     /**
      * 16x16
      */
