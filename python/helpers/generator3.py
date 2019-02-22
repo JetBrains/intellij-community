@@ -14,7 +14,6 @@ FAILED_VERSION_STAMP = '.failed'
 # TODO: Move all CLR-specific functions to clr_tools
 debug_mode = True
 quiet = False
-_prepopulate_cache_with_sdk_skeletons = True
 
 # TODO move to property of Generator3 as soon as tests finished
 def version():
@@ -24,6 +23,10 @@ def version():
 # TODO move to property of Generator3 as soon as tests finished
 def required_gen_version_file_path():
     return os.environ.get(ENV_REQUIRED_GEN_VERSION_FILE, os.path.join(_helpers_dir, 'required_gen_version'))
+
+
+def is_test_mode():
+    return ENV_TEST_MODE_FLAG in os.environ
 
 
 _helpers_dir = os.path.dirname(__file__)
@@ -405,7 +408,7 @@ def read_generator_version(skeleton_file):
     return None
 
 
-def should_update_skeleton(base_dir, mod_qname):
+def should_update_skeleton(base_dir, mod_qname, mod_path):
     cur_version = version_to_tuple(version())
 
     with ignored_os_errors(errno.ENOENT):
@@ -414,6 +417,10 @@ def should_update_skeleton(base_dir, mod_qname):
             return stamp_content != cur_version
 
     # noinspection PyUnreachableCode
+    failed_version = read_failed_version_from_legacy_blacklist(base_dir, mod_path)
+    if failed_version:
+        return failed_version < cur_version
+
     required_version = read_required_version(mod_qname)
 
     for path in skeleton_path_candidates(base_dir, mod_qname, init_for_pkg=True):
@@ -457,6 +464,26 @@ def read_required_version(mod_qname):
     return versions.get('(default)')
 
 
+def read_failed_version_from_legacy_blacklist(sdk_skeletons_dir, mod_path):
+    blacklist = read_legacy_blacklist_file(sdk_skeletons_dir)
+    record = blacklist.get('{mod_path}' if is_test_mode() else mod_path)
+    return record[0] if record else None
+
+
+def read_legacy_blacklist_file(sdk_skeletons_dir):
+    results = {}
+    with ignored_os_errors(errno.ENOENT):
+        with fopen(os.path.join(sdk_skeletons_dir, '.blacklist'), 'r') as f:
+            for line in f:
+                if not line or line.startswith('#'):
+                    continue
+
+                m = BLACKLIST_VERSION_LINE.match(line)
+                if m:
+                    results[m.group('path')] = (version_to_tuple(m.group('version')), int(m.group('mtime')) / 1000)
+    return results
+
+
 # command-line interface
 # noinspection PyBroadException
 def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
@@ -478,18 +505,14 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
         python_stubs_dir = os.path.dirname(sdk_skeletons_dir)
         global_cache_dir = os.path.join(python_stubs_dir, 'cache')
         mod_cache_dir = build_cache_dir_path(global_cache_dir, name, mod_file_name)
-        if should_update_skeleton(mod_cache_dir, name):
+        # At the moment this is actually enforced on Java-side
+        if not should_update_skeleton(sdk_skeletons_dir, name, mod_file_name):
+            return True
+
+        if should_update_skeleton(mod_cache_dir, name, mod_file_name):
             note('Updating cache for %s at %r', name, mod_cache_dir)
             delete(mod_cache_dir)
             mkdir(mod_cache_dir)
-
-            if _prepopulate_cache_with_sdk_skeletons and not should_update_skeleton(sdk_skeletons_dir, name):
-                note('Prepopulating cache for %s from existing skeletons at %r', name, sdk_skeletons_dir)
-                copy_dst = build_pkg_structure(mod_cache_dir, '.'.join(name.split('.')[:-1]))
-                for path in skeleton_path_candidates(sdk_skeletons_dir, name, init_for_pkg=False):
-                    if os.path.exists(path):
-                        copy(path, copy_dst)
-                        return True
 
             old_modules = list(sys.modules.keys())
             imported_module_names = set()
