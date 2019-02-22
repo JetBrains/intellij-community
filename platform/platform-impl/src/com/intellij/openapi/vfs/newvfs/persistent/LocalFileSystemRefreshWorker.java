@@ -321,9 +321,9 @@ class LocalFileSystemRefreshWorker {
         return FileVisitResult.CONTINUE;
       }
 
-      if(checkCancelled(child, myRefreshContext)) {
-        return FileVisitResult.CONTINUE;
-      }
+        if(checkCancelled(child, myRefreshContext)) {
+          return FileVisitResult.TERMINATE;
+        }
 
       if (!child.isDirty()) {
         return FileVisitResult.CONTINUE;
@@ -434,8 +434,10 @@ class LocalFileSystemRefreshWorker {
     @NotNull
     VfsEventGenerationHelper getHelper() {
       if (!myPersistentChildren.isEmpty()) {
-        for (VirtualFile child : myPersistentChildren.values()) {
-          myHelper.scheduleDeletion(child);
+        if (!myCancelled) {
+          for (VirtualFile child : myPersistentChildren.values()) {
+            myHelper.scheduleDeletion(child);
+          }
         }
         myPersistentChildren.clear();
       }
