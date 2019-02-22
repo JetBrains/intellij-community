@@ -1,3 +1,4 @@
+import errno
 import logging
 import os
 import subprocess
@@ -13,6 +14,7 @@ from pycharm_generator_utils.constants import (
     ENV_REQUIRED_GEN_VERSION_FILE,
 )
 from pycharm_generator_utils.test import GeneratorTestCase
+from pycharm_generator_utils.util_methods import ignored_os_errors
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -35,7 +37,7 @@ class SkeletonCachingTest(GeneratorTestCase):
                       extra_syspath_entry=None,
                       gen_version=None,
                       required_gen_version_file_path=None):
-        output_dir = os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR, self.SDK_SKELETONS_DIR)
+        output_dir = self.temp_skeletons_dir
 
         if not extra_syspath_entry:
             extra_syspath_entry = self.test_data_dir
@@ -84,6 +86,10 @@ class SkeletonCachingTest(GeneratorTestCase):
                     del os.environ[name]
 
         return mod_path
+
+    @property
+    def temp_skeletons_dir(self):
+        return os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR, self.SDK_SKELETONS_DIR)
 
     @staticmethod
     def imported_module_path(mod_qname, extra_syspath_entry):
@@ -175,9 +181,31 @@ class SkeletonCachingTest(GeneratorTestCase):
     def test_cache_not_prepopulated_with_outdated_existing_sdk_skeleton(self):
         self.check_generator_output('mod', mod_path='mod.py', gen_version='0.2', custom_required_gen=True)
 
+    def test_cache_not_updated_when_sdk_skeleton_is_up_to_date(self):
+        # We can't safely updated cache from SDK skeletons (backwards) because of binaries declaring
+        # multiple modules. Skeletons for them are scattered across SDK skeletons directory, and we can't
+        # collect them reliably.
+        self.check_generator_output('mod', mod_path='mod.py', gen_version='0.2', custom_required_gen=True)
+
+    def test_cache_skeleton_reused_when_sdk_skeleton_is_missing(self):
+        self.check_generator_output('mod', mod_path='mod.py', gen_version='0.2', custom_required_gen=True)
+
+    def test_cache_skeleton_reused_when_sdk_skeleton_is_outdated(self):
+        # SDK skeleton version is 0.1, cache skeleton version is 0.2, skeletons need to be updated starting from 0.2
+        # New skeleton would have version 0.3, but we shouldn't generate any.
+        self.check_generator_output('mod', mod_path='mod.py', gen_version='0.3', custom_required_gen=True)
+
+    def test_cache_skeleton_reused_when_sdk_skeleton_generation_failed(self):
+        # Generation failed for version 0.1, cache skeleton version is 0.2
+        self.check_generator_output('mod', mod_path='mod.py', gen_version='0.3', custom_required_gen=True)
+
+    def test_cache_skeleton_not_regenerated_when_sdk_skeleton_generation_failed_for_same_version(self):
+        self.check_generator_output('mod', mod_path='mod.py', gen_version='0.1', custom_required_gen=True)
+
     def check_generator_output(self, mod_name, mod_path=None, mod_root=None, custom_required_gen=False, **kwargs):
         if custom_required_gen:
-            kwargs['required_gen_version_file_path'] = os.path.join(self.test_data_dir, 'required_gen_version')
+            kwargs.setdefault('required_gen_version_file_path',
+                              os.path.join(self.test_data_dir, 'required_gen_version'))
 
         if not mod_root:
             mod_root = self.test_data_dir
