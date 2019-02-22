@@ -476,7 +476,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   @Override
   public void dispose(@NotNull DeleteParameterInfoContext context) {
     Editor editor = context.getEditor();
-    if (!(editor instanceof EditorWindow)) {
+    if (!(editor instanceof EditorWindow) && CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) {
       resetHints(context.getCustomContext());
       PsiElement parameterOwner = context.getParameterOwner();
       if (!editor.isDisposed() && parameterOwner != null && parameterOwner.isValid()) {
