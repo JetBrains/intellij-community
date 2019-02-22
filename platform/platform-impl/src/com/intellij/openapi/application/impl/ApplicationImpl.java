@@ -1416,12 +1416,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void saveSettings() {
-    saveSettings(false);
-  }
-
-  private void saveSettings(boolean isForceSavingAllSettings) {
     if (mySaveAllowed) {
-      StoreUtil.saveSettings(this, isForceSavingAllSettings);
+      StoreUtil.saveSettings(this, false);
     }
   }
 
