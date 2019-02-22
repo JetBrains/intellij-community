@@ -279,9 +279,8 @@ object GuiTestUtilKt {
     }
   }
 
-  fun <T : Component> isComponentShowing(componentClass: Class<T>): Boolean = ignoreComponentLookupException {
-    robot.findComponent(null, componentClass) { it.isShowing }
-  } != null
+  fun <T : Component> isComponentShowing(componentClass: Class<T>): Boolean =
+    robot.finder().findAll(typeMatcher(componentClass) { it.isShowing }).isNotEmpty()
 
   fun <ComponentType : Component> findAllWithBFS(container: Container, clazz: Class<ComponentType>): List<ComponentType> {
     val result = LinkedList<ComponentType>()
