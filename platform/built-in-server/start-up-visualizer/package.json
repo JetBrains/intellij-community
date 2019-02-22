@@ -6,7 +6,9 @@
     "@amcharts/amcharts4": "4.1.9"
   },
   "devDependencies": {
+    "@types/jest": "^24.0.6",
     "@types/parcel-env": "^0.0.0",
+    "jest": "^24.1.0",
     "parcel-bundler": "^1.11.0",
     "typescript": "^3.3.3"
   },
@@ -14,6 +16,7 @@
     "compile": "tsc --outFile out/index.js --module amd",
     "//": "chrome://flags/#allow-insecure-localhost to tell Chrome to ignore cert warnings on localhost",
     "serve": "caddy -quic -host localhost -port 8080 \"ext .html\" \"log stdout\" \"tls self_signed\" \"bind 127.0.0.1\"",
-    "dev": "parcel dev.html"
+    "dev": "parcel dev.html",
+    "test": "parcel build src/timeLineChartHelper.test.ts --out-dir dist/test --no-minify && jest dist/test"
   }
 }

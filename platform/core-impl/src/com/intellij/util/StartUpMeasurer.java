@@ -8,11 +8,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Consumer;
 
 public final class StartUpMeasurer {
   // use constants for better overview of existing phases (and preserve consistent naming)
   // `what + noun` is used as scheme for name to make analyzing easier (to visually group - `components loading/initialization/etc`, not to put common part of name to end of)
   public static final class Phases {
+    // this phase name is not fully clear - it is time from `PluginManager.start` to `IdeaApplication.initApplication`
+    public static final String PREPARE_TO_INIT_APP = "app initialization preparation";
     // this phase name is not fully clear - it is time from `IdeaApplication.initApplication` to `IdeaApplication.run`
     public static final String INIT_APP = "app initialization";
 
@@ -35,7 +38,7 @@ public final class StartUpMeasurer {
   public static final String COMPONENT_INITIALIZED_INTERNAL_NAME = "_component initialized";
   public static final String PRELOAD_ACTIVITY_FINISHED = "_preload activity finished";
 
-  private static final long startTime = System.currentTimeMillis();
+  private static final long startTime = System.nanoTime();
 
   private static final ConcurrentLinkedQueue<Item> items = new ConcurrentLinkedQueue<>();
 
@@ -54,11 +57,11 @@ public final class StartUpMeasurer {
   }
 
   public static void reportComponentInitialized(@NotNull Class<?> componentClass, long startTime, long endTime) {
-    new Item(COMPONENT_INITIALIZED_INTERNAL_NAME, componentClass.getName(), startTime).end(endTime);
+    new Item(COMPONENT_INITIALIZED_INTERNAL_NAME, componentClass.getName(), startTime, null).end(endTime);
   }
 
   @NotNull
-  public static List<Item> getAndClear() {
+  public static List<Item> processAndClear(@NotNull Consumer<Item> consumer) {
     ArrayList<Item> list = new ArrayList<>();
     while (true) {
       Item item = items.poll();
@@ -66,7 +69,7 @@ public final class StartUpMeasurer {
         break;
       }
 
-      list.add(item);
+      consumer.accept(item);
     }
     return list;
   }
@@ -78,14 +81,31 @@ public final class StartUpMeasurer {
     private final long start;
     private long end;
 
+    // null doesn't mean root - not obligated to set parent, only as hint
+    private final Item parent;
+
     private Item(@Nullable String name, @Nullable String description) {
-      this(name, description, System.currentTimeMillis());
+      this(name, description, System.nanoTime(), null);
     }
 
-    private Item(@Nullable String name, @Nullable String description, long start) {
+    private Item(@Nullable String name, @Nullable String description, long start, @Nullable Item parent) {
       this.name = name;
       this.description = StringUtil.nullize(description);
       this.start = start;
+      this.parent = parent;
+    }
+
+    @Nullable
+    public Item getParent() {
+      return parent;
+    }
+
+    // and how do we can sort correctly, when parent item equals to child (start and end) and also there is another child with start equals to end?
+    // so, parent added to API but as it was not enough, decided to measure time in nanoseconds instead of ms to mitigate such situations
+    @Override
+    @NotNull
+    public Item startChild(@NotNull String name) {
+      return new Item(name, null, System.nanoTime(), this);
     }
 
     @NotNull
@@ -111,7 +131,7 @@ public final class StartUpMeasurer {
       if (description != null) {
         this.description = description;
       }
-      end = System.currentTimeMillis();
+      end = System.nanoTime();
       items.add(this);
     }
 
@@ -124,10 +144,18 @@ public final class StartUpMeasurer {
     public void close() {
       end();
     }
+
+    @Override
+    public String toString() {
+      return name;
+    }
   }
 
   public interface MeasureToken extends AutoCloseable {
     void end(@Nullable String description);
+
+    @NotNull
+    Item startChild(@NotNull String name);
 
     default void end() {
       end(null);

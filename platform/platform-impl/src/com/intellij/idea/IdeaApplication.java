@@ -68,6 +68,7 @@ public class IdeaApplication {
 
   @SuppressWarnings("SSBasedInspection")
   public static void initApplication(String[] args) {
+    PluginManager.startupStart.end();
     StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(StartUpMeasurer.Phases.INIT_APP);
     IdeaApplication app = new IdeaApplication(args);
     // this invokeLater() call is needed to place the app starting code on a freshly minted IdeEventQueue instance
@@ -346,7 +347,6 @@ public class IdeaApplication {
       AppLifecycleListener lifecyclePublisher = app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
       lifecyclePublisher.appFrameCreated(args, willOpenProject);
 
-      LOG.info("App initialization took " + (System.nanoTime() - PluginManager.startupStart) / 1000000 + " ms");
       PluginManagerCore.dumpPluginClassStatistics();
 
       // Temporary check until the jre implementation has been checked and bundled
@@ -379,7 +379,6 @@ public class IdeaApplication {
         LifecycleUsageTriggerCollector.onIdeStart();
       });
     }
-
   }
 
   /**

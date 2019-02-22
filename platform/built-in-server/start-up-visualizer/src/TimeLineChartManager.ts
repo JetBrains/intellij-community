@@ -1,7 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-import {InputData, Item, XYChartManager} from "./core"
+import {InputData, XYChartManager} from "./core"
 import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
+import {computeLevels, TimeLineItem} from "./timeLineChartHelper"
 
 // https://github.com/almende/vis/blob/master/examples/timeline/dataHandling/dataSerialization.html
 // do not group because it makes hard to understand results
@@ -30,6 +31,7 @@ export class TimelineChartManager extends XYChartManager {
     levelAxis.renderer.grid.template.location = 0
     levelAxis.renderer.minGridDistance = 1
     levelAxis.renderer.labels.template.disabled = true
+    // levelAxis.renderer.grid.template.disabled = true
     return levelAxis
   }
 
@@ -72,6 +74,12 @@ export class TimelineChartManager extends XYChartManager {
     // https://www.amcharts.com/docs/v4/tutorials/auto-adjusting-chart-height-based-on-a-number-of-data-items/
     // noinspection SpellCheckingInspection
     this.chart.events.on("datavalidated", () => {
+      const grid = this.chart.yAxes.getIndex(0)!!.renderer.grid
+      // hide all grid lines except first and last
+      for (let i = 1; i < (grid.length - 1); i++) {
+        grid.getIndex(i)!!.disabled = true
+      }
+
       const chart = this.chart
       const adjustHeight = chart.data.reduce((max, item) => Math.max(item.rowIndex, max), 0) * 35 - levelAxis.pixelHeight
 
@@ -86,7 +94,7 @@ export class TimelineChartManager extends XYChartManager {
   render(ijData: InputData) {
     const items = ijData.items
     const firstStart = new Date(items[0].start)
-    const timeOffset = items[0].start
+    const timeOffset = 0
 
     const data = transformIjData(ijData, timeOffset)
     this.chart.data = data
@@ -94,22 +102,6 @@ export class TimelineChartManager extends XYChartManager {
     const originalItems = items
     const durationAxis = this.chart.xAxes.getIndex(0) as am4charts.DurationAxis
     durationAxis.max = originalItems[originalItems.length - 1].end - timeOffset
-  }
-}
-
-function computeLevels(items: Array<Item>) {
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i]
-    let level = 0
-    for (let j = i - 1; j >= 0; j--) {
-      const prevItem = items[j] as TimeLineItem
-      if (prevItem.end >= item.end) {
-        level = prevItem.level + 1
-        break
-      }
-    }
-
-    (item as TimeLineItem).level = level
   }
 }
 
@@ -123,31 +115,24 @@ function transformIjData(input: InputData, timeOffset: number): Array<any> {
   let rowIndex = 0
   for (let i = 0; i < input.items.length; i++) {
     const item = input.items[i] as TimeLineItem
+
+    if (rowIndex > 5 && item.level === 0) {
+      rowIndex = 0
+    }
+
     const result: any = {
       name: item.name,
       start: item.start - timeOffset,
       end: item.end - timeOffset,
       duration: item.duration,
-      // level: item.isSubItem ? 2 : 1
-      // level: "l" + getLevel(i, input.items, transformedItems).toString(),
-      // level: getLevel(i, input.items, transformedItems),
-      // level: item.level,
       rowIndex: rowIndex++,
-      color: colorSet.getIndex(item.level),
+      color: colorSet.getIndex(item.colorIndex),
       level: item.level,
     }
 
-    if (rowIndex > 6) {
-      rowIndex = 0
-    }
     transformedItems[i] = result
   }
 
   transformedItems.sort((a, b) => a.rowIndex - b.rowIndex)
   return transformedItems
-}
-
-interface TimeLineItem extends Item {
-  level: number
-  rowIndex: number
 }

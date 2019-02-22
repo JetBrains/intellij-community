@@ -43,9 +43,11 @@ import org.picocontainer.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManagerEx, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentManager");
+  public static final long COMPONENT_MEASURE_THRESHOLD = TimeUnit.MILLISECONDS.toNanos(10);
 
   private volatile MutablePicoContainer myPicoContainer;
   private volatile boolean myDisposed;
@@ -110,14 +112,14 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myComponentConfigCount = componentConfigCount;
 
     if (componentsRegistered != null) {
-      measureToken = isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix + StartUpMeasurer.Phases.COMPONENTS_REGISTERED_CALLBACK_SUFFIX) : null;
+      measureToken = isNeededToMeasure ? totalMeasureToken.startChild(measureTokenNamePrefix + StartUpMeasurer.Phases.COMPONENTS_REGISTERED_CALLBACK_SUFFIX) : null;
       componentsRegistered.run();
       if (measureToken != null) {
         measureToken.end();
       }
     }
 
-    measureToken = isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix + StartUpMeasurer.Phases.CREATE_COMPONENTS_SUFFIX) : null;
+    measureToken = isNeededToMeasure ? totalMeasureToken.startChild(measureTokenNamePrefix + StartUpMeasurer.Phases.CREATE_COMPONENTS_SUFFIX) : null;
     createComponents(indicator);
     if (measureToken != null) {
       measureToken.end();
@@ -465,7 +467,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
             return instance;
           }
 
-          long startTime = System.currentTimeMillis();
+          long startTime = System.nanoTime();
 
           instance = super.getComponentInstance(picoContainer);
 
@@ -494,8 +496,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
               ((BaseComponent)instance).initComponent();
             }
 
-            long endTime = System.currentTimeMillis();
-            if ((endTime - startTime) > 10 && (LOG.isDebugEnabled() || ApplicationInfoImpl.getShadowInstance().isEAP())) {
+            long endTime = System.nanoTime();
+            if ((endTime - startTime) > COMPONENT_MEASURE_THRESHOLD && (LOG.isDebugEnabled() || ApplicationInfoImpl.getShadowInstance().isEAP())) {
               StartUpMeasurer.reportComponentInitialized(instance.getClass(), startTime, endTime);
             }
           }

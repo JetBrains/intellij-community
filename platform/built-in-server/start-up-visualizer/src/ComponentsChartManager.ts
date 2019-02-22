@@ -26,6 +26,7 @@ export class ComponentsChartManager extends XYChartManager {
     nameAxisLabel.horizontalCenter = "right"
     nameAxis.renderer.minGridDistance = 1
     nameAxis.renderer.grid.template.location = 0
+    nameAxis.renderer.grid.template.disabled = true
   }
 
   private configureDurationAxis(): void {

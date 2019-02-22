@@ -10,8 +10,6 @@ export interface Item {
   end: number
 
   duration: number
-
-  isSubItem?: boolean
 }
 
 export interface InputData {
