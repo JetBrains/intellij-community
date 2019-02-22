@@ -50,7 +50,7 @@ class GradleProjectContributor : GradleMethodContextContributor {
       if (parent is GrMethodCallExpression) {
         val typeTakArgument = parent.namedArguments.find { "type" == it.labelName }?.expression?.type
         if (typeTakArgument is PsiClassType && "Class" == typeTakArgument.className) {
-          taskType = typeTakArgument.parameters.first()
+          taskType = typeTakArgument.parameters.firstOrNull()
         }
       }
       if (taskType == null) {
