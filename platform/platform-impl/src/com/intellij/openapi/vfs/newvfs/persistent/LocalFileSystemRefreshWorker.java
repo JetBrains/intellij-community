@@ -364,21 +364,7 @@ class LocalFileSystemRefreshWorker {
                                      myRefreshContext.persistence.getLastRecordedLength(child), attrs.size());
       }
 
-      boolean currentWritable = myRefreshContext.persistence.isWritable(child);
-      boolean isWritable;
-
-      if (attrs instanceof DosFileAttributes) {
-        DosFileAttributes dosFileAttributes = (DosFileAttributes)attrs;
-        isWritable = isDirectory || !dosFileAttributes.isReadOnly();
-      }
-      else if (attrs instanceof PosixFileAttributes) {
-        isWritable = ((PosixFileAttributes)attrs).permissions().contains(PosixFilePermission.OWNER_WRITE);
-      }
-      else {
-        isWritable = file.toFile().canWrite();
-      }
-
-      myHelper.checkWritableAttributeChange(child, currentWritable, isWritable);
+      myHelper.checkWritableAttributeChange(child, myRefreshContext.persistence.isWritable(child), isWritable(file, attrs, isDirectory));
 
       if (attrs instanceof DosFileAttributes) {
         myHelper.checkHiddenAttributeChange(child, child.is(VFileProperty.HIDDEN), ((DosFileAttributes)attrs).isHidden());
@@ -448,7 +434,23 @@ class LocalFileSystemRefreshWorker {
     }
   }
 
-  private static boolean isEmptyDir(@NotNull Path path, @NotNull BasicFileAttributes a) {
+  private static boolean isWritable(Path file, BasicFileAttributes a, boolean directory) {
+    boolean isWritable;
+
+    if (a instanceof DosFileAttributes) {
+      DosFileAttributes dosFileAttributes = (DosFileAttributes)a;
+      isWritable = directory || !dosFileAttributes.isReadOnly();
+    }
+    else if (a instanceof PosixFileAttributes) {
+      isWritable = ((PosixFileAttributes)a).permissions().contains(PosixFilePermission.OWNER_WRITE);
+    }
+    else {
+      isWritable = file.toFile().canWrite();
+    }
+    return isWritable;
+  }
+
+  private static boolean isEmptyDir(Path path, BasicFileAttributes a) {
     return a.isDirectory() && !LocalFileSystemBase.hasChildren(path);
   }
 
@@ -467,13 +469,13 @@ class LocalFileSystemRefreshWorker {
     }
 
     long lastModified = a.lastModifiedTime().toMillis();
+    boolean writable = isWritable(path, a, a.isDirectory());
+    
     if (SystemInfo.isWindows) {
       boolean hidden = path.getParent() != null && ((DosFileAttributes)a).isHidden();
-      boolean writable = a.isDirectory() || !((DosFileAttributes)a).isReadOnly();
       return new FileAttributes(a.isDirectory(), a.isOther(), isSymlink, hidden, a.size(), lastModified, writable);
     }
     else {
-      boolean writable = Files.isWritable(path);
       return new FileAttributes(a.isDirectory(), a.isOther(), isSymlink, false, a.size(), lastModified, writable);
     }
   }
