@@ -176,7 +176,13 @@ class LocalFileSystemRefreshWorker {
                                                                             Collections.singletonList(file));
 
     refreshingFileVisitor.visit(file);
-    myHelper.addAllEventsFrom(refreshingFileVisitor.getHelper());
+    addAllEventsFrom(refreshingFileVisitor);
+  }
+
+  private void addAllEventsFrom(RefreshingFileVisitor refreshingFileVisitor) {
+    synchronized (myHelper) {
+      myHelper.addAllEventsFrom(refreshingFileVisitor.getHelper());
+    }
   }
 
   private void fullDirRefresh(@NotNull VirtualDirectoryImpl dir, @NotNull RefreshContext refreshContext) {
@@ -202,7 +208,7 @@ class LocalFileSystemRefreshWorker {
           return false;
         }
 
-        myHelper.addAllEventsFrom(refreshingFileVisitor.getHelper());
+        addAllEventsFrom(refreshingFileVisitor);
         return true;
       });
       if (hasEvents) {
@@ -240,7 +246,7 @@ class LocalFileSystemRefreshWorker {
           return false;
         }
 
-        myHelper.addAllEventsFrom(refreshingFileVisitor.getHelper());
+        addAllEventsFrom(refreshingFileVisitor);
 
         return true;
       });
