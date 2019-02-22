@@ -14,7 +14,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomDeclarationSearcher;
 import com.intellij.pom.PomTarget;
 import com.intellij.psi.*;
@@ -26,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.GrHighlightUtil;
-import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFilter;
@@ -41,10 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -59,8 +54,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.ReferenceFixesKt.generateAddImportActions;
-import static org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.ReferenceFixesKt.generateCreateClassActions;
+import static org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.ReferenceFixesKt.*;
 
 public class GrUnresolvedAccessChecker {
   public static final Logger LOG = Logger.getInstance(GrUnresolvedAccessChecker.class);
@@ -327,58 +321,8 @@ public class GrUnresolvedAccessChecker {
   private static void registerReferenceFixes(GrReferenceExpression refExpr,
                                              HighlightInfo info,
                                              final HighlightDisplayKey key) {
-    PsiClass targetClass = QuickfixUtil.findTargetClass(refExpr);
-    if (targetClass == null) return;
-
-    addDynamicAnnotation(info, refExpr, key);
-
-    if (!(targetClass instanceof SyntheticElement) || (targetClass instanceof GroovyScriptClass)) {
-
-      QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createCreateFieldFromUsageFix(refExpr), key);
-
-      if (PsiUtil.isAccessedForReading(refExpr)) {
-        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createCreateGetterFromUsageFix(refExpr, targetClass), key);
-      }
-      if (PsiUtil.isLValue(refExpr)) {
-        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createCreateSetterFromUsageFix(refExpr), key);
-      }
-
-      if (refExpr.getParent() instanceof GrCall && refExpr.getParent() instanceof GrExpression) {
-        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createCreateMethodFromUsageFix(refExpr), key);
-      }
-    }
-
-    if (!refExpr.isQualified()) {
-      GrVariableDeclarationOwner owner = PsiTreeUtil.getParentOfType(refExpr, GrVariableDeclarationOwner.class);
-      if (!(owner instanceof GroovyFileBase) || ((GroovyFileBase)owner).isScript()) {
-        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createCreateLocalVariableFromUsageFix(refExpr, owner), key);
-      }
-      if (PsiTreeUtil.getParentOfType(refExpr, GrMethod.class) != null) {
-        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createCreateParameterFromUsageFix(refExpr), key);
-      }
-    }
-  }
-
-  private static void addDynamicAnnotation(HighlightInfo info, GrReferenceExpression referenceExpression, HighlightDisplayKey key) {
-    final PsiFile containingFile = referenceExpression.getContainingFile();
-    if (containingFile != null) {
-      VirtualFile file = containingFile.getVirtualFile();
-      if (file == null) return;
-    }
-    else {
-      return;
-    }
-
-    if (PsiUtil.isCall(referenceExpression)) {
-      PsiType[] argumentTypes = PsiUtil.getArgumentTypes(referenceExpression, false);
-      if (argumentTypes != null) {
-        QuickFixAction.registerQuickFixAction(info, referenceExpression.getTextRange(),
-                                              GroovyQuickFixFactory.getInstance().createDynamicMethodFix(referenceExpression,
-                                                                                                         argumentTypes), key);
-      }
-    }
-    else {
-      QuickFixAction.registerQuickFixAction(info, referenceExpression.getTextRange(), GroovyQuickFixFactory.getInstance().createDynamicPropertyFix(referenceExpression), key);
+    for (IntentionAction fix : generateReferenceExpressionFixes(refExpr)) {
+      QuickFixAction.registerQuickFixAction(info, fix, key);
     }
   }
 
