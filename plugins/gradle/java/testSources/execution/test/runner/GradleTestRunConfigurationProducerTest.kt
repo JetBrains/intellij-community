@@ -130,4 +130,33 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
       testTasksFilter = { it in setOf("test", "autoTest") }
     )
   }
+
+  @Test
+  fun `test configuration tests for directory`() {
+    val projectData = generateAndImportTemplateProject()
+    assertConfigurationFromContext<AllInDirectoryGradleConfigurationProducer>(
+      """:cleanAutoTest :autoTest --tests * :cleanAutomationTest :automationTest --tests * :cleanTest :test --tests * --continue""",
+      projectData["project"].root
+    )
+    assertConfigurationFromContext<AllInDirectoryGradleConfigurationProducer>(
+      """:cleanTest :test --tests *""",
+      projectData["project"].root.subDirectory("src")
+    )
+    assertConfigurationFromContext<AllInDirectoryGradleConfigurationProducer>(
+      """:cleanTest :test --tests *""",
+      projectData["project"].root.subDirectory("src", "test")
+    )
+    assertConfigurationFromContext<AllInPackageGradleConfigurationProducer>(
+      """:cleanTest :test --tests *""",
+      projectData["project"].root.subDirectory("src", "test", "java")
+    )
+    assertConfigurationFromContext<AllInPackageGradleConfigurationProducer>(
+      """:cleanAutoTest :autoTest --tests * :cleanAutomationTest :automationTest --tests * --continue""",
+      projectData["project"].root.subDirectory("automation")
+    )
+    assertConfigurationFromContext<AllInDirectoryGradleConfigurationProducer>(
+      """:module:cleanTest :module:test --tests *""",
+      projectData["module"].root
+    )
+  }
 }
