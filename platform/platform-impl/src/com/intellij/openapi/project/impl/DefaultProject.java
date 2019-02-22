@@ -1,13 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl;
 
+import com.intellij.openapi.components.ComponentConfig;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
-class DefaultProject extends ProjectImpl {
+final class DefaultProject extends ProjectImpl {
   private static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
 
   DefaultProject(@NotNull String filePath) {
@@ -24,9 +24,14 @@ class DefaultProject extends ProjectImpl {
     return true; // no startup activities, never opened
   }
 
-  @Nullable
+  @NotNull
   @Override
   protected String measureTokenNamePrefix() {
     return "default project ";
+  }
+
+  @Override
+  protected boolean isComponentSuitable(@NotNull ComponentConfig componentConfig) {
+    return super.isComponentSuitable(componentConfig) && componentConfig.isLoadForDefaultProject();
   }
 }

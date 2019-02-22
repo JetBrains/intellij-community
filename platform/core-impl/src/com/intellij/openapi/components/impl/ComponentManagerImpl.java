@@ -19,7 +19,6 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -88,7 +87,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     String measureTokenNamePrefix = StringUtil.notNullize(measureTokenNamePrefix());
     StartUpMeasurer.MeasureToken measureToken = isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix + StartUpMeasurer.Phases.REGISTER_COMPONENTS_SUFFIX) : null;
 
-    boolean isDefaultProject = this instanceof Project && ((Project)this).isDefault();
     StartupProgress startupProgress = null;
     if (indicator != null) {
       startupProgress = (message, progress) -> indicator.setFraction(progress);
@@ -97,7 +95,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     int componentConfigCount = 0;
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins(startupProgress)) {
       for (ComponentConfig config : getMyComponentConfigsFromDescriptor(plugin)) {
-        if ((!isDefaultProject || config.isLoadForDefaultProject()) && isComponentSuitable(config.options)) {
+        if (isComponentSuitable(config)) {
           registerComponents(config, plugin);
           componentConfigCount++;
         }
@@ -291,7 +289,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myParentComponentManager == null ? new DefaultPicoContainer() : new DefaultPicoContainer(myParentComponentManager.getPicoContainer());
   }
 
-  protected boolean isComponentSuitable(@Nullable Map<String, String> options) {
+  protected boolean isComponentSuitable(@NotNull ComponentConfig componentConfig) {
     return true;
   }
 
