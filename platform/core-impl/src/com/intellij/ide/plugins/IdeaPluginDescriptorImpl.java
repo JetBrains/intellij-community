@@ -327,9 +327,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   private static void readComponents(@NotNull Element parent, @NotNull Ref<BeanBinding> oldComponentConfigBean, @NotNull ArrayList<ComponentConfig> result) {
-    final Application app = ApplicationManager.getApplication();
-    boolean headless = app == null || app.isHeadlessEnvironment();
-
     List<Content> content = parent.getContent();
     int contentSize = content.size();
     if (contentSize == 0) {
@@ -358,12 +355,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
       beanBinding.deserializeInto(componentConfig, componentElement);
       Map<String, String> options = componentConfig.options;
-      if (options != null && (!Extensions.isComponentSuitableForOs(options.get("os")) ||
-                              (Boolean.parseBoolean(options.get("internal")) && !(app == null || ApplicationManager.getApplication().isInternal())))) {
-        continue;
-      }
-
-      if (!componentConfig.prepareClasses(headless)) {
+      if (options != null && (!Extensions.isComponentSuitableForOs(options.get("os")))) {
         continue;
       }
 

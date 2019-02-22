@@ -5,6 +5,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.StartupProgress;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -94,11 +95,18 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
     StartUpMeasurer.MeasureToken totalMeasureToken = isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix() + StartUpMeasurer.Phases.INITIALIZE_COMPONENTS_SUFFIX) : null;
 
+    final Application app = ApplicationManager.getApplication();
+    boolean headless = app == null || app.isHeadlessEnvironment();
+
     String measureTokenNamePrefix = StringUtil.notNullize(measureTokenNamePrefix());
     StartUpMeasurer.MeasureToken measureToken = isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix + StartUpMeasurer.Phases.REGISTER_COMPONENTS_SUFFIX) : null;
     int componentConfigCount = 0;
     for (IdeaPluginDescriptor plugin : plugins) {
       for (ComponentConfig config : getMyComponentConfigsFromDescriptor(plugin)) {
+        if (!config.prepareClasses(headless)) {
+          continue;
+        }
+
         if (isComponentSuitable(config)) {
           registerComponents(config, plugin);
           componentConfigCount++;
@@ -294,7 +302,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   protected boolean isComponentSuitable(@NotNull ComponentConfig componentConfig) {
-    return true;
+    Map<String, String> options = componentConfig.options;
+    return options == null || ((!Boolean.parseBoolean(options.get("internal")) || ApplicationManager.getApplication().isInternal()));
   }
 
   @Override
