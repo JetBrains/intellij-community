@@ -1480,6 +1480,7 @@ public class ExpressionUtils {
         case "format":
           if (arguments.length < 1) return false;
           final PsiParameterList parameterList = method.getParameterList();
+          if (parameterList.getParametersCount() < 1) return false;
           final PsiParameter[] parameters = parameterList.getParameters();
           final PsiParameter parameter = parameters[0];
           final PsiType firstParameterType = parameter.getType();
