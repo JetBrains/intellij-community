@@ -143,7 +143,8 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
           baseDir = baseDir.getParent();
         }
       }
-      if (baseDir == null) { // no reasonable directory -> create new temp one or use parent
+      // no reasonable directory -> create new temp one or use parent
+      if (baseDir == null) {
         if (tempProject || Registry.is("ide.open.file.in.temp.project.dir")) {
           try {
             dummyProjectName = virtualFile.getName();
@@ -161,46 +162,14 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
       }
     }
 
-    final Path projectDir = Paths.get(FileUtil.toSystemDependentName(baseDir.getPath()), Project.DIRECTORY_STORE_FOLDER);
-
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (!forceOpenInNewFrame && openProjects.length > 0) {
       if (projectToClose == null) {
         projectToClose = openProjects[openProjects.length - 1];
       }
 
-      if (ProjectAttachProcessor.canAttachToProject() && GeneralSettings.getInstance().getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK) {
-
-        final int exitCode = ProjectUtil.confirmOpenOrAttachProject();
-
-        if (exitCode == -1) {
-          return null;
-        }
-        if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
-          if (!ProjectUtil.closeAndDispose(projectToClose)) {
-            return null;
-          }
-        }
-        else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
-          if (attachToProject(projectToClose, Paths.get(FileUtil.toSystemDependentName(baseDir.getPath())), callback)) {
-            return null;
-          }
-        }
-        // process all pending events that can interrupt focus flow
-        // todo this can be removed after taming the focus beast
-        IdeEventQueue.getInstance().flushQueue();
-      }
-      else {
-        int exitCode = ProjectUtil.confirmOpenNewProject(false);
-        if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
-          if (!ProjectUtil.closeAndDispose(projectToClose)) {
-            return null;
-          }
-        }
-        else if (exitCode != GeneralSettings.OPEN_PROJECT_NEW_WINDOW) {
-          // not in a new window
-          return null;
-        }
+      if (checkExistingProjectOnOpen(projectToClose, callback, baseDir)) {
+        return null;
       }
     }
 
@@ -208,6 +177,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     boolean newProject = false;
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     Project project = null;
+    final Path projectDir = Paths.get(FileUtil.toSystemDependentName(baseDir.getPath()), Project.DIRECTORY_STORE_FOLDER);
     if (PathKt.exists(projectDir)) {
       try {
         File baseDirIo = VfsUtilCore.virtualToIoFile(baseDir);
@@ -267,6 +237,41 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     }
 
     return project;
+  }
+
+  private static boolean checkExistingProjectOnOpen(@NotNull Project projectToClose, @Nullable ProjectOpenedCallback callback, VirtualFile baseDir) {
+    if (ProjectAttachProcessor.canAttachToProject() && GeneralSettings.getInstance().getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK) {
+      final int exitCode = ProjectUtil.confirmOpenOrAttachProject();
+      if (exitCode == -1) {
+        return true;
+      }
+      else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
+        if (!ProjectUtil.closeAndDispose(projectToClose)) {
+          return true;
+        }
+      }
+      else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
+        if (attachToProject(projectToClose, Paths.get(FileUtil.toSystemDependentName(baseDir.getPath())), callback)) {
+          return true;
+        }
+      }
+      // process all pending events that can interrupt focus flow
+      // todo this can be removed after taming the focus beast
+      IdeEventQueue.getInstance().flushQueue();
+    }
+    else {
+      int exitCode = ProjectUtil.confirmOpenNewProject(false);
+      if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
+        if (!ProjectUtil.closeAndDispose(projectToClose)) {
+          return true;
+        }
+      }
+      else if (exitCode != GeneralSettings.OPEN_PROJECT_NEW_WINDOW) {
+        // not in a new window
+        return true;
+      }
+    }
+    return false;
   }
 
   public static Module runDirectoryProjectConfigurators(VirtualFile baseDir, Project project) {
