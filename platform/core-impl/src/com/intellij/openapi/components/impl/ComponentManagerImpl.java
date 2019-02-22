@@ -14,7 +14,6 @@ import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -279,9 +278,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   protected boolean isComponentSuitable(@Nullable Map<String, String> options) {
-    return options == null ||
-           Extensions.isComponentSuitableForOs(options.get("os")) &&
-           (!Boolean.parseBoolean(options.get("internal")) || ApplicationManager.getApplication().isInternal());
+    return true;
   }
 
   @Override
@@ -314,6 +311,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     if (indicator != null) {
       startupProgress = (message, progress) -> indicator.setFraction(progress);
     }
+
     ArrayList<ComponentConfig> componentConfigs = new ArrayList<>();
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins(startupProgress)) {
       List<ComponentConfig> configs = getMyComponentConfigsFromDescriptor(plugin);

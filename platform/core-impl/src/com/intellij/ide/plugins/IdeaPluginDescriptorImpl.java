@@ -341,18 +341,26 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       }
 
       Element componentElement = ((Element)child);
-      if (componentElement.getName().equals("component")) {
-        OldComponentConfig componentConfig = new OldComponentConfig();
-
-        BeanBinding beanBinding = oldComponentConfigBean.get();
-        if (beanBinding == null) {
-          beanBinding = XmlSerializer.getBeanBinding(componentConfig);
-          oldComponentConfigBean.set(beanBinding);
-        }
-
-        beanBinding.deserializeInto(componentConfig, componentElement);
-        result.add(componentConfig);
+      if (!componentElement.getName().equals("component")) {
+        continue;
       }
+
+      OldComponentConfig componentConfig = new OldComponentConfig();
+
+      BeanBinding beanBinding = oldComponentConfigBean.get();
+      if (beanBinding == null) {
+        beanBinding = XmlSerializer.getBeanBinding(componentConfig);
+        oldComponentConfigBean.set(beanBinding);
+      }
+
+      beanBinding.deserializeInto(componentConfig, componentElement);
+      Map<String, String> options = componentConfig.options;
+      if (options != null && (!Extensions.isComponentSuitableForOs(options.get("os")) ||
+                              (Boolean.parseBoolean(options.get("internal")) && !ApplicationManager.getApplication().isInternal()))) {
+        continue;
+      }
+
+      result.add(componentConfig);
     }
   }
 
