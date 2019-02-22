@@ -65,6 +65,30 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   private boolean myForceDontPaintLines = false;
   private static final boolean mySkinny = false;
 
+  private static final TreeUIAction EXPAND_OR_SELECT_NEXT = new TreeUIAction() {
+    @Override
+    public void actionPerformed(ActionEvent event) {
+      Object source = event.getSource();
+      if (source instanceof JTree) {
+        JTree tree = (JTree)source;
+        TreePath path = tree.getLeadSelectionPath();
+        if (path != null) {
+          if (tree.isExpanded(path) || tree.getModel().isLeaf(path.getLastPathComponent())) {
+            int row = tree.getRowForPath(path);
+            path = row < 0 ? null : tree.getPathForRow(row + 1);
+            if (path != null) {
+              tree.setSelectionPath(path);
+              tree.scrollPathToVisible(path);
+            }
+          }
+          else {
+            tree.expandPath(path);
+          }
+        }
+      }
+    }
+  };
+
   public WideSelectionTreeUI() {
     this(true, Conditions.alwaysTrue());
   }
@@ -151,87 +175,8 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   @Override
   protected void installKeyboardActions() {
     super.installKeyboardActions();
-
-    if (Boolean.TRUE.equals(tree.getClientProperty("MacTreeUi.actionsInstalled"))) return;
-
-    tree.putClientProperty("MacTreeUi.actionsInstalled", Boolean.TRUE);
-
-    final InputMap inputMap = tree.getInputMap(JComponent.WHEN_FOCUSED);
-    inputMap.put(KeyStroke.getKeyStroke("pressed LEFT"), "collapse_or_move_up");
-    inputMap.put(KeyStroke.getKeyStroke("pressed RIGHT"), "expand");
-
-    final ActionMap actionMap = tree.getActionMap();
-
-    final Action expandAction = actionMap.get("expand");
-    if (expandAction != null) {
-      actionMap.put("expand", new TreeUIAction() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          final Object source = e.getSource();
-          if (source instanceof JTree) {
-            JTree tree = (JTree)source;
-            int selectionRow = tree.getLeadSelectionRow();
-            if (selectionRow != -1) {
-              TreePath selectionPath = tree.getPathForRow(selectionRow);
-              if (selectionPath != null) {
-                boolean leaf = tree.getModel().isLeaf(selectionPath.getLastPathComponent());
-                int toSelect = -1;
-                int toScroll = -1;
-                if ((!leaf && tree.isExpanded(selectionRow)) || leaf) {
-                  if (selectionRow + 1 < tree.getRowCount()) {
-                    toSelect = selectionRow + 1;
-                    toScroll = toSelect;
-                  }
-                }
-                //todo[kb]: make cycle scrolling
-
-                if (toSelect != -1) {
-                  tree.setSelectionInterval(toSelect, toSelect);
-                }
-
-                if (toScroll != -1) {
-                  tree.scrollRowToVisible(toScroll);
-                }
-
-                if (toSelect != -1 || toScroll != -1) return;
-              }
-            }
-          }
-
-
-          expandAction.actionPerformed(e);
-        }
-      });
-    }
-
-    actionMap.put("collapse_or_move_up", new TreeUIAction() {
-      @Override
-      public void actionPerformed(final ActionEvent e) {
-        final Object source = e.getSource();
-        if (source instanceof JTree) {
-          JTree tree = (JTree)source;
-          int selectionRow = tree.getLeadSelectionRow();
-          if (selectionRow == -1) return;
-
-          TreePath selectionPath = tree.getPathForRow(selectionRow);
-          if (selectionPath == null) return;
-
-          if (tree.getModel().isLeaf(selectionPath.getLastPathComponent()) || tree.isCollapsed(selectionRow)) {
-            final TreePath parentPath = tree.getPathForRow(selectionRow).getParentPath();
-            if (parentPath != null) {
-              if (parentPath.getParentPath() != null || tree.isRootVisible()) {
-                final int parentRow = tree.getRowForPath(parentPath);
-                tree.scrollRowToVisible(parentRow);
-                tree.setSelectionInterval(parentRow, parentRow);
-              }
-            }
-          }
-          else {
-            tree.collapseRow(selectionRow);
-          }
-        }
-      }
-    });
+    ActionMap map = tree.getActionMap();
+    if (map != null) map.put("selectChild", EXPAND_OR_SELECT_NEXT);
   }
 
   public void setForceDontPaintLines() {
