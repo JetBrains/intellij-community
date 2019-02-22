@@ -14,16 +14,7 @@ public final class RemoteServersIcons {
     return IconLoader.getIcon(path, RemoteServersIcons.class);
   }
 
-  /**
-   * 16x16
-   */
-  public static final Icon ResumeScaled = load("/icons/resumeScaled.svg");
-  /**
-   * 13x13
-   */
-  public static final Icon ServersToolWindow = load("/icons/serversToolWindow.svg");
-  /**
-   * 16x16
-   */
-  public static final Icon SuspendScaled = load("/icons/suspendScaled.svg");
+  /** 16x16 */ public static final Icon ResumeScaled = load("/icons/resumeScaled.svg");
+  /** 13x13 */ public static final Icon ServersToolWindow = load("/icons/serversToolWindow.svg");
+  /** 16x16 */ public static final Icon SuspendScaled = load("/icons/suspendScaled.svg");
 }

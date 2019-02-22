@@ -14,12 +14,6 @@ public final class EditorconfigIcons {
     return IconLoader.getIcon(path, EditorconfigIcons.class);
   }
 
-  /**
-   * 12x12
-   */
-  public static final Icon PartiallyOverridden = load("/icons/partiallyOverridden.svg");
-  /**
-   * 12x12
-   */
-  public static final Icon PartiallyOverriding = load("/icons/partiallyOverriding.svg");
+  /** 12x12 */ public static final Icon PartiallyOverridden = load("/icons/partiallyOverridden.svg");
+  /** 12x12 */ public static final Icon PartiallyOverriding = load("/icons/partiallyOverriding.svg");
 }
