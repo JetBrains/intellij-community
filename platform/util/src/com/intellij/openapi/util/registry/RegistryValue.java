@@ -128,6 +128,10 @@ public class RegistryValue {
     return isChangedFromDefault(asString());
   }
 
+  public boolean isContributedByThirdPartyPlugin() {
+    return myKeyDescriptor != null && myKeyDescriptor.isContributedByThirdPartyPlugin();
+  }
+
   boolean isChangedFromDefault(@NotNull String newValue) {
     return !newValue.equals(Registry.getInstance().getBundleValue(myKey, false));
   }
