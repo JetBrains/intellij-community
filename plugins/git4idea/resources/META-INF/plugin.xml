@@ -40,7 +40,8 @@
     <action class="git4idea.log.GitShowCommitInLogAction" id="Git.SelectInGitLog"/>
     <action class="git4idea.log.GitBrowseRepoAtRevisionAction" id="Git.BrowseRepoAtRevision"/>
 
-    <action class="git4idea.actions.GitCheckoutRevisionAction" id="Git.CheckoutRevision" text="Checkout Revision"/>
+    <group class="git4idea.actions.GitCheckoutActionGroup" id="Git.CheckoutGroup" text="Checkout"
+           description="Checkout selected revision or a branch on selected commit"/>
     <group class="git4idea.ui.branch.GitLogBranchOperationsActionGroup" id="Git.BranchOperationGroup"/>
     <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch" text="Branch..."
             description="Create new branch starting from the selected commit"/>
@@ -130,7 +131,7 @@
     </group>
 
     <group id="Git.Log.ContextMenu.CheckoutBrowse">
-      <reference id="Git.CheckoutRevision"/>
+      <reference id="Git.CheckoutGroup"/>
       <reference id="Git.BrowseRepoAtRevision"/>
 
       <add-to-group group-id="Vcs.Log.ContextMenu" relative-to-action="Vcs.Log.CompareRevisions" anchor="before"/>
