@@ -137,7 +137,7 @@ public class GrUnresolvedAccessChecker {
         registerAddImportFixes(ref, info, myDisplayKey);
       }
 
-      registerReferenceFixes(ref, info, inStaticContext, myDisplayKey);
+      registerReferenceFixes(ref, info, myDisplayKey);
       UnresolvedReferenceQuickFixProvider.registerReferenceFixes(ref, new QuickFixActionRegistrarAdapter(info, myDisplayKey));
       QuickFixFactory.getInstance().registerOrderEntryFixes(new QuickFixActionRegistrarAdapter(info, myDisplayKey), ref);
       return result;
@@ -326,9 +326,8 @@ public class GrUnresolvedAccessChecker {
 
   private static void registerReferenceFixes(GrReferenceExpression refExpr,
                                              HighlightInfo info,
-                                             boolean compileStatic,
                                              final HighlightDisplayKey key) {
-    PsiClass targetClass = QuickfixUtil.findTargetClass(refExpr, compileStatic);
+    PsiClass targetClass = QuickfixUtil.findTargetClass(refExpr);
     if (targetClass == null) return;
 
     addDynamicAnnotation(info, refExpr, key);
