@@ -52,6 +52,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -525,7 +526,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     runBareImpl(this::startRunAndTear);
   }
 
-  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   protected void runBareImpl(ThrowableRunnable<?> start) throws Exception {
     if (!shouldRunTest()) {
       return;
@@ -747,9 +747,13 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     private boolean areJdksEqual(final Sdk newSdk) {
       if (mySdk == null || newSdk == null) return mySdk == newSdk;
 
-      final String[] myUrls = mySdk.getRootProvider().getUrls(OrderRootType.CLASSES);
-      final String[] newUrls = newSdk.getRootProvider().getUrls(OrderRootType.CLASSES);
-      return ContainerUtil.newHashSet(myUrls).equals(ContainerUtil.newHashSet(newUrls));
+      OrderRootType[] rootTypes = new OrderRootType[]{OrderRootType.CLASSES, AnnotationOrderRootType.getInstance()};
+      for (OrderRootType rootType : rootTypes) {
+        final String[] myUrls = mySdk.getRootProvider().getUrls(rootType);
+        final String[] newUrls = newSdk.getRootProvider().getUrls(rootType);
+        if (!ContainerUtil.newHashSet(myUrls).equals(ContainerUtil.newHashSet(newUrls))) return false;
+      }
+      return true;
     }
   }
 }
