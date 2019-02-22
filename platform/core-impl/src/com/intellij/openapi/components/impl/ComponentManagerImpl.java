@@ -317,7 +317,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       componentConfigs.ensureCapacity(componentConfigs.size() + configs.size());
       for (ComponentConfig config : configs) {
         if ((!isDefaultProject || config.isLoadForDefaultProject()) && isComponentSuitable(config.options)) {
-          config.pluginDescriptor = plugin;
           componentConfigs.add(config);
         }
       }

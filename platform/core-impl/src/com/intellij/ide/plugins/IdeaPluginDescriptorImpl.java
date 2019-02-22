@@ -326,7 +326,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
   }
 
-  private static void readComponents(@NotNull Element parent, @NotNull Ref<BeanBinding> oldComponentConfigBean, @NotNull ArrayList<ComponentConfig> result) {
+  private void readComponents(@NotNull Element parent, @NotNull Ref<BeanBinding> oldComponentConfigBean, @NotNull ArrayList<ComponentConfig> result) {
     boolean headless = ApplicationManager.getApplication().isHeadlessEnvironment();
 
     List<Content> content = parent.getContent();
@@ -366,6 +366,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         continue;
       }
 
+      componentConfig.pluginDescriptor = this;
       result.add(componentConfig);
     }
   }
