@@ -359,7 +359,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       beanBinding.deserializeInto(componentConfig, componentElement);
       Map<String, String> options = componentConfig.options;
       if (options != null && (!Extensions.isComponentSuitableForOs(options.get("os")) ||
-                              (Boolean.parseBoolean(options.get("internal")) && !ApplicationManager.getApplication().isInternal()))) {
+                              (Boolean.parseBoolean(options.get("internal")) && !(app == null || ApplicationManager.getApplication().isInternal())))) {
         continue;
       }
 
