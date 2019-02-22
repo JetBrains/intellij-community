@@ -14,6 +14,7 @@ import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -83,17 +84,30 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   protected final void init(@Nullable ProgressIndicator indicator, @Nullable Runnable componentsRegistered, boolean isNeededToMeasure) {
     StartUpMeasurer.MeasureToken totalMeasureToken = isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix() + StartUpMeasurer.Phases.INITIALIZE_COMPONENTS_SUFFIX) : null;
-    List<ComponentConfig> componentConfigs = getComponentConfigs(indicator);
 
     String measureTokenNamePrefix = StringUtil.notNullize(measureTokenNamePrefix());
     StartUpMeasurer.MeasureToken measureToken = isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix + StartUpMeasurer.Phases.REGISTER_COMPONENTS_SUFFIX) : null;
-    for (ComponentConfig config : componentConfigs) {
-      registerComponents(config);
+
+    boolean isDefaultProject = this instanceof Project && ((Project)this).isDefault();
+    StartupProgress startupProgress = null;
+    if (indicator != null) {
+      startupProgress = (message, progress) -> indicator.setFraction(progress);
     }
+
+    int componentConfigCount = 0;
+    for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins(startupProgress)) {
+      for (ComponentConfig config : getMyComponentConfigsFromDescriptor(plugin)) {
+        if ((!isDefaultProject || config.isLoadForDefaultProject()) && isComponentSuitable(config.options)) {
+          registerComponents(config, plugin);
+          componentConfigCount++;
+        }
+      }
+    }
+
     if (measureToken != null) {
       measureToken.end();
     }
-    myComponentConfigCount = componentConfigs.size();
+    myComponentConfigCount = componentConfigCount;
 
     if (componentsRegistered != null) {
       measureToken = isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix + StartUpMeasurer.Phases.COMPONENTS_REGISTERED_CALLBACK_SUFFIX) : null;
@@ -303,27 +317,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myDisposed;
   }
 
-  @NotNull
-  private List<ComponentConfig> getComponentConfigs(@Nullable ProgressIndicator indicator) {
-    boolean isDefaultProject = this instanceof Project && ((Project)this).isDefault();
-    StartupProgress startupProgress = null;
-    if (indicator != null) {
-      startupProgress = (message, progress) -> indicator.setFraction(progress);
-    }
-
-    ArrayList<ComponentConfig> componentConfigs = new ArrayList<>();
-    for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins(startupProgress)) {
-      List<ComponentConfig> configs = getMyComponentConfigsFromDescriptor(plugin);
-      componentConfigs.ensureCapacity(componentConfigs.size() + configs.size());
-      for (ComponentConfig config : configs) {
-        if ((!isDefaultProject || config.isLoadForDefaultProject()) && isComponentSuitable(config.options)) {
-          componentConfigs.add(config);
-        }
-      }
-    }
-    return componentConfigs;
-  }
-
   // used in upsource
   @NotNull
   public List<ComponentConfig> getMyComponentConfigsFromDescriptor(@NotNull IdeaPluginDescriptor plugin) {
@@ -380,8 +373,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return component.getClass().getName();
   }
 
-  private void registerComponents(@NotNull ComponentConfig config) {
-    ClassLoader loader = config.getClassLoader();
+  private void registerComponents(@NotNull ComponentConfig config, @NotNull PluginDescriptor pluginDescriptor) {
+    ClassLoader loader = pluginDescriptor.getPluginClassLoader();
     try {
       Class<?> interfaceClass = Class.forName(config.getInterfaceClass(), true, loader);
       Class<?> implementationClass = Comparing.equal(config.getInterfaceClass(), config.getImplementationClass()) ? interfaceClass :
@@ -398,11 +391,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       // implementationClass == null means we want to unregister this component
       if (implementationClass != null) {
         boolean ws = config.options != null && Boolean.parseBoolean(config.options.get("workspace"));
-        picoContainer.registerComponent(new ComponentConfigComponentAdapter(interfaceClass, implementationClass, config.getPluginId(), ws));
+        picoContainer.registerComponent(new ComponentConfigComponentAdapter(interfaceClass, implementationClass, pluginDescriptor.getPluginId(), ws));
       }
     }
     catch (Throwable t) {
-      handleInitComponentError(t, null, config.getPluginId());
+      handleInitComponentError(t, null, pluginDescriptor.getPluginId());
     }
   }
 

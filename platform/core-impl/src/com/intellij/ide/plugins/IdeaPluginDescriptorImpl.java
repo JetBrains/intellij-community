@@ -366,7 +366,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         continue;
       }
 
-      componentConfig.pluginDescriptor = this;
       result.add(componentConfig);
     }
   }
