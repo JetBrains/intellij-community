@@ -86,7 +86,7 @@ public abstract class ProjectManagerEx extends ProjectManager {
   public abstract Project findOpenProjectByHash(@Nullable String locationHash);
 
   @Nullable
-  public abstract Project convertAndLoadProject(@NotNull String filePath) throws IOException;
+  public abstract Project convertAndLoadProject(@NotNull VirtualFile path) throws IOException;
 
   /**
    * Internal use only. Force reload changed project files. Must be called before save otherwise saving maybe not performed (because storage saving is disabled).

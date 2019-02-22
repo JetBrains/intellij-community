@@ -215,7 +215,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
           processor.refreshProjectFiles(baseDirIo);
         }
 
-        project = projectManager.convertAndLoadProject(baseDir.getPath());
+        project = projectManager.convertAndLoadProject(baseDir);
 
         if (project != null) {
           Module[] modules = ModuleManager.getInstance(project).getModules();
