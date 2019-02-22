@@ -48,12 +48,13 @@ public class MergeUtil {
   public static Action createSimpleResolveAction(@NotNull MergeResult result,
                                                  @NotNull MergeRequest request,
                                                  @NotNull MergeContext context,
-                                                 @NotNull MergeViewer viewer) {
+                                                 @NotNull MergeViewer viewer,
+                                                 boolean contentWasModified) {
     String caption = getResolveActionTitle(result, request, context);
     return new AbstractAction(caption) {
       @Override
       public void actionPerformed(ActionEvent e) {
-        if (result == MergeResult.CANCEL && !showExitWithoutApplyingChangesDialog(viewer, request, context)) {
+        if (result == MergeResult.CANCEL && !showExitWithoutApplyingChangesDialog(viewer, request, context, contentWasModified)) {
           return;
         }
         context.finishMerge(result);
@@ -131,13 +132,14 @@ public class MergeUtil {
 
   public static boolean showExitWithoutApplyingChangesDialog(@NotNull MergeViewer viewer,
                                                              @NotNull MergeRequest request,
-                                                             @NotNull MergeContext context) {
+                                                             @NotNull MergeContext context,
+                                                             boolean contentWasModified) {
     Condition<MergeViewer> customHandler = DiffUtil.getUserData(request, context, DiffUserDataKeysEx.MERGE_CANCEL_HANDLER);
     if (customHandler != null) {
       return customHandler.value(viewer);
     }
 
-    return showExitWithoutApplyingChangesDialog(viewer.getComponent(), request, context);
+    return !contentWasModified || showExitWithoutApplyingChangesDialog(viewer.getComponent(), request, context);
   }
 
   public static boolean showExitWithoutApplyingChangesDialog(@NotNull JComponent component,

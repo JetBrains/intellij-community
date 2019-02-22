@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.model.internal;
 
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -22,10 +23,7 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.*;
 
 /**
  * @author Vladislav.Soroka
@@ -42,6 +40,7 @@ public class InternalExternalProjectInfo implements ExternalProjectInfo, Seriali
   private DataNode<ProjectData> myExternalProjectStructure;
   private long lastSuccessfulImportTimestamp = -1;
   private long lastImportTimestamp = -1;
+  private String myBuildNumber;
 
   public InternalExternalProjectInfo(@NotNull ProjectSystemId projectSystemId,
                                      @NotNull String externalProjectPath,
@@ -49,6 +48,7 @@ public class InternalExternalProjectInfo implements ExternalProjectInfo, Seriali
     myProjectSystemId = projectSystemId;
     myExternalProjectPath = externalProjectPath;
     myExternalProjectStructure = externalProjectStructure;
+    myBuildNumber = ApplicationInfo.getInstance().getBuild().asString();
   }
 
   @Override
@@ -84,16 +84,17 @@ public class InternalExternalProjectInfo implements ExternalProjectInfo, Seriali
     return lastImportTimestamp;
   }
 
-  public void setExternalProjectStructure(@Nullable DataNode<ProjectData> externalProjectStructure) {
-    myExternalProjectStructure = externalProjectStructure;
-  }
-
   public void setLastSuccessfulImportTimestamp(long lastSuccessfulImportTimestamp) {
     this.lastSuccessfulImportTimestamp = lastSuccessfulImportTimestamp;
   }
 
   public void setLastImportTimestamp(long lastImportTimestamp) {
     this.lastImportTimestamp = lastImportTimestamp;
+  }
+
+  @Override
+  public String getBuildNumber() {
+    return myBuildNumber;
   }
 
   @Override
@@ -125,6 +126,7 @@ public class InternalExternalProjectInfo implements ExternalProjectInfo, Seriali
     out.writeObject(myExternalProjectStructure);
     out.writeLong(lastSuccessfulImportTimestamp);
     out.writeLong(lastImportTimestamp);
+    out.writeObject(myBuildNumber);
   }
 
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -134,5 +136,10 @@ public class InternalExternalProjectInfo implements ExternalProjectInfo, Seriali
     myExternalProjectStructure = (DataNode<ProjectData>)in.readObject();
     lastSuccessfulImportTimestamp = in.readLong();
     lastImportTimestamp = in.readLong();
+    try {
+      myBuildNumber = (String)in.readObject();
+    }
+    catch (OptionalDataException ignore) {
+    }
   }
 }

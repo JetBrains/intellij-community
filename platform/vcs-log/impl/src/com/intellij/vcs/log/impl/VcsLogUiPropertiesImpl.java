@@ -17,6 +17,7 @@ package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static com.intellij.vcs.log.ui.table.GraphTableModel.*;
 
 /**
  * Stores UI configuration based on user activity and preferences.
@@ -94,7 +97,9 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     }
     else if (CommonUiProperties.COLUMN_ORDER.equals(property)) {
       List<Integer> order = getState().COLUMN_ORDER;
-      if (order == null) order = ContainerUtil.newArrayList();
+      if (order == null || order.isEmpty()) {
+        order = ContainerUtilRt.newArrayList(ROOT_COLUMN, COMMIT_COLUMN, AUTHOR_COLUMN, DATE_COLUMN);
+      }
       return (T)order;
     }
     else if (property instanceof VcsLogHighlighterProperty) {

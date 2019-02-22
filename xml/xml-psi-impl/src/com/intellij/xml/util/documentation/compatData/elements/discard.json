@@ -64,13 +64,13 @@
                 "version_added": null
               },
               "firefox": {
-                "version_added": null
+                "version_added": false
               },
               "firefox_android": {
-                "version_added": null
+                "version_added": false
               },
               "ie": {
-                "version_added": null
+                "version_added": false
               },
               "opera": {
                 "version_added": null
@@ -111,13 +111,13 @@
                 "version_added": null
               },
               "firefox": {
-                "version_added": null
+                "version_added": false
               },
               "firefox_android": {
-                "version_added": null
+                "version_added": false
               },
               "ie": {
-                "version_added": null
+                "version_added": false
               },
               "opera": {
                 "version_added": null

@@ -7,12 +7,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.awt.*;
-import java.util.List;
 
 public class TextDiffType {
   public static final TextDiffType INSERT = new TextDiffType(TextDiffTypeEnum.INSERT, DiffBundle.message("diff.type.inserted.name"), DiffColors.DIFF_INSERTED);
@@ -21,9 +17,6 @@ public class TextDiffType {
   public static final TextDiffType CONFLICT = new TextDiffType(TextDiffTypeEnum.CONFLICT, DiffBundle.message("diff.type.conflict.name"), DiffColors.DIFF_CONFLICT);
 
   public static final TextDiffType NONE = new TextDiffType(TextDiffTypeEnum.NONE, DiffBundle.message("diff.type.none.name"), null);
-
-  public static final List<TextDiffType> DIFF_TYPES = ContainerUtil.immutableList(DELETED, CHANGED, INSERT);
-  public static final List<TextDiffType> MERGE_TYPES = ContainerUtil.immutableList(DELETED, CHANGED, INSERT, CONFLICT);
 
   private final TextDiffTypeEnum myType;
   private final TextAttributesKey myAttributesKey;
@@ -61,12 +54,6 @@ public class TextDiffType {
   @Nullable
   public TextAttributes getTextAttributes(@NotNull EditorColorsScheme scheme) {
     return scheme.getAttributes(myAttributesKey);
-  }
-
-  @Nullable
-  public Color getPolygonColor(Editor editor) {
-    TextAttributes attributes = getTextAttributes(editor);
-    return attributes == null ? null : attributes.getBackgroundColor();
   }
 
   @Nullable

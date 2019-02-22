@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -145,41 +146,41 @@ public class RefreshWorker {
       // obtaining directory snapshot
       Pair<String[], VirtualFile[]> result = LocalFileSystemRefreshWorker.getDirectorySnapshot(persistence, dir);
       if (result == null) return;
-      String[] currentNames = result.getFirst();
+      String[] persistedNames = result.getFirst();
       VirtualFile[] children = result.getSecond();
 
       // reading children attributes
       String[] upToDateNames = VfsUtil.filterNames(fs.list(dir));
       Set<String> newNames = newTroveSet(strategy, upToDateNames);
-      ContainerUtil.removeAll(newNames, currentNames);
-      Set<String> deletedNames = newTroveSet(strategy, currentNames);
+      ContainerUtil.removeAll(newNames, persistedNames);
+      Set<String> deletedNames = newTroveSet(strategy, persistedNames);
       ContainerUtil.removeAll(deletedNames, upToDateNames);
 
       OpenTHashSet<String> actualNames = fs.isCaseSensitive() ? null : new OpenTHashSet<>(strategy, upToDateNames);
-      if (LOG.isTraceEnabled()) LOG.trace("current=" + Arrays.toString(currentNames) + " +" + newNames + " -" + deletedNames);
+      if (LOG.isTraceEnabled()) LOG.trace("current=" + Arrays.toString(persistedNames) + " +" + newNames + " -" + deletedNames);
 
-      List<NewChildRecord> newKids = ContainerUtil.newArrayListWithCapacity(newNames.size());
-      for (String name : newNames) {
+      List<NewChildRecord> newKids = new ArrayList<>(newNames.size());
+      for (String newName : newNames) {
         checkCancelled(dir);
-        NewChildRecord record = childRecord(fs, dir, name);
+        NewChildRecord record = childRecord(fs, dir, newName);
         if (record != null) {
           newKids.add(record);
         }
         else {
-          if (LOG.isTraceEnabled()) LOG.trace("[+] fs=" + fs + " dir=" + dir + " name=" + name);
+          if (LOG.isTraceEnabled()) LOG.trace("[+] fs=" + fs + " dir=" + dir + " name=" + newName);
         }
       }
 
-      List<Pair<VirtualFile, FileAttributes>> updatedMap = ContainerUtil.newArrayListWithCapacity(children.length);
+      List<Pair<VirtualFile, FileAttributes>> updatedMap = new ArrayList<>(children.length);
       for (VirtualFile child : children) {
-        if (deletedNames.contains(child.getName())) continue;
         checkCancelled(dir);
+        if (deletedNames.contains(child.getName())) continue;
         updatedMap.add(pair(child, fs.getAttributes(child)));
       }
 
       // generating events unless a directory was changed in between
       boolean hasEvents = ReadAction.compute(() -> {
-        if (!Arrays.equals(currentNames, persistence.list(dir)) || !Arrays.equals(children, dir.getChildren())) {
+        if (!Arrays.equals(persistedNames, persistence.list(dir)) || !Arrays.equals(children, dir.getChildren())) {
           if (LOG.isTraceEnabled()) LOG.trace("retry: " + dir);
           return false;
         }
@@ -235,13 +236,13 @@ public class RefreshWorker {
       }
 
       // reading children attributes
-      List<Pair<VirtualFile, FileAttributes>> existingMap = ContainerUtil.newArrayListWithCapacity(cached.size());
+      List<Pair<VirtualFile, FileAttributes>> existingMap = new ArrayList<>(cached.size());
       for (VirtualFile child : cached) {
         checkCancelled(dir);
         existingMap.add(pair(child, fs.getAttributes(child)));
       }
 
-      List<NewChildRecord> newKids = ContainerUtil.newArrayListWithCapacity(wanted.size());
+      List<NewChildRecord> newKids = new ArrayList<>(wanted.size());
       for (String name : wanted) {
         if (name.isEmpty()) continue;
         checkCancelled(dir);
@@ -282,12 +283,14 @@ public class RefreshWorker {
   }
 
   private static class NewChildRecord {
+    @NotNull
     final String name;
+    @NotNull
     final FileAttributes attributes;
     final boolean isEmptyDir;
     final String symlinkTarget;
 
-    NewChildRecord(String name, FileAttributes attributes, boolean isEmptyDir, String symlinkTarget) {
+    NewChildRecord(@NotNull String name, @NotNull FileAttributes attributes, boolean isEmptyDir, @Nullable String symlinkTarget) {
       this.name = name;
       this.attributes = attributes;
       this.isEmptyDir = isEmptyDir;
@@ -295,7 +298,7 @@ public class RefreshWorker {
     }
   }
 
-  private static NewChildRecord childRecord(NewVirtualFileSystem fs, VirtualFile dir, String name) {
+  private static NewChildRecord childRecord(@NotNull NewVirtualFileSystem fs, @NotNull VirtualFile dir, @NotNull String name) {
     FakeVirtualFile file = new FakeVirtualFile(dir, name);
     FileAttributes attributes = fs.getAttributes(file);
     if (attributes == null) return null;

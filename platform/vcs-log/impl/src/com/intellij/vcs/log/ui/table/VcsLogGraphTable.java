@@ -109,6 +109,9 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   @NotNull private final Collection<VcsLogHighlighter> myHighlighters = ContainerUtil.newArrayList();
 
+  // BasicTableUI.viewIndexForColumn uses reference equality, so we should not change TableColumn during DnD.
+  private final List<TableColumn> myTableColumns = new ArrayList<>();
+
   public VcsLogGraphTable(@NotNull AbstractVcsLogUi ui,
                           @NotNull VcsLogData logData,
                           @NotNull VisiblePack initialDataPack,
@@ -160,16 +163,18 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     };
   }
 
-  protected void initColumns() {
+  private void initColumns() {
     setColumnModel(new MyTableColumnModel(myProperties));
     createDefaultColumnsFromModel();
+    ContainerUtil.addAll(myTableColumns, getColumnModel().getColumns());
     setAutoCreateColumnsFromModel(false); // otherwise sizes are recalculated after each TableColumn re-initialization
     onColumnOrderSettingChanged();
 
     setRootColumnSize();
 
-    for (int column = 0; column < getColumnCount(); column++) {
-      getColumnByModelIndex(column).setResizable(column != ROOT_COLUMN);
+    for (int i = 0; i < getColumnModel().getColumnCount(); i++) {
+      TableColumn column = getColumnModel().getColumn(i);
+      column.setResizable(column.getModelIndex() != ROOT_COLUMN);
     }
   }
 
@@ -201,51 +206,43 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   public void onColumnOrderSettingChanged() {
-    if (myProperties.exists(CommonUiProperties.COLUMN_ORDER)) {
-      List<Integer> columnOrder = myProperties.get(CommonUiProperties.COLUMN_ORDER);
+    TableColumnModel columnModel = getColumnModel();
 
-      int columnCount = getColumnModel().getColumnCount();
-      boolean dataCorrect = true;
-      if (columnOrder.size() != columnCount) {
-        dataCorrect = false;
-      }
-      else {
-        for (int i = 0; i < columnCount; i++) {
-          Integer expectedColumnIndex = columnOrder.get(i);
-          if (expectedColumnIndex < 0 || expectedColumnIndex >= columnCount) {
-            dataCorrect = false;
-            break;
-          }
-          if (expectedColumnIndex != getColumnModel().getColumn(i).getModelIndex()) {
-            // need to put column with model index columnOrder.get(i) into position i
-            // let's find it
-            // since we are going from left to right, we know that columns on the left are already placed correctly
-            // so only need to check columns on the right
-            int foundColumnIndex = -1;
-            for (int j = i + 1; j < columnCount; j++) {
-              if (getColumnModel().getColumn(j).getModelIndex() == expectedColumnIndex) {
-                foundColumnIndex = j;
-                break;
-              }
-            }
-            if (foundColumnIndex < 0) {
-              dataCorrect = false;
-              break;
-            }
-            else {
-              ((MyTableColumnModel)getColumnModel()).moveWithoutChecks(foundColumnIndex, i);
-            }
-          }
-        }
+    List<Integer> columnOrder = getColumnOrderFromProperties();
+    if (columnOrder != null) {
+      int columnCount = columnModel.getColumnCount();
+      for (int i = columnCount - 1; i >= 0; i--) {
+        columnModel.removeColumn(columnModel.getColumn(i));
       }
 
-      if (!dataCorrect) {
-        if (!columnOrder.isEmpty()) {
-          LOG.debug("Incorrect column order was saved in properties " + columnOrder + ", replacing it with current order.");
-        }
-        saveColumnOrderToSettings();
+      for (Integer expectedColumnIndex : columnOrder) {
+        columnModel.addColumn(myTableColumns.get(expectedColumnIndex));
       }
     }
+
+    reLayout();
+  }
+
+  @Nullable
+  private List<Integer> getColumnOrderFromProperties() {
+    if (!myProperties.exists(CommonUiProperties.COLUMN_ORDER)) return null;
+
+    List<Integer> columnOrder = myProperties.get(CommonUiProperties.COLUMN_ORDER);
+    if (isValidColumnOrder(columnOrder)) return columnOrder;
+
+    LOG.debug("Incorrect column order was saved in properties " + columnOrder + ", replacing it with default order.");
+    saveColumnOrderToSettings();
+    return null;
+  }
+
+  private boolean isValidColumnOrder(@NotNull List<Integer> columnOrder) {
+    int columnCount = getModel().getColumnCount();
+    if (!columnOrder.contains(ROOT_COLUMN)) return false;
+    if (!columnOrder.contains(COMMIT_COLUMN)) return false;
+    for (Integer index : columnOrder) {
+      if (index == null || index < 0 || index >= columnCount) return false;
+    }
+    return true;
   }
 
   private void saveColumnOrderToSettings() {
@@ -291,68 +288,96 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   private void updateAuthorAndDataWidth() {
-    for (int i : new int[]{AUTHOR_COLUMN, DATE_COLUMN}) {
-      int width = CommonUiProperties.getColumnWidth(myProperties, i);
+    for (int columnIndex : DYNAMIC_COLUMNS) {
+      TableColumn column = getColumnByModelIndex(columnIndex);
+      if (column == null) continue;
+
+      int width = CommonUiProperties.getColumnWidth(myProperties, columnIndex);
       if (width <= 0 || width > getWidth()) {
-        if (i != AUTHOR_COLUMN || !myAuthorColumnInitialized) {
-          width = getColumnWidthFromData(i);
+        if (columnIndex != AUTHOR_COLUMN || !myAuthorColumnInitialized) {
+          width = getColumnWidthFromData(column);
         }
         else {
           width = -1;
         }
       }
 
-      if (width > 0 && width != getColumnByModelIndex(i).getPreferredWidth()) {
-        getColumnByModelIndex(i).setPreferredWidth(width);
+      if (width > 0 && width != column.getPreferredWidth()) {
+        column.setPreferredWidth(width);
       }
     }
 
     updateCommitColumnWidth();
   }
 
-  private int getColumnWidthFromData(int i) {
+  private int getColumnWidthFromData(@NotNull TableColumn column) {
+    int index = column.getModelIndex();
+
     Font tableFont = getTableFont();
-    if (i == AUTHOR_COLUMN) {
-      int width = getColumnByModelIndex(i).getPreferredWidth();
+    if (index == AUTHOR_COLUMN) {
+      if (getModel().getRowCount() <= 0) {
+        return column.getPreferredWidth();
+      }
 
       // detect author with the longest name
-      if (getModel().getRowCount() > 0) {
-        int maxRowsToCheck = Math.min(MAX_ROWS_TO_CALC_WIDTH, getRowCount());
-        int maxAuthorWidth = 0;
-        int unloaded = 0;
-        for (int row = 0; row < maxRowsToCheck; row++) {
-          String value = getModel().getValueAt(row, AUTHOR_COLUMN).toString();
-          if (value.isEmpty()) {
-            unloaded++;
-            continue;
-          }
-          Font font = tableFont;
-          VcsLogHighlighter.TextStyle style = getStyle(row, convertColumnIndexToView(AUTHOR_COLUMN), false, false).getTextStyle();
-          if (BOLD.equals(style)) {
-            font = tableFont.deriveFont(Font.BOLD);
-          }
-          else if (ITALIC.equals(style)) {
-            font = tableFont.deriveFont(Font.ITALIC);
-          }
-          maxAuthorWidth = Math.max(getFontMetrics(font).stringWidth(value + "*"), maxAuthorWidth);
+      int maxRowsToCheck = Math.min(MAX_ROWS_TO_CALC_WIDTH, getRowCount());
+      int maxAuthorWidth = 0;
+      int unloaded = 0;
+      for (int row = 0; row < maxRowsToCheck; row++) {
+        String value = getModel().getValueAt(row, AUTHOR_COLUMN).toString();
+        if (value.isEmpty()) {
+          unloaded++;
+          continue;
         }
-
-        width = Math.min(maxAuthorWidth + myStringCellRenderer.getHorizontalTextPadding(), JBUI.scale(MAX_DEFAULT_AUTHOR_COLUMN_WIDTH));
-        if (unloaded * 2 <= maxRowsToCheck) myAuthorColumnInitialized = true;
+        Font font = tableFont;
+        VcsLogHighlighter.TextStyle style = getStyle(row, convertColumnIndexToView(AUTHOR_COLUMN), false, false).getTextStyle();
+        if (BOLD.equals(style)) {
+          font = tableFont.deriveFont(Font.BOLD);
+        }
+        else if (ITALIC.equals(style)) {
+          font = tableFont.deriveFont(Font.ITALIC);
+        }
+        maxAuthorWidth = Math.max(getFontMetrics(font).stringWidth(value + "*"), maxAuthorWidth);
       }
+
+      int width = Math.min(maxAuthorWidth + myStringCellRenderer.getHorizontalTextPadding(), JBUI.scale(MAX_DEFAULT_AUTHOR_COLUMN_WIDTH));
+      if (unloaded * 2 <= maxRowsToCheck) myAuthorColumnInitialized = true;
       return width;
     }
-    else if (i == DATE_COLUMN) {
+    else if (index == DATE_COLUMN) {
       // all dates have nearly equal sizes
       return getFontMetrics(getTableFont().deriveFont(Font.BOLD)).stringWidth(DateFormatUtil.formatDateTime(new Date())) +
              myStringCellRenderer.getHorizontalTextPadding();
     }
-    throw new IllegalArgumentException("Can only calculate author or date columns width from data, yet given column " + i);
+    else if (index == HASH_COLUMN) {
+      if (getModel().getRowCount() <= 0) {
+        return column.getPreferredWidth();
+      }
+      // all hashes have nearly equal sizes
+      String hash = getModel().getValueAt(0, HASH_COLUMN).toString();
+      return getFontMetrics(getTableFont().deriveFont(Font.BOLD)).stringWidth(hash) +
+             myStringCellRenderer.getHorizontalTextPadding();
+    }
+    LOG.error("Can only calculate author, hash or date columns width from data, yet given column " + index);
+    return column.getPreferredWidth();
+  }
+
+  @Nullable
+  public TableColumn getColumnByModelIndex(int index) {
+    int viewIndex = convertColumnIndexToView(index);
+    return viewIndex != -1 ? getColumnModel().getColumn(viewIndex) : null;
   }
 
   @NotNull
-  public TableColumn getColumnByModelIndex(int index) {
-    return getColumnModel().getColumn(convertColumnIndexToView(index));
+  public TableColumn getRootColumn() {
+    //noinspection ConstantConditions
+    return getColumnByModelIndex(ROOT_COLUMN);
+  }
+
+  @NotNull
+  public TableColumn getCommitColumn() {
+    //noinspection ConstantConditions
+    return getColumnByModelIndex(COMMIT_COLUMN);
   }
 
   private static Font getTableFont() {
@@ -364,15 +389,14 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     for (int i = 0; i < getColumnCount(); i++) {
       if (i == COMMIT_COLUMN) continue;
       TableColumn column = getColumnByModelIndex(i);
-      size -= column.getPreferredWidth();
+      if (column != null) size -= column.getPreferredWidth();
     }
 
-    TableColumn commitColumn = getColumnByModelIndex(COMMIT_COLUMN);
-    commitColumn.setPreferredWidth(size);
+    getCommitColumn().setPreferredWidth(size);
   }
 
   private void setRootColumnSize() {
-    TableColumn column = getColumnByModelIndex(ROOT_COLUMN);
+    TableColumn column = getRootColumn();
     int rootWidth;
     if (!myColorManager.isMultipleRoots()) {
       rootWidth = 0;
@@ -643,7 +667,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       if (myColorManager.isMultipleRoots()) {
         g.setColor(getRootBackgroundColor(getModel().getRoot(lastRow), myColorManager));
 
-        int rootWidth = getColumnByModelIndex(ROOT_COLUMN).getWidth();
+        int rootWidth = getRootColumn().getWidth();
         if (!isShowRootNames()) rootWidth -= JBUI.scale(ROOT_INDICATOR_WHITE_WIDTH);
 
         g.fillRect(x, y, rootWidth, height);
@@ -761,14 +785,10 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       // and TableColumnModelListener.columnMarginChanged does not provide any information which column was changed
       if (getTableHeader().getResizingColumn() == null) return;
       if ("width".equals(evt.getPropertyName())) {
-        TableColumn authorColumn = getColumnByModelIndex(AUTHOR_COLUMN);
-        if (authorColumn.equals(evt.getSource())) {
-          CommonUiProperties.saveColumnWidth(myProperties, AUTHOR_COLUMN, authorColumn.getWidth());
-        }
-        else {
-          TableColumn dateColumn = getColumnByModelIndex(DATE_COLUMN);
-          if (dateColumn.equals(evt.getSource())) {
-            CommonUiProperties.saveColumnWidth(myProperties, DATE_COLUMN, dateColumn.getWidth());
+        for (int columnIndex : DYNAMIC_COLUMNS) {
+          TableColumn column = getColumnByModelIndex(columnIndex);
+          if (evt.getSource().equals(column)) {
+            CommonUiProperties.saveColumnWidth(myProperties, columnIndex, column.getWidth());
           }
         }
       }
@@ -778,12 +798,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     @Override
     public void moveColumn(int columnIndex, int newIndex) {
       if (convertColumnIndexToModel(columnIndex) == ROOT_COLUMN || convertColumnIndexToModel(newIndex) == ROOT_COLUMN) return;
-      moveWithoutChecks(columnIndex, newIndex);
-      saveColumnOrderToSettings();
-    }
-
-    public void moveWithoutChecks(int columnIndex, int newIndex) {
       super.moveColumn(columnIndex, newIndex);
+      saveColumnOrderToSettings();
     }
   }
 }

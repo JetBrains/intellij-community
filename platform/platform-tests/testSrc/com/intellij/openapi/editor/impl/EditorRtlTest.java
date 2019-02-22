@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -51,8 +37,8 @@ public class EditorRtlTest extends AbstractRtlTest {
     checkVPConversions(vR(4), lF(4), xy(40));
     checkVPConversions(vL(5), lB(5), xy(50));
     checkVPConversions(vR(5), lF(5), xy(50));
-    checkVPConversions(vL(1, 0), lB(1, 0), xy(0, 10));
-    checkVPConversions(vR(1, 0), lF(1, 0), xy(0, 10));
+    checkVPConversions(vL(1, 0), lB(1, 0), xy(0, ls(10)));
+    checkVPConversions(vR(1, 0), lF(1, 0), xy(0, ls(10)));
     
     checkXYConversion(xy(0),  vL(0));
     checkXYConversion(xy(12), vR(1));
@@ -192,10 +178,10 @@ public class EditorRtlTest extends AbstractRtlTest {
     checkOffsetConversions(0, lB(0), vL(0), vL(3), xy(0), xy(30));
     checkOffsetConversions(1, lB(1), vR(2), vL(2), xy(20));
     checkOffsetConversions(2, lB(2), vR(1), vL(1), xy(10));
-    checkOffsetConversions(3, lB(3), vL(1, 1), vL(1, 3),  xy(10, 10), xy(30, 10));
-    checkOffsetConversions(4, lB(4), vR(1, 2), vL(1, 2),  xy(20, 10));
-    checkOffsetConversions(5, lB(5), vR(1, 1), vR(1, 3),  xy(10, 10), xy(30, 10));
-    checkOffsetConversions(6, lB(5), vR(1, 1), vR(1, 3),  xy(10, 10), xy(30, 10));
+    checkOffsetConversions(3, lB(3), vL(1, 1), vL(1, 3),  xy(10, ls(10)), xy(30, ls(10)));
+    checkOffsetConversions(4, lB(4), vR(1, 2), vL(1, 2),  xy(20, ls(10)));
+    checkOffsetConversions(5, lB(5), vR(1, 1), vR(1, 3),  xy(10, ls(10)), xy(30, ls(10)));
+    checkOffsetConversions(6, lB(5), vR(1, 1), vR(1, 3),  xy(10, ls(10)), xy(30, ls(10)));
 
     checkLPConversions(0, 0, vL(0), vL(3));
     checkLPConversions(1, 1, vR(2), vL(2));
@@ -215,16 +201,16 @@ public class EditorRtlTest extends AbstractRtlTest {
     checkVPConversions(3, lF(0), lF(3), xy(30));
     checkVPConversions(4, lF(3), lF(3), xy(40));
     checkVPConversions(5, lF(3), lF(3), xy(50));
-    checkVPConversions(vL(1, 0), lB(3), xy(0, 10));
-    checkVPConversions(vR(1, 0), lB(3), xy(0, 10));
-    checkVPConversions(vL(1, 1), lB(3), xy(10, 10));
-    checkVPConversions(vR(1, 1), lB(5), xy(10, 10));
-    checkVPConversions(vL(1, 2), lF(4), xy(20, 10));
-    checkVPConversions(vR(1, 2), lB(4), xy(20, 10));
-    checkVPConversions(vL(1, 3), lF(3), xy(30, 10));
-    checkVPConversions(vR(1, 3), lF(5), xy(30, 10));
-    checkVPConversions(vL(1, 4), lB(6), xy(40, 10));
-    checkVPConversions(vR(1, 4), lF(6), xy(40, 10));
+    checkVPConversions(vL(1, 0), lB(3), xy(0, ls(10)));
+    checkVPConversions(vR(1, 0), lB(3), xy(0, ls(10)));
+    checkVPConversions(vL(1, 1), lB(3), xy(10, ls(10)));
+    checkVPConversions(vR(1, 1), lB(5), xy(10, ls(10)));
+    checkVPConversions(vL(1, 2), lF(4), xy(20, ls(10)));
+    checkVPConversions(vR(1, 2), lB(4), xy(20, ls(10)));
+    checkVPConversions(vL(1, 3), lF(3), xy(30, ls(10)));
+    checkVPConversions(vR(1, 3), lF(5), xy(30, ls(10)));
+    checkVPConversions(vL(1, 4), lB(6), xy(40, ls(10)));
+    checkVPConversions(vR(1, 4), lF(6), xy(40, ls(10)));
 
     checkXYConversion(xy(0), vL(0));
     checkXYConversion(xy(2), vR(0));
@@ -238,16 +224,16 @@ public class EditorRtlTest extends AbstractRtlTest {
     checkXYConversion(xy(42), vR(4));
     checkXYConversion(xy(47), vL(5));
     checkXYConversion(xy(54), vR(5));
-    checkXYConversion(xy(0, 10), vL(1, 0));
-    checkXYConversion(xy(2, 10), vR(1, 0));
-    checkXYConversion(xy(9, 10), vL(1, 1));
-    checkXYConversion(xy(11, 10), vR(1, 1));
-    checkXYConversion(xy(18, 10), vL(1, 2));
-    checkXYConversion(xy(23, 10), vR(1, 2));
-    checkXYConversion(xy(30, 10), vL(1, 3));
-    checkXYConversion(xy(34, 10), vR(1, 3));
-    checkXYConversion(xy(37, 10), vL(1, 4));
-    checkXYConversion(xy(41, 10), vR(1, 4));
+    checkXYConversion(xy(0, ls(10)), vL(1, 0));
+    checkXYConversion(xy(2, ls(10)), vR(1, 0));
+    checkXYConversion(xy(9, ls(10)), vL(1, 1));
+    checkXYConversion(xy(11, ls(10)), vR(1, 1));
+    checkXYConversion(xy(18, ls(10)), vL(1, 2));
+    checkXYConversion(xy(23, ls(10)), vR(1, 2));
+    checkXYConversion(xy(30, ls(10)), vL(1, 3));
+    checkXYConversion(xy(34, ls(10)), vR(1, 3));
+    checkXYConversion(xy(37, ls(10)), vL(1, 4));
+    checkXYConversion(xy(41, ls(10)), vR(1, 4));
   }
   
   public void testSelectingRtlLineByDraggingMouseFromLeftToRight() {

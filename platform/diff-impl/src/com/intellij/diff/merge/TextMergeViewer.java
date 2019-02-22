@@ -136,12 +136,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     components.statusPanel = init.statusPanel;
     components.toolbarActions = init.toolbarActions;
 
-    components.closeHandler = () -> {
-      if (myViewer.myContentModified)
-        return MergeUtil.showExitWithoutApplyingChangesDialog(this, myMergeRequest, myMergeContext);
-      else
-        return true;
-    };
+    components.closeHandler =
+      () -> MergeUtil.showExitWithoutApplyingChangesDialog(this, myMergeRequest, myMergeContext, myViewer.myContentModified);
 
     return components;
   }
@@ -314,8 +310,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
               return;
             }
           }
-          if (result == MergeResult.CANCEL && myContentModified &&
-              !MergeUtil.showExitWithoutApplyingChangesDialog(TextMergeViewer.this, myMergeRequest, myMergeContext)) {
+          if (result == MergeResult.CANCEL &&
+              !MergeUtil.showExitWithoutApplyingChangesDialog(TextMergeViewer.this, myMergeRequest, myMergeContext, myContentModified)) {
             return;
           }
           destroyChangedBlocks();

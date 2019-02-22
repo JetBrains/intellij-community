@@ -8,6 +8,7 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.jdkEx.JdkEx;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -141,6 +142,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     MouseGestureManager.getInstance().add(this);
 
     myFrameDecorator = IdeFrameDecorator.decorate(this);
+
+    if (IdeRootPane.isFrameDecorated()) JdkEx.setHasCustomDecoration(this);
 
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt()    {
       @Override
@@ -532,27 +535,27 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   public void paint(@NotNull Graphics g) {
     UISettings.setupAntialiasing(g);
     super.paint(g);
-    if (IdeRootPane.isFrameDecorated() && !isInFullScreen()) {
-      final BufferedImage shadow = ourShadowPainter.createShadow(getRootPane(), getWidth(), getHeight());
-      g.drawImage(shadow, 0, 0, null);
-    }
+    //if (IdeRootPane.isFrameDecorated() && !isInFullScreen()) {
+    //  final BufferedImage shadow = ourShadowPainter.createShadow(getRootPane(), getWidth(), getHeight());
+    //  g.drawImage(shadow, 0, 0, null);
+    //}
   }
 
-  @Override
-  public Color getBackground() {
-    return IdeRootPane.isFrameDecorated() ? Gray.x00.withAlpha(0) : super.getBackground();
-  }
+  //@Override
+  //public Color getBackground() {
+  //  return IdeRootPane.isFrameDecorated() ? Gray.x00.withAlpha(0) : super.getBackground();
+  //}
 
   @Override
   public void doLayout() {
     super.doLayout();
-    if (!isInFullScreen() && IdeRootPane.isFrameDecorated()) {
-      final int leftSide = AllIcons.Ide.Shadow.Left.getIconWidth();
-      final int rightSide = AllIcons.Ide.Shadow.Right.getIconWidth();
-      final int top = AllIcons.Ide.Shadow.Top.getIconHeight();
-      final int bottom = AllIcons.Ide.Shadow.Bottom.getIconHeight();
-      getRootPane().setBounds(leftSide, top, getWidth() - leftSide - rightSide, getHeight() - top - bottom);
-    }
+    //if (!isInFullScreen() && IdeRootPane.isFrameDecorated()) {
+    //  final int leftSide = AllIcons.Ide.Shadow.Left.getIconWidth();
+    //  final int rightSide = AllIcons.Ide.Shadow.Right.getIconWidth();
+    //  final int top = AllIcons.Ide.Shadow.Top.getIconHeight();
+    //  final int bottom = AllIcons.Ide.Shadow.Bottom.getIconHeight();
+    //  getRootPane().setBounds(leftSide, top, getWidth() - leftSide - rightSide, getHeight() - top - bottom);
+    //}
   }
 
   @Override

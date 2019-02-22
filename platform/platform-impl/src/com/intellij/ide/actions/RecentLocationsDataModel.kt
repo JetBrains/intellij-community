@@ -4,7 +4,7 @@ package com.intellij.ide.actions
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.ide.actions.RecentLocationsAction.EMPTY_FILE_TEXT
-import com.intellij.ide.actions.RecentLocationsAction.showChanged
+import com.intellij.ide.ui.UISettings
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -76,7 +76,7 @@ data class RecentLocationsDataModel(val project: Project, val editorsToRelease: 
   }
 
   private fun getBreadcrumbs(project: Project, placeInfo: IdeDocumentHistoryImpl.PlaceInfo): String {
-    val rangeMarker = RecentLocationManager.getInstance(project).getPositionOffset(placeInfo, showChanged(project))
+    val rangeMarker = placeInfo.caretPosition
     val fileName = placeInfo.file.name
     if (rangeMarker == null) {
       return fileName
@@ -109,7 +109,7 @@ data class RecentLocationsDataModel(val project: Project, val editorsToRelease: 
     }
 
     val items = arrayListOf<RecentLocationItem>()
-    for (placeInfo in places) {
+    for (placeInfo in places.stream().limit(UISettings.instance.recentLocationsLimit.toLong())) {
       val editor = createEditor(project, placeInfo)
       if (editor != null) {
         items.add(RecentLocationItem(editor, placeInfo))
@@ -134,7 +134,7 @@ data class RecentLocationsDataModel(val project: Project, val editorsToRelease: 
   }
 
   private fun createEditor(project: Project, placeInfo: IdeDocumentHistoryImpl.PlaceInfo): EditorEx? {
-    val positionOffset = RecentLocationManager.getInstance(project).getPositionOffset(placeInfo, showChanged(project))
+    val positionOffset = placeInfo.caretPosition
     if (positionOffset == null || !positionOffset.isValid) {
       return null
     }
@@ -175,6 +175,7 @@ data class RecentLocationsDataModel(val project: Project, val editorsToRelease: 
     settings.additionalLinesCount = 0
     settings.isRightMarginShown = false
     settings.isUseSoftWraps = false
+    settings.isAdditionalPageAtBottom = false
   }
 
   private fun setHighlighting(project: Project,

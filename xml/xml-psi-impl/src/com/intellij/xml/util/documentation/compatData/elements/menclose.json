@@ -80,7 +80,7 @@
               },
               "safari": {
                 "version_added": "7",
-                "notes": "<code>updiagonalarrow</code> and <code>phasorangle</code> are not supported, see <a href='https://bugs.webkit.org/show_bug.cgi?id=127466'>WebKit bug 127466</a>."
+                "notes": "<code>updiagonalarrow</code> and <code>phasorangle</code> are not supported, see <a href='https://webkit.org/b/127466'>WebKit bug 127466</a>."
               },
               "safari_ios": {
                 "version_added": false

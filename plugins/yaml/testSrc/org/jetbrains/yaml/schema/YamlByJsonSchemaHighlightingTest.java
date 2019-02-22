@@ -899,6 +899,6 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
            "      \"deprecationMessage\": \"Baz\",\n" +
            "      \"description\": \"Foo bar\"\n" +
            "    }\n" +
-           "  }}", "<weak_warning descr=\"Property 'myPropertyXxx' is deprecated: Baz\">myPropertyXxx</weak_warning>: a");
+           "  }}", "<weak_warning descr=\"Key 'myPropertyXxx' is deprecated: Baz\">myPropertyXxx</weak_warning>: a");
   }
 }

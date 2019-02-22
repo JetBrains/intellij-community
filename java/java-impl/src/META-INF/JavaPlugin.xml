@@ -105,6 +105,9 @@
                     interface="com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocationProvider"/>
 
     <extensionPoint qualifiedName="com.intellij.vetoSPICondition" interface="com.intellij.openapi.util.Condition"/>
+    <extensionPoint qualifiedName="com.intellij.languageCompilerRefAdapter" interface="com.intellij.compiler.backwardRefs.LanguageCompilerRefAdapter"/>
+    <extensionPoint qualifiedName="com.intellij.framework.type" interface="com.intellij.framework.FrameworkTypeEx"/>
+    <extensionPoint qualifiedName="com.intellij.runConfigurationExtension" interface="com.intellij.execution.RunConfigurationExtension"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -368,7 +371,7 @@
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveMembers.MoveMembersHandler"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.JavaMoveFilesOrDirectoriesHandler" id="moveJavaFileOrDir"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveClassesOrPackages.JavaMoveClassesOrPackagesHandler" order="before moveJavaFileOrDir"/>
-    <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyClassesHandler" order="before copyJavaFilesOrPackages"/>
+    <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyClassesHandler" order="before copyFilesOrDirectories"/>
     <saveFileAsTemplateHandler implementation="com.intellij.ide.fileTemplates.SaveJavaAsTemplateHandler"/>
     <exceptionFilter implementation="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationExceptionFilterFactory"/>
     <packageDependencies.visitor language="JAVA" implementationClass="com.intellij.packageDependencies.JavaDependencyVisitorFactory"/>

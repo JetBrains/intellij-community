@@ -744,13 +744,13 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     public void execute(@NotNull FileViewProvider viewProvider) {
       final PsiFile file = viewProvider.getPsi(viewProvider.getBaseLanguage());
       final FormatTextRanges textRanges = myRanges.ensureNonEmpty();
-      if (!ExternalFormatProcessor.useExternalFormatter(file)) {
+      if (ExternalFormatProcessor.useExternalFormatter(file)) {
+        CodeStyleManagerImpl.formatRanges(file, myRanges, null);
+      }
+      else {
         final CodeFormatterFacade codeFormatter = getFormatterFacade(viewProvider);
         codeFormatter.setReformatContext(true);
         codeFormatter.processText(file, textRanges, false);
-      }
-      else {
-        CodeStyleManagerImpl.formatRanges(file, myRanges, null);
       }
     }
 

@@ -144,7 +144,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     }
   }
 
-  private void pushScriptStyle(boolean script, boolean style) {
+  protected void pushScriptStyle(boolean script, boolean style) {
     int position = scriptStyleStack[0] == 0 ? 0 : 1;
     scriptStyleStack[position] = script ? SCRIPT :
                                  style ? STYLE :
@@ -303,7 +303,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     seenContentType = (initialState & SEEN_CONTENT_TYPE) != 0;
     seenStylesheetType = (initialState & SEEN_STYLESHEET_TYPE) != 0;
     if (seenTag || seenAttribute) {
-      int stack = (initialState & SEEN_STYLE_SCRIPT_MASK) >> SEEN_STYLE_SCRIPT_SHIFT + 1;
+      int stack = ((initialState & SEEN_STYLE_SCRIPT_MASK) >> SEEN_STYLE_SCRIPT_SHIFT) + 1;
       scriptStyleStack[0] = stack / 3;
       scriptStyleStack[1] = stack % 3;
     }
@@ -424,7 +424,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     state |= ((seenStylesheetType)?SEEN_STYLESHEET_TYPE:0);
 
     if (seenTag || seenAttribute) {
-      state |= (scriptStyleStack[0] * 3 + scriptStyleStack[1] - 1) << 9;
+      state |= (scriptStyleStack[0] * 3 + scriptStyleStack[1] - 1) << SEEN_STYLE_SCRIPT_SHIFT;
     }
 
     return state;

@@ -478,9 +478,6 @@
     <extensionPoint name="executionTargetProvider"
                     interface="com.intellij.execution.ExecutionTargetProvider"/>
 
-    <extensionPoint name="runConfigurationExtension"
-                    interface="com.intellij.execution.RunConfigurationExtension"/>
-
     <extensionPoint name="jreProvider"
                     interface="com.intellij.execution.ui.JreProvider"/>
 
@@ -763,8 +760,6 @@
 
     <extensionPoint name="framework.detector"
                     interface="com.intellij.framework.detection.FrameworkDetector"/>
-    <extensionPoint name="framework.type"
-                    interface="com.intellij.framework.FrameworkTypeEx"/>
 
     <extensionPoint name="methodNavigationOffsetProvider"
                     interface="com.intellij.codeInsight.navigation.MethodNavigationOffsetProvider"/>
@@ -995,8 +990,6 @@
 
     <extensionPoint name="runningApplicationUpdaterProvider"
                     interface="com.intellij.execution.update.RunningApplicationUpdaterProvider"/>
-
-    <extensionPoint name="languageCompilerRefAdapter" interface="com.intellij.compiler.backwardRefs.LanguageCompilerRefAdapter"/>
 
     <extensionPoint name="retypeFileAssistant" interface="com.intellij.internal.retype.RetypeFileAssistant"/>
 

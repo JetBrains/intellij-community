@@ -26,7 +26,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -485,7 +484,7 @@ class PassExecutorService implements Disposable {
                                               @NotNull final DaemonProgressIndicator updateProgress,
                                               @NotNull final AtomicInteger threadsToStartCountdown,
                                               @NotNull Runnable callbackOnApplied) {
-    ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       if (isDisposed() || myProject.isDisposed() || !fileEditor.isValid()) {
         updateProgress.cancel();
       }

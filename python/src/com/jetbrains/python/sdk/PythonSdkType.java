@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk;
 
 import com.google.common.collect.ImmutableMap;
@@ -377,7 +377,7 @@ public final class PythonSdkType extends SdkType {
 
   @NotNull
   @Override
-  public String suggestSdkName(final String currentSdkName, final String sdkHome) {
+  public String suggestSdkName(@Nullable final String currentSdkName, final String sdkHome) {
     final String name = StringUtil.notNullize(suggestBaseSdkName(sdkHome), "Unknown");
     final File virtualEnvRoot = getVirtualEnvRoot(sdkHome);
     if (virtualEnvRoot != null) {
@@ -700,7 +700,7 @@ public final class PythonSdkType extends SdkType {
     if (pythonSdk != null) {
       @Nullable VirtualFile originFile = vFile;
       @NotNull String originPath = vFile.getPath();
-      boolean checkOnRemoteFS = false; 
+      boolean checkOnRemoteFS = false;
       // All binary skeletons are collected under the same root regardless of their original location.
       // Because of that we need to use paths to the corresponding binary modules recorded in their headers.
       final SkeletonHeader header = readSkeletonHeader(originFile, pythonSdk);
@@ -731,7 +731,7 @@ public final class PythonSdkType extends SdkType {
         originFile = ObjectUtils.notNull(originFile.getCanonicalFile(), originFile);
         originPath = originFile.getPath();
       }
-      
+
       final VirtualFile libDir = PyProjectScopeBuilder.findLibDir(pythonSdk);
       if (libDir != null && isUnderLibDirButNotSitePackages(originFile, originPath, libDir, pythonSdk, checkOnRemoteFS)) {
         return true;
@@ -771,7 +771,7 @@ public final class PythonSdkType extends SdkType {
   private static boolean isUnderLibDirButNotSitePackages(@Nullable VirtualFile file,
                                                          @NotNull String path,
                                                          @NotNull VirtualFile libDir,
-                                                         @NotNull Sdk sdk, 
+                                                         @NotNull Sdk sdk,
                                                          boolean checkOnRemoteFS) {
     final VirtualFile originLibDir;
     final String originLibDirPath;

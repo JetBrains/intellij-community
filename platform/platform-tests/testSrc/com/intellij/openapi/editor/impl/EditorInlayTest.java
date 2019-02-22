@@ -1,10 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.DocumentUtil;
@@ -346,20 +347,20 @@ public class EditorInlayTest extends AbstractEditorTest {
   public void testYToVisualLineCalculationForBlockInlay() {
     initText("abc\ndef");
     addBlockInlay(1);
-    assertEquals(1, myEditor.yToVisualLine(TEST_LINE_HEIGHT * 2));
+    assertEquals(1, myEditor.yToVisualLine((int)(FontPreferences.DEFAULT_LINE_SPACING * TEST_LINE_HEIGHT * 2)));
   }
 
   public void testYToVisualLineCalculationForBlockInlayAnotherCase() {
     initText("abc\ndef\nghi");
     addBlockInlay(1);
-    assertEquals(1, myEditor.yToVisualLine(TEST_LINE_HEIGHT * 2));
+    assertEquals(1, myEditor.yToVisualLine((int)(FontPreferences.DEFAULT_LINE_SPACING * TEST_LINE_HEIGHT * 2)));
   }
 
   public void testInlayIsAddedIntoCollapsedFoldRegion() {
     initText("abc");
     addCollapsedFoldRegion(0, 3, "...");
     addBlockInlay(0);
-    assertEquals(TEST_LINE_HEIGHT, myEditor.visualLineToY(1));
+    assertEquals((int)(FontPreferences.DEFAULT_LINE_SPACING * TEST_LINE_HEIGHT), myEditor.visualLineToY(1));
   }
 
   public void testVerticalCaretMovementInPresenceOfBothTypesOfInlays() {

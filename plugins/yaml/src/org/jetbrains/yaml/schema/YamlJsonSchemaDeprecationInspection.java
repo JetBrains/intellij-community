@@ -29,7 +29,9 @@ public class YamlJsonSchemaDeprecationInspection extends YamlJsonSchemaInspectio
                                              PsiElement root,
                                              JsonSchemaObject schema) {
     final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(root, schema);
-    if (walker == null || schema == null) return PsiElementVisitor.EMPTY_VISITOR;
+    if (walker == null || schema == null) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
     return new YamlPsiElementVisitor() {
       @Override
       public void visitKeyValue(@NotNull YAMLKeyValue keyValue) {
@@ -37,17 +39,21 @@ public class YamlJsonSchemaDeprecationInspection extends YamlJsonSchemaInspectio
         super.visitKeyValue(keyValue);
       }
 
-      private void annotate(@NotNull YAMLKeyValue o) {
-        PsiElement key = o.getKey();
-        if (key == null) return;
-        JsonPointerPosition position = walker.findPosition(o, true);
-        if (position == null) return;
+      private void annotate(@NotNull YAMLKeyValue keyValue) {
+        PsiElement key = keyValue.getKey();
+        if (key == null) {
+          return;
+        }
+        JsonPointerPosition position = walker.findPosition(keyValue, true);
+        if (position == null) {
+          return;
+        }
 
         final MatchResult result = new JsonSchemaResolver(schema, false, position).detailedResolve();
         for (JsonSchemaObject object : result.mySchemas) {
           String message = object.getDeprecationMessage();
           if (message != null) {
-            holder.registerProblem(key, "Key '" + o.getName() + "' is deprecated: " + message);
+            holder.registerProblem(key, YAMLBundle.message("inspections.schema.deprecation.text", keyValue.getName(), message));
             return;
           }
         }

@@ -35,7 +35,7 @@ public class XmlElementPattern<T extends XmlElement,Self extends XmlElementPatte
   }
 
   public static class Capture extends XmlElementPattern<XmlElement, Capture> {
-    protected Capture() {
+    public Capture() {
       super(new InitialPatternCondition<XmlElement>(XmlElement.class) {
         @Override
         public boolean accepts(@Nullable final Object o, final ProcessingContext context) {

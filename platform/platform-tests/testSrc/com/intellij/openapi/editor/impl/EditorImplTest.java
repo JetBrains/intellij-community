@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -205,7 +206,7 @@ public class EditorImplTest extends AbstractEditorTest {
     initText("a\nbbb\nccccc");
     myEditor.getSettings().setAdditionalColumnsCount(0);
     myEditor.getSettings().setAdditionalLinesCount(0);
-    assertEquals(new Dimension(50, 30), myEditor.getContentComponent().getPreferredSize());
+    assertEquals(new Dimension(50, (int)(30 * FontPreferences.DEFAULT_LINE_SPACING)), myEditor.getContentComponent().getPreferredSize());
   }
   
   public void testCollapsingRegionContainingSoftWrap() {
@@ -221,7 +222,7 @@ public class EditorImplTest extends AbstractEditorTest {
     myEditor.getSettings().setAdditionalLinesCount(0);
     configureSoftWraps(4);
     myEditor.getSettings().setUseSoftWraps(false);
-    assertEquals(new Dimension(70, 10), myEditor.getContentComponent().getPreferredSize());
+    assertEquals(new Dimension(70, (int)(10 * FontPreferences.DEFAULT_LINE_SPACING)), myEditor.getContentComponent().getPreferredSize());
   }
   
   public void testUpdatingCaretPositionAfterBulkMode() {

@@ -315,11 +315,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       startupProgress = (message, progress) -> indicator.setFraction(progress);
     }
     ArrayList<ComponentConfig> componentConfigs = new ArrayList<>();
-    for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins(startupProgress)) {
-      if (PluginManagerCore.shouldSkipPlugin(plugin)) {
-        continue;
-      }
-
+    for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins(startupProgress)) {
       List<ComponentConfig> configs = getMyComponentConfigsFromDescriptor(plugin);
       componentConfigs.ensureCapacity(componentConfigs.size() + configs.size());
       for (ComponentConfig config : configs) {

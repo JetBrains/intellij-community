@@ -310,7 +310,7 @@ public interface HighlightInfoType {
     private final TextAttributesKey myAttributesKey;
     private final HighlightDisplayKey myToolKey;
 
-    HighlightInfoTypeSeverityByKey(@NotNull HighlightDisplayKey severityKey, @NotNull TextAttributesKey attributesKey) {
+    public HighlightInfoTypeSeverityByKey(@NotNull HighlightDisplayKey severityKey, @NotNull TextAttributesKey attributesKey) {
       myToolKey = severityKey;
       myAttributesKey = attributesKey;
     }

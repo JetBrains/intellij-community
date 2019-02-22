@@ -3,13 +3,13 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.*;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
-import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.ThreeState;
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 
 public class ReorderingUtilsTest extends LightCodeInsightTestCase {
   private static final String PREFIX = "import java.util.Optional;\n" +
@@ -87,9 +87,10 @@ public class ReorderingUtilsTest extends LightCodeInsightTestCase {
     checkCanBeReordered("str == null ? /*<*/str.trim()/*>*/ : \"\"", ThreeState.UNSURE);
   }
 
+  @NotNull
   @Override
-  protected Sdk getProjectJDK() {
-    return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk9());
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return LightCodeInsightFixtureTestCase.JAVA_9_ANNOTATED;
   }
 
   private static void checkCanBeReordered(@Language(value = "JAVA", prefix = PREFIX, suffix = SUFFIX) String expressionText,

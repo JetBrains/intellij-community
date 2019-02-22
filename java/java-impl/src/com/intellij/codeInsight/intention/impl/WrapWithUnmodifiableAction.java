@@ -2,16 +2,18 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,32 +24,52 @@ import static com.intellij.util.ObjectUtils.tryCast;
 /**
  * @author Pavel.Dolgov
  */
-public class WrapWithUnmodifiableAction extends PsiElementBaseIntentionAction {
+public class WrapWithUnmodifiableAction extends BaseIntentionAction {
+  private static final String JAVA_UTIL_SORTED_SET = "java.util.SortedSet";
+  private static final String JAVA_UTIL_SORTED_MAP = "java.util.SortedMap";
+
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    PsiExpression expression = getParentExpression(element);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    if (editor == null || file == null || !canModify(file)) {
+      return;
+    }
+    PsiExpression expression = getParentExpression(editor, file);
     if (expression != null) {
       PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
-      if (InheritanceUtil.isInheritor(psiClass, JAVA_UTIL_LIST)) {
-        wrapWith(expression, "unmodifiableList");
-      }
-      else if (InheritanceUtil.isInheritor(psiClass, "java.util.SortedSet")) {
-        wrapWith(expression, "unmodifiableSortedSet");
-      }
-      else if (InheritanceUtil.isInheritor(psiClass, JAVA_UTIL_SET)) {
-        wrapWith(expression, "unmodifiableSet");
-      }
-      else if (InheritanceUtil.isInheritor(psiClass, "java.util.SortedMap")) {
-        wrapWith(expression, "unmodifiableSortedMap");
-      }
-      else if (InheritanceUtil.isInheritor(psiClass, JAVA_UTIL_MAP)) {
-        wrapWith(expression, "unmodifiableMap");
+      if (psiClass != null) {
+
+        PsiClass expectedClass = PsiUtil.resolveClassInClassTypeOnly(getExpectedType(expression));
+        if (expectedClass != null) {
+          GlobalSearchScope scope = psiClass.getResolveScope();
+
+          if (isInheritorChain(psiClass, JAVA_UTIL_LIST, expectedClass, scope, project)) {
+            wrapWith(expression, "unmodifiableList");
+          }
+          else if (isInheritorChain(psiClass, JAVA_UTIL_SORTED_SET, expectedClass, scope, project)) {
+            wrapWith(expression, "unmodifiableSortedSet");
+          }
+          else if (isInheritorChain(psiClass, JAVA_UTIL_SET, expectedClass, scope, project)) {
+            wrapWith(expression, "unmodifiableSet");
+          }
+          else if (isInheritorChain(psiClass, JAVA_UTIL_SORTED_MAP, expectedClass, scope, project)) {
+            wrapWith(expression, "unmodifiableSortedMap");
+          }
+          else if (isInheritorChain(psiClass, JAVA_UTIL_MAP, expectedClass, scope, project)) {
+            wrapWith(expression, "unmodifiableMap");
+          }
+        }
       }
     }
   }
 
-  private static PsiExpression getParentExpression(@NotNull PsiElement element) {
+  @Nullable
+  private static PsiExpression getParentExpression(@NotNull Editor editor, @NotNull PsiFile file) {
+    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     PsiExpression expression = PsiTreeUtil.getNonStrictParentOfType(element, PsiExpression.class);
+    if (expression == null) {
+      element = file.findElementAt(editor.getCaretModel().getOffset() - 1);
+      expression = PsiTreeUtil.getNonStrictParentOfType(element, PsiExpression.class);
+    }
     if (expression != null) {
       PsiMethodCallExpression methodCall = tryCast(expression.getParent(), PsiMethodCallExpression.class);
       if (methodCall != null && methodCall.getMethodExpression() == expression) {
@@ -65,38 +87,68 @@ public class WrapWithUnmodifiableAction extends PsiElementBaseIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    PsiExpression expression = getParentExpression(element);
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    if (editor == null || file == null || !canModify(file)) {
+      return false;
+    }
+    PsiExpression expression = getParentExpression(editor, file);
     if (expression != null) {
       if (isUnmodifiable(expression)) {
         return false;
       }
       PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
       if (psiClass != null) {
-        if (InheritanceUtil.isInheritor(psiClass, JAVA_UTIL_LIST)) {
-          setText(CodeInsightBundle.message("intention.wrap.with.unmodifiable.list"));
-          return true;
-        }
-        if (InheritanceUtil.isInheritor(psiClass, JAVA_UTIL_SET)) {
-          setText(CodeInsightBundle.message("intention.wrap.with.unmodifiable.set"));
-          return true;
-        }
-        if (InheritanceUtil.isInheritor(psiClass, JAVA_UTIL_MAP)) {
-          setText(CodeInsightBundle.message("intention.wrap.with.unmodifiable.map"));
-          return true;
+        PsiClass expectedClass = PsiUtil.resolveClassInClassTypeOnly(getExpectedType(expression));
+
+        if (expectedClass != null) {
+          GlobalSearchScope scope = psiClass.getResolveScope();
+
+          if (isInheritorChain(psiClass, JAVA_UTIL_LIST, expectedClass, scope, project)) {
+            setText(CodeInsightBundle.message("intention.wrap.with.unmodifiable.list"));
+            return true;
+          }
+          if (isInheritorChain(psiClass, JAVA_UTIL_SET, expectedClass, scope, project) ||
+              isInheritorChain(psiClass, JAVA_UTIL_SORTED_SET, expectedClass, scope, project)) {
+            setText(CodeInsightBundle.message("intention.wrap.with.unmodifiable.set"));
+            return true;
+          }
+          if (isInheritorChain(psiClass, JAVA_UTIL_MAP, expectedClass, scope, project) ||
+              isInheritorChain(psiClass, JAVA_UTIL_SORTED_MAP, expectedClass, scope, project)) {
+            setText(CodeInsightBundle.message("intention.wrap.with.unmodifiable.map"));
+            return true;
+          }
         }
       }
     }
     return false;
   }
 
-  private static boolean isUnmodifiable(PsiExpression expression) {
+  private static PsiType getExpectedType(@NotNull PsiExpression expression) {
+    final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+    if (parent instanceof PsiConditionalExpression) {
+      return getExpectedType((PsiConditionalExpression)parent);
+    }
+    return PsiTypesUtil.getExpectedTypeByParent(expression);
+  }
+
+  private static boolean isInheritorChain(PsiClass psiClass,
+                                          String collectionClassName,
+                                          PsiClass expectedClass,
+                                          GlobalSearchScope scope,
+                                          Project project) {
+    PsiClass collectionClass = JavaPsiFacade.getInstance(project).findClass(collectionClassName, scope);
+
+    return InheritanceUtil.isInheritorOrSelf(psiClass, collectionClass, true) &&
+           InheritanceUtil.isInheritorOrSelf(collectionClass, expectedClass, true);
+  }
+
+  private static boolean isUnmodifiable(@NotNull PsiExpression expression) {
     PsiMethodCallExpression methodCall = tryCast(expression, PsiMethodCallExpression.class);
     if (isUnmodifiableCall(methodCall)) {
       return true;
     }
 
-    PsiExpressionList expressionList = tryCast(PsiUtil.skipParenthesizedExprUp(expression.getParent()), PsiExpressionList.class);
+    PsiExpressionList expressionList = tryCast(ExpressionUtils.getPassThroughParent(expression), PsiExpressionList.class);
     if (expressionList != null && expressionList.getExpressionCount() == 1) {
       methodCall = tryCast(expressionList.getParent(), PsiMethodCallExpression.class);
       if (isUnmodifiableCall(methodCall)) {

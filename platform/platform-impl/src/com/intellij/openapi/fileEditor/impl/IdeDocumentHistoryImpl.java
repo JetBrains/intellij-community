@@ -14,7 +14,9 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.EditorEventListener;
@@ -212,7 +214,8 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
         return new PlaceInfo(file,
                              fileEditor.getState(FileEditorStateLevel.NAVIGATION),
                              TextEditorProvider.getInstance().getEditorTypeId(),
-                             null);
+                             null,
+                             getCaretPosition(fileEditor));
       }
     }
     return null;
@@ -499,7 +502,20 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     final VirtualFile file = editorManager.getFile(fileEditor);
     LOG.assertTrue(file != null);
     FileEditorState state = fileEditor.getState(FileEditorStateLevel.NAVIGATION);
-    return new PlaceInfo(file, state, fileProvider.getEditorTypeId(), editorManager.getCurrentWindow());
+
+    return new PlaceInfo(file, state, fileProvider.getEditorTypeId(), editorManager.getCurrentWindow(), getCaretPosition(fileEditor));
+  }
+
+  @Nullable
+  private static RangeMarker getCaretPosition(@NotNull FileEditor fileEditor) {
+    if (!(fileEditor instanceof TextEditor)) {
+      return null;
+    }
+
+    Editor editor = ((TextEditor)fileEditor).getEditor();
+    int offset = editor.getCaretModel().getOffset();
+
+    return editor.getDocument().createRangeMarker(offset, offset);
   }
 
   private void putLastOrMerge(@NotNull PlaceInfo next, int limit, boolean isChanged) {
@@ -534,15 +550,18 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     private final FileEditorState myNavigationState;
     private final String myEditorTypeId;
     private final Reference<EditorWindow> myWindow;
+    @Nullable private final RangeMarker myCaretPosition;
 
     public PlaceInfo(@NotNull VirtualFile file,
                      @NotNull FileEditorState navigationState,
                      @NotNull String editorTypeId,
-                     @Nullable EditorWindow window) {
+                     @Nullable EditorWindow window,
+                     @Nullable RangeMarker caretPosition) {
       myNavigationState = navigationState;
       myFile = file;
       myEditorTypeId = editorTypeId;
       myWindow = new WeakReference<>(window);
+      myCaretPosition = caretPosition;
     }
 
     public EditorWindow getWindow() {
@@ -567,6 +586,11 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     @Override
     public String toString() {
       return getFile().getName() + " " + getNavigationState();
+    }
+
+    @Nullable
+    public RangeMarker getCaretPosition() {
+      return myCaretPosition;
     }
   }
 

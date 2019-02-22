@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.openapi.application.ApplicationStarter;
@@ -141,7 +141,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
   @NotNull
   @Override
-  public String suggestSdkName(String currentSdkName, String sdkHome) {
+  public String suggestSdkName(@Nullable String currentSdkName, String sdkHome) {
     if (PsiUtil.isPathToIntelliJIdeaSources(sdkHome)) return "Local IDEA [" + sdkHome + "]";
     String buildNumber = getBuildNumber(sdkHome);
     return IntelliJPlatformProduct.fromBuildNumber(buildNumber).getName() + " " + (buildNumber != null ? buildNumber : "");

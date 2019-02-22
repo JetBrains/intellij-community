@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
@@ -242,7 +242,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
       "<scheme name=\"test\" version=\"142\" parent_scheme=\"Default\">\n" +
       "  <option name=\"CONSOLE_FONT_NAME\" value=\"Test\" />\n" +
       "  <option name=\"CONSOLE_FONT_SIZE\" value=\"10\" />\n" +
-      "  <option name=\"CONSOLE_LINE_SPACING\" value=\"1.0\" />\n" +
+      "  <option name=\"CONSOLE_LINE_SPACING\" value=\"1.2\" />\n" +
       "</scheme>",
       serialize(editorColorsScheme));
   }

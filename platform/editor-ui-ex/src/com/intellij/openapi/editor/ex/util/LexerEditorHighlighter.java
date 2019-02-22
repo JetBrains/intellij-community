@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -381,7 +380,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     }
 
     if(myEditor != null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      UIUtil.invokeLaterIfNeeded((DumbAwareRunnable)() -> myEditor.repaint(0, textLength));
+      UIUtil.invokeLaterIfNeeded(() -> myEditor.repaint(0, textLength));
     }
   }
 

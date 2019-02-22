@@ -31,11 +31,10 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.FileContentUtilCore
-import com.intellij.util.ref.GCUtil
 import com.intellij.util.io.EnumeratorIntegerDescriptor
 import com.intellij.util.io.EnumeratorStringDescriptor
+import com.intellij.util.ref.GCWatcher
 import groovy.transform.CompileStatic
-
 /**
  * @author peter
  */
@@ -181,7 +180,7 @@ class FileGistTest extends LightCodeInsightFixtureTestCase {
     def file = myFixture.addFileToProject('a.xtt', 'foo')
     assert gist.getFileData(file) == 1
 
-    GCUtil.tryGcSoftlyReachableObjects()
+    GCWatcher.tracking(PsiDocumentManager.getInstance(project).getCachedDocument(file)).tryGc()
     assert !PsiDocumentManager.getInstance(project).getCachedDocument(file)
 
     assert gist.getFileData(file) == 1

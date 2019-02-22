@@ -57,6 +57,8 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
         return true;
       case GIT_CONFIG:
         return false; // need to know the value from git.config to give correct answer
+      case NO_RENAMES:
+        return false;
       case REGISTRY:
         Changes changes = myChanges.get();
         int estimate =

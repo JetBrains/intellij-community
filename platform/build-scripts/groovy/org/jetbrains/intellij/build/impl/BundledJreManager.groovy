@@ -59,7 +59,7 @@ class BundledJreManager {
       buildContext.messages.info("JRE is already extracted to $targetDir")
       return targetDir
     }
-    def jreArchive = "jbrsdk-${jreArchiveSuffix(secondJreBuild, getSecondJreVersion(), JvmArchitecture.x64, osName)}"
+    def jreArchive = "jbr-${jreArchiveSuffix(secondJreBuild, getSecondJreVersion(), JvmArchitecture.x64, osName)}"
     File archive = new File(jreDir(), jreArchive)
     if (!archive.file || !archive.exists()) {
       def errorMessage = "Cannot extract $osName JRE: file $jreArchive is not found"
@@ -212,7 +212,7 @@ class BundledJreManager {
     def jreBuild = getExpectedJreBuild(osName)
 
     String suffix = jreArchiveSuffix(jreBuild, buildContext.options.bundledJreVersion.toString(), arch, osName)
-    String prefix = buildContext.isBundledJreModular() ? vendor.modularJreNamePrefix :
+    String prefix = buildContext.isBundledJreModular() ? vendor.jreNamePrefix :
                     buildContext.productProperties.toolsJarRequired ? vendor.jreWithToolsJarNamePrefix : vendor.jreNamePrefix
     def jreArchive = new File(jreDir, "$prefix$suffix")
 
@@ -252,17 +252,15 @@ class BundledJreManager {
   }
 
   private enum JreVendor {
-    Oracle("jre", "jdk", "jre"),
-    JetBrains("jbr-", "jbrx-", "jbrsdk-")
+    Oracle("jre", "jdk"),
+    JetBrains("jbr-", "jbrx-")
 
     final String jreNamePrefix
     final String jreWithToolsJarNamePrefix
-    final String modularJreNamePrefix
 
-    JreVendor(String jreNamePrefix, String jreWithToolsJarNamePrefix, String modularJreNamePrefix) {
+    JreVendor(String jreNamePrefix, String jreWithToolsJarNamePrefix) {
       this.jreNamePrefix = jreNamePrefix
       this.jreWithToolsJarNamePrefix = jreWithToolsJarNamePrefix
-      this.modularJreNamePrefix = modularJreNamePrefix
     }
   }
 

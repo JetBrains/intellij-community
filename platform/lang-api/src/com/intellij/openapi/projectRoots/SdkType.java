@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -75,7 +75,7 @@ public abstract class SdkType implements SdkTypeId {
   }
 
   @NotNull
-  public abstract String suggestSdkName(String currentSdkName, String sdkHome);
+  public abstract String suggestSdkName(@Nullable String currentSdkName, String sdkHome);
 
   /**
    * Returns a comparator used to order SDKs in project or module settings combo boxes.

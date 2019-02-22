@@ -26,8 +26,8 @@ import com.intellij.psi.*;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.Range;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.OrderedSet;
 import com.sun.jdi.Location;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -37,10 +37,7 @@ import org.jetbrains.org.objectweb.asm.Label;
 import org.jetbrains.org.objectweb.asm.MethodVisitor;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
-import java.util.Collections;
-import java.util.Deque;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
   private static final Logger LOG = Logger.getInstance(JavaSmartStepIntoHandler.class);
@@ -123,7 +120,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       }
       while (true);
 
-      final List<SmartStepTarget> targets = new OrderedSet<>();
+      final List<SmartStepTarget> targets = new ArrayList<>();
 
       final Ref<TextRange> textRange = new Ref<>(lineRange);
 
@@ -275,6 +272,10 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
           final PsiMethod psiMethod = expression.resolveMethod();
           if (psiMethod != null) {
             myContextStack.push(psiMethod);
+            StreamEx.of(targets)
+              .select(MethodSmartStepTarget.class)
+              .filter(t -> t.getMethod().equals(psiMethod))
+              .forEach(t -> t.setOrdinal(t.getOrdinal() + 1));
             targets.add(new MethodSmartStepTarget(
               psiMethod,
               null,
@@ -325,13 +326,17 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
               @Override
               public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
                 if (myLineMatch) {
-                  targets.removeIf(t -> {
-                    if (t instanceof MethodSmartStepTarget) {
-                      return DebuggerUtilsEx.methodMatches(((MethodSmartStepTarget)t).getMethod(),
-                                                           owner.replace("/", "."), name, desc, suspendContext.getDebugProcess());
+                  Iterator<SmartStepTarget> iterator = targets.iterator();
+                  while (iterator.hasNext()) {
+                    SmartStepTarget e = iterator.next();
+                    if (e instanceof MethodSmartStepTarget &&
+                        DebuggerUtilsEx.methodMatches(((MethodSmartStepTarget)e).getMethod(),
+                                                      owner.replace("/", "."), name, desc,
+                                                      suspendContext.getDebugProcess())) {
+                      iterator.remove();
+                      break;
                     }
-                    return false;
-                  });
+                  }
                 }
               }
             }, true);

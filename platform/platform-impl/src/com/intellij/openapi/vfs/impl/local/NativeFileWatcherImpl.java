@@ -385,7 +385,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       myNotificationSink.notifyManualWatchRoots(myLines);
     }
 
-    private void processChange(String path, WatcherOp op) {
+    private void processChange(@NotNull String path, @NotNull WatcherOp op) {
       if (SystemInfo.isWindows && op == WatcherOp.RECDIRTY) {
         myNotificationSink.notifyReset(path);
         return;
