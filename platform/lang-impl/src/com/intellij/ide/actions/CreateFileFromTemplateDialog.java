@@ -16,21 +16,31 @@
 
 package com.intellij.ide.actions;
 
+import com.intellij.ide.actions.newclass.CreateWithTemplatesDialogPanel;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -125,8 +135,13 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
   }
 
   public static Builder createDialog(@NotNull final Project project) {
-    final CreateFileFromTemplateDialog dialog = new CreateFileFromTemplateDialog(project);
-    return new BuilderImpl(dialog, project);
+    if (Experiments.isFeatureEnabled("show.create.new.element.in.popup")) {
+     return new NonBlockingPopupBuilderImpl(project);
+    }
+    else {
+      final CreateFileFromTemplateDialog dialog = new CreateFileFromTemplateDialog(project);
+      return new BuilderImpl(dialog, project);
+    }
   }
 
   private static class BuilderImpl implements Builder {
@@ -162,7 +177,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     @Override
     public <T extends PsiElement> T show(@NotNull String errorTitle, @Nullable String selectedTemplateName,
                                          @NotNull final FileCreator<T> creator) {
-      final Ref<SmartPsiElementPointer<T>>created = Ref.create(null);
+      final Ref<SmartPsiElementPointer<T>> created = Ref.create(null);
       myDialog.getKindCombo().setSelectedName(selectedTemplateName);
       myDialog.myCreator = new ElementCreator(myProject, errorTitle) {
 
@@ -195,9 +210,130 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
       return null;
     }
 
+    @Override
+    public <T extends PsiElement> void show(@NotNull String errorTitle,
+                                            @Nullable String selectedItem,
+                                            @NotNull FileCreator<T> creator,
+                                            Consumer<? super T> elementConsumer) {
+      T element = show(errorTitle, selectedItem, creator);
+      elementConsumer.consume(element);
+    }
+
     @Nullable
     @Override
     public Map<String,String> getCustomProperties() {
+      return null;
+    }
+  }
+
+  private static class NonBlockingPopupBuilderImpl implements Builder {
+    @NotNull private final Project myProject;
+
+    private String myTitle = "Title";
+    private final List<Trinity<String, Icon, String>> myTemplatesList = new ArrayList<>();
+    private InputValidator myInputValidator;
+
+    private NonBlockingPopupBuilderImpl(@NotNull Project project) {myProject = project;}
+
+    @Override
+    public Builder setTitle(String title) {
+      myTitle = title;
+      return this;
+    }
+
+    @Override
+    public Builder addKind(@NotNull String kind, @Nullable Icon icon, @NotNull String templateName) {
+      myTemplatesList.add(Trinity.create(kind, icon, templateName));
+      return this;
+    }
+
+    @Override
+    public Builder setValidator(InputValidator validator) {
+      myInputValidator = validator;
+      return this;
+    }
+
+    @Nullable
+    @Override
+    public <T extends PsiElement> T show(@NotNull String errorTitle, @Nullable String selectedItem, @NotNull FileCreator<T> creator) {
+      throw new UnsupportedOperationException("Modal dialog is not supported by this builder");
+    }
+
+    @Override
+    public <T extends PsiElement> void show(@NotNull String errorTitle,
+                                            @Nullable String selectedItem,
+                                            @NotNull FileCreator<T> fileCreator,
+                                            Consumer<? super T> elementConsumer) {
+      CreateWithTemplatesDialogPanel contentPanel = new CreateWithTemplatesDialogPanel(myTemplatesList, selectedItem);
+      ElementCreator elementCreator = new ElementCreator(myProject, errorTitle) {
+
+        @Override
+        protected PsiElement[] create(@NotNull String newName) {
+          T element = fileCreator.createFile(contentPanel.getEnteredName(), contentPanel.getSelectedTemplate());
+          return element != null ? new PsiElement[]{element} : PsiElement.EMPTY_ARRAY;
+        }
+
+        @Override
+        public boolean startInWriteAction() {
+          return fileCreator.startInWriteAction();
+        }
+
+        @Override
+        protected String getActionName(String newName) {
+          return fileCreator.getActionName(newName, contentPanel.getSelectedTemplate());
+        }
+      };
+
+      JBPopup popup = JBPopupFactory.getInstance()
+        .createComponentPopupBuilder(contentPanel, contentPanel.getNameField())
+        .setTitle(myTitle)
+        .setResizable(true)
+        .setModalContext(true)
+        .setFocusable(true)
+        .setRequestFocus(true)
+        .setMovable(true)
+        .setBelongsToGlobalPopupStack(true)
+        .setCancelOnClickOutside(false)
+        .setCancelKeyEnabled(true)
+        .createPopup();
+
+      contentPanel.getNameField().addKeyListener(new KeyAdapter() {
+        @Override
+        public void keyPressed(KeyEvent e) {
+          if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+            T createdElement = (T) commitInput(contentPanel, elementCreator);
+            if (createdElement != null) {
+              popup.closeOk(e);
+              elementConsumer.consume(createdElement);
+            }
+            else {
+              contentPanel.setError(true);
+            }
+          }
+        }
+      });
+      popup.showCenteredInCurrentWindow(myProject);
+    }
+
+    @Nullable
+    @Override
+    public Map<String, String> getCustomProperties() {
+      return null;
+    }
+
+    @Nullable
+    private PsiElement commitInput(CreateWithTemplatesDialogPanel dialogPanel, ElementCreator creator) {
+      boolean canCreate = true;
+      String newElementName = dialogPanel.getEnteredName();
+      if (myInputValidator != null) {
+        canCreate = myInputValidator.canClose(newElementName);
+      }
+
+      if (canCreate) {
+        PsiElement[] elements = creator.tryCreate(newElementName);
+        return elements.length > 0 ? elements[0] : null;
+      }
+
       return null;
     }
   }
@@ -208,6 +344,9 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     Builder addKind(@NotNull String kind, @Nullable Icon icon, @NotNull String templateName);
     @Nullable
     <T extends PsiElement> T show(@NotNull String errorTitle, @Nullable String selectedItem, @NotNull FileCreator<T> creator);
+
+    <T extends PsiElement> void show(@NotNull String errorTitle, @Nullable String selectedItem, @NotNull FileCreator<T> creator, Consumer<? super T> elementConsumer);
+
     @Nullable
     Map<String,String> getCustomProperties();
   }
