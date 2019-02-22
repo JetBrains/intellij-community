@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.projectImport.ProjectAttachProcessor;
@@ -177,21 +176,15 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     boolean newProject = false;
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     Project project = null;
-    final Path projectDir = Paths.get(FileUtil.toSystemDependentName(baseDir.getPath()), Project.DIRECTORY_STORE_FOLDER);
-    if (PathKt.exists(projectDir)) {
+    if (PathKt.exists(Paths.get(FileUtil.toSystemDependentName(baseDir.getPath()), Project.DIRECTORY_STORE_FOLDER))) {
       try {
-        File baseDirIo = VfsUtilCore.virtualToIoFile(baseDir);
         for (ProjectOpenProcessor processor : ProjectOpenProcessor.EXTENSION_POINT_NAME.getExtensionList()) {
-          processor.refreshProjectFiles(baseDirIo);
+          processor.refreshProjectFiles(baseDir);
         }
 
         project = projectManager.convertAndLoadProject(baseDir);
-
-        if (project != null) {
-          Module[] modules = ModuleManager.getInstance(project).getModules();
-          if (modules.length > 0) {
-            runConfigurators = false;
-          }
+        if (project != null && ModuleManager.getInstance(project).getModules().length > 0) {
+          runConfigurators = false;
         }
       }
       catch (Exception e) {
