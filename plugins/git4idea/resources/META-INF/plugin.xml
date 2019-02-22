@@ -191,6 +191,8 @@
         implementation="git4idea.diff.GitSubmoduleDiffRequestProvider"/>
     <vcsChangesViewRefresher implementation="git4idea.ignore.GitIgnoredFilesHolder$Provider"/>
     <vcs.ignoredFilesHolder implementation="git4idea.ignore.GitIgnoredFilesHolder$Provider"/>
+    <projectConfigurable id="vcs.Git" displayName="Git" instance="git4idea.config.GitVcsConfigurable"
+                         parentId="project.propVCSSupport.Mappings" groupWeight="-500"/>
 
     <projectService serviceImplementation="git4idea.repo.GitRepositoryManager"/>
     <projectService serviceImplementation="git4idea.ui.branch.GitBranchManager"/>
