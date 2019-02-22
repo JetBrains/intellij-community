@@ -72,14 +72,22 @@ internal fun show(panel: JPanel, stepContent: Component) {
   (panel.layout as CardLayout).show(panel, stepContentName)
 }
 
-fun showProcessExecutionErrorDialog(project: Project?, e: PyExecutionException) {
-  val errorMessageText = "${e.command} could not complete successfully. " +
+fun showProcessExecutionErrorDialog(project: Project?, e: PyExecutionException) =
+  showProcessExecutionErrorDialog(project, e.localizedMessage.orEmpty(), e.command, e.stdout, e.stderr, e.exitCode)
+
+fun showProcessExecutionErrorDialog(project: Project?,
+                                    dialogTitle: String,
+                                    command: String,
+                                    stdout: String,
+                                    stderr: String,
+                                    exitCode: Int) {
+  val errorMessageText = "$command could not complete successfully. " +
                          "Please see the command's output for information about resolving this problem."
   // HTML format for text in `JBLabel` enables text wrapping
   val errorMessageLabel = JBLabel(UIUtil.toHtml(errorMessageText), Messages.getErrorIcon(), SwingConstants.LEFT)
 
   val commandOutputTextPane = JTextPane().apply {
-    appendProcessOutput(e.stdout, e.stderr, e.exitCode)
+    appendProcessOutput(stdout, stderr, exitCode)
 
     background = JBColor.WHITE
     isEditable = false
@@ -98,7 +106,7 @@ fun showProcessExecutionErrorDialog(project: Project?, e: PyExecutionException) 
   object : DialogWrapper(project) {
     init {
       init()
-      title = e.localizedMessage
+      title = dialogTitle
     }
 
     override fun createActions(): Array<Action> = arrayOf(okAction)
