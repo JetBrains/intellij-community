@@ -19,6 +19,9 @@ import com.intellij.testGuiFramework.util.step
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.ui.EdtInvocationManager
 import org.fest.swing.awt.AWT
+import org.fest.swing.awt.AWT.translate
+import org.fest.swing.awt.AWT.visibleCenterOf
+import org.fest.swing.core.Scrolling.scrollToVisible
 import org.fest.swing.edt.GuiActionRunner
 import org.fest.swing.edt.GuiQuery
 import org.fest.swing.hierarchy.ComponentHierarchy
@@ -28,6 +31,7 @@ import org.fest.swing.util.Modifiers
 import java.awt.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import javax.swing.JComponent
 import javax.swing.JPopupMenu
 import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
@@ -35,37 +39,48 @@ import javax.swing.SwingUtilities
 class SmartWaitRobot : Robot {
 
   override fun moveMouse(component: Component) {
-    basicRobot.moveMouse(component)
+    var where = visibleCenterOf(component)
+    if (component is JComponent) {
+      scrollToVisible(this, component)
+      where = visibleCenterOf(component)
+    }
+    moveMouse(component, where)
   }
 
   override fun moveMouse(component: Component, point: Point) {
-    basicRobot.moveMouse(component, point)
+    val translatedPoint = translate(component, point.x, point.y)
+    requireNotNull(translatedPoint) {  "Translated point should be not null" }
+    moveMouse(translatedPoint.x, translatedPoint.y)
   }
 
   override fun moveMouse(point: Point) {
-    basicRobot.moveMouse(point)
+    moveMouse(point.x, point.y)
   }
 
   override fun click(component: Component) {
     step("click at component ${component.loggedOutput()}") {
+      moveMouse(component)
       basicRobot.click(component)
     }
   }
 
   override fun click(component: Component, mouseButton: MouseButton) {
     step("click at component ${component.loggedOutput()}, $mouseButton") {
+      moveMouse(component)
       basicRobot.click(component, mouseButton)
     }
   }
 
   override fun click(component: Component, mouseButton: MouseButton, counts: Int) {
     step("click at component ${component.loggedOutput()}, $mouseButton $counts times") {
+      moveMouse(component)
       basicRobot.click(component, mouseButton, counts)
     }
   }
 
   override fun click(component: Component, point: Point) {
     step("click at component ${component.loggedOutput()} at point ${point.loggedOutput()}") {
+      moveMouse(component)
       basicRobot.click(component, point)
     }
   }
