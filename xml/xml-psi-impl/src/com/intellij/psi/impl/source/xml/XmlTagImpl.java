@@ -35,6 +35,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
@@ -43,6 +44,7 @@ import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.impl.schema.MultiFileNsDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.index.XmlNamespaceIndex;
+import com.intellij.xml.util.XmlPsiUtil;
 import com.intellij.xml.util.XmlTagUtil;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashMap;
@@ -62,14 +64,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlTagImpl");
   @NonNls private static final String XML_NS_PREFIX = "xml";
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("xmlTag");
-  private static final Key<ParameterizedCachedValue<XmlTag[], XmlTagImpl>> SUBTAGS_KEY = Key.create("subtags");
-  private static final ParameterizedCachedValueProvider<XmlTag[],XmlTagImpl> CACHED_VALUE_PROVIDER =
-    tag -> {
-      List<XmlTag> result = new ArrayList<>();
-      tag.fillSubTags(result);
-      XmlTag[] tags = result.toArray(EMPTY);
-      return Result.create(tags, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, tag);
-    };
+  private static final Key<CachedValue<XmlTag[]>> SUBTAGS_WITH_INCLUDES_KEY = Key.create("subtags with includes");
+  private static final Key<CachedValue<XmlTag[]>> SUBTAGS_WITHOUT_INCLUDES_KEY = Key.create("subtags without includes");
   private static final Comparator<TextRange> RANGE_COMPARATOR = Comparator.comparingInt(TextRange::getStartOffset);
   private final int myHC = ourHC++;
   private volatile String myName;
@@ -670,17 +666,25 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   @Override
   @NotNull
   public XmlTag[] getSubTags() {
-    return CachedValuesManager.getManager(getProject()).getParameterizedCachedValue(this, SUBTAGS_KEY, CACHED_VALUE_PROVIDER, false, this).clone();
+    boolean processIncludes = FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() == null &&
+                              !XmlUtil.isStubBuilding(); // todo the first condition should be enough
+    Key<CachedValue<XmlTag[]>> key = processIncludes ? SUBTAGS_WITH_INCLUDES_KEY : SUBTAGS_WITHOUT_INCLUDES_KEY;
+    XmlTag[] cached = CachedValuesManager.getCachedValue(this, key, () ->
+      Result.create(calcSubTags(processIncludes), PsiModificationTracker.MODIFICATION_COUNT));
+    return cached.clone();
   }
 
-  protected void fillSubTags(final List<? super XmlTag> result) {
-    processElements(element -> {
+  @NotNull
+  protected XmlTag[] calcSubTags(boolean processIncludes) {
+    List<XmlTag> result = new ArrayList<>();
+    XmlPsiUtil.processXmlElements(this, element -> {
       if (element instanceof XmlTag) {
         PsiUtilCore.ensureValid(element);
         result.add((XmlTag)element);
       }
       return true;
-    }, this);
+    }, false, false, getContainingFile(), processIncludes);
+    return result.toArray(EMPTY);
   }
 
   @Override
