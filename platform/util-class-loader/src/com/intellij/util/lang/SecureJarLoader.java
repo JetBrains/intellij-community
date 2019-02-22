@@ -17,7 +17,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 class SecureJarLoader extends JarLoader {
-  @Nullable private volatile ProtectionDomain myProtectionDomain;
+  @Nullable private ProtectionDomain myProtectionDomain;
+  private final Object myProtectionDomainMonitor = new Object();
 
   SecureJarLoader(URL url, int index, ClassPath configuration) throws IOException {
     super(url, index, configuration);
@@ -47,12 +48,15 @@ class SecureJarLoader extends JarLoader {
       try {
         stream = file.getInputStream(myEntry);
         result = FileUtilRt.loadBytes(stream, (int)myEntry.getSize());
-        if (myProtectionDomain == null) {
-          JarEntry jarEntry = file.getJarEntry(myEntry.getName());
-          CodeSource codeSource = new CodeSource(myUrl, jarEntry.getCodeSigners());
-          myProtectionDomain = new ProtectionDomain(codeSource, new Permissions());
+        synchronized (myProtectionDomainMonitor) {
+          if (myProtectionDomain == null) {
+            JarEntry jarEntry = file.getJarEntry(myEntry.getName());
+            CodeSource codeSource = new CodeSource(myUrl, jarEntry.getCodeSigners());
+            myProtectionDomain = new ProtectionDomain(codeSource, new Permissions());
+          }
         }
-      } finally {
+      }
+      finally {
         if (stream != null) stream.close();
         releaseZipFile(file);
       }
@@ -62,7 +66,9 @@ class SecureJarLoader extends JarLoader {
     @Nullable
     @Override
     public ProtectionDomain getProtectionDomain() {
-      return myProtectionDomain;
+      synchronized (myProtectionDomainMonitor) {
+        return myProtectionDomain;
+      }
     }
   }
 }
