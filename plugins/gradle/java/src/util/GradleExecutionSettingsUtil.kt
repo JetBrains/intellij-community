@@ -45,8 +45,13 @@ object GradleExecutionSettingsUtil {
   }
 
   @JvmStatic
+  fun createTestWildcardFilter(hasSuffix: Boolean): String {
+    return createTestFilter("*", hasSuffix)
+  }
+
+  @JvmStatic
   fun createTestFilterFromPackage(aPackage: String, hasSuffix: Boolean): String {
-    if (aPackage.isEmpty()) return createTestFilter("*", hasSuffix)
+    if (aPackage.isEmpty()) return createTestWildcardFilter(hasSuffix)
     val packageFilter = String.format("%s.*", aPackage)
     return createTestFilterFrom(packageFilter, hasSuffix)
   }

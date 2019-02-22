@@ -12,16 +12,15 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiManager
-import com.intellij.psi.PsiMethod
+import com.intellij.psi.*
 import com.intellij.testFramework.MapDataContext
 import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilderEx
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.util.*
 import org.junit.runners.Parameterized
+import java.io.File
 import java.util.function.Consumer
 
 abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestCase() {
@@ -185,11 +184,20 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     val packageTestCase = extractJavaClassData(packageTestCaseFile)
     val groovyTestCase = extractGroovyClassData(groovyTestCaseFile)
     val myModuleTestCase = extractGroovyClassData(myModuleTestCaseFile)
+    val projectDir = findPsiDirectory(".")
+    val moduleDir = findPsiDirectory("module")
+    val myModuleDir = findPsiDirectory("my module")
     return ProjectData(
-      ModuleData("project", testCase, packageTestCase, automationTestCase, abstractTestCase, groovyTestCase),
-      ModuleData("module", moduleTestCase),
-      ModuleData("my module", myModuleTestCase)
+      ModuleData("project", projectDir, testCase, packageTestCase, automationTestCase, abstractTestCase, groovyTestCase),
+      ModuleData("module", moduleDir, moduleTestCase),
+      ModuleData("my module", myModuleDir, myModuleTestCase)
     )
+  }
+
+  private fun findPsiDirectory(relativePath: String) = runReadActionAndWait {
+    val virtualFile = VfsUtil.findFileByIoFile(File(projectPath, relativePath), false)!!
+    val psiManager = PsiManager.getInstance(myProject)
+    psiManager.findDirectory(virtualFile)!!
   }
 
   private fun extractJavaClassData(file: VirtualFile) = runReadActionAndWait {
@@ -222,6 +230,7 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
 
   protected class ModuleData(
     val name: String,
+    val root: PsiDirectory,
     vararg classes: ClassData
   ) : Mapping<ClassData>(classes.map { it.name to it }.toMap())
 
@@ -235,6 +244,14 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     val name: String,
     val element: PsiMethod
   )
+
+  protected fun PsiDirectory.subDirectory(vararg names: String) = runReadActionAndWait {
+    var directory = this
+    for (name in names) {
+      directory = directory.findSubdirectory(name)!!
+    }
+    directory
+  }
 
   companion object {
     /**

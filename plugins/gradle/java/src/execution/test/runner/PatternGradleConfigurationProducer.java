@@ -16,11 +16,11 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import kotlin.jvm.functions.Function1;
-import kotlin.jvm.functions.Function2;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
@@ -29,6 +29,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 import java.util.*;
 
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.applyTestConfiguration;
+import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.getSourceFile;
 import static org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil.createTestFilterFrom;
 
 /**
@@ -55,12 +56,12 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
     Project project = context.getProject();
     List<String> tests = getTestPatterns(context);
     TestMappings testMappings = getTestMappings(project, tests);
-    Function1<String, PsiClass> findPsiClass = test -> testMappings.getClasses().get(test);
-    Function2<PsiClass, String, String> createFilter = (psiClass, test) ->
-      createTestFilterFrom(psiClass, testMappings.getMethods().get(test), /*hasSuffix=*/true);
+    Function1<String, VirtualFile> findTestSource = test -> getSourceFile(testMappings.getClasses().get(test));
+    Function1<String, String> createFilter = (test) ->
+      createTestFilterFrom(testMappings.getClasses().get(test), testMappings.getMethods().get(test), /*hasSuffix=*/true);
     Module module = getModuleFromContext(context);
     if (module == null) return false;
-    if (!applyTestConfiguration(settings, module, tests, findPsiClass, createFilter)) return false;
+    if (!applyTestConfiguration(settings, module, tests, findTestSource, createFilter)) return false;
     configuration.setName(tests.size() > 1 ? String.format("%s and %d more", tests.get(0), tests.size() - 1) : tests.get(0));
     JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, contextLocation);
     return true;
@@ -90,17 +91,17 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
     List<String> tests = getTestPatterns(context);
     TestMappings testMappings = getTestMappings(project, tests);
     getTestTasksChooser().chooseTestTasks(project, context.getDataContext(), testMappings.getClasses().values(), tasks -> {
-        ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
-        Function1<String, PsiClass> findPsiClass = test -> testMappings.getClasses().get(test);
-        Function2<PsiClass, String, String> createFilter = (psiClass, test) ->
-          createTestFilterFrom(psiClass, testMappings.getMethods().get(test), /*hasSuffix=*/true);
-        if (!applyTestConfiguration(settings, module, tasks, tests, findPsiClass, createFilter)) {
-          LOG.warn("Cannot apply pattern test configuration, uses raw run configuration");
-          performRunnable.run();
-          return;
-        }
-        configuration.setName(tests.size() > 1 ? String.format("%s and %d more", tests.get(0), tests.size() - 1) : tests.get(0));
+      ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
+      Function1<String, VirtualFile> findTestSource = test -> getSourceFile(testMappings.getClasses().get(test));
+      Function1<String, String> createFilter = (test) ->
+        createTestFilterFrom(testMappings.getClasses().get(test), testMappings.getMethods().get(test), /*hasSuffix=*/true);
+      if (!applyTestConfiguration(settings, module, tasks, tests, findTestSource, createFilter)) {
+        LOG.warn("Cannot apply pattern test configuration, uses raw run configuration");
         performRunnable.run();
+        return;
+      }
+      configuration.setName(tests.size() > 1 ? String.format("%s and %d more", tests.get(0), tests.size() - 1) : tests.get(0));
+      performRunnable.run();
     });
   }
 

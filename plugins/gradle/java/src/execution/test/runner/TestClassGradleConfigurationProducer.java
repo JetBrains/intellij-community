@@ -22,6 +22,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.util.containers.ContainerUtil;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +35,7 @@ import java.util.List;
 
 import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.getMethodLocation;
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.applyTestConfiguration;
+import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.escapeIfNeeded;
 import static org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil.createTestFilterFrom;
 
 /**
@@ -74,7 +76,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
     TasksToRun tasksToRun = findTestsTaskToRun(source, context.getProject());
 
     configuration.getSettings().setExternalProjectPath(projectPath);
-    configuration.getSettings().setTaskNames(tasksToRun);
+    configuration.getSettings().setTaskNames(ContainerUtil.map(tasksToRun, it -> escapeIfNeeded(it)));
 
     String filter = createTestFilterFrom(testClass, /*hasSuffix=*/false);
     configuration.getSettings().setScriptParameters(filter);
