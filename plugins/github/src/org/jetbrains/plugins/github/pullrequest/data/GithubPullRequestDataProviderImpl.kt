@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.data
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.util.EventDispatcher
@@ -21,7 +22,6 @@ import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
-import org.jetbrains.plugins.github.util.NonReusableEmptyProgressIndicator
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
@@ -43,7 +43,7 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
   private var lastKnownHeadSha: String? = null
 
   private val detailsRequestValue = object : LazyCancellableBackgroundProcessValue<GithubPullRequestDetailedWithHtml>(progressManager) {
-    override fun compute(indicator: NonReusableEmptyProgressIndicator): GithubPullRequestDetailedWithHtml {
+    override fun compute(indicator: ProgressIndicator): GithubPullRequestDetailedWithHtml {
       val details = requestExecutor.execute(indicator,
                                             GithubApiRequests.Repos.PullRequests.getHtml(serverPath, username, repositoryName, number))
       invokeAndWaitIfNeeded {
@@ -57,7 +57,7 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
     get() = GithubAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { detailsRequestValue.value } }
 
   private val branchFetchRequestValue = object : LazyCancellableBackgroundProcessValue<Unit>(progressManager) {
-    override fun compute(indicator: NonReusableEmptyProgressIndicator) {
+    override fun compute(indicator: ProgressIndicator) {
       git.fetch(repository, remote, emptyList(), "refs/pull/${number}/head:").throwOnError()
     }
   }
@@ -65,7 +65,7 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
     get() = GithubAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { branchFetchRequestValue.value } }
 
   private val apiCommitsRequestValue = object : LazyCancellableBackgroundProcessValue<List<GithubCommit>>(progressManager) {
-    override fun compute(indicator: NonReusableEmptyProgressIndicator) = GithubApiPagesLoader
+    override fun compute(indicator: ProgressIndicator) = GithubApiPagesLoader
       .loadAll(requestExecutor, indicator,
                GithubApiRequests.Repos.PullRequests.Commits.pages(serverPath, username, repositoryName, number))
 
@@ -74,7 +74,7 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
     get() = GithubAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { apiCommitsRequestValue.value } }
 
   private val logCommitsRequestValue = object : LazyCancellableBackgroundProcessValue<List<GitCommit>>(progressManager) {
-    override fun compute(indicator: NonReusableEmptyProgressIndicator): List<GitCommit> {
+    override fun compute(indicator: ProgressIndicator): List<GitCommit> {
       branchFetchRequestValue.value.joinCancellable()
       val commitHashes = apiCommitsRequestValue.value.joinCancellable().map { it.sha }
       val gitCommits = mutableListOf<GitCommit>()
