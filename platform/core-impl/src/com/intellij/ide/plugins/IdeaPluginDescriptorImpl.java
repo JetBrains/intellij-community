@@ -327,7 +327,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   private static void readComponents(@NotNull Element parent, @NotNull Ref<BeanBinding> oldComponentConfigBean, @NotNull ArrayList<ComponentConfig> result) {
-    boolean headless = ApplicationManager.getApplication().isHeadlessEnvironment();
+    final Application app = ApplicationManager.getApplication();
+    boolean headless = app == null || app.isHeadlessEnvironment();
 
     List<Content> content = parent.getContent();
     int contentSize = content.size();
