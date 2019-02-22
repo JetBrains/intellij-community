@@ -25,7 +25,9 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.MemoryDumpHelper;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ref.GCUtil;
+import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -237,16 +239,14 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     assertNotNull(file.toString(), document);
     WriteCommandAction.runWriteCommandAction(myProject, () -> ObjectUtils.assertNotNull(myDocumentManager.getDocument(file)).insertString(0, "xxx"));
 
-    int idCode = System.identityHashCode(document);
     //noinspection UnusedAssignment
     document = null;
 
     myDocumentManager.saveAllDocuments();
 
-    GCUtil.tryGcSoftlyReachableObjects();
+    GCWatcher.tracking(myDocumentManager.getDocument(file)).tryGc();
 
-    document = myDocumentManager.getDocument(file);
-    assertTrue(idCode != System.identityHashCode(document));
+    assertNull(myDocumentManager.getCachedDocument(file));
   }
 
   public void testSaveDocument_DocumentWasNotChanged() throws Exception {
@@ -634,7 +634,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     }
 
     for (int iteration = 0; iteration < 10; iteration++) {
-      GCUtil.tryGcSoftlyReachableObjects();
+      GCWatcher.tracking(ContainerUtil.mapNotNull(physicalFiles, f -> FileDocumentManager.getInstance().getCachedDocument(f))).tryGc();
 
       checkDocumentFiles(physicalFiles);
       checkDocumentFiles(createNonPhysicalFiles());
