@@ -206,6 +206,7 @@ public class ExtensionPointImplTest {
   @Test
   public void testListenerNotifications() {
     ExtensionPoint<String> extensionPoint = buildExtensionPoint(String.class);
+
     final List<String> extensions = ContainerUtil.newArrayList();
     extensionPoint.addExtensionPointListener(new ExtensionPointListener<String>() {
       @Override
@@ -213,25 +214,22 @@ public class ExtensionPointImplTest {
         extensions.add(extension);
       }
     }, true, null);
-    MyShootingComponentAdapter adapter = stringAdapter();
 
     extensionPoint.registerExtension("first", disposable);
     assertThat(extensions).contains("first");
 
-    extensionPoint.registerExtension("second", LoadingOrder.FIRST, null);
+    extensionPoint.registerExtension("second", LoadingOrder.FIRST, disposable);
+
+    MyShootingComponentAdapter adapter = stringAdapter();
     ((ExtensionPointImpl)extensionPoint).registerExtensionAdapter(adapter);
     adapter.setFire(() -> {
       throw new ProcessCanceledException();
     });
-    try {
-      extensionPoint.getExtensions();
-      fail("PCE expected");
-    }
-    catch (ProcessCanceledException ignored) { }
+    assertThatThrownBy(() -> extensionPoint.getExtensionList()).isInstanceOf(ProcessCanceledException.class);
     assertThat(extensions).contains("first", "second");
 
     adapter.setFire(null);
-    extensionPoint.getExtensions();
+    extensionPoint.getExtensionList();
     assertThat(extensions).contains("first", "second", "");
   }
 
@@ -263,11 +261,11 @@ public class ExtensionPointImplTest {
     return new MyShootingComponentAdapter(String.class.getName());
   }
 
-  private static final class MyShootingComponentAdapter extends ExtensionComponentAdapter {
+  private static final class MyShootingComponentAdapter extends XmlExtensionAdapter {
     private Runnable myFire;
 
     MyShootingComponentAdapter(@NotNull String implementationClass) {
-      super(implementationClass, new DefaultPluginDescriptor("test"), null, LoadingOrder.ANY);
+      super(implementationClass, new DefaultPluginDescriptor("test"), null, LoadingOrder.ANY, null);
     }
 
     public void setFire(@Nullable Runnable fire) {

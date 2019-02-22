@@ -32,6 +32,11 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
     myExtensionElement = extensionElement;
   }
 
+  @Override
+  boolean isInstanceCreated() {
+    return myComponentInstance != null;
+  }
+
   @NotNull
   @Override
   public Object createInstance(@Nullable PicoContainer container) {
