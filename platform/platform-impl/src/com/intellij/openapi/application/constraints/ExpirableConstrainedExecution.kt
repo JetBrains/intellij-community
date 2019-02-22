@@ -60,13 +60,18 @@ internal abstract class ExpirableConstrainedExecution<E : ConstrainedExecution<E
     override fun schedule(runnable: Runnable) {
       val runOnce = RunOnce()
 
-      val expirationHandle = expiration.invokeOnExpiration(Runnable {
-        runOnce {
-          // We expect the coroutine job has already been cancelled through the expirableHandle at this point.
-          // TODO[eldar] relying on the order of invocations of CompletionHandlers
-          dispatchLaterUnconstrained(runnable)
+      val invokeWhenCompletelyExpiredRunnable = object : Runnable {
+        override fun run() {
+          if (expiration.isExpired) {
+            runOnce {
+              // At this point all the expiration handlers, including the one responsible for cancelling the coroutine job, have finished.
+              runnable.run()
+            }
+          }
+          else if (runOnce.isActive) dispatchLaterUnconstrained(this)
         }
-      })
+      }
+      val expirationHandle = expiration.invokeOnExpiration(invokeWhenCompletelyExpiredRunnable)
       if (runOnce.isActive) {
         constraint.schedule(Runnable {
           runOnce {

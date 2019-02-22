@@ -354,8 +354,8 @@ class AppUIExecutorTest : LightPlatformTestCase() {
                           "before yield",
                           "disposing",
                           "disposable.beforeTreeDispose()",
-                          "disposable.dispose()",
                           "coroutine yield caught JobCancellationException because of null",
+                          "disposable.dispose()",
                           "end")
     }.joinNonBlocking()
   }
