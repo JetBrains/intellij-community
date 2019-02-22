@@ -104,8 +104,8 @@ class TestGradleConfigurationProducerUtilTest : GradleImportingTestCase() {
         ":dep-module:cleanTest :dep-module:test --tests \"DepSimpleTestCase\" " +
         "--continue", aSimpleTestCase, aDepSimpleTestCase)
       assertClassRunConfigurationSettings(
-        ":module:cleanTest :module:test --tests \"SimpleTestCase\" --tests \"SimpleTestCase\" --tests \"SimpleTestCase\" " +
-        ":dep-module:cleanTest :dep-module:test --tests \"DepSimpleTestCase\" --tests \"DepSimpleTestCase\" " +
+        ":module:cleanTest :module:test --tests \"SimpleTestCase\" " +
+        ":dep-module:cleanTest :dep-module:test --tests \"DepSimpleTestCase\" " +
         "--continue", aSimpleTestCase, aDepSimpleTestCase, aDepSimpleTestCase, aSimpleTestCase, aSimpleTestCase)
     }
   }
