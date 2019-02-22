@@ -1,12 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.newclass;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.components.JBTextField;
+import com.intellij.util.BooleanFunction;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,14 +21,17 @@ import java.util.List;
 
 public class CreateWithTemplatesDialogPanel extends JBPanel {
 
-  private final JTextField myNameField;
+  private final JBTextField myNameField;
   private final JList<Trinity<String, Icon, String>> myTemplatesList;
 
   public CreateWithTemplatesDialogPanel(@NotNull List<Trinity<String, Icon, String>> templates, @Nullable String selectedItem) {
     super(new BorderLayout());
 
-    myNameField = new JTextField();
+    myNameField = new JBTextField();
     myNameField.setColumns(30);
+    myNameField.putClientProperty("StatusVisibleFunction", (BooleanFunction<JBTextField>) field -> field.getText().isEmpty());
+    myNameField.getEmptyText().setText(IdeBundle.message("action.create.new.class.name.field"));
+
     myTemplatesList = new JBList<>(templates);
 
     updateBorder(false);
