@@ -45,7 +45,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.messages.MessageBus;
@@ -390,13 +389,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
         return;
       }
 
-      TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES);
-      Color backgroundColor = attributes.getBackgroundColor();
-      if (backgroundColor != null) {
-        attributes = attributes.clone();
-        attributes.setBackgroundColor(ColorUtil.softer(backgroundColor));
-      }
-
+      TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.NOT_TOP_FRAME_ATTRIBUTES);
       Editor editor = e.getEditor();
       myCurrentHighlighter = editor.getMarkupModel().addLineHighlighter(lineNumber,
                                                                         DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,
