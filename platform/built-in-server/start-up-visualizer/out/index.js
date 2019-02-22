@@ -143,6 +143,16 @@ define("timeLineChartHelper", ["require", "exports"], function (require, exports
         }
     }
     exports.computeLevels = computeLevels;
+    function disableGridButKeepBorderLines(axis) {
+        axis.renderer.grid.template.adapter.add("disabled", (_, target) => {
+            if (target.dataItem == null) {
+                return false;
+            }
+            const index = target.dataItem.index;
+            return !(index === 0 || index === -1);
+        });
+    }
+    exports.disableGridButKeepBorderLines = disableGridButKeepBorderLines;
 });
 define("TimeLineChartManager", ["require", "exports", "core", "@amcharts/amcharts4/charts", "@amcharts/amcharts4/core", "timeLineChartHelper"], function (require, exports, core_2, am4charts, am4core, timeLineChartHelper_1) {
     "use strict";
@@ -158,6 +168,7 @@ define("TimeLineChartManager", ["require", "exports", "core", "@amcharts/amchart
     class TimelineChartManager extends core_2.XYChartManager {
         constructor(container) {
             super(container);
+            this.maxRowIndex = 0;
             const chart = this.chart;
             this.configureDurationAxis();
             const levelAxis = this.configureLevelAxis();
@@ -169,8 +180,8 @@ define("TimeLineChartManager", ["require", "exports", "core", "@amcharts/amchart
             levelAxis.dataFields.category = "rowIndex";
             levelAxis.renderer.grid.template.location = 0;
             levelAxis.renderer.minGridDistance = 1;
+            timeLineChartHelper_1.disableGridButKeepBorderLines(levelAxis);
             levelAxis.renderer.labels.template.disabled = true;
-            // levelAxis.renderer.grid.template.disabled = true
             return levelAxis;
         }
         configureDurationAxis() {
@@ -208,16 +219,8 @@ define("TimeLineChartManager", ["require", "exports", "core", "@amcharts/amchart
             // https://www.amcharts.com/docs/v4/tutorials/auto-adjusting-chart-height-based-on-a-number-of-data-items/
             // noinspection SpellCheckingInspection
             this.chart.events.on("datavalidated", () => {
-                const grid = this.chart.yAxes.getIndex(0).renderer.grid;
-                // hide all grid lines except first and last
-                for (let i = 1; i < (grid.length - 1); i++) {
-                    grid.getIndex(i).disabled = true;
-                }
                 const chart = this.chart;
-                const adjustHeight = chart.data.reduce((max, item) => Math.max(item.rowIndex, max), 0) * 35 - levelAxis.pixelHeight;
-                // get current chart height
-                let targetHeight = chart.pixelHeight + adjustHeight;
-                // Set it on chart's container
+                const targetHeight = chart.pixelHeight + ((this.maxRowIndex + 1) * 30 - levelAxis.pixelHeight);
                 chart.svgContainer.htmlElement.style.height = targetHeight + "px";
             });
         }
@@ -225,40 +228,44 @@ define("TimeLineChartManager", ["require", "exports", "core", "@amcharts/amchart
             const items = ijData.items;
             const firstStart = new Date(items[0].start);
             const timeOffset = 0;
-            const data = transformIjData(ijData, timeOffset);
+            const data = this.transformIjData(ijData, timeOffset);
             this.chart.data = data;
             const originalItems = items;
             const durationAxis = this.chart.xAxes.getIndex(0);
             durationAxis.max = originalItems[originalItems.length - 1].end - timeOffset;
         }
+        transformIjData(input, timeOffset) {
+            const colorSet = new am4core.ColorSet();
+            const transformedItems = new Array(input.items.length);
+            timeLineChartHelper_1.computeLevels(input.items);
+            // we cannot use actual level as row index because in this case labels will be overlapped, so,
+            // row index simply incremented till empirical limit.
+            let rowIndex = 0;
+            this.maxRowIndex = 0;
+            for (let i = 0; i < input.items.length; i++) {
+                const item = input.items[i];
+                if (rowIndex > 5 && item.level === 0) {
+                    rowIndex = 0;
+                }
+                else if (rowIndex > this.maxRowIndex) {
+                    this.maxRowIndex = rowIndex;
+                }
+                const result = {
+                    name: item.name,
+                    start: item.start - timeOffset,
+                    end: item.end - timeOffset,
+                    duration: item.duration,
+                    rowIndex: rowIndex++,
+                    color: colorSet.getIndex(item.colorIndex),
+                    level: item.level,
+                };
+                transformedItems[i] = result;
+            }
+            transformedItems.sort((a, b) => a.rowIndex - b.rowIndex);
+            return transformedItems;
+        }
     }
     exports.TimelineChartManager = TimelineChartManager;
-    function transformIjData(input, timeOffset) {
-        const colorSet = new am4core.ColorSet();
-        const transformedItems = new Array(input.items.length);
-        timeLineChartHelper_1.computeLevels(input.items);
-        // we cannot use actual level as row index because in this case labels will be overlapped, so,
-        // row index simply incremented till empirical limit (6).
-        let rowIndex = 0;
-        for (let i = 0; i < input.items.length; i++) {
-            const item = input.items[i];
-            if (rowIndex > 5 && item.level === 0) {
-                rowIndex = 0;
-            }
-            const result = {
-                name: item.name,
-                start: item.start - timeOffset,
-                end: item.end - timeOffset,
-                duration: item.duration,
-                rowIndex: rowIndex++,
-                color: colorSet.getIndex(item.colorIndex),
-                level: item.level,
-            };
-            transformedItems[i] = result;
-        }
-        transformedItems.sort((a, b) => a.rowIndex - b.rowIndex);
-        return transformedItems;
-    }
 });
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 define("dev", ["require", "exports", "TimeLineChartManager"], function (require, exports, TimeLineChartManager_1) {
@@ -881,7 +888,7 @@ define("main", ["require", "exports", "@amcharts/amcharts4/core", "@amcharts/amc
 define("timeLineChartHelper.test", ["require", "exports", "timeLineChartHelper"], function (require, exports, timeLineChartHelper_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    test("adds 1 + 2 to equal 3", () => {
+    test("sort", () => {
         const items = [
             {
                 "name": "default project components creation",

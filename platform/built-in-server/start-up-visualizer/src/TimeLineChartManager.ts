@@ -2,7 +2,7 @@
 import {InputData, XYChartManager} from "./core"
 import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
-import {computeLevels, TimeLineItem} from "./timeLineChartHelper"
+import {computeLevels, disableGridButKeepBorderLines, TimeLineItem} from "./timeLineChartHelper"
 
 // https://github.com/almende/vis/blob/master/examples/timeline/dataHandling/dataSerialization.html
 // do not group because it makes hard to understand results
@@ -14,6 +14,8 @@ const groups = isCreateGroups ? [
 ] : null
 
 export class TimelineChartManager extends XYChartManager {
+  private maxRowIndex = 0
+
   constructor(container: HTMLElement) {
     super(container)
 
@@ -30,8 +32,8 @@ export class TimelineChartManager extends XYChartManager {
     levelAxis.dataFields.category = "rowIndex"
     levelAxis.renderer.grid.template.location = 0
     levelAxis.renderer.minGridDistance = 1
+    disableGridButKeepBorderLines(levelAxis)
     levelAxis.renderer.labels.template.disabled = true
-    // levelAxis.renderer.grid.template.disabled = true
     return levelAxis
   }
 
@@ -74,19 +76,8 @@ export class TimelineChartManager extends XYChartManager {
     // https://www.amcharts.com/docs/v4/tutorials/auto-adjusting-chart-height-based-on-a-number-of-data-items/
     // noinspection SpellCheckingInspection
     this.chart.events.on("datavalidated", () => {
-      const grid = this.chart.yAxes.getIndex(0)!!.renderer.grid
-      // hide all grid lines except first and last
-      for (let i = 1; i < (grid.length - 1); i++) {
-        grid.getIndex(i)!!.disabled = true
-      }
-
       const chart = this.chart
-      const adjustHeight = chart.data.reduce((max, item) => Math.max(item.rowIndex, max), 0) * 35 - levelAxis.pixelHeight
-
-      // get current chart height
-      let targetHeight = chart.pixelHeight + adjustHeight
-
-      // Set it on chart's container
+      const targetHeight = chart.pixelHeight + ((this.maxRowIndex + 1) * 30 - levelAxis.pixelHeight)
       chart.svgContainer!!.htmlElement.style.height = targetHeight + "px"
     })
   }
@@ -96,43 +87,46 @@ export class TimelineChartManager extends XYChartManager {
     const firstStart = new Date(items[0].start)
     const timeOffset = 0
 
-    const data = transformIjData(ijData, timeOffset)
+    const data = this.transformIjData(ijData, timeOffset)
     this.chart.data = data
 
     const originalItems = items
     const durationAxis = this.chart.xAxes.getIndex(0) as am4charts.DurationAxis
     durationAxis.max = originalItems[originalItems.length - 1].end - timeOffset
   }
-}
 
-function transformIjData(input: InputData, timeOffset: number): Array<any> {
-  const colorSet = new am4core.ColorSet()
-  const transformedItems = new Array<any>(input.items.length)
-  computeLevels(input.items)
+  private transformIjData(input: InputData, timeOffset: number): Array<any> {
+    const colorSet = new am4core.ColorSet()
+    const transformedItems = new Array<any>(input.items.length)
+    computeLevels(input.items)
 
-  // we cannot use actual level as row index because in this case labels will be overlapped, so,
-  // row index simply incremented till empirical limit (6).
-  let rowIndex = 0
-  for (let i = 0; i < input.items.length; i++) {
-    const item = input.items[i] as TimeLineItem
+    // we cannot use actual level as row index because in this case labels will be overlapped, so,
+    // row index simply incremented till empirical limit.
+    let rowIndex = 0
+    this.maxRowIndex = 0
+    for (let i = 0; i < input.items.length; i++) {
+      const item = input.items[i] as TimeLineItem
+      if (rowIndex > 5 && item.level === 0) {
+        rowIndex = 0
+      }
+      else if (rowIndex > this.maxRowIndex) {
+        this.maxRowIndex = rowIndex
+      }
 
-    if (rowIndex > 5 && item.level === 0) {
-      rowIndex = 0
+      const result: any = {
+        name: item.name,
+        start: item.start - timeOffset,
+        end: item.end - timeOffset,
+        duration: item.duration,
+        rowIndex: rowIndex++,
+        color: colorSet.getIndex(item.colorIndex),
+        level: item.level,
+      }
+
+      transformedItems[i] = result
     }
 
-    const result: any = {
-      name: item.name,
-      start: item.start - timeOffset,
-      end: item.end - timeOffset,
-      duration: item.duration,
-      rowIndex: rowIndex++,
-      color: colorSet.getIndex(item.colorIndex),
-      level: item.level,
-    }
-
-    transformedItems[i] = result
+    transformedItems.sort((a, b) => a.rowIndex - b.rowIndex)
+    return transformedItems
   }
-
-  transformedItems.sort((a, b) => a.rowIndex - b.rowIndex)
-  return transformedItems
 }
