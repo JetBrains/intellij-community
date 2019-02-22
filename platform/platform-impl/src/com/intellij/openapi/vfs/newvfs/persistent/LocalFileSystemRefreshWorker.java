@@ -363,11 +363,6 @@ class LocalFileSystemRefreshWorker {
         myHelper.checkContentChanged(child, myRefreshContext.persistence.getTimeStamp(child), attrs.lastModifiedTime().toMillis(),
                                      myRefreshContext.persistence.getLastRecordedLength(child), attrs.size());
       }
-      else {
-        if (myIsRecursive) {
-          myRefreshContext.submitRefreshRequest(() -> processFile(child, myRefreshContext));
-        }
-      }
 
       boolean currentWritable = myRefreshContext.persistence.isWritable(child);
       boolean isWritable;
@@ -392,7 +387,14 @@ class LocalFileSystemRefreshWorker {
       if (isLink) {
         myHelper.checkSymbolicLinkChange(child, child.getCanonicalPath(), myRefreshContext.fs.resolveSymLink(child));
       }
+
       if (!child.isDirectory()) child.markClean();
+      else {
+        if (myIsRecursive) {
+          myRefreshContext.submitRefreshRequest(() -> processFile(child, myRefreshContext));
+        }
+      }
+
       return FileVisitResult.CONTINUE;
     }
 
