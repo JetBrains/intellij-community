@@ -14,12 +14,11 @@ import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -83,18 +82,32 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   protected final void init(@Nullable ProgressIndicator indicator, @Nullable Runnable componentsRegistered, boolean isNeededToMeasure) {
+    StartupProgress startupProgress = null;
+    if (indicator != null) {
+      startupProgress = (message, progress) -> indicator.setFraction(progress);
+    }
+
+    // before totalMeasureToken to ensure that plugin loading is not part of this
+    List<IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins(startupProgress);
+
     StartUpMeasurer.MeasureToken totalMeasureToken = isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix() + StartUpMeasurer.Phases.INITIALIZE_COMPONENTS_SUFFIX) : null;
-    List<ComponentConfig> componentConfigs = getComponentConfigs(indicator);
 
     String measureTokenNamePrefix = StringUtil.notNullize(measureTokenNamePrefix());
     StartUpMeasurer.MeasureToken measureToken = isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix + StartUpMeasurer.Phases.REGISTER_COMPONENTS_SUFFIX) : null;
-    for (ComponentConfig config : componentConfigs) {
-      registerComponents(config);
+    int componentConfigCount = 0;
+    for (IdeaPluginDescriptor plugin : plugins) {
+      for (ComponentConfig config : getMyComponentConfigsFromDescriptor(plugin)) {
+        if (isComponentSuitable(config)) {
+          registerComponents(config, plugin);
+          componentConfigCount++;
+        }
+      }
     }
+
     if (measureToken != null) {
       measureToken.end();
     }
-    myComponentConfigCount = componentConfigs.size();
+    myComponentConfigCount = componentConfigCount;
 
     if (componentsRegistered != null) {
       measureToken = isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix + StartUpMeasurer.Phases.COMPONENTS_REGISTERED_CALLBACK_SUFFIX) : null;
@@ -278,10 +291,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myParentComponentManager == null ? new DefaultPicoContainer() : new DefaultPicoContainer(myParentComponentManager.getPicoContainer());
   }
 
-  protected boolean isComponentSuitable(@Nullable Map<String, String> options) {
-    return options == null ||
-           Extensions.isComponentSuitableForOs(options.get("os")) &&
-           (!Boolean.parseBoolean(options.get("internal")) || ApplicationManager.getApplication().isInternal());
+  protected boolean isComponentSuitable(@NotNull ComponentConfig componentConfig) {
+    return true;
   }
 
   @Override
@@ -304,28 +315,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @Override
   public boolean isDisposed() {
     return myDisposed;
-  }
-
-  @NotNull
-  private List<ComponentConfig> getComponentConfigs(@Nullable ProgressIndicator indicator) {
-    boolean isDefaultProject = this instanceof Project && ((Project)this).isDefault();
-    boolean headless = ApplicationManager.getApplication().isHeadlessEnvironment();
-    StartupProgress startupProgress = null;
-    if (indicator != null) {
-      startupProgress = (message, progress) -> indicator.setFraction(progress);
-    }
-    ArrayList<ComponentConfig> componentConfigs = new ArrayList<>();
-    for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins(startupProgress)) {
-      List<ComponentConfig> configs = getMyComponentConfigsFromDescriptor(plugin);
-      componentConfigs.ensureCapacity(componentConfigs.size() + configs.size());
-      for (ComponentConfig config : configs) {
-        if ((!isDefaultProject || config.isLoadForDefaultProject()) && isComponentSuitable(config.options) && config.prepareClasses(headless)) {
-          config.pluginDescriptor = plugin;
-          componentConfigs.add(config);
-        }
-      }
-    }
-    return componentConfigs;
   }
 
   // used in upsource
@@ -384,8 +373,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return component.getClass().getName();
   }
 
-  private void registerComponents(@NotNull ComponentConfig config) {
-    ClassLoader loader = config.getClassLoader();
+  private void registerComponents(@NotNull ComponentConfig config, @NotNull PluginDescriptor pluginDescriptor) {
+    ClassLoader loader = pluginDescriptor.getPluginClassLoader();
     try {
       Class<?> interfaceClass = Class.forName(config.getInterfaceClass(), true, loader);
       Class<?> implementationClass = Comparing.equal(config.getInterfaceClass(), config.getImplementationClass()) ? interfaceClass :
@@ -402,11 +391,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       // implementationClass == null means we want to unregister this component
       if (implementationClass != null) {
         boolean ws = config.options != null && Boolean.parseBoolean(config.options.get("workspace"));
-        picoContainer.registerComponent(new ComponentConfigComponentAdapter(interfaceClass, implementationClass, config.getPluginId(), ws));
+        picoContainer.registerComponent(new ComponentConfigComponentAdapter(interfaceClass, implementationClass, pluginDescriptor.getPluginId(), ws));
       }
     }
     catch (Throwable t) {
-      handleInitComponentError(t, null, config.getPluginId());
+      handleInitComponentError(t, null, pluginDescriptor.getPluginId());
     }
   }
 

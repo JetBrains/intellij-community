@@ -427,6 +427,25 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           }
         }
       }, true);
+
+      StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(StartUpMeasurer.Phases.APP_INITIALIZED_CALLBACK);
+      ExtensionPoint<ApplicationInitializedListener> initializedExtensionPoint = ApplicationInitializedListener.EP_NAME.getPoint(null);
+      for (ApplicationInitializedListener listener : initializedExtensionPoint.getExtensionList()) {
+        try {
+          listener.componentsInitialized();
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+      }
+
+      try {
+        initializedExtensionPoint.reset();
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+      measureToken.end();
     }
     finally {
       token.finish();
@@ -440,32 +459,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   protected void createComponents(@Nullable ProgressIndicator indicator) {
     // we cannot wrap "init()" call because ProgressManager instance could be created only after component registration (our "componentsRegistered" callback)
-    Runnable task = () -> {
-      super.createComponents(indicator);
-      ExtensionPoint<ApplicationInitializedListener> initializedExtensionPoint = ApplicationInitializedListener.EP_NAME.getPoint(null);
-      for (ApplicationInitializedListener listener : initializedExtensionPoint.getExtensionList()) {
-        try {
-          listener.componentsInitialized();
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
-
-        try {
-          initializedExtensionPoint.reset();
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
-      }
-    };
-
     if (indicator == null) {
       // no splash, no need to to use progress manager
-      task.run();
+      super.createComponents(null);
     }
     else {
-      ProgressManager.getInstance().runProcess(task, indicator);
+      ProgressManager.getInstance().runProcess(() -> super.createComponents(indicator), indicator);
     }
   }
 

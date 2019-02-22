@@ -29,6 +29,7 @@ import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ref.GCUtil;
+import com.intellij.util.ref.GCWatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -177,7 +178,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     assertNull(JavaPsiFacade.getInstance(getProject()).findClass("Foo", GlobalSearchScope.allScope(getProject())));
     assertSize(0, psiFile.getClasses());
     assertEquals("", psiManager.findFile(file).getText());
-    GCUtil.tryGcSoftlyReachableObjects();
+    GCWatcher.tracking(psiManager.findFile(file)).tryGc();
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
@@ -200,7 +201,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     assertNull(facade.findClass("Foo", allScope));
     long count1 = tracker.getJavaStructureModificationCount();
 
-    GCUtil.tryGcSoftlyReachableObjects();
+    GCWatcher.tracking(PsiDocumentManager.getInstance(getProject()).getCachedPsiFile(document)).tryGc();
     assertNull(PsiDocumentManager.getInstance(getProject()).getCachedPsiFile(document));
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, "class Foo {}"));
@@ -230,35 +231,39 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> document.deleteString(0, document.getTextLength()));
     DocumentCommitThread.getInstance().waitForAllCommits(100, TimeUnit.SECONDS);
-
-    // gc softly-referenced file and AST
-    GCUtil.tryGcSoftlyReachableObjects();
-    final PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
-    assertNull(psiManager.getFileManager().getCachedPsiFile(file));
+    gcPsi(file);
 
     assertFalse(count1 == tracker.getJavaStructureModificationCount());
     assertNull(JavaPsiFacade.getInstance(getProject()).findClass("Foo", GlobalSearchScope.allScope(getProject())));
   }
 
+  private void gcPsi(VirtualFile file) {
+    PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
+    GCWatcher.tracking(psiManager.getFileManager().getCachedPsiFile(file)).tryGc();
+    assertNull(psiManager.getFileManager().getCachedPsiFile(file));
+  }
 
   public void testClassShouldNotDisappearWithoutEvents_NoDocument() throws IOException {
     PsiModificationTracker tracker = getTracker();
-    final PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
 
     final VirtualFile file = addFileToProject("Foo.java", "class Foo {}").getVirtualFile();
     assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("Foo", GlobalSearchScope.allScope(getProject())));
     long count1 = tracker.getJavaStructureModificationCount();
 
-    // gc softly-referenced file and document
-    GCUtil.tryGcSoftlyReachableObjects();
-    assertNull(FileDocumentManager.getInstance().getCachedDocument(file));
-    assertNull(psiManager.getFileManager().getCachedPsiFile(file));
+    gcPsiAndDocument(file);
 
     setFileText(file, "");
     assertNull(FileDocumentManager.getInstance().getCachedDocument(file));
 
     assertNull(JavaPsiFacade.getInstance(getProject()).findClass("Foo", GlobalSearchScope.allScope(getProject())));
     assertFalse(count1 == tracker.getJavaStructureModificationCount());
+  }
+
+  private void gcPsiAndDocument(VirtualFile file) {
+    PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
+    GCWatcher.tracking(FileDocumentManager.getInstance().getCachedDocument(file), psiManager.getFileManager().getCachedPsiFile(file)).tryGc();
+    assertNull(FileDocumentManager.getInstance().getCachedDocument(file));
+    assertNull(psiManager.getFileManager().getCachedPsiFile(file));
   }
 
   public void testClassShouldNotAppearWithoutEvents_NoPsiDirectory() throws IOException {
@@ -296,16 +301,12 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
 
   public void testClassShouldNotDisappearWithoutEvents_VirtualFileDeleted() throws IOException {
     PsiModificationTracker tracker = getTracker();
-    final PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
 
     final VirtualFile file = addFileToProject("Foo.java", "class Foo {}").getVirtualFile();
     assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("Foo", GlobalSearchScope.allScope(getProject())));
     long count1 = tracker.getJavaStructureModificationCount();
 
-    // gc softly-referenced file and document
-    GCUtil.tryGcSoftlyReachableObjects();
-    assertNull(FileDocumentManager.getInstance().getCachedDocument(file));
-    assertNull(psiManager.getFileManager().getCachedPsiFile(file));
+    gcPsiAndDocument(file);
     delete(file);
 
     assertNull(JavaPsiFacade.getInstance(getProject()).findClass("Foo", GlobalSearchScope.allScope(getProject())));
@@ -314,17 +315,13 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
 
   public void testClassShouldNotDisappearWithoutEvents_ParentVirtualDirectoryDeleted() throws Exception {
     PsiModificationTracker tracker = getTracker();
-    final PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
 
     final VirtualFile file = addFileToProject("foo/Foo.java", "package foo; class Foo {}").getVirtualFile();
     assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("foo.Foo", GlobalSearchScope.allScope(getProject())));
 
     long count1 = tracker.getJavaStructureModificationCount();
 
-    // gc softly-referenced file and document
-    GCUtil.tryGcSoftlyReachableObjects();
-    assertNull(FileDocumentManager.getInstance().getCachedDocument(file));
-    assertNull(psiManager.getFileManager().getCachedPsiFile(file));
+    gcPsiAndDocument(file);
     delete(file.getParent());
 
     assertNull(JavaPsiFacade.getInstance(getProject()).findClass("foo.Foo", GlobalSearchScope.allScope(getProject())));
@@ -457,8 +454,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     WriteAction.run(() -> file.setWritable(false));
     assertEquals(mc, tracker.getModificationCount());
 
-    GCUtil.tryGcSoftlyReachableObjects();
-    assertNull(PsiManagerEx.getInstanceEx(myProject).getFileManager().getCachedPsiFile(file));
+    gcPsi(file);
 
     WriteAction.run(() -> file.setWritable(true));
     assertEquals(mc, tracker.getModificationCount());

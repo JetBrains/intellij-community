@@ -54,7 +54,13 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
       return new InputFileObject(file, myEncodingName);
     }
   };
-  protected Map<File, Set<File>> myOutputsMap = Collections.emptyMap();
+  private static final Function<String, File> ourPathToFileConverter = new Function<String, File>() {
+    @Override
+    public File fun(String s) {
+      return new File(s);
+    }
+  };
+  private Map<File, Set<File>> myOutputsMap = Collections.emptyMap();
   @Nullable
   private String myEncodingName;
   private int myChecksCounter = 0;
@@ -319,12 +325,7 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
 
   @Override
   public Iterable<? extends JavaFileObject> getJavaFileObjectsFromFiles(final Iterable<? extends File> files) {
-    return wrapJavaFileObjects(convert(files, new Function<File, JavaFileObject>() {
-      @Override
-      public JavaFileObject fun(File file) {
-        return new InputFileObject(file, myEncodingName);
-      }
-    }));
+    return wrapJavaFileObjects(convert(files, myFileToInputFileObjectConverter));
   }
 
   @Override
@@ -334,12 +335,7 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
 
   @Override
   public Iterable<? extends JavaFileObject> getJavaFileObjectsFromStrings(final Iterable<String> names) {
-    return getJavaFileObjectsFromFiles(convert(names, new Function<String, File>() {
-      @Override
-      public File fun(String s) {
-        return new File(s);
-      }
-    }));
+    return getJavaFileObjectsFromFiles(convert(names, ourPathToFileConverter));
   }
 
   @Override
@@ -354,10 +350,12 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
 
   @Override
   public boolean isSameFile(FileObject a, FileObject b) {
-    if (a instanceof OutputFileObject || b instanceof OutputFileObject) {
-      return a.equals(b);
+    final FileObject _a = unwrapFileObject(a);
+    final FileObject _b = unwrapFileObject(b);
+    if (_a instanceof JpsFileObject || _b instanceof JpsFileObject) {
+      return _a.equals(_b);
     }
-    return super.isSameFile(unwrapFileObject(a), unwrapFileObject(b));
+    return super.isSameFile(_a, _b);
   }
 
   private static FileObject unwrapFileObject(FileObject a) {

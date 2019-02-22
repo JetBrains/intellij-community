@@ -95,10 +95,12 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   }
 
   @Override
-  protected boolean isComponentSuitable(@Nullable Map<String, String> options) {
-    if (!super.isComponentSuitable(options)) {
+  protected boolean isComponentSuitable(@NotNull ComponentConfig componentConfig) {
+    if (!super.isComponentSuitable(componentConfig)) {
       return false;
     }
+
+    Map<String, String> options = componentConfig.options;
     if (options == null || options.isEmpty()) {
       return true;
     }

@@ -86,4 +86,15 @@ public abstract class JpsFileObject extends SimpleJavaFileObject {
       stream.close();
     }
   }
+
+  @Override
+  public int hashCode() {
+    return toUri().hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    // todo: check if this is fast enough to rely on URI.equals() here
+    return this == obj || (obj instanceof JpsFileObject && toUri().equals(((JpsFileObject)obj).toUri()));
+  }
 }

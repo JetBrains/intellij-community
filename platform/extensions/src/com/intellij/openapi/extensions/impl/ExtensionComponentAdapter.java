@@ -11,13 +11,12 @@ import org.picocontainer.PicoContainer;
 /**
  * @author Alexander Kireyev
  */
-public class ExtensionComponentAdapter implements LoadingOrder.Orderable {
+public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderable {
   public static final ExtensionComponentAdapter[] EMPTY_ARRAY = new ExtensionComponentAdapter[0];
 
   private final PluginDescriptor myPluginDescriptor;
   @NotNull
   private Object myImplementationClassOrName; // Class or String
-  private boolean myNotificationSent;
 
   private final String myOrderId;
   private final LoadingOrder myOrder;
@@ -32,6 +31,8 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable {
     myOrderId = orderId;
     myOrder = order;
   }
+
+  abstract boolean isInstanceCreated();
 
   @NotNull
   public Object createInstance(@Nullable PicoContainer container) {
@@ -106,14 +107,6 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable {
       return (String)implementationClassOrName;
     }
     return ((Class)implementationClassOrName).getName();
-  }
-
-  final boolean isNotificationSent() {
-    return myNotificationSent;
-  }
-
-  final void setNotificationSent() {
-    myNotificationSent = true;
   }
 
   @Override

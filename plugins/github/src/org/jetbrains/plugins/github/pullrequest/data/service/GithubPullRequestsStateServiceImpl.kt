@@ -8,12 +8,12 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import git4idea.GitCommit
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubFullPath
 import org.jetbrains.plugins.github.api.GithubServerPath
+import org.jetbrains.plugins.github.api.data.GithubCommit
 import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailed
 import org.jetbrains.plugins.github.pullrequest.action.ui.GithubMergeCommitMessageDialog
@@ -87,12 +87,13 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
   override fun merge(pullRequest: Long) {
     if (!busyStateTracker.acquire(pullRequest)) return
 
+    val dataProvider = dataLoader.getDataProvider(pullRequest)
     progressManager.run(object : Task.Backgroundable(project, "Merging Pull Request", true) {
       private lateinit var details: GithubPullRequestDetailed
 
       override fun run(indicator: ProgressIndicator) {
         indicator.text2 = "Loading details"
-        details = GithubAsyncUtil.awaitMutableFuture(indicator) { dataLoader.getDataProvider(pullRequest).detailsRequest }
+        details = GithubAsyncUtil.awaitFuture(indicator, dataProvider.detailsRequest)
         indicator.checkCanceled()
 
         indicator.text2 = "Acquiring commit message"
@@ -129,12 +130,13 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
   override fun rebaseMerge(pullRequest: Long) {
     if (!busyStateTracker.acquire(pullRequest)) return
 
+    val dataProvider = dataLoader.getDataProvider(pullRequest)
     progressManager.run(object : Task.Backgroundable(project, "Merging Pull Request", true) {
       lateinit var details: GithubPullRequestDetailed
 
       override fun run(indicator: ProgressIndicator) {
         indicator.text2 = "Loading details"
-        details = GithubAsyncUtil.awaitMutableFuture(indicator) { dataLoader.getDataProvider(pullRequest).detailsRequest }
+        details = GithubAsyncUtil.awaitFuture(indicator, dataProvider.detailsRequest)
         indicator.checkCanceled()
 
         indicator.text2 = "Merging"
@@ -161,22 +163,23 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
   override fun squashMerge(pullRequest: Long) {
     if (!busyStateTracker.acquire(pullRequest)) return
 
+    val dataProvider = dataLoader.getDataProvider(pullRequest)
     progressManager.run(object : Task.Backgroundable(project, "Merging Pull Request", true) {
       lateinit var details: GithubPullRequestDetailed
-      lateinit var commits: List<GitCommit>
+      lateinit var commits: List<GithubCommit>
 
 
       override fun run(indicator: ProgressIndicator) {
         indicator.text2 = "Loading details"
-        details = GithubAsyncUtil.awaitMutableFuture(indicator) { dataLoader.getDataProvider(pullRequest).detailsRequest }
+        details = GithubAsyncUtil.awaitFuture(indicator, dataProvider.detailsRequest)
         indicator.checkCanceled()
 
         indicator.text2 = "Loading commits"
-        commits = GithubAsyncUtil.awaitMutableFuture(indicator) { dataLoader.getDataProvider(pullRequest).logCommitsRequest }
+        commits = GithubAsyncUtil.awaitFuture(indicator, dataProvider.apiCommitsRequest)
         indicator.checkCanceled()
 
         indicator.text2 = "Acquiring commit message"
-        val body = "* " + StringUtil.join(commits, { it.subject }, "\n\n* ")
+        val body = "* " + StringUtil.join(commits, { it.commit.message }, "\n\n* ")
         val commitMessage = invokeAndWaitIfNeeded {
           val dialog = GithubMergeCommitMessageDialog(project,
                                                       "Merge Pull Request",

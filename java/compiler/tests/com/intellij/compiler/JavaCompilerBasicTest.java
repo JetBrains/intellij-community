@@ -9,12 +9,14 @@ import com.intellij.util.io.Compressor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.javac.JpsJavacFileManager;
 import org.jetbrains.jps.javac.OutputFileObject;
+import org.jetbrains.jps.javac.ZipFileObject;
 
 import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Locale;
@@ -104,6 +106,80 @@ public class JavaCompilerBasicTest extends BaseCompilerTestCase {
     assertEquals(JavaFileObject.Kind.CLASS, aClass.getKind());
     assertEquals(jarFile.toURI().getPath() + "!/ppp/B.class", aClass.toUri().getPath());
     assertFalse(clsIterator.hasNext());
+  }
+
+  public void testFileObjectComparison() throws IOException {
+    final VirtualFile srcAFile = createFile("src/A.java", "public class A {}");
+    final VirtualFile srcBFile = createFile("src/B.java", "public class B {}");
+    final File jarFile = new File(srcAFile.getParent().getParent().getPath(), "lib.jar");
+    try (Compressor.Jar jar = new Compressor.Jar(jarFile)) {
+      jar.addFile("arch/A.java", new File(srcAFile.getPath()));
+      jar.addFile("arch/B.java", new File(srcBFile.getPath()));
+    }
+
+    final StandardJavaFileManager stdFileManager = ToolProvider.getSystemJavaCompiler().getStandardFileManager(new DiagnosticListener<JavaFileObject>() {
+      @Override
+      public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+      }
+    }, Locale.US, null);
+    final JpsJavacFileManager fileManager = new JpsJavacFileManager(new JpsJavacFileManager.Context() {
+      @Override
+      public boolean isCanceled() {
+        return false;
+      }
+
+      @NotNull
+      @Override
+      public StandardJavaFileManager getStandardFileManager() {
+        return stdFileManager;
+      }
+
+      @Override
+      public void consumeOutputFile(@NotNull OutputFileObject obj) {
+      }
+
+      @Override
+      public void reportMessage(Diagnostic.Kind kind, String message) {
+
+      }
+    }, true, Collections.emptyList());
+
+    fileManager.setLocation(StandardLocation.CLASS_PATH, Collections.singleton(jarFile));
+    fileManager.setLocation(StandardLocation.SOURCE_PATH, Collections.emptyList());
+
+    final File srcA = new File(srcAFile.getPath());
+    final File srcB = new File(srcBFile.getPath());
+    final Iterable<? extends JavaFileObject> sources = fileManager.getJavaFileObjectsFromFiles(Arrays.asList(srcA, srcB));
+    
+    final Iterator<? extends JavaFileObject> it = sources.iterator();
+    assertTrue(it.hasNext());
+    final JavaFileObject srcAFileObject = it.next();
+    assertTrue(it.hasNext());
+    final JavaFileObject srcBFileObject = it.next();
+    assertFalse(it.hasNext());
+
+    assertEquals(JavaFileObject.Kind.SOURCE, srcAFileObject.getKind());
+    assertEquals(JavaFileObject.Kind.SOURCE, srcBFileObject.getKind());
+    assertEquals(srcA.toURI().getPath(), srcAFileObject.toUri().getPath());
+    assertEquals(srcB.toURI().getPath(), srcBFileObject.toUri().getPath());
+    assertTrue(fileManager.isSameFile(srcAFileObject, srcAFileObject));
+    assertFalse(fileManager.isSameFile(srcAFileObject, srcBFileObject));
+
+    final Iterable<JavaFileObject> libClasses = fileManager.list(StandardLocation.CLASS_PATH, "arch", Collections.singleton(JavaFileObject.Kind.SOURCE), false);
+    final Iterator<JavaFileObject> clsIterator = libClasses.iterator();
+    assertTrue(clsIterator.hasNext());
+    final JavaFileObject res1 = clsIterator.next();
+    assertTrue(clsIterator.hasNext());
+    final JavaFileObject res2 = clsIterator.next();
+    assertFalse(clsIterator.hasNext());
+
+    assertTrue(res1 instanceof ZipFileObject);
+    assertEquals(JavaFileObject.Kind.SOURCE, res1.getKind());
+
+    assertTrue(res2 instanceof ZipFileObject);
+    assertEquals(JavaFileObject.Kind.SOURCE, res2.getKind());
+    
+    assertFalse(fileManager.isSameFile(res1, res2));
   }
 
 

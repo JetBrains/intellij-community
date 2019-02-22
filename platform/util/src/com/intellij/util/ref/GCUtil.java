@@ -22,40 +22,55 @@ import java.beans.Introspector;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.function.BooleanSupplier;
 
 public class GCUtil {
   /**
    * Try to force VM to collect soft references if possible.
-   * Method doesn't guarantee to succeed, and should not be used in the production code.
-   * Commits / hours optimized method code: 5 / 3
+   * This method doesn't guarantee to succeed, and should not be used in the production code.
+   * In tests, if you can exactly point to objects you want to GC, use {@code GCWatcher.tracking(objects).tryGc()}
+   * which is faster and has more chances to succeed.
+   * <p></p>
+   * Commits / hours of tweaking method code: 6 / 5
    */
   @TestOnly
   public static void tryGcSoftlyReachableObjects() {
     //long started = System.nanoTime();
     ReferenceQueue<Object> q = new ReferenceQueue<>();
     SoftReference<Object> ref = new SoftReference<>(new Object(), q);
-    ArrayList<SoftReference<?>> list = new ArrayList<>(100 + useReference(ref));
+    reachabilityFence(ref.get());
 
+    //noinspection CallToSystemGC
     System.gc();
-    final long freeMemory = Runtime.getRuntime().freeMemory();
 
+    allocateTonsOfMemory(() -> q.poll() != null);
+
+    // using ref is important as to loop to finish with several iterations: long runs of the method (~80 run of PsiModificationTrackerTest)
+    // discovered 'ref' being collected and loop iterated 100 times taking a lot of time
+    reachabilityFence(ref.get());
+
+    //System.out.println("Done gc'ing refs:" + ((System.nanoTime() - started) / 1000000));
+  }
+
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  static void allocateTonsOfMemory(BooleanSupplier until) {
+    long freeMemory = Runtime.getRuntime().freeMemory();
+
+    List<SoftReference<?>> list = new ArrayList<>();
     try {
       int i = 0;
-      while (q.poll() == null) {
+      while (!until.getAsBoolean()) {
         // full gc is caused by allocation of large enough array below, SoftReference will be cleared after two full gc
         int bytes = Math.min((int)(freeMemory * 0.05), Integer.MAX_VALUE / 2);
         list.add(new SoftReference<Object>(new byte[bytes]));
         i++;
         if (i > 1000) {
           //noinspection UseOfSystemOutOrSystemErr
-          System.out.println("GCUtil.tryGcSoftlyReachableObjects: giving up");
+          System.out.println("GCUtil: giving up");
           break;
         }
       }
-
-      // use ref is important as to loop to finish with several iterations: long runs of the method (~80 run of PsiModificationTrackerTest)
-      // discovered 'ref' being collected and loop iterated 100 times taking a lot of time
-      list.ensureCapacity(list.size() + useReference(ref));
 
       // do not leave a chance for our created SoftReference's content to lie around until next full GC's
       for(SoftReference createdReference:list) createdReference.clear();
@@ -63,18 +78,17 @@ public class GCUtil {
     catch (OutOfMemoryError e) {
       int size = list.size();
       list.clear();
+      //noinspection CallToPrintStackTrace
       e.printStackTrace();
       System.err.println("Free memory before: " + freeMemory + "; .freeMemory() now: " + Runtime.getRuntime().freeMemory()+"; list.size(): "+size);
       System.err.println(ThreadDumper.dumpThreadsToString());
       throw e;
     }
-    //System.out.println("Done gc'ing refs:" + ((System.nanoTime() - started) / 1000000));
   }
 
-  private static int useReference(SoftReference<Object> ref) {
-    Object o = ref.get();
-    return o == null ? 0 : Math.abs(o.hashCode()) % 10;
-  }
+  // They promise in http://mail.openjdk.java.net/pipermail/core-libs-dev/2018-February/051312.html that
+  // the object reference won't be removed by JIT and GC-ed until this call
+  private static void reachabilityFence(Object o) {}
 
   /**
    * Using java beans (e.g. Groovy does it) results in all referenced class infos being cached in ThreadGroupContext. A valid fix

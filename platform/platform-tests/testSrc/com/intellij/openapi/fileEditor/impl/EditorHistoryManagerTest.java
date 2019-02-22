@@ -17,12 +17,11 @@ import com.intellij.project.ProjectKt;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ref.GCUtil;
+import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
@@ -47,14 +46,7 @@ public class EditorHistoryManagerTest extends PlatformTestCase {
 
     String threadDumpBefore = ThreadDumper.dumpThreadsToString();
 
-    GCUtil.tryGcSoftlyReachableObjects();
-
-    WeakReference<Object> weakReference = new WeakReference<>(new Object());
-    do {
-      //noinspection CallToSystemGC
-      System.gc();
-    }
-    while (weakReference.get() != null);
+    GCWatcher.tracking(FileDocumentManager.getInstance().getCachedDocument(virtualFile)).tryGc();
 
     Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
     if (document != null) {

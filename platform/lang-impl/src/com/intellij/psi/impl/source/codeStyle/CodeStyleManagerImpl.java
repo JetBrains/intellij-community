@@ -79,16 +79,17 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
     ASTNode treeElement = element.getNode();
     final PsiFile file = element.getContainingFile();
-    if (!ExternalFormatProcessor.useExternalFormatter(file)) {
-      final PsiElement formatted =
-        new CodeFormatterFacade(getSettings(file), element.getLanguage(), canChangeWhiteSpacesOnly)
-          .processElement(treeElement).getPsi();
-      if (!canChangeWhiteSpacesOnly) {
-        return postProcessElement(file, formatted);
-      }
-      return formatted;
+    if (ExternalFormatProcessor.useExternalFormatter(file)) {
+      return ExternalFormatProcessor.formatElement(element, element.getTextRange(), canChangeWhiteSpacesOnly);
     }
-    return ExternalFormatProcessor.formatElement(element, element.getTextRange(), canChangeWhiteSpacesOnly);
+
+    final PsiElement formatted =
+      new CodeFormatterFacade(getSettings(file), element.getLanguage(), canChangeWhiteSpacesOnly)
+        .processElement(treeElement).getPsi();
+    if (!canChangeWhiteSpacesOnly) {
+      return postProcessElement(file, formatted);
+    }
+    return formatted;
   }
 
   private static PsiElement postProcessElement(@NotNull PsiFile file, @NotNull final PsiElement formatted) {
@@ -196,13 +197,14 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       removeEndingWhiteSpaceFromEachRange(file, ranges);
     }
 
-    formatRanges(file, ranges, () -> {
-      if (!ExternalFormatProcessor.useExternalFormatter(file)) {
-        final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(file), file.getLanguage());
-        codeFormatter.setReformatContext(reformatContext);
-        codeFormatter.processText(file, ranges, true);
-      }
-    });
+    formatRanges(file, ranges,
+                 ExternalFormatProcessor.useExternalFormatter(file)
+                 ? null  // do nothing, delegate the external formatting activity to post-processor
+                 : () -> {
+                   final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(file), file.getLanguage());
+                   codeFormatter.setReformatContext(reformatContext);
+                   codeFormatter.processText(file, ranges, true);
+                 });
 
     if (caretKeeper != null) {
       caretKeeper.restoreCaretPosition();
@@ -284,13 +286,13 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
     ASTNode treeElement = element.getNode();
     final PsiFile file = element.getContainingFile();
-    if (!ExternalFormatProcessor.useExternalFormatter(file)) {
-      final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(file), element.getLanguage());
-      final PsiElement formatted = codeFormatter.processRange(treeElement, startOffset, endOffset).getPsi();
-
-      return canChangeWhiteSpacesOnly ? formatted : postProcessElement(file, formatted);
+    if (ExternalFormatProcessor.useExternalFormatter(file)) {
+      return ExternalFormatProcessor.formatElement(element, TextRange.create(startOffset, endOffset), canChangeWhiteSpacesOnly);
     }
-    return ExternalFormatProcessor.formatElement(element, TextRange.create(startOffset, endOffset), canChangeWhiteSpacesOnly);
+
+    final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(file), element.getLanguage());
+    final PsiElement formatted = codeFormatter.processRange(treeElement, startOffset, endOffset).getPsi();
+    return canChangeWhiteSpacesOnly ? formatted : postProcessElement(file, formatted);
   }
 
 
