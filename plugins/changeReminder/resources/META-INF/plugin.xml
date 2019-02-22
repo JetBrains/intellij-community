@@ -1,0 +1,25 @@
+<idea-plugin>
+  <id>com.jetbrains.changeReminder</id>
+  <name>ChangeReminder</name>
+  <version>0.5.0</version>
+  <vendor>JetBrains</vendor>
+
+  <description><![CDATA[
+        This plugin can predict the full set of files in the commit given only a part of it. <br>
+        In other words, ChangeReminder predicts files which developer might have forgotten to modify or to add to VCS (currently only Git is supported).<br><br>
+
+        It is easier to understand by example. <br>
+        When you are committing a file (<i>ExceptionHandler.java</i>),
+            the system knows which files are usually committed with this one
+            and reminds you to add forgotten files (<i>ExceptionHandlerTest.java</i>, <i>ExceptionHandlerFactory.java</i>) to this commit
+            or to modify them.<br><br>
+    ]]></description>
+
+  <depends>com.intellij.modules.vcs</depends>
+  <depends>Git4Idea</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <checkinHandlerFactory implementation="com.jetbrains.changeReminder.commit.handle.ChangeReminderCheckinHandlerFactory"/>
+    <applicationService serviceImplementation="com.jetbrains.changeReminder.plugin.UserSettings"/>
+  </extensions>
+</idea-plugin>

@@ -700,6 +700,7 @@
       <module fileurl="file://$PROJECT_DIR$/jps/standalone-builder/intellij.tools.jps.build.standalone.iml" filepath="$PROJECT_DIR$/jps/standalone-builder/intellij.tools.jps.build.standalone.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/testFramework/bootstrap/intellij.tools.testsBootstrap.iml" filepath="$PROJECT_DIR$/platform/testFramework/bootstrap/intellij.tools.testsBootstrap.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ui-designer-core/intellij.uiDesigner.iml" filepath="$PROJECT_DIR$/plugins/ui-designer-core/intellij.uiDesigner.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/changeReminder/intellij.vcs.changeReminder.iml" filepath="$PROJECT_DIR$/plugins/changeReminder/intellij.vcs.changeReminder.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/cvs/cvs-plugin/intellij.vcs.cvs.iml" filepath="$PROJECT_DIR$/plugins/cvs/cvs-plugin/intellij.vcs.cvs.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/cvs/cvs-core/intellij.vcs.cvs.core.iml" filepath="$PROJECT_DIR$/plugins/cvs/cvs-core/intellij.vcs.cvs.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/cvs/javacvs-src/intellij.vcs.cvs.javacvs.iml" filepath="$PROJECT_DIR$/plugins/cvs/javacvs-src/intellij.vcs.cvs.javacvs.iml" />
