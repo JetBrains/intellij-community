@@ -34,7 +34,10 @@
       "focusColor": "#1AEBFF",
       "focusedBorderColor": "#1AEBFF",
 
-      "separatorColor": "#B3B3B3"
+      "separatorColor": "#B3B3B3",
+
+      "uidesigner.canvas.background": "#000000",
+      "uidesigner.panel.background": "#000000"
     },
 
     "ActionButton": {
