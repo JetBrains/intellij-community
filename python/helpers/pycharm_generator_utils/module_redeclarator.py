@@ -70,7 +70,7 @@ class ModuleRedeclarator(object):
         @param sdk_dir: path to interpreter specific skeletons directory
         @param indent_size: amount of space characters per indent
         """
-        self.test_mode = ENV_TEST_MODE_FLAG in os.environ
+        self.test_mode = generator3.is_test_mode()
         self.module = module
         self.qname = mod_qname
         self.cache_dir = cache_dir
