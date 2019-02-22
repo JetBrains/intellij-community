@@ -197,13 +197,14 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       removeEndingWhiteSpaceFromEachRange(file, ranges);
     }
 
-    formatRanges(file, ranges, () -> {
-      if (!ExternalFormatProcessor.useExternalFormatter(file)) {
-        final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(file), file.getLanguage());
-        codeFormatter.setReformatContext(reformatContext);
-        codeFormatter.processText(file, ranges, true);
-      }
-    });
+    formatRanges(file, ranges,
+                 ExternalFormatProcessor.useExternalFormatter(file)
+                 ? null  // do nothing, delegate the external formatting activity to post-processor
+                 : () -> {
+                   final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(file), file.getLanguage());
+                   codeFormatter.setReformatContext(reformatContext);
+                   codeFormatter.processText(file, ranges, true);
+                 });
 
     if (caretKeeper != null) {
       caretKeeper.restoreCaretPosition();
