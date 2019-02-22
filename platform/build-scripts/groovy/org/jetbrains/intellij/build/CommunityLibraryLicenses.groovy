@@ -227,7 +227,7 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0", url: "https://github.com/FasterXML/jackson"),
     new LibraryLicense(name: "Jakarta ORO", libraryName: "OroMatcher", version: "2.0.8", license: "Apache",
                        url: "http://jakarta.apache.org/oro/", licenseUrl: "http://svn.apache.org/repos/asf/jakarta/oro/trunk/LICENSE"),
-    new LibraryLicense(name: "Java-WebSocket", libraryName: "java_websocket.jar", version: "1.4.0 Trunk", license: "MIT",
+    new LibraryLicense(name: "Java WebSockets", libraryName: "java-websocket", version: "1.3.9", license: "MIT",
                        url: "https://github.com/TooTallNate/Java-WebSocket",
                        licenseUrl: "https://github.com/TooTallNate/Java-WebSocket/blob/master/LICENSE"),
     new LibraryLicense(name: "Java Compatibility", version: "1.0.1", license: "GPL 2.0 + Classpath", url: "https://github.com/JetBrains/intellij-deps-java-compatibility",
