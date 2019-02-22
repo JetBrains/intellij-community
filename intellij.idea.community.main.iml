@@ -129,5 +129,6 @@
     <orderEntry type="module" module-name="intellij.devkit.java.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.testng.rt.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.editorconfig" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.vcs.changeReminder" scope="RUNTIME" />
   </component>
 </module>
