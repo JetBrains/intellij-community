@@ -596,6 +596,10 @@
       <description>Second Cmd/Ctrl+E switches to Recently Edited Files</description>
     </experimentalFeature>
 
+    <experimentalFeature id="show.create.new.element.in.popup" internalFeature="true" percentOfUsers="100">
+      <description>Use popups (instead of dialogs) for creating new items (files, classes, etc.)</description>
+    </experimentalFeature>
+
     <rawEditorTypedHandler implementationClass="com.intellij.openapi.editor.impl.EditorFactoryImpl$MyRawTypedHandler"/>
 
     <stalledStorage file="statistics.toolbar.clicks.xml">
