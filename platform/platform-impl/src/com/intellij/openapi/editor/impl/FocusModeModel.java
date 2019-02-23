@@ -3,7 +3,6 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -113,7 +112,7 @@ public class FocusModeModel {
     }
   }
 
-  public boolean isInFocusMode(FoldRegion region) {
+  public boolean isInFocusMode(@NotNull RangeMarker region) {
     return myFocusModeRange != null && !intersects(myFocusModeRange, region);
   }
 
