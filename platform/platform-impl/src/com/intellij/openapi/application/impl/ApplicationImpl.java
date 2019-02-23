@@ -57,11 +57,11 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
+import net.miginfocom.layout.PlatformDefaults;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.ide.PooledThreadExecutor;
 import org.picocontainer.MutablePicoContainer;
 import sun.awt.AWTAccessor;
 import sun.awt.AWTAutoShutdown;
@@ -112,7 +112,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   private static final int ourDumpThreadsOnLongWriteActionWaiting = Integer.getInteger("dump.threads.on.long.write.action.waiting", 0);
 
-  private final ExecutorService ourThreadExecutorsService = PooledThreadExecutor.INSTANCE;
+  private final ExecutorService ourThreadExecutorsService = AppExecutorUtil.getAppExecutorService();
   private boolean myLoaded;
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
@@ -394,6 +394,16 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
       // before totalMeasureToken to ensure that plugin loading is not part of this
       List<IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins(startupProgress);
+
+      if (!isHeadlessEnvironment()) {
+        // wanted for UI, but should not affect start-up time,
+        // since MigLayout is not important for start-up UI, it is ok execute it in a pooled thread
+        // (call itself is cheap but leads to loading classes)
+        AppExecutorUtil.getAppExecutorService().submit(() -> {
+          //IDEA-170295
+          PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE);
+        });
+      }
 
       ProgressIndicator indicator = mySplash == null ? null : new EmptyProgressIndicator() {
         @Override
