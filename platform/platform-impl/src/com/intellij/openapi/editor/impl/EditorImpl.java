@@ -4831,7 +4831,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       //noinspection ConstantConditions
       Component header = myHeaderPanel == null ? null : ArrayUtil.getFirstElement(myHeaderPanel.getComponents());
       boolean paintTop = thereIsSomethingAbove && header == null && UISettings.getInstance().getEditorTabPlacement() != SwingConstants.TOP;
-      return splitters == null ? super.getBorderInsets(c) : new Insets(paintTop ? 1 : 0, 0, 0, 0);
+      return splitters == null ? super.getBorderInsets(c) : JBUI.insetsTop(paintTop ? 1 : 0);
     }
 
     private boolean toolWindowIsNotEmpty() {
