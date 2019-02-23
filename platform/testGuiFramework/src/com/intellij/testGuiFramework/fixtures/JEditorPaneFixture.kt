@@ -14,23 +14,10 @@ import java.awt.Point
 import javax.swing.JEditorPane
 
 class JEditorPaneFixture(robot: Robot, pane: JEditorPane) : JTextComponentFixture(robot, pane) {
-  private fun String.searchInString(search: String): IntRange{
-    val ind = this.indexOf(search)
-    return if(ind >= 0)
-      (ind + 1)..(ind + search.length)
-    else -1..-1
-  }
-
-  fun clickLabelAtText(text: String) {
-    step("click at the text '$text' at label at JEditorPane") {
-      val length = GuiTestUtilKt.computeOnEdt { target().document.length - 1 }!!
-      val fullText = GuiTestUtilKt.computeOnEdt { target().document.getText(1, length) }!!
-      val searchedRange = fullText.searchInString(text)
-      val leftX = GuiTestUtilKt.computeOnEdt { target().modelToView2D(searchedRange.first).x }!!.toInt()
-      val rightX = GuiTestUtilKt.computeOnEdt { target().modelToView2D(searchedRange.last).x }!!.toInt()
-      val height = GuiTestUtilKt.computeOnEdt { target().height }!! / 2
-      val clickPoint = Point((leftX + rightX) / 2, height)
-      driver().click(target(), clickPoint)
+  fun clickLabel() {
+    step("click at label at JEditorPane") {
+      val shift = GuiTestUtilKt.computeOnEdt { target().height }!! / 2
+      driver().click(target(), Point(shift, shift))
     }
   }
 }
