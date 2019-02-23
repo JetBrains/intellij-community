@@ -82,14 +82,10 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
   private fun logStats(end: Long, activationNumber: Int) {
     val log = Logger.getInstance(StartUpMeasurer::class.java)
 
-    val activityDescriptors = listOf(ActivityDescriptor(StartUpMeasurer.Activities.COMPONENT_INITIALIZED_INTERNAL_NAME, "components"),
-                                     ActivityDescriptor(StartUpMeasurer.Activities.PRELOAD_ACTIVITY_FINISHED, "preloadActivities"),
-                                     ActivityDescriptor(StartUpMeasurer.Activities.OPTIONS_TOP_HIT_PROVIDER, "optionsTopHitProvidera"))
-
     val items = mutableListOf<Item>()
     val activities = THashMap<String, MutableList<Item>>()
     StartUpMeasurer.processAndClear(Consumer { item ->
-      if (activityDescriptors.any { it.itemName === item.name }) {
+      if (item.name.first() == '_') {
         activities.getOrPut(item.name) { mutableListOf() }.add(item)
       }
       else {
@@ -135,11 +131,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     totalDuration += writeUnknown(writer, items.last().end, end, startTime)
     writer.endArray()
 
-    for (activityDescriptor in activityDescriptors) {
-      val list = activities.get(activityDescriptor.itemName) ?: continue
-      sortItems(list)
-      writeActivities(list, startTime, writer, activityDescriptor.jsonFieldName)
-    }
+    writeActivities(activities, startTime, writer)
 
     writer.name("totalDurationComputed").value(TimeUnit.NANOSECONDS.toMillis(totalDuration))
     writer.name("totalDurationActual").value(TimeUnit.NANOSECONDS.toMillis(end - startTime))
@@ -156,61 +148,75 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     log.info(string)
   }
 
-  private fun writeActivities(slowComponents: List<Item>, offset: Long, writer: JsonWriter, fieldName: String) {
-    if (slowComponents.isEmpty()) {
-      return
+  private fun writeActivities(activities: THashMap<String, MutableList<Item>>, startTime: Long, writer: JsonWriter) {
+    // sorted to get predictable JSON
+    for (name in activities.keys.sorted()) {
+      val list = activities.get(name)!!
+      sortItems(list)
+      writeActivities(list, startTime, writer, activityNameToJsonFieldName(name))
     }
-
-    // actually here not all components, but only slow (>10ms - as it was before)
-    writer.name(fieldName)
-    writer.beginArray()
-
-    for (item in slowComponents) {
-      writer.beginObject()
-      writer.name("name").value(item.description)
-      writeItemTimeInfo(item, item.end - item.start, offset, writer)
-      writer.endObject()
-    }
-
-    writer.endArray()
-  }
-
-  private fun writeItemTimeInfo(item: Item, duration: Long, offset: Long, writer: JsonWriter) {
-    writer.name("duration").value(TimeUnit.NANOSECONDS.toMillis(duration))
-    writer.name("start").value(TimeUnit.NANOSECONDS.toMillis(item.start - offset))
-    writer.name("end").value(TimeUnit.NANOSECONDS.toMillis(item.end - offset))
-  }
-
-  private fun isSubItem(item: Item, itemIndex: Int, list: List<Item>): Boolean {
-    if (item.parent != null) {
-      return true
-    }
-
-    var index = itemIndex
-    while (true) {
-      val prevItem = list.getOrNull(--index) ?: return false
-      // items are sorted, no need to check start or next items
-      if (prevItem.end >= item.end) {
-        return true
-      }
-    }
-  }
-
-  private fun writeUnknown(writer: JsonWriter, start: Long, end: Long, offset: Long): Long {
-    val duration = end - start
-    val durationInMs = TimeUnit.NANOSECONDS.toMillis(duration)
-    if (durationInMs <= 1) {
-      return 0
-    }
-
-    writer.beginObject()
-    writer.name("name").value("unknown")
-    writer.name("duration").value(durationInMs)
-    writer.name("start").value(TimeUnit.NANOSECONDS.toMillis(start - offset))
-    writer.name("end").value(TimeUnit.NANOSECONDS.toMillis(end - offset))
-    writer.endObject()
-    return duration
   }
 }
 
-private data class ActivityDescriptor(val itemName: String, val jsonFieldName: String)
+private fun activityNameToJsonFieldName(name: String): String {
+  return when {
+    name.last() == 'y' -> name.substring(1, name.length - 1) + "ies"
+    else -> name.substring(1) + 's'
+  }
+}
+
+private fun writeActivities(slowComponents: List<Item>, offset: Long, writer: JsonWriter, fieldName: String) {
+  if (slowComponents.isEmpty()) {
+    return
+  }
+
+  // actually here not all components, but only slow (>10ms - as it was before)
+  writer.name(fieldName)
+  writer.beginArray()
+
+  for (item in slowComponents) {
+    writer.beginObject()
+    writer.name("name").value(item.description)
+    writeItemTimeInfo(item, item.end - item.start, offset, writer)
+    writer.endObject()
+  }
+
+  writer.endArray()
+}
+
+private fun writeItemTimeInfo(item: Item, duration: Long, offset: Long, writer: JsonWriter) {
+  writer.name("duration").value(TimeUnit.NANOSECONDS.toMillis(duration))
+  writer.name("start").value(TimeUnit.NANOSECONDS.toMillis(item.start - offset))
+  writer.name("end").value(TimeUnit.NANOSECONDS.toMillis(item.end - offset))
+}
+
+private fun isSubItem(item: Item, itemIndex: Int, list: List<Item>): Boolean {
+  if (item.parent != null) {
+    return true
+  }
+
+  var index = itemIndex
+  while (true) {
+    val prevItem = list.getOrNull(--index) ?: return false
+    // items are sorted, no need to check start or next items
+    if (prevItem.end >= item.end) {
+      return true
+    }
+  }
+}
+
+private fun writeUnknown(writer: JsonWriter, start: Long, end: Long, offset: Long): Long {
+  val duration = end - start
+  val durationInMs = TimeUnit.NANOSECONDS.toMillis(duration)
+  if (durationInMs <= 1) {
+    return 0
+  }
+
+  writer.beginObject()
+  writer.name("name").value("unknown")
+  writer.name("duration").value(durationInMs)
+  writer.name("start").value(TimeUnit.NANOSECONDS.toMillis(start - offset))
+  writer.name("end").value(TimeUnit.NANOSECONDS.toMillis(end - offset))
+  writer.endObject()
+  return duration
+}

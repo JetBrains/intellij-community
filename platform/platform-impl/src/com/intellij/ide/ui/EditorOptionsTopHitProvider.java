@@ -1,19 +1,20 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
-import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+
+import static com.intellij.ide.ui.OptionsTopHitProvider.messageApp;
+import static com.intellij.ide.ui.OptionsTopHitProvider.messageIde;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class EditorOptionsTopHitProvider extends OptionsTopHitProvider {
+public final class EditorOptionsTopHitProvider implements OptionsTopHitProvider.ApplicationLevelProvider {
   public static final String ID = "editor";
 
   private static final Collection<OptionDescription> ourOptions = ContainerUtil.immutableList(
@@ -35,7 +36,7 @@ public class EditorOptionsTopHitProvider extends OptionsTopHitProvider {
 
   @NotNull
   @Override
-  public Collection<OptionDescription> getOptions(@Nullable Project project) {
+  public Collection<OptionDescription> getOptions() {
     return ourOptions;
   }
 
@@ -68,7 +69,7 @@ public class EditorOptionsTopHitProvider extends OptionsTopHitProvider {
     return new DaemonCodeAnalyzerOptionDescription(field, option, "editor.preferences.appearance");
   }
 
-  public static class Ex extends OptionsTopHitProvider implements CoveredByToggleActions {
+  public static class Ex implements OptionsTopHitProvider.CoveredByToggleActions, ApplicationLevelProvider {
     private static final Collection<OptionDescription> ourOptions = ContainerUtil.immutableList(
       editorApp("Appearance: " + messageApp("checkbox.show.line.numbers"), "ARE_LINE_NUMBERS_SHOWN"),
       editorApp("Appearance: " + messageApp("checkbox.show.gutter.icons"), "ARE_GUTTER_ICONS_SHOWN")
@@ -76,7 +77,7 @@ public class EditorOptionsTopHitProvider extends OptionsTopHitProvider {
 
     @NotNull
     @Override
-    public Collection<OptionDescription> getOptions(@Nullable Project project) {
+    public Collection<OptionDescription> getOptions() {
       return ourOptions;
     }
 

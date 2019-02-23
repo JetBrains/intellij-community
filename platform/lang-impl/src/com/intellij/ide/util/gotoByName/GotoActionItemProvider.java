@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.DataManager;
@@ -102,7 +102,6 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
       //noinspection deprecation
       if (provider instanceof OptionsTopHitProvider.CoveredByToggleActions) continue;
-      if (provider instanceof OptionsTopHitProvider && !((OptionsTopHitProvider)provider).isEnabled(project)) continue;
       if (provider instanceof OptionsTopHitProvider && !StringUtil.startsWith(pattern, commandAccelerator)) {
         String prefix = commandAccelerator + ((OptionsTopHitProvider)provider).getId() + " ";
         provider.consumeTopHits(prefix + pattern, collector, project);
@@ -217,7 +216,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
   }
 
   private final static Logger LOG = Logger.getInstance(GotoActionItemProvider.class);
-  
+
   private static boolean processItems(String pattern, JBIterable<? extends Comparable> items, Processor<? super MatchedValue> consumer) {
     List<MatchedValue> matched = ContainerUtil.newArrayList(items.map(o -> o instanceof MatchedValue ? (MatchedValue)o : new MatchedValue(o, pattern)));
     try {

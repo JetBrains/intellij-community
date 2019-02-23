@@ -4,9 +4,7 @@ package com.intellij.codeInsight.intention.impl.config;
 import com.intellij.ide.ui.OptionsTopHitProvider;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,7 +13,7 @@ import java.util.Collections;
 /**
  * @author Sergey.Malenkov
  */
-final class IntentionsOptionsTopHitProvider extends OptionsTopHitProvider {
+final class IntentionsOptionsTopHitProvider implements OptionsTopHitProvider.ApplicationLevelProvider {
   @Override
   public String getId() {
     return "intentions";
@@ -23,7 +21,7 @@ final class IntentionsOptionsTopHitProvider extends OptionsTopHitProvider {
 
   @NotNull
   @Override
-  public Collection<OptionDescription> getOptions(@Nullable Project project) {
+  public Collection<OptionDescription> getOptions() {
     IntentionManagerSettings settings = IntentionManagerSettings.getInstance();
     Collection<BooleanOptionDescription> options = new ArrayList<>();
     for (IntentionActionMetaData data : settings.getMetaData()) {

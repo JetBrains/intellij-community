@@ -17,6 +17,7 @@
     "//": "chrome://flags/#allow-insecure-localhost to tell Chrome to ignore cert warnings on localhost",
     "serve": "caddy -quic -host localhost -port 8080 \"ext .html\" \"log stdout\" \"tls self_signed\" \"bind 127.0.0.1\"",
     "dev": "parcel dev.html",
+    "dev-main": "parcel main.html",
     "test": "parcel build src/timeLineChartHelper.test.ts --out-dir dist/test --no-minify && jest dist/test",
     "pack-reproduce": "zip -9 sample.zip dev.html main.css package.json src tsconfig.json yarn.lock .yarnclean .gitignore"
   }

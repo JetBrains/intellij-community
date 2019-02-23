@@ -67,7 +67,7 @@ final class Preloader implements ApplicationInitializedListener {
         if (myIndicator.isCanceled()) return;
 
         progressManager.runProcess(() -> {
-          StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(StartUpMeasurer.Activities.PRELOAD_ACTIVITY_FINISHED, activity.getClass().getName());
+          StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(StartUpMeasurer.Activities.PRELOAD_ACTIVITY, activity.getClass().getName());
           try {
             activity.preload(myWrappingIndicator);
           }

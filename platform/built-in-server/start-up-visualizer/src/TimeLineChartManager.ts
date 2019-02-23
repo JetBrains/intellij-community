@@ -4,22 +4,11 @@ import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
 import {computeLevels, disableGridButKeepBorderLines, TimeLineItem} from "./timeLineChartHelper"
 
-// https://github.com/almende/vis/blob/master/examples/timeline/dataHandling/dataSerialization.html
-// do not group because it makes hard to understand results
-// (executed sequentially, so, we need to see it sequentially from left to right)
-const isCreateGroups = false
-const groups = isCreateGroups ? [
-  {id: "application components"},
-  {id: "project components"},
-] : null
-
 export class TimelineChartManager extends XYChartManager {
   private maxRowIndex = 0
 
   constructor(container: HTMLElement) {
     super(container)
-
-    const chart = this.chart
 
     this.configureDurationAxis()
     const levelAxis = this.configureLevelAxis()
@@ -84,7 +73,6 @@ export class TimelineChartManager extends XYChartManager {
 
   render(ijData: InputData) {
     const items = ijData.items
-    const firstStart = new Date(items[0].start)
 
     const data = this.transformIjData(ijData)
     this.chart.data = data

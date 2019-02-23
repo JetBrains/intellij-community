@@ -16,7 +16,6 @@ function define(name, dependencies, definition) {
 
   if (name === "main") {
     require(["main"], function (main) {
-      main.main()
     })
   }
 }

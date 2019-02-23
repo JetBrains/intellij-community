@@ -8,9 +8,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 public final class StartUpMeasurer {
+  public static final long MEASURE_THRESHOLD = TimeUnit.MILLISECONDS.toNanos(10);
+
   // use constants for better overview of existing phases (and preserve consistent naming)
   // `what + noun` is used as scheme for name to make analyzing easier (to visually group - `components loading/initialization/etc`, not to put common part of name to end of)
   public static final class Phases {
@@ -39,9 +42,13 @@ public final class StartUpMeasurer {
 
   // non-sequential and repeated items
   public static final class Activities {
-    public static final String COMPONENT_INITIALIZED_INTERNAL_NAME = "_component initialized";
-    public static final String PRELOAD_ACTIVITY_FINISHED = "_preload activity finished";
-    public static final String OPTIONS_TOP_HIT_PROVIDER = "_OptionsTopHitProvider";
+    public static final String APP_COMPONENT = "_appComponent";
+    public static final String PROJECT_COMPONENT = "_projectComponent";
+
+    public static final String PRELOAD_ACTIVITY = "_preloadActivity";
+
+    public static final String APP_OPTIONS_TOP_HIT_PROVIDER = "_appOptionsTopHitProvider";
+    public static final String PROJECT_OPTIONS_TOP_HIT_PROVIDER = "_projectOptionsTopHitProvider";
   }
 
   private static final long startTime = System.nanoTime();
@@ -60,10 +67,6 @@ public final class StartUpMeasurer {
   @NotNull
   public static MeasureToken start(@NotNull String name) {
     return new Item(name, null);
-  }
-
-  public static void reportComponentInitialized(@NotNull Class<?> componentClass, long startTime, long endTime) {
-    new Item(Activities.COMPONENT_INITIALIZED_INTERNAL_NAME, componentClass.getName(), startTime, null).end(endTime);
   }
 
   @NotNull
@@ -141,9 +144,13 @@ public final class StartUpMeasurer {
       items.add(this);
     }
 
-    void end(long end) {
-      this.end = end;
-      items.add(this);
+    @Override
+    public void endWithThreshold(@NotNull Class<?> clazz) {
+      this.description = clazz.getName();
+      end = System.nanoTime();
+      if ((end - start) > MEASURE_THRESHOLD) {
+        items.add(this);
+      }
     }
 
     @Override
@@ -159,6 +166,8 @@ public final class StartUpMeasurer {
 
   public interface MeasureToken extends AutoCloseable {
     void end(@Nullable String description);
+
+    void endWithThreshold(@NotNull Class<?> clazz);
 
     @NotNull
     Item startChild(@NotNull String name);

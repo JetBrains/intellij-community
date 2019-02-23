@@ -165,7 +165,7 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <search.topHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
+    <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
     <checkoutProvider implementation="git4idea.checkout.GitCheckoutProvider"/>
     <vcs.checkoutProcessor implementation="git4idea.checkout.GitCheckoutProcessor"/>

@@ -1888,9 +1888,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
         for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
           check();
-          if (provider instanceof OptionsTopHitProvider && !((OptionsTopHitProvider)provider).isEnabled(project)) {
-            continue;
-          }
           provider.consumeTopHits(pattern, consumer, project);
         }
       }

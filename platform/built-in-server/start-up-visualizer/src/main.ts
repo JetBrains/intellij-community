@@ -2,7 +2,7 @@
 import * as am4core from "@amcharts/amcharts4/core"
 
 import am4themes_animated from "@amcharts/amcharts4/themes/animated"
-import {ComponentsChartManager} from "./ComponentsChartManager"
+import {ComponentsChartManager, TopHitProviderChart} from "./ComponentsChartManager"
 import {TimelineChartManager} from "./TimeLineChartManager"
 import {ChartManager, getButtonElement, getInputElement, InputData} from "./core"
 
@@ -14,44 +14,93 @@ export function main(): void {
 
   const chartManagers: Array<ChartManager> = [
     new TimelineChartManager(document.getElementById("visualization")!!),
-    new ComponentsChartManager(document.getElementById("componentsVisualization")!!),
+    new ComponentsChartManager(document.getElementById("componentChart")!!),
+    new TopHitProviderChart(document.getElementById("optionsTopHitProviderChart")!!),
   ]
-  // debug
+
   const global = window as any
   global.timelineChart = chartManagers[0]
   global.componentsChart = chartManagers[1]
 
-  configureInput(data => {
-    global.lastData = data
+  new InputFormManager(data => {
     for (const chartManager of chartManagers) {
       chartManager.render(data)
     }
   })
 }
 
-function configureInput(dataListener: (data: InputData) => void): void {
-  const inputElement = getInputElement("ijInput")
-
-  function callListener(rawData: string) {
-    dataListener(JSON.parse(rawData))
-  }
-
-  function setInput(rawData: string | null) {
-    if (rawData != null && rawData.length !== 0) {
-      inputElement.value = rawData
-      callListener(rawData)
+class InputFormManager {
+  constructor(private dataListener: (data: InputData) => void) {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", () => {
+        this.configureElements()
+      })
+    }
+    else {
+      this.configureElements()
     }
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    getPortInputElement().value = localStorage.getItem(storageKeyPort) || "63342"
-    setInput(localStorage.getItem(storageKeyData))
-  })
+  private callListener(rawData: string) {
+    this.dataListener(JSON.parse(rawData))
+  }
 
-  function grabFromRunningInstance(port: string) {
-    fetch(`http://localhost:${port}/api/about/?startUpMeasurement`, {credentials: "omit"})
+  private setInput(rawData: string | null) {
+    if (rawData != null && rawData.length !== 0) {
+      getInputElement("ijInput").value = rawData
+      this.callListener(rawData)
+    }
+  }
+
+  private configureElements(): void {
+    const inputElement = getInputElement("ijInput")
+
+    getPortInputElement().value = localStorage.getItem(storageKeyPort) || "63342"
+    this.setInput(localStorage.getItem(storageKeyData))
+
+    getButtonElement("grabButton").addEventListener("click", () => {
+      // use parseInt to validate input
+      let port = getPortInputElement().value
+      if (port.length === 0) {
+        port = "63342"
+      } else if (!/^\d+$/.test(port)) {
+        throw new Error("Port number value is not numeric")
+      }
+
+      localStorage.setItem(storageKeyPort, port)
+      this.grabFromRunningInstance(port)
+    })
+
+    getButtonElement("grabDevButton").addEventListener("click", () => {
+      this.grabFromRunningInstance("63343")
+    })
+
+    inputElement.addEventListener("input", () => {
+      const rawData = inputElement.value.trim()
+      localStorage.setItem(storageKeyData, rawData)
+      this.callListener(rawData)
+    })
+  }
+
+  private grabFromRunningInstance(port: string) {
+    const host = `localhost:${port}`
+
+    function showError(reason: any) {
+      alert(`Cannot load data from "${host}": ${reason}`)
+    }
+
+    const controller = new AbortController()
+    const signal = controller.signal
+    const timeoutId = setTimeout(() => {
+      controller.abort()
+      showError("8 seconds timeout")
+    }, 8000)
+
+    fetch(`http://${host}/api/about/?startUpMeasurement`, {credentials: "omit", signal})
       .then(it => it.json())
       .then(json => {
+        clearTimeout(timeoutId)
+
         const data = json.startUpMeasurement
         if (data == null) {
           const message = "IntelliJ Platform IDE didn't report startup measurement result"
@@ -62,34 +111,20 @@ function configureInput(dataListener: (data: InputData) => void): void {
 
         const rawData = JSON.stringify(data, null, 2)
         localStorage.setItem(storageKeyData, rawData)
-        setInput(rawData)
+        this.setInput(rawData)
+      })
+      .catch(e => {
+        clearTimeout(timeoutId)
+        console.error(e)
+        if (!(e instanceof (window as any).AbortError)) {
+          showError(e)
+        }
       })
   }
-
-  getButtonElement("grabButton").addEventListener("click", () => {
-    // use parseInt to validate input
-    let port = getPortInputElement().value
-    if (port.length === 0) {
-      port = "63342"
-    } else if (!/^\d+$/.test(port)) {
-      throw new Error("Port number value is not numeric")
-    }
-
-    localStorage.setItem(storageKeyPort, port)
-    grabFromRunningInstance(port)
-  })
-
-  getButtonElement("grabDevButton").addEventListener("click", () => {
-    grabFromRunningInstance("63343")
-  })
-
-  inputElement.addEventListener("input", () => {
-    const rawData = inputElement.value.trim()
-    localStorage.setItem(storageKeyData, rawData)
-    callListener(rawData)
-  })
 }
 
 function getPortInputElement() {
   return getInputElement("ijPort")
 }
+
+main()

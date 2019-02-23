@@ -16,8 +16,13 @@ export interface InputData {
   version: string
 
   items: Array<Item>
-  components?: Array<Item>
+
+  appComponents?: Array<Item>
+  projectComponents?: Array<Item>
+
   preloadActivities?: Array<Item>
+  appOptionsTopHitProviders?: Array<Item>
+  projectOptionsTopHitProviders?: Array<Item>
 
   totalDurationComputed: number
   totalDurationActual: number

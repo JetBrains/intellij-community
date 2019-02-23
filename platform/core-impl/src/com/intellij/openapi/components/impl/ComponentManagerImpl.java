@@ -42,11 +42,9 @@ import org.picocontainer.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManagerEx, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentManager");
-  public static final long COMPONENT_MEASURE_THRESHOLD = TimeUnit.MILLISECONDS.toNanos(10);
 
   private volatile MutablePicoContainer myPicoContainer;
   private volatile boolean myDisposed;
@@ -466,7 +464,14 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
             return instance;
           }
 
-          long startTime = System.nanoTime();
+          StartUpMeasurer.MeasureToken measureToken;
+          if (LOG.isDebugEnabled() || ApplicationInfoImpl.getShadowInstance().isEAP()) {
+            // if it will be module component, then get rid of such component instead of measurement
+            measureToken = StartUpMeasurer.start(ComponentManagerImpl.this instanceof Application ? StartUpMeasurer.Activities.APP_COMPONENT : StartUpMeasurer.Activities.PROJECT_COMPONENT);
+          }
+          else {
+            measureToken = null;
+          }
 
           instance = super.getComponentInstance(picoContainer);
 
@@ -495,9 +500,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
               ((BaseComponent)instance).initComponent();
             }
 
-            long endTime = System.nanoTime();
-            if ((endTime - startTime) > COMPONENT_MEASURE_THRESHOLD && (LOG.isDebugEnabled() || ApplicationInfoImpl.getShadowInstance().isEAP())) {
-              StartUpMeasurer.reportComponentInitialized(instance.getClass(), startTime, endTime);
+            if (measureToken != null) {
+              measureToken.endWithThreshold(instance.getClass());
             }
           }
           finally {

@@ -9,15 +9,6 @@
 
   <link rel="icon" href="data:;base64,iVBORw0KGgo=">
   <link rel="stylesheet" type="text/css" href="main.css">
-
-  <!-- for security reasons official source of scripts is not used - versioned URL must be used  -->
-  <!-- jsdelivr cannot handle amcharts package (>50MB), so, use https://www.srihash.org/ to compute integrity -->
-  <script src="https://cdn.jsdelivr.net/gh/amcharts/amcharts4@4.1.9/dist/script/core.js" integrity="sha384-PlKsP/oQhuEJevVS1tTQ/cYJBNgqwZqOXgKuPFqvBNkv23cnGg2AFhcuWqiGlYSX" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/gh/amcharts/amcharts4@4.1.9/dist/script/charts.js" integrity="sha384-aly+R8ukAs/wzeo5YvKZznHxXi48TS3WCHBE8YnuVUKGO1ta/+yzwUV5QphoyPxY" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/gh/amcharts/amcharts4@4.1.9/dist/script/themes/animated.js" integrity="sha384-2WR4/PAikFSwy8DTue1g8Cb6Bht0j1T3VoB1WthzSBLIf98n5BHhNHtOmfcPsqvk" crossorigin="anonymous"></script>
-
-  <script defer src="amd.js"></script>
-  <script defer src="out/index.js"></script>
 </head>
 <body>
 <div class="container">
@@ -43,5 +34,7 @@
 
 <h2>Options Top Hit Providers</h2>
 <div id="optionsTopHitProviderChart" class="activityChart"></div>
+
+<script src="src/main.ts"></script>
 </body>
 </html>
