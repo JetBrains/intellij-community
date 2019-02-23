@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -47,8 +48,8 @@ public class FocusModeModel {
 
     myEditor.getScrollingModel().addVisibleAreaListener(e -> {
       AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
-      if (event instanceof MouseEvent) {
-        clearFocusMode(); // clear when scrolling with touchpad or mouse
+      if (event instanceof MouseEvent && !EditorUtil.isPrimaryCaretVisible(myEditor)) {
+        clearFocusMode(); // clear when scrolling with touchpad or mouse and primary caret is out the visible area
       }
       else {
         myEditor.applyFocusMode(); // apply the focus mode when jumping to the next line, e.g. Cmd+G
