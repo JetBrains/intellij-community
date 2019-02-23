@@ -10,8 +10,8 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value="generateDiffParser" />
-          <option value="generateDiffLexer" />
+          <option value=":generateDiffParser" />
+          <option value=":generateDiffLexer" />
         </list>
       </option>
       <option name="vmOptions" value="" />

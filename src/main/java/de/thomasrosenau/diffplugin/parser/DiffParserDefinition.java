@@ -32,7 +32,7 @@ import de.thomasrosenau.diffplugin.psi.DiffFile;
 import de.thomasrosenau.diffplugin.psi.DiffTypes;
 import org.jetbrains.annotations.NotNull;
 
-class DiffParserDefinition implements ParserDefinition {
+public class DiffParserDefinition implements ParserDefinition {
 
     private static final IFileElementType FILE = new IFileElementType(DiffLanguage.INSTANCE);
 
