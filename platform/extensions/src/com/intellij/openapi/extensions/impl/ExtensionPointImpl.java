@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
-import com.intellij.util.containers.StringInterner;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,15 +58,11 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   @Nullable
   protected Class<T> myExtensionClass;
 
-  private static final StringInterner INTERNER = new StringInterner();
-
   ExtensionPointImpl(@NotNull String name,
                      @NotNull String className,
                      @NotNull ExtensionsAreaImpl owner,
                      @NotNull PluginDescriptor pluginDescriptor) {
-    synchronized (INTERNER) {
-      myName = INTERNER.intern(name);
-    }
+    myName = name;
     myClassName = className;
     myOwner = owner;
     myDescriptor = pluginDescriptor;
