@@ -195,7 +195,7 @@ define("TimeLineChartManager", ["require", "exports", "core", "@amcharts/amchart
         configureSeries() {
             const series = this.chart.series.push(new am4charts.ColumnSeries());
             // series.columns.template.width = am4core.percent(80)
-            series.columns.template.tooltipText = "{name}: {duration}\nlevel: {level}\nrange: {start}-{end}";
+            series.columns.template.tooltipText = "{name}: {duration}\nlevel: {level}\nrange: {start}-{end}\n{description}";
             series.dataFields.openDateX = "start";
             series.dataFields.openValueX = "start";
             series.dataFields.dateX = "end";
@@ -227,14 +227,13 @@ define("TimeLineChartManager", ["require", "exports", "core", "@amcharts/amchart
         render(ijData) {
             const items = ijData.items;
             const firstStart = new Date(items[0].start);
-            const timeOffset = 0;
-            const data = this.transformIjData(ijData, timeOffset);
+            const data = this.transformIjData(ijData);
             this.chart.data = data;
             const originalItems = items;
             const durationAxis = this.chart.xAxes.getIndex(0);
-            durationAxis.max = originalItems[originalItems.length - 1].end - timeOffset;
+            durationAxis.max = originalItems[originalItems.length - 1].end;
         }
-        transformIjData(input, timeOffset) {
+        transformIjData(input) {
             const colorSet = new am4core.ColorSet();
             const transformedItems = new Array(input.items.length);
             timeLineChartHelper_1.computeLevels(input.items);
@@ -250,15 +249,7 @@ define("TimeLineChartManager", ["require", "exports", "core", "@amcharts/amchart
                 else if (rowIndex > this.maxRowIndex) {
                     this.maxRowIndex = rowIndex;
                 }
-                const result = {
-                    name: item.name,
-                    start: item.start - timeOffset,
-                    end: item.end - timeOffset,
-                    duration: item.duration,
-                    rowIndex: rowIndex++,
-                    color: colorSet.getIndex(item.colorIndex),
-                    level: item.level,
-                };
+                const result = Object.assign({}, item, { rowIndex: rowIndex++, color: colorSet.getIndex(item.colorIndex) });
                 transformedItems[i] = result;
             }
             transformedItems.sort((a, b) => a.rowIndex - b.rowIndex);
@@ -272,528 +263,548 @@ define("dev", ["require", "exports", "TimeLineChartManager"], function (require,
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     const data = {
+        "version": "1",
         "items": [
             {
                 "name": "app initialization preparation",
-                "duration": 2744,
+                "duration": 3148,
                 "start": 0,
-                "end": 2744
+                "end": 3148
             },
             {
                 "name": "app initialization",
-                "duration": 302,
-                "start": 2744,
-                "end": 3046
+                "duration": 301,
+                "start": 3148,
+                "end": 3450
             },
             {
                 "name": "plugins initialization",
                 "description": "plugin count: 189",
-                "duration": 369,
-                "start": 3053,
-                "end": 3423
+                "duration": 398,
+                "start": 3453,
+                "end": 3852
             },
             {
                 "name": "plugin descriptors loading",
-                "duration": 281,
-                "start": 3054,
-                "end": 3335
+                "duration": 298,
+                "start": 3454,
+                "end": 3753
             },
             {
                 "name": "app components initialization",
                 "description": "component count: 101",
-                "duration": 3029,
-                "start": 3424,
-                "end": 6453
+                "duration": 3422,
+                "start": 3856,
+                "end": 7279
             },
             {
                 "name": "app components registration",
-                "duration": 323,
-                "start": 3424,
-                "end": 3747
+                "duration": 368,
+                "start": 3856,
+                "end": 4225
             },
             {
                 "name": "app components registered callback",
-                "duration": 111,
-                "start": 3747,
-                "end": 3859
+                "duration": 126,
+                "start": 4225,
+                "end": 4351
             },
             {
                 "name": "app components creation",
-                "duration": 2594,
-                "start": 3859,
-                "end": 6453
+                "duration": 2927,
+                "start": 4351,
+                "end": 7279
             },
             {
                 "name": "app initialized callback",
-                "duration": 229,
-                "start": 6453,
-                "end": 6683
+                "duration": 248,
+                "start": 7279,
+                "end": 7528
             },
             {
                 "name": "project components initialization",
                 "description": "component count: 210",
-                "duration": 2008,
-                "start": 7490,
-                "end": 9498
+                "duration": 1992,
+                "start": 8804,
+                "end": 10797
             },
             {
                 "name": "project components registration",
-                "duration": 760,
-                "start": 7490,
-                "end": 8250
+                "duration": 639,
+                "start": 8804,
+                "end": 9444
             },
             {
                 "name": "project components creation",
-                "duration": 1248,
-                "start": 8250,
-                "end": 9498
+                "duration": 1352,
+                "start": 9444,
+                "end": 10797
+            },
+            {
+                "name": "module loading",
+                "description": "module count: 1",
+                "duration": 166,
+                "start": 10797,
+                "end": 10964
             },
             {
                 "name": "project pre-startup",
-                "duration": 29,
-                "start": 11277,
-                "end": 11307
+                "duration": 21,
+                "start": 12772,
+                "end": 12793
             },
             {
                 "name": "project startup",
-                "duration": 0,
-                "start": 11307,
-                "end": 11307
+                "duration": 3,
+                "start": 12793,
+                "end": 12797
             },
             {
                 "name": "default project components initialization",
                 "description": "component count: 24",
-                "duration": 11,
-                "start": 11510,
-                "end": 11522
+                "duration": 13,
+                "start": 13017,
+                "end": 13030
             },
             {
                 "name": "default project components registration",
                 "duration": 0,
-                "start": 11510,
-                "end": 11511
+                "start": 13017,
+                "end": 13018
             },
             {
                 "name": "default project components creation",
-                "duration": 11,
-                "start": 11511,
-                "end": 11522
+                "duration": 12,
+                "start": 13018,
+                "end": 13030
             },
             {
                 "name": "unknown",
-                "duration": 1157,
-                "start": 11522,
-                "end": 12679
+                "duration": 1232,
+                "start": 13030,
+                "end": 14262
             }
         ],
         "components": [
             {
                 "name": "com.intellij.openapi.components.impl.ServiceManagerImpl",
-                "duration": 37,
-                "start": 3747,
-                "end": 3785
+                "duration": 43,
+                "start": 4225,
+                "end": 4268
             },
             {
                 "name": "com.intellij.openapi.util.registry.RegistryState",
-                "duration": 99,
-                "start": 3862,
-                "end": 3962
+                "duration": 109,
+                "start": 4356,
+                "end": 4465
             },
             {
                 "name": "com.intellij.internal.statistic.updater.StatisticsJobsScheduler",
-                "duration": 16,
-                "start": 3962,
-                "end": 3978
+                "duration": 17,
+                "start": 4465,
+                "end": 4482
             },
             {
                 "name": "com.intellij.configurationStore.StoreAwareProjectManager",
-                "duration": 122,
-                "start": 3978,
-                "end": 4101
+                "duration": 130,
+                "start": 4482,
+                "end": 4613
             },
             {
                 "name": "com.intellij.openapi.vfs.PlatformVirtualFileManager",
-                "duration": 118,
-                "start": 3978,
-                "end": 4097
+                "duration": 127,
+                "start": 4482,
+                "end": 4609
             },
             {
                 "name": "com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl",
-                "duration": 98,
-                "start": 3981,
-                "end": 4080
+                "duration": 104,
+                "start": 4485,
+                "end": 4590
             },
             {
                 "name": "com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl",
-                "duration": 93,
-                "start": 3981,
-                "end": 4074
+                "duration": 98,
+                "start": 4485,
+                "end": 4583
             },
             {
                 "name": "com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl",
-                "duration": 448,
-                "start": 4101,
-                "end": 4549
+                "duration": 531,
+                "start": 4613,
+                "end": 5145
             },
             {
                 "name": "com.intellij.openapi.editor.impl.EditorFactoryImpl",
-                "duration": 306,
-                "start": 4554,
-                "end": 4861
+                "duration": 360,
+                "start": 5150,
+                "end": 5511
             },
             {
                 "name": "com.intellij.openapi.actionSystem.impl.ActionManagerImpl",
-                "duration": 293,
-                "start": 4556,
-                "end": 4849
+                "duration": 345,
+                "start": 5152,
+                "end": 5497
             },
             {
                 "name": "com.intellij.openapi.keymap.impl.KeymapManagerImpl",
-                "duration": 15,
-                "start": 4556,
-                "end": 4571
+                "duration": 18,
+                "start": 5152,
+                "end": 5170
             },
             {
                 "name": "com.intellij.history.integration.LocalHistoryImpl",
-                "duration": 13,
-                "start": 4861,
-                "end": 4874
+                "duration": 15,
+                "start": 5511,
+                "end": 5526
             },
             {
                 "name": "com.intellij.ide.ui.laf.LafManagerImpl",
-                "duration": 220,
-                "start": 4885,
-                "end": 5105
+                "duration": 241,
+                "start": 5539,
+                "end": 5780
             },
             {
                 "name": "com.intellij.util.net.ssl.CertificateManager",
-                "duration": 72,
-                "start": 5131,
-                "end": 5204
+                "duration": 77,
+                "start": 5810,
+                "end": 5887
             },
             {
                 "name": "com.intellij.openapi.util.registry.RegistryExtensionCollector",
-                "duration": 13,
-                "start": 5210,
-                "end": 5223
+                "duration": 17,
+                "start": 5894,
+                "end": 5911
             },
             {
                 "name": "com.intellij.openapi.wm.impl.FocusManagerImpl",
-                "duration": 20,
-                "start": 5223,
-                "end": 5243
+                "duration": 22,
+                "start": 5911,
+                "end": 5934
             },
             {
                 "name": "com.intellij.openapi.wm.impl.WindowManagerImpl",
-                "duration": 15,
-                "start": 5225,
-                "end": 5241
+                "duration": 17,
+                "start": 5914,
+                "end": 5931
             },
             {
                 "name": "com.intellij.ide.IdeTooltipManager",
                 "duration": 16,
-                "start": 5243,
-                "end": 5260
+                "start": 5934,
+                "end": 5950
             },
             {
                 "name": "com.intellij.ide.MacOSApplicationProvider",
-                "duration": 21,
-                "start": 5271,
-                "end": 5292
+                "duration": 22,
+                "start": 5962,
+                "end": 5985
             },
             {
                 "name": "com.intellij.openapi.updateSettings.impl.UpdateCheckerComponent",
-                "duration": 50,
-                "start": 5292,
-                "end": 5343
+                "duration": 57,
+                "start": 5985,
+                "end": 6042
             },
             {
                 "name": "com.intellij.util.indexing.FileBasedIndexImpl",
-                "duration": 527,
-                "start": 5343,
-                "end": 5871
+                "duration": 611,
+                "start": 6042,
+                "end": 6654
             },
             {
                 "name": "com.intellij.psi.stubs.SerializationManagerImpl",
-                "duration": 11,
-                "start": 5871,
-                "end": 5883
+                "duration": 12,
+                "start": 6653,
+                "end": 6666
             },
             {
                 "name": "com.intellij.psi.stubs.StubIndexImpl",
-                "duration": 100,
-                "start": 5872,
-                "end": 5973
+                "duration": 128,
+                "start": 6655,
+                "end": 6784
             },
             {
                 "name": "com.intellij.openapi.actionSystem.ex.QuickListsManager",
                 "duration": 18,
-                "start": 5978,
-                "end": 5996
+                "start": 6789,
+                "end": 6807
             },
             {
                 "name": "com.intellij.execution.ExecutorRegistryImpl",
-                "duration": 22,
-                "start": 6006,
-                "end": 6029
+                "duration": 27,
+                "start": 6819,
+                "end": 6846
             },
             {
                 "name": "com.intellij.util.xml.impl.JavaDomApplicationComponent",
-                "duration": 11,
-                "start": 6031,
-                "end": 6042
+                "duration": 13,
+                "start": 6848,
+                "end": 6861
             },
             {
                 "name": "com.intellij.openapi.projectRoots.impl.DefaultJdkConfigurator",
-                "duration": 84,
-                "start": 6044,
-                "end": 6129
+                "duration": 94,
+                "start": 6862,
+                "end": 6956
             },
             {
                 "name": "org.intellij.lang.xpath.xslt.impl.XsltConfigImpl",
-                "duration": 10,
-                "start": 6138,
-                "end": 6149
+                "duration": 13,
+                "start": 6966,
+                "end": 6979
+            },
+            {
+                "name": "com.intellij.stats.completion.CompletionTrackerInitializer",
+                "duration": 11,
+                "start": 6987,
+                "end": 6998
             },
             {
                 "name": "com.intellij.stats.personalization.impl.ApplicationUserFactorStorage",
-                "duration": 14,
-                "start": 6165,
-                "end": 6180
+                "duration": 16,
+                "start": 6998,
+                "end": 7015
             },
             {
                 "name": "com.intellij.completion.FeatureManagerImpl",
                 "duration": 13,
-                "start": 6180,
-                "end": 6193
+                "start": 7015,
+                "end": 7029
             },
             {
                 "name": "com.jetbrains.cidr.lang.dfa.contextSensitive.OCSourceGliderComponent",
-                "duration": 160,
-                "start": 6194,
-                "end": 6354
-            },
-            {
-                "name": "com.intellij.j2ee.appServerIntegrations.impl.ApplicationServersManagerImpl",
-                "duration": 14,
-                "start": 6354,
-                "end": 6369
+                "duration": 162,
+                "start": 7030,
+                "end": 7192
             },
             {
                 "name": "org.jetbrains.android.AndroidPlugin",
                 "duration": 23,
-                "start": 6376,
-                "end": 6400
+                "start": 7205,
+                "end": 7228
             },
             {
-                "name": "com.jetbrains.python.testing.VFSTestFrameworkListener",
-                "duration": 15,
-                "start": 6425,
-                "end": 6440
+                "name": "org.jetbrains.plugins.ruby.gem.GemManager",
+                "duration": 12,
+                "start": 7264,
+                "end": 7276
+            },
+            {
+                "name": "com.intellij.openapi.components.impl.ServiceManagerImpl",
+                "duration": 13,
+                "start": 9444,
+                "end": 9457
+            },
+            {
+                "name": "com.intellij.openapi.vcs.impl.FileStatusManagerImpl",
+                "duration": 10,
+                "start": 9462,
+                "end": 9473
             },
             {
                 "name": "com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl",
-                "duration": 20,
-                "start": 8266,
-                "end": 8286
+                "duration": 23,
+                "start": 9474,
+                "end": 9497
             },
             {
                 "name": "com.intellij.openapi.wm.impl.ToolWindowManagerImpl",
                 "duration": 20,
-                "start": 8287,
-                "end": 8307
+                "start": 9497,
+                "end": 9518
             },
             {
                 "name": "com.intellij.openapi.roots.impl.ProjectRootManagerComponent",
                 "duration": 13,
-                "start": 8308,
-                "end": 8321
+                "start": 9519,
+                "end": 9533
             },
             {
                 "name": "com.intellij.psi.impl.PsiManagerImpl",
-                "duration": 13,
-                "start": 8321,
-                "end": 8335
-            },
-            {
-                "name": "com.intellij.psi.impl.PsiDocumentManagerImpl",
-                "duration": 16,
-                "start": 8336,
-                "end": 8353
+                "duration": 14,
+                "start": 9533,
+                "end": 9547
             },
             {
                 "name": "com.intellij.openapi.module.impl.ModuleManagerComponent",
-                "duration": 35,
-                "start": 8353,
-                "end": 8388
+                "duration": 42,
+                "start": 9556,
+                "end": 9599
             },
             {
                 "name": "com.intellij.openapi.fileEditor.impl.PsiAwareFileEditorManagerImpl",
-                "duration": 20,
-                "start": 8389,
-                "end": 8410
+                "duration": 24,
+                "start": 9600,
+                "end": 9624
             },
             {
                 "name": "com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl",
-                "duration": 16,
-                "start": 8418,
-                "end": 8434
+                "duration": 17,
+                "start": 9634,
+                "end": 9651
             },
             {
                 "name": "com.intellij.codeInsight.daemon.impl.DaemonListeners",
-                "duration": 202,
-                "start": 8434,
-                "end": 8637
+                "duration": 219,
+                "start": 9651,
+                "end": 9871
             },
             {
                 "name": "com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl",
-                "duration": 21,
-                "start": 8487,
-                "end": 8509
+                "duration": 20,
+                "start": 9707,
+                "end": 9728
             },
             {
                 "name": "com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl",
-                "duration": 109,
-                "start": 8509,
-                "end": 8618
+                "duration": 119,
+                "start": 9728,
+                "end": 9848
             },
             {
                 "name": "com.intellij.openapi.vcs.changes.ChangeListManagerImpl",
-                "duration": 107,
-                "start": 8509,
-                "end": 8617
+                "duration": 118,
+                "start": 9728,
+                "end": 9846
             },
             {
                 "name": "com.intellij.openapi.vcs.changes.ChangesViewManager",
-                "duration": 62,
-                "start": 8515,
-                "end": 8577
+                "duration": 72,
+                "start": 9734,
+                "end": 9806
             },
             {
                 "name": "com.intellij.codeInsight.daemon.impl.GeneralHighlightingPassFactory",
-                "duration": 32,
-                "start": 8637,
-                "end": 8669
+                "duration": 39,
+                "start": 9871,
+                "end": 9910
             },
             {
                 "name": "com.intellij.codeInsight.navigation.CtrlMouseHandler",
-                "duration": 13,
-                "start": 8673,
-                "end": 8687
+                "duration": 14,
+                "start": 9914,
+                "end": 9929
             },
             {
                 "name": "com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl",
-                "duration": 13,
-                "start": 8687,
-                "end": 8701
+                "duration": 15,
+                "start": 9929,
+                "end": 9945
             },
             {
                 "name": "com.intellij.packaging.impl.artifacts.ArtifactManagerImpl",
                 "duration": 10,
-                "start": 8717,
-                "end": 8727
+                "start": 9962,
+                "end": 9973
             },
             {
                 "name": "com.intellij.compiler.CompilerConfigurationImpl",
                 "duration": 10,
-                "start": 8728,
-                "end": 8738
+                "start": 9973,
+                "end": 9984
             },
             {
                 "name": "com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager",
-                "duration": 27,
-                "start": 8754,
-                "end": 8781
+                "duration": 30,
+                "start": 10002,
+                "end": 10032
             },
             {
                 "name": "com.intellij.xdebugger.impl.XDebuggerManagerImpl",
-                "duration": 88,
-                "start": 8794,
-                "end": 8882
+                "duration": 106,
+                "start": 10046,
+                "end": 10152
+            },
+            {
+                "name": "com.intellij.execution.testDiscovery.TestDiscoveryIndex",
+                "duration": 10,
+                "start": 10175,
+                "end": 10185
             },
             {
                 "name": "com.intellij.execution.scratch.JavaScratchCompilationSupport",
-                "duration": 41,
-                "start": 8911,
-                "end": 8953
+                "duration": 40,
+                "start": 10185,
+                "end": 10225
             },
             {
                 "name": "com.intellij.stats.personalization.impl.UserFactorsManagerImpl",
-                "duration": 19,
-                "start": 8973,
-                "end": 8992
+                "duration": 18,
+                "start": 10246,
+                "end": 10264
             },
             {
                 "name": "com.intellij.tasks.impl.TaskManagerImpl",
-                "duration": 50,
-                "start": 8992,
-                "end": 9043
+                "duration": 53,
+                "start": 10264,
+                "end": 10318
             },
             {
                 "name": "com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager",
-                "duration": 212,
-                "start": 9043,
-                "end": 9256
+                "duration": 217,
+                "start": 10318,
+                "end": 10536
             },
             {
                 "name": "com.intellij.ide.palette.impl.PaletteToolWindowManager",
                 "duration": 14,
-                "start": 9256,
-                "end": 9270
+                "start": 10536,
+                "end": 10551
+            },
+            {
+                "name": "org.jetbrains.idea.maven.navigator.MavenProjectsNavigator",
+                "duration": 10,
+                "start": 10559,
+                "end": 10569
             },
             {
                 "name": "com.jetbrains.cidr.lang.symbols.symtable.FileSymbolTablesCache",
                 "duration": 10,
-                "start": 9298,
-                "end": 9308
+                "start": 10580,
+                "end": 10591
             },
             {
                 "name": "com.jetbrains.cidr.lang.hmap.OCHeaderMapManager",
-                "duration": 45,
-                "start": 9309,
-                "end": 9354
+                "duration": 46,
+                "start": 10591,
+                "end": 10638
             },
             {
                 "name": "com.intellij.jpa.JpaProjectComponent",
-                "duration": 31,
-                "start": 9362,
-                "end": 9394
+                "duration": 33,
+                "start": 10648,
+                "end": 10682
             },
             {
                 "name": "com.android.tools.idea.gradle.project.AndroidGradleProjectComponent",
                 "duration": 33,
-                "start": 9414,
-                "end": 9447
+                "start": 10704,
+                "end": 10738
             },
             {
                 "name": "com.android.tools.idea.res.PsiProjectListener",
-                "duration": 12,
-                "start": 9447,
-                "end": 9459
+                "duration": 13,
+                "start": 10738,
+                "end": 10751
             },
             {
                 "name": "com.intellij.openapi.roots.impl.ModuleRootManagerComponent",
-                "duration": 75,
-                "start": 9530,
-                "end": 9605
-            },
-            {
-                "name": "com.intellij.facet.FacetManagerImpl",
-                "duration": 18,
-                "start": 9605,
-                "end": 9624
+                "duration": 105,
+                "start": 10834,
+                "end": 10939
             }
         ],
         "preloadActivities": [
             {
                 "name": "com.intellij.ide.ui.OptionsTopHitProvider$Activity",
-                "duration": 1639,
-                "start": 6530,
-                "end": 8169
+                "duration": 1936,
+                "start": 7369,
+                "end": 9306
             }
         ],
-        "totalDurationComputed": 9883,
-        "totalDurationActual": 12679
+        "totalDurationComputed": 10950,
+        "totalDurationActual": 14262
     };
     function main() {
         const container = document.getElementById("visualization");

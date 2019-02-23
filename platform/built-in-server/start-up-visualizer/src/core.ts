@@ -13,6 +13,8 @@ export interface Item {
 }
 
 export interface InputData {
+  version: string
+
   items: Array<Item>
   components?: Array<Item>
   preloadActivities?: Array<Item>

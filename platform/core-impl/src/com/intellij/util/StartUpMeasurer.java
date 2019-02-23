@@ -33,6 +33,8 @@ public final class StartUpMeasurer {
     public static final String PROJECT_STARTUP = "project startup";
 
     public static final String PROJECT_DUMB_POST_STARTUP = "project dumb post-startup";
+
+    public static final String LOAD_MODULES = "module loading";
   }
 
   public static final String COMPONENT_INITIALIZED_INTERNAL_NAME = "_component initialized";

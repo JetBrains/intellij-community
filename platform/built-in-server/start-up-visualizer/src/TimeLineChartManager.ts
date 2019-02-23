@@ -49,7 +49,7 @@ export class TimelineChartManager extends XYChartManager {
   private configureSeries() {
     const series = this.chart.series.push(new am4charts.ColumnSeries())
     // series.columns.template.width = am4core.percent(80)
-    series.columns.template.tooltipText = "{name}: {duration}\nlevel: {level}\nrange: {start}-{end}"
+    series.columns.template.tooltipText = "{name}: {duration}\nlevel: {level}\nrange: {start}-{end}\n{description}"
     series.dataFields.openDateX = "start"
     series.dataFields.openValueX = "start"
     series.dataFields.dateX = "end"
@@ -85,17 +85,16 @@ export class TimelineChartManager extends XYChartManager {
   render(ijData: InputData) {
     const items = ijData.items
     const firstStart = new Date(items[0].start)
-    const timeOffset = 0
 
-    const data = this.transformIjData(ijData, timeOffset)
+    const data = this.transformIjData(ijData)
     this.chart.data = data
 
     const originalItems = items
     const durationAxis = this.chart.xAxes.getIndex(0) as am4charts.DurationAxis
-    durationAxis.max = originalItems[originalItems.length - 1].end - timeOffset
+    durationAxis.max = originalItems[originalItems.length - 1].end
   }
 
-  private transformIjData(input: InputData, timeOffset: number): Array<any> {
+  private transformIjData(input: InputData): Array<any> {
     const colorSet = new am4core.ColorSet()
     const transformedItems = new Array<any>(input.items.length)
     computeLevels(input.items)
@@ -114,13 +113,9 @@ export class TimelineChartManager extends XYChartManager {
       }
 
       const result: any = {
-        name: item.name,
-        start: item.start - timeOffset,
-        end: item.end - timeOffset,
-        duration: item.duration,
+        ...item,
         rowIndex: rowIndex++,
         color: colorSet.getIndex(item.colorIndex),
-        level: item.level,
       }
 
       transformedItems[i] = result
