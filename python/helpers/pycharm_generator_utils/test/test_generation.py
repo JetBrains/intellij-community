@@ -220,7 +220,7 @@ class SkeletonCachingTest(GeneratorTestCase):
 
     def assertDirLayoutEquals(self, dir_path, expected_layout):
         def format_dir(dir_path, indent=''):
-            for child_name in os.listdir(dir_path):
+            for child_name in sorted(os.listdir(dir_path)):
                 child_path = os.path.join(dir_path, child_name)
                 if os.path.isdir(child_path):
                     yield indent + child_name + '/'
