@@ -37,8 +37,12 @@ public final class StartUpMeasurer {
     public static final String LOAD_MODULES = "module loading";
   }
 
-  public static final String COMPONENT_INITIALIZED_INTERNAL_NAME = "_component initialized";
-  public static final String PRELOAD_ACTIVITY_FINISHED = "_preload activity finished";
+  // non-sequential and repeated items
+  public static final class Activities {
+    public static final String COMPONENT_INITIALIZED_INTERNAL_NAME = "_component initialized";
+    public static final String PRELOAD_ACTIVITY_FINISHED = "_preload activity finished";
+    public static final String OPTIONS_TOP_HIT_PROVIDER = "_OptionsTopHitProvider";
+  }
 
   private static final long startTime = System.nanoTime();
 
@@ -59,7 +63,7 @@ public final class StartUpMeasurer {
   }
 
   public static void reportComponentInitialized(@NotNull Class<?> componentClass, long startTime, long endTime) {
-    new Item(COMPONENT_INITIALIZED_INTERNAL_NAME, componentClass.getName(), startTime, null).end(endTime);
+    new Item(Activities.COMPONENT_INITIALIZED_INTERNAL_NAME, componentClass.getName(), startTime, null).end(endTime);
   }
 
   @NotNull

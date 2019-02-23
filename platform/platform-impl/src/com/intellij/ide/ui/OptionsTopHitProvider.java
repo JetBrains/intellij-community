@@ -3,6 +3,7 @@ package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SearchTopHitProvider;
+import com.intellij.ide.StartUpPerformanceReporter;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -20,16 +21,14 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.util.Consumer;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.StartUpMeasurer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 /**
  * @author Konstantin Bulenkov
@@ -48,15 +47,20 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
     CachedOptions cache = manager.getUserData(CachedOptions.KEY);
     if (cache == null) cache = new CachedOptions(manager);
 
-    return cache.map.computeIfAbsent(getClass(), type -> getOptions(project));
+    Class<? extends OptionsTopHitProvider> clazz = getClass();
+    return cache.map.computeIfAbsent(clazz, type -> {
+      StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(StartUpMeasurer.Activities.OPTIONS_TOP_HIT_PROVIDER, clazz.getName());
+      Collection<OptionDescription> result = getOptions(project);
+      measureToken.end();
+      return result;
+    });
   }
 
   @Override
-  public final void consumeTopHits(@NonNls String pattern, Consumer<Object> collector, Project project) {
+  public final void consumeTopHits(@NotNull String pattern, @NotNull Consumer<Object> collector, @Nullable Project project) {
     if (!pattern.startsWith(SearchTopHitProvider.getTopHitAccelerator())) return;
     pattern = pattern.substring(1);
     final List<String> parts = StringUtil.split(pattern, " ");
-
     if (parts.isEmpty()) {
       return;
     }
@@ -67,7 +71,7 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
       final MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
       for (OptionDescription option : getCachedOptions(project)) {
         if (matcher.matches(option.getOption())) {
-          collector.consume(option);
+          collector.accept(option);
         }
       }
     }
@@ -144,32 +148,59 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
 
       long millis = System.currentTimeMillis();
       String name = project == null ? "application" : "project";
-      List<SearchTopHitProvider> providers = SearchTopHitProvider.EP_NAME.getExtensionList();
-      for (SearchTopHitProvider provider : providers) {
-        if (provider instanceof OptionsTopHitProvider && !(provider instanceof ConfigurableOptionsTopHitProvider)) {
+      Deque<ConfigurableOptionsTopHitProvider> edtProviders = new ArrayDeque<>();
+      for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensionList()) {
+        if (provider instanceof ConfigurableOptionsTopHitProvider) {
+          // process on EDT, because it creates a Swing components
+          // do not process all in one unified invokeLater to ensure that EDT is not blocked for a long time
+          edtProviders.add((ConfigurableOptionsTopHitProvider)provider);
+        }
+        else if (provider instanceof OptionsTopHitProvider) {
           cache((OptionsTopHitProvider)provider, indicator, project);
         }
       }
 
-      application.invokeLater(() -> {
-        long start = System.currentTimeMillis();
-        for (SearchTopHitProvider provider : providers) {
-          // process on EDT, because it creates a Swing components
-          if (provider instanceof ConfigurableOptionsTopHitProvider) {
-            cache((ConfigurableOptionsTopHitProvider)provider, indicator, project);
-          }
-        }
-        LOG.info((System.currentTimeMillis() - start) + " ms spent on EDT to cache options in " + name);
-      });
+      scheduleEdtTasks(edtProviders, indicator, project);
 
       long delta = System.currentTimeMillis() - millis;
       LOG.info(delta + " ms spent to cache options in " + name);
     }
 
-    private static void cache(@NotNull OptionsTopHitProvider provider, @Nullable ProgressIndicator indicator, @Nullable Project project) {
-      if (indicator != null && indicator.isCanceled()) return; // if application is closed
-      if (project != null && project.isDisposed()) return; // if project is closed
-      if (provider.isEnabled(project)) provider.getCachedOptions(project);
+    private static void scheduleEdtTasks(@NotNull Deque<ConfigurableOptionsTopHitProvider> edtProviders, @Nullable ProgressIndicator indicator, @Nullable Project project) {
+      if (edtProviders.isEmpty()) {
+        StartUpPerformanceReporter startUpPerformanceReporter = StartupActivity.POST_STARTUP_ACTIVITY.findExtension(StartUpPerformanceReporter.class);
+        if (startUpPerformanceReporter != null) {
+          startUpPerformanceReporter.lastEdtOptionTopHitProviderFinished();
+        }
+        return;
+      }
+
+      ApplicationManager.getApplication().invokeLater(() -> {
+        ConfigurableOptionsTopHitProvider provider = edtProviders.poll();
+        if (provider != null && cache(provider, indicator, project)) {
+          scheduleEdtTasks(edtProviders, indicator, project);
+        }
+      }, ObjectUtils.chooseNotNull(project, ApplicationManager.getApplication()).getDisposed());
+    }
+
+    /**
+     * returns false if disposed or cancelled
+     */
+    private static boolean cache(@NotNull OptionsTopHitProvider provider, @Nullable ProgressIndicator indicator, @Nullable Project project) {
+      // if application is closed
+      if (indicator != null && indicator.isCanceled()) {
+        return false;
+      }
+
+      // if project is closed
+      if (project != null && project.isDisposed()) {
+        return false;
+      }
+
+      if (provider.isEnabled(project)) {
+        provider.getCachedOptions(project);
+      }
+      return true;
     }
   }
 }

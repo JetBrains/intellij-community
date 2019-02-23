@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.SearchTopHitProvider;
@@ -34,8 +34,8 @@ import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -135,7 +135,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
     return new TopHitRenderer(myProject);
   }
 
-  private void fill(String pattern, Function<Object, Boolean> consumer) {
+  private void fill(@NotNull String pattern, Function<Object, Boolean> consumer) {
     if (pattern.startsWith(SearchTopHitProvider.getTopHitAccelerator()) && !pattern.contains(" ")) {
       return;
     }
@@ -147,7 +147,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
     fillFromExtensions(pattern, consumer);
   }
 
-  private void fillFromExtensions(String pattern, Function<Object, Boolean> consumer) {
+  private void fillFromExtensions(@NotNull String pattern, Function<Object, Boolean> consumer) {
     for (SearchTopHitProvider provider : myTopHitProviders) {
       if (provider instanceof OptionsTopHitProvider && !((OptionsTopHitProvider)provider).isEnabled(myProject)) {
         continue;

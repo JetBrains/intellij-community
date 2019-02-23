@@ -12,11 +12,17 @@ import com.intellij.util.StartUpMeasurer.Item
 import gnu.trove.THashMap
 import java.io.StringWriter
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 
 class StartUpPerformanceReporter : StartupActivity, DumbAware {
   private val activationCount = AtomicInteger()
+  // questions like "what if we have several projects to open? what if no projects at all?" are out of scope for now
+  private val isLastEdtOptionTopHitProviderFinished = AtomicBoolean()
+
+  @Volatile
+  private var end: Long = -1
 
   var lastReport: String? = null
     private set
@@ -49,18 +55,36 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
 
   override fun runActivity(project: Project) {
     val end = System.nanoTime()
-    val activationNumber = activationCount.incrementAndGet()
-    // even if this activity executed in a pooled thread, better if it will not affect start-up in any way,
-    ApplicationManager.getApplication().executeOnPooledThread {
-      logStats(end, activationNumber)
+    this.end = end
+    val activationNumber = activationCount.getAndIncrement()
+    if (isLastEdtOptionTopHitProviderFinished.get()) {
+      // even if this activity executed in a pooled thread, better if it will not affect start-up in any way
+      ApplicationManager.getApplication().executeOnPooledThread {
+        logStats(end, activationNumber)
+      }
     }
   }
 
+  fun lastEdtOptionTopHitProviderFinished() {
+    if (!isLastEdtOptionTopHitProviderFinished.compareAndSet(false, true)) {
+      return
+    }
+
+    val end = end
+    if (end != -1L) {
+      ApplicationManager.getApplication().executeOnPooledThread {
+        logStats(end, 0)
+      }
+    }
+  }
+
+  @Synchronized
   private fun logStats(end: Long, activationNumber: Int) {
     val log = Logger.getInstance(StartUpMeasurer::class.java)
 
-    val activityDescriptors = listOf(ActivityDescriptor(StartUpMeasurer.COMPONENT_INITIALIZED_INTERNAL_NAME, "components"),
-                                     ActivityDescriptor(StartUpMeasurer.PRELOAD_ACTIVITY_FINISHED, "preloadActivities"))
+    val activityDescriptors = listOf(ActivityDescriptor(StartUpMeasurer.Activities.COMPONENT_INITIALIZED_INTERNAL_NAME, "components"),
+                                     ActivityDescriptor(StartUpMeasurer.Activities.PRELOAD_ACTIVITY_FINISHED, "preloadActivities"),
+                                     ActivityDescriptor(StartUpMeasurer.Activities.OPTIONS_TOP_HIT_PROVIDER, "optionsTopHitProvidera"))
 
     val items = mutableListOf<Item>()
     val activities = THashMap<String, MutableList<Item>>()
@@ -72,6 +96,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
         items.add(item)
       }
     })
+
     if (items.isEmpty() || (ApplicationManager.getApplication().isUnitTestMode && activationNumber > 2)) {
       return
     }
