@@ -170,17 +170,6 @@ class SkeletonCachingTest(GeneratorTestCase):
     def test_segmentation_fault_handling(self):
         self.check_generator_output('sigsegv', mod_path='sigsegv.py', gen_version='0.1', fake_hashes=False)
 
-    def test_cache_prepopulated_with_existing_module_from_sdk_skeletons(self):
-        # Version shouldn't updated as we copy existing skeletons from SDK dir
-        self.check_generator_output('mod', mod_path='mod.py', gen_version='0.2', custom_required_gen=True)
-
-    def test_cache_prepopulated_with_existing_package_from_sdk_skeletons(self):
-        # Version shouldn't updated as we copy existing skeletons from SDK dir
-        self.check_generator_output('pkg.subpkg.mod', mod_path='pkg/subpkg/mod.py', gen_version='0.2', custom_required_gen=True)
-
-    def test_cache_not_prepopulated_with_outdated_existing_sdk_skeleton(self):
-        self.check_generator_output('mod', mod_path='mod.py', gen_version='0.2', custom_required_gen=True)
-
     def test_cache_not_updated_when_sdk_skeleton_is_up_to_date(self):
         # We can't safely updated cache from SDK skeletons (backwards) because of binaries declaring
         # multiple modules. Skeletons for them are scattered across SDK skeletons directory, and we can't
@@ -194,6 +183,9 @@ class SkeletonCachingTest(GeneratorTestCase):
         # SDK skeleton version is 0.1, cache skeleton version is 0.2, skeletons need to be updated starting from 0.2
         # New skeleton would have version 0.3, but we shouldn't generate any.
         self.check_generator_output('mod', mod_path='mod.py', gen_version='0.3', custom_required_gen=True)
+
+    def test_cache_skeleton_generated_and_reused_when_sdk_skeleton_is_outdated(self):
+        self.check_generator_output('mod', mod_path='mod.py', gen_version='0.2', custom_required_gen=True)
 
     def test_cache_skeleton_reused_when_sdk_skeleton_generation_failed(self):
         # Generation failed for version 0.1, cache skeleton version is 0.2
