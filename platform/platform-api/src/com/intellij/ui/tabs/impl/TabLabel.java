@@ -218,6 +218,10 @@ public class TabLabel extends JPanel implements Accessible {
         insets.right = 3;
       }
     }
+
+    if (myTabs.getPosition() == JBTabsPosition.top) {
+      insets.top += getNonSelectedOffset();
+    }
     return insets;
   }
 
@@ -311,6 +315,12 @@ public class TabLabel extends JPanel implements Accessible {
   }
 
   private void doPaint(final Graphics g) {
+    if (myTabs.getPosition() == JBTabsPosition.top) {
+      super.paint(g);
+      return;
+    }
+
+
     doTranslate((x, y) -> g.translate(x, y));
 
     final Composite oldComposite = ((Graphics2D)g).getComposite();

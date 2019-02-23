@@ -99,7 +99,7 @@ public class TableLayout extends TabLayout {
   }
                                            
   public boolean isLastRow(TabInfo info) {
-    if (info == null) return false;
+    if (info == null || myLastTableLayout == null) return false;
     List<TableRow> rows = myLastTableLayout.table;
     if (rows.size() > 0) {
       for (TabInfo tabInfo : rows.get(rows.size() - 1).myColumns) {
