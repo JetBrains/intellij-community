@@ -8,6 +8,7 @@
 /config
 /out
 /python/helpers/.idea
+/python/helpers/**/.tox
 /system
 /test-config
 /test-system
