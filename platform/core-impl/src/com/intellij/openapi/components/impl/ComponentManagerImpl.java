@@ -2,9 +2,7 @@
 package com.intellij.openapi.components.impl;
 
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.StartupProgress;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -84,15 +82,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return null;
   }
 
-  protected final void init(@Nullable ProgressIndicator indicator, @Nullable Runnable componentsRegistered, boolean isNeededToMeasure) {
-    StartupProgress startupProgress = null;
-    if (indicator != null) {
-      startupProgress = (message, progress) -> indicator.setFraction(progress);
-    }
-
-    // before totalMeasureToken to ensure that plugin loading is not part of this
-    List<IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins(startupProgress);
-
+  protected final void init(@NotNull List<IdeaPluginDescriptor> plugins, @Nullable ProgressIndicator indicator, @Nullable Runnable componentsRegistered, boolean isNeededToMeasure) {
     StartUpMeasurer.MeasureToken totalMeasureToken = isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix() + StartUpMeasurer.Phases.INITIALIZE_COMPONENTS_SUFFIX) : null;
 
     final Application app = ApplicationManager.getApplication();

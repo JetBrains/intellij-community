@@ -3,6 +3,7 @@ package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -259,8 +260,9 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     Application application = ApplicationManager.getApplication();
 
     ProgressIndicator progressIndicator = isDefault() ? null : ProgressIndicatorProvider.getGlobalProgressIndicator();
+    //  at this point of time plugins are already loaded by application - no need to pass indicator to getLoadedPlugins call
     //noinspection CodeBlock2Expr
-    init(progressIndicator, application.isUnitTestMode() ? () -> {
+    init(PluginManagerCore.getLoadedPlugins(null), progressIndicator, !isDefault() && application.isUnitTestMode() ? () -> {
       application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this);
     } : null, true);
 

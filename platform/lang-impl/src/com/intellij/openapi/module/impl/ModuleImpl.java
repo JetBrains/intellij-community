@@ -3,6 +3,7 @@ package com.intellij.openapi.module.impl;
 
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.ModuleServiceManagerImpl;
@@ -71,7 +72,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   @Override
   public void init(@Nullable Runnable beforeComponentCreation) {
-    init(null, () -> {
+    init(PluginManagerCore.getLoadedPlugins(null), null, () -> {
       // create ServiceManagerImpl at first to force extension classes registration
       getPicoContainer().getComponentInstance(ModuleServiceManagerImpl.class);
       if (beforeComponentCreation != null) {

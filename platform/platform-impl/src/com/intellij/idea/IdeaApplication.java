@@ -67,7 +67,7 @@ public class IdeaApplication {
   }
 
   @SuppressWarnings("SSBasedInspection")
-  public static void initApplication(String[] args) {
+  public static void initApplication(@NotNull String[] args) {
     PluginManager.startupStart.end();
     StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(StartUpMeasurer.Phases.INIT_APP);
     IdeaApplication app = new IdeaApplication(args);
@@ -208,9 +208,9 @@ public class IdeaApplication {
     return new IdeStarter();
   }
 
-  public void run() {
+  private void run() {
     try {
-      ApplicationManagerEx.getApplicationEx().load();
+      ApplicationManagerEx.getApplicationEx().load(null);
       myLoaded = true;
 
       ((TransactionGuardImpl) TransactionGuard.getInstance()).performUserActivity(() -> myStarter.main(myArgs));

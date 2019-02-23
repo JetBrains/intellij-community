@@ -49,7 +49,7 @@ export class TimelineChartManager extends XYChartManager {
   private configureSeries() {
     const series = this.chart.series.push(new am4charts.ColumnSeries())
     // series.columns.template.width = am4core.percent(80)
-    series.columns.template.tooltipText = "{name}: {duration}\nlevel: {level}"
+    series.columns.template.tooltipText = "{name}: {duration}\nlevel: {level}\nrange: {start}-{end}"
     series.dataFields.openDateX = "start"
     series.dataFields.openValueX = "start"
     series.dataFields.dateX = "end"

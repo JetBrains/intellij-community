@@ -10,6 +10,7 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
@@ -386,21 +387,21 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  public void load() {
-    load(null);
-  }
-
-  @Override
   public void load(@Nullable final String configPath) {
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
+      StartupProgress startupProgress = mySplash == null ? null : (message, progress) -> mySplash.showProgress("", progress);
+
+      // before totalMeasureToken to ensure that plugin loading is not part of this
+      List<IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins(startupProgress);
+
       ProgressIndicator indicator = mySplash == null ? null : new EmptyProgressIndicator() {
         @Override
         public void setFraction(double fraction) {
           mySplash.showProgress("", (float)fraction);
         }
       };
-      init(indicator, () -> {
+      init(plugins, indicator, () -> {
         // create ServiceManagerImpl at first to force extension classes registration
         getPicoContainer().getComponentInstance(ServiceManagerImpl.class);
 
