@@ -1,5 +1,8 @@
-*** lao	2019-02-14 07:15:57.000000000 +0100
---- tzu	2019-02-13 22:05:33.000000000 +0100
+Only in tzu: intro
+Only in lao: preamble
+diff -cr lao/quote tzu/quote
+*** lao/quote	Sat Feb 23 14:40:37 2019
+--- tzu/quote	Sat Feb 23 14:45:39 2019
 ***************
 *** 1,7 ****
 - The Way that can be told of is not the eternal Way;
@@ -12,7 +15,7 @@
 --- 1,6 ----
   The Nameless is the origin of Heaven and Earth;
 ! The named is the mother of all things.
-!
+! 
   Therefore let there always be non-being,
     so we may see their subtlety,
   And let there always be being,
@@ -25,3 +28,5 @@
 + They both may be called deep and profound.
 + Deeper and more profound,
 + The door of all subtleties!
+\ No newline at end of file
+Only in tzu: unquote

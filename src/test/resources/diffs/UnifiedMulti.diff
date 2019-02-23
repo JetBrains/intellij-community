@@ -1,5 +1,8 @@
---- lao	2019-02-14 07:15:57.000000000 +0100
-+++ tzu	2019-02-13 22:05:33.000000000 +0100
+Only in tzu: intro
+Only in lao: preamble
+diff -ur lao/quote tzu/quote
+--- lao/quote	2019-02-23 14:40:37.000000000 +0100
++++ tzu/quote	2019-02-23 14:45:39.000000000 +0100
 @@ -1,7 +1,6 @@
 -The Way that can be told of is not the eternal Way;
 -The name that can be named is not the eternal name.
@@ -17,3 +20,5 @@
 +They both may be called deep and profound.
 +Deeper and more profound,
 +The door of all subtleties!
+\ No newline at end of file
+Only in tzu: unquote

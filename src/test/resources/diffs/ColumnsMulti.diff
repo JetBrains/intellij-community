@@ -1,3 +1,6 @@
+Only in tzu: intro
+Only in lao: preamble
+diff -yr lao/quote tzu/quote
 The Way that can be told of is not the eternal Way;	      <
 The name that can be named is not the eternal name.	      <
 The Nameless is the origin of Heaven and Earth;			The Nameless is the origin of Heaven and Earth;
@@ -12,4 +15,4 @@ But after they are produced,					But after they are produced,
   they have different names.					  they have different names.
 							      >	They both may be called deep and profound.
 							      >	Deeper and more profound,
-							      >	The door of all subtleties!
+							      >	The door of all subtleties!Only in tzu: unquote

@@ -1,5 +1,7 @@
-diff -r -e lao/quote tzu/quote
-12c
+Only in tzu: intro
+Only in lao: preamble
+diff -er lao/quote tzu/quote
+11a
 They both may be called deep and profound.
 Deeper and more profound,
 The door of all subtleties!
@@ -9,3 +11,4 @@ The named is the mother of all things.
 
 .
 1,2d
+Only in tzu: unquote

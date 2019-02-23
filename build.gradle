@@ -43,7 +43,7 @@ wrapper {
 }
 
 def genSrcPath = 'src/main/generated-java'
-File genSrc = file(genSrcPath)
+File genSrc = file genSrcPath
 sourceSets.main.java.srcDir genSrc
 idea.module.generatedSourceDirs += genSrc
 

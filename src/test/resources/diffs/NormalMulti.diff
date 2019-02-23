@@ -1,3 +1,4 @@
+Only in tzu: intro
 Only in lao: preamble
 diff -r lao/quote tzu/quote
 1,2d0
@@ -7,11 +8,10 @@ diff -r lao/quote tzu/quote
 < The Named is the mother of all things.
 ---
 > The named is the mother of all things.
->
-12c11,13
-<
----
+> 
+11a11,13
 > They both may be called deep and profound.
 > Deeper and more profound,
 > The door of all subtleties!
+\ No newline at end of file
 Only in tzu: unquote

@@ -1,7 +1,5 @@
-Only in lao: preamble
-diff -r -u lao/quote tzu/quote
---- lao/quote	2019-02-14 07:11:32.000000000 +0100
-+++ tzu/quote	2019-02-14 07:10:13.000000000 +0100
+--- lao/quote	2019-02-23 14:40:37.000000000 +0100
++++ tzu/quote	2019-02-23 14:45:39.000000000 +0100
 @@ -1,7 +1,6 @@
 -The Way that can be told of is not the eternal Way;
 -The name that can be named is not the eternal name.
@@ -12,13 +10,11 @@ diff -r -u lao/quote tzu/quote
  Therefore let there always be non-being,
    so we may see their subtlety,
  And let there always be being,
-@@ -9,4 +8,6 @@
+@@ -9,3 +8,6 @@
  The two are the same,
  But after they are produced,
    they have different names.
--
 +They both may be called deep and profound.
 +Deeper and more profound,
 +The door of all subtleties!
-Only in tzu: unquote
-
+\ No newline at end of file

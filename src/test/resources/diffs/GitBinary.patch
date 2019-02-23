@@ -1,0 +1,235 @@
+From 32fff2fbb9ef79e9496794c565da791d16a772d8 Mon Sep 17 00:00:00 2001
+From: ThomasR <thomasr@fantasymail.de>
+Date: Tue, 12 Feb 2019 23:07:02 +0100
+Subject: [PATCH] Changed icon
+
+---
+ .idea/icon.png                                | Bin 712 -> 382 bytes
+ .idea/icon_dark.png                           | Bin 712 -> 0 bytes
+ .../thomasrosenau/diffplugin/DiffIcons.java   |   2 +-
+ src/main/resources/META-INF/plugin.xml        |   2 +-
+ src/main/resources/META-INF/pluginIcon.svg    |  39 +++++++++++-------
+ .../resources/META-INF/pluginIcon_dark.svg    |  38 ++++++++++-------
+ src/main/resources/icons/paper.png            | Bin 435 -> 0 bytes
+ src/main/resources/icons/paper@2x.png         | Bin 712 -> 0 bytes
+ 8 files changed, 47 insertions(+), 34 deletions(-)
+ delete mode 100644 .idea/icon_dark.png
+ delete mode 100644 src/main/resources/icons/paper.png
+ delete mode 100644 src/main/resources/icons/paper@2x.png
+
+diff --git a/.idea/icon.png b/.idea/icon.png
+index a7fea0010f6c031a4db99a3e0b5548b03ef34171..3769a1b131ac30bed4e78b4662bd2a66276b76e8 100644
+GIT binary patch
+delta 355
+zcmV-p0i6EG1^xn%B!2{RLP=Bz2nYy#2xN!=000SaNLh0L03C+_03C+`kLB@Y0000P
+zbVXQnQ*UN;cVTj60C#tHE@^ISb7Ns}WiD@WXPfRk8UO$Q`$<GWR9J=8moW~4FcgMA
+zjI$Hz<jMvPh6`{46R+WUyoQMfFu1uG7udW(<Kzh(Oo`DVuYU@)eiJmW{Esi?B}6z<
+zRn-jG0kP{|fGo?R$NQ1ba2w-K!j)2JtpP~WRJ6aYYwNnmz;n1#N)#%gvw<PQI~y1}
+z{A~k1!dn~g6>e?7XSlTipW$Gi12KTsy7|_J#Ay-^LF*)xPPlIg*T4&xtJ{;~iKr}m
+z1IJ`;UC$5uUR)Xo-#~so-7j3vfROMFGzd?%EB|94D;EH4inXXdVJfN%-+*~@!?Iif
+zauZ#IZ=fo+fcqJc621Y0G0`{S8fg2M>zkh&xB;$GNmO+hp2YwF002ovPDHLkV1h&g
+Bl;{8e
+
+delta 688
+zcmV;h0#E(^0>}lBB!3BTNLh0L01FcU01FcV0GgZ_0007dNkl<ZScUDDPe>F|9LGOz
+zW_Na7|KL)m)s`g)51oP_s18Ymb_hBNRtRAz7A8S-Rp=0Os6$dDMSm^}Ub`lUS*H#a
+zq(~id-Rk13O1tas%)EJBR8~`GciU|V`oh4Q_xsNKedfL2Z+{qphx+;+`Q3>9(#uyU
+zhx&8RMlR)w@%p?BR>aVK%I+uyASALrfD_$)dne;#i@SNXQWh>%2L6dN7Y18v2B4tL
+zaoyLa&JXPWs{kq|{A)uShzX@lbzU53+s?aD1J~b<*8wes!Fxx$zLWzXgX$nKtq?B+
+z>I%>zr8af4dw<~cMEv2$Lhr^7C@GIfSAH(M%1I93qHY4bijQ8^baeos4k1*B5Tv(y
+zJ-eVRDb8LVzW-cW>c-RC*LK~->Hq*BdUQkd^bU`H6@ttrKB@Yj+!}mSWq>sdh@rMj
+z>RRLau&QlXjA{;0@(~CD4fPG^x?YrDp-89GNa<Dvpnti!nOHPh(le%+B9Tm11|Xfz
+zV5U;|wBmNaMPV+bc8r${VB0o{h3(&_9Q}Jm7zh}&Mk1SvFtxPIqG<wx=)M+$fdF~S
+zVtyeBYU@Yf4*`O8bu=|KZJKkH%c5zb>w<7Nj3xx3P>65ef8aPyWdT-}SD0CyLoX=8
+zTy7NrDSur)&CX)@3~bx-OkNfMKt7+}G3M9~j_sXzT{SPl{{XcCaFtz4fP|j+zgxfY
+z?1C8cR#NO~uS8}I&2h5950CHk{wxY$XnH(4a=a@6OjZJ5JM9Xfkne}4<1^(hZrgh2
+zgZ8f9{)CGL0Ky86l?z~y@jT*c7GXZyXl1-i8!3cRceBD3bCt=ht)kT3vBUkgm-81`
+W?c)mnghkx|0000<MNUMnLSTYb0zyLo
+
+diff --git a/.idea/icon_dark.png b/.idea/icon_dark.png
+deleted file mode 100644
+index a7fea0010f6c031a4db99a3e0b5548b03ef34171..0000000000000000000000000000000000000000
+GIT binary patch
+literal 0
+HcmV?d00001
+
+literal 712
+zcmV;(0yq7MP)<h;3K|Lk000e1NJLTq001BW001Be1^@s6b9#F800009a7bBm000XU
+z000XU0RWnu7ytkQdPzh<R9J=WmQP3&Q5?rVZ)SIPUH{-xr`47v2oIftAgB&Wg?0!!
+z304SUC>AC`bXDjObf`m8Bt?HN3tqb>h*_r&6{JWVa^33UtV+A<?##S-T~t<6XLs9e
+z3HrjooA>+9`+erU-)|U!hx+;+`Q3>9(#uyUhx&8RMlR)w@%p?BR>aVK%I+uyASALr
+zfD_$)dne;#i@SNXQWh>%2L6dN7Y18v2B4tLaoyLa&JXPWs{kq|{A)uShzX@lbzU53
+z+s?aD1J~b<*8wes!Fxx$zLWzXgX$nKtq?B+>I%>zr8af4d*Jj${Ncw!@5T-&DUV23
+zelEPqNe<wmZUVfDk6zVubpW9bAykJDq_=uKyPzy7&R!nA|6E$?#?#x^cHPD5001C*
+zbVKy?4v&5ng3Km9srsMX8hle_fHe$=p|(uwTI2e#s%=<|Y7S8H5eNYd^$qB{UX)*<
+zNT<_C=~f1yxw)BGG+NR#rkNs<OjZUUoz7sUQuwsucECkpE~R#imkeOrHi?Dp-=-Y>
+zdqo%s7_>$rn~E^Cw9KMu0)pti7J`8QdCOvcAqi^hN8k?uf^~H?H8pLTbCt`YX`<_b
+za5#)61ffufZ{L65I8J2&R+d+oS)D^KD8gKB6#yw+KF!Wz_zY~@@=RV906;#U-!bOc
+z4vy`ecwIFw!v6rZ0dSRFOMrx)_rF`e@$7;a^Hx&qX|F_P4b5?~!4Hq`^!_XgU}$<g
+zI&!=#0Zdi`U_0#!ppfr}rsFf^E^ga;=Y#gH-~NP)1^~hej+F~wknud?Y8GKW+h}FH
+uOdEt!ceBD3bCt=ht)kT3vBUkgm-81`?c)mnghkx|0000<MNUMnLSTXm8A7B0
+
+diff --git a/src/main/java/de/thomasrosenau/diffplugin/DiffIcons.java b/src/main/java/de/thomasrosenau/diffplugin/DiffIcons.java
+index 2e16fb9..8956f5d 100644
+--- a/src/main/java/de/thomasrosenau/diffplugin/DiffIcons.java
++++ b/src/main/java/de/thomasrosenau/diffplugin/DiffIcons.java
+@@ -21,5 +21,5 @@ import javax.swing.*;
+ import com.intellij.openapi.util.IconLoader;
+ 
+ public class DiffIcons {
+-  public static final Icon FILE = IconLoader.getIcon("icons/paper.png");
++  public static final Icon FILE = IconLoader.getIcon("META-INF/pluginIcon.svg");
+ }
+diff --git a/src/main/resources/META-INF/plugin.xml b/src/main/resources/META-INF/plugin.xml
+index dd88cdf..663f2f8 100644
+--- a/src/main/resources/META-INF/plugin.xml
++++ b/src/main/resources/META-INF/plugin.xml
+@@ -37,7 +37,6 @@
+        the specific language governing permissions and limitations under the License.</p>
+     <hr/>
+     <br/>
+-    <p>Icons by <a href="https://www.iconfinder.com/korawan_m">BomSymbols</a>.</p>
+     ]]></description>
+ 
+   <change-notes><![CDATA[
+@@ -45,6 +44,7 @@
+     <ul>
+     <li>Support highlighting of file names, separators, EOL hints, and modified lines</li>
+     <li>Color settings page</li>
++    <li>Icon changed</li>
+     </ul>
+     ]]></change-notes>
+ 
+diff --git a/src/main/resources/META-INF/pluginIcon.svg b/src/main/resources/META-INF/pluginIcon.svg
+index f015879..165dbc8 100644
+--- a/src/main/resources/META-INF/pluginIcon.svg
++++ b/src/main/resources/META-INF/pluginIcon.svg
+@@ -1,17 +1,24 @@
+-<!-- Icon by "BomSymbols" https://www.iconfinder.com/korawan_m -->
+-<svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 91 91" version="1.1"
+-    viewBox="0 0 91 91"
+-    width="80px" height="80px">
+-  <path
+-      d="M19.888,77.474v-60.8H7.838v73.879h53.046c2.592,0,4.701-2.109,4.701-4.705v-5.561H22.703 C21.149,80.287,19.888,79.029,19.888,77.474z"
+-      fill="#6EC4A7" />
+-  <path
+-      d="M70.176,17.614h8.905L65.476,4.566v8.348C65.476,15.507,67.583,17.614,70.176,17.614z"
+-      fill="#45596B" />
+-  <path
+-      d="M70.173,23.243c-5.695,0-10.33-4.635-10.33-10.33V0.782H25.517V74.66h42.575 c0.101-0.012,0.202-0.031,0.308-0.031c0.107,0,0.207,0.02,0.311,0.031h9.854c2.595,0,4.701-2.111,4.701-4.705V23.243H70.173z"
+-      fill="#647F94" />
+-  <path
+-      d="M48.013,54.627h-9.547c-1.557,0-2.815-1.258-2.815-2.814c0-1.553,1.259-2.813,2.815-2.813h9.547 c1.551,0,2.812,1.26,2.812,2.813C50.824,53.369,49.563,54.627,48.013,54.627zM63.149,54.627h-3.916c-1.555,0-2.815-1.258-2.815-2.814c0-1.553,1.261-2.813,2.815-2.813h3.916 c1.555,0,2.815,1.26,2.815,2.813C65.965,53.369,64.704,54.627,63.149,54.627zM70.315,41.701h-31.85c-1.557,0-2.815-1.259-2.815-2.814c0-1.554,1.259-2.814,2.815-2.814h31.85 c1.555,0,2.815,1.26,2.815,2.814C73.131,40.442,71.87,41.701,70.315,41.701z"
+-      fill="#95AEC2" />
++<!--
++ Copyright 2019 Thomas Rosenau
++
++ Licensed under the Apache License, Version 2.0 (the "License");
++ you may not use this file except in compliance with the License.
++ You may obtain a copy of the License at
++
++     http://www.apache.org/licenses/LICENSE-2.0
++
++ Unless required by applicable law or agreed to in writing, software
++ distributed under the License is distributed on an "AS IS" BASIS,
++ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ See the License for the specific language governing permissions and
++ limitations under the License.
++ -->
++<svg xmlns="http://www.w3.org/2000/svg" version="1.1"
++    viewBox="0 0 16 16" width="16px" height="16px">
++    <path fill="#d3d3d3" d="M2,16H14V0H6.7l-4.7,4.7z" />
++    <path fill="#ffffff" d="M3,6V15h10V1h-5v5zM3,5h4v-4z" />
++    <path fill="#ffebf1" d="M5,7v3h6v-3z" />
++    <path fill="#cb2431" d="M4,8v1h3v-1z" />
++    <path fill="#daffe3" d="M5,11v3h6v-3z" />
++    <path fill="#2cbe4e" d="M4,12v1h1v1h1v-1h1v-1h-1v-1h-1v1z" />
+ </svg>
+diff --git a/src/main/resources/META-INF/pluginIcon_dark.svg b/src/main/resources/META-INF/pluginIcon_dark.svg
+index f015879..16adae0 100644
+--- a/src/main/resources/META-INF/pluginIcon_dark.svg
++++ b/src/main/resources/META-INF/pluginIcon_dark.svg
+@@ -1,17 +1,23 @@
+-<!-- Icon by "BomSymbols" https://www.iconfinder.com/korawan_m -->
+-<svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 91 91" version="1.1"
+-    viewBox="0 0 91 91"
+-    width="80px" height="80px">
+-  <path
+-      d="M19.888,77.474v-60.8H7.838v73.879h53.046c2.592,0,4.701-2.109,4.701-4.705v-5.561H22.703 C21.149,80.287,19.888,79.029,19.888,77.474z"
+-      fill="#6EC4A7" />
+-  <path
+-      d="M70.176,17.614h8.905L65.476,4.566v8.348C65.476,15.507,67.583,17.614,70.176,17.614z"
+-      fill="#45596B" />
+-  <path
+-      d="M70.173,23.243c-5.695,0-10.33-4.635-10.33-10.33V0.782H25.517V74.66h42.575 c0.101-0.012,0.202-0.031,0.308-0.031c0.107,0,0.207,0.02,0.311,0.031h9.854c2.595,0,4.701-2.111,4.701-4.705V23.243H70.173z"
+-      fill="#647F94" />
+-  <path
+-      d="M48.013,54.627h-9.547c-1.557,0-2.815-1.258-2.815-2.814c0-1.553,1.259-2.813,2.815-2.813h9.547 c1.551,0,2.812,1.26,2.812,2.813C50.824,53.369,49.563,54.627,48.013,54.627zM63.149,54.627h-3.916c-1.555,0-2.815-1.258-2.815-2.814c0-1.553,1.261-2.813,2.815-2.813h3.916 c1.555,0,2.815,1.26,2.815,2.813C65.965,53.369,64.704,54.627,63.149,54.627zM70.315,41.701h-31.85c-1.557,0-2.815-1.259-2.815-2.814c0-1.554,1.259-2.814,2.815-2.814h31.85 c1.555,0,2.815,1.26,2.815,2.814C73.131,40.442,71.87,41.701,70.315,41.701z"
+-      fill="#95AEC2" />
++<!--
++ Copyright 2019 Thomas Rosenau
++
++ Licensed under the Apache License, Version 2.0 (the "License");
++ you may not use this file except in compliance with the License.
++ You may obtain a copy of the License at
++
++     http://www.apache.org/licenses/LICENSE-2.0
++
++ Unless required by applicable law or agreed to in writing, software
++ distributed under the License is distributed on an "AS IS" BASIS,
++ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ See the License for the specific language governing permissions and
++ limitations under the License.
++ -->
++<svg xmlns="http://www.w3.org/2000/svg" version="1.1"
++    viewBox="0 0 16 16" width="16px" height="16px">
++    <path fill="#87939a" d="M3,6V15h10V1h-5v5zM3,5h4v-4z" />
++    <path fill="#cb2431" fill-opacity=".5" d="M5,7v3h6v-3z" />
++    <path fill="#550000" d="M4,8v1h3v-1z" />
++    <path fill="#2cbe4e" fill-opacity=".7" d="M5,11v3h6v-3z" />
++    <path fill="#005500" d="M4,12v1h1v1h1v-1h1v-1h-1v-1h-1v1z" />
+ </svg>
+diff --git a/src/main/resources/icons/paper.png b/src/main/resources/icons/paper.png
+deleted file mode 100644
+index 1b6c5db35d102b1acce3b8d190f0e3864f2637e8..0000000000000000000000000000000000000000
+GIT binary patch
+literal 0
+HcmV?d00001
+
+literal 435
+zcmV;k0ZjghP)<h;3K|Lk000e1NJLTq000mG000mO1^@s6AM^iV00009a7bBm000XU
+z000XU0RWnu7ytkPWl2OqR5*>DkvmHRQ4odC++>q=SE9HnM9?OpAmT5uQ^cQO1S`eD
+z2O?NlNjkBWjYY7x4cOTUmI?*~Vk^D^CNbtg_Q8&YvLu__pdPrz9Oit?+#v+CdXU~F
+z!J9#!Jxbrc<;<H*#%c9Mu#p4|FcQH>0>)5P*`7;oEVlNC0bu?5T+^!Wkq@AW%SMp-
+z4Q6kEi0=hcb|Ja7ba7^8{Rz}&?Zi{maxARwcTEFeqU6}b^qp`cBR1?S=?YRY46v6Q
+zok~26PtN4mQl{yz@JGeL00@IU0r9wjeqHbIt)_+7Lcy=4fO@SC*Ks?1$7#Ew{11c>
+z2!%rMm{IwxKoG&QEYutASCRr$H40tRplN+z5Hwwbq9`4G(iMuOGK!_LUq3y+be~iP
+z_^tj8Am9-Qu0R}hVIQfap7siRu)R!brwahI7n>hmkw-awJiC0@>VyG+fhqyTA5WE}
+d9cJW%<`>;pbntjpC7J*L002ovPDHLkV1kq6xo-df
+
+diff --git a/src/main/resources/icons/paper@2x.png b/src/main/resources/icons/paper@2x.png
+deleted file mode 100644
+index a7fea0010f6c031a4db99a3e0b5548b03ef34171..0000000000000000000000000000000000000000
+GIT binary patch
+literal 0
+HcmV?d00001
+
+literal 712
+zcmV;(0yq7MP)<h;3K|Lk000e1NJLTq001BW001Be1^@s6b9#F800009a7bBm000XU
+z000XU0RWnu7ytkQdPzh<R9J=WmQP3&Q5?rVZ)SIPUH{-xr`47v2oIftAgB&Wg?0!!
+z304SUC>AC`bXDjObf`m8Bt?HN3tqb>h*_r&6{JWVa^33UtV+A<?##S-T~t<6XLs9e
+z3HrjooA>+9`+erU-)|U!hx+;+`Q3>9(#uyUhx&8RMlR)w@%p?BR>aVK%I+uyASALr
+zfD_$)dne;#i@SNXQWh>%2L6dN7Y18v2B4tLaoyLa&JXPWs{kq|{A)uShzX@lbzU53
+z+s?aD1J~b<*8wes!Fxx$zLWzXgX$nKtq?B+>I%>zr8af4d*Jj${Ncw!@5T-&DUV23
+zelEPqNe<wmZUVfDk6zVubpW9bAykJDq_=uKyPzy7&R!nA|6E$?#?#x^cHPD5001C*
+zbVKy?4v&5ng3Km9srsMX8hle_fHe$=p|(uwTI2e#s%=<|Y7S8H5eNYd^$qB{UX)*<
+zNT<_C=~f1yxw)BGG+NR#rkNs<OjZUUoz7sUQuwsucECkpE~R#imkeOrHi?Dp-=-Y>
+zdqo%s7_>$rn~E^Cw9KMu0)pti7J`8QdCOvcAqi^hN8k?uf^~H?H8pLTbCt`YX`<_b
+za5#)61ffufZ{L65I8J2&R+d+oS)D^KD8gKB6#yw+KF!Wz_zY~@@=RV906;#U-!bOc
+z4vy`ecwIFw!v6rZ0dSRFOMrx)_rF`e@$7;a^Hx&qX|F_P4b5?~!4Hq`^!_XgU}$<g
+zI&!=#0Zdi`U_0#!ppfr}rsFf^E^ga;=Y#gH-~NP)1^~hej+F~wknud?Y8GKW+h}FH
+uOdEt!ceBD3bCt=ht)kT3vBUkgm-81`?c)mnghkx|0000<MNUMnLSTXm8A7B0
+
+-- 
+2.20.1
+
