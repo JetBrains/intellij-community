@@ -125,7 +125,7 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
     }
   }
 
-  public static final class Activity extends PreloadingActivity implements StartupActivity {
+  static final class Activity extends PreloadingActivity implements StartupActivity {
     @Override
     public void preload(@NotNull ProgressIndicator indicator) {
       cacheAll(indicator, null); // for application
