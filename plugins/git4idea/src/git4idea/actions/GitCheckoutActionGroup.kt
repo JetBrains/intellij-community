@@ -1,40 +1,24 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.actions
 
-import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsLog
 import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.VcsRef
 import git4idea.branch.GitBrancher
 import git4idea.log.GitRefManager.LOCAL_BRANCH
 import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryManager
 import java.util.*
 
-internal class GitCheckoutActionGroup : ActionGroup("Checkout", false), DumbAware {
+internal class GitCheckoutActionGroup : GitSingleCommitActionGroup("Checkout", false) {
 
-  override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-    if (e == null) return AnAction.EMPTY_ARRAY
-
-    val project = e.project
-    val log = e.getData(VcsLogDataKeys.VCS_LOG)
-    if (project == null || log == null) {
-      return AnAction.EMPTY_ARRAY
-    }
-
-    val commits = log.selectedCommits
-    if (commits.size != 1) return AnAction.EMPTY_ARRAY
-    val commit = commits.first()
-
-    val repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(commit.root) ?: return AnAction.EMPTY_ARRAY
-
+  override fun getChildren(e: AnActionEvent, project: Project, log: VcsLog, repository: GitRepository, commit: CommitId): Array<AnAction> {
     val refNames = getRefNames(e, log, repository)
     val actions = ArrayList<AnAction>()
     for (refName in refNames) {
@@ -48,7 +32,6 @@ internal class GitCheckoutActionGroup : ActionGroup("Checkout", false), DumbAwar
 
     val mainGroup = DefaultActionGroup("Checkout", actions)
     mainGroup.isPopup = hasMultipleActions
-
     return arrayOf(mainGroup)
   }
 
