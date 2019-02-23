@@ -35,6 +35,12 @@ public class DiffParser implements PsiParser, LightPsiParser {
     else if (root_ == CONTEXT_HUNK_TO) {
       result_ = contextHunkTo(builder_, 0);
     }
+    else if (root_ == GIT_BINARY_PATCH) {
+      result_ = gitBinaryPatch(builder_, 0);
+    }
+    else if (root_ == GIT_FOOTER) {
+      result_ = gitFooter(builder_, 0);
+    }
     else if (root_ == GIT_HEADER) {
       result_ = gitHeader(builder_, 0);
     }
@@ -206,12 +212,12 @@ public class DiffParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // gitDiff | (leadingText (normalDiff | contextDiff | unifiedDiff))+ trailingText
+  // gitDiffFile | (leadingText (normalDiff | contextDiff | unifiedDiff))+ trailingText
   static boolean diffFile(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "diffFile")) return false;
     boolean result_;
     Marker marker_ = enter_section_(builder_);
-    result_ = gitDiff(builder_, level_ + 1);
+    result_ = gitDiffFile(builder_, level_ + 1);
     if (!result_) result_ = diffFile_1(builder_, level_ + 1);
     exit_section_(builder_, marker_, null, result_);
     return result_;
@@ -265,36 +271,93 @@ public class DiffParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (leadingText unifiedDiff)+
-  static boolean gitBody(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "gitBody")) return false;
+  // GIT_BINARY_PATCH_HEADER (GIT_BINARY_PATCH_CONTENT | WHITE_SPACE)*
+  public static boolean gitBinaryPatch(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "gitBinaryPatch")) return false;
+    if (!nextTokenIs(builder_, GIT_BINARY_PATCH_HEADER)) return false;
     boolean result_;
     Marker marker_ = enter_section_(builder_);
-    result_ = gitBody_0(builder_, level_ + 1);
+    result_ = consumeToken(builder_, GIT_BINARY_PATCH_HEADER);
+    result_ = result_ && gitBinaryPatch_1(builder_, level_ + 1);
+    exit_section_(builder_, marker_, GIT_BINARY_PATCH, result_);
+    return result_;
+  }
+
+  // (GIT_BINARY_PATCH_CONTENT | WHITE_SPACE)*
+  private static boolean gitBinaryPatch_1(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "gitBinaryPatch_1")) return false;
+    while (true) {
+      int pos_ = current_position_(builder_);
+      if (!gitBinaryPatch_1_0(builder_, level_ + 1)) break;
+      if (!empty_element_parsed_guard_(builder_, "gitBinaryPatch_1", pos_)) break;
+    }
+    return true;
+  }
+
+  // GIT_BINARY_PATCH_CONTENT | WHITE_SPACE
+  private static boolean gitBinaryPatch_1_0(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "gitBinaryPatch_1_0")) return false;
+    boolean result_;
+    result_ = consumeToken(builder_, GIT_BINARY_PATCH_CONTENT);
+    if (!result_) result_ = consumeToken(builder_, WHITE_SPACE);
+    return result_;
+  }
+
+  /* ********************************************************** */
+  // gitDiff+
+  static boolean gitBody(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "gitBody")) return false;
+    if (!nextTokenIs(builder_, COMMAND)) return false;
+    boolean result_;
+    Marker marker_ = enter_section_(builder_);
+    result_ = gitDiff(builder_, level_ + 1);
     while (result_) {
       int pos_ = current_position_(builder_);
-      if (!gitBody_0(builder_, level_ + 1)) break;
+      if (!gitDiff(builder_, level_ + 1)) break;
       if (!empty_element_parsed_guard_(builder_, "gitBody", pos_)) break;
     }
     exit_section_(builder_, marker_, null, result_);
     return result_;
   }
 
-  // leadingText unifiedDiff
-  private static boolean gitBody_0(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "gitBody_0")) return false;
+  /* ********************************************************** */
+  // consoleCommand anyLine* (unifiedDiff | gitBinaryPatch)
+  static boolean gitDiff(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "gitDiff")) return false;
+    if (!nextTokenIs(builder_, COMMAND)) return false;
     boolean result_;
     Marker marker_ = enter_section_(builder_);
-    result_ = leadingText(builder_, level_ + 1);
-    result_ = result_ && unifiedDiff(builder_, level_ + 1);
+    result_ = consoleCommand(builder_, level_ + 1);
+    result_ = result_ && gitDiff_1(builder_, level_ + 1);
+    result_ = result_ && gitDiff_2(builder_, level_ + 1);
     exit_section_(builder_, marker_, null, result_);
+    return result_;
+  }
+
+  // anyLine*
+  private static boolean gitDiff_1(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "gitDiff_1")) return false;
+    while (true) {
+      int pos_ = current_position_(builder_);
+      if (!anyLine(builder_, level_ + 1)) break;
+      if (!empty_element_parsed_guard_(builder_, "gitDiff_1", pos_)) break;
+    }
+    return true;
+  }
+
+  // unifiedDiff | gitBinaryPatch
+  private static boolean gitDiff_2(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "gitDiff_2")) return false;
+    boolean result_;
+    result_ = unifiedDiff(builder_, level_ + 1);
+    if (!result_) result_ = gitBinaryPatch(builder_, level_ + 1);
     return result_;
   }
 
   /* ********************************************************** */
   // gitHeader gitBody gitFooter
-  static boolean gitDiff(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "gitDiff")) return false;
+  static boolean gitDiffFile(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "gitDiffFile")) return false;
     if (!nextTokenIs(builder_, GIT_FIRST_LINE)) return false;
     boolean result_;
     Marker marker_ = enter_section_(builder_);
@@ -307,13 +370,13 @@ public class DiffParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // GIT_SEPARATOR GIT_VERSION_NUMBER
-  static boolean gitFooter(PsiBuilder builder_, int level_) {
+  public static boolean gitFooter(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "gitFooter")) return false;
     if (!nextTokenIs(builder_, GIT_SEPARATOR)) return false;
     boolean result_;
     Marker marker_ = enter_section_(builder_);
     result_ = consumeTokens(builder_, 0, GIT_SEPARATOR, GIT_VERSION_NUMBER);
-    exit_section_(builder_, marker_, null, result_);
+    exit_section_(builder_, marker_, GIT_FOOTER, result_);
     return result_;
   }
 

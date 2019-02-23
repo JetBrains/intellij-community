@@ -31,9 +31,8 @@ patchPluginXml {
     // -- language=HTML
     pluginDescription '''
     <h1>Syntax highlighting for .diff files and .patch files</h1>
-    <p>Supports the common formats: normal, contextual, unified (git patch).</p>
-    <p>Does not support the formats: side-by-side, diff3, ed, if-else, RCS.
-       Currently does not support git binary patches.</p>
+    <p>Supports the common formats: normal, contextual, unified, git patch.</p>
+    <p>Does not support the formats: side-by-side, diff3, ed, if-else, RCS.</p>
     <br/>
     <hr/>
     <p>Copyright 2019 Thomas Rosenau</p>
@@ -51,6 +50,11 @@ patchPluginXml {
 
     // -- language=HTML
     changeNotes '''
+    <h5>2.1.0</h5>
+    <ul>
+      <li>Support for git binary patches</li>
+      <li>Fix git patch footer detection</li>
+    </ul>
     <h5>2.0.0</h5>
     <ul>
       <li>Folding support</li>

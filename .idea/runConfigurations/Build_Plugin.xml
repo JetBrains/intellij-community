@@ -18,7 +18,6 @@
     </ExternalSystemSettings>
     <GradleScriptDebugEnabled>true</GradleScriptDebugEnabled>
     <method v="2">
-      <option name="RunConfigurationTask" enabled="true" run_configuration_name="Generate Sources" run_configuration_type="GradleRunConfiguration" />
       <option name="RunConfigurationTask" enabled="true" run_configuration_name="Unit Tests" run_configuration_type="GradleRunConfiguration" />
     </method>
   </configuration>

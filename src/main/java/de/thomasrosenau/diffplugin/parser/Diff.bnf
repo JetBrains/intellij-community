@@ -30,13 +30,11 @@
 }
 
 // https://www.gnu.org/software/diffutils/manual/diffutils.html#Imperfect
-private diffFile ::= gitDiff | (leadingText (normalDiff | contextDiff | unifiedDiff))+ trailingText // TODO: handle indentation
+private diffFile ::= gitDiffFile | (leadingText (normalDiff | contextDiff | unifiedDiff))+ trailingText // TODO: handle indentation
 
 // TODO: Handle Prereq: and Index:
-// TODO: Handle git header, cf. https://git-scm.com/docs/git-diff#_generating_patches_with_p
 private leadingText ::= anyLine* (consoleCommand anyLine*)?
 consoleCommand ::= COMMAND
-// TODO: Handle git footer
 private trailingText ::= anyLine*
 private anyLine ::= WHITE_SPACE | OTHER
 
@@ -50,7 +48,6 @@ private contextToFileLine ::= CONTEXT_COMMON_LINE | CONTEXT_CHANGED_LINE | CONTE
 
 // https://www.gnu.org/software/diffutils/manual/diffutils.html#Detailed-Unified
 private unifiedDiff ::= UNIFIED_FROM_LABEL UNIFIED_TO_LABEL unifiedHunk+
-// TODO: Handle git binaries
 unifiedHunk ::= UNIFIED_LINE_NUMBERS (unifiedLine | WHITE_SPACE)+
 private unifiedLine ::= UNIFIED_INSERTED_LINE | UNIFIED_DELETED_LINE | UNIFIED_COMMON_LINE | EOL_HINT
 
@@ -62,7 +59,10 @@ private normalHunkChange ::= NORMAL_CHANGE_COMMAND NORMAL_FROM_LINE+ EOL_HINT? N
 private normalHunkDelete ::= NORMAL_DELETE_COMMAND NORMAL_FROM_LINE+ EOL_HINT?
 
 // https://git-scm.com/docs/git-diff
-private gitDiff ::= gitHeader gitBody gitFooter
+private gitDiffFile ::= gitHeader gitBody gitFooter
 gitHeader ::= GIT_FIRST_LINE anyLine+ GIT_SEPARATOR anyLine+
-private gitBody ::= (leadingText unifiedDiff)+
-private gitFooter ::= GIT_SEPARATOR GIT_VERSION_NUMBER
+private gitBody ::= gitDiff+
+// TODO: Handle git extended header lines, cf. https://git-scm.com/docs/git-diff#_generating_patches_with_p
+private gitDiff ::= consoleCommand anyLine* (unifiedDiff | gitBinaryPatch)
+gitBinaryPatch ::= GIT_BINARY_PATCH_HEADER (GIT_BINARY_PATCH_CONTENT | WHITE_SPACE)*
+gitFooter ::= GIT_SEPARATOR GIT_VERSION_NUMBER

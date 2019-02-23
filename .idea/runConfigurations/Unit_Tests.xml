@@ -17,6 +17,8 @@
       <option name="vmOptions" value="" />
     </ExternalSystemSettings>
     <GradleScriptDebugEnabled>false</GradleScriptDebugEnabled>
-    <method v="2" />
+    <method v="2">
+      <option name="RunConfigurationTask" enabled="true" run_configuration_name="Generate Sources" run_configuration_type="GradleRunConfiguration" />
+    </method>
   </configuration>
 </component>

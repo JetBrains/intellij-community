@@ -23,6 +23,14 @@ public class DiffVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitGitBinaryPatch(@NotNull DiffGitBinaryPatch o) {
+    visitPsiElement(o);
+  }
+
+  public void visitGitFooter(@NotNull DiffGitFooter o) {
+    visitPsiElement(o);
+  }
+
   public void visitGitHeader(@NotNull DiffGitHeader o) {
     visitPsiElement(o);
   }
