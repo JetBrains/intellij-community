@@ -23,6 +23,10 @@ public class DiffVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitGitHeader(@NotNull DiffGitHeader o) {
+    visitPsiElement(o);
+  }
+
   public void visitNormalHunk(@NotNull DiffNormalHunk o) {
     visitPsiElement(o);
   }

@@ -31,7 +31,7 @@ import static de.thomasrosenau.diffplugin.psi.DiffTypes.*;
 %function advance
 %type IElementType
 %unicode
-%state CONTEXT, UNIFIED, NORMAL
+%state GIT_HEAD, CONTEXT, UNIFIED, NORMAL, GIT_BODY
 
 Newline = [\r\n]
 InputCharacter = [^\r\n]
@@ -42,6 +42,8 @@ Range = {Digits} ("," {Digits})?
 %%
 
 {Newline} { return WHITE_SPACE; }
+
+<YYINITIAL> ^ "From " {InputCharacters} $ { yybegin(GIT_HEAD); return GIT_FIRST_LINE; }
 
 <YYINITIAL> ^ "*** " {InputCharacters} $ { yybegin(CONTEXT); return CONTEXT_FROM_LABEL; }
 <CONTEXT> {
@@ -55,8 +57,22 @@ Range = {Digits} ("," {Digits})?
   ^ "  " {InputCharacters}? {Newline}? { return CONTEXT_COMMON_LINE; }
 }
 
+<GIT_HEAD> {
+  ^ "---" $ { return GIT_SEPARATOR; }
+}
+
+<GIT_HEAD,GIT_BODY> {
+  ^ "--- " {InputCharacters} $ { yybegin(GIT_BODY); return UNIFIED_FROM_LABEL; }
+  ^ "diff " {InputCharacters} $ { return COMMAND; }
+}
+
+<GIT_BODY> {
+  ^ "-- " $ { return GIT_SEPARATOR; }
+  ^ {Digits}\.{Digits}\.{Digits} $ { return GIT_VERSION_NUMBER; }
+}
+
 <YYINITIAL,UNIFIED> ^ "--- " {InputCharacters} $ { yybegin(UNIFIED); return UNIFIED_FROM_LABEL; }
-<UNIFIED> {
+<UNIFIED,GIT_BODY> {
   ^ "+++ " {InputCharacters} $ { return UNIFIED_TO_LABEL; }
   ^ "@@ " {InputCharacters} " @@" (" " .+)? $ { return UNIFIED_LINE_NUMBERS; }
   ^ "+" {InputCharacters}? {Newline}? { return UNIFIED_INSERTED_LINE; }

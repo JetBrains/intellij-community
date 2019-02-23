@@ -30,7 +30,7 @@
 }
 
 // https://www.gnu.org/software/diffutils/manual/diffutils.html#Imperfect
-private diffFile ::= (leadingText (normalDiff | contextDiff | unifiedDiff))+ trailingText // TODO: handle indentation
+private diffFile ::= gitDiff | (leadingText (normalDiff | contextDiff | unifiedDiff))+ trailingText // TODO: handle indentation
 
 // TODO: Handle Prereq: and Index:
 // TODO: Handle git header, cf. https://git-scm.com/docs/git-diff#_generating_patches_with_p
@@ -60,3 +60,9 @@ normalHunk ::= normalHunkAdd | normalHunkChange | normalHunkDelete
 private normalHunkAdd ::= NORMAL_ADD_COMMAND NORMAL_TO_LINE+ EOL_HINT?
 private normalHunkChange ::= NORMAL_CHANGE_COMMAND NORMAL_FROM_LINE+ EOL_HINT? NORMAL_SEPARATOR NORMAL_TO_LINE+ EOL_HINT?
 private normalHunkDelete ::= NORMAL_DELETE_COMMAND NORMAL_FROM_LINE+ EOL_HINT?
+
+// https://git-scm.com/docs/git-diff
+private gitDiff ::= gitHeader gitBody gitFooter
+gitHeader ::= GIT_FIRST_LINE anyLine+ GIT_SEPARATOR anyLine+
+private gitBody ::= (leadingText unifiedDiff)+
+private gitFooter ::= GIT_SEPARATOR GIT_VERSION_NUMBER

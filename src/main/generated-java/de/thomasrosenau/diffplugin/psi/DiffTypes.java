@@ -12,6 +12,7 @@ public interface DiffTypes {
   IElementType CONTEXT_HUNK = new DiffElementType("CONTEXT_HUNK");
   IElementType CONTEXT_HUNK_FROM = new DiffElementType("CONTEXT_HUNK_FROM");
   IElementType CONTEXT_HUNK_TO = new DiffElementType("CONTEXT_HUNK_TO");
+  IElementType GIT_HEADER = new DiffElementType("GIT_HEADER");
   IElementType NORMAL_HUNK = new DiffElementType("NORMAL_HUNK");
   IElementType UNIFIED_HUNK = new DiffElementType("UNIFIED_HUNK");
 
@@ -26,6 +27,9 @@ public interface DiffTypes {
   IElementType CONTEXT_TO_LABEL = new DiffTokenType("CONTEXT_TO_LABEL");
   IElementType CONTEXT_TO_LINE_NUMBERS = new DiffTokenType("CONTEXT_TO_LINE_NUMBERS");
   IElementType EOL_HINT = new DiffTokenType("EOL_HINT");
+  IElementType GIT_FIRST_LINE = new DiffTokenType("GIT_FIRST_LINE");
+  IElementType GIT_SEPARATOR = new DiffTokenType("GIT_SEPARATOR");
+  IElementType GIT_VERSION_NUMBER = new DiffTokenType("GIT_VERSION_NUMBER");
   IElementType NORMAL_ADD_COMMAND = new DiffTokenType("NORMAL_ADD_COMMAND");
   IElementType NORMAL_CHANGE_COMMAND = new DiffTokenType("NORMAL_CHANGE_COMMAND");
   IElementType NORMAL_DELETE_COMMAND = new DiffTokenType("NORMAL_DELETE_COMMAND");
@@ -55,6 +59,9 @@ public interface DiffTypes {
       }
       else if (type == CONTEXT_HUNK_TO) {
         return new DiffContextHunkToImpl(node);
+      }
+      else if (type == GIT_HEADER) {
+        return new DiffGitHeaderImpl(node);
       }
       else if (type == NORMAL_HUNK) {
         return new DiffNormalHunkImpl(node);
