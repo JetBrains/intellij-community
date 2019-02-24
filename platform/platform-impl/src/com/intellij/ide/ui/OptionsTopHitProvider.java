@@ -53,7 +53,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
 
   @NotNull
   private static Collection<OptionDescription> getCachedOptions(@NotNull OptionsSearchTopHitProvider provider, @Nullable Project project) {
-    ComponentManager manager = project != null ? project : ApplicationManager.getApplication();
+    ComponentManager manager = project == null || provider instanceof ApplicationLevelProvider ? ApplicationManager.getApplication() : project;
     if (manager == null || manager.isDisposed()) return Collections.emptyList();
 
     CachedOptions cache = manager.getUserData(CachedOptions.KEY);
