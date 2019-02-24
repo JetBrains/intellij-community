@@ -30,6 +30,10 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
                    !e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY).isNullOrEmpty())
 
     updateEnabledAndVisible(e, enabled)
+
+    if (!e.getData(VcsDataKeys.CHANGE_LISTS).isNullOrEmpty()) {
+      e.presentation.text = "Move Files to Another Changelist..."
+    }
   }
 
   override fun actionPerformed(e: AnActionEvent) {
