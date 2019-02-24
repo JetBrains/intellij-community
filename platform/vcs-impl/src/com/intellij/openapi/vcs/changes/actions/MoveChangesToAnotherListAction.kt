@@ -2,10 +2,8 @@
 package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.vcs.FilePath
@@ -23,24 +21,15 @@ import com.intellij.util.containers.ContainerUtil.intersects
 import com.intellij.util.containers.isEmpty
 import com.intellij.vcsUtil.VcsUtil
 
-class MoveChangesToAnotherListAction : DumbAwareAction() {
+class MoveChangesToAnotherListAction : AbstractChangeListAction() {
   override fun update(e: AnActionEvent) {
-    val isEnabled = isEnabled(e)
-
-    if (ActionPlaces.isPopupPlace(e.place)) {
-      e.presentation.isEnabledAndVisible = isEnabled
-    }
-    else {
-      e.presentation.isEnabled = isEnabled
-    }
-  }
-
-  private fun isEnabled(e: AnActionEvent): Boolean {
     val project = e.project
-    return project != null && ProjectLevelVcsManager.getInstance(project).hasActiveVcss() &&
-           (!e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY).isEmpty() ||
-            !e.getData(VcsDataKeys.CHANGES).isNullOrEmpty() ||
-            !e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY).isNullOrEmpty())
+    val enabled = project != null && ProjectLevelVcsManager.getInstance(project).hasActiveVcss() &&
+                  (!e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY).isEmpty() ||
+                   !e.getData(VcsDataKeys.CHANGES).isNullOrEmpty() ||
+                   !e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY).isNullOrEmpty())
+
+    updateEnabledAndVisible(e, enabled)
   }
 
   override fun actionPerformed(e: AnActionEvent) {

@@ -2,7 +2,6 @@
 
 package com.intellij.openapi.vcs.changes.actions
 
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ui.NewChangelistDialog
@@ -23,12 +22,5 @@ class AddChangeListAction : AbstractChangeListAction() {
     }
   }
 
-  override fun update(e: AnActionEvent) {
-    val enabled = e.project != null
-
-    e.presentation.isEnabled = enabled
-    if (e.place == ActionPlaces.CHANGES_VIEW_POPUP) {
-      e.presentation.isVisible = enabled && !getChangeLists(e).none()
-    }
-  }
+  override fun update(e: AnActionEvent) = updateEnabledAndVisible(e, e.project != null, !getChangeLists(e).none())
 }

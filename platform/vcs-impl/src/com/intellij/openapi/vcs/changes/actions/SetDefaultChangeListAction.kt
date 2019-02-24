@@ -2,7 +2,6 @@
 
 package com.intellij.openapi.vcs.changes.actions
 
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.vcs.changes.ChangeListManager
 
@@ -11,10 +10,7 @@ class SetDefaultChangeListAction : AbstractChangeListAction() {
     val changeList = getTargetChangeList(e)
     val enabled = changeList != null && !changeList.isDefault
 
-    e.presentation.isEnabled = enabled
-    if (e.place == ActionPlaces.CHANGES_VIEW_POPUP) {
-      e.presentation.isVisible = enabled
-    }
+    updateEnabledAndVisible(e, enabled)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
