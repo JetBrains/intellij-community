@@ -1,0 +1,18 @@
+Only in tzu: intro
+Only in lao: preamble
+<fold text='diff -r lao/quote tzu/quote' expand='true'>diff -r lao/quote tzu/quote
+<fold text='1,2d0' expand='true'>1,2d0
+< The Way that can be told of is not the eternal Way;
+< The name that can be named is not the eternal name.</fold>
+<fold text='4c2,3' expand='true'>4c2,3
+< The Named is the mother of all things.
+---
+> The named is the mother of all things.
+> </fold>
+<fold text='11a11,13' expand='true'>11a11,13
+> They both may be called deep and profound.
+> Deeper and more profound,
+> The door of all subtleties!
+\ No newline at end of file</fold>
+Only in tzu: unquote
+</fold>

@@ -1,0 +1,3185 @@
+<fold text='From dc32f3823bd6f530708a08de4611a1d058337fda Mon Sep 17 00:00:00 2001' expand='true'>From dc32f3823bd6f530708a08de4611a1d058337fda Mon Sep 17 00:00:00 2001
+From: ThomasR <thomasr@fantasymail.de>
+Date: Mon, 18 Feb 2019 21:47:43 +0100
+Subject: [PATCH] Improved lexer and parser
+
+---
+ .idea/gradle.xml                              |   1 -
+ .idea/runConfigurations/build_plugin.xml      |   6 +-
+ .idea/runConfigurations/generateSources.xml   |  22 +
+ .idea/runConfigurations/run_in_IDE.xml        |   6 +-
+ build.gradle                                  |  18 +-
+ .../thomasrosenau/diffplugin/DiffLexer.java   | 534 ++++++++++------
+ .../diffplugin/parser/DiffParser.java         | 570 ++++++++++++++++--
+ .../psi/{DiffPlain.java => DiffAnyLine.java}  |   2 +-
+ .../diffplugin/psi/DiffConsoleCommand.java    |  10 +
+ .../diffplugin/psi/DiffContextDiff.java       |  13 +
+ .../psi/DiffContextFromFileLine.java          |  10 +
+ .../diffplugin/psi/DiffContextHunk.java       |  16 +
+ .../diffplugin/psi/DiffContextHunkFrom.java   |  13 +
+ .../diffplugin/psi/DiffContextHunkTo.java     |  13 +
+ .../diffplugin/psi/DiffContextToFileLine.java |  10 +
+ .../diffplugin/psi/DiffLeadingText.java       |  16 +
+ .../diffplugin/psi/DiffNormalDiff.java        |  13 +
+ .../diffplugin/psi/DiffNormalHunk.java        |  19 +
+ .../{DiffInfo.java => DiffNormalHunkAdd.java} |   2 +-
+ .../diffplugin/psi/DiffNormalHunkChange.java  |  10 +
+ .../diffplugin/psi/DiffNormalHunkDelete.java  |  10 +
+ .../diffplugin/psi/DiffTrailingText.java      |  13 +
+ .../diffplugin/psi/DiffTypes.java             | 107 +++-
+ .../diffplugin/psi/DiffUnifiedDiff.java       |  13 +
+ .../diffplugin/psi/DiffUnifiedHunk.java       |  13 +
+ ...{DiffChanged.java => DiffUnifiedLine.java} |   2 +-
+ .../diffplugin/psi/DiffVisitor.java           |  66 +-
+ ...fChangedImpl.java => DiffAnyLineImpl.java} |   6 +-
+ .../psi/impl/DiffConsoleCommandImpl.java      |  29 +
+ .../psi/impl/DiffContextDiffImpl.java         |  35 ++
+ .../psi/impl/DiffContextFromFileLineImpl.java |  29 +
+ .../psi/impl/DiffContextHunkFromImpl.java     |  35 ++
+ .../psi/impl/DiffContextHunkImpl.java         |  41 ++
+ .../psi/impl/DiffContextHunkToImpl.java       |  35 ++
+ .../psi/impl/DiffContextToFileLineImpl.java   |  29 +
+ .../psi/impl/DiffLeadingTextImpl.java         |  41 ++
+ .../psi/impl/DiffNormalDiffImpl.java          |  35 ++
+ ...inImpl.java => DiffNormalHunkAddImpl.java} |   6 +-
+ .../psi/impl/DiffNormalHunkChangeImpl.java    |  29 +
+ .../psi/impl/DiffNormalHunkDeleteImpl.java    |  29 +
+ .../psi/impl/DiffNormalHunkImpl.java          |  47 ++
+ .../psi/impl/DiffTrailingTextImpl.java        |  35 ++
+ .../psi/impl/DiffUnifiedDiffImpl.java         |  35 ++
+ .../psi/impl/DiffUnifiedHunkImpl.java         |  35 ++
+ ...InfoImpl.java => DiffUnifiedLineImpl.java} |   6 +-
+ .../highlighter/DiffColorSettingsPage.java    |  72 +--
+ .../highlighter/DiffSyntaxHighlighter.java    |  66 +-
+ .../thomasrosenau/diffplugin/lexer/Diff.flex  |  62 +-
+ .../diffplugin/lexer/DiffLexerAdapter.java    |   4 +-
+ .../thomasrosenau/diffplugin/parser/Diff.bnf  |  36 +-
+ src/test/resources/dir-context.diff           |  20 +-
+ src/test/resources/dir-normal.diff            |   2 +
+ src/test/resources/dir-unified.diff           |   3 +
+ 53 files changed, 1958 insertions(+), 372 deletions(-)
+ create mode 100644 .idea/runConfigurations/generateSources.xml
+ rename src/main/generated-java/de/thomasrosenau/diffplugin/psi/{DiffPlain.java => DiffAnyLine.java} (80%)
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffConsoleCommand.java
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextDiff.java
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextFromFileLine.java
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextHunk.java
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextHunkFrom.java
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextHunkTo.java
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextToFileLine.java
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffLeadingText.java
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffNormalDiff.java
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffNormalHunk.java
+ rename src/main/generated-java/de/thomasrosenau/diffplugin/psi/{DiffInfo.java => DiffNormalHunkAdd.java} (78%)
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffNormalHunkChange.java
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffNormalHunkDelete.java
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffTrailingText.java
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffUnifiedDiff.java
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffUnifiedHunk.java
+ rename src/main/generated-java/de/thomasrosenau/diffplugin/psi/{DiffChanged.java => DiffUnifiedLine.java} (78%)
+ rename src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/{DiffChangedImpl.java => DiffAnyLineImpl.java} (81%)
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffConsoleCommandImpl.java
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextDiffImpl.java
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextFromFileLineImpl.java
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextHunkFromImpl.java
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextHunkImpl.java
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextHunkToImpl.java
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextToFileLineImpl.java
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffLeadingTextImpl.java
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffNormalDiffImpl.java
+ rename src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/{DiffPlainImpl.java => DiffNormalHunkAddImpl.java} (79%)
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffNormalHunkChangeImpl.java
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffNormalHunkDeleteImpl.java
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffNormalHunkImpl.java
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffTrailingTextImpl.java
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffUnifiedDiffImpl.java
+ create mode 100644 src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffUnifiedHunkImpl.java
+ rename src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/{DiffInfoImpl.java => DiffUnifiedLineImpl.java} (80%)</fold>
+
+<fold text='diff --git a/.idea/gradle.xml b/.idea/gradle.xml' expand='true'>diff --git a/.idea/gradle.xml b/.idea/gradle.xml
+index 6545c4e..92e6e63 100644
+--- a/.idea/gradle.xml
++++ b/.idea/gradle.xml
+<fold text='@@ -12,7 +12,6 @@' expand='true'>@@ -12,7 +12,6 @@
+           </set>
+         </option>
+         <option name="resolveModulePerSourceSet" value="false" />
+-        <option name="useAutoImport" value="true" />
+         <option name="useQualifiedModuleNames" value="true" />
+       </GradleProjectSettings>
+     </option></fold></fold>
+<fold text='diff --git a/.idea/runConfigurations/build_plugin.xml b/.idea/runConfigurations/build_plugin.xml' expand='true'>diff --git a/.idea/runConfigurations/build_plugin.xml b/.idea/runConfigurations/build_plugin.xml
+index 1895d65..cf3c606 100644
+--- a/.idea/runConfigurations/build_plugin.xml
++++ b/.idea/runConfigurations/build_plugin.xml
+<fold text='@@ -10,8 +10,6 @@' expand='true'>@@ -10,8 +10,6 @@
+       </option>
+       <option name="taskNames">
+         <list>
+-          <option value="generateDiffParser" />
+-          <option value="generateDiffLexer" />
+           <option value="buildPlugin" />
+           <option value="verifyPlugin" />
+         </list></fold>
+<fold text='@@ -19,6 +17,8 @@' expand='true'>@@ -19,6 +17,8 @@
+       <option name="vmOptions" value="" />
+     </ExternalSystemSettings>
+     <GradleScriptDebugEnabled>true</GradleScriptDebugEnabled>
+-    <method v="2" />
++    <method v="2">
++      <option name="RunConfigurationTask" enabled="true" run_configuration_name="generateSources" run_configuration_type="GradleRunConfiguration" />
++    </method>
+   </configuration>
+ </component>
+\ No newline at end of file</fold></fold>
+<fold text='diff --git a/.idea/runConfigurations/generateSources.xml b/.idea/runConfigurations/generateSources.xml' expand='true'>diff --git a/.idea/runConfigurations/generateSources.xml b/.idea/runConfigurations/generateSources.xml
+new file mode 100644
+index 0000000..6460337
+--- /dev/null
++++ b/.idea/runConfigurations/generateSources.xml
+<fold text='@@ -0,0 +1,22 @@' expand='true'>@@ -0,0 +1,22 @@
++<component name="ProjectRunConfigurationManager">
++  <configuration default="false" name="generateSources" type="GradleRunConfiguration" factoryName="Gradle">
++    <ExternalSystemSettings>
++      <option name="executionName" />
++      <option name="externalProjectPath" value="$PROJECT_DIR$" />
++      <option name="externalSystemIdString" value="GRADLE" />
++      <option name="scriptParameters" value="" />
++      <option name="taskDescriptions">
++        <list />
++      </option>
++      <option name="taskNames">
++        <list>
++          <option value="generateDiffParser" />
++          <option value="generateDiffLexer" />
++        </list>
++      </option>
++      <option name="vmOptions" value="" />
++    </ExternalSystemSettings>
++    <GradleScriptDebugEnabled>true</GradleScriptDebugEnabled>
++    <method v="2" />
++  </configuration>
++</component>
+\ No newline at end of file</fold></fold>
+<fold text='diff --git a/.idea/runConfigurations/run_in_IDE.xml b/.idea/runConfigurations/run_in_IDE.xml' expand='true'>diff --git a/.idea/runConfigurations/run_in_IDE.xml b/.idea/runConfigurations/run_in_IDE.xml
+index 3822425..a4fd315 100644
+--- a/.idea/runConfigurations/run_in_IDE.xml
++++ b/.idea/runConfigurations/run_in_IDE.xml
+<fold text='@@ -10,14 +10,14 @@' expand='true'>@@ -10,14 +10,14 @@
+       </option>
+       <option name="taskNames">
+         <list>
+-          <option value="generateDiffParser" />
+-          <option value="generateDiffLexer" />
+           <option value="runIde" />
+         </list>
+       </option>
+       <option name="vmOptions" value="" />
+     </ExternalSystemSettings>
+     <GradleScriptDebugEnabled>true</GradleScriptDebugEnabled>
+-    <method v="2" />
++    <method v="2">
++      <option name="RunConfigurationTask" enabled="true" run_configuration_name="generateSources" run_configuration_type="GradleRunConfiguration" />
++    </method>
+   </configuration>
+ </component>
+\ No newline at end of file</fold></fold>
+<fold text='diff --git a/build.gradle b/build.gradle' expand='true'>diff --git a/build.gradle b/build.gradle
+index 336ddb9..d7c5ec3 100644
+--- a/build.gradle
++++ b/build.gradle
+<fold text='@@ -45,7 +45,8 @@ intellij {' expand='true'>@@ -45,7 +45,8 @@ intellij {
+     version = 'LATEST-EAP-SNAPSHOT'
+ }
+ 
+-File genSrc = file('src/main/generated-java')
++def genSrcPath = 'src/main/generated-java'
++File genSrc = file(genSrcPath)
+ sourceSets.main.java.srcDir genSrc
+ idea.module.generatedSourceDirs += genSrc
+ </fold>
+<fold text='@@ -61,7 +62,8 @@ patchPluginXml {' expand='true'>@@ -61,7 +62,8 @@ patchPluginXml {
+     pluginDescription '''
+     <h1>Syntax highlighting for .diff files and .patch files</h1>
+     <p>Supports the common formats: normal, contextual, unified (git patch).</p>
+-    <p>Does not support the formats: side-by-side, diff3, ed, if-else, RCS.</p>
++    <p>Does not support the formats: side-by-side, diff3, ed, if-else, RCS.
++       Currently does not support git binary patches.</p>
+     <br/>
+     <hr/>
+     <p>Copyright 2019 Thomas Rosenau</p></fold>
+<fold text='@@ -92,17 +94,19 @@ patchPluginXml {' expand='true'>@@ -92,17 +94,19 @@ patchPluginXml {
+     '''
+ }
+ 
++def namespacePath = 'de/thomasrosenau/diffplugin'
++
+ task generateDiffLexer(type: GenerateLexer) {
+-    source 'src/main/java/de/thomasrosenau/diffplugin/lexer/Diff.flex'
+-    targetDir 'src/main/generated-java/de/thomasrosenau/diffplugin'
++    source 'src/main/java/' + namespacePath + '/lexer/Diff.flex'
++    targetDir genSrcPath + '/' + namespacePath
+     targetClass 'DiffLexer'
+     purgeOldFiles true
+ }
+ 
+ task generateDiffParser(type: GenerateParser) {
+-    source 'src/main/java/de/thomasrosenau/diffplugin/parser/Diff.bnf'
+-    targetRoot 'src/main/generated-java'
++    source 'src/main/java/' + namespacePath + '/parser/Diff.bnf'
++    targetRoot genSrcPath
+     pathToParser 'DiffParser.java'
+-    pathToPsiRoot 'psi'
++    pathToPsiRoot namespacePath + '/psi'
+     purgeOldFiles true
+ }</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/DiffLexer.java b/src/main/generated-java/de/thomasrosenau/diffplugin/DiffLexer.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/DiffLexer.java b/src/main/generated-java/de/thomasrosenau/diffplugin/DiffLexer.java
+index 1902c89..9265357 100644
+--- a/src/main/generated-java/de/thomasrosenau/diffplugin/DiffLexer.java
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/DiffLexer.java
+<fold text='@@ -41,8 +41,9 @@ public class DiffLexer implements FlexLexer {' expand='true'>@@ -41,8 +41,9 @@ public class DiffLexer implements FlexLexer {
+ 
+   /** lexical states */
+   public static final int YYINITIAL = 0;
+-  public static final int GitHead = 2;
+-  public static final int DEFAULT = 4;
++  public static final int CONTEXT = 2;
++  public static final int UNIFIED = 4;
++  public static final int NORMAL = 6;
+ 
+   /**
+    * ZZ_LEXSTATE[l] is the state in the DFA for the lexical state l</fold>
+<fold text='@@ -51,7 +52,7 @@ public class DiffLexer implements FlexLexer {' expand='true'>@@ -51,7 +52,7 @@ public class DiffLexer implements FlexLexer {
+    * l is of the form l = 2*k, k a non negative integer
+    */
+   private static final int ZZ_LEXSTATE[] = { 
+-     0,  1,  0,  2,  0, 3
++     0,  1,  0,  2,  0,  3,  0, 4
+   };
+ 
+   /** </fold>
+<fold text='@@ -73,9 +74,9 @@ public class DiffLexer implements FlexLexer {' expand='true'>@@ -73,9 +74,9 @@ public class DiffLexer implements FlexLexer {
+ 
+   /* The ZZ_CMAP_A table has 320 entries */
+   static final char ZZ_CMAP_A[] = zzUnpackCMap(
+-    "\12\0\1\4\2\5\1\1\22\0\1\12\1\24\10\0\1\17\1\21\1\3\1\16\2\0\12\2\2\0\1\23"+
+-    "\1\0\1\22\1\0\1\20\5\0\1\6\25\0\1\25\7\0\1\13\1\0\1\15\2\0\1\14\3\0\1\11\1"+
+-    "\0\1\10\2\0\1\7\22\0\1\5\242\0\2\5\26\0");
++    "\12\0\1\4\2\5\1\1\22\0\1\7\1\11\10\0\1\6\1\12\1\3\1\10\2\0\12\2\2\0\1\20\1"+
++    "\0\1\17\1\0\1\13\33\0\1\23\4\0\1\14\1\0\1\15\1\16\1\0\1\22\2\0\1\21\33\0\1"+
++    "\5\242\0\2\5\26\0");
+ 
+   /** 
+    * Translates DFA states to action switch labels.</fold>
+<fold text='@@ -83,16 +84,22 @@ public class DiffLexer implements FlexLexer {' expand='true'>@@ -83,16 +84,22 @@ public class DiffLexer implements FlexLexer {
+   private static final int [] ZZ_ACTION = zzUnpackAction();
+ 
+   private static final String ZZ_ACTION_PACKED_0 =
+-    "\4\0\1\1\1\2\17\1\1\0\3\3\5\0\2\4"+
+-    "\1\3\4\0\2\5\1\3\2\0\1\3\1\0\1\3"+
+-    "\1\0\3\6\2\0\1\7\3\0\2\10\4\0\1\3"+
+-    "\1\0\2\11\3\12\1\13\2\0\3\14\5\0\1\14"+
+-    "\1\0\1\15\1\0\2\16\1\17\4\0\1\3\4\0"+
+-    "\1\3\1\0\1\3\3\20\3\0\1\6\3\21\3\22"+
+-    "\1\23\3\0\1\24\1\25\16\0\1\14\3\0";
++    "\5\0\1\1\1\2\22\1\1\0\3\3\11\0\1\3"+
++    "\2\0\2\4\2\0\2\5\1\0\2\6\2\0\2\7"+
++    "\1\3\1\0\2\10\1\3\2\0\2\11\1\3\4\0"+
++    "\2\12\1\3\1\0\2\13\1\3\1\14\7\0\3\15"+
++    "\2\0\1\3\1\0\1\3\2\0\1\3\1\0\1\3"+
++    "\4\0\1\16\1\0\2\16\1\17\1\0\2\17\3\20"+
++    "\3\0\1\21\2\0\2\22\4\0\1\3\3\23\1\24"+
++    "\1\0\1\25\1\0\1\26\1\0\1\3\1\0\1\3"+
++    "\5\0\1\3\1\0\1\3\1\0\3\27\3\30\1\0"+
++    "\1\3\3\0\3\31\2\0\3\32\1\0\1\33\1\34"+
++    "\3\35\3\0\1\36\2\0\1\37\1\0\1\40\3\0"+
++    "\3\41\4\0\1\42\5\0\3\43\3\44\1\0\1\45"+
++    "\1\46\3\0\3\47";
+ 
+   private static int [] zzUnpackAction() {
+-    int [] result = new int[135];
++    int [] result = new int[210];
+     int offset = 0;
+     offset = zzUnpackAction(ZZ_ACTION_PACKED_0, offset, result);
+     return result;</fold>
+<fold text='@@ -117,26 +124,36 @@ public class DiffLexer implements FlexLexer {' expand='true'>@@ -117,26 +124,36 @@ public class DiffLexer implements FlexLexer {
+   private static final int [] ZZ_ROWMAP = zzUnpackRowMap();
+ 
+   private static final String ZZ_ROWMAP_PACKED_0 =
+-    "\0\0\0\26\0\54\0\102\0\130\0\130\0\156\0\204"+
+-    "\0\232\0\260\0\306\0\334\0\362\0\u0108\0\u011e\0\u0134"+
+-    "\0\u014a\0\u0160\0\u0176\0\u018c\0\u01a2\0\156\0\u01b8\0\130"+
+-    "\0\156\0\204\0\u01ce\0\u01e4\0\u01fa\0\u0134\0\u01b8\0\130"+
+-    "\0\u0134\0\u0210\0\u0226\0\u023c\0\u011e\0\u01b8\0\130\0\u011e"+
+-    "\0\u0252\0\u0268\0\u0268\0\u027e\0\u027e\0\u0176\0\u0294\0\130"+
+-    "\0\u0176\0\u02aa\0\u02c0\0\130\0\u02d6\0\u02ec\0\u0302\0\u01b8"+
+-    "\0\130\0\u0318\0\u032e\0\u0344\0\u035a\0\u035a\0\u0370\0\u01b8"+
+-    "\0\130\0\u0386\0\130\0\u027e\0\130\0\u039c\0\u03b2\0\u03c8"+
+-    "\0\130\0\156\0\u03de\0\u03f4\0\u040a\0\u0420\0\u0436\0\u035a"+
+-    "\0\u044c\0\130\0\u0462\0\u0294\0\130\0\130\0\u0478\0\u048e"+
+-    "\0\u04a4\0\u04ba\0\u04a4\0\u04d0\0\u04e6\0\u04fc\0\u0512\0\u0512"+
+-    "\0\u0528\0\u0528\0\u053e\0\130\0\u04a4\0\u0554\0\u056a\0\u0580"+
+-    "\0\u0528\0\u0596\0\130\0\u0512\0\u05ac\0\130\0\u0528\0\130"+
+-    "\0\u05c2\0\u05d8\0\u05ee\0\130\0\130\0\u0604\0\u061a\0\u0630"+
+-    "\0\u0646\0\u065c\0\u0672\0\u0688\0\u069e\0\u06b4\0\u06ca\0\u06e0"+
+-    "\0\u06f6\0\u070c\0\u0722\0\u04a4\0\u0738\0\u074e\0\u0764";
++    "\0\0\0\24\0\50\0\74\0\120\0\144\0\144\0\170"+
++    "\0\214\0\240\0\264\0\310\0\334\0\360\0\u0104\0\u0118"+
++    "\0\u012c\0\u0140\0\u0154\0\u0168\0\u017c\0\u0190\0\u01a4\0\u01b8"+
++    "\0\u01cc\0\170\0\u01e0\0\144\0\170\0\214\0\u01f4\0\u0208"+
++    "\0\u021c\0\u0230\0\u0244\0\u0258\0\u026c\0\u0280\0\u0280\0\u0294"+
++    "\0\u02a8\0\u01e0\0\144\0\u02bc\0\u02d0\0\u01e0\0\144\0\u02e4"+
++    "\0\u01e0\0\144\0\u02f8\0\u0154\0\u01e0\0\144\0\u0154\0\u030c"+
++    "\0\u01e0\0\144\0\u030c\0\u0320\0\u0334\0\u01e0\0\144\0\u0334"+
++    "\0\u0348\0\u035c\0\u0370\0\u01b8\0\u01e0\0\144\0\u01b8\0\u01cc"+
++    "\0\u01e0\0\144\0\u01cc\0\144\0\u0384\0\u0398\0\u03ac\0\u03c0"+
++    "\0\u03d4\0\u03e8\0\u03fc\0\u0410\0\144\0\u0280\0\u0424\0\u0438"+
++    "\0\u0438\0\u044c\0\u044c\0\u0460\0\u0474\0\u0474\0\u0488\0\u0488"+
++    "\0\u049c\0\u04b0\0\u04c4\0\u04d8\0\u04ec\0\u0500\0\144\0\170"+
++    "\0\u0514\0\u0528\0\144\0\170\0\u053c\0\144\0\170\0\u0550"+
++    "\0\u0564\0\u0578\0\144\0\u058c\0\u05a0\0\u01e0\0\144\0\u05b4"+
++    "\0\u05c8\0\u05dc\0\u05f0\0\u05f0\0\u0604\0\144\0\170\0\144"+
++    "\0\u0618\0\144\0\u062c\0\144\0\u0640\0\u0640\0\u0654\0\u0654"+
++    "\0\u0668\0\u067c\0\u0690\0\u06a4\0\u06b8\0\u06a4\0\u06cc\0\u06cc"+
++    "\0\u06e0\0\u06f4\0\144\0\u0640\0\u0708\0\144\0\u0654\0\u071c"+
++    "\0\u071c\0\u0730\0\u0744\0\u0758\0\u076c\0\144\0\u06a4\0\u0780"+
++    "\0\u0794\0\u07a8\0\144\0\u06cc\0\u07bc\0\144\0\144\0\u07d0"+
++    "\0\144\0\u071c\0\u07e4\0\u07f8\0\u080c\0\144\0\u0820\0\u0834"+
++    "\0\144\0\u0848\0\144\0\u085c\0\u0870\0\u0884\0\u0898\0\144"+
++    "\0\u05f0\0\u08ac\0\u08c0\0\u08d4\0\u08e8\0\144\0\u08fc\0\u0910"+
++    "\0\u0924\0\u0938\0\u094c\0\u0960\0\144\0\170\0\u0974\0\144"+
++    "\0\u06a4\0\u0988\0\144\0\144\0\u099c\0\u09b0\0\u09c4\0\u09d8"+
++    "\0\144\0\170";
+ 
+   private static int [] zzUnpackRowMap() {
+-    int [] result = new int[135];
++    int [] result = new int[210];
+     int offset = 0;
+     offset = zzUnpackRowMap(ZZ_ROWMAP_PACKED_0, offset, result);
+     return result;</fold>
+<fold text='@@ -159,84 +176,112 @@ public class DiffLexer implements FlexLexer {' expand='true'>@@ -159,84 +176,112 @@ public class DiffLexer implements FlexLexer {
+   private static final int [] ZZ_TRANS = zzUnpackTrans();
+ 
+   private static final String ZZ_TRANS_PACKED_0 =
+-    "\1\5\1\6\2\5\1\6\21\5\1\7\1\6\1\10"+
+-    "\1\7\1\6\1\7\1\11\4\7\1\12\2\7\1\13"+
+-    "\1\14\1\15\1\16\1\17\1\20\1\21\1\22\1\23"+
+-    "\1\6\2\23\1\6\6\23\1\24\2\23\1\25\7\23"+
+-    "\1\7\1\6\1\10\1\7\1\6\6\7\1\12\2\7"+
+-    "\1\13\1\14\1\15\1\16\1\17\1\20\1\21\1\22"+
+-    "\26\0\1\26\1\27\2\26\1\30\1\31\21\26\1\27"+
+-    "\1\32\1\33\1\30\1\31\21\26\1\27\2\26\1\30"+
+-    "\1\31\1\26\1\34\17\26\1\27\2\26\1\30\1\31"+
+-    "\6\26\1\35\11\26\1\36\1\37\2\36\1\40\1\41"+
+-    "\10\36\1\42\7\36\1\26\1\27\2\26\1\30\1\31"+
+-    "\11\26\1\43\7\26\1\27\2\26\1\30\1\31\12\26"+
+-    "\1\44\5\26\1\45\1\46\2\45\1\47\1\50\13\45"+
+-    "\1\51\5\45\1\46\2\45\1\47\1\50\20\45\1\36"+
+-    "\1\37\2\36\1\40\1\41\20\36\1\52\1\27\2\52"+
+-    "\1\30\1\53\20\52\1\54\1\27\2\54\1\30\1\55"+
+-    "\20\54\1\56\1\57\2\56\1\60\1\61\21\56\1\57"+
+-    "\2\56\1\60\1\61\6\56\1\62\12\56\1\57\2\56"+
+-    "\1\60\1\61\10\56\1\63\7\56\4\0\1\64\21\0"+
+-    "\1\26\1\27\1\65\1\26\1\30\1\31\21\26\1\27"+
+-    "\2\26\1\30\1\31\2\26\1\66\16\26\1\27\2\26"+
+-    "\1\30\1\31\7\26\1\67\10\26\1\36\1\70\2\36"+
+-    "\1\71\1\41\4\36\1\72\3\36\1\73\7\36\1\26"+
+-    "\1\27\2\26\1\30\1\31\11\26\1\74\6\26\1\75"+
+-    "\1\27\2\75\1\30\1\76\20\75\1\45\1\46\2\45"+
+-    "\1\47\1\50\13\45\1\77\4\45\1\52\1\100\2\52"+
+-    "\1\101\1\53\20\52\1\54\1\102\2\54\1\103\1\104"+
+-    "\20\54\4\0\1\105\21\0\1\56\1\57\2\56\1\60"+
+-    "\1\61\7\56\1\106\11\56\1\57\2\56\1\60\1\61"+
+-    "\10\56\1\107\7\56\1\26\1\110\1\65\1\26\1\111"+
+-    "\1\112\21\26\1\27\2\26\1\30\1\31\3\26\1\113"+
+-    "\15\26\1\27\2\26\1\30\1\31\7\26\1\114\10\26"+
+-    "\1\36\1\70\2\36\1\71\1\41\21\36\1\70\2\36"+
+-    "\1\71\1\41\4\36\1\115\13\36\1\26\1\27\2\26"+
+-    "\1\30\1\31\4\26\1\116\4\26\1\117\6\26\1\75"+
+-    "\1\110\2\75\1\111\1\120\20\75\1\45\1\46\2\45"+
+-    "\1\47\1\50\4\45\1\121\13\45\4\0\1\122\21\0"+
+-    "\1\56\1\57\2\56\1\60\1\61\7\56\1\123\11\56"+
+-    "\1\124\2\56\1\125\1\61\20\56\4\0\1\126\21\0"+
+-    "\1\26\1\27\2\26\1\30\1\31\4\26\1\127\14\26"+
+-    "\1\27\2\26\1\30\1\31\4\26\1\130\13\26\1\131"+
+-    "\1\37\1\132\1\131\1\40\1\133\21\131\1\27\1\134"+
+-    "\1\131\1\30\1\133\20\131\1\26\1\27\2\26\1\30"+
+-    "\1\31\11\26\1\135\6\26\1\131\1\46\2\131\1\47"+
+-    "\1\133\20\131\1\56\1\57\2\56\1\60\1\61\4\56"+
+-    "\1\136\13\56\1\137\1\27\2\137\1\30\1\140\20\137"+
+-    "\1\141\1\27\2\141\1\30\1\142\20\141\1\131\1\143"+
+-    "\2\131\1\144\1\145\21\131\1\143\1\132\1\146\1\144"+
+-    "\1\145\21\131\1\143\1\134\1\147\1\144\1\145\20\131"+
+-    "\1\26\1\27\2\26\1\30\1\31\11\26\1\150\6\26"+
+-    "\1\141\1\57\2\141\1\60\1\151\20\141\1\137\1\152"+
+-    "\2\137\1\153\1\154\20\137\1\141\1\155\2\141\1\156"+
+-    "\1\157\20\141\4\0\1\160\21\0\1\131\1\143\1\161"+
+-    "\1\131\1\144\1\145\21\131\1\143\1\162\1\131\1\144"+
+-    "\1\145\20\131\1\26\1\27\2\26\1\30\1\31\11\26"+
+-    "\1\163\6\26\4\0\1\164\25\0\1\165\21\0\1\131"+
+-    "\1\143\1\161\1\131\1\144\1\145\4\131\1\166\14\131"+
+-    "\1\143\1\162\1\131\1\144\1\145\4\131\1\167\13\131"+
+-    "\1\26\1\27\2\26\1\30\1\31\11\26\1\170\6\26"+
+-    "\1\131\1\143\2\131\1\144\1\145\10\131\1\171\10\131"+
+-    "\1\143\2\131\1\144\1\145\11\131\1\172\6\131\1\26"+
+-    "\1\27\2\26\1\30\1\31\11\26\1\173\6\26\1\131"+
+-    "\1\143\2\131\1\144\1\145\10\131\1\174\10\131\1\143"+
+-    "\2\131\1\144\1\145\11\131\1\175\6\131\1\26\1\27"+
+-    "\2\26\1\30\1\31\11\26\1\176\6\26\1\131\1\143"+
+-    "\2\131\1\144\1\145\10\131\1\177\10\131\1\143\2\131"+
+-    "\1\144\1\145\11\131\1\200\6\131\1\26\1\27\2\26"+
+-    "\1\30\1\31\11\26\1\201\6\26\1\131\1\143\2\131"+
+-    "\1\144\1\145\10\131\1\202\10\131\1\143\2\131\1\144"+
+-    "\1\145\11\131\1\202\6\131\1\26\1\27\2\26\1\30"+
+-    "\1\31\11\26\1\203\6\26\1\131\1\110\2\131\1\111"+
+-    "\1\204\20\131\1\26\1\27\2\26\1\30\1\31\11\26"+
+-    "\1\205\7\26\1\27\2\26\1\30\1\31\11\26\1\206"+
+-    "\7\26\1\27\2\26\1\30\1\31\11\26\1\207\7\26"+
+-    "\1\70\2\26\1\71\1\31\20\26";
++    "\1\6\1\7\2\6\1\7\17\6\1\10\1\7\1\11"+
++    "\1\10\1\7\1\10\1\12\1\10\1\13\5\10\1\14"+
++    "\4\10\1\15\1\10\1\7\2\10\1\7\1\10\1\16"+
++    "\1\17\1\20\1\21\1\22\3\10\1\14\4\10\1\15"+
++    "\1\10\1\7\2\10\1\7\2\10\1\23\1\24\1\10"+
++    "\1\25\1\26\2\10\1\14\4\10\1\15\1\10\1\7"+
++    "\1\11\1\10\1\7\3\10\1\27\5\10\1\14\1\30"+
++    "\1\31\2\10\1\15\24\0\1\32\1\33\2\32\1\34"+
++    "\1\35\17\32\1\33\1\36\1\37\1\34\1\35\6\32"+
++    "\1\40\1\41\1\42\6\32\1\33\2\32\1\34\1\35"+
++    "\1\43\16\32\1\33\2\32\1\34\1\35\2\32\1\44"+
++    "\14\32\1\33\2\32\1\34\1\35\13\32\1\45\2\32"+
++    "\1\46\1\33\2\46\1\34\1\47\16\46\1\32\1\33"+
++    "\2\32\1\34\1\35\1\50\16\32\1\33\2\32\1\34"+
++    "\1\35\1\32\1\51\15\32\1\52\2\32\1\53\1\35"+
++    "\1\32\1\54\1\55\14\32\1\56\2\32\1\57\1\35"+
++    "\1\32\1\60\15\32\1\61\2\32\1\62\1\35\1\32"+
++    "\1\63\14\32\1\64\1\65\2\64\1\66\1\67\16\64"+
++    "\1\70\1\71\2\70\1\72\1\73\2\70\1\74\13\70"+
++    "\1\75\1\76\2\75\1\77\1\100\4\75\1\101\11\75"+
++    "\1\32\1\33\2\32\1\34\1\35\5\32\1\102\11\32"+
++    "\1\33\2\32\1\34\1\35\2\32\1\103\13\32\1\104"+
++    "\1\105\2\104\1\106\1\107\16\104\1\110\1\111\2\110"+
++    "\1\112\1\113\16\110\4\0\1\114\17\0\1\32\1\33"+
++    "\1\115\1\32\1\34\1\35\17\32\1\33\1\116\1\32"+
++    "\1\34\1\35\17\32\1\33\1\117\1\32\1\34\1\35"+
++    "\17\32\1\33\1\120\1\32\1\34\1\35\17\32\1\33"+
++    "\2\32\1\34\1\35\1\121\16\32\1\33\2\32\1\34"+
++    "\1\35\2\32\1\122\14\32\1\33\2\32\1\34\1\35"+
++    "\14\32\1\123\1\32\1\46\1\124\2\46\1\125\1\126"+
++    "\16\46\1\32\1\33\2\32\1\34\1\35\1\127\15\32"+
++    "\1\130\1\33\2\130\1\34\1\131\16\130\1\132\1\33"+
++    "\2\132\1\34\1\133\16\132\1\32\1\33\2\32\1\34"+
++    "\1\35\2\32\1\134\13\32\1\135\1\33\2\135\1\34"+
++    "\1\136\16\135\1\137\1\33\2\137\1\34\1\140\16\137"+
++    "\1\70\1\71\2\70\1\72\1\73\17\70\1\71\2\70"+
++    "\1\72\1\73\2\70\1\141\13\70\1\75\1\76\2\75"+
++    "\1\77\1\100\17\75\1\76\2\75\1\77\1\100\4\75"+
++    "\1\142\11\75\1\32\1\33\2\32\1\34\1\35\1\32"+
++    "\1\143\15\32\1\33\2\32\1\34\1\35\2\32\1\144"+
++    "\14\32\1\33\1\115\1\32\1\34\1\35\7\32\1\41"+
++    "\1\42\6\32\1\145\1\116\1\146\1\147\1\150\17\32"+
++    "\1\151\1\117\1\152\1\153\1\154\17\32\1\155\1\120"+
++    "\1\32\1\156\1\157\17\32\1\33\2\32\1\34\1\35"+
++    "\1\32\1\160\15\32\1\33\2\32\1\34\1\35\1\32"+
++    "\1\161\15\32\1\33\2\32\1\34\1\35\14\32\1\162"+
++    "\1\32\4\0\1\163\17\0\1\32\1\33\2\32\1\34"+
++    "\1\35\1\164\1\165\14\32\1\130\1\166\2\130\1\167"+
++    "\1\131\16\130\1\132\1\52\2\132\1\53\1\133\16\132"+
++    "\1\32\1\33\2\32\1\34\1\35\1\32\1\170\14\32"+
++    "\1\135\1\56\2\135\1\57\1\136\16\135\1\137\1\61"+
++    "\2\137\1\62\1\140\16\137\1\70\1\71\2\70\1\72"+
++    "\1\73\1\70\1\171\14\70\1\75\1\76\2\75\1\77"+
++    "\1\100\1\75\1\172\14\75\1\173\1\33\2\173\1\34"+
++    "\1\174\16\173\1\32\1\175\2\32\1\176\1\177\16\32"+
++    "\4\0\1\200\17\0\1\32\1\33\1\201\1\32\1\34"+
++    "\1\35\16\32\4\0\1\202\17\0\1\32\1\33\1\203"+
++    "\1\32\1\34\1\35\16\32\4\0\1\204\17\0\1\205"+
++    "\1\33\2\205\1\34\1\206\16\205\1\207\1\33\2\207"+
++    "\1\34\1\210\16\207\1\32\1\33\2\32\1\34\1\35"+
++    "\1\32\1\211\15\32\1\33\2\32\1\34\1\35\1\212"+
++    "\16\32\1\33\1\213\1\32\1\34\1\35\16\32\1\214"+
++    "\1\33\1\215\1\214\1\34\1\216\16\214\1\207\1\71"+
++    "\2\207\1\72\1\210\16\207\1\217\1\76\2\217\1\77"+
++    "\1\220\16\217\1\173\1\33\2\173\1\34\1\174\1\173"+
++    "\1\221\14\173\4\0\1\176\17\0\1\32\1\145\1\201"+
++    "\1\32\1\147\1\150\17\32\1\151\1\203\1\32\1\153"+
++    "\1\154\16\32\1\205\1\222\2\205\1\223\1\224\16\205"+
++    "\1\207\1\225\2\207\1\226\1\227\16\207\1\230\1\33"+
++    "\2\230\1\34\1\231\16\230\1\32\1\33\2\32\1\34"+
++    "\1\35\1\232\16\32\1\33\1\213\1\233\1\34\1\35"+
++    "\1\32\1\234\14\32\1\214\1\235\2\214\1\236\1\237"+
++    "\17\214\1\235\1\215\1\240\1\236\1\237\1\214\1\241"+
++    "\14\214\1\217\1\242\2\217\1\243\1\244\16\217\1\173"+
++    "\1\33\2\173\1\34\1\174\1\173\1\221\3\173\1\245"+
++    "\10\173\4\0\1\246\23\0\1\247\17\0\1\230\1\250"+
++    "\2\230\1\251\1\252\16\230\1\32\1\33\2\32\1\34"+
++    "\1\35\1\253\16\32\1\33\1\254\1\32\1\34\1\35"+
++    "\17\32\1\33\2\32\1\34\1\35\1\255\15\32\4\0"+
++    "\1\256\17\0\1\214\1\235\1\257\1\214\1\236\1\237"+
++    "\17\214\1\235\2\214\1\236\1\237\2\214\1\260\13\214"+
++    "\4\0\1\261\17\0\1\173\1\33\2\173\1\34\1\174"+
++    "\1\173\1\221\3\173\1\262\10\173\4\0\1\263\17\0"+
++    "\1\32\1\33\2\32\1\34\1\35\1\264\16\32\1\33"+
++    "\1\254\1\32\1\34\1\35\1\32\1\234\15\32\1\33"+
++    "\2\32\1\34\1\35\1\265\15\32\1\214\1\235\1\257"+
++    "\1\214\1\236\1\237\1\214\1\241\15\214\1\235\2\214"+
++    "\1\236\1\237\2\214\1\266\13\214\1\173\1\267\2\173"+
++    "\1\270\1\271\1\173\1\272\14\173\1\32\1\33\2\32"+
++    "\1\34\1\35\1\273\16\32\1\33\2\32\1\34\1\35"+
++    "\1\274\15\32\1\214\1\235\2\214\1\236\1\237\2\214"+
++    "\1\275\13\214\4\0\1\276\17\0\1\277\1\33\2\277"+
++    "\1\34\1\174\16\277\1\32\1\33\2\32\1\34\1\35"+
++    "\1\300\16\32\1\33\2\32\1\34\1\35\1\301\15\32"+
++    "\1\214\1\235\2\214\1\236\1\237\2\214\1\302\13\214"+
++    "\1\277\1\267\2\277\1\270\1\271\16\277\1\32\1\33"+
++    "\2\32\1\34\1\35\1\303\16\32\1\304\2\32\1\305"+
++    "\1\306\16\32\1\214\1\307\2\214\1\310\1\311\16\214"+
++    "\1\32\1\33\2\32\1\34\1\35\1\312\15\32\4\0"+
++    "\1\313\23\0\1\314\17\0\1\32\1\33\2\32\1\34"+
++    "\1\35\1\315\16\32\1\33\2\32\1\34\1\35\1\316"+
++    "\16\32\1\33\2\32\1\34\1\35\1\317\16\32\1\320"+
++    "\2\32\1\321\1\322\16\32\4\0\1\321\17\0";
+ 
+   private static int [] zzUnpackTrans() {
+-    int [] result = new int[1914];
++    int [] result = new int[2540];
+     int offset = 0;
+     offset = zzUnpackTrans(ZZ_TRANS_PACKED_0, offset, result);
+     return result;</fold>
+<fold text='@@ -274,18 +319,25 @@ public class DiffLexer implements FlexLexer {' expand='true'>@@ -274,18 +319,25 @@ public class DiffLexer implements FlexLexer {
+   private static final int [] ZZ_ATTRIBUTE = zzUnpackAttribute();
+ 
+   private static final String ZZ_ATTRIBUTE_PACKED_0 =
+-    "\4\0\2\11\17\1\1\0\1\1\1\11\1\1\5\0"+
+-    "\1\1\1\11\1\1\4\0\1\1\1\11\1\1\2\0"+
+-    "\1\1\1\0\1\1\1\0\1\1\1\11\1\1\2\0"+
+-    "\1\11\3\0\1\1\1\11\4\0\1\1\1\0\1\1"+
+-    "\1\11\1\1\1\11\1\1\1\11\2\0\1\1\1\11"+
+-    "\1\1\5\0\1\1\1\0\1\11\1\0\1\1\2\11"+
+-    "\4\0\1\1\4\0\1\1\1\0\2\1\1\11\1\1"+
+-    "\3\0\2\1\1\11\2\1\1\11\1\1\1\11\3\0"+
+-    "\2\11\16\0\1\1\3\0";
++    "\5\0\2\11\22\1\1\0\1\1\1\11\1\1\11\0"+
++    "\1\1\2\0\1\1\1\11\2\0\1\1\1\11\1\0"+
++    "\1\1\1\11\2\0\1\1\1\11\1\1\1\0\1\1"+
++    "\1\11\1\1\2\0\1\1\1\11\1\1\4\0\1\1"+
++    "\1\11\1\1\1\0\1\1\1\11\1\1\1\11\7\0"+
++    "\1\1\1\11\1\1\2\0\1\1\1\0\1\1\2\0"+
++    "\1\1\1\0\1\1\4\0\1\1\1\0\1\11\2\1"+
++    "\1\0\1\11\2\1\1\11\1\1\3\0\1\11\2\0"+
++    "\1\1\1\11\4\0\2\1\1\11\1\1\1\11\1\0"+
++    "\1\11\1\0\1\11\1\0\1\1\1\0\1\1\5\0"+
++    "\1\1\1\0\1\1\1\0\1\1\1\11\2\1\1\11"+
++    "\1\1\1\0\1\1\3\0\1\1\1\11\1\1\2\0"+
++    "\1\1\1\11\1\1\1\0\2\11\1\1\1\11\1\1"+
++    "\3\0\1\11\2\0\1\11\1\0\1\11\3\0\1\1"+
++    "\1\11\1\1\4\0\1\11\5\0\1\1\1\11\2\1"+
++    "\1\11\1\1\1\0\2\11\3\0\1\1\1\11\1\1";
+ 
+   private static int [] zzUnpackAttribute() {
+-    int [] result = new int[135];
++    int [] result = new int[210];
+     int offset = 0;
+     offset = zzUnpackAttribute(ZZ_ATTRIBUTE_PACKED_0, offset, result);
+     return result;</fold>
+<fold text='@@ -622,149 +674,281 @@ public class DiffLexer implements FlexLexer {' expand='true'>@@ -622,149 +674,281 @@ public class DiffLexer implements FlexLexer {
+             { return BAD_CHARACTER;
+             } 
+             // fall through
+-          case 22: break;
++          case 40: break;
+           case 2: 
+             { return WHITE_SPACE;
+             } 
+             // fall through
+-          case 23: break;
++          case 41: break;
+           case 3: 
+             // lookahead expression with fixed lookahead length
+             zzMarkedPos = Character.offsetByCodePoints
+                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -1);
+-            { yybegin(DEFAULT); return OTHER;
++            { return OTHER;
+             } 
+             // fall through
+-          case 24: break;
++          case 42: break;
+           case 4: 
+-            { yybegin(DEFAULT); return DELETED;
++            { return CONTEXT_DELETED_LINE;
+             } 
+             // fall through
+-          case 25: break;
++          case 43: break;
+           case 5: 
+-            { yybegin(DEFAULT); return ADDED;
++            { return CONTEXT_CHANGED_LINE;
+             } 
+             // fall through
+-          case 26: break;
++          case 44: break;
+           case 6: 
++            { return CONTEXT_INSERTED_LINE;
++            } 
++            // fall through
++          case 45: break;
++          case 7: 
++            { return UNIFIED_COMMON_LINE;
++            } 
++            // fall through
++          case 46: break;
++          case 8: 
++            { return UNIFIED_DELETED_LINE;
++            } 
++            // fall through
++          case 47: break;
++          case 9: 
++            { return UNIFIED_INSERTED_LINE;
++            } 
++            // fall through
++          case 48: break;
++          case 10: 
++            { return NORMAL_TO_LINE;
++            } 
++            // fall through
++          case 49: break;
++          case 11: 
++            { return NORMAL_FROM_LINE;
++            } 
++            // fall through
++          case 50: break;
++          case 12: 
++            // lookahead expression with fixed lookahead length
++            zzMarkedPos = Character.offsetByCodePoints
++                (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -2);
++            { return OTHER;
++            } 
++            // fall through
++          case 51: break;
++          case 13: 
+             // lookahead expression with fixed lookahead length
+             zzMarkedPos = Character.offsetByCodePoints
+                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -1);
+-            { return GIT_HEAD;
++            { return EOLHINT;
+             } 
+             // fall through
+-          case 27: break;
+-          case 7: 
++          case 52: break;
++          case 14: 
++            // lookahead expression with fixed lookahead length
++            zzMarkedPos = Character.offsetByCodePoints
++                (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -1);
++            { yybegin(NORMAL); return NORMAL_ADD_COMMAND;
++            } 
++            // fall through
++          case 53: break;
++          case 15: 
++            // lookahead expression with fixed lookahead length
++            zzMarkedPos = Character.offsetByCodePoints
++                (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -1);
++            { yybegin(NORMAL); return NORMAL_CHANGE_COMMAND;
++            } 
++            // fall through
++          case 54: break;
++          case 16: 
++            // lookahead expression with fixed lookahead length
++            zzMarkedPos = Character.offsetByCodePoints
++                (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -1);
++            { yybegin(NORMAL); return NORMAL_DELETE_COMMAND;
++            } 
++            // fall through
++          case 55: break;
++          case 17: 
+             // lookahead expression with fixed lookahead length
+             zzMarkedPos = Character.offsetByCodePoints
+                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -2);
+-            { yybegin(DEFAULT); return OTHER;
++            { return EOLHINT;
+             } 
+             // fall through
+-          case 28: break;
+-          case 8: 
+-            { yybegin(DEFAULT); return SEPARATOR;
++          case 56: break;
++          case 18: 
++            { return CONTEXT_COMMON_LINE;
+             } 
+             // fall through
+-          case 29: break;
+-          case 9: 
+-            { yybegin(DEFAULT); return MODIFIED;
++          case 57: break;
++          case 19: 
++            // lookahead expression with fixed base length
++            zzMarkedPos = Character.offsetByCodePoints
++                (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzStartRead, 3);
++            { return NORMAL_SEPARATOR;
+             } 
+             // fall through
+-          case 30: break;
+-          case 10: 
++          case 58: break;
++          case 20: 
++            // lookahead expression with fixed lookahead length
++            zzMarkedPos = Character.offsetByCodePoints
++                (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -2);
++            { yybegin(NORMAL); return NORMAL_ADD_COMMAND;
++            } 
++            // fall through
++          case 59: break;
++          case 21: 
++            // lookahead expression with fixed lookahead length
++            zzMarkedPos = Character.offsetByCodePoints
++                (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -2);
++            { yybegin(NORMAL); return NORMAL_CHANGE_COMMAND;
++            } 
++            // fall through
++          case 60: break;
++          case 22: 
++            // lookahead expression with fixed lookahead length
++            zzMarkedPos = Character.offsetByCodePoints
++                (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -2);
++            { yybegin(NORMAL); return NORMAL_DELETE_COMMAND;
++            } 
++            // fall through
++          case 61: break;
++          case 23: 
+             // lookahead expression with fixed lookahead length
+             zzMarkedPos = Character.offsetByCodePoints
+                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -1);
+-            { yybegin(DEFAULT); return EOLHINT;
++            { yybegin(CONTEXT); return CONTEXT_FROM_LABEL;
+             } 
+             // fall through
+-          case 31: break;
+-          case 11: 
++          case 62: break;
++          case 24: 
++            // lookahead expression with fixed lookahead length
++            zzMarkedPos = Character.offsetByCodePoints
++                (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -1);
++            { yybegin(UNIFIED); return UNIFIED_FROM_LABEL;
++            } 
++            // fall through
++          case 63: break;
++          case 25: 
++            // lookahead expression with fixed lookahead length
++            zzMarkedPos = Character.offsetByCodePoints
++                (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -1);
++            { return CONTEXT_TO_LABEL;
++            } 
++            // fall through
++          case 64: break;
++          case 26: 
++            // lookahead expression with fixed lookahead length
++            zzMarkedPos = Character.offsetByCodePoints
++                (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -1);
++            { return UNIFIED_TO_LABEL;
++            } 
++            // fall through
++          case 65: break;
++          case 27: 
+             // lookahead expression with fixed lookahead length
+             zzMarkedPos = Character.offsetByCodePoints
+                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -2);
+-            { return GIT_HEAD;
++            { yybegin(CONTEXT); return CONTEXT_FROM_LABEL;
+             } 
+             // fall through
+-          case 32: break;
+-          case 12: 
++          case 66: break;
++          case 28: 
++            // lookahead expression with fixed lookahead length
++            zzMarkedPos = Character.offsetByCodePoints
++                (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -2);
++            { yybegin(UNIFIED); return UNIFIED_FROM_LABEL;
++            } 
++            // fall through
++          case 67: break;
++          case 29: 
+             // lookahead expression with fixed lookahead length
+             zzMarkedPos = Character.offsetByCodePoints
+                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -1);
+-            { yybegin(DEFAULT); return HUNK_HEAD;
++            { yybegin(YYINITIAL); return COMMAND;
+             } 
+             // fall through
+-          case 33: break;
+-          case 13: 
++          case 68: break;
++          case 30: 
+             // lookahead expression with fixed lookahead length
+             zzMarkedPos = Character.offsetByCodePoints
+                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -2);
+-            { yybegin(DEFAULT); return EOLHINT;
++            { return CONTEXT_TO_LABEL;
+             } 
+             // fall through
+-          case 34: break;
+-          case 14: 
+-            { return SEPARATOR;
++          case 69: break;
++          case 31: 
++            // lookahead expression with fixed lookahead length
++            zzMarkedPos = Character.offsetByCodePoints
++                (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -2);
++            { return UNIFIED_TO_LABEL;
+             } 
+             // fall through
+-          case 35: break;
+-          case 15: 
++          case 70: break;
++          case 32: 
+             // lookahead expression with fixed lookahead length
+             zzMarkedPos = Character.offsetByCodePoints
+                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -2);
+-            { yybegin(DEFAULT); return HUNK_HEAD;
++            { yybegin(YYINITIAL); return COMMAND;
+             } 
+             // fall through
+-          case 36: break;
+-          case 16: 
++          case 71: break;
++          case 33: 
+             // lookahead expression with fixed lookahead length
+             zzMarkedPos = Character.offsetByCodePoints
+                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -1);
+-            { yybegin(DEFAULT); return FILE;
++            { return UNIFIED_LINE_NUMBERS;
+             } 
+             // fall through
+-          case 37: break;
+-          case 17: 
++          case 72: break;
++          case 34: 
+             // lookahead expression with fixed lookahead length
+             zzMarkedPos = Character.offsetByCodePoints
+-                (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -1);
+-            { yybegin(GitHead); return GIT_HEAD;
++                (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -2);
++            { return UNIFIED_LINE_NUMBERS;
+             } 
+             // fall through
+-          case 38: break;
+-          case 18: 
++          case 73: break;
++          case 35: 
+             // lookahead expression with fixed lookahead length
+             zzMarkedPos = Character.offsetByCodePoints
+                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -1);
+-            { yybegin(DEFAULT); return COMMAND;
++            { return CONTEXT_FROM_LINE_NUMBERS;
+             } 
+             // fall through
+-          case 39: break;
+-          case 19: 
++          case 74: break;
++          case 36: 
+             // lookahead expression with fixed lookahead length
+             zzMarkedPos = Character.offsetByCodePoints
+-                (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -2);
+-            { yybegin(DEFAULT); return FILE;
++                (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -1);
++            { return CONTEXT_TO_LINE_NUMBERS;
+             } 
+             // fall through
+-          case 40: break;
+-          case 20: 
++          case 75: break;
++          case 37: 
+             // lookahead expression with fixed lookahead length
+             zzMarkedPos = Character.offsetByCodePoints
+                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -2);
+-            { yybegin(GitHead); return GIT_HEAD;
++            { return CONTEXT_FROM_LINE_NUMBERS;
+             } 
+             // fall through
+-          case 41: break;
+-          case 21: 
++          case 76: break;
++          case 38: 
+             // lookahead expression with fixed lookahead length
+             zzMarkedPos = Character.offsetByCodePoints
+                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -2);
+-            { yybegin(DEFAULT); return COMMAND;
++            { return CONTEXT_TO_LINE_NUMBERS;
+             } 
+             // fall through
+-          case 42: break;
++          case 77: break;
++          case 39: 
++            // lookahead expression with fixed base length
++            zzMarkedPos = Character.offsetByCodePoints
++                (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzStartRead, 15);
++            { return CONTEXT_HUNK_SEPERATOR;
++            } 
++            // fall through
++          case 78: break;
+           default:
+             zzScanError(ZZ_NO_MATCH);
+           }</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/parser/DiffParser.java b/src/main/generated-java/de/thomasrosenau/diffplugin/parser/DiffParser.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/parser/DiffParser.java b/src/main/generated-java/de/thomasrosenau/diffplugin/parser/DiffParser.java
+index 94ccfe2..8a6b80d 100644
+--- a/src/main/generated-java/de/thomasrosenau/diffplugin/parser/DiffParser.java
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/parser/DiffParser.java
+<fold text='@@ -23,14 +23,59 @@ public class DiffParser implements PsiParser, LightPsiParser {' expand='true'>@@ -23,14 +23,59 @@ public class DiffParser implements PsiParser, LightPsiParser {
+     boolean result_;
+     builder_ = adapt_builder_(root_, builder_, this, null);
+     Marker marker_ = enter_section_(builder_, 0, _COLLAPSE_, null);
+-    if (root_ == CHANGED) {
+-      result_ = changed(builder_, 0);
++    if (root_ == ANY_LINE) {
++      result_ = anyLine(builder_, 0);
+     }
+-    else if (root_ == INFO) {
+-      result_ = info(builder_, 0);
++    else if (root_ == CONSOLE_COMMAND) {
++      result_ = consoleCommand(builder_, 0);
+     }
+-    else if (root_ == PLAIN) {
+-      result_ = plain(builder_, 0);
++    else if (root_ == CONTEXT_DIFF) {
++      result_ = contextDiff(builder_, 0);
++    }
++    else if (root_ == CONTEXT_FROM_FILE_LINE) {
++      result_ = contextFromFileLine(builder_, 0);
++    }
++    else if (root_ == CONTEXT_HUNK) {
++      result_ = contextHunk(builder_, 0);
++    }
++    else if (root_ == CONTEXT_HUNK_FROM) {
++      result_ = contextHunkFrom(builder_, 0);
++    }
++    else if (root_ == CONTEXT_HUNK_TO) {
++      result_ = contextHunkTo(builder_, 0);
++    }
++    else if (root_ == CONTEXT_TO_FILE_LINE) {
++      result_ = contextToFileLine(builder_, 0);
++    }
++    else if (root_ == LEADING_TEXT) {
++      result_ = leadingText(builder_, 0);
++    }
++    else if (root_ == NORMAL_DIFF) {
++      result_ = normalDiff(builder_, 0);
++    }
++    else if (root_ == NORMAL_HUNK) {
++      result_ = normalHunk(builder_, 0);
++    }
++    else if (root_ == NORMAL_HUNK_ADD) {
++      result_ = normalHunkAdd(builder_, 0);
++    }
++    else if (root_ == NORMAL_HUNK_CHANGE) {
++      result_ = normalHunkChange(builder_, 0);
++    }
++    else if (root_ == NORMAL_HUNK_DELETE) {
++      result_ = normalHunkDelete(builder_, 0);
++    }
++    else if (root_ == TRAILING_TEXT) {
++      result_ = trailingText(builder_, 0);
++    }
++    else if (root_ == UNIFIED_DIFF) {
++      result_ = unifiedDiff(builder_, 0);
++    }
++    else if (root_ == UNIFIED_HUNK) {
++      result_ = unifiedHunk(builder_, 0);
++    }
++    else if (root_ == UNIFIED_LINE) {
++      result_ = unifiedLine(builder_, 0);
+     }
+     else {
+       result_ = parse_root_(root_, builder_, 0);</fold>
+<fold text='@@ -43,65 +88,514 @@ public class DiffParser implements PsiParser, LightPsiParser {' expand='true'>@@ -43,65 +88,514 @@ public class DiffParser implements PsiParser, LightPsiParser {
+   }
+ 
+   /* ********************************************************** */
+-  // ADDED | DELETED | MODIFIED
+-  public static boolean changed(PsiBuilder builder_, int level_) {
+-    if (!recursion_guard_(builder_, level_, "changed")) return false;
++  // WHITE_SPACE | OTHER
++  public static boolean anyLine(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "anyLine")) return false;
++    if (!nextTokenIs(builder_, "<any line>", OTHER, WHITE_SPACE)) return false;
+     boolean result_;
+-    Marker marker_ = enter_section_(builder_, level_, _NONE_, CHANGED, "<changed>");
+-    result_ = consumeToken(builder_, ADDED);
+-    if (!result_) result_ = consumeToken(builder_, DELETED);
+-    if (!result_) result_ = consumeToken(builder_, MODIFIED);
++    Marker marker_ = enter_section_(builder_, level_, _NONE_, ANY_LINE, "<any line>");
++    result_ = consumeToken(builder_, WHITE_SPACE);
++    if (!result_) result_ = consumeToken(builder_, OTHER);
+     exit_section_(builder_, level_, marker_, result_, false, null);
+     return result_;
+   }
+ 
+   /* ********************************************************** */
+-  // (info | changed | plain)*
+-  static boolean diffFile(PsiBuilder builder_, int level_) {
+-    if (!recursion_guard_(builder_, level_, "diffFile")) return false;
++  // COMMAND
++  public static boolean consoleCommand(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "consoleCommand")) return false;
++    if (!nextTokenIs(builder_, COMMAND)) return false;
++    boolean result_;
++    Marker marker_ = enter_section_(builder_);
++    result_ = consumeToken(builder_, COMMAND);
++    exit_section_(builder_, marker_, CONSOLE_COMMAND, result_);
++    return result_;
++  }
++
++  /* ********************************************************** */
++  // CONTEXT_FROM_LABEL CONTEXT_TO_LABEL contextHunk+
++  public static boolean contextDiff(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "contextDiff")) return false;
++    if (!nextTokenIs(builder_, CONTEXT_FROM_LABEL)) return false;
++    boolean result_;
++    Marker marker_ = enter_section_(builder_);
++    result_ = consumeTokens(builder_, 0, CONTEXT_FROM_LABEL, CONTEXT_TO_LABEL);
++    result_ = result_ && contextDiff_2(builder_, level_ + 1);
++    exit_section_(builder_, marker_, CONTEXT_DIFF, result_);
++    return result_;
++  }
++
++  // contextHunk+
++  private static boolean contextDiff_2(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "contextDiff_2")) return false;
++    boolean result_;
++    Marker marker_ = enter_section_(builder_);
++    result_ = contextHunk(builder_, level_ + 1);
++    while (result_) {
++      int pos_ = current_position_(builder_);
++      if (!contextHunk(builder_, level_ + 1)) break;
++      if (!empty_element_parsed_guard_(builder_, "contextDiff_2", pos_)) break;
++    }
++    exit_section_(builder_, marker_, null, result_);
++    return result_;
++  }
++
++  /* ********************************************************** */
++  // CONTEXT_COMMON_LINE | CONTEXT_CHANGED_LINE | CONTEXT_DELETED_LINE
++  public static boolean contextFromFileLine(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "contextFromFileLine")) return false;
++    boolean result_;
++    Marker marker_ = enter_section_(builder_, level_, _NONE_, CONTEXT_FROM_FILE_LINE, "<context from file line>");
++    result_ = consumeToken(builder_, CONTEXT_COMMON_LINE);
++    if (!result_) result_ = consumeToken(builder_, CONTEXT_CHANGED_LINE);
++    if (!result_) result_ = consumeToken(builder_, CONTEXT_DELETED_LINE);
++    exit_section_(builder_, level_, marker_, result_, false, null);
++    return result_;
++  }
++
++  /* ********************************************************** */
++  // CONTEXT_HUNK_SEPERATOR contextHunkFrom contextHunkTo
++  public static boolean contextHunk(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "contextHunk")) return false;
++    if (!nextTokenIs(builder_, CONTEXT_HUNK_SEPERATOR)) return false;
++    boolean result_;
++    Marker marker_ = enter_section_(builder_);
++    result_ = consumeToken(builder_, CONTEXT_HUNK_SEPERATOR);
++    result_ = result_ && contextHunkFrom(builder_, level_ + 1);
++    result_ = result_ && contextHunkTo(builder_, level_ + 1);
++    exit_section_(builder_, marker_, CONTEXT_HUNK, result_);
++    return result_;
++  }
++
++  /* ********************************************************** */
++  // CONTEXT_FROM_LINE_NUMBERS contextFromFileLine* (EOLHINT)?
++  public static boolean contextHunkFrom(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "contextHunkFrom")) return false;
++    if (!nextTokenIs(builder_, CONTEXT_FROM_LINE_NUMBERS)) return false;
++    boolean result_;
++    Marker marker_ = enter_section_(builder_);
++    result_ = consumeToken(builder_, CONTEXT_FROM_LINE_NUMBERS);
++    result_ = result_ && contextHunkFrom_1(builder_, level_ + 1);
++    result_ = result_ && contextHunkFrom_2(builder_, level_ + 1);
++    exit_section_(builder_, marker_, CONTEXT_HUNK_FROM, result_);
++    return result_;
++  }
++
++  // contextFromFileLine*
++  private static boolean contextHunkFrom_1(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "contextHunkFrom_1")) return false;
+     while (true) {
+       int pos_ = current_position_(builder_);
+-      if (!diffFile_0(builder_, level_ + 1)) break;
+-      if (!empty_element_parsed_guard_(builder_, "diffFile", pos_)) break;
++      if (!contextFromFileLine(builder_, level_ + 1)) break;
++      if (!empty_element_parsed_guard_(builder_, "contextHunkFrom_1", pos_)) break;
+     }
+     return true;
+   }
+ 
+-  // info | changed | plain
++  // (EOLHINT)?
++  private static boolean contextHunkFrom_2(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "contextHunkFrom_2")) return false;
++    consumeToken(builder_, EOLHINT);
++    return true;
++  }
++
++  /* ********************************************************** */
++  // CONTEXT_TO_LINE_NUMBERS contextToFileLine* (EOLHINT)?
++  public static boolean contextHunkTo(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "contextHunkTo")) return false;
++    if (!nextTokenIs(builder_, CONTEXT_TO_LINE_NUMBERS)) return false;
++    boolean result_;
++    Marker marker_ = enter_section_(builder_);
++    result_ = consumeToken(builder_, CONTEXT_TO_LINE_NUMBERS);
++    result_ = result_ && contextHunkTo_1(builder_, level_ + 1);
++    result_ = result_ && contextHunkTo_2(builder_, level_ + 1);
++    exit_section_(builder_, marker_, CONTEXT_HUNK_TO, result_);
++    return result_;
++  }
++
++  // contextToFileLine*
++  private static boolean contextHunkTo_1(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "contextHunkTo_1")) return false;
++    while (true) {
++      int pos_ = current_position_(builder_);
++      if (!contextToFileLine(builder_, level_ + 1)) break;
++      if (!empty_element_parsed_guard_(builder_, "contextHunkTo_1", pos_)) break;
++    }
++    return true;
++  }
++
++  // (EOLHINT)?
++  private static boolean contextHunkTo_2(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "contextHunkTo_2")) return false;
++    consumeToken(builder_, EOLHINT);
++    return true;
++  }
++
++  /* ********************************************************** */
++  // CONTEXT_COMMON_LINE | CONTEXT_CHANGED_LINE | CONTEXT_INSERTED_LINE
++  public static boolean contextToFileLine(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "contextToFileLine")) return false;
++    boolean result_;
++    Marker marker_ = enter_section_(builder_, level_, _NONE_, CONTEXT_TO_FILE_LINE, "<context to file line>");
++    result_ = consumeToken(builder_, CONTEXT_COMMON_LINE);
++    if (!result_) result_ = consumeToken(builder_, CONTEXT_CHANGED_LINE);
++    if (!result_) result_ = consumeToken(builder_, CONTEXT_INSERTED_LINE);
++    exit_section_(builder_, level_, marker_, result_, false, null);
++    return result_;
++  }
++
++  /* ********************************************************** */
++  // (leadingText (normalDiff | contextDiff | unifiedDiff))+ trailingText
++  static boolean diffFile(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "diffFile")) return false;
++    boolean result_;
++    Marker marker_ = enter_section_(builder_);
++    result_ = diffFile_0(builder_, level_ + 1);
++    result_ = result_ && trailingText(builder_, level_ + 1);
++    exit_section_(builder_, marker_, null, result_);
++    return result_;
++  }
++
++  // (leadingText (normalDiff | contextDiff | unifiedDiff))+
+   private static boolean diffFile_0(PsiBuilder builder_, int level_) {
+     if (!recursion_guard_(builder_, level_, "diffFile_0")) return false;
+     boolean result_;
+-    result_ = info(builder_, level_ + 1);
+-    if (!result_) result_ = changed(builder_, level_ + 1);
+-    if (!result_) result_ = plain(builder_, level_ + 1);
++    Marker marker_ = enter_section_(builder_);
++    result_ = diffFile_0_0(builder_, level_ + 1);
++    while (result_) {
++      int pos_ = current_position_(builder_);
++      if (!diffFile_0_0(builder_, level_ + 1)) break;
++      if (!empty_element_parsed_guard_(builder_, "diffFile_0", pos_)) break;
++    }
++    exit_section_(builder_, marker_, null, result_);
++    return result_;
++  }
++
++  // leadingText (normalDiff | contextDiff | unifiedDiff)
++  private static boolean diffFile_0_0(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "diffFile_0_0")) return false;
++    boolean result_;
++    Marker marker_ = enter_section_(builder_);
++    result_ = leadingText(builder_, level_ + 1);
++    result_ = result_ && diffFile_0_0_1(builder_, level_ + 1);
++    exit_section_(builder_, marker_, null, result_);
++    return result_;
++  }
++
++  // normalDiff | contextDiff | unifiedDiff
++  private static boolean diffFile_0_0_1(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "diffFile_0_0_1")) return false;
++    boolean result_;
++    result_ = normalDiff(builder_, level_ + 1);
++    if (!result_) result_ = contextDiff(builder_, level_ + 1);
++    if (!result_) result_ = unifiedDiff(builder_, level_ + 1);
+     return result_;
+   }
+ 
+   /* ********************************************************** */
+-  // COMMAND | FILE | SEPARATOR | HUNK_HEAD | EOLHINT | GIT_HEAD
+-  public static boolean info(PsiBuilder builder_, int level_) {
+-    if (!recursion_guard_(builder_, level_, "info")) return false;
++  // anyLine* (consoleCommand anyLine*)?
++  public static boolean leadingText(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "leadingText")) return false;
+     boolean result_;
+-    Marker marker_ = enter_section_(builder_, level_, _NONE_, INFO, "<info>");
+-    result_ = consumeToken(builder_, COMMAND);
+-    if (!result_) result_ = consumeToken(builder_, FILE);
+-    if (!result_) result_ = consumeToken(builder_, SEPARATOR);
+-    if (!result_) result_ = consumeToken(builder_, HUNK_HEAD);
+-    if (!result_) result_ = consumeToken(builder_, EOLHINT);
+-    if (!result_) result_ = consumeToken(builder_, GIT_HEAD);
++    Marker marker_ = enter_section_(builder_, level_, _NONE_, LEADING_TEXT, "<leading text>");
++    result_ = leadingText_0(builder_, level_ + 1);
++    result_ = result_ && leadingText_1(builder_, level_ + 1);
++    exit_section_(builder_, level_, marker_, result_, false, null);
++    return result_;
++  }
++
++  // anyLine*
++  private static boolean leadingText_0(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "leadingText_0")) return false;
++    while (true) {
++      int pos_ = current_position_(builder_);
++      if (!anyLine(builder_, level_ + 1)) break;
++      if (!empty_element_parsed_guard_(builder_, "leadingText_0", pos_)) break;
++    }
++    return true;
++  }
++
++  // (consoleCommand anyLine*)?
++  private static boolean leadingText_1(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "leadingText_1")) return false;
++    leadingText_1_0(builder_, level_ + 1);
++    return true;
++  }
++
++  // consoleCommand anyLine*
++  private static boolean leadingText_1_0(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "leadingText_1_0")) return false;
++    boolean result_;
++    Marker marker_ = enter_section_(builder_);
++    result_ = consoleCommand(builder_, level_ + 1);
++    result_ = result_ && leadingText_1_0_1(builder_, level_ + 1);
++    exit_section_(builder_, marker_, null, result_);
++    return result_;
++  }
++
++  // anyLine*
++  private static boolean leadingText_1_0_1(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "leadingText_1_0_1")) return false;
++    while (true) {
++      int pos_ = current_position_(builder_);
++      if (!anyLine(builder_, level_ + 1)) break;
++      if (!empty_element_parsed_guard_(builder_, "leadingText_1_0_1", pos_)) break;
++    }
++    return true;
++  }
++
++  /* ********************************************************** */
++  // normalHunk+
++  public static boolean normalDiff(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "normalDiff")) return false;
++    boolean result_;
++    Marker marker_ = enter_section_(builder_, level_, _NONE_, NORMAL_DIFF, "<normal diff>");
++    result_ = normalHunk(builder_, level_ + 1);
++    while (result_) {
++      int pos_ = current_position_(builder_);
++      if (!normalHunk(builder_, level_ + 1)) break;
++      if (!empty_element_parsed_guard_(builder_, "normalDiff", pos_)) break;
++    }
+     exit_section_(builder_, level_, marker_, result_, false, null);
+     return result_;
+   }
+ 
+   /* ********************************************************** */
+-  // OTHER
+-  public static boolean plain(PsiBuilder builder_, int level_) {
+-    if (!recursion_guard_(builder_, level_, "plain")) return false;
+-    if (!nextTokenIs(builder_, OTHER)) return false;
++  // normalHunkAdd | normalHunkChange | normalHunkDelete
++  public static boolean normalHunk(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "normalHunk")) return false;
++    boolean result_;
++    Marker marker_ = enter_section_(builder_, level_, _NONE_, NORMAL_HUNK, "<normal hunk>");
++    result_ = normalHunkAdd(builder_, level_ + 1);
++    if (!result_) result_ = normalHunkChange(builder_, level_ + 1);
++    if (!result_) result_ = normalHunkDelete(builder_, level_ + 1);
++    exit_section_(builder_, level_, marker_, result_, false, null);
++    return result_;
++  }
++
++  /* ********************************************************** */
++  // NORMAL_ADD_COMMAND NORMAL_TO_LINE+ EOLHINT?
++  public static boolean normalHunkAdd(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "normalHunkAdd")) return false;
++    if (!nextTokenIs(builder_, NORMAL_ADD_COMMAND)) return false;
++    boolean result_;
++    Marker marker_ = enter_section_(builder_);
++    result_ = consumeToken(builder_, NORMAL_ADD_COMMAND);
++    result_ = result_ && normalHunkAdd_1(builder_, level_ + 1);
++    result_ = result_ && normalHunkAdd_2(builder_, level_ + 1);
++    exit_section_(builder_, marker_, NORMAL_HUNK_ADD, result_);
++    return result_;
++  }
++
++  // NORMAL_TO_LINE+
++  private static boolean normalHunkAdd_1(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "normalHunkAdd_1")) return false;
++    boolean result_;
++    Marker marker_ = enter_section_(builder_);
++    result_ = consumeToken(builder_, NORMAL_TO_LINE);
++    while (result_) {
++      int pos_ = current_position_(builder_);
++      if (!consumeToken(builder_, NORMAL_TO_LINE)) break;
++      if (!empty_element_parsed_guard_(builder_, "normalHunkAdd_1", pos_)) break;
++    }
++    exit_section_(builder_, marker_, null, result_);
++    return result_;
++  }
++
++  // EOLHINT?
++  private static boolean normalHunkAdd_2(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "normalHunkAdd_2")) return false;
++    consumeToken(builder_, EOLHINT);
++    return true;
++  }
++
++  /* ********************************************************** */
++  // NORMAL_CHANGE_COMMAND NORMAL_FROM_LINE+ EOLHINT? NORMAL_SEPARATOR NORMAL_TO_LINE+ EOLHINT?
++  public static boolean normalHunkChange(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "normalHunkChange")) return false;
++    if (!nextTokenIs(builder_, NORMAL_CHANGE_COMMAND)) return false;
+     boolean result_;
+     Marker marker_ = enter_section_(builder_);
+-    result_ = consumeToken(builder_, OTHER);
+-    exit_section_(builder_, marker_, PLAIN, result_);
++    result_ = consumeToken(builder_, NORMAL_CHANGE_COMMAND);
++    result_ = result_ && normalHunkChange_1(builder_, level_ + 1);
++    result_ = result_ && normalHunkChange_2(builder_, level_ + 1);
++    result_ = result_ && consumeToken(builder_, NORMAL_SEPARATOR);
++    result_ = result_ && normalHunkChange_4(builder_, level_ + 1);
++    result_ = result_ && normalHunkChange_5(builder_, level_ + 1);
++    exit_section_(builder_, marker_, NORMAL_HUNK_CHANGE, result_);
++    return result_;
++  }
++
++  // NORMAL_FROM_LINE+
++  private static boolean normalHunkChange_1(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "normalHunkChange_1")) return false;
++    boolean result_;
++    Marker marker_ = enter_section_(builder_);
++    result_ = consumeToken(builder_, NORMAL_FROM_LINE);
++    while (result_) {
++      int pos_ = current_position_(builder_);
++      if (!consumeToken(builder_, NORMAL_FROM_LINE)) break;
++      if (!empty_element_parsed_guard_(builder_, "normalHunkChange_1", pos_)) break;
++    }
++    exit_section_(builder_, marker_, null, result_);
++    return result_;
++  }
++
++  // EOLHINT?
++  private static boolean normalHunkChange_2(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "normalHunkChange_2")) return false;
++    consumeToken(builder_, EOLHINT);
++    return true;
++  }
++
++  // NORMAL_TO_LINE+
++  private static boolean normalHunkChange_4(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "normalHunkChange_4")) return false;
++    boolean result_;
++    Marker marker_ = enter_section_(builder_);
++    result_ = consumeToken(builder_, NORMAL_TO_LINE);
++    while (result_) {
++      int pos_ = current_position_(builder_);
++      if (!consumeToken(builder_, NORMAL_TO_LINE)) break;
++      if (!empty_element_parsed_guard_(builder_, "normalHunkChange_4", pos_)) break;
++    }
++    exit_section_(builder_, marker_, null, result_);
++    return result_;
++  }
++
++  // EOLHINT?
++  private static boolean normalHunkChange_5(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "normalHunkChange_5")) return false;
++    consumeToken(builder_, EOLHINT);
++    return true;
++  }
++
++  /* ********************************************************** */
++  // NORMAL_DELETE_COMMAND NORMAL_FROM_LINE+ EOLHINT?
++  public static boolean normalHunkDelete(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "normalHunkDelete")) return false;
++    if (!nextTokenIs(builder_, NORMAL_DELETE_COMMAND)) return false;
++    boolean result_;
++    Marker marker_ = enter_section_(builder_);
++    result_ = consumeToken(builder_, NORMAL_DELETE_COMMAND);
++    result_ = result_ && normalHunkDelete_1(builder_, level_ + 1);
++    result_ = result_ && normalHunkDelete_2(builder_, level_ + 1);
++    exit_section_(builder_, marker_, NORMAL_HUNK_DELETE, result_);
++    return result_;
++  }
++
++  // NORMAL_FROM_LINE+
++  private static boolean normalHunkDelete_1(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "normalHunkDelete_1")) return false;
++    boolean result_;
++    Marker marker_ = enter_section_(builder_);
++    result_ = consumeToken(builder_, NORMAL_FROM_LINE);
++    while (result_) {
++      int pos_ = current_position_(builder_);
++      if (!consumeToken(builder_, NORMAL_FROM_LINE)) break;
++      if (!empty_element_parsed_guard_(builder_, "normalHunkDelete_1", pos_)) break;
++    }
++    exit_section_(builder_, marker_, null, result_);
++    return result_;
++  }
++
++  // EOLHINT?
++  private static boolean normalHunkDelete_2(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "normalHunkDelete_2")) return false;
++    consumeToken(builder_, EOLHINT);
++    return true;
++  }
++
++  /* ********************************************************** */
++  // anyLine*
++  public static boolean trailingText(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "trailingText")) return false;
++    Marker marker_ = enter_section_(builder_, level_, _NONE_, TRAILING_TEXT, "<trailing text>");
++    while (true) {
++      int pos_ = current_position_(builder_);
++      if (!anyLine(builder_, level_ + 1)) break;
++      if (!empty_element_parsed_guard_(builder_, "trailingText", pos_)) break;
++    }
++    exit_section_(builder_, level_, marker_, true, false, null);
++    return true;
++  }
++
++  /* ********************************************************** */
++  // UNIFIED_FROM_LABEL UNIFIED_TO_LABEL unifiedHunk+
++  public static boolean unifiedDiff(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "unifiedDiff")) return false;
++    if (!nextTokenIs(builder_, UNIFIED_FROM_LABEL)) return false;
++    boolean result_;
++    Marker marker_ = enter_section_(builder_);
++    result_ = consumeTokens(builder_, 0, UNIFIED_FROM_LABEL, UNIFIED_TO_LABEL);
++    result_ = result_ && unifiedDiff_2(builder_, level_ + 1);
++    exit_section_(builder_, marker_, UNIFIED_DIFF, result_);
++    return result_;
++  }
++
++  // unifiedHunk+
++  private static boolean unifiedDiff_2(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "unifiedDiff_2")) return false;
++    boolean result_;
++    Marker marker_ = enter_section_(builder_);
++    result_ = unifiedHunk(builder_, level_ + 1);
++    while (result_) {
++      int pos_ = current_position_(builder_);
++      if (!unifiedHunk(builder_, level_ + 1)) break;
++      if (!empty_element_parsed_guard_(builder_, "unifiedDiff_2", pos_)) break;
++    }
++    exit_section_(builder_, marker_, null, result_);
++    return result_;
++  }
++
++  /* ********************************************************** */
++  // UNIFIED_LINE_NUMBERS (unifiedLine | WHITE_SPACE)+
++  public static boolean unifiedHunk(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "unifiedHunk")) return false;
++    if (!nextTokenIs(builder_, UNIFIED_LINE_NUMBERS)) return false;
++    boolean result_;
++    Marker marker_ = enter_section_(builder_);
++    result_ = consumeToken(builder_, UNIFIED_LINE_NUMBERS);
++    result_ = result_ && unifiedHunk_1(builder_, level_ + 1);
++    exit_section_(builder_, marker_, UNIFIED_HUNK, result_);
++    return result_;
++  }
++
++  // (unifiedLine | WHITE_SPACE)+
++  private static boolean unifiedHunk_1(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "unifiedHunk_1")) return false;
++    boolean result_;
++    Marker marker_ = enter_section_(builder_);
++    result_ = unifiedHunk_1_0(builder_, level_ + 1);
++    while (result_) {
++      int pos_ = current_position_(builder_);
++      if (!unifiedHunk_1_0(builder_, level_ + 1)) break;
++      if (!empty_element_parsed_guard_(builder_, "unifiedHunk_1", pos_)) break;
++    }
++    exit_section_(builder_, marker_, null, result_);
++    return result_;
++  }
++
++  // unifiedLine | WHITE_SPACE
++  private static boolean unifiedHunk_1_0(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "unifiedHunk_1_0")) return false;
++    boolean result_;
++    result_ = unifiedLine(builder_, level_ + 1);
++    if (!result_) result_ = consumeToken(builder_, WHITE_SPACE);
++    return result_;
++  }
++
++  /* ********************************************************** */
++  // UNIFIED_INSERTED_LINE | UNIFIED_DELETED_LINE | UNIFIED_COMMON_LINE | EOLHINT
++  public static boolean unifiedLine(PsiBuilder builder_, int level_) {
++    if (!recursion_guard_(builder_, level_, "unifiedLine")) return false;
++    boolean result_;
++    Marker marker_ = enter_section_(builder_, level_, _NONE_, UNIFIED_LINE, "<unified line>");
++    result_ = consumeToken(builder_, UNIFIED_INSERTED_LINE);
++    if (!result_) result_ = consumeToken(builder_, UNIFIED_DELETED_LINE);
++    if (!result_) result_ = consumeToken(builder_, UNIFIED_COMMON_LINE);
++    if (!result_) result_ = consumeToken(builder_, EOLHINT);
++    exit_section_(builder_, level_, marker_, result_, false, null);
+     return result_;
+   }
+ </fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffPlain.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffAnyLine.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffPlain.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffAnyLine.java
+similarity index 80%
+rename from src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffPlain.java
+rename to src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffAnyLine.java
+index 36c872b..a4bc0fb 100644
+--- a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffPlain.java
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffAnyLine.java
+<fold text='@@ -5,6 +5,6 @@ import java.util.List;' expand='true'>@@ -5,6 +5,6 @@ import java.util.List;
+ import org.jetbrains.annotations.*;
+ import com.intellij.psi.PsiElement;
+ 
+-public interface DiffPlain extends PsiElement {
++public interface DiffAnyLine extends PsiElement {
+ 
+ }</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffConsoleCommand.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffConsoleCommand.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffConsoleCommand.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffConsoleCommand.java
+new file mode 100644
+index 0000000..640d920
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffConsoleCommand.java
+<fold text='@@ -0,0 +1,10 @@' expand='true'>@@ -0,0 +1,10 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.psi.PsiElement;
++
++public interface DiffConsoleCommand extends PsiElement {
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextDiff.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextDiff.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextDiff.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextDiff.java
+new file mode 100644
+index 0000000..dda6a44
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextDiff.java
+<fold text='@@ -0,0 +1,13 @@' expand='true'>@@ -0,0 +1,13 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.psi.PsiElement;
++
++public interface DiffContextDiff extends PsiElement {
++
++  @NotNull
++  List<DiffContextHunk> getContextHunkList();
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextFromFileLine.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextFromFileLine.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextFromFileLine.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextFromFileLine.java
+new file mode 100644
+index 0000000..4d226a7
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextFromFileLine.java
+<fold text='@@ -0,0 +1,10 @@' expand='true'>@@ -0,0 +1,10 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.psi.PsiElement;
++
++public interface DiffContextFromFileLine extends PsiElement {
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextHunk.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextHunk.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextHunk.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextHunk.java
+new file mode 100644
+index 0000000..d621e93
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextHunk.java
+<fold text='@@ -0,0 +1,16 @@' expand='true'>@@ -0,0 +1,16 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.psi.PsiElement;
++
++public interface DiffContextHunk extends PsiElement {
++
++  @NotNull
++  DiffContextHunkFrom getContextHunkFrom();
++
++  @NotNull
++  DiffContextHunkTo getContextHunkTo();
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextHunkFrom.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextHunkFrom.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextHunkFrom.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextHunkFrom.java
+new file mode 100644
+index 0000000..848eb08
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextHunkFrom.java
+<fold text='@@ -0,0 +1,13 @@' expand='true'>@@ -0,0 +1,13 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.psi.PsiElement;
++
++public interface DiffContextHunkFrom extends PsiElement {
++
++  @NotNull
++  List<DiffContextFromFileLine> getContextFromFileLineList();
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextHunkTo.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextHunkTo.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextHunkTo.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextHunkTo.java
+new file mode 100644
+index 0000000..42fe567
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextHunkTo.java
+<fold text='@@ -0,0 +1,13 @@' expand='true'>@@ -0,0 +1,13 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.psi.PsiElement;
++
++public interface DiffContextHunkTo extends PsiElement {
++
++  @NotNull
++  List<DiffContextToFileLine> getContextToFileLineList();
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextToFileLine.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextToFileLine.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextToFileLine.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextToFileLine.java
+new file mode 100644
+index 0000000..1af8db5
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffContextToFileLine.java
+<fold text='@@ -0,0 +1,10 @@' expand='true'>@@ -0,0 +1,10 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.psi.PsiElement;
++
++public interface DiffContextToFileLine extends PsiElement {
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffLeadingText.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffLeadingText.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffLeadingText.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffLeadingText.java
+new file mode 100644
+index 0000000..79103e4
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffLeadingText.java
+<fold text='@@ -0,0 +1,16 @@' expand='true'>@@ -0,0 +1,16 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.psi.PsiElement;
++
++public interface DiffLeadingText extends PsiElement {
++
++  @NotNull
++  List<DiffAnyLine> getAnyLineList();
++
++  @Nullable
++  DiffConsoleCommand getConsoleCommand();
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffNormalDiff.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffNormalDiff.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffNormalDiff.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffNormalDiff.java
+new file mode 100644
+index 0000000..3fe3b40
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffNormalDiff.java
+<fold text='@@ -0,0 +1,13 @@' expand='true'>@@ -0,0 +1,13 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.psi.PsiElement;
++
++public interface DiffNormalDiff extends PsiElement {
++
++  @NotNull
++  List<DiffNormalHunk> getNormalHunkList();
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffNormalHunk.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffNormalHunk.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffNormalHunk.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffNormalHunk.java
+new file mode 100644
+index 0000000..1726eae
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffNormalHunk.java
+<fold text='@@ -0,0 +1,19 @@' expand='true'>@@ -0,0 +1,19 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.psi.PsiElement;
++
++public interface DiffNormalHunk extends PsiElement {
++
++  @Nullable
++  DiffNormalHunkAdd getNormalHunkAdd();
++
++  @Nullable
++  DiffNormalHunkChange getNormalHunkChange();
++
++  @Nullable
++  DiffNormalHunkDelete getNormalHunkDelete();
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffInfo.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffNormalHunkAdd.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffInfo.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffNormalHunkAdd.java
+similarity index 78%
+rename from src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffInfo.java
+rename to src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffNormalHunkAdd.java
+index 68b6360..94cd46e 100644
+--- a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffInfo.java
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffNormalHunkAdd.java
+<fold text='@@ -5,6 +5,6 @@ import java.util.List;' expand='true'>@@ -5,6 +5,6 @@ import java.util.List;
+ import org.jetbrains.annotations.*;
+ import com.intellij.psi.PsiElement;
+ 
+-public interface DiffInfo extends PsiElement {
++public interface DiffNormalHunkAdd extends PsiElement {
+ 
+ }</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffNormalHunkChange.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffNormalHunkChange.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffNormalHunkChange.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffNormalHunkChange.java
+new file mode 100644
+index 0000000..f8b9b6b
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffNormalHunkChange.java
+<fold text='@@ -0,0 +1,10 @@' expand='true'>@@ -0,0 +1,10 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.psi.PsiElement;
++
++public interface DiffNormalHunkChange extends PsiElement {
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffNormalHunkDelete.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffNormalHunkDelete.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffNormalHunkDelete.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffNormalHunkDelete.java
+new file mode 100644
+index 0000000..0a438f3
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffNormalHunkDelete.java
+<fold text='@@ -0,0 +1,10 @@' expand='true'>@@ -0,0 +1,10 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.psi.PsiElement;
++
++public interface DiffNormalHunkDelete extends PsiElement {
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffTrailingText.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffTrailingText.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffTrailingText.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffTrailingText.java
+new file mode 100644
+index 0000000..4b9cdba
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffTrailingText.java
+<fold text='@@ -0,0 +1,13 @@' expand='true'>@@ -0,0 +1,13 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.psi.PsiElement;
++
++public interface DiffTrailingText extends PsiElement {
++
++  @NotNull
++  List<DiffAnyLine> getAnyLineList();
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffTypes.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffTypes.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffTypes.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffTypes.java
+index f894200..116b053 100644
+--- a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffTypes.java
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffTypes.java
+<fold text='@@ -8,32 +8,107 @@ import de.thomasrosenau.diffplugin.psi.impl.*;' expand='true'>@@ -8,32 +8,107 @@ import de.thomasrosenau.diffplugin.psi.impl.*;
+ 
+ public interface DiffTypes {
+ 
+-  IElementType CHANGED = new DiffElementType("CHANGED");
+-  IElementType INFO = new DiffElementType("INFO");
+-  IElementType PLAIN = new DiffElementType("PLAIN");
++  IElementType ANY_LINE = new DiffElementType("ANY_LINE");
++  IElementType CONSOLE_COMMAND = new DiffElementType("CONSOLE_COMMAND");
++  IElementType CONTEXT_DIFF = new DiffElementType("CONTEXT_DIFF");
++  IElementType CONTEXT_FROM_FILE_LINE = new DiffElementType("CONTEXT_FROM_FILE_LINE");
++  IElementType CONTEXT_HUNK = new DiffElementType("CONTEXT_HUNK");
++  IElementType CONTEXT_HUNK_FROM = new DiffElementType("CONTEXT_HUNK_FROM");
++  IElementType CONTEXT_HUNK_TO = new DiffElementType("CONTEXT_HUNK_TO");
++  IElementType CONTEXT_TO_FILE_LINE = new DiffElementType("CONTEXT_TO_FILE_LINE");
++  IElementType LEADING_TEXT = new DiffElementType("LEADING_TEXT");
++  IElementType NORMAL_DIFF = new DiffElementType("NORMAL_DIFF");
++  IElementType NORMAL_HUNK = new DiffElementType("NORMAL_HUNK");
++  IElementType NORMAL_HUNK_ADD = new DiffElementType("NORMAL_HUNK_ADD");
++  IElementType NORMAL_HUNK_CHANGE = new DiffElementType("NORMAL_HUNK_CHANGE");
++  IElementType NORMAL_HUNK_DELETE = new DiffElementType("NORMAL_HUNK_DELETE");
++  IElementType TRAILING_TEXT = new DiffElementType("TRAILING_TEXT");
++  IElementType UNIFIED_DIFF = new DiffElementType("UNIFIED_DIFF");
++  IElementType UNIFIED_HUNK = new DiffElementType("UNIFIED_HUNK");
++  IElementType UNIFIED_LINE = new DiffElementType("UNIFIED_LINE");
+ 
+-  IElementType ADDED = new DiffTokenType("ADDED");
+   IElementType COMMAND = new DiffTokenType("COMMAND");
+-  IElementType DELETED = new DiffTokenType("DELETED");
++  IElementType CONTEXT_CHANGED_LINE = new DiffTokenType("CONTEXT_CHANGED_LINE");
++  IElementType CONTEXT_COMMON_LINE = new DiffTokenType("CONTEXT_COMMON_LINE");
++  IElementType CONTEXT_DELETED_LINE = new DiffTokenType("CONTEXT_DELETED_LINE");
++  IElementType CONTEXT_FROM_LABEL = new DiffTokenType("CONTEXT_FROM_LABEL");
++  IElementType CONTEXT_FROM_LINE_NUMBERS = new DiffTokenType("CONTEXT_FROM_LINE_NUMBERS");
++  IElementType CONTEXT_HUNK_SEPERATOR = new DiffTokenType("CONTEXT_HUNK_SEPERATOR");
++  IElementType CONTEXT_INSERTED_LINE = new DiffTokenType("CONTEXT_INSERTED_LINE");
++  IElementType CONTEXT_TO_LABEL = new DiffTokenType("CONTEXT_TO_LABEL");
++  IElementType CONTEXT_TO_LINE_NUMBERS = new DiffTokenType("CONTEXT_TO_LINE_NUMBERS");
+   IElementType EOLHINT = new DiffTokenType("EOLHINT");
+-  IElementType FILE = new DiffTokenType("FILE");
+-  IElementType GIT_HEAD = new DiffTokenType("GIT_HEAD");
+-  IElementType HUNK_HEAD = new DiffTokenType("HUNK_HEAD");
+-  IElementType MODIFIED = new DiffTokenType("MODIFIED");
++  IElementType NORMAL_ADD_COMMAND = new DiffTokenType("NORMAL_ADD_COMMAND");
++  IElementType NORMAL_CHANGE_COMMAND = new DiffTokenType("NORMAL_CHANGE_COMMAND");
++  IElementType NORMAL_DELETE_COMMAND = new DiffTokenType("NORMAL_DELETE_COMMAND");
++  IElementType NORMAL_FROM_LINE = new DiffTokenType("NORMAL_FROM_LINE");
++  IElementType NORMAL_SEPARATOR = new DiffTokenType("NORMAL_SEPARATOR");
++  IElementType NORMAL_TO_LINE = new DiffTokenType("NORMAL_TO_LINE");
+   IElementType OTHER = new DiffTokenType("OTHER");
+-  IElementType SEPARATOR = new DiffTokenType("SEPARATOR");
++  IElementType UNIFIED_COMMON_LINE = new DiffTokenType("UNIFIED_COMMON_LINE");
++  IElementType UNIFIED_DELETED_LINE = new DiffTokenType("UNIFIED_DELETED_LINE");
++  IElementType UNIFIED_FROM_LABEL = new DiffTokenType("UNIFIED_FROM_LABEL");
++  IElementType UNIFIED_INSERTED_LINE = new DiffTokenType("UNIFIED_INSERTED_LINE");
++  IElementType UNIFIED_LINE_NUMBERS = new DiffTokenType("UNIFIED_LINE_NUMBERS");
++  IElementType UNIFIED_TO_LABEL = new DiffTokenType("UNIFIED_TO_LABEL");
++  IElementType WHITE_SPACE = new DiffTokenType("WHITE_SPACE");
+ 
+   class Factory {
+     public static PsiElement createElement(ASTNode node) {
+       IElementType type = node.getElementType();
+-      if (type == CHANGED) {
+-        return new DiffChangedImpl(node);
++      if (type == ANY_LINE) {
++        return new DiffAnyLineImpl(node);
+       }
+-      else if (type == INFO) {
+-        return new DiffInfoImpl(node);
++      else if (type == CONSOLE_COMMAND) {
++        return new DiffConsoleCommandImpl(node);
+       }
+-      else if (type == PLAIN) {
+-        return new DiffPlainImpl(node);
++      else if (type == CONTEXT_DIFF) {
++        return new DiffContextDiffImpl(node);
++      }
++      else if (type == CONTEXT_FROM_FILE_LINE) {
++        return new DiffContextFromFileLineImpl(node);
++      }
++      else if (type == CONTEXT_HUNK) {
++        return new DiffContextHunkImpl(node);
++      }
++      else if (type == CONTEXT_HUNK_FROM) {
++        return new DiffContextHunkFromImpl(node);
++      }
++      else if (type == CONTEXT_HUNK_TO) {
++        return new DiffContextHunkToImpl(node);
++      }
++      else if (type == CONTEXT_TO_FILE_LINE) {
++        return new DiffContextToFileLineImpl(node);
++      }
++      else if (type == LEADING_TEXT) {
++        return new DiffLeadingTextImpl(node);
++      }
++      else if (type == NORMAL_DIFF) {
++        return new DiffNormalDiffImpl(node);
++      }
++      else if (type == NORMAL_HUNK) {
++        return new DiffNormalHunkImpl(node);
++      }
++      else if (type == NORMAL_HUNK_ADD) {
++        return new DiffNormalHunkAddImpl(node);
++      }
++      else if (type == NORMAL_HUNK_CHANGE) {
++        return new DiffNormalHunkChangeImpl(node);
++      }
++      else if (type == NORMAL_HUNK_DELETE) {
++        return new DiffNormalHunkDeleteImpl(node);
++      }
++      else if (type == TRAILING_TEXT) {
++        return new DiffTrailingTextImpl(node);
++      }
++      else if (type == UNIFIED_DIFF) {
++        return new DiffUnifiedDiffImpl(node);
++      }
++      else if (type == UNIFIED_HUNK) {
++        return new DiffUnifiedHunkImpl(node);
++      }
++      else if (type == UNIFIED_LINE) {
++        return new DiffUnifiedLineImpl(node);
+       }
+       throw new AssertionError("Unknown element type: " + type);
+     }</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffUnifiedDiff.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffUnifiedDiff.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffUnifiedDiff.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffUnifiedDiff.java
+new file mode 100644
+index 0000000..5ae0d53
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffUnifiedDiff.java
+<fold text='@@ -0,0 +1,13 @@' expand='true'>@@ -0,0 +1,13 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.psi.PsiElement;
++
++public interface DiffUnifiedDiff extends PsiElement {
++
++  @NotNull
++  List<DiffUnifiedHunk> getUnifiedHunkList();
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffUnifiedHunk.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffUnifiedHunk.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffUnifiedHunk.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffUnifiedHunk.java
+new file mode 100644
+index 0000000..dc25ddc
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffUnifiedHunk.java
+<fold text='@@ -0,0 +1,13 @@' expand='true'>@@ -0,0 +1,13 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.psi.PsiElement;
++
++public interface DiffUnifiedHunk extends PsiElement {
++
++  @NotNull
++  List<DiffUnifiedLine> getUnifiedLineList();
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffChanged.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffUnifiedLine.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffChanged.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffUnifiedLine.java
+similarity index 78%
+rename from src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffChanged.java
+rename to src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffUnifiedLine.java
+index 337d120..6c498d8 100644
+--- a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffChanged.java
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffUnifiedLine.java
+<fold text='@@ -5,6 +5,6 @@ import java.util.List;' expand='true'>@@ -5,6 +5,6 @@ import java.util.List;
+ import org.jetbrains.annotations.*;
+ import com.intellij.psi.PsiElement;
+ 
+-public interface DiffChanged extends PsiElement {
++public interface DiffUnifiedLine extends PsiElement {
+ 
+ }</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffVisitor.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffVisitor.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffVisitor.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffVisitor.java
+index ab7720e..d1b1475 100644
+--- a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffVisitor.java
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/DiffVisitor.java
+<fold text='@@ -7,15 +7,75 @@ import com.intellij.psi.PsiElement;' expand='true'>@@ -7,15 +7,75 @@ import com.intellij.psi.PsiElement;
+ 
+ public class DiffVisitor extends PsiElementVisitor {
+ 
+-  public void visitChanged(@NotNull DiffChanged o) {
++  public void visitAnyLine(@NotNull DiffAnyLine o) {
+     visitPsiElement(o);
+   }
+ 
+-  public void visitInfo(@NotNull DiffInfo o) {
++  public void visitConsoleCommand(@NotNull DiffConsoleCommand o) {
+     visitPsiElement(o);
+   }
+ 
+-  public void visitPlain(@NotNull DiffPlain o) {
++  public void visitContextDiff(@NotNull DiffContextDiff o) {
++    visitPsiElement(o);
++  }
++
++  public void visitContextFromFileLine(@NotNull DiffContextFromFileLine o) {
++    visitPsiElement(o);
++  }
++
++  public void visitContextHunk(@NotNull DiffContextHunk o) {
++    visitPsiElement(o);
++  }
++
++  public void visitContextHunkFrom(@NotNull DiffContextHunkFrom o) {
++    visitPsiElement(o);
++  }
++
++  public void visitContextHunkTo(@NotNull DiffContextHunkTo o) {
++    visitPsiElement(o);
++  }
++
++  public void visitContextToFileLine(@NotNull DiffContextToFileLine o) {
++    visitPsiElement(o);
++  }
++
++  public void visitLeadingText(@NotNull DiffLeadingText o) {
++    visitPsiElement(o);
++  }
++
++  public void visitNormalDiff(@NotNull DiffNormalDiff o) {
++    visitPsiElement(o);
++  }
++
++  public void visitNormalHunk(@NotNull DiffNormalHunk o) {
++    visitPsiElement(o);
++  }
++
++  public void visitNormalHunkAdd(@NotNull DiffNormalHunkAdd o) {
++    visitPsiElement(o);
++  }
++
++  public void visitNormalHunkChange(@NotNull DiffNormalHunkChange o) {
++    visitPsiElement(o);
++  }
++
++  public void visitNormalHunkDelete(@NotNull DiffNormalHunkDelete o) {
++    visitPsiElement(o);
++  }
++
++  public void visitTrailingText(@NotNull DiffTrailingText o) {
++    visitPsiElement(o);
++  }
++
++  public void visitUnifiedDiff(@NotNull DiffUnifiedDiff o) {
++    visitPsiElement(o);
++  }
++
++  public void visitUnifiedHunk(@NotNull DiffUnifiedHunk o) {
++    visitPsiElement(o);
++  }
++
++  public void visitUnifiedLine(@NotNull DiffUnifiedLine o) {
+     visitPsiElement(o);
+   }
+ </fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffChangedImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffAnyLineImpl.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffChangedImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffAnyLineImpl.java
+similarity index 81%
+rename from src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffChangedImpl.java
+rename to src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffAnyLineImpl.java
+index fd51904..d3f11ce 100644
+--- a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffChangedImpl.java
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffAnyLineImpl.java
+<fold text='@@ -11,14 +11,14 @@ import static de.thomasrosenau.diffplugin.psi.DiffTypes.*;' expand='true'>@@ -11,14 +11,14 @@ import static de.thomasrosenau.diffplugin.psi.DiffTypes.*;
+ import com.intellij.extapi.psi.ASTWrapperPsiElement;
+ import de.thomasrosenau.diffplugin.psi.*;
+ 
+-public class DiffChangedImpl extends ASTWrapperPsiElement implements DiffChanged {
++public class DiffAnyLineImpl extends ASTWrapperPsiElement implements DiffAnyLine {
+ 
+-  public DiffChangedImpl(@NotNull ASTNode node) {
++  public DiffAnyLineImpl(@NotNull ASTNode node) {
+     super(node);
+   }
+ 
+   public void accept(@NotNull DiffVisitor visitor) {
+-    visitor.visitChanged(this);
++    visitor.visitAnyLine(this);
+   }
+ 
+   public void accept(@NotNull PsiElementVisitor visitor) {</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffConsoleCommandImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffConsoleCommandImpl.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffConsoleCommandImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffConsoleCommandImpl.java
+new file mode 100644
+index 0000000..a848724
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffConsoleCommandImpl.java
+<fold text='@@ -0,0 +1,29 @@' expand='true'>@@ -0,0 +1,29 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi.impl;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.lang.ASTNode;
++import com.intellij.psi.PsiElement;
++import com.intellij.psi.PsiElementVisitor;
++import com.intellij.psi.util.PsiTreeUtil;
++import static de.thomasrosenau.diffplugin.psi.DiffTypes.*;
++import com.intellij.extapi.psi.ASTWrapperPsiElement;
++import de.thomasrosenau.diffplugin.psi.*;
++
++public class DiffConsoleCommandImpl extends ASTWrapperPsiElement implements DiffConsoleCommand {
++
++  public DiffConsoleCommandImpl(@NotNull ASTNode node) {
++    super(node);
++  }
++
++  public void accept(@NotNull DiffVisitor visitor) {
++    visitor.visitConsoleCommand(this);
++  }
++
++  public void accept(@NotNull PsiElementVisitor visitor) {
++    if (visitor instanceof DiffVisitor) accept((DiffVisitor)visitor);
++    else super.accept(visitor);
++  }
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextDiffImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextDiffImpl.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextDiffImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextDiffImpl.java
+new file mode 100644
+index 0000000..a51ed0f
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextDiffImpl.java
+<fold text='@@ -0,0 +1,35 @@' expand='true'>@@ -0,0 +1,35 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi.impl;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.lang.ASTNode;
++import com.intellij.psi.PsiElement;
++import com.intellij.psi.PsiElementVisitor;
++import com.intellij.psi.util.PsiTreeUtil;
++import static de.thomasrosenau.diffplugin.psi.DiffTypes.*;
++import com.intellij.extapi.psi.ASTWrapperPsiElement;
++import de.thomasrosenau.diffplugin.psi.*;
++
++public class DiffContextDiffImpl extends ASTWrapperPsiElement implements DiffContextDiff {
++
++  public DiffContextDiffImpl(@NotNull ASTNode node) {
++    super(node);
++  }
++
++  public void accept(@NotNull DiffVisitor visitor) {
++    visitor.visitContextDiff(this);
++  }
++
++  public void accept(@NotNull PsiElementVisitor visitor) {
++    if (visitor instanceof DiffVisitor) accept((DiffVisitor)visitor);
++    else super.accept(visitor);
++  }
++
++  @Override
++  @NotNull
++  public List<DiffContextHunk> getContextHunkList() {
++    return PsiTreeUtil.getChildrenOfTypeAsList(this, DiffContextHunk.class);
++  }
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextFromFileLineImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextFromFileLineImpl.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextFromFileLineImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextFromFileLineImpl.java
+new file mode 100644
+index 0000000..9ae256b
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextFromFileLineImpl.java
+<fold text='@@ -0,0 +1,29 @@' expand='true'>@@ -0,0 +1,29 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi.impl;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.lang.ASTNode;
++import com.intellij.psi.PsiElement;
++import com.intellij.psi.PsiElementVisitor;
++import com.intellij.psi.util.PsiTreeUtil;
++import static de.thomasrosenau.diffplugin.psi.DiffTypes.*;
++import com.intellij.extapi.psi.ASTWrapperPsiElement;
++import de.thomasrosenau.diffplugin.psi.*;
++
++public class DiffContextFromFileLineImpl extends ASTWrapperPsiElement implements DiffContextFromFileLine {
++
++  public DiffContextFromFileLineImpl(@NotNull ASTNode node) {
++    super(node);
++  }
++
++  public void accept(@NotNull DiffVisitor visitor) {
++    visitor.visitContextFromFileLine(this);
++  }
++
++  public void accept(@NotNull PsiElementVisitor visitor) {
++    if (visitor instanceof DiffVisitor) accept((DiffVisitor)visitor);
++    else super.accept(visitor);
++  }
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextHunkFromImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextHunkFromImpl.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextHunkFromImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextHunkFromImpl.java
+new file mode 100644
+index 0000000..eddf129
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextHunkFromImpl.java
+<fold text='@@ -0,0 +1,35 @@' expand='true'>@@ -0,0 +1,35 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi.impl;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.lang.ASTNode;
++import com.intellij.psi.PsiElement;
++import com.intellij.psi.PsiElementVisitor;
++import com.intellij.psi.util.PsiTreeUtil;
++import static de.thomasrosenau.diffplugin.psi.DiffTypes.*;
++import com.intellij.extapi.psi.ASTWrapperPsiElement;
++import de.thomasrosenau.diffplugin.psi.*;
++
++public class DiffContextHunkFromImpl extends ASTWrapperPsiElement implements DiffContextHunkFrom {
++
++  public DiffContextHunkFromImpl(@NotNull ASTNode node) {
++    super(node);
++  }
++
++  public void accept(@NotNull DiffVisitor visitor) {
++    visitor.visitContextHunkFrom(this);
++  }
++
++  public void accept(@NotNull PsiElementVisitor visitor) {
++    if (visitor instanceof DiffVisitor) accept((DiffVisitor)visitor);
++    else super.accept(visitor);
++  }
++
++  @Override
++  @NotNull
++  public List<DiffContextFromFileLine> getContextFromFileLineList() {
++    return PsiTreeUtil.getChildrenOfTypeAsList(this, DiffContextFromFileLine.class);
++  }
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextHunkImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextHunkImpl.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextHunkImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextHunkImpl.java
+new file mode 100644
+index 0000000..a122713
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextHunkImpl.java
+<fold text='@@ -0,0 +1,41 @@' expand='true'>@@ -0,0 +1,41 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi.impl;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.lang.ASTNode;
++import com.intellij.psi.PsiElement;
++import com.intellij.psi.PsiElementVisitor;
++import com.intellij.psi.util.PsiTreeUtil;
++import static de.thomasrosenau.diffplugin.psi.DiffTypes.*;
++import com.intellij.extapi.psi.ASTWrapperPsiElement;
++import de.thomasrosenau.diffplugin.psi.*;
++
++public class DiffContextHunkImpl extends ASTWrapperPsiElement implements DiffContextHunk {
++
++  public DiffContextHunkImpl(@NotNull ASTNode node) {
++    super(node);
++  }
++
++  public void accept(@NotNull DiffVisitor visitor) {
++    visitor.visitContextHunk(this);
++  }
++
++  public void accept(@NotNull PsiElementVisitor visitor) {
++    if (visitor instanceof DiffVisitor) accept((DiffVisitor)visitor);
++    else super.accept(visitor);
++  }
++
++  @Override
++  @NotNull
++  public DiffContextHunkFrom getContextHunkFrom() {
++    return findNotNullChildByClass(DiffContextHunkFrom.class);
++  }
++
++  @Override
++  @NotNull
++  public DiffContextHunkTo getContextHunkTo() {
++    return findNotNullChildByClass(DiffContextHunkTo.class);
++  }
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextHunkToImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextHunkToImpl.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextHunkToImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextHunkToImpl.java
+new file mode 100644
+index 0000000..dbf0974
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextHunkToImpl.java
+<fold text='@@ -0,0 +1,35 @@' expand='true'>@@ -0,0 +1,35 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi.impl;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.lang.ASTNode;
++import com.intellij.psi.PsiElement;
++import com.intellij.psi.PsiElementVisitor;
++import com.intellij.psi.util.PsiTreeUtil;
++import static de.thomasrosenau.diffplugin.psi.DiffTypes.*;
++import com.intellij.extapi.psi.ASTWrapperPsiElement;
++import de.thomasrosenau.diffplugin.psi.*;
++
++public class DiffContextHunkToImpl extends ASTWrapperPsiElement implements DiffContextHunkTo {
++
++  public DiffContextHunkToImpl(@NotNull ASTNode node) {
++    super(node);
++  }
++
++  public void accept(@NotNull DiffVisitor visitor) {
++    visitor.visitContextHunkTo(this);
++  }
++
++  public void accept(@NotNull PsiElementVisitor visitor) {
++    if (visitor instanceof DiffVisitor) accept((DiffVisitor)visitor);
++    else super.accept(visitor);
++  }
++
++  @Override
++  @NotNull
++  public List<DiffContextToFileLine> getContextToFileLineList() {
++    return PsiTreeUtil.getChildrenOfTypeAsList(this, DiffContextToFileLine.class);
++  }
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextToFileLineImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextToFileLineImpl.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextToFileLineImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextToFileLineImpl.java
+new file mode 100644
+index 0000000..a4c0122
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffContextToFileLineImpl.java
+<fold text='@@ -0,0 +1,29 @@' expand='true'>@@ -0,0 +1,29 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi.impl;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.lang.ASTNode;
++import com.intellij.psi.PsiElement;
++import com.intellij.psi.PsiElementVisitor;
++import com.intellij.psi.util.PsiTreeUtil;
++import static de.thomasrosenau.diffplugin.psi.DiffTypes.*;
++import com.intellij.extapi.psi.ASTWrapperPsiElement;
++import de.thomasrosenau.diffplugin.psi.*;
++
++public class DiffContextToFileLineImpl extends ASTWrapperPsiElement implements DiffContextToFileLine {
++
++  public DiffContextToFileLineImpl(@NotNull ASTNode node) {
++    super(node);
++  }
++
++  public void accept(@NotNull DiffVisitor visitor) {
++    visitor.visitContextToFileLine(this);
++  }
++
++  public void accept(@NotNull PsiElementVisitor visitor) {
++    if (visitor instanceof DiffVisitor) accept((DiffVisitor)visitor);
++    else super.accept(visitor);
++  }
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffLeadingTextImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffLeadingTextImpl.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffLeadingTextImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffLeadingTextImpl.java
+new file mode 100644
+index 0000000..1aa1f42
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffLeadingTextImpl.java
+<fold text='@@ -0,0 +1,41 @@' expand='true'>@@ -0,0 +1,41 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi.impl;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.lang.ASTNode;
++import com.intellij.psi.PsiElement;
++import com.intellij.psi.PsiElementVisitor;
++import com.intellij.psi.util.PsiTreeUtil;
++import static de.thomasrosenau.diffplugin.psi.DiffTypes.*;
++import com.intellij.extapi.psi.ASTWrapperPsiElement;
++import de.thomasrosenau.diffplugin.psi.*;
++
++public class DiffLeadingTextImpl extends ASTWrapperPsiElement implements DiffLeadingText {
++
++  public DiffLeadingTextImpl(@NotNull ASTNode node) {
++    super(node);
++  }
++
++  public void accept(@NotNull DiffVisitor visitor) {
++    visitor.visitLeadingText(this);
++  }
++
++  public void accept(@NotNull PsiElementVisitor visitor) {
++    if (visitor instanceof DiffVisitor) accept((DiffVisitor)visitor);
++    else super.accept(visitor);
++  }
++
++  @Override
++  @NotNull
++  public List<DiffAnyLine> getAnyLineList() {
++    return PsiTreeUtil.getChildrenOfTypeAsList(this, DiffAnyLine.class);
++  }
++
++  @Override
++  @Nullable
++  public DiffConsoleCommand getConsoleCommand() {
++    return findChildByClass(DiffConsoleCommand.class);
++  }
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffNormalDiffImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffNormalDiffImpl.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffNormalDiffImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffNormalDiffImpl.java
+new file mode 100644
+index 0000000..8003fbb
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffNormalDiffImpl.java
+<fold text='@@ -0,0 +1,35 @@' expand='true'>@@ -0,0 +1,35 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi.impl;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.lang.ASTNode;
++import com.intellij.psi.PsiElement;
++import com.intellij.psi.PsiElementVisitor;
++import com.intellij.psi.util.PsiTreeUtil;
++import static de.thomasrosenau.diffplugin.psi.DiffTypes.*;
++import com.intellij.extapi.psi.ASTWrapperPsiElement;
++import de.thomasrosenau.diffplugin.psi.*;
++
++public class DiffNormalDiffImpl extends ASTWrapperPsiElement implements DiffNormalDiff {
++
++  public DiffNormalDiffImpl(@NotNull ASTNode node) {
++    super(node);
++  }
++
++  public void accept(@NotNull DiffVisitor visitor) {
++    visitor.visitNormalDiff(this);
++  }
++
++  public void accept(@NotNull PsiElementVisitor visitor) {
++    if (visitor instanceof DiffVisitor) accept((DiffVisitor)visitor);
++    else super.accept(visitor);
++  }
++
++  @Override
++  @NotNull
++  public List<DiffNormalHunk> getNormalHunkList() {
++    return PsiTreeUtil.getChildrenOfTypeAsList(this, DiffNormalHunk.class);
++  }
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffPlainImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffNormalHunkAddImpl.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffPlainImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffNormalHunkAddImpl.java
+similarity index 79%
+rename from src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffPlainImpl.java
+rename to src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffNormalHunkAddImpl.java
+index 4489095..5a4af96 100644
+--- a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffPlainImpl.java
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffNormalHunkAddImpl.java
+<fold text='@@ -11,14 +11,14 @@ import static de.thomasrosenau.diffplugin.psi.DiffTypes.*;' expand='true'>@@ -11,14 +11,14 @@ import static de.thomasrosenau.diffplugin.psi.DiffTypes.*;
+ import com.intellij.extapi.psi.ASTWrapperPsiElement;
+ import de.thomasrosenau.diffplugin.psi.*;
+ 
+-public class DiffPlainImpl extends ASTWrapperPsiElement implements DiffPlain {
++public class DiffNormalHunkAddImpl extends ASTWrapperPsiElement implements DiffNormalHunkAdd {
+ 
+-  public DiffPlainImpl(@NotNull ASTNode node) {
++  public DiffNormalHunkAddImpl(@NotNull ASTNode node) {
+     super(node);
+   }
+ 
+   public void accept(@NotNull DiffVisitor visitor) {
+-    visitor.visitPlain(this);
++    visitor.visitNormalHunkAdd(this);
+   }
+ 
+   public void accept(@NotNull PsiElementVisitor visitor) {</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffNormalHunkChangeImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffNormalHunkChangeImpl.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffNormalHunkChangeImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffNormalHunkChangeImpl.java
+new file mode 100644
+index 0000000..86d6650
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffNormalHunkChangeImpl.java
+<fold text='@@ -0,0 +1,29 @@' expand='true'>@@ -0,0 +1,29 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi.impl;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.lang.ASTNode;
++import com.intellij.psi.PsiElement;
++import com.intellij.psi.PsiElementVisitor;
++import com.intellij.psi.util.PsiTreeUtil;
++import static de.thomasrosenau.diffplugin.psi.DiffTypes.*;
++import com.intellij.extapi.psi.ASTWrapperPsiElement;
++import de.thomasrosenau.diffplugin.psi.*;
++
++public class DiffNormalHunkChangeImpl extends ASTWrapperPsiElement implements DiffNormalHunkChange {
++
++  public DiffNormalHunkChangeImpl(@NotNull ASTNode node) {
++    super(node);
++  }
++
++  public void accept(@NotNull DiffVisitor visitor) {
++    visitor.visitNormalHunkChange(this);
++  }
++
++  public void accept(@NotNull PsiElementVisitor visitor) {
++    if (visitor instanceof DiffVisitor) accept((DiffVisitor)visitor);
++    else super.accept(visitor);
++  }
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffNormalHunkDeleteImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffNormalHunkDeleteImpl.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffNormalHunkDeleteImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffNormalHunkDeleteImpl.java
+new file mode 100644
+index 0000000..9674d1e
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffNormalHunkDeleteImpl.java
+<fold text='@@ -0,0 +1,29 @@' expand='true'>@@ -0,0 +1,29 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi.impl;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.lang.ASTNode;
++import com.intellij.psi.PsiElement;
++import com.intellij.psi.PsiElementVisitor;
++import com.intellij.psi.util.PsiTreeUtil;
++import static de.thomasrosenau.diffplugin.psi.DiffTypes.*;
++import com.intellij.extapi.psi.ASTWrapperPsiElement;
++import de.thomasrosenau.diffplugin.psi.*;
++
++public class DiffNormalHunkDeleteImpl extends ASTWrapperPsiElement implements DiffNormalHunkDelete {
++
++  public DiffNormalHunkDeleteImpl(@NotNull ASTNode node) {
++    super(node);
++  }
++
++  public void accept(@NotNull DiffVisitor visitor) {
++    visitor.visitNormalHunkDelete(this);
++  }
++
++  public void accept(@NotNull PsiElementVisitor visitor) {
++    if (visitor instanceof DiffVisitor) accept((DiffVisitor)visitor);
++    else super.accept(visitor);
++  }
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffNormalHunkImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffNormalHunkImpl.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffNormalHunkImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffNormalHunkImpl.java
+new file mode 100644
+index 0000000..1621141
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffNormalHunkImpl.java
+<fold text='@@ -0,0 +1,47 @@' expand='true'>@@ -0,0 +1,47 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi.impl;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.lang.ASTNode;
++import com.intellij.psi.PsiElement;
++import com.intellij.psi.PsiElementVisitor;
++import com.intellij.psi.util.PsiTreeUtil;
++import static de.thomasrosenau.diffplugin.psi.DiffTypes.*;
++import com.intellij.extapi.psi.ASTWrapperPsiElement;
++import de.thomasrosenau.diffplugin.psi.*;
++
++public class DiffNormalHunkImpl extends ASTWrapperPsiElement implements DiffNormalHunk {
++
++  public DiffNormalHunkImpl(@NotNull ASTNode node) {
++    super(node);
++  }
++
++  public void accept(@NotNull DiffVisitor visitor) {
++    visitor.visitNormalHunk(this);
++  }
++
++  public void accept(@NotNull PsiElementVisitor visitor) {
++    if (visitor instanceof DiffVisitor) accept((DiffVisitor)visitor);
++    else super.accept(visitor);
++  }
++
++  @Override
++  @Nullable
++  public DiffNormalHunkAdd getNormalHunkAdd() {
++    return findChildByClass(DiffNormalHunkAdd.class);
++  }
++
++  @Override
++  @Nullable
++  public DiffNormalHunkChange getNormalHunkChange() {
++    return findChildByClass(DiffNormalHunkChange.class);
++  }
++
++  @Override
++  @Nullable
++  public DiffNormalHunkDelete getNormalHunkDelete() {
++    return findChildByClass(DiffNormalHunkDelete.class);
++  }
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffTrailingTextImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffTrailingTextImpl.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffTrailingTextImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffTrailingTextImpl.java
+new file mode 100644
+index 0000000..635ede2
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffTrailingTextImpl.java
+<fold text='@@ -0,0 +1,35 @@' expand='true'>@@ -0,0 +1,35 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi.impl;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.lang.ASTNode;
++import com.intellij.psi.PsiElement;
++import com.intellij.psi.PsiElementVisitor;
++import com.intellij.psi.util.PsiTreeUtil;
++import static de.thomasrosenau.diffplugin.psi.DiffTypes.*;
++import com.intellij.extapi.psi.ASTWrapperPsiElement;
++import de.thomasrosenau.diffplugin.psi.*;
++
++public class DiffTrailingTextImpl extends ASTWrapperPsiElement implements DiffTrailingText {
++
++  public DiffTrailingTextImpl(@NotNull ASTNode node) {
++    super(node);
++  }
++
++  public void accept(@NotNull DiffVisitor visitor) {
++    visitor.visitTrailingText(this);
++  }
++
++  public void accept(@NotNull PsiElementVisitor visitor) {
++    if (visitor instanceof DiffVisitor) accept((DiffVisitor)visitor);
++    else super.accept(visitor);
++  }
++
++  @Override
++  @NotNull
++  public List<DiffAnyLine> getAnyLineList() {
++    return PsiTreeUtil.getChildrenOfTypeAsList(this, DiffAnyLine.class);
++  }
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffUnifiedDiffImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffUnifiedDiffImpl.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffUnifiedDiffImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffUnifiedDiffImpl.java
+new file mode 100644
+index 0000000..e0b64de
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffUnifiedDiffImpl.java
+<fold text='@@ -0,0 +1,35 @@' expand='true'>@@ -0,0 +1,35 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi.impl;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.lang.ASTNode;
++import com.intellij.psi.PsiElement;
++import com.intellij.psi.PsiElementVisitor;
++import com.intellij.psi.util.PsiTreeUtil;
++import static de.thomasrosenau.diffplugin.psi.DiffTypes.*;
++import com.intellij.extapi.psi.ASTWrapperPsiElement;
++import de.thomasrosenau.diffplugin.psi.*;
++
++public class DiffUnifiedDiffImpl extends ASTWrapperPsiElement implements DiffUnifiedDiff {
++
++  public DiffUnifiedDiffImpl(@NotNull ASTNode node) {
++    super(node);
++  }
++
++  public void accept(@NotNull DiffVisitor visitor) {
++    visitor.visitUnifiedDiff(this);
++  }
++
++  public void accept(@NotNull PsiElementVisitor visitor) {
++    if (visitor instanceof DiffVisitor) accept((DiffVisitor)visitor);
++    else super.accept(visitor);
++  }
++
++  @Override
++  @NotNull
++  public List<DiffUnifiedHunk> getUnifiedHunkList() {
++    return PsiTreeUtil.getChildrenOfTypeAsList(this, DiffUnifiedHunk.class);
++  }
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffUnifiedHunkImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffUnifiedHunkImpl.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffUnifiedHunkImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffUnifiedHunkImpl.java
+new file mode 100644
+index 0000000..f3f10bd
+--- /dev/null
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffUnifiedHunkImpl.java
+<fold text='@@ -0,0 +1,35 @@' expand='true'>@@ -0,0 +1,35 @@
++// This is a generated file. Not intended for manual editing.
++package de.thomasrosenau.diffplugin.psi.impl;
++
++import java.util.List;
++import org.jetbrains.annotations.*;
++import com.intellij.lang.ASTNode;
++import com.intellij.psi.PsiElement;
++import com.intellij.psi.PsiElementVisitor;
++import com.intellij.psi.util.PsiTreeUtil;
++import static de.thomasrosenau.diffplugin.psi.DiffTypes.*;
++import com.intellij.extapi.psi.ASTWrapperPsiElement;
++import de.thomasrosenau.diffplugin.psi.*;
++
++public class DiffUnifiedHunkImpl extends ASTWrapperPsiElement implements DiffUnifiedHunk {
++
++  public DiffUnifiedHunkImpl(@NotNull ASTNode node) {
++    super(node);
++  }
++
++  public void accept(@NotNull DiffVisitor visitor) {
++    visitor.visitUnifiedHunk(this);
++  }
++
++  public void accept(@NotNull PsiElementVisitor visitor) {
++    if (visitor instanceof DiffVisitor) accept((DiffVisitor)visitor);
++    else super.accept(visitor);
++  }
++
++  @Override
++  @NotNull
++  public List<DiffUnifiedLine> getUnifiedLineList() {
++    return PsiTreeUtil.getChildrenOfTypeAsList(this, DiffUnifiedLine.class);
++  }
++
++}</fold></fold>
+<fold text='diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffInfoImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffUnifiedLineImpl.java' expand='true'>diff --git a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffInfoImpl.java b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffUnifiedLineImpl.java
+similarity index 80%
+rename from src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffInfoImpl.java
+rename to src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffUnifiedLineImpl.java
+index 074dfe3..1f20759 100644
+--- a/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffInfoImpl.java
++++ b/src/main/generated-java/de/thomasrosenau/diffplugin/psi/impl/DiffUnifiedLineImpl.java
+<fold text='@@ -11,14 +11,14 @@ import static de.thomasrosenau.diffplugin.psi.DiffTypes.*;' expand='true'>@@ -11,14 +11,14 @@ import static de.thomasrosenau.diffplugin.psi.DiffTypes.*;
+ import com.intellij.extapi.psi.ASTWrapperPsiElement;
+ import de.thomasrosenau.diffplugin.psi.*;
+ 
+-public class DiffInfoImpl extends ASTWrapperPsiElement implements DiffInfo {
++public class DiffUnifiedLineImpl extends ASTWrapperPsiElement implements DiffUnifiedLine {
+ 
+-  public DiffInfoImpl(@NotNull ASTNode node) {
++  public DiffUnifiedLineImpl(@NotNull ASTNode node) {
+     super(node);
+   }
+ 
+   public void accept(@NotNull DiffVisitor visitor) {
+-    visitor.visitInfo(this);
++    visitor.visitUnifiedLine(this);
+   }
+ 
+   public void accept(@NotNull PsiElementVisitor visitor) {</fold></fold>
+<fold text='diff --git a/src/main/java/de/thomasrosenau/diffplugin/highlighter/DiffColorSettingsPage.java b/src/main/java/de/thomasrosenau/diffplugin/highlighter/DiffColorSettingsPage.java' expand='true'>diff --git a/src/main/java/de/thomasrosenau/diffplugin/highlighter/DiffColorSettingsPage.java b/src/main/java/de/thomasrosenau/diffplugin/highlighter/DiffColorSettingsPage.java
+index a1a93db..981698b 100644
+--- a/src/main/java/de/thomasrosenau/diffplugin/highlighter/DiffColorSettingsPage.java
++++ b/src/main/java/de/thomasrosenau/diffplugin/highlighter/DiffColorSettingsPage.java
+<fold text='@@ -30,16 +30,15 @@ import org.jetbrains.annotations.Nullable;' expand='true'>@@ -30,16 +30,15 @@ import org.jetbrains.annotations.Nullable;
+ 
+ public class DiffColorSettingsPage implements ColorSettingsPage {
+     private static final AttributesDescriptor[] DESCRIPTORS = new AttributesDescriptor[] {
+-            new AttributesDescriptor("Changed lines//Inserted line", DiffSyntaxHighlighter.ADDED),
++            new AttributesDescriptor("Changed lines//Inserted line", DiffSyntaxHighlighter.INSERTED),
+             new AttributesDescriptor("Changed lines//Deleted line", DiffSyntaxHighlighter.DELETED),
+-            new AttributesDescriptor("Changed lines//Changed line", DiffSyntaxHighlighter.MODIFIED),
++            new AttributesDescriptor("Changed lines//Changed line", DiffSyntaxHighlighter.CHANGED),
+             new AttributesDescriptor("Meta info//Console command", DiffSyntaxHighlighter.COMMAND),
+             new AttributesDescriptor("Meta info//File names", DiffSyntaxHighlighter.FILE),
+             new AttributesDescriptor("Meta info//Newline hint", DiffSyntaxHighlighter.EOLHINT),
+-            new AttributesDescriptor("Meta info//git patch header", DiffSyntaxHighlighter.GIT_HEAD),
+             new AttributesDescriptor("Hunk header", DiffSyntaxHighlighter.HUNK_HEAD),
+             new AttributesDescriptor("Separator", DiffSyntaxHighlighter.SEPARATOR),
+-            new AttributesDescriptor("Text", DiffSyntaxHighlighter.TEXT)
++            new AttributesDescriptor("Text (default)", DiffSyntaxHighlighter.TEXT)
+     };
+ 
+     @Nullable</fold>
+<fold text='@@ -58,55 +57,22 @@ public class DiffColorSettingsPage implements ColorSettingsPage {' expand='true'>@@ -58,55 +57,22 @@ public class DiffColorSettingsPage implements ColorSettingsPage {
+     @Override
+     public String getDemoText() {
+         // TODO: provide better example for multiple formats
+-        return "From 4c763966942c5a7376c6cd299d2ef7e617a0957b Mon Sep 17 00:00:00 2001\n" +
+-                "From: John Doe <john.doe@example.com>\n" +
+-                "Date: Wed, 21 Mar 2018 10:49:11 +0000\n" +
+-                "Subject: [PATCH 28/35] Fixed broken links\n" +
+-                "\n" +
+-                "---\n" +
+-                " .gitignore                    |   3 +-\n" +
+-                " .travis.yml                   |   6 +-\n" +
+-                " commanderConfig.js            |  17 +++--\n" +
+-                " package.json                  |   2 +-\n" +
+-                " test/Cli.js                   | 139 ++++++++++++++++++++++++++++++++++\n" +
+-                " test/{index.js => Factory.js} |   4 +-\n" +
+-                " test/ProvidersCLI.js          |  41 ++++++++++\n" +
+-                " test/helpers.js               |  31 ++++++++\n" +
+-                " test/mocha.opts               |   1 +\n" +
+-                " 9 files changed, 231 insertions(+), 13 deletions(-)\n" +
+-                " create mode 100644 test/Cli.js\n" +
+-                " rename test/{index.js => Factory.js} (94%)\n" +
+-                " create mode 100644 test/ProvidersCLI.js\n" +
+-                " create mode 100644 test/helpers.js\n" +
+-                " create mode 100644 test/mocha.opts\n" +
+-                "\n" +
+-                "diff --git a/test/index.js b/test/Factory.js\n" +
+-                "similarity index 94%\n" +
+-                "rename from test/index.js\n" +
+-                "rename to test/Factory.js\n" +
+-                "index e77e4b8..6a3c7f5 100644\n" +
+-                "--- a/test/index.js\n" +
+-                "+++ b/test/Factory.js\n" +
+-                "@@ -1,6 +1,6 @@\n" +
+-                " var chai = require('chai');\n" +
+-                " var expect = require('chai').expect;\n" +
+-                "-var Image = require('../image/Image.js');\n" +
+-                "+var Image = require('../image/Image');\n" +
+-                " \n" +
+-                " describe('Image Factory', function () {\n" +
+-                "   'use strict';\n" +
+-                "@@ -61,7 +61,7 @@ describe('Image Providers', function () {\n" +
+-                "     Image.setProvider('UnsplashIt');\n" +
+-                " \n" +
+-                "     expect(Image.getImageUrl(size))\n" +
+-                "-        .to.equal('https://unsplash.it/400/400');\n" +
+-                "+      .to.equal('https://unsplash.it/400/400');\n" +
+-                "   });\n" +
+-                " \n" +
+-                "   it('returns FakeImg URL', function () {\n" +
+-                "\\ No newline at end of file\n" +
+-                "-- \n" +
+-                "2.20.1\n";
++        return "Only in lao: preamble\n" + "diff -c lao/quote tzu/quote\n" +
++                "*** lao/quote\t2019-02-18 08:26:38.000000000 +0100\n" +
++                "--- tzu/quote\t2019-02-18 08:23:58.000000000 +0100\n" + "***************\n" + "*** 1,7 ****\n" +
++                "- The Way that can be told of is not the eternal Way;\n" +
++                "- The name that can be named is not the eternal name.\n" +
++                "  The Nameless is the origin of Heaven and Earth;\n" + "! The Named is the mother of all things.\n" +
++                "  Therefore let there always be non-being,\n" + "    so we may see their subtlety,\n" +
++                "  And let there always be being,\n" + "--- 1,6 ----\n" +
++                "  The Nameless is the origin of Heaven and Earth;\n" + "! The named is the mother of all things.\n" +
++                "!\n" + "  Therefore let there always be non-being,\n" + "    so we may see their subtlety,\n" +
++                "  And let there always be being,\n" + "***************\n" + "*** 9,11 ****\n" + "--- 8,13 ----\n" +
++                "  The two are the same,\n" + "  But after they are produced,\n" + "    they have different names.\n" +
++                "+ They both may be called deep and profound.\n" + "+ Deeper and more profound,\n" +
++                "+ The door of all subtleties!\n" +
++                "Only in tzu: unquote\n" +
++                "\\ No newline at end of file\n";
+     }
+ 
+     @Nullable</fold></fold>
+<fold text='diff --git a/src/main/java/de/thomasrosenau/diffplugin/highlighter/DiffSyntaxHighlighter.java b/src/main/java/de/thomasrosenau/diffplugin/highlighter/DiffSyntaxHighlighter.java' expand='true'>diff --git a/src/main/java/de/thomasrosenau/diffplugin/highlighter/DiffSyntaxHighlighter.java b/src/main/java/de/thomasrosenau/diffplugin/highlighter/DiffSyntaxHighlighter.java
+index 15fa5bf..6ff1d41 100644
+--- a/src/main/java/de/thomasrosenau/diffplugin/highlighter/DiffSyntaxHighlighter.java
++++ b/src/main/java/de/thomasrosenau/diffplugin/highlighter/DiffSyntaxHighlighter.java
+<fold text='@@ -30,16 +30,17 @@ import de.thomasrosenau.diffplugin.lexer.DiffLexerAdapter;' expand='true'>@@ -30,16 +30,17 @@ import de.thomasrosenau.diffplugin.lexer.DiffLexerAdapter;
+ import de.thomasrosenau.diffplugin.psi.DiffTypes;
+ import org.jetbrains.annotations.NotNull;
+ 
++// TODO: add tests
+ public class DiffSyntaxHighlighter extends SyntaxHighlighterBase {
+     public static final TextAttributesKey COMMAND = createTextAttributesKey("PATCH_COMMAND",
+             ConsoleViewContentType.USER_INPUT_KEY);
+     public static final TextAttributesKey FILE = createTextAttributesKey("PATCH_FILEINFO",
+-            DefaultLanguageHighlighterColors.LINE_COMMENT);
+-    public static final TextAttributesKey ADDED = createTextAttributesKey("PATCH_ADDED",
++            DefaultLanguageHighlighterColors.BLOCK_COMMENT);
++    public static final TextAttributesKey INSERTED = createTextAttributesKey("PATCH_INSERTED",
+             DiffColors.DIFF_INSERTED);
+     public static final TextAttributesKey DELETED = createTextAttributesKey("PATCH_DELETED",
+             DiffColors.DIFF_DELETED);
+-    public static final TextAttributesKey MODIFIED = createTextAttributesKey("PATCH_MODIFIED",
++    public static final TextAttributesKey CHANGED = createTextAttributesKey("PATCH_CHANGED",
+             DiffColors.DIFF_MODIFIED);
+     public static final TextAttributesKey HUNK_HEAD = createTextAttributesKey("PATCH_HUNK_HEAD",
+             DefaultLanguageHighlighterColors.LABEL);</fold>
+<fold text='@@ -49,7 +50,7 @@ public class DiffSyntaxHighlighter extends SyntaxHighlighterBase {' expand='true'>@@ -49,7 +50,7 @@ public class DiffSyntaxHighlighter extends SyntaxHighlighterBase {
+             DefaultLanguageHighlighterColors.DOC_COMMENT);
+     public static final TextAttributesKey TEXT = createTextAttributesKey("PATCH_TEXT",
+             HighlighterColors.TEXT);
+-    public static final TextAttributesKey GIT_HEAD = createTextAttributesKey("PATCH_GIT_HEAD",
++    public static final TextAttributesKey LEADING_TEXT = createTextAttributesKey("PATCH_LEADING_TEXT",
+             DefaultLanguageHighlighterColors.BLOCK_COMMENT);
+ 
+     @NotNull</fold>
+<fold text='@@ -58,27 +59,62 @@ public class DiffSyntaxHighlighter extends SyntaxHighlighterBase {' expand='true'>@@ -58,27 +59,62 @@ public class DiffSyntaxHighlighter extends SyntaxHighlighterBase {
+         return new DiffLexerAdapter();
+     }
+ 
++    private boolean isChangedLine(IElementType tokenType) {
++        return tokenType.equals(DiffTypes.CONTEXT_CHANGED_LINE);
++    }
++
++    private boolean isInsertedLine(IElementType tokenType) {
++        return tokenType.equals(DiffTypes.CONTEXT_INSERTED_LINE) ||
++                tokenType.equals(DiffTypes.UNIFIED_INSERTED_LINE) ||
++                tokenType.equals(DiffTypes.NORMAL_TO_LINE);
++    }
++
++    private boolean isDeletedLine(IElementType tokenType) {
++        return tokenType.equals(DiffTypes.CONTEXT_DELETED_LINE) ||
++                tokenType.equals(DiffTypes.UNIFIED_DELETED_LINE) ||
++                tokenType.equals(DiffTypes.NORMAL_FROM_LINE);
++    }
++
++    private boolean isHunkHead(IElementType tokenType) {
++        return tokenType.equals(DiffTypes.CONTEXT_FROM_LINE_NUMBERS) ||
++                tokenType.equals(DiffTypes.CONTEXT_TO_LINE_NUMBERS) ||
++                tokenType.equals(DiffTypes.UNIFIED_LINE_NUMBERS) ||
++                tokenType.equals(DiffTypes.NORMAL_ADD_COMMAND) ||
++                tokenType.equals(DiffTypes.NORMAL_DELETE_COMMAND) ||
++                tokenType.equals(DiffTypes.NORMAL_CHANGE_COMMAND);
++    }
++
++    private boolean isSeparator(IElementType tokenType) {
++        return tokenType.equals(DiffTypes.CONTEXT_HUNK_SEPERATOR) ||
++                tokenType.equals(DiffTypes.NORMAL_SEPARATOR);
++    }
++
++    private boolean isFileName(IElementType tokenType) {
++        return tokenType.equals(DiffTypes.CONTEXT_FROM_LABEL) ||
++                 tokenType.equals(DiffTypes.CONTEXT_TO_LABEL) ||
++                 tokenType.equals(DiffTypes.UNIFIED_FROM_LABEL) ||
++                 tokenType.equals(DiffTypes.UNIFIED_TO_LABEL);
++    }
++
+     @NotNull
+     @Override
+     public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
+         if (tokenType.equals(DiffTypes.COMMAND)) {
+             return pack(COMMAND);
+-        } else if (tokenType.equals(DiffTypes.FILE)) {
+-            return pack(FILE);
+-        } else if (tokenType.equals(DiffTypes.ADDED)) {
+-            return pack(ADDED);
+-        } else if (tokenType.equals(DiffTypes.DELETED)) {
++        } else if (isChangedLine(tokenType)) {
++            return pack(CHANGED);
++        } else if (isInsertedLine(tokenType)) {
++            return pack(INSERTED);
++        } else if (isDeletedLine(tokenType)) {
+             return pack(DELETED);
+-        } else if (tokenType.equals(DiffTypes.MODIFIED)) {
+-            return pack(MODIFIED);
+-        } else if (tokenType.equals(DiffTypes.HUNK_HEAD)) {
++        } else if (isHunkHead(tokenType)) {
+             return pack(HUNK_HEAD);
+-        } else if (tokenType.equals(DiffTypes.SEPARATOR)) {
++        } else if (isSeparator(tokenType)) {
+             return pack(SEPARATOR);
++        } else if (isFileName(tokenType)) {
++            return pack(FILE);
+         } else if (tokenType.equals(DiffTypes.EOLHINT)) {
+             return pack(EOLHINT);
+-        } else if (tokenType.equals(DiffTypes.GIT_HEAD)) {
+-            return pack(GIT_HEAD);
+         } else {
+             return pack(TEXT);
+         }</fold></fold>
+<fold text='diff --git a/src/main/java/de/thomasrosenau/diffplugin/lexer/Diff.flex b/src/main/java/de/thomasrosenau/diffplugin/lexer/Diff.flex' expand='true'>diff --git a/src/main/java/de/thomasrosenau/diffplugin/lexer/Diff.flex b/src/main/java/de/thomasrosenau/diffplugin/lexer/Diff.flex
+index 890a958..6204460 100644
+--- a/src/main/java/de/thomasrosenau/diffplugin/lexer/Diff.flex
++++ b/src/main/java/de/thomasrosenau/diffplugin/lexer/Diff.flex
+<fold text='@@ -31,48 +31,54 @@ import static de.thomasrosenau.diffplugin.psi.DiffTypes.*;' expand='true'>@@ -31,48 +31,54 @@ import static de.thomasrosenau.diffplugin.psi.DiffTypes.*;
+ %function advance
+ %type IElementType
+ %unicode
+-%state GitHead, DEFAULT
++%state CONTEXT, UNIFIED, NORMAL
+ 
+ Newline = [\r\n]
+ InputCharacter = [^\r\n]
+ InputCharacters = {InputCharacter}+
+ Digits = [0-9]+
+-Range = {Digits} "," {Digits}
++Range = {Digits} ("," {Digits})?
+ 
+ %%
+ 
+-<YYINITIAL> ^ "From "  {InputCharacters} $ { yybegin(GitHead); return GIT_HEAD; }
+-
+-<GitHead> {
+-  ^ "diff " {InputCharacters} $ { yybegin(DEFAULT); return COMMAND; }
+-  ^ "---" {Newline} { return SEPARATOR; }
+-  // TODO detect email address etc
+-  ^ {InputCharacters} $ { return GIT_HEAD; }
+-}
+-
+ {Newline} { return WHITE_SPACE; }
+ 
+-^ "diff " {InputCharacters} $ { yybegin(DEFAULT); return COMMAND; }
+-
+-^ {Range} $ { yybegin(DEFAULT); return HUNK_HEAD; }
+-^ "--- " {Range} " ----" $ { yybegin(DEFAULT); return HUNK_HEAD; }
+-^ "*** " {Range} " ****" $ { yybegin(DEFAULT); return HUNK_HEAD; }
+-^ "@@" {InputCharacters} $ { yybegin(DEFAULT); return HUNK_HEAD; }
++<YYINITIAL> ^ "*** " {InputCharacters} $ { yybegin(CONTEXT); return CONTEXT_FROM_LABEL; }
++<CONTEXT> {
++  ^ "***************" $ { return CONTEXT_HUNK_SEPERATOR; }
++  ^ "*** " {Range} " ****" $ { return CONTEXT_FROM_LINE_NUMBERS; }
++  ^ "--- " {Range} " ----" $ { return CONTEXT_TO_LINE_NUMBERS; }
++  ^ "--- " {InputCharacters} $ { return CONTEXT_TO_LABEL; }
++  ^ "!" (" " {InputCharacters})? {Newline} { return CONTEXT_CHANGED_LINE; }
++  ^ "+" (" " {InputCharacters})? {Newline} { return CONTEXT_INSERTED_LINE; }
++  ^ "-" (" " {InputCharacters})? {Newline} { return CONTEXT_DELETED_LINE; }
++  ^ "  " {InputCharacters} {Newline} { return CONTEXT_COMMON_LINE; }
++}
+ 
+-^ "*** " {InputCharacters} $ { yybegin(DEFAULT); return FILE; }
+-^ "--- " {InputCharacters} $ { yybegin(DEFAULT); return FILE; } // TODO: find out if first or second file (-u vs. -c)
+-^ "+++ " {InputCharacters} $ { yybegin(DEFAULT); return FILE; }
++<YYINITIAL,UNIFIED> ^ "--- " {InputCharacters} $ { yybegin(UNIFIED); return UNIFIED_FROM_LABEL; }
++<UNIFIED> {
++  ^ "+++ " {InputCharacters} $ { return UNIFIED_TO_LABEL; }
++  ^ "@@ " {InputCharacters} " @@" (" " .+)? $ { return UNIFIED_LINE_NUMBERS; }
++  ^ "+" {InputCharacters}? {Newline} { return UNIFIED_INSERTED_LINE; }
++  ^ "-" {InputCharacters}? {Newline} { return UNIFIED_DELETED_LINE; }
++  ^ " " {InputCharacters}? {Newline} { return UNIFIED_COMMON_LINE; }
++}
+ 
+-^ "--" ("-" | " ")? {Newline} { yybegin(DEFAULT); return SEPARATOR; }
+-^ "***************" {Newline} { yybegin(DEFAULT); return SEPARATOR; }
++<YYINITIAL,NORMAL> {
++  ^ {Digits} "a" {Range} $ { yybegin(NORMAL); return NORMAL_ADD_COMMAND; }
++  ^ {Range} "c" {Range} $ { yybegin(NORMAL); return NORMAL_CHANGE_COMMAND; }
++  ^ {Range} "d" {Digits} $ { yybegin(NORMAL); return NORMAL_DELETE_COMMAND; }
++}
++<NORMAL> {
++  ^ ">" {InputCharacters}? {Newline} { return NORMAL_TO_LINE; }
++  ^ "<" {InputCharacters}? {Newline} { return NORMAL_FROM_LINE; }
++  ^ "---" $ { return NORMAL_SEPARATOR; }
++}
+ 
+-// TODO: handle EOF
+-^ [+>] {InputCharacters}? {Newline} { yybegin(DEFAULT); return ADDED; }
+-^ [-<] {InputCharacters}? {Newline} { yybegin(DEFAULT); return DELETED; }
+-^ "!" {InputCharacters} {Newline} { yybegin(DEFAULT); return MODIFIED; } // TODO: find out if added or deleted
++^ "diff " {InputCharacters} $ { yybegin(YYINITIAL); return COMMAND; }
+ 
+-^ "\\" {InputCharacters} $ { yybegin(DEFAULT); return EOLHINT; } // TODO: find out if added or deleted
++^ "\\" {InputCharacters} $ { return EOLHINT; }
+ 
+-^ {InputCharacters} $ { yybegin(DEFAULT); return OTHER; }
++^ {InputCharacters} $ { return OTHER; }
+ 
+ [^] { return BAD_CHARACTER; } // this should never happen; debugging only</fold></fold>
+<fold text='diff --git a/src/main/java/de/thomasrosenau/diffplugin/lexer/DiffLexerAdapter.java b/src/main/java/de/thomasrosenau/diffplugin/lexer/DiffLexerAdapter.java' expand='true'>diff --git a/src/main/java/de/thomasrosenau/diffplugin/lexer/DiffLexerAdapter.java b/src/main/java/de/thomasrosenau/diffplugin/lexer/DiffLexerAdapter.java
+index 3f11300..06d4efa 100644
+--- a/src/main/java/de/thomasrosenau/diffplugin/lexer/DiffLexerAdapter.java
++++ b/src/main/java/de/thomasrosenau/diffplugin/lexer/DiffLexerAdapter.java
+<fold text='@@ -16,13 +16,11 @@' expand='true'>@@ -16,13 +16,11 @@
+ 
+ package de.thomasrosenau.diffplugin.lexer;
+ 
+-import java.io.Reader;
+-
+ import com.intellij.lexer.FlexAdapter;
+ import de.thomasrosenau.diffplugin.DiffLexer;
+ 
+ public class DiffLexerAdapter extends FlexAdapter {
+   public DiffLexerAdapter() {
+-    super(new DiffLexer((Reader) null));
++    super(new DiffLexer(null));
+   }
+ }</fold></fold>
+<fold text='diff --git a/src/main/java/de/thomasrosenau/diffplugin/parser/Diff.bnf b/src/main/java/de/thomasrosenau/diffplugin/parser/Diff.bnf' expand='true'>diff --git a/src/main/java/de/thomasrosenau/diffplugin/parser/Diff.bnf b/src/main/java/de/thomasrosenau/diffplugin/parser/Diff.bnf
+index 69f7c82..03cc353 100644
+--- a/src/main/java/de/thomasrosenau/diffplugin/parser/Diff.bnf
++++ b/src/main/java/de/thomasrosenau/diffplugin/parser/Diff.bnf
+<fold text='@@ -29,8 +29,36 @@' expand='true'>@@ -29,8 +29,36 @@
+   tokenTypeClass="de.thomasrosenau.diffplugin.psi.DiffTokenType"
+ }
+ 
+-diffFile ::= (info | changed | plain)*
++// TODO: make stuff private if possible
+ 
+-info ::= COMMAND | FILE | SEPARATOR | HUNK_HEAD | EOLHINT | GIT_HEAD
+-changed ::=  ADDED | DELETED | MODIFIED
+-plain ::= OTHER
++// https://www.gnu.org/software/diffutils/manual/diffutils.html#Imperfect
++diffFile ::= (leadingText (normalDiff | contextDiff | unifiedDiff))+ trailingText // TODO: handle indentation
++
++// TODO: Handle Prereq: and Index:
++// TODO: Handle git header
++leadingText ::= anyLine* (consoleCommand anyLine*)?
++consoleCommand ::= COMMAND
++// TODO: Handle git footer
++trailingText ::= anyLine*
++anyLine ::= WHITE_SPACE | OTHER
++
++// https://www.gnu.org/software/diffutils/manual/diffutils.html#Detailed-Context
++contextDiff ::= CONTEXT_FROM_LABEL CONTEXT_TO_LABEL contextHunk+
++contextHunk ::= CONTEXT_HUNK_SEPERATOR contextHunkFrom contextHunkTo
++contextHunkFrom ::= CONTEXT_FROM_LINE_NUMBERS contextFromFileLine* (EOLHINT)?
++contextHunkTo ::= CONTEXT_TO_LINE_NUMBERS contextToFileLine* (EOLHINT)?
++contextFromFileLine ::= CONTEXT_COMMON_LINE | CONTEXT_CHANGED_LINE | CONTEXT_DELETED_LINE
++contextToFileLine ::= CONTEXT_COMMON_LINE | CONTEXT_CHANGED_LINE | CONTEXT_INSERTED_LINE
++
++// https://www.gnu.org/software/diffutils/manual/diffutils.html#Detailed-Unified
++unifiedDiff ::= UNIFIED_FROM_LABEL UNIFIED_TO_LABEL unifiedHunk+
++// TODO: Handle git binaries
++unifiedHunk ::= UNIFIED_LINE_NUMBERS (unifiedLine | WHITE_SPACE)+
++unifiedLine ::= UNIFIED_INSERTED_LINE | UNIFIED_DELETED_LINE | UNIFIED_COMMON_LINE | EOLHINT
++
++// https://www.gnu.org/software/diffutils/manual/diffutils.html#Detailed-Normal
++normalDiff ::= normalHunk+
++normalHunk ::= normalHunkAdd | normalHunkChange | normalHunkDelete
++normalHunkAdd ::= NORMAL_ADD_COMMAND NORMAL_TO_LINE+ EOLHINT?
++normalHunkChange ::= NORMAL_CHANGE_COMMAND NORMAL_FROM_LINE+ EOLHINT? NORMAL_SEPARATOR NORMAL_TO_LINE+ EOLHINT?
++normalHunkDelete ::= NORMAL_DELETE_COMMAND NORMAL_FROM_LINE+ EOLHINT?</fold></fold>
+<fold text='diff --git a/src/test/resources/dir-context.diff b/src/test/resources/dir-context.diff' expand='true'>diff --git a/src/test/resources/dir-context.diff b/src/test/resources/dir-context.diff
+index 0769810..20f14d2 100644
+--- a/src/test/resources/dir-context.diff
++++ b/src/test/resources/dir-context.diff
+<fold text='@@ -1,6 +1,7 @@' expand='true'>@@ -1,6 +1,7 @@
+-diff -r -c lao/quote tzu/quote
+-*** lao/quote	2019-02-14 07:11:32.000000000 +0100
+---- tzu/quote	2019-02-14 07:10:13.000000000 +0100
++Only in lao: preamble
++diff -c lao/quote tzu/quote
++*** lao/quote	2019-02-18 08:26:38.000000000 +0100
++--- tzu/quote	2019-02-18 08:23:58.000000000 +0100
+ ***************
+ *** 1,7 ****
+ - The Way that can be told of is not the eternal Way;</fold>
+<fold text='@@ -18,15 +19,12 @@ diff -r -c lao/quote tzu/quote' expand='true'>@@ -18,15 +19,12 @@ diff -r -c lao/quote tzu/quote
+     so we may see their subtlety,
+   And let there always be being,
+ ***************
+-*** 9,12 ****
+-  The two are the same,
+-  But after they are produced,
+-    they have different names.
+-!
++*** 9,11 ****
+ --- 8,13 ----
+   The two are the same,
+   But after they are produced,
+     they have different names.
+-! They both may be called deep and profound.
+-! Deeper and more profound,
+-! The door of all subtleties!
+++ They both may be called deep and profound.
+++ Deeper and more profound,
+++ The door of all subtleties!
++Only in tzu: unquote</fold></fold>
+<fold text='diff --git a/src/test/resources/dir-normal.diff b/src/test/resources/dir-normal.diff' expand='true'>diff --git a/src/test/resources/dir-normal.diff b/src/test/resources/dir-normal.diff
+index c691cd0..f8818b4 100644
+--- a/src/test/resources/dir-normal.diff
++++ b/src/test/resources/dir-normal.diff
+<fold text='@@ -1,3 +1,4 @@' expand='true'>@@ -1,3 +1,4 @@
++Only in lao: preamble
+ diff -r lao/quote tzu/quote
+ 1,2d0
+ < The Way that can be told of is not the eternal Way;</fold>
+<fold text='@@ -13,3 +14,4 @@ diff -r lao/quote tzu/quote' expand='true'>@@ -13,3 +14,4 @@ diff -r lao/quote tzu/quote
+ > They both may be called deep and profound.
+ > Deeper and more profound,
+ > The door of all subtleties!
++Only in tzu: unquote</fold></fold>
+<fold text='diff --git a/src/test/resources/dir-unified.diff b/src/test/resources/dir-unified.diff' expand='true'>diff --git a/src/test/resources/dir-unified.diff b/src/test/resources/dir-unified.diff
+index 6303678..6341918 100644
+--- a/src/test/resources/dir-unified.diff
++++ b/src/test/resources/dir-unified.diff
+<fold text='@@ -1,3 +1,4 @@' expand='true'>@@ -1,3 +1,4 @@
++Only in lao: preamble
+ diff -r -u lao/quote tzu/quote
+ --- lao/quote	2019-02-14 07:11:32.000000000 +0100
+ +++ tzu/quote	2019-02-14 07:10:13.000000000 +0100</fold>
+<fold text='@@ -19,3 +20,5 @@ diff -r -u lao/quote tzu/quote' expand='true'>@@ -19,3 +20,5 @@ diff -r -u lao/quote tzu/quote
+ +They both may be called deep and profound.
+ +Deeper and more profound,
+ +The door of all subtleties!
++Only in tzu: unquote
++</fold></fold>
+-- 
+2.20.1
+

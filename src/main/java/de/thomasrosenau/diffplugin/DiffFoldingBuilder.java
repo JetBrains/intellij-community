@@ -23,6 +23,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.FoldingBuilderEx;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -36,8 +37,7 @@ import de.thomasrosenau.diffplugin.psi.impl.DiffUnifiedHunkImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-// TODO: add tests
-class DiffFoldingBuilder extends FoldingBuilderEx {
+class DiffFoldingBuilder extends FoldingBuilderEx implements PossiblyDumbAware {
     @NotNull
     @Override
     public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
@@ -45,7 +45,12 @@ class DiffFoldingBuilder extends FoldingBuilderEx {
         buildFileFoldingRegions(root, result);
         buildHunkFoldingRegions(root, result);
         buildGitFoldingRegions(root, result);
-        return result.toArray(new FoldingDescriptor[] {});
+        return result.toArray(FoldingDescriptor.EMPTY);
+    }
+
+    @Override
+    public boolean isCollapsedByDefault(@NotNull ASTNode node) {
+        return node.getPsi() instanceof DiffGitBinaryPatchImpl;
     }
 
     // TODO: have parser detect the files rather than doing it here
@@ -80,13 +85,6 @@ class DiffFoldingBuilder extends FoldingBuilderEx {
         }
     }
 
-    private void buildGitFoldingRegions(@NotNull PsiElement root, @NotNull ArrayList<FoldingDescriptor> result) {
-        PsiElement gitHeader = PsiTreeUtil.findChildOfType(root, DiffGitHeaderImpl.class);
-        if (gitHeader != null) {
-            addElement(result, gitHeader);
-        }
-    }
-
     void addElement(@NotNull ArrayList<FoldingDescriptor> result, @NotNull PsiElement element) {
         TextRange range = element.getTextRange();
         if (element.getText().endsWith("\n")) {
@@ -96,9 +94,11 @@ class DiffFoldingBuilder extends FoldingBuilderEx {
 
     }
 
-    @Override
-    public boolean isCollapsedByDefault(@NotNull ASTNode node) {
-        return node.getPsi() instanceof DiffGitBinaryPatchImpl;
+    private void buildGitFoldingRegions(@NotNull PsiElement root, @NotNull ArrayList<FoldingDescriptor> result) {
+        PsiElement gitHeader = PsiTreeUtil.findChildOfType(root, DiffGitHeaderImpl.class);
+        if (gitHeader != null) {
+            addElement(result, gitHeader);
+        }
     }
 
     @Nullable
@@ -115,5 +115,10 @@ class DiffFoldingBuilder extends FoldingBuilderEx {
         } else {
             return psiNode.getFirstChild().getText();
         }
+    }
+
+    @Override
+    public boolean isDumbAware() {
+        return true;
     }
 }
