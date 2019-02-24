@@ -132,16 +132,25 @@ public class MemoryAgentUtil {
 
   public static void loadAgentProxy(@NotNull DebugProcessImpl debugProcess, @NotNull Consumer<MemoryAgent> agentLoaded) {
     debugProcess.addDebugProcessListener(new DebugProcessAdapterImpl() {
+      private final AtomicBoolean isInitializing = new AtomicBoolean(false);
+
       @Override
       public void paused(SuspendContextImpl suspendContext) {
-        MemoryAgent memoryAgent = initMemoryAgent(suspendContext);
-        if (memoryAgent == null) {
-          LOG.warn("Could not initialize memory agent.");
-          return;
-        }
+        if (isInitializing.compareAndSet(false, true)) {
+          try {
+            MemoryAgent memoryAgent = initMemoryAgent(suspendContext);
+            if (memoryAgent == null) {
+              LOG.warn("Could not initialize memory agent.");
+              return;
+            }
 
-        agentLoaded.accept(memoryAgent);
-        debugProcess.removeDebugProcessListener(this);
+            agentLoaded.accept(memoryAgent);
+            debugProcess.removeDebugProcessListener(this);
+          }
+          finally {
+            isInitializing.set(false);
+          }
+        }
       }
 
       @Nullable
