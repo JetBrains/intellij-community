@@ -95,6 +95,11 @@ public class MemoryAgentUtil {
 
     LOG.info("Memory agent extracting took " + (System.currentTimeMillis() - start) + " ms");
     String path = JavaExecutionUtil.handleSpacesInAgentPath(agentFile.getAbsolutePath(), "debugger-memory-agent", null);
+    if (path == null) {
+      LOG.error("Could not use memory agent file. Spaces are found.");
+      return;
+    }
+
     String args = "";
     if (isInDebugMode) {
       args = "5";// Enable debug messages
