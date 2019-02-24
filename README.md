@@ -17,10 +17,12 @@ In order to open this project in IntelliJ IDEA, follow these steps:
 
 Now, there are two [run configurations](https://www.jetbrains.com/help/idea/creating-and-editing-run-debug-configurations.html#e867c088), *Run in IDE* and *Build Plugin*.
 
-* *Run in IDE* allows you to launch an IntelliJ Community Edition with the plugin enabled.
+* *Run in IDE* allows you to launch an IntelliJ Community Edition with the plugin enabled.  
+  The IDE version is configured in `build.gradle`. Required files will be automatically downloaded.  
+  You can find version numbers here: [stable](https://www.jetbrains.com/intellij-repository/releases) | [snapshots](https://www.jetbrains.com/intellij-repository/snapshots/).
+  See section *com.jetbrains.intellij.idea*. You can use *Version* or *Build Number*.
 * *Build Plugin* will generate `build/distributions/intellij-diff-plugin-*.zip`, which you can [install](https://www.jetbrains.com/help/idea/managing-plugins.html#c5e86b83) in your JetBrains IDE.
-  Make sure to adjust `intellij/version` in `build.gradle`. Find valid version numbers here:
-  [stable](https://www.jetbrains.com/intellij-repository/releases) | [snapshots](https://www.jetbrains.com/intellij-repository/snapshots/) | [previous](https://www.jetbrains.com/idea/download/previous.html)
+
 
 To find out more about plugin development, please refer to the excellent official documentation:
 http://www.jetbrains.org/intellij/sdk/docs/

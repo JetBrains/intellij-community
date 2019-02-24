@@ -22,10 +22,10 @@ public class GitPatchParserTest extends DiffParserTestBase {
     }
 
     public void testGit() {
-        doTest(true, true);
+        doTest(true);
     }
 
     public void testGitBinary() {
-        doTest(true, true);
+        doTest(true);
     }
 }

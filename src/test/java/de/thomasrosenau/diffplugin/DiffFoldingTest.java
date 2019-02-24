@@ -21,43 +21,43 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 public class DiffFoldingTest extends LightCodeInsightFixtureTestCase {
 
     public void testContext() {
-        go();
+        doTest();
     }
 
     public void testContextMulti() {
-        go();
+        doTest();
     }
 
     public void testUnified() {
-        go();
+        doTest();
     }
 
     public void testUnifiedMulti() {
-        go();
+        doTest();
     }
 
     public void testNormal() {
-        go();
+        doTest();
     }
 
     public void testNormalMulti() {
-        go();
+        doTest();
     }
 
     public void testGit() {
-        go("patch");
+        doTest("patch");
     }
 
     public void testGitBinary() {
-        go("patch");
+        doTest("patch");
     }
 
 
-    private void go() {
-        go("diff");
+    private void doTest() {
+        doTest("diff");
     }
 
-    private void go(String fileExtension) {
+    private void doTest(String fileExtension) {
         myFixture.testFoldingWithCollapseStatus(
                 getTestDataPath() + "/" + getTestName(false) + ".folded." + fileExtension);
     }

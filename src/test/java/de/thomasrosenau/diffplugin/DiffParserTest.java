@@ -18,27 +18,27 @@ package de.thomasrosenau.diffplugin;
 
 public class DiffParserTest extends DiffParserTestBase {
     public void testContext() {
-        doTest(true, true);
+        doTest(true);
     }
 
     public void testUnified() {
-        doTest(true, true);
+        doTest(true);
     }
 
     public void testNormal() {
-        doTest(true, true);
+        doTest(true);
     }
 
     public void testContextMulti() {
-        doTest(true, true);
+        doTest(true);
     }
 
     public void testUnifiedMulti() {
-        doTest(true, true);
+        doTest(true);
     }
 
     public void testNormalMulti() {
-        doTest(true, true);
+        doTest(true);
     }
 
 }

@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ExternalDependencies">
     <plugin id="DevKit" />
-    <plugin id="PsiViewer" />
     <plugin id="org.jetbrains.idea.grammar" />
     <plugin id="org.jetbrains.plugins.gradle" />
   </component>
