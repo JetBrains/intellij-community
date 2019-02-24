@@ -4,12 +4,10 @@ package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ui.NewChangelistDialog
 
-class AddChangeListAction : DumbAwareAction() {
+class AddChangeListAction : AbstractChangeListAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
     val dialog = NewChangelistDialog(project)
@@ -26,9 +24,11 @@ class AddChangeListAction : DumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
+    val enabled = e.project != null
+
+    e.presentation.isEnabled = enabled
     if (e.place == ActionPlaces.CHANGES_VIEW_POPUP) {
-      val changeLists = e.getData(VcsDataKeys.CHANGE_LISTS)
-      e.presentation.isVisible = !changeLists.isNullOrEmpty()
+      e.presentation.isVisible = enabled && !getChangeLists(e).none()
     }
   }
 }
