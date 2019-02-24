@@ -14,15 +14,17 @@ import java.io.StringWriter
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Consumer
+
+private val LOG = Logger.getInstance(StartUpMeasurer::class.java)
 
 class StartUpPerformanceReporter : StartupActivity, DumbAware {
   private val activationCount = AtomicInteger()
   // questions like "what if we have several projects to open? what if no projects at all?" are out of scope for now
   private val isLastEdtOptionTopHitProviderFinished = AtomicBoolean()
 
-  @Volatile
-  private var end: Long = -1
+  private var startUpEnd = AtomicLong(-1)
 
   var lastReport: String? = null
     private set
@@ -55,8 +57,10 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
 
   override fun runActivity(project: Project) {
     val end = System.nanoTime()
-    this.end = end
     val activationNumber = activationCount.getAndIncrement()
+    if (activationNumber == 0) {
+      LOG.assertTrue(startUpEnd.getAndSet(end) == -1L)
+    }
     if (isLastEdtOptionTopHitProviderFinished.get()) {
       // even if this activity executed in a pooled thread, better if it will not affect start-up in any way
       ApplicationManager.getApplication().executeOnPooledThread {
@@ -65,12 +69,12 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     }
   }
 
-  fun lastEdtOptionTopHitProviderFinished() {
+  fun lastEdtOptionTopHitProviderFinishedForProject() {
     if (!isLastEdtOptionTopHitProviderFinished.compareAndSet(false, true)) {
       return
     }
 
-    val end = end
+    val end = startUpEnd.get()
     if (end != -1L) {
       ApplicationManager.getApplication().executeOnPooledThread {
         logStats(end, 0)
@@ -80,8 +84,6 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
 
   @Synchronized
   private fun logStats(end: Long, activationNumber: Int) {
-    val log = Logger.getInstance(StartUpMeasurer::class.java)
-
     val items = mutableListOf<Item>()
     val activities = THashMap<String, MutableList<Item>>()
     StartUpMeasurer.processAndClear(Consumer { item ->
@@ -145,7 +147,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     var string = stringWriter.toString()
     // to make output more compact (quite a lot slow components) - should we write own JSON encoder? well, for now potentially slow RegExp is ok
     string = string.replace(Regex(",\\s+(\"start\"|\"end\"|\\{)"), ", $1")
-    log.info(string)
+    LOG.info(string)
   }
 
   private fun writeActivities(activities: THashMap<String, MutableList<Item>>, startTime: Long, writer: JsonWriter) {

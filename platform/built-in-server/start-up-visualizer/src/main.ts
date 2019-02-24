@@ -2,7 +2,7 @@
 import * as am4core from "@amcharts/amcharts4/core"
 
 import am4themes_animated from "@amcharts/amcharts4/themes/animated"
-import {ComponentsChartManager, TopHitProviderChart} from "./ComponentsChartManager"
+import {ComponentsChartManager, TopHitProviderChart} from "./ItemChartManager"
 import {TimelineChartManager} from "./TimeLineChartManager"
 import {ChartManager, getButtonElement, getInputElement, InputData} from "./core"
 

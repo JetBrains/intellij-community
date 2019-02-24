@@ -253,9 +253,11 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
 
     private static void scheduleEdtTasks(@NotNull Deque<ConfigurableOptionsTopHitProvider> edtProviders, @Nullable ProgressIndicator indicator, @Nullable Project project) {
       if (edtProviders.isEmpty()) {
-        StartUpPerformanceReporter startUpPerformanceReporter = StartupActivity.POST_STARTUP_ACTIVITY.findExtension(StartUpPerformanceReporter.class);
-        if (startUpPerformanceReporter != null) {
-          startUpPerformanceReporter.lastEdtOptionTopHitProviderFinished();
+        if (project != null) {
+          StartUpPerformanceReporter startUpPerformanceReporter = StartupActivity.POST_STARTUP_ACTIVITY.findExtension(StartUpPerformanceReporter.class);
+          if (startUpPerformanceReporter != null) {
+            startUpPerformanceReporter.lastEdtOptionTopHitProviderFinishedForProject();
+          }
         }
         return;
       }

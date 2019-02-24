@@ -15,6 +15,8 @@ export abstract class ItemChartManager extends XYChartManager {
     this.configureSeries()
 
     this.chart.legend = new am4charts.Legend()
+    // make colors more contrast because we have more than one series
+    this.chart.colors.step = 2
   }
 
   private get nameAxis(): am4charts.CategoryAxis {
