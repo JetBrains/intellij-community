@@ -37,6 +37,7 @@ final class SystemOptionsTopHitProvider implements OptionsTopHitProvider.Applica
     return ourOptions;
   }
 
+  @NotNull
   @Override
   public String getId() {
     return "system";

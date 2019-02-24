@@ -15,6 +15,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 final class InspectionsTopHitProvider implements OptionsSearchTopHitProvider.ProjectLevelProvider {
+  @NotNull
   @Override
   public String getId() {
     return "inspections";

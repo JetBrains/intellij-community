@@ -27,6 +27,7 @@ import static com.intellij.vcs.commit.CommitMessageInspectionProfile.getBodyRigh
  * @author Sergey.Malenkov
  */
 public final class VcsOptionsTopHitProvider implements OptionsSearchTopHitProvider.ProjectLevelProvider {
+  @NotNull
   @Override
   public String getId() {
     return "vcs";

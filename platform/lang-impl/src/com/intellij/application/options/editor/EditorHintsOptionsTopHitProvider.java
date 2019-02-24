@@ -41,6 +41,7 @@ public class EditorHintsOptionsTopHitProvider implements OptionsTopHitProvider.A
     return myOptions;
   }
 
+  @NotNull
   @Override
   public String getId() {
     return EditorOptionsTopHitProvider.ID;

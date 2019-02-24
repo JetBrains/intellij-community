@@ -19,6 +19,7 @@ import java.util.Collections;
  * @author Sergey.Malenkov
  */
 final class CvsOptionsTopHitProvider implements OptionsSearchTopHitProvider.ProjectLevelProvider {
+  @NotNull
   @Override
   public String getId() {
     return "vcs";

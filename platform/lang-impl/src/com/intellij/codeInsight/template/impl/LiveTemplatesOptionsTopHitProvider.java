@@ -14,6 +14,7 @@ import java.util.Collections;
  * @author Sergey.Malenkov
  */
 final class LiveTemplatesOptionsTopHitProvider implements OptionsTopHitProvider.ApplicationLevelProvider {
+  @NotNull
   @Override
   public String getId() {
     return "templates";

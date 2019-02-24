@@ -33,6 +33,7 @@ final class PluginOptionsTopHitProvider implements OptionsTopHitProvider.Applica
     return options;
   }
 
+  @NotNull
   @Override
   public String getId() {
     return "plugins";

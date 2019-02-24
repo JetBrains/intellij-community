@@ -19,6 +19,7 @@ import java.util.Collections;
  * @author Sergey.Malenkov
  */
 public final class FileColorsOptionsTopHitProvider implements OptionsSearchTopHitProvider.ProjectLevelProvider {
+  @NotNull
   @Override
   public String getId() {
     return AppearanceOptionsTopHitProvider.ID;

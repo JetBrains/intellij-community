@@ -46,6 +46,7 @@ public final class AppearanceOptionsTopHitProvider implements OptionsTopHitProvi
     return ourOptions;
   }
 
+  @NotNull
   @Override
   public String getId() {
     return ID;
@@ -92,6 +93,7 @@ public final class AppearanceOptionsTopHitProvider implements OptionsTopHitProvi
       return ourOptions;
     }
 
+    @NotNull
     @Override
     public String getId() {
       return ID;

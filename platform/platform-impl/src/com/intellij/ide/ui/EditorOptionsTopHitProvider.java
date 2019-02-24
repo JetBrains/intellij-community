@@ -40,6 +40,7 @@ public final class EditorOptionsTopHitProvider implements OptionsTopHitProvider.
     return ourOptions;
   }
 
+  @NotNull
   @Override
   public String getId() {
     return ID;
@@ -81,6 +82,7 @@ public final class EditorOptionsTopHitProvider implements OptionsTopHitProvider.
       return ourOptions;
     }
 
+    @NotNull
     @Override
     public String getId() {
       return ID;

@@ -30,6 +30,7 @@ final class RegistryOptionsTopHitProvider implements OptionsTopHitProvider.Appli
     return Holder.ourValues;
   }
 
+  @NotNull
   @Override
   public String getId() {
     return "registry";

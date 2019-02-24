@@ -19,6 +19,7 @@ import java.util.Collections;
  * @author Sergey.Malenkov
  */
 final class HgOptionsTopHitProvider implements OptionsSearchTopHitProvider.ProjectLevelProvider {
+  @NotNull
   @Override
   public String getId() {
     return "vcs";
