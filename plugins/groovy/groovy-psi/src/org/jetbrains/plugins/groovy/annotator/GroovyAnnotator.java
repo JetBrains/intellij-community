@@ -90,6 +90,8 @@ import static com.intellij.util.ArrayUtil.contains;
 import static org.jetbrains.plugins.groovy.annotator.ImplKt.checkInnerClassReferenceFromInstanceContext;
 import static org.jetbrains.plugins.groovy.annotator.ImplKt.checkUnresolvedCodeReference;
 import static org.jetbrains.plugins.groovy.annotator.UtilKt.*;
+import static org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessChecker.checkUnresolvedReference;
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isInStaticCompilationContext;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.mayContainTypeArguments;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.findScriptField;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isFieldDeclaration;
@@ -298,6 +300,9 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       PsiElement nameElement = referenceExpression.getReferenceNameElement();
       LOG.assertTrue(nameElement != null);
       myHolder.createInfoAnnotation(nameElement, null).setTextAttributes(GroovySyntaxHighlighter.KEYWORD);
+    }
+    else if (isInStaticCompilationContext(referenceExpression)) {
+      checkUnresolvedReference(referenceExpression, true, true, new AnnotationHolderHighlightSink(myHolder));
     }
   }
 

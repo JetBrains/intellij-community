@@ -40,7 +40,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -79,6 +78,7 @@ public class GrUnresolvedAccessChecker {
 
   @Nullable
   public List<HighlightInfo> checkReferenceExpression(GrReferenceExpression ref) {
+    if (PsiUtil.isInStaticCompilationContext(ref)) return null;
     List<HighlightInfo> info = checkRefInner(ref);
     addEmptyIntentionIfNeeded(ContainerUtil.getFirstItem(info));
     return info;
@@ -89,7 +89,6 @@ public class GrUnresolvedAccessChecker {
     PsiElement refNameElement = ref.getReferenceNameElement();
     if (refNameElement == null) return null;
 
-    boolean inStaticContext = PsiUtil.isCompileStatic(ref) || GrStaticChecker.isPropertyAccessInStaticMethod(ref);
     GroovyResolveResult resolveResult = getBestResolveResult(ref);
 
     if (resolveResult.getElement() != null) {
@@ -97,7 +96,7 @@ public class GrUnresolvedAccessChecker {
 
       if (!isStaticOk(resolveResult)) {
         String message = GroovyBundle.message("cannot.reference.non.static", ref.getReferenceName());
-        return Collections.singletonList(createAnnotationForRef(ref, inStaticContext, message));
+        return Collections.singletonList(createAnnotationForRef(ref, message));
       }
 
       return null;
@@ -107,18 +106,16 @@ public class GrUnresolvedAccessChecker {
       return null;
     }
 
-    if (!inStaticContext) {
-      if (!myInspectionEnabled) return null;
-      assert myInspection != null;
+    if (!myInspectionEnabled) return null;
+    assert myInspection != null;
 
-      if (!myInspection.myHighlightIfGroovyObjectOverridden && areGroovyObjectMethodsOverridden(ref)) return null;
-      if (!myInspection.myHighlightIfMissingMethodsDeclared && areMissingMethodsDeclared(ref)) return null;
+    if (!myInspection.myHighlightIfGroovyObjectOverridden && areGroovyObjectMethodsOverridden(ref)) return null;
+    if (!myInspection.myHighlightIfMissingMethodsDeclared && areMissingMethodsDeclared(ref)) return null;
 
-      if (GrUnresolvedAccessInspection.isSuppressed(ref)) return null;
-    }
+    if (GrUnresolvedAccessInspection.isSuppressed(ref)) return null;
 
-    if (inStaticContext || shouldHighlightAsUnresolved(ref)) {
-      HighlightInfo info = createAnnotationForRef(ref, inStaticContext, GroovyBundle.message("cannot.resolve", ref.getReferenceName()));
+    if (shouldHighlightAsUnresolved(ref)) {
+      HighlightInfo info = createAnnotationForRef(ref, GroovyBundle.message("cannot.resolve", ref.getReferenceName()));
       if (info == null) return null;
 
       ArrayList<HighlightInfo> result = ContainerUtil.newArrayList();
@@ -140,7 +137,7 @@ public class GrUnresolvedAccessChecker {
     return null;
   }
 
-  private static boolean areMissingMethodsDeclared(GrReferenceExpression ref) {
+  static boolean areMissingMethodsDeclared(GrReferenceExpression ref) {
     PsiType qualifierType = PsiImplUtil.getQualifierType(ref);
     if (!(qualifierType instanceof PsiClassType)) return false;
 
@@ -163,7 +160,7 @@ public class GrUnresolvedAccessChecker {
     return false;
   }
 
-  private static boolean areGroovyObjectMethodsOverridden(GrReferenceExpression ref) {
+  static boolean areGroovyObjectMethodsOverridden(GrReferenceExpression ref) {
     PsiMethod patternMethod = findPatternMethod(ref);
     if (patternMethod == null) return false;
 
@@ -270,7 +267,7 @@ public class GrUnresolvedAccessChecker {
     }
   }
 
-  private static boolean isStaticOk(GroovyResolveResult resolveResult) {
+  static boolean isStaticOk(GroovyResolveResult resolveResult) {
     if (resolveResult.isStaticsOK()) return true;
 
     PsiElement resolved = resolveResult.getElement();
@@ -281,7 +278,7 @@ public class GrUnresolvedAccessChecker {
   }
 
   @NotNull
-  private static GroovyResolveResult getBestResolveResult(GrReferenceExpression ref) {
+  static GroovyResolveResult getBestResolveResult(GrReferenceExpression ref) {
     GroovyResolveResult[] results = ref.multiResolve(false);
     if (results.length == 0) return EmptyGroovyResolveResult.INSTANCE;
     if (results.length == 1) return results[0];
@@ -298,10 +295,8 @@ public class GrUnresolvedAccessChecker {
   }
 
   @Nullable
-  private static HighlightInfo createAnnotationForRef(@NotNull GrReferenceElement ref,
-                                                      boolean strongError,
-                                                      @NotNull String message) {
-    HighlightDisplayLevel displayLevel = strongError ? HighlightDisplayLevel.ERROR : GrUnresolvedAccessInspection.getHighlightDisplayLevel(ref.getProject(), ref);
+  private static HighlightInfo createAnnotationForRef(@NotNull GrReferenceElement ref, @NotNull String message) {
+    HighlightDisplayLevel displayLevel = GrUnresolvedAccessInspection.getHighlightDisplayLevel(ref.getProject(), ref);
     return GrInspectionUtil.createAnnotationForRef(ref, displayLevel, message);
   }
 
