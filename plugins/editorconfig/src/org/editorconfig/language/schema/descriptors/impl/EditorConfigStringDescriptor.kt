@@ -6,15 +6,20 @@ import com.intellij.psi.PsiElement
 import org.editorconfig.language.schema.descriptors.EditorConfigDescriptor
 import org.editorconfig.language.schema.descriptors.EditorConfigDescriptorVisitor
 import org.editorconfig.language.schema.descriptors.EditorConfigMutableDescriptor
+import java.util.regex.Pattern
 
 data class EditorConfigStringDescriptor(
   override val documentation: String?,
-  override val deprecation: String?
+  override val deprecation: String?,
+  val pattern : String? = null
 ) : EditorConfigMutableDescriptor {
   override var parent: EditorConfigDescriptor? = null
   override fun accept(visitor: EditorConfigDescriptorVisitor) = visitor.visitString(this)
   override fun matches(element: PsiElement): Boolean {
     if (element.children.isNotEmpty()) return false
-    return StringUtil.isJavaIdentifier(element.text)
+    return when {
+      pattern != null -> element.text.matches(pattern.toRegex())
+      else -> StringUtil.isJavaIdentifier(element.text)
+    }
   }
 }

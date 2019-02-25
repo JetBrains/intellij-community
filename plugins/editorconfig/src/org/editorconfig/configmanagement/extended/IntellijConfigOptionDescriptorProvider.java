@@ -3,6 +3,7 @@ package org.editorconfig.configmanagement.extended;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.codeStyle.properties.*;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import org.editorconfig.Utils;
 import org.editorconfig.language.extensions.EditorConfigOptionDescriptorProvider;
@@ -62,19 +63,30 @@ public class IntellijConfigOptionDescriptorProvider implements EditorConfigOptio
     if (accessor instanceof CodeStyleChoiceList) {
       return new EditorConfigUnionDescriptor(choicesToDescriptorList((CodeStyleChoiceList)accessor), null, null);
     }
+    else if (isFormatterOnOffTag(accessor)) {
+      return new EditorConfigPairDescriptor(
+        new EditorConfigStringDescriptor(null, null, ".*"),
+        new EditorConfigStringDescriptor(null, null, ".*"),
+        null, null);
+    }
     else if (accessor instanceof IntegerAccessor) {
       return new EditorConfigNumberDescriptor(null,  null);
     }
     else if (accessor instanceof ValueListPropertyAccessor) {
-      return new EditorConfigListDescriptor(0, true, Collections.singletonList(new EditorConfigStringDescriptor(null, null)), null,  null);
+      return new EditorConfigListDescriptor(0, true, Collections.singletonList(new EditorConfigStringDescriptor(null, null, null)), null,  null);
     }
     else if (accessor instanceof ExternalStringAccessor) {
-      return new EditorConfigStringDescriptor(null, null);
+      return new EditorConfigStringDescriptor(null, null, null);
     }
     else if (accessor instanceof VisualGuidesAccessor) {
       return new EditorConfigListDescriptor(0, true, Collections.singletonList(new EditorConfigNumberDescriptor(null, null)), null,  null);
     }
     return null;
+  }
+
+  private static boolean isFormatterOnOffTag(@NotNull CodeStylePropertyAccessor accessor) {
+    String name = accessor.getPropertyName();
+    return "formatter_on_tag".equals(name) || "formatter_off_tag".equals(name);
   }
 
   private static List<EditorConfigDescriptor> choicesToDescriptorList(@NotNull CodeStyleChoiceList list) {
