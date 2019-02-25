@@ -72,9 +72,16 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
   private static final Logger LOG = Logger.getInstance(GroovyAssignabilityCheckInspection.class);
 
-  private final HighlightSink myHighlightSink = (highlightElement, highlightType, message, fixes) ->
-    registerError(highlightElement, message, fixes, highlightType);
-  
+  private final HighlightSink myHighlightSink = new HighlightSink() {
+    @Override
+    public void registerProblem(@NotNull PsiElement highlightElement,
+                                @NotNull ProblemHighlightType highlightType,
+                                @NotNull String message,
+                                @NotNull LocalQuickFix... fixes) {
+      GroovyTypeCheckVisitor.this.registerError(highlightElement, message, fixes, highlightType);
+    }
+  };
+
   private boolean checkCallApplicability(@Nullable PsiType type,
                                          boolean checkUnknownArgs,
                                          @NotNull CallInfo<? extends GroovyPsiElement> info) {

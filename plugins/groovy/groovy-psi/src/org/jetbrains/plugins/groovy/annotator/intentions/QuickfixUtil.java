@@ -1,9 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
-import com.intellij.psi.*;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ParamInfo;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicElementSettings;
@@ -20,6 +27,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.codeInspection.IntentionWrapper.wrapToQuickFixes;
 
 public class QuickfixUtil {
   @Nullable
@@ -146,5 +155,20 @@ public class QuickfixUtil {
     settings.setName(label.getName());
 
     return settings;
+  }
+
+  @NotNull
+  public static List<IntentionAction> fixesToIntentions(@NotNull PsiElement highlightElement, @NotNull LocalQuickFix[] fixes) {
+    InspectionManager inspectionManager = InspectionManager.getInstance(highlightElement.getProject());
+    // dummy problem descriptor, highlight element is only used
+    ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(
+      highlightElement, highlightElement, "", ProblemHighlightType.INFORMATION, true, LocalQuickFix.EMPTY_ARRAY
+    );
+    return ContainerUtil.map(fixes, it -> new LocalQuickFixAsIntentionAdapter(it, descriptor));
+  }
+
+  @NotNull
+  public static LocalQuickFix[] intentionsToFixes(@NotNull PsiElement highlightElement, @NotNull List<? extends IntentionAction> actions) {
+    return wrapToQuickFixes(actions, highlightElement.getContainingFile()).toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 }
