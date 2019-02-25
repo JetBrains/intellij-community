@@ -37,21 +37,22 @@ public abstract class ExpandBracketsBaseIntention extends Intention {
   }
 
   private void processInnerExpression(@Nullable Editor editor, @NotNull List<PsiExpression> expressions) {
+    final Pass<PsiExpression> callback = new Pass<PsiExpression>() {
+      @Override
+      public void pass(PsiExpression expression) {
+        WriteCommandAction.writeCommandAction(expression.getProject(), expression.getContainingFile())
+          .run(() -> replaceExpression(expression));
+      }
+    };
+
     if (expressions.size() == 1) {
-      replaceExpression(expressions.get(0));
+      callback.pass(expressions.get(0));
       return;
     }
 
     if (expressions.isEmpty() || editor == null) return;
 
     final PsiExpressionTrimRenderer.RenderFunction renderer = new PsiExpressionTrimRenderer.RenderFunction();
-    final Pass<PsiExpression> callback = new Pass<PsiExpression>() {
-      @Override
-      public void pass(PsiExpression expression) {
-        WriteCommandAction.runWriteCommandAction(editor.getProject(), () -> replaceExpression(expression));
-      }
-    };
-
     IntroduceTargetChooser.showChooser(editor, expressions, callback, renderer);
   }
 
@@ -124,6 +125,11 @@ public abstract class ExpandBracketsBaseIntention extends Intention {
 
   @NotNull
   protected abstract IElementType[] getPrefixes();
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
 
   @NotNull
   @Override
