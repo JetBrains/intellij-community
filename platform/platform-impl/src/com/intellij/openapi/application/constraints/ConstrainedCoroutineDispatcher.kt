@@ -4,22 +4,35 @@ package com.intellij.openapi.application.constraints
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.cancel
+import java.util.function.BooleanSupplier
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
 
 internal fun createConstrainedCoroutineDispatcher(executionScheduler: ConstrainedExecutionScheduler,
+                                                  cancellationCondition: BooleanSupplier? = null,
                                                   expiration: Expiration? = null): ContinuationInterceptor {
-  val dispatcher = ConstrainedCoroutineDispatcherImpl(executionScheduler)
+  val dispatcher = ConstrainedCoroutineDispatcherImpl(executionScheduler, cancellationCondition)
   return when (expiration) {
     null -> dispatcher
     else -> ExpirableContinuationInterceptor(dispatcher, expiration)
   }
 }
 
-internal class ConstrainedCoroutineDispatcherImpl(private val executionScheduler: ConstrainedExecutionScheduler) : CoroutineDispatcher() {
-  override fun dispatch(context: CoroutineContext, block: Runnable) = executionScheduler.scheduleWithinConstraints(block)
+internal class ConstrainedCoroutineDispatcherImpl(private val executionScheduler: ConstrainedExecutionScheduler,
+                                                  private val cancellationCondition: BooleanSupplier?) : CoroutineDispatcher() {
+  override fun dispatch(context: CoroutineContext, block: Runnable) {
+    val condition = cancellationCondition?.let {
+      BooleanSupplier {
+        true.also {
+          if (cancellationCondition.asBoolean) context.cancel()
+        }
+      }
+    }
+    executionScheduler.scheduleWithinConstraints(block, condition)
+  }
   override fun toString(): String = executionScheduler.toString()
 }
 

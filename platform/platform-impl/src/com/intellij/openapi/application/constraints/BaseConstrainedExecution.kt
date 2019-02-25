@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger
 import kotlinx.coroutines.Runnable
 import java.util.function.BooleanSupplier
 import java.util.function.Consumer
-import kotlin.coroutines.ContinuationInterceptor
 
 /**
  * This class is responsible for running a task in a proper context defined using various builder methods of this class and it's
@@ -30,9 +29,10 @@ abstract class BaseConstrainedExecution<E : ConstrainedExecution<E>>(protected v
 
   override fun withConstraint(constraint: ContextConstraint): E = cloneWith(constraints + constraint)
 
-  override fun asExecutor() = ConstrainedTaskExecutor(this, composeExpiration())
-  override fun asCoroutineDispatcher(): ContinuationInterceptor = createConstrainedCoroutineDispatcher(this, composeExpiration())
+  override fun asExecutor() = ConstrainedTaskExecutor(this, composeCancellationCondition(), composeExpiration())
+  override fun asCoroutineDispatcher() = createConstrainedCoroutineDispatcher(this, composeCancellationCondition(), composeExpiration())
   protected open fun composeExpiration(): Expiration? = null
+  protected open fun composeCancellationCondition(): BooleanSupplier? = null
 
   override fun scheduleWithinConstraints(runnable: Runnable, condition: BooleanSupplier?) =
     doScheduleWithinConstraints(Consumer { runnable.run() }, condition, ReschedulingAttempt.NULL)

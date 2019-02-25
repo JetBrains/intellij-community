@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.concurrency.CancellablePromise
 import java.util.concurrent.Callable
+import java.util.function.BooleanSupplier
 
 /**
  * @author peter
@@ -23,8 +24,9 @@ import java.util.concurrent.Callable
  */
 internal class AppUIExecutorImpl private constructor(private val modality: ModalityState,
                                                      constraints: Array<ContextConstraint>,
+                                                     cancellationConditions: Array<BooleanSupplier>,
                                                      expirableHandles: Set<Expiration>)
-  : ExpirableConstrainedExecution<AppUIExecutorEx>(constraints, expirableHandles), AppUIExecutorEx {
+  : ExpirableConstrainedExecution<AppUIExecutorEx>(constraints, cancellationConditions, expirableHandles), AppUIExecutorEx {
 
   constructor(modality: ModalityState) : this(modality, arrayOf(/* fallback */ object : ContextConstraint {
     override fun isCorrectContext(): Boolean =
@@ -35,10 +37,12 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
     }
 
     override fun toString() = "onUiThread($modality)"
-  }), emptySet<Expiration>())
+  }), emptyArray(), emptySet())
 
-  override fun cloneWith(constraints: Array<ContextConstraint>, expirationSet: Set<Expiration>): AppUIExecutorEx =
-    AppUIExecutorImpl(modality, constraints, expirationSet)
+  override fun cloneWith(constraints: Array<ContextConstraint>,
+                         cancellationConditions: Array<BooleanSupplier>,
+                         expirationSet: Set<Expiration>): AppUIExecutorEx =
+    AppUIExecutorImpl(modality, constraints, cancellationConditions, expirationSet)
 
   override fun dispatchLaterUnconstrained(runnable: Runnable) =
     ApplicationManager.getApplication().invokeLater(runnable, modality)
