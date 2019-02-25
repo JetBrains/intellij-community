@@ -79,11 +79,6 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
   protected abstract boolean processResults(@NotNull Processor<? super Result> consumer);
 
   @NotNull
-  protected AsyncFuture<Boolean> processResultsAsync(@NotNull Processor<? super Result> consumer) {
-    return AsyncUtil.wrapBoolean(processResults(consumer));
-  }
-
-  @NotNull
   public static <T> Query<T> wrapInReadAction(@NotNull final Query<? extends T> query) {
     return new AbstractQuery<T>() {
       @Override
