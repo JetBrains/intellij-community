@@ -3,14 +3,11 @@ package org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
-import com.intellij.codeInspection.InspectionProfile
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
-import com.intellij.openapi.project.Project
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle.message
 import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool
@@ -35,9 +32,6 @@ class GrUnresolvedAccessInspection : GroovySuppressableInspectionTool() {
     optionsPanel.addCheckbox(message("highlight.if.missing.methods.declared"), "myHighlightIfMissingMethodsDeclared")
     return optionsPanel
   }
-
-  @Nls
-  override fun getDisplayName(): String = displayText
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     return GroovyPsiElementVisitor(Visitor(UnresolvedReferenceHighlightSink(holder)))
@@ -65,28 +59,10 @@ class GrUnresolvedAccessInspection : GroovySuppressableInspectionTool() {
 
     private const val SHORT_NAME = "GrUnresolvedAccess"
 
-    @JvmStatic
-    fun isSuppressed(ref: PsiElement): Boolean {
-      return GroovySuppressableInspectionTool.isElementToolSuppressedIn(ref, SHORT_NAME)
+    fun getHighlightDisplayLevel(element: PsiElement): HighlightDisplayLevel {
+      val key = HighlightDisplayKey.find(SHORT_NAME) ?: error("Cannot find inspection key")
+      val inspectionProfile = InspectionProjectProfileManager.getInstance(element.project).currentProfile
+      return inspectionProfile.getErrorLevel(key, element)
     }
-
-    @JvmStatic
-    fun findDisplayKey(): HighlightDisplayKey? {
-      return HighlightDisplayKey.find(SHORT_NAME)
-    }
-
-    @JvmStatic
-    fun getHighlightDisplayLevel(project: Project, ref: PsiElement): HighlightDisplayLevel {
-      val key = findDisplayKey() ?: error("Cannot find inspection key")
-      return getInspectionProfile(project).getErrorLevel(key, ref)
-    }
-
-    private fun getInspectionProfile(project: Project): InspectionProfile {
-      return InspectionProjectProfileManager.getInstance(project).currentProfile
-    }
-
-    @JvmStatic
-    val displayText: String
-      get() = "Access to unresolved expression"
   }
 }
