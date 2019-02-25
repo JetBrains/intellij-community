@@ -204,6 +204,8 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable, Ba
     runInSaveOnFrameDeactivationDisabledMode {
       ProgressManager.getInstance().run(object : Task.Modal(componentManager as? Project, "Saving " + (if (componentManager is Application) "Application" else "Project"), /* canBeCancelled = */ false) {
         override fun run(indicator: ProgressIndicator) {
+          indicator.isIndeterminate = true
+
           if (project != null) {
             synchronized(saveQueue) {
               saveQueue.removeAll { it.onlyProject === project }
