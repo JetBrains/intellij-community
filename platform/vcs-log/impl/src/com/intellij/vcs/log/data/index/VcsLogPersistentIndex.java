@@ -623,7 +623,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
         LOG.warn("Indexing " + myRoot.getName() + " was cancelled after " + StopWatch.formatTime(time));
         myBigRepositoriesList.addRepository(myRoot);
         indicator.cancel();
-        showIndexingNotification(limit);
+        showIndexingNotification(time, limit);
       }
     }
 
@@ -636,20 +636,23 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       return "IndexingRequest of " + myCommits.size() + " commits in " + myRoot.getName() + (myFull ? " (full)" : "");
     }
 
-    private void showIndexingNotification(int limit) {
+    private void showIndexingNotification(long timeMillis, int limitMinutes) {
       myIndexCollector.reportIndexingTooLongNotification();
       AbstractVcs vcs = VcsUtil.findVcsByKey(myProject, myProviders.get(myRoot).getSupportedVcs());
       String vcsName = vcs != null ? vcs.getDisplayName() : "Vcs";
       Notification notification = VcsNotifier.createNotification(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION, "",
                                                                  vcsName +
                                                                  " Log indexing was paused for '" + myRoot.getName() + "'" +
-                                                                 " as it took more than " + formatTime(limit),
+                                                                 " as it took more than " + formatTime(limitMinutes),
                                                                  NotificationType.INFORMATION, null);
       notification.addAction(NotificationAction.createSimple("Resume", () -> {
         myIndexCollector.reportResumeClick();
         if (myBigRepositoriesList.isBig(myRoot)) {
           LOG.info("Resuming indexing " + myRoot.getName());
-          myIndexingLimit.get(myRoot).updateAndGet(l -> l + getIndexingLimit());
+          myIndexingLimit.get(myRoot).updateAndGet(l -> {
+            return Math.max(l + getIndexingLimit(),
+                            (int)((timeMillis / (getIndexingLimit() * 60000) + 1) * getIndexingLimit()));
+          });
           myBigRepositoriesList.removeRepository(myRoot);
           scheduleIndex(false);
         }
