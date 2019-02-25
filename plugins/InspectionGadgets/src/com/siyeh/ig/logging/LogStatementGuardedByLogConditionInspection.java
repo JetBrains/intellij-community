@@ -229,6 +229,10 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
       if (!flagAllUnguarded) {
         boolean constant = true;
         for (PsiExpression argument : arguments) {
+          argument = PsiUtil.skipParenthesizedExprDown(argument);
+          if (argument instanceof PsiLambdaExpression || argument instanceof PsiMethodReferenceExpression) {
+            continue;
+          }
           if (!PsiUtil.isConstantExpression(argument)) {
             constant = false;
             break;
