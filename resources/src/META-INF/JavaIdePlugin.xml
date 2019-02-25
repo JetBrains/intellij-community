@@ -109,6 +109,16 @@
 
   <xi:include href="/META-INF/built-in-server.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
+  <actions>
+    <group id="InspectCodeGroup" text="Inspect Code Actions">
+      <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
+      <action id="CodeCleanup" class="com.intellij.codeInspection.actions.CodeCleanupAction"/>
+      <action id="SilentCodeCleanup" class="com.intellij.codeInspection.actions.SilentCodeCleanupAction"/>
+      <action id="RunInspection" class="com.intellij.codeInspection.actions.RunInspectionAction"/>
+      <action id="PopupHector" class="com.intellij.codeInsight.daemon.impl.PopupHectorAction"/>
+      <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction"/>
+    </group>
+  </actions>
 
   <xi:include href="/idea/JavaActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
 

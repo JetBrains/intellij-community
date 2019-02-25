@@ -51,19 +51,10 @@
     </group>
 
     <group id="AnalyzeMenu" popup="true">
+      <reference ref="InspectCodeGroup"/>
       <separator/>
       <reference ref="AnalyzeActions"/>
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="CodeMenu"/>
-    </group>
-
-    <group id="InspectCodeGroup" text="Inspect Code Actions">
-      <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
-      <action id="CodeCleanup" class="com.intellij.codeInspection.actions.CodeCleanupAction"/>
-      <action id="SilentCodeCleanup" class="com.intellij.codeInspection.actions.SilentCodeCleanupAction"/>
-      <action id="RunInspection" class="com.intellij.codeInspection.actions.RunInspectionAction"/>
-      <action id="PopupHector" class="com.intellij.codeInsight.daemon.impl.PopupHectorAction"/>
-      <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction"/>
-      <add-to-group group-id="AnalyzeMenu" anchor="first"/>
     </group>
 
     <group id="BuildMenu" popup="true">
