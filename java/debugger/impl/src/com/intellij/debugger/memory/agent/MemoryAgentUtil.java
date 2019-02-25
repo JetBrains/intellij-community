@@ -112,7 +112,7 @@ public class MemoryAgentUtil {
   public static List<JavaReferenceInfo> tryCalculateSizes(@NotNull List<JavaReferenceInfo> objects, @Nullable MemoryAgent agent) {
     if (agent == null || !agent.canEvaluateObjectsSizes()) return objects;
     if (objects.size() > ESTIMATE_OBJECTS_SIZE_LIMIT) {
-      LOG.info("Too many objects to estimate their sizess");
+      LOG.info("Too many objects to estimate their sizes");
       return objects;
     }
     try {
@@ -124,7 +124,7 @@ public class MemoryAgentUtil {
         .toList();
     }
     catch (EvaluateException e) {
-      LOG.error("Could not estimate objects sizes");
+      LOG.error("Could not estimate objects sizes", e);
     }
 
     return objects;
@@ -185,6 +185,7 @@ public class MemoryAgentUtil {
     if (isInDebugMode) {
       String debugAgentPath = Registry.get("debugger.memory.agent.debug.path").asString();
       if (!debugAgentPath.isEmpty()) {
+        LOG.info("Local memory agent will be used: " + debugAgentPath);
         return new File(debugAgentPath);
       }
     }
