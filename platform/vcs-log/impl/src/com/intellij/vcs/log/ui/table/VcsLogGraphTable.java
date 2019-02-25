@@ -702,7 +702,9 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         return;
       }
       append(value.toString(), applyHighlighters(this, row, column, hasFocus, selected));
-      SpeedSearchUtil.applySpeedSearchHighlighting(table, this, false, selected);
+      if (column == convertColumnIndexToView(COMMIT_COLUMN) || column == convertColumnIndexToView(AUTHOR_COLUMN)) {
+        SpeedSearchUtil.applySpeedSearchHighlighting(table, this, false, selected);
+      }
     }
 
     public int getHorizontalTextPadding() {
