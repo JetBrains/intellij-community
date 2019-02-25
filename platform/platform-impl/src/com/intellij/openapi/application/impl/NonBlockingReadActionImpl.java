@@ -123,7 +123,7 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
     private void rescheduleLater() {
       for (ContextConstraint constraint : myConstraints) {
         if (!constraint.isCorrectContext()) {
-          constraint.schedule(this::transferToBgThread);
+          constraint.schedule(this::rescheduleLater);
           return;
         }
       }
