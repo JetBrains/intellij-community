@@ -24,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -695,31 +696,26 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           }
         }
       } else if (ScopeUtil.getScopeOwner(e) == ScopeUtil.getScopeOwner(element)) {
-        String name = null;
         ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(e);
-        if (e instanceof PsiNamedElement) {
-          name = ((PsiNamedElement) e).getName();
-        } else if (e instanceof PyImportElement) {
-          name = ((PyImportElement) e).getName();
-        } else if (e instanceof PyImportedNameDefiner && scopeOwner != null) {
-          Ref<Boolean> importFound = Ref.create(false);
+        Ref<Boolean> definedBefore = Ref.create(false);
+        if (scopeOwner != null) {
           Instruction[] instructions = ControlFlowCache.getControlFlow(scopeOwner).getInstructions();
           int completionIndex = ControlFlowUtil.findInstructionNumberByElement(instructions, element);
           if (completionIndex >= 0) {
             ControlFlowUtil.iteratePrev(completionIndex, instructions, instruction -> {
               if (instruction.getElement() == e) {
-                importFound.set(true);
-                return ControlFlowUtil.Operation.BREAK;
+                boolean isImport = e instanceof PyImportedNameDefiner;
+                boolean isWriteAccess = instruction instanceof ReadWriteInstruction && ((ReadWriteInstruction)instruction).getAccess().isWriteAccess();
+                if (isImport || isWriteAccess) {
+                  definedBefore.set(true);
+                  return ControlFlowUtil.Operation.BREAK;
+                }
               }
               return ControlFlowUtil.Operation.NEXT;
             });
-            return importFound.get();
           }
         }
-        if (name != null && scopeOwner != null) {
-          List<Instruction> defs = getLatestDefinitions(name, scopeOwner, element);
-          return !defs.isEmpty();
-        }
+        return definedBefore.get();
       }
       return true;
     }, null);
