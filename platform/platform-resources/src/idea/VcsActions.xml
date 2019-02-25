@@ -112,7 +112,7 @@
       </group>
       <action id="ChangesView.ShelveSilently" class="com.intellij.openapi.vcs.changes.actions.ShelveSilentlyAction"
               text="Shelve Silently" description="Shelve changes to appropriate shelved changelists" icon="AllIcons.Vcs.ShelveSilent">
-        <keyboard-shortcut first-keystroke="control alt H" keymap="$default"/>
+        <keyboard-shortcut first-keystroke="shift control H" keymap="$default"/>
       </action>
     </group>
 
