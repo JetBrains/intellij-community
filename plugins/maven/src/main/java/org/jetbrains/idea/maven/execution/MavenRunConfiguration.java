@@ -10,6 +10,8 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.filters.TextConsoleBuilder;
+import com.intellij.execution.filters.TextConsoleBuilderImpl;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -307,8 +309,8 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
 
       final ProcessHandler processHandler = startProcess();
-
       final ConsoleView console = createConsoleViewAndAttachToProcess(executor, processHandler);
+
 
       DefaultExecutionResult res = new DefaultExecutionResult(console, processHandler, createActions(console, processHandler, executor));
       if (executor.getId().equals(ToolWindowId.RUN)
@@ -321,6 +323,11 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
     private @Nullable
     ConsoleView createConsoleViewAndAttachToProcess(Executor executor, ProcessHandler processHandler) throws ExecutionException {
+      TextConsoleBuilder consoleBuilder = getConsoleBuilder();
+      if (consoleBuilder instanceof TextConsoleBuilderImpl) {
+        ((TextConsoleBuilderImpl)consoleBuilder).setUsePredefinedMessageFilter(false);
+      }
+
       ConsoleView console = super.createConsole(executor);
       if (console == null) {
         return null;

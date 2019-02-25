@@ -2,8 +2,10 @@
 package org.jetbrains.idea.maven.externalSystemIntegration.output;
 
 import com.intellij.build.events.BuildEvent;
+import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.impl.FailureResultImpl;
 import com.intellij.build.events.impl.FinishBuildEventImpl;
+import com.intellij.build.events.impl.MessageEventImpl;
 import com.intellij.build.events.impl.SuccessResultImpl;
 import com.intellij.build.output.BuildOutputInstantReader;
 import com.intellij.build.output.BuildOutputParser;
@@ -90,6 +92,7 @@ public class MavenLogOutputParser implements BuildOutputParser {
     if (logLine.myLine.equals("BUILD FAILURE")) {
       MavenLogEntryReader.MavenLogEntry errorDesc = mavenLogReader.findFirst(s -> s.getType() == LogMessageType.ERROR);
       completeParsers(messageConsumer);
+      messageConsumer.accept(new MessageEventImpl(myTaskId, MessageEvent.Kind.ERROR, null, errorDesc.myLine, errorDesc.myLine));
       messageConsumer
         .accept(new FinishBuildEventImpl(myTaskId, null, System.currentTimeMillis(), "Maven run",
                                          new FailureResultImpl(errorDesc == null ? "Failed" : errorDesc.myLine,
