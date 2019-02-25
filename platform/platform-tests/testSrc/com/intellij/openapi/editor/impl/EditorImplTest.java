@@ -568,4 +568,10 @@ public class EditorImplTest extends AbstractEditorTest {
     rightWithSelection();
     checkResultByText("<selection>l<caret></selection>ine 2");
   }
+
+  public void testRightClickOutsideSelectionRemovesIt() {
+    initText("<selection>some<caret></selection> text");
+    mouse().right().clickAt(0, 6);
+    checkResultByText("some t<caret>ext");
+  }
 }
