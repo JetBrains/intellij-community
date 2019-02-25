@@ -10,7 +10,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider
 import com.intellij.codeInspection.ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.plugins.groovy.GroovyBundle
+import org.jetbrains.plugins.groovy.GroovyBundle.message
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory
 import org.jetbrains.plugins.groovy.highlighting.HighlightSink
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
@@ -29,7 +29,7 @@ fun checkUnresolvedReference(
   val resolveResult = GrUnresolvedAccessChecker.getBestResolveResult(expression)
   if (resolveResult.element != null) {
     if (!GrUnresolvedAccessChecker.isStaticOk(resolveResult)) {
-      highlightSink.registerProblem(referenceNameElement, GroovyBundle.message("cannot.reference.non.static", referenceName))
+      highlightSink.registerProblem(referenceNameElement, LIKE_UNKNOWN_SYMBOL, message("cannot.reference.non.static", referenceName))
     }
     return
   }
@@ -62,5 +62,5 @@ fun checkUnresolvedReference(
   }
   UnresolvedReferenceQuickFixProvider.registerReferenceFixes(expression, registrar)
   QuickFixFactory.getInstance().registerOrderEntryFixes(registrar, expression)
-  highlightSink.registerProblem(referenceNameElement, LIKE_UNKNOWN_SYMBOL, GroovyBundle.message("cannot.resolve", referenceName), actions)
+  highlightSink.registerProblem(referenceNameElement, LIKE_UNKNOWN_SYMBOL, message("cannot.resolve", referenceName), actions)
 }
