@@ -6,6 +6,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
+import com.intellij.ide.actions.ShowLogAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
@@ -234,7 +235,14 @@ public abstract class AbstractTerminalRunner<T extends Process> {
       }
       catch (Exception e) {
         LOG.info("Cannot open " + runningTargetName(), e);
-        ApplicationManager.getApplication().invokeLater(() -> showCannotOpenTerminalDialog(e), modalityState);
+        ApplicationManager.getApplication().invokeLater(() -> {
+          terminalWidget.getTerminal().writeCharacters(e.getMessage());
+          terminalWidget.getTerminal().newLine();
+          terminalWidget.getTerminal().newLine();
+          terminalWidget.getTerminal().carriageReturn();
+          terminalWidget.getTerminal().writeCharacters("See your idea.log (Help | " + ShowLogAction.getActionName() + ") for the details.");
+          terminalWidget.getTerminalPanel().setCursorVisible(false);
+        }, modalityState, myProject.getDisposed());
       }
     });
   }
