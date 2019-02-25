@@ -44,6 +44,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -244,6 +245,7 @@ class GitBranchPopupActions {
       myGitVcsSettings = GitVcsSettings.getInstance(myProject);
       myIncomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(myProject);
       getTemplatePresentation().setText(calcBranchText(), false); // no mnemonics
+      getTemplatePresentation().putClientProperty(JComponent.TOOL_TIP_TEXT_KEY, constructTooltip());
       setFavorite(myGitBranchManager.isFavorite(LOCAL, repositories.size() > 1 ? null : mySelectedRepository, myBranchName));
     }
 
@@ -260,6 +262,25 @@ class GitBranchPopupActions {
     @NotNull
     public String getBranchName() {
       return myBranchName;
+    }
+
+    @Nullable
+    private String constructTooltip() {
+      boolean incoming = hasIncomingCommits();
+      boolean outgoing = hasOutgoingCommits();
+      if (!incoming && !outgoing) return null;
+
+      StringBuilder stringBuilder = new StringBuilder("There are ");
+      String delimiter = "";
+      if (incoming) {
+        stringBuilder.append("incoming ");
+        delimiter = "and ";
+      }
+      if (outgoing) {
+        stringBuilder.append(delimiter).append("outgoing ");
+      }
+      stringBuilder.append("commits");
+      return stringBuilder.toString();
     }
 
     @NotNull
