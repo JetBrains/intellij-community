@@ -32,6 +32,11 @@ public class OutputToGeneralTestsEventsConverterTest extends BaseSMTRunnerTestCa
     doCheckOutptut("##teamcity[enteredTheMatrix timestamp = '2011-06-03T13:00:08.259+0400']\n", "", true);
   }
 
+
+  public void testFlushInTheMiddle() {
+    doCheckOutptut("##teamcity", "[stdout]##teamcity", false);
+  }
+
   public void testLineBreaks_NormalOutput() {
     doCheckOutptut("\na\nb\n\nc\n", "[stdout]\n" +
                                     "[stdout]a\n" +

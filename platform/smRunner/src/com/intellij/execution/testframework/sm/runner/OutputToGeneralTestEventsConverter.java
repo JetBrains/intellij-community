@@ -128,6 +128,10 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     return message != null;
   }
 
+  @Override
+  public void flushBufferOnProcessTermination(int exitCode) {
+    mySplitter.flush();
+  }
 
   private void fireOnTestStarted(@NotNull TestStartedEvent testStartedEvent) {
     // local variable is used to prevent concurrent modification
