@@ -14,8 +14,5 @@ public final class PythonPsiApiIcons {
     return IconLoader.getIcon(path, PythonPsiApiIcons.class);
   }
 
-  /**
-   * 16x16
-   */
-  public static final Icon PythonFile = load("/icons/com/jetbrains/python/pythonFile.svg");
+  /** 16x16 */ public static final Icon PythonFile = load("/icons/com/jetbrains/python/pythonFile.svg");
 }

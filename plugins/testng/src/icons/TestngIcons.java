@@ -14,8 +14,5 @@ public final class TestngIcons {
     return IconLoader.getIcon(path, TestngIcons.class);
   }
 
-  /**
-   * 16x16
-   */
-  public static final Icon TestNG = load("/resources/testNG.svg");
+  /** 16x16 */ public static final Icon TestNG = load("/resources/testNG.svg");
 }

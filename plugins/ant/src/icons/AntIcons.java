@@ -18,34 +18,13 @@ public final class AntIcons {
     return IconLoader.getIcon(path, clazz);
   }
 
-  /**
-   * 16x16
-   */
-  public static final Icon AntBuildXml = load("/icons/AntBuildXml.svg");
-  /**
-   * 16x16
-   */
-  public static final Icon Build = load("/icons/build.svg");
-  /**
-   * 16x16
-   */
-  public static final Icon LogDebug = load("/icons/logDebug.svg");
-  /**
-   * 16x16
-   */
-  public static final Icon LogVerbose = load("/icons/logVerbose.svg");
-  /**
-   * 16x16
-   */
-  public static final Icon MetaTarget = load("/icons/metaTarget.svg");
-  /**
-   * 16x16
-   */
-  public static final Icon Task = load("/icons/task.svg");
-  /**
-   * 16x16
-   */
-  public static final Icon Verbose = load("/icons/verbose.svg");
+  /** 16x16 */ public static final Icon AntBuildXml = load("/icons/AntBuildXml.svg");
+  /** 16x16 */ public static final Icon Build = load("/icons/build.svg");
+  /** 16x16 */ public static final Icon LogDebug = load("/icons/logDebug.svg");
+  /** 16x16 */ public static final Icon LogVerbose = load("/icons/logVerbose.svg");
+  /** 16x16 */ public static final Icon MetaTarget = load("/icons/metaTarget.svg");
+  /** 16x16 */ public static final Icon Task = load("/icons/task.svg");
+  /** 16x16 */ public static final Icon Verbose = load("/icons/verbose.svg");
 
   /** @deprecated to be removed in IDEA 2020 - use AntIcons.Build */
   @SuppressWarnings("unused")
