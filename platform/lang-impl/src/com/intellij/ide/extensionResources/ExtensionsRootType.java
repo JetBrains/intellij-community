@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +42,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Set;
 
@@ -210,8 +212,19 @@ public class ExtensionsRootType extends RootType {
     String resourcesPath = EXTENSIONS_PATH + "/" + path;
     IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
     ClassLoader pluginClassLoader = plugin != null ? plugin.getPluginClassLoader() : null;
-    Set<URL> urls = plugin == null ? null : ContainerUtil.newLinkedHashSet(ContainerUtil.toList(pluginClassLoader.getResources(resourcesPath)));
-    if (urls == null) return ContainerUtil.emptyList();
+
+    final Set<URL> urls;
+    if (pluginClassLoader instanceof UrlClassLoader) {
+      final URL resource = ((UrlClassLoader)pluginClassLoader).findResource(resourcesPath);
+      if (resource == null) return ContainerUtil.emptyList();
+      urls = ContainerUtil.newLinkedHashSet(resource);
+    }
+    else if (pluginClassLoader != null) {
+      final Enumeration<URL> resources = pluginClassLoader.getResources(resourcesPath);
+      if (resources == null) return ContainerUtil.emptyList();
+      urls = ContainerUtil.newLinkedHashSet(ContainerUtil.toList(resources));
+    }
+    else return ContainerUtil.emptyList();
 
     PluginId corePluginId = PluginId.findId(PluginManagerCore.CORE_PLUGIN_ID);
     IdeaPluginDescriptor corePlugin = ObjectUtils.notNull(PluginManager.getPlugin(corePluginId));
