@@ -78,7 +78,7 @@ public class GridCellImpl implements GridCell {
       @Override
       @NotNull
       public UiDecoration getDecoration() {
-        return new UiDecoration(null, new Insets(JBUI.scale(4), -1, JBUI.scale(4), -1));
+        return new UiDecoration(null, JBUI.insets(4, 5, 4, 9));
       }
     }).setSideComponentVertical(!context.getLayoutSettings().isToolbarHorizontal())
       .setStealthTabMode(false).setFocusCycle(false).setPaintFocus(true)
