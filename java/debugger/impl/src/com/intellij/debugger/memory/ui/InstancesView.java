@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.components.JBLabel;
@@ -193,7 +194,9 @@ class InstancesView extends InstancesViewBase {
           instances = instances.subList(0, limit);
         }
 
-        instances = MemoryAgentUtil.tryCalculateSizes(instances, myDebugProcess.getMemoryAgent());
+        if (Registry.is("debugger.memory.agent.use.in.memory.view")) {
+          instances = MemoryAgentUtil.tryCalculateSizes(instances, myDebugProcess.getMemoryAgent());
+        }
 
         if (evaluationContext != null) {
           synchronized (myFilteringTaskLock) {
