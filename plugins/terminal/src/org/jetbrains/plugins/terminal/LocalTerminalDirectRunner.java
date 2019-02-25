@@ -86,18 +86,19 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   @Nullable
-  private static String findRCFile(String shellName) {
-    if (shellName != null) {
-      if ("sh".equals(shellName)) {
-        shellName = "bash";
-      }
-      String rcfile = "jediterm-" + shellName + ".in";
-      if ("zsh".equals(shellName)) {
-        rcfile = ".zshrc";
-      }
-      else if ("fish".equals(shellName)) {
-        rcfile = "fish/config.fish";
-      }
+  private static String findRCFile(@NotNull String shellName) {
+    String rcfile = null;
+    //noinspection IfCanBeSwitch
+    if ("bash".equals(shellName) || "sh".equals(shellName)) {
+      rcfile = "jediterm-bash.in";
+    }
+    else if ("zsh".equals(shellName)) {
+      rcfile = ".zshrc";
+    }
+    else if ("fish".equals(shellName)) {
+      rcfile = "fish/config.fish";
+    }
+    if (rcfile != null) {
       try {
         return findAbsolutePath(rcfile);
       }
