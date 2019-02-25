@@ -744,4 +744,36 @@ public class IconUtil {
   public static Icon filterIcon(@NotNull Icon icon, Supplier<RGBImageFilter> filterSupplier, @Nullable Component ancestor) {
     return IconLoader.filterIcon(icon, filterSupplier, ancestor);
   }
+
+  /**
+   * This method works with compound icons like RowIcon or LayeredIcon
+   * and replaces its inner 'simple' icon with another one recursively
+   * @return original icon with modified inner state
+   */
+  public static Icon replaceInnerIcon(@Nullable Icon icon, @NotNull Icon toCheck, @NotNull Icon toReplace) {
+    if (icon  instanceof LayeredIcon) {
+      Icon[] layers = ((LayeredIcon)icon).getAllLayers();
+      for (int i = 0; i < layers.length; i++) {
+        Icon layer = layers[i];
+        if (layer == toCheck) {
+          layers[i] = toReplace;
+        } else {
+          replaceInnerIcon(layer, toCheck, toReplace);
+        }
+      }
+    }
+    else if (icon instanceof RowIcon) {
+      Icon[] allIcons = ((RowIcon)icon).getAllIcons();
+      for (int i = 0; i < allIcons.length; i++) {
+        Icon anIcon = allIcons[i];
+        if (anIcon == toCheck) {
+          ((RowIcon)icon).setIcon(toReplace, i);
+        }
+        else {
+          replaceInnerIcon(anIcon, toCheck, toReplace);
+        }
+      }
+    }
+    return icon;
+  }
 }

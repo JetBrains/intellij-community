@@ -16,7 +16,9 @@
 
 package com.intellij.ide.hierarchy;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,5 +54,12 @@ public final class HierarchyNodeRenderer extends NodeRenderer {
     else {
       super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
     }
+  }
+
+  @Override
+  protected Icon fixIconIfNeeded(Icon icon, boolean selected, boolean hasFocus) {
+    return IconUtil.replaceInnerIcon(super.fixIconIfNeeded(icon, selected, hasFocus),
+                                     selected ? AllIcons.General.Modified : AllIcons.General.Modified_selected,
+                                     selected ? AllIcons.General.Modified_selected : AllIcons.General.Modified);
   }
 }

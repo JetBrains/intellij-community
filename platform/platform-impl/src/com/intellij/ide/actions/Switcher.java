@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
@@ -49,10 +50,12 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
@@ -427,12 +430,13 @@ public class Switcher extends AnAction implements DumbAware {
       }
 
       final VirtualFilesRenderer filesRenderer = new VirtualFilesRenderer(this) {
-        final JPanel myPanel = new JPanel(new BorderLayout());
-        final JLabel myLabel = createPaleLabel("* ");
+        final JPanel myPanel = new NonOpaquePanel(new BorderLayout());
+        final JLabel myLabel = new JLabel();
+
+        final Icon emptyIcon = EmptyIcon.create(AllIcons.General.Modified);
 
         {
-          myPanel.setOpaque(false);
-          myPanel.setBackground(UIUtil.getListBackground());
+          myLabel.setOpaque(true);
         }
 
         @NotNull
@@ -446,9 +450,8 @@ public class Switcher extends AnAction implements DumbAware {
           final Component c = super.getListCellRendererComponent(list, value, index, selected, selected);
           final Color bg = UIUtil.getListBackground();
           final Color fg = UIUtil.getListForeground();
-          myLabel.setFont(list.getFont());
-          myLabel.setForeground(open ? fg : bg);
-
+          myLabel.setIcon(open ? selected ? AllIcons.General.Modified_selected : AllIcons.General.Modified : emptyIcon);
+          myLabel.setBackground(c.getBackground());
           myPanel.removeAll();
           myPanel.add(myLabel, BorderLayout.WEST);
           myPanel.add(c, BorderLayout.CENTER);

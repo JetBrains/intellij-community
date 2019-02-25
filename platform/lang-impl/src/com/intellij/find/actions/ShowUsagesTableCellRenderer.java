@@ -16,6 +16,7 @@
 
 package com.intellij.find.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -129,7 +130,9 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
 
     switch(column) {
       case CURRENT_ASTERISK_COL:
-        if (isOriginUsage) panel.add(new JLabel(" *"));
+        if (isOriginUsage) {
+          panel.add(new JLabel(isSelected ? AllIcons.General.Modified_selected : AllIcons.General.Modified));
+        }
         break;
       case FILE_GROUP_COL:
         appendGroupText(list, (GroupNode)usageNode.getParent(), panel, fileBgColor, isSelected);

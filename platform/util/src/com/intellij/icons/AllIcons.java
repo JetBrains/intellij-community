@@ -1543,10 +1543,10 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Subtypes = IconLoader.getIcon("/hierarchy/subtypes.svg");
     /** 16x16 */ public static final Icon Supertypes = IconLoader.getIcon("/hierarchy/supertypes.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Forward */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Modified */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Base = AllIcons.Actions.Forward;
+    public static final Icon Base = General.Modified;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Hierarchy.Subtypes */
     @SuppressWarnings("unused")
