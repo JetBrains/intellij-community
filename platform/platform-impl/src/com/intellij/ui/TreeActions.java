@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 
 import javax.swing.JTree;
 
+import static com.intellij.ui.speedSearch.SpeedSearchSupply.getSupply;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
@@ -17,7 +18,8 @@ public abstract class TreeActions extends SwingActionDelegate {
 
   @Override
   protected JTree getComponent(AnActionEvent event) {
-    return tryCast(super.getComponent(event), JTree.class);
+    JTree tree = tryCast(super.getComponent(event), JTree.class);
+    return tree == null || getSupply(tree) != null ? null : tree;
   }
 
   public static final class Home extends TreeActions {

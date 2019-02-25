@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 
 import javax.swing.JList;
 
+import static com.intellij.ui.speedSearch.SpeedSearchSupply.getSupply;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
@@ -17,7 +18,8 @@ public abstract class ListActions extends SwingActionDelegate {
 
   @Override
   protected JList getComponent(AnActionEvent event) {
-    return tryCast(super.getComponent(event), JList.class);
+    JList list = tryCast(super.getComponent(event), JList.class);
+    return list == null || getSupply(list) != null ? null : list;
   }
 
   public static final class Home extends ListActions {
