@@ -276,7 +276,7 @@ class LocalFileSystemRefreshWorker {
     ourCancellingCondition = condition;
   }
 
-  private class RefreshingFileVisitor /*extends SimpleFileVisitor<Path>*/ {
+  private class RefreshingFileVisitor extends SimpleFileVisitor<Path> {
     private final VfsEventGenerationHelper myHelper = new VfsEventGenerationHelper();
     private final Map<String, VirtualFile> myPersistentChildren;
     private final Set<String> myChildrenWeAreInterested; // null - no limit
@@ -300,8 +300,8 @@ class LocalFileSystemRefreshWorker {
       }
     }
 
-    /*@Override
-    public*/ FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+    @Override
+    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
       String name = file.getName(file.getNameCount() - 1).toString();
 
       if (!acceptsFileName(name)) {
@@ -326,14 +326,14 @@ class LocalFileSystemRefreshWorker {
           attrs = brokenSymlinkAttributes;
         }
         isDirectory = attrs.isDirectory();
-      } /*else if (myFileOrDir.is(VFileProperty.SYMLINK)) {
+      } else if (myFileOrDir.is(VFileProperty.SYMLINK)) {
         try {
           attrs = Files.readAttributes(file, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
         } catch (NoSuchFileException | AccessDeniedException ignore) {
           attrs = brokenSymlinkAttributes;
         }
         isLink = attrs.isSymbolicLink();
-      }*/
+      }
 
       if (child == null) { // new file is created
         VirtualFile parent = myFileOrDir.isDirectory() ? myFileOrDir : myFileOrDir.getParent();
@@ -405,20 +405,17 @@ class LocalFileSystemRefreshWorker {
         Path path = Paths.get(fileOrDir.getPath());
         if (fileOrDir.isDirectory()) {
           if (myChildrenWeAreInterested == null) {
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
-              for (Path child : stream) {
-                FileVisitResult result = visitFile(child, readAttributes(child));
-                if (result == FileVisitResult.TERMINATE) break;
-              }
-            }
-            //EnumSet<FileVisitOption> options = fileOrDir.is(VFileProperty.SYMLINK) ? EnumSet.of(FileVisitOption.FOLLOW_LINKS) : EnumSet.noneOf(FileVisitOption.class);
-            //Files.walkFileTree(path, options, 1, this);
+            // Files.walkFileTree is more efficient than File.openDirectoryStream / readAttributes because former provides access to cached 
+            // file attributes of visited children, see usages of BasicFileAttributesHolder in FileTreeWalker.getAttributes 
+            EnumSet<FileVisitOption> options = fileOrDir.is(VFileProperty.SYMLINK) ? EnumSet.of(FileVisitOption.FOLLOW_LINKS) : EnumSet.noneOf(FileVisitOption.class);
+            Files.walkFileTree(path, options, 1, this);
           }
           else {
             for (String child : myChildrenWeAreInterested) {
               try {
                 Path subPath = fixCaseIfNeeded(path.resolve(child), fileOrDir);
-                FileVisitResult result = visitFile(subPath, readAttributes(subPath));
+                BasicFileAttributes attrs = Files.readAttributes(subPath, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+                FileVisitResult result = visitFile(subPath, attrs);
                 if (result == FileVisitResult.TERMINATE) break;
               }
               catch (IOException ignore) {
@@ -427,7 +424,9 @@ class LocalFileSystemRefreshWorker {
           }
         }
         else {
-          visitFile(fixCaseIfNeeded(path, fileOrDir), readAttributes(path));
+          Path file = fixCaseIfNeeded(path, fileOrDir);
+          BasicFileAttributes attrs = Files.readAttributes(file, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+          visitFile(file, attrs);
         }
       }
       catch (AccessDeniedException | NoSuchFileException ignore) {
@@ -450,19 +449,6 @@ class LocalFileSystemRefreshWorker {
 
       return myHelper;
     }
-  }
-
-  private static BasicFileAttributes readAttributes(Path subPath) throws IOException {
-    //try {
-    //  if (subPath instanceof BasicFileAttributesHolder) {
-    //    BasicFileAttributes attributes = ((BasicFileAttributesHolder)subPath).get();
-    //    if (attributes != null) {
-    //      return attributes;
-    //    }
-    //  }
-    //}
-    //catch (Throwable ignore) {}
-    return Files.readAttributes(subPath, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
   }
 
   private static Path fixCaseIfNeeded(Path path, VirtualFile file) throws IOException {
