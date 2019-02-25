@@ -2,6 +2,9 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.DfaFactType;
+import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -13,6 +16,7 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -124,11 +128,11 @@ public class WrapWithUnmodifiableAction extends BaseIntentionAction {
   }
 
   private static PsiType getExpectedType(@NotNull PsiExpression expression) {
-    final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    if (parent instanceof PsiConditionalExpression) {
-      return getExpectedType((PsiConditionalExpression)parent);
+    PsiType expectedType = PsiTypesUtil.getExpectedTypeByParent(expression); // try the cheaper way first
+    if (expectedType != null) {
+      return expectedType;
     }
-    return PsiTypesUtil.getExpectedTypeByParent(expression);
+    return ExpectedTypeUtils.findExpectedType(expression, false);
   }
 
   private static boolean isInheritorChain(PsiClass psiClass,
@@ -143,6 +147,10 @@ public class WrapWithUnmodifiableAction extends BaseIntentionAction {
   }
 
   private static boolean isUnmodifiable(@NotNull PsiExpression expression) {
+    Mutability fact = CommonDataflow.getExpressionFact(expression, DfaFactType.MUTABILITY);
+    if (fact != null && fact.isUnmodifiable()) {
+      return true;
+    }
     PsiMethodCallExpression methodCall = tryCast(expression, PsiMethodCallExpression.class);
     if (isUnmodifiableCall(methodCall)) {
       return true;

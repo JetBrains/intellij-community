@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 class C {
     ArrayList<String> test() {
-        List<String> result = new ArrayList<>();
+        ArrayList<String> result = new ArrayList<>();
         return <caret>result;
     }
 }
