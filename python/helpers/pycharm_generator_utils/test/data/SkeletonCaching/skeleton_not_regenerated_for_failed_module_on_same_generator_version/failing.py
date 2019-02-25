@@ -1,4 +1,1 @@
-import os
-
-if os.environ['GENERATOR3_VERSION'] == '0.1':
-    raise RuntimeError
+# Actually a correct module to check that we don't even attempt to regenerate a skeleton for it.
