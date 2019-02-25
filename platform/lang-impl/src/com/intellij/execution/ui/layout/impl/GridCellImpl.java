@@ -22,6 +22,7 @@ import com.intellij.ui.tabs.newImpl.TabLabel;
 import com.intellij.ui.tabs.newImpl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.newImpl.singleRow.SingleRowLayout;
 import com.intellij.util.SmartList;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -77,10 +78,10 @@ public class GridCellImpl implements GridCell {
       @Override
       @NotNull
       public UiDecoration getDecoration() {
-        return new UiDecoration(null, new Insets(1, -1, 1, -1));
+        return new UiDecoration(null, new Insets(JBUI.scale(4), -1, JBUI.scale(4), -1));
       }
     }).setSideComponentVertical(!context.getLayoutSettings().isToolbarHorizontal())
-      .setStealthTabMode(true).setFocusCycle(false).setPaintFocus(true)
+      .setStealthTabMode(false).setFocusCycle(false).setPaintFocus(true)
       .setTabDraggingEnabled(true).setSideComponentOnTabs(false);
 
     myTabs.addTabMouseListener(new MouseAdapter() {
