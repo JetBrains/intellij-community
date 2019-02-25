@@ -7,6 +7,7 @@ import textwrap
 import unittest
 
 import generator3
+import six
 from pycharm_generator_utils.constants import (
     ENV_TEST_MODE_FLAG,
     ENV_CONTENT_INDEPENDENT_HASHES_FLAG,
@@ -193,6 +194,14 @@ class SkeletonCachingTest(GeneratorTestCase):
 
     def test_cache_skeleton_not_regenerated_when_sdk_skeleton_generation_failed_for_same_version(self):
         self.check_generator_output('mod', mod_path='mod.py', gen_version='0.1', custom_required_gen=True)
+
+    @unittest.skipUnless(six.PY3, "Python 3 version of the test")
+    def test_inaccessible_class_attribute_py3(self):
+        self.check_generator_output('mod', mod_path='mod.py')
+
+    @unittest.skipUnless(six.PY2, "Python 2 version of the test")
+    def test_inaccessible_class_attribute_py2(self):
+        self.check_generator_output('mod', mod_path='mod.py')
 
     def check_generator_output(self, mod_name, mod_path=None, mod_root=None, custom_required_gen=False, **kwargs):
         if custom_required_gen:
