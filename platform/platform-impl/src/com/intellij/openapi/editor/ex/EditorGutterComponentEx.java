@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.ex;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.TextAnnotationGutterProvider;
@@ -18,8 +19,9 @@ import java.util.List;
 
 public abstract class EditorGutterComponentEx extends JComponent implements EditorGutter {
   /**
-   * The key to retrieve a logical editor line position of a latest actionable click inside the gutter
-   * NOTE: Available into popup actions data context of gutter component
+   * The key to retrieve a logical editor line position of a latest actionable click inside the gutter.
+   * Available to gutter popup actions (see {@link #setGutterPopupGroup(ActionGroup)},
+   * {@link GutterIconRenderer#getPopupMenuActions()}, {@link TextAnnotationGutterProvider#getPopupActions(int, Editor)})
    */
   public static final DataKey<Integer> LOGICAL_LINE_AT_CURSOR = DataKey.create("EditorGutter.LOGICAL_LINE_AT_CURSOR");
 
