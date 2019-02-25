@@ -135,7 +135,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
   }
 
   private static int getIndexingLimit() {
-    return Registry.intValue("vcs.log.index.limit.minutes");
+    return Math.max(1, Registry.intValue("vcs.log.index.limit.minutes"));
   }
 
   protected IndexStorage createIndexStorage(@NotNull FatalErrorHandler fatalErrorHandler,
