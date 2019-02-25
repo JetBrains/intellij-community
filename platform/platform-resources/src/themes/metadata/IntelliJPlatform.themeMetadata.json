@@ -60,11 +60,8 @@
       "key": "Counter.foreground"
     },
     {
-      "key": "DebuggerPopup.background",
+      "key": "DebuggerPopup.borderColor",
       "description": "A breakpoint popup that opens on right-click"
-    },
-    {
-      "key": "DebuggerPopup.borderColor"
     },
     {
       "key": "DebuggerTabs.selectedBackground",
@@ -217,11 +214,8 @@
       "key": "InformationHint.borderColor"
     },
     {
-      "key": "InplaceRefactoringPopup.background",
+      "key": "InplaceRefactoringPopup.borderColor",
       "description": "A popup in the editor with refactoring options"
-    },
-    {
-      "key": "InplaceRefactoringPopup.borderColor"
     },
     {
       "key": "Label.disabledText"
@@ -525,6 +519,10 @@
     },
     {
       "key": "Table.stripeColor"
+    },
+    {
+      "key": "TableHeader.cellBorder",
+      "description": "Insets between a header label and borders. Format: \"top, left, bottom, right\" in pixels, e.g. \"3,0,3,0\""
     },
     {
       "key": "TitlePane.background"
