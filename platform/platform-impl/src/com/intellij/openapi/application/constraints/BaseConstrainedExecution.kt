@@ -6,6 +6,7 @@ import com.intellij.openapi.application.constraints.ConstrainedExecution.Context
 import com.intellij.openapi.diagnostic.Logger
 import kotlinx.coroutines.Runnable
 import java.util.function.BooleanSupplier
+import java.util.function.Consumer
 import kotlin.coroutines.ContinuationInterceptor
 
 /**
@@ -33,47 +34,60 @@ abstract class BaseConstrainedExecution<E : ConstrainedExecution<E>>(protected v
   override fun asCoroutineDispatcher(): ContinuationInterceptor = createConstrainedCoroutineDispatcher(this, composeExpiration())
   protected open fun composeExpiration(): Expiration? = null
 
-  override fun scheduleWithinConstraints(runnable: Runnable, condition: BooleanSupplier?) = doSchedule(runnable, condition, null)
+  override fun scheduleWithinConstraints(runnable: Runnable, condition: BooleanSupplier?) =
+    doScheduleWithinConstraints(Consumer { runnable.run() }, condition, ReschedulingAttempt.NULL)
 
-  private fun doSchedule(runnable: Runnable, condition: BooleanSupplier?,
-                         previousAttempt: ReschedulingAttempt?) {
+  @JvmOverloads
+  protected fun doScheduleWithinConstraints(task: Consumer<ReschedulingAttempt>,
+                                            condition: BooleanSupplier? = null,
+                                            previousAttempt: ReschedulingAttempt) {
     if (condition?.asBoolean == false) return
     for (constraint in constraints) {
       if (!constraint.isCorrectContext()) {
-        return constraint.schedule(ReschedulingRunnable(runnable, condition, constraint, previousAttempt))
+        return constraint.schedule(ReschedulingRunnable(task, condition, constraint, previousAttempt))
       }
     }
-    runnable.run()
+    task.accept(previousAttempt)
   }
 
-  private inner class ReschedulingRunnable(private val runnable: Runnable,
+  private inner class ReschedulingRunnable(private val task: Consumer<ReschedulingAttempt>,
                                            private val condition: BooleanSupplier?,
-                                           constraint: ContextConstraint,
-                                           previousAttempt: ReschedulingAttempt?) : ReschedulingAttempt(constraint,
-                                                                                                        previousAttempt), Runnable {
+                                           private val constraint: ContextConstraint,
+                                           previousAttempt: ReschedulingAttempt) : ReschedulingAttempt(constraint,
+                                                                                                       previousAttempt), Runnable {
     override fun run() {
       LOG.assertTrue(constraint.isCorrectContext())
-      doSchedule(runnable, condition, previousAttempt = this)
+      doScheduleWithinConstraints(task = task, condition = condition, previousAttempt = this)
     }
 
-    override fun toString(): String = "$runnable rescheduled due to " + super.toString()
+    override fun toString(): String = "$task rescheduled due to " + super.toString()
   }
 
-  private open class ReschedulingAttempt(val constraint: ContextConstraint,
-                                         private val previousAttempt: ReschedulingAttempt?) {
+  protected open class ReschedulingAttempt private constructor(private val cause: Any?,
+                                                               private val previousAttempt: ReschedulingAttempt?,
+                                                               private val attemptNumber: Int) {
     private val attemptChain: Sequence<ReschedulingAttempt> get() = generateSequence(this) { it.previousAttempt }
-    private val attemptNumber: Int = ((previousAttempt?.attemptNumber ?: 0) + 1).also { n ->
-      if (n > 3000) {
-        val lastConstraints = attemptChain.take(15).map { it.constraint }
-        LOG.error("Too many reschedule requests, probably constraints can't be satisfied all together: " + lastConstraints.joinToString())
+
+    init {
+      if (attemptNumber > 3000) {
+        val lastCauses = attemptChain.take(15).map { it.cause }
+        LOG.error("Too many reschedule requests, probably constraints can't be satisfied all together: " + lastCauses.joinToString())
       }
     }
+
+    constructor(cause: Any, previousAttempt: ReschedulingAttempt) : this(cause, previousAttempt,
+                                                                         attemptNumber = previousAttempt.attemptNumber + 1)
 
     override fun toString(): String {
       val limit = 5
-      val lastConstraints = attemptChain.take(limit).mapTo(mutableListOf()) { "[${it.attemptNumber}]${it.constraint}" }
-      if (lastConstraints.size == limit) lastConstraints[limit - 1] = "..."
-      return lastConstraints.joinToString(" <- ")
+      val lastCauses = attemptChain.take(limit).mapTo(mutableListOf()) { "[${it.attemptNumber}]${it.cause}" }
+      if (lastCauses.size == limit) lastCauses[limit - 1] = "..."
+      return lastCauses.joinToString(" <- ")
+    }
+
+    companion object {
+      @JvmField
+      val NULL = ReschedulingAttempt(cause = null, previousAttempt = null, attemptNumber = 0)
     }
   }
 
