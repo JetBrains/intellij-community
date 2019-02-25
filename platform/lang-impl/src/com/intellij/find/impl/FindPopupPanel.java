@@ -743,12 +743,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       public Dimension getPreferredSize() {
         return new Dimension(myResultsPreviewTable.getWidth(), Math.max(getHeight(), getLineHeight() * 15));
       }
-
-      @NotNull
-      @Override
-      protected EditorKind getEditorKind() {
-        return EditorKind.PREVIEW_UNDER_READ_ACTION;
-      }
     };
     Disposer.register(myDisposable, myUsagePreviewPanel);
     final Runnable updatePreviewRunnable = () -> {

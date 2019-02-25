@@ -31,6 +31,7 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
   protected final JVMName myTargetMethodSignature;
   private final Range<Integer> myCallingExpressionLines;
   private final int myOrdinal;
+  private final boolean myCheckCaller;
 
   public BasicStepMethodFilter(@NotNull PsiMethod psiMethod, Range<Integer> callingExpressionLines) {
     this(psiMethod, 0, callingExpressionLines);
@@ -41,19 +42,27 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
          JVMNameUtil.getJVMMethodName(psiMethod),
          JVMNameUtil.getJVMSignature(psiMethod),
          ordinal,
-         callingExpressionLines);
+         callingExpressionLines,
+         checkCaller(psiMethod));
   }
 
   protected BasicStepMethodFilter(@NotNull JVMName declaringClassName,
                                   @NotNull String targetMethodName,
                                   @Nullable JVMName targetMethodSignature,
                                   int ordinal,
-                                  Range<Integer> callingExpressionLines) {
+                                  Range<Integer> callingExpressionLines,
+                                  boolean checkCaller) {
     myDeclaringClassName = declaringClassName;
     myTargetMethodName = targetMethodName;
     myTargetMethodSignature = targetMethodSignature;
     myCallingExpressionLines = callingExpressionLines;
     myOrdinal = ordinal;
+    myCheckCaller = checkCaller;
+  }
+
+  private static boolean checkCaller(PsiMethod method) {
+    PsiClass aClass = method.getContainingClass();
+    return aClass != null && aClass.hasAnnotation("java.lang.FunctionalInterface");
   }
 
   @Override
@@ -64,15 +73,15 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
 
   @Override
   public boolean locationMatches(DebugProcessImpl process, Location location) throws EvaluateException {
-    return locationMatches(process, location, null);
+    return locationMatches(process, location, null, false);
   }
 
   @Override
   public boolean locationMatches(DebugProcessImpl process, @NotNull StackFrameProxyImpl frameProxy) throws EvaluateException {
-    return locationMatches(process, frameProxy.location(), frameProxy);
+    return locationMatches(process, frameProxy.location(), frameProxy, false);
   }
 
-  private boolean locationMatches(DebugProcessImpl process, Location location, @Nullable StackFrameProxyImpl stackFrame)
+  private boolean locationMatches(DebugProcessImpl process, Location location, @Nullable StackFrameProxyImpl stackFrame, boolean caller)
     throws EvaluateException {
     Method method = location.method();
     String name = method.name();
@@ -80,12 +89,19 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
       if (isLambdaCall(process, name, location) || isProxyCall(process, method, stackFrame)) {
         return true;
       }
+      if (!caller && myCheckCaller) {
+        int index = stackFrame.getFrameIndex();
+        StackFrameProxyImpl callerFrame = stackFrame.threadProxy().frame(index + 1);
+        if (callerFrame != null) {
+          return locationMatches(process, callerFrame.location(), callerFrame, true);
+        }
+      }
       return false;
     }
     if (myTargetMethodSignature != null && !signatureMatches(method, myTargetMethodSignature.getName(process))) {
       return false;
     }
-    if (RequestHint.isProxyMethod(method)) {
+    if (!caller && RequestHint.isProxyMethod(method)) {
       return false;
     }
     String declaringClassNameName = myDeclaringClassName.getName(process);
