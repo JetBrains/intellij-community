@@ -1,24 +1,36 @@
 {
   "name": "start-up-visualizer",
   "private": true,
-  "main": "out/index.js",
   "dependencies": {
-    "@amcharts/amcharts4": "4.1.9"
+    "@amcharts/amcharts4": "4.1.11"
   },
   "devDependencies": {
     "@types/jest": "^24.0.6",
-    "@types/parcel-env": "^0.0.0",
+    "@types/webpack-env": "^1.13.7",
+    "clean-webpack-plugin": "^1.0.1",
+    "copy-webpack-plugin": "^5.0.0",
+    "fork-ts-checker-notifier-webpack-plugin": "^1.0.0-alpha.1",
+    "fork-ts-checker-webpack-plugin": "^1.0.0-alpha.8",
+    "html-webpack-plugin": "^3.2.0",
     "jest": "^24.1.0",
-    "parcel-bundler": "^1.11.0",
-    "typescript": "^3.3.3"
+    "ts-jest": "^24.0.0",
+    "ts-loader": "^5.3.3",
+    "typescript": "^3.3.3",
+    "webpack": "^4.29.5",
+    "webpack-cli": "^3.2.3",
+    "webpack-dev-server": "^3.2.0",
+    "webpack-subresource-integrity": "^1.3.2"
   },
   "scripts": {
-    "compile": "tsc --outFile out/index.js --module amd",
     "//": "chrome://flags/#allow-insecure-localhost to tell Chrome to ignore cert warnings on localhost",
-    "serve": "caddy -quic -host localhost -port 8080 \"ext .html\" \"log stdout\" \"tls self_signed\" \"bind 127.0.0.1\"",
-    "dev": "parcel dev.html",
-    "dev-main": "parcel main.html",
-    "test": "parcel build src/timeLineChartHelper.test.ts --out-dir dist/test --no-minify && jest dist/test",
-    "pack-reproduce": "zip -9 sample.zip dev.html main.css package.json src tsconfig.json yarn.lock .yarnclean .gitignore"
+    "dist": "webpack --mode=production",
+    "dist-ij": "webpack --mode=production --optimize-minimize=false",
+    "dev": "webpack-dev-server",
+    "dev-one": "webpack-dev-server",
+    "test": "jest"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node"
   }
 }

@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Conditions
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.net.NetUtils
+import com.intellij.util.text.nullize
 import io.netty.bootstrap.Bootstrap
 import io.netty.bootstrap.BootstrapUtil
 import io.netty.bootstrap.ServerBootstrap
@@ -201,6 +202,13 @@ val Channel.uriScheme: String
 val HttpRequest.host: String?
   get() = headers().getAsString(HttpHeaderNames.HOST)
 
+val HttpRequest.hostName: String?
+  get() {
+    val hostAndPort = headers().getAsString(HttpHeaderNames.HOST).nullize() ?: return null
+    val portIndex = hostAndPort.lastIndexOf(':')
+    return if (portIndex > 0) hostAndPort.substring(0, portIndex).nullize() else hostAndPort
+  }
+
 val HttpRequest.origin: String?
   get() = headers().getAsString(HttpHeaderNames.ORIGIN)
 
@@ -224,7 +232,7 @@ inline fun <T> ByteBuf.releaseIfError(task: () -> T): T {
   }
 }
 
-fun isLocalHost(host: String, onlyAnyOrLoopback: Boolean, hostsOnly: Boolean = false): Boolean {
+fun isLocalHost(host: String, onlyAnyOrLoopback: Boolean = true, hostsOnly: Boolean = false): Boolean {
   if (NetUtils.isLocalhost(host)) {
     return true
   }

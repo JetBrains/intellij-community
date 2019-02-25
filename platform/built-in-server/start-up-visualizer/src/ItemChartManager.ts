@@ -10,6 +10,8 @@ export abstract class ItemChartManager extends XYChartManager {
   protected constructor(container: HTMLElement, private readonly sourceNames: Array<ComponentProviderSourceNames> | Array<TopHitProviderSourceNames>) {
     super(container)
 
+    this.addDisposeHandler(module.hot)
+
     this.configureNameAxis()
     this.configureDurationAxis()
     this.configureSeries()
@@ -96,16 +98,7 @@ export abstract class ItemChartManager extends XYChartManager {
       // trigger update
       nameAxis.data = nameAxis.data
 
-      // const seriesList = this.chart.series
-      // const axisData = []
-      // for (let i = 0; i < seriesList.length; i++) {
-      //   const s = seriesList.getIndex(i)!!
-      //   if (s.visible) {
-      //     axisData.push(...s.data)
-      //   }
-      // }
-      // nameAxis.data = axisData
-      // wothout this call items is not rendered correctly (overlapped)
+      // without this call items is not rendered correctly (overlapped)
       this.chart.invalidateData()
     })
     return series
@@ -127,6 +120,8 @@ export abstract class ItemChartManager extends XYChartManager {
 
     // https://www.amcharts.com/docs/v4/concepts/series/#Note_about_Series_data_and_Category_axis
     this.nameAxis.data = axisData
+    // since we don't set chart data, but set data to series and axis explicitly, amcharts doesn't re-zoom on new data, so, needed to be called explicitly
+    this.chart.invalidateData()
   }
 
   private static assignShortName(items: Array<Item>) {

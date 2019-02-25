@@ -6,7 +6,9 @@
     "newLine": "LF",
     "noEmitOnError": true,
     "noUnusedParameters": true,
-    "noUnusedLocals": true
+    "noUnusedLocals": true,
+    "outDir": "dist",
+    "sourceMap": true
   },
   "include": [
     "src/*.ts"

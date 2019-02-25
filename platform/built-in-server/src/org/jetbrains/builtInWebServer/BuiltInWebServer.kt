@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.builtInWebServer
 
 import com.google.common.cache.CacheBuilder
@@ -65,23 +65,14 @@ class BuiltInWebServer : HttpRequestHandler() {
   override fun isSupported(request: FullHttpRequest): Boolean = super.isSupported(request) || request.method() == HttpMethod.POST
 
   override fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean {
-    var host = request.host
-    if (host.isNullOrEmpty()) {
-      return false
-    }
-
-    val portIndex = host!!.indexOf(':')
-    if (portIndex > 0) {
-      host = host.substring(0, portIndex)
-    }
-
+    var hostName = request.hostName ?: return false
     val projectName: String?
-    val isIpv6 = host[0] == '[' && host.length > 2 && host[host.length - 1] == ']'
+    val isIpv6 = hostName[0] == '[' && hostName.length > 2 && hostName[hostName.length - 1] == ']'
     if (isIpv6) {
-      host = host.substring(1, host.length - 1)
+      hostName = hostName.substring(1, hostName.length - 1)
     }
 
-    if (isIpv6 || InetAddresses.isInetAddress(host) || isOwnHostName(host) || host.endsWith(".ngrok.io")) {
+    if (isIpv6 || InetAddresses.isInetAddress(hostName) || isOwnHostName(hostName) || hostName.endsWith(".ngrok.io")) {
       if (urlDecoder.path().length < 2) {
         return false
       }
@@ -89,11 +80,11 @@ class BuiltInWebServer : HttpRequestHandler() {
       projectName = null
     }
     else {
-      if (host.endsWith(".localhost")) {
-        projectName = host.substring(0, host.lastIndexOf('.'))
+      if (hostName.endsWith(".localhost")) {
+        projectName = hostName.substring(0, hostName.lastIndexOf('.'))
       }
       else {
-        projectName = host
+        projectName = hostName
       }
     }
     return doProcess(urlDecoder, request, context, projectName)

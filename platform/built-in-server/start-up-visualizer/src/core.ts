@@ -70,7 +70,6 @@ export abstract class XYChartManager implements ChartManager {
         this.chart.xAxes.getIndex(0)!!.events.on("endchanged", handler)
       }, 1000)
 
-      // strange, but doesn't work
       // module.hot.dispose(() => {
       //   if (devState == null) {
       //     sessionStorage.removeItem("devState")
@@ -90,6 +89,17 @@ export abstract class XYChartManager implements ChartManager {
         })
       }
     }
+  }
+
+  // module.hot must be passed here explicitly, because module in this context related only to this module
+  protected addDisposeHandler(hot: __WebpackModuleApi.Hot | null | undefined) {
+    if (hot == null) {
+      return
+    }
+
+    hot.dispose(_data => {
+      this.chart.dispose()
+    })
   }
 
   abstract render(data: InputData): void

@@ -9,24 +9,42 @@ import {ChartManager, getButtonElement, getInputElement, InputData} from "./core
 const storageKeyPort = "ijPort"
 const storageKeyData = "inputIjFormat"
 
-export function main(): void {
+function main(): void {
   am4core.useTheme(am4themes_animated)
 
-  const chartManagers: Array<ChartManager> = [
-    new TimelineChartManager(document.getElementById("visualization")!!),
-    new ComponentsChartManager(document.getElementById("componentChart")!!),
-    new TopHitProviderChart(document.getElementById("optionsTopHitProviderChart")!!),
-  ]
+  const chartManagers: Array<ChartManager> = [new TimelineChartManager(document.getElementById("visualization")!!)]
+  createItemChartManagers(chartManagers)
 
   const global = window as any
-  global.timelineChart = chartManagers[0]
-  global.componentsChart = chartManagers[1]
+  global.chartManagers = chartManagers
 
+  let lastData: InputData | null = null
   new InputFormManager(data => {
+    lastData = data
     for (const chartManager of chartManagers) {
       chartManager.render(data)
     }
   })
+
+  if (module != null && module.hot != null) {
+    module.hot.accept("./ItemChartManager", function() {
+      chartManagers.length = 1
+      createItemChartManagers(chartManagers)
+      if (lastData != null) {
+        for (const chartManager of chartManagers.slice(1)) {
+          chartManager.render(lastData)
+        }
+      }
+    })
+
+    // https://webpack.js.org/api/hot-module-replacement/#accept-self
+    module.hot.accept()
+  }
+}
+
+function createItemChartManagers(chartManagers: Array<ChartManager>): void {
+  chartManagers.push(new ComponentsChartManager(document.getElementById("componentChart")!!))
+  chartManagers.push(new TopHitProviderChart(document.getElementById("optionsTopHitProviderChart")!!))
 }
 
 class InputFormManager {
@@ -96,15 +114,14 @@ class InputFormManager {
       showError("8 seconds timeout")
     }, 8000)
 
-    fetch(`http://${host}/api/about/?startUpMeasurement`, {credentials: "omit", signal})
+    fetch(`http://${host}/api/startUpMeasurement`, {credentials: "omit", signal})
       .then(it => it.json())
-      .then(json => {
+      .then(data => {
         clearTimeout(timeoutId)
 
-        const data = json.startUpMeasurement
         if (data == null) {
           const message = "IntelliJ Platform IDE didn't report startup measurement result"
-          console.error(message, json)
+          console.error(message)
           alert(message)
           return
         }

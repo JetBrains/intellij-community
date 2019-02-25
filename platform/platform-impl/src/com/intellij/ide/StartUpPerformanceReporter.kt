@@ -26,7 +26,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
 
   private var startUpEnd = AtomicLong(-1)
 
-  var lastReport: String? = null
+  var lastReport: ByteArray? = null
     private set
 
   companion object {
@@ -141,7 +141,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     writer.endObject()
     writer.flush()
 
-    lastReport = stringWriter.buffer.substring(logPrefix.length)
+    lastReport = stringWriter.buffer.substring(logPrefix.length).toByteArray()
 
     stringWriter.write("\n=== Stop: StartUp Measurement ===")
     var string = stringWriter.toString()

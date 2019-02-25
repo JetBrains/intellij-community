@@ -10,6 +10,8 @@ export class TimelineChartManager extends XYChartManager {
   constructor(container: HTMLElement) {
     super(container)
 
+    this.addDisposeHandler(module.hot)
+
     this.configureDurationAxis()
     const levelAxis = this.configureLevelAxis()
     this.configureSeries()
