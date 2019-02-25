@@ -19,8 +19,6 @@
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
     </group>
 
-    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction"/>
-
     <group id="NewProjectOrModuleGroup">
       <action id="NewProject" class="com.intellij.ide.actions.NewProjectAction" text="Project..."/>
       <action id="ImportProject" class="com.intellij.ide.actions.ImportProjectAction" text="Project from Existing Sources..."/>

@@ -845,6 +845,8 @@
   </extensions>
 
   <actions>
+    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction"/>
+
     <action id="RerunFailedTests" class="com.intellij.execution.testframework.actions.RerunFailedTestsAction"
             icon="AllIcons.RunConfigurations.RerunFailedTests"/>
 
