@@ -228,12 +228,14 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
       if (codeBlock == null) {
         return;
       }
-      final StringBuildingVisitor visitor = new StringBuildingVisitor(variable, tracker, builder);
+      final StringExpressionCollector visitor = new StringExpressionCollector(variable);
       codeBlock.accept(visitor);
-      if (visitor.hadProblem()) {
-        return;
-      }
       final List<PsiExpression> expressions = visitor.getExpressions();
+      for (PsiExpression expression : expressions) {
+        if (expression == null || buildStringExpression(expression, tracker, builder) == null) {
+          return;
+        }
+      }
       final String expressionText = builder.toString().trim();
       final PsiExpression lastExpression = expressions.get(expressions.size() - 1);
       final PsiStatement statement = PsiTreeUtil.getParentOfType(lastExpression, PsiStatement.class);
@@ -442,25 +444,17 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
       return document.getLineNumber(element.getTextRange().getStartOffset());
     }
 
-    private class StringBuildingVisitor extends JavaRecursiveElementWalkingVisitor {
+    private static class StringExpressionCollector extends JavaRecursiveElementWalkingVisitor {
 
       private final PsiVariable myVariable;
-      private final CommentTracker myTracker;
-      private final StringBuilder myBuilder;
-      private final List<PsiExpression> expressions = new SmartList<>();
-      private boolean myProblem;
+      private final List<PsiExpression> myExpressions = new SmartList<>();
 
-      StringBuildingVisitor(@NotNull PsiVariable variable, CommentTracker tracker, StringBuilder builder) {
+      StringExpressionCollector(@NotNull PsiVariable variable) {
         myVariable = variable;
-        myTracker = tracker;
-        myBuilder = builder;
       }
 
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
-        if (myProblem) {
-          return;
-        }
         super.visitReferenceExpression(expression);
         if (expression.getQualifierExpression() != null) {
           return;
@@ -470,10 +464,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
           return;
         }
         if (ExpressionUtils.isImplicitToStringCall(expression)) {
-          if (buildStringExpression(expression, myTracker, myBuilder) == null) {
-            myProblem = true;
-          }
-          expressions.add(expression);
+          myExpressions.add(expression);
         }
         else {
           PsiMethodCallExpression methodCallExpression = null;
@@ -487,19 +478,12 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
               break;
             }
           }
-          if (methodCallExpression == null || buildStringExpression(methodCallExpression, myTracker, myBuilder) == null) {
-            myProblem = true;
-          }
-          expressions.add(methodCallExpression);
+          myExpressions.add(methodCallExpression);
         }
       }
 
       public List<PsiExpression> getExpressions() {
-        return expressions;
-      }
-
-      boolean hadProblem() {
-        return myProblem;
+        return myExpressions;
       }
     }
   }

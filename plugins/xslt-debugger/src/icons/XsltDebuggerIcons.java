@@ -18,10 +18,7 @@ public final class XsltDebuggerIcons {
     return IconLoader.getIcon(path, clazz);
   }
 
-  /**
-   * 16x16
-   */
-  public static final Icon XmlComment = load("/icons/xmlComment.svg");
+  /** 16x16 */ public static final Icon XmlComment = load("/icons/xmlComment.svg");
 
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.ObjectBrowser.FlattenPackages */
   @SuppressWarnings("unused")

@@ -100,6 +100,7 @@ import java.util.stream.Stream;
  * @author Eugene Zhuravlev
  */
 public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent, Disposable {
+  private static final ThreadLocal<VirtualFile> ourIndexedFile = new ThreadLocal<>();
   static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndexImpl");
   private static final String CORRUPTION_MARKER_NAME = "corruption.marker";
   private static final NotificationGroup NOTIFICATIONS = new NotificationGroup("Indexing", NotificationDisplayType.BALLOON, false);
@@ -1655,6 +1656,8 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       currentFC.putUserData(ourPhysicalContentKey, Boolean.TRUE);
     }
 
+    if (ourIndexedFile.get() != null) throw new AssertionError("Reentrant indexing");
+    ourIndexedFile.set(file);
     boolean updateCalculated = false;
     try {
       // important: no hard referencing currentFC to avoid OOME, the methods introduced for this purpose!
@@ -1672,6 +1675,14 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       }
       throw exception;
     }
+    finally {
+      ourIndexedFile.remove();
+    }
+  }
+
+  @Override
+  public VirtualFile getFileBeingCurrentlyIndexed() {
+    return ourIndexedFile.get();
   }
 
   private class VirtualFileUpdateTask extends UpdateTask<VirtualFile> {

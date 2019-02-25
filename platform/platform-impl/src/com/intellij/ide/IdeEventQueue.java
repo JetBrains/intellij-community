@@ -36,6 +36,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -199,6 +200,12 @@ public class IdeEventQueue extends EventQueue {
     if (Registry.is("skip.move.resize.events")) {
       myPostEventListeners.addListener(IdeEventQueue::skipMoveResizeEvents);
     }
+
+    ((IdeKeyboardFocusManager)KeyboardFocusManager.getCurrentKeyboardFocusManager()).setTypeaheadHandler(ke -> {
+      if (myKeyEventDispatcher.dispatchKeyEvent(ke)) {
+        ke.consume();
+      }
+    });
   }
 
   private static boolean skipMoveResizeEvents(AWTEvent event) {
@@ -648,8 +655,15 @@ public class IdeEventQueue extends EventQueue {
     }
 
     if (e instanceof KeyEvent) {
-      if (myKeyEventDispatcher.dispatchKeyEvent((KeyEvent)e)) {
-        ((KeyEvent)e).consume();
+      if (
+        !SystemInfo.isJetBrainsJvm ||
+        (JavaVersion.current().compareTo(JavaVersion.compose(8, 0, 202, 1504, false)) < 0 &&
+         JavaVersion.current().compareTo(JavaVersion.compose(9, 0, 0, 0, false)) < 0) ||
+        JavaVersion.current().compareTo(JavaVersion.compose(11, 0, 0, 0, false)) > 0
+      ) {
+        if (myKeyEventDispatcher.dispatchKeyEvent((KeyEvent)e)) {
+          ((KeyEvent)e).consume();
+        }
       }
       defaultDispatchEvent(e);
     }

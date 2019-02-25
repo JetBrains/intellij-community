@@ -85,7 +85,7 @@ class GithubCreatePullRequestTest : GithubGitRepoTest() {
     repository.apply {
       git("remote add origin ${repo.cloneUrl}")
       // fork is initialized in background and there's nothing to poll
-      for (i in 1..5) {
+      for (i in 1..10) {
         try {
           git("fetch")
           break

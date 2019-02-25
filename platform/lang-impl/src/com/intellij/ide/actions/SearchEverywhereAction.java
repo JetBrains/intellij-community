@@ -530,7 +530,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
            index == model.moreIndex.runConfigurations;
   }
 
-  private void rebuildList(final String pattern) {
+  private void rebuildList(@NotNull String pattern) {
     assert EventQueue.isDispatchThread() : "Must be EDT";
     if (myCalcThread != null && !myCurrentWorker.isProcessed()) {
       myCurrentWorker = myCalcThread.cancel();
@@ -741,7 +741,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         ApplicationManager.getApplication().invokeLater(() -> rebuildList(myPopupField.getText()));
       }
     });
-
 
     registerDataProvider(panel, project);
     final RelativePoint showPoint = calculateShowingPoint(e, panel);
@@ -1319,7 +1318,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     private final ArrayList<AnAction> myAlreadyAddedActions = new ArrayList<>();
 
 
-    CalcThread(Project project, String pattern, boolean reuseModel) {
+    CalcThread(Project project, @NotNull String pattern, boolean reuseModel) {
       this.project = project;
       this.pattern = pattern;
       myListModel = reuseModel ? (SearchListModel)myList.getModel() : new SearchListModel();
@@ -1796,7 +1795,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       return myProgressIndicator.isCanceled() || myDone.isRejected();
     }
 
-    private synchronized void buildTopHit(String pattern) {
+    private synchronized void buildTopHit(@NotNull String pattern) {
       final List<Object> elements = new ArrayList<>();
       final HistoryItem history = myHistoryItem;
       if (history != null) {
@@ -1858,7 +1857,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           }
         }
       }
-      final Consumer<Object> consumer = o -> {
+      final java.util.function.Consumer<Object> consumer = o -> {
         if (isSetting(o) || isVirtualFile(o) || isActionValue(o) || o instanceof PsiElement || o instanceof OptionsTopHitProvider) {
           if (o instanceof AnAction && myAlreadyAddedActions.contains(o)) {
             return;
@@ -1875,7 +1874,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           if (provider instanceof OptionsTopHitProvider) {
             final String providerId = ((OptionsTopHitProvider)provider).getId();
             if (!ids.contains(providerId) && StringUtil.startsWithIgnoreCase(providerId, id)) {
-              consumer.consume(provider);
+              consumer.accept(provider);
               ids.add(providerId);
             }
           }
@@ -1884,14 +1883,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         final ActionManager actionManager = ActionManager.getInstance();
         final List<String> actions = AbbreviationManager.getInstance().findActions(pattern);
         for (String actionId : actions) {
-          consumer.consume(actionManager.getAction(actionId));
+          consumer.accept(actionManager.getAction(actionId));
         }
 
         for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
           check();
-          if (provider instanceof OptionsTopHitProvider && !((OptionsTopHitProvider)provider).isEnabled(project)) {
-            continue;
-          }
           provider.consumeTopHits(pattern, consumer, project);
         }
       }

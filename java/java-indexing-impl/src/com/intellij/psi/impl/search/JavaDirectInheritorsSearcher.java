@@ -46,7 +46,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     final Project project = PsiUtilCore.getProjectInReadAction(baseClass);
     if (JavaClassInheritorsSearcher.isJavaLangObject(baseClass)) {
       SearchScope useScope = ReadAction.compute(baseClass::getUseScope);
-      return AllClassesSearch.search(useScope, project).forEach(psiClass -> {
+      return AllClassesSearch.search(useScope, project).allowParallelProcessing().forEach(psiClass -> {
         ProgressManager.checkCanceled();
         if (psiClass.isInterface()) {
           return consumer.process(psiClass);

@@ -8,62 +8,98 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.util.StartUpMeasurer
+import com.intellij.util.StartUpMeasurer.Item
 import gnu.trove.THashMap
 import java.io.StringWriter
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
+import java.util.function.Consumer
+
+private val LOG = Logger.getInstance(StartUpMeasurer::class.java)
 
 class StartUpPerformanceReporter : StartupActivity, DumbAware {
   private val activationCount = AtomicInteger()
+  // questions like "what if we have several projects to open? what if no projects at all?" are out of scope for now
+  private val isLastEdtOptionTopHitProviderFinished = AtomicBoolean()
 
-  var lastReport: String? = null
+  private var startUpEnd = AtomicLong(-1)
+
+  var lastReport: ByteArray? = null
     private set
 
-  override fun runActivity(project: Project) {
-    val end = System.currentTimeMillis()
-    val activationNumber = activationCount.incrementAndGet()
-    // even if this activity executed in a pooled thread, better if it will not affect start-up in any way,
-    ApplicationManager.getApplication().executeOnPooledThread {
-      logStats(end, activationNumber)
+  companion object {
+    // need to be exposed for tests, but I don't want to expose as top-level function, so, as companion object
+    fun sortItems(items: MutableList<Item>) {
+      items.sortWith(Comparator { o1, o2 ->
+        if (o1 == o2.parent) {
+          return@Comparator -1
+        }
+        else if (o2 == o1.parent) {
+          return@Comparator 1
+        }
+
+        when {
+          o1.start > o2.start -> 1
+          o1.start < o2.start -> -1
+          else -> {
+            when {
+              o1.end > o2.end -> -1
+              o1.end < o2.end -> 1
+              else -> 0
+            }
+          }
+        }
+      })
     }
   }
 
-  private fun logStats(end: Long, activationNumber: Int) {
-    val log = Logger.getInstance(StartUpMeasurer::class.java)
+  override fun runActivity(project: Project) {
+    val end = System.nanoTime()
+    val activationNumber = activationCount.getAndIncrement()
+    if (activationNumber == 0) {
+      LOG.assertTrue(startUpEnd.getAndSet(end) == -1L)
+    }
+    if (isLastEdtOptionTopHitProviderFinished.get()) {
+      // even if this activity executed in a pooled thread, better if it will not affect start-up in any way
+      ApplicationManager.getApplication().executeOnPooledThread {
+        logStats(end, activationNumber)
+      }
+    }
+  }
 
-    val items: MutableList<StartUpMeasurer.Item> = StartUpMeasurer.getAndClear()
+  fun lastEdtOptionTopHitProviderFinishedForProject() {
+    if (!isLastEdtOptionTopHitProviderFinished.compareAndSet(false, true)) {
+      return
+    }
+
+    val end = startUpEnd.get()
+    if (end != -1L) {
+      ApplicationManager.getApplication().executeOnPooledThread {
+        logStats(end, 0)
+      }
+    }
+  }
+
+  @Synchronized
+  private fun logStats(end: Long, activationNumber: Int) {
+    val items = mutableListOf<Item>()
+    val activities = THashMap<String, MutableList<Item>>()
+    StartUpMeasurer.processAndClear(Consumer { item ->
+      if (item.name.first() == '_') {
+        activities.getOrPut(item.name) { mutableListOf() }.add(item)
+      }
+      else {
+        items.add(item)
+      }
+    })
+
     if (items.isEmpty() || (ApplicationManager.getApplication().isUnitTestMode && activationNumber > 2)) {
       return
     }
 
-    // project components initialization must be first
-//    {
-//          "name": "project components registration",
-//          "duration": 398,
-//          "start": 1550307664977,
-//          "end": 1550307665375
-//        },
-//        {
-//          "name": "project components initialization",
-//          "description": "component count: 212",
-//          "duration": 1302,
-//          "start": 1550307664977,
-//          "end": 1550307666279
-//        },
-//        {
-//          "name": "project components creation",
-//          "isSubItem": true,
-//          "duration": 904,
-//          "start": 1550307665375,
-//          "end": 1550307666279
-//        },
-    items.sortWith(Comparator { o1, o2 ->
-      val diff = (o1.start - o2.start).toInt()
-      if (diff != 0) {
-        return@Comparator diff
-      }
-
-      (o2.end - o1.end).toInt()
-    })
+    sortItems(items)
 
     val stringWriter = StringWriter()
     val logPrefix = "=== Start: StartUp Measurement ===\n"
@@ -72,18 +108,14 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     writer.setIndent("  ")
     writer.beginObject()
 
+    writer.name("version").value("1")
+
+    val startTime = if (activationNumber == 0) StartUpMeasurer.getStartTime() else items.first().start
+
     writer.name("items")
     writer.beginArray()
-    var totalDuration = if (activationNumber == 0) writeUnknown(writer, StartUpMeasurer.getStartTime(), items.get(0).start) else 0
-    val activities = THashMap<String, MutableList<StartUpMeasurer.Item>>()
-    val activityDescriptors = listOf(ActivityDescriptor(StartUpMeasurer.COMPONENT_INITIALIZED_INTERNAL_NAME, "components"),
-                                     ActivityDescriptor(StartUpMeasurer.PRELOAD_ACTIVITY_FINISHED, "preloadActivities"))
+    var totalDuration = if (activationNumber == 0) writeUnknown(writer, startTime, items.first().start, startTime) else 0
     for ((index, item) in items.withIndex()) {
-      if (activityDescriptors.any { it.itemName === item.name }) {
-        activities.getOrPut(item.name) { mutableListOf() }.add(item)
-        continue
-      }
-
       writer.beginObject()
       writer.name("name").value(item.name)
       if (item.description != null) {
@@ -91,91 +123,102 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
       }
 
       val duration = item.end - item.start
-
-      if (isSubItem(item, index, items)) {
-        // for debug purposes (check that isSubItem computed correctly)
-        writer.name("isSubItem").value(true)
-      }
-      else {
+      if (!isSubItem(item, index, items)) {
         totalDuration += duration
       }
 
-      writeItemTimeInfo(item, duration, writer)
+      writeItemTimeInfo(item, duration, startTime, writer)
       writer.endObject()
     }
-    totalDuration += writeUnknown(writer, items.last().end, end)
+    totalDuration += writeUnknown(writer, items.last().end, end, startTime)
     writer.endArray()
 
-    for (activityDescriptor in activityDescriptors) {
-      val list = activities.get(activityDescriptor.itemName) ?: continue
-      writeActivities(list, writer, activityDescriptor.jsonFieldName)
-    }
+    writeActivities(activities, startTime, writer)
 
-    writer.name("totalDurationComputed").value(totalDuration)
-    writer.name("totalDurationActual").value(end - items.first().start)
+    writer.name("totalDurationComputed").value(TimeUnit.NANOSECONDS.toMillis(totalDuration))
+    writer.name("totalDurationActual").value(TimeUnit.NANOSECONDS.toMillis(end - startTime))
 
     writer.endObject()
     writer.flush()
 
-    lastReport = stringWriter.buffer.substring(logPrefix.length)
+    lastReport = stringWriter.buffer.substring(logPrefix.length).toByteArray()
 
     stringWriter.write("\n=== Stop: StartUp Measurement ===")
     var string = stringWriter.toString()
     // to make output more compact (quite a lot slow components) - should we write own JSON encoder? well, for now potentially slow RegExp is ok
     string = string.replace(Regex(",\\s+(\"start\"|\"end\"|\\{)"), ", $1")
-    log.info(string)
+    LOG.info(string)
   }
 
-  private fun writeActivities(slowComponents: List<StartUpMeasurer.Item>, writer: JsonWriter, fieldName: String) {
-    if (slowComponents.isEmpty()) {
-      return
+  private fun writeActivities(activities: THashMap<String, MutableList<Item>>, startTime: Long, writer: JsonWriter) {
+    // sorted to get predictable JSON
+    for (name in activities.keys.sorted()) {
+      val list = activities.get(name)!!
+      sortItems(list)
+      writeActivities(list, startTime, writer, activityNameToJsonFieldName(name))
     }
-
-    // actually here not all components, but only slow (>10ms - as it was before)
-    writer.name(fieldName)
-    writer.beginArray()
-
-    for (item in slowComponents) {
-      writer.beginObject()
-      writer.name("name").value(item.description)
-      writeItemTimeInfo(item, item.end - item.start, writer)
-      writer.endObject()
-    }
-
-    writer.endArray()
-  }
-
-  private fun writeItemTimeInfo(item: StartUpMeasurer.Item, duration: Long, writer: JsonWriter) {
-    writer.name("duration").value(duration)
-    writer.name("start").value(item.start)
-    writer.name("end").value(item.end)
-  }
-
-  private fun isSubItem(item: StartUpMeasurer.Item, itemIndex: Int, list: List<StartUpMeasurer.Item>): Boolean {
-    var index = itemIndex
-    while (true) {
-      val prevItem = list.getOrNull(--index) ?: return false
-      // items are sorted, no need to check start or next items
-      if (prevItem.end >= item.end) {
-        return true
-      }
-    }
-  }
-
-  private fun writeUnknown(writer: JsonWriter, start: Long, end: Long): Long {
-    val duration = end - start
-    if (duration <= 1) {
-      return 0
-    }
-
-    writer.beginObject()
-    writer.name("name").value("unknown")
-    writer.name("duration").value(duration)
-    writer.name("start").value(start)
-    writer.name("end").value(end)
-    writer.endObject()
-    return duration
   }
 }
 
-private data class ActivityDescriptor(val itemName: String, val jsonFieldName: String)
+private fun activityNameToJsonFieldName(name: String): String {
+  return when {
+    name.last() == 'y' -> name.substring(1, name.length - 1) + "ies"
+    else -> name.substring(1) + 's'
+  }
+}
+
+private fun writeActivities(slowComponents: List<Item>, offset: Long, writer: JsonWriter, fieldName: String) {
+  if (slowComponents.isEmpty()) {
+    return
+  }
+
+  // actually here not all components, but only slow (>10ms - as it was before)
+  writer.name(fieldName)
+  writer.beginArray()
+
+  for (item in slowComponents) {
+    writer.beginObject()
+    writer.name("name").value(item.description)
+    writeItemTimeInfo(item, item.end - item.start, offset, writer)
+    writer.endObject()
+  }
+
+  writer.endArray()
+}
+
+private fun writeItemTimeInfo(item: Item, duration: Long, offset: Long, writer: JsonWriter) {
+  writer.name("duration").value(TimeUnit.NANOSECONDS.toMillis(duration))
+  writer.name("start").value(TimeUnit.NANOSECONDS.toMillis(item.start - offset))
+  writer.name("end").value(TimeUnit.NANOSECONDS.toMillis(item.end - offset))
+}
+
+private fun isSubItem(item: Item, itemIndex: Int, list: List<Item>): Boolean {
+  if (item.parent != null) {
+    return true
+  }
+
+  var index = itemIndex
+  while (true) {
+    val prevItem = list.getOrNull(--index) ?: return false
+    // items are sorted, no need to check start or next items
+    if (prevItem.end >= item.end) {
+      return true
+    }
+  }
+}
+
+private fun writeUnknown(writer: JsonWriter, start: Long, end: Long, offset: Long): Long {
+  val duration = end - start
+  val durationInMs = TimeUnit.NANOSECONDS.toMillis(duration)
+  if (durationInMs <= 1) {
+    return 0
+  }
+
+  writer.beginObject()
+  writer.name("name").value("unknown")
+  writer.name("duration").value(durationInMs)
+  writer.name("start").value(TimeUnit.NANOSECONDS.toMillis(start - offset))
+  writer.name("end").value(TimeUnit.NANOSECONDS.toMillis(end - offset))
+  writer.endObject()
+  return duration
+}

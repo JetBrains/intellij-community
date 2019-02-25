@@ -33,7 +33,6 @@ import com.intellij.ui.Splash;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StartUpMeasurer;
-import net.miginfocom.layout.PlatformDefaults;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +66,8 @@ public class IdeaApplication {
   }
 
   @SuppressWarnings("SSBasedInspection")
-  public static void initApplication(String[] args) {
+  public static void initApplication(@NotNull String[] args) {
+    PluginManager.startupStart.end();
     StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(StartUpMeasurer.Phases.INIT_APP);
     IdeaApplication app = new IdeaApplication(args);
     // this invokeLater() call is needed to place the app starting code on a freshly minted IdeEventQueue instance
@@ -183,9 +183,6 @@ public class IdeaApplication {
       }
     }
 
-    //IDEA-170295
-    PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE);
-
     IconLoader.activate();
 
     new JFrame().pack(); // this peer will prevent shutting down our application
@@ -207,9 +204,9 @@ public class IdeaApplication {
     return new IdeStarter();
   }
 
-  public void run() {
+  private void run() {
     try {
-      ApplicationManagerEx.getApplicationEx().load();
+      ApplicationManagerEx.getApplicationEx().load(null);
       myLoaded = true;
 
       ((TransactionGuardImpl) TransactionGuard.getInstance()).performUserActivity(() -> myStarter.main(myArgs));
@@ -346,7 +343,6 @@ public class IdeaApplication {
       AppLifecycleListener lifecyclePublisher = app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
       lifecyclePublisher.appFrameCreated(args, willOpenProject);
 
-      LOG.info("App initialization took " + (System.nanoTime() - PluginManager.startupStart) / 1000000 + " ms");
       PluginManagerCore.dumpPluginClassStatistics();
 
       // Temporary check until the jre implementation has been checked and bundled
@@ -379,7 +375,6 @@ public class IdeaApplication {
         LifecycleUsageTriggerCollector.onIdeStart();
       });
     }
-
   }
 
   /**

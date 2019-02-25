@@ -39,6 +39,7 @@ import com.intellij.psi.impl.source.codeStyle.IndentHelperImpl;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.Function;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.TextRangeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -163,7 +164,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
         final FileViewProvider viewProvider = containingFile.getViewProvider();
 
         if (!viewProvider.isEventSystemEnabled()) return;
-        getContext().myUpdatedProviders.add(viewProvider);
+        getContext().myUpdatedProviders.putValue(viewProvider, (FileElement)containingFile.getNode());
         for (final ASTNode node : changeSet.getChangedElements()) {
           final TreeChange treeChange = changeSet.getChangesByElement(node);
           for (final ASTNode affectedChild : treeChange.getAffectedChildren()) {
@@ -232,7 +233,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     atomic(() -> {
       if (isDisabled()) return;
       try {
-        FileViewProvider[] viewProviders = getContext().myUpdatedProviders.toArray(new FileViewProvider[0]);
+        FileViewProvider[] viewProviders = getContext().myUpdatedProviders.keySet().toArray(new FileViewProvider[0]);
         for (final FileViewProvider viewProvider : viewProviders) {
           doPostponedFormatting(viewProvider);
         }
@@ -804,7 +805,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   private static class Context {
     private int myPostponedCounter;
     private int myDisabledCounter;
-    private final Set<FileViewProvider> myUpdatedProviders = new HashSet<>();
+    private final MultiMap<FileViewProvider, FileElement> myUpdatedProviders = MultiMap.create();
     private final Map<FileViewProvider, List<ASTNode>> myReformatElements = new HashMap<>();
   }
 }

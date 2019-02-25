@@ -14,7 +14,7 @@ import org.apache.http.cookie.SM;
 import org.apache.http.entity.ContentType;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft;
-import org.java_websocket.drafts.Draft_17;
+import org.java_websocket.drafts.Draft_6455;
 import org.java_websocket.handshake.ClientHandshakeBuilder;
 import org.java_websocket.handshake.ServerHandshake;
 import org.jetbrains.annotations.NotNull;
@@ -743,7 +743,7 @@ public class IpnbConnection {
     }
   }
 
-  protected class Draft17WithOrigin extends Draft_17 {
+  protected class Draft17WithOrigin extends Draft_6455 {
     @Override
     public Draft copyInstance() {
       return new Draft17WithOrigin();

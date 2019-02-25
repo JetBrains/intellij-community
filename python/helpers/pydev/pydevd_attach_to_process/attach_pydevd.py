@@ -1,5 +1,8 @@
+from __future__ import print_function
 import sys
 import os
+import subprocess
+import traceback
 
 def process_command_line(argv):
     setup = {}
@@ -31,6 +34,17 @@ def process_command_line(argv):
     return setup
 
 def main(setup):
+    if sys.platform == 'linux':
+        try:
+            output = subprocess.check_output(['sysctl', 'kernel.yama.ptrace_scope'])
+            if output.decode().strip()[-1] != '0':
+                print("WARNING: The 'kernel.yama.ptrace_scope' parameter value is not 0, attach to process may not work correctly.\n"
+                      "         Please run 'sudo sysctl kernel.yama.ptrace_scope=0' to change the value temporary\n"
+                      "         or add the 'kernel.yama.ptrace_scope = 0' line to /etc/sysctl.d/10-ptrace.conf to set it permanently.",
+                      file=sys.stderr)
+        except Exception:
+            traceback.print_exc()
+
     import add_code_to_python_process
     show_debug_info_on_target_process = 0
 

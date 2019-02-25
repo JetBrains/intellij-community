@@ -21,7 +21,6 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.AppIcon;
@@ -51,6 +50,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -125,7 +125,9 @@ public abstract class RestService extends HttpRequestHandler {
   @NotNull
   protected abstract String getServiceName();
 
-  protected abstract boolean isMethodSupported(@NotNull HttpMethod method);
+  protected boolean isMethodSupported(@NotNull HttpMethod method) {
+    return method == HttpMethod.GET;
+  }
 
   @Override
   public final boolean process(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) {
@@ -231,14 +233,14 @@ public abstract class RestService extends HttpRequestHandler {
 
   @NotNull
   protected static JsonReader createJsonReader(@NotNull FullHttpRequest request) {
-    JsonReader reader = new JsonReader(new InputStreamReader(new ByteBufInputStream(request.content()), CharsetToolkit.UTF8_CHARSET));
+    JsonReader reader = new JsonReader(new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8));
     reader.setLenient(true);
     return reader;
   }
 
   @NotNull
   protected static JsonWriter createJsonWriter(@NotNull OutputStream out) {
-    JsonWriter writer = new JsonWriter(new OutputStreamWriter(out, CharsetToolkit.UTF8_CHARSET));
+    JsonWriter writer = new JsonWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
     writer.setIndent("  ");
     return writer;
   }
@@ -272,6 +274,10 @@ public abstract class RestService extends HttpRequestHandler {
 
   protected static void send(@NotNull BufferExposingByteArrayOutputStream byteOut, @NotNull HttpRequest request, @NotNull ChannelHandlerContext context) {
     HttpResponse response = Responses.response("application/json", Unpooled.wrappedBuffer(byteOut.getInternalBuffer(), 0, byteOut.size()));
+    sendResponse(request, context, response);
+  }
+
+  protected static void sendResponse(@NotNull HttpRequest request, @NotNull ChannelHandlerContext context, @NotNull HttpResponse response) {
     Responses.addNoCache(response);
     response.headers().set("X-Frame-Options", "Deny");
     Responses.send(response, context.channel(), request);

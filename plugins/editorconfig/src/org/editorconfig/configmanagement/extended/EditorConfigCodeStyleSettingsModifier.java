@@ -12,6 +12,7 @@ import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
+import com.intellij.util.containers.ContainerUtil;
 import org.editorconfig.Utils;
 import org.editorconfig.configmanagement.EditorConfigNavigationActionsFactory;
 import org.editorconfig.core.EditorConfig;
@@ -21,12 +22,24 @@ import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.editorconfig.core.EditorConfig.OutPair;
 
+@SuppressWarnings("SameParameterValue")
 public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsModifier {
+  private final static Map<String,List<String>> DEPENDENCIES = ContainerUtil.newHashMap();
+  static {
+    addDependency("indent_size", "continuation_indent_size");
+  }
+
+  private static void addDependency(@NotNull String name, String... dependentNames) {
+    DEPENDENCIES.put(name, Arrays.asList(dependentNames));
+  }
+
   @Override
   public boolean modifySettings(@NotNull TransientCodeStyleSettings settings, @NotNull PsiFile psiFile) {
     final VirtualFile file = psiFile.getVirtualFile();
@@ -63,8 +76,9 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
     LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(file.getLanguage());
     if (provider != null) {
       AbstractCodeStylePropertyMapper mapper = provider.getPropertyMapper(settings);
-      boolean isModified = processOptions(editorConfigOptions, mapper, false);
-      isModified = processOptions(editorConfigOptions, mapper, true) || isModified;
+      Set<String> processed = ContainerUtil.newHashSet();
+      boolean isModified = processOptions(editorConfigOptions, mapper, false, processed);
+      isModified = processOptions(editorConfigOptions, mapper, true, processed) || isModified;
       return isModified;
 
     }
@@ -73,14 +87,27 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
 
   private static boolean processOptions(@NotNull List<OutPair> editorConfigOptions,
                                         @NotNull AbstractCodeStylePropertyMapper mapper,
-                                        boolean languageSpecific) {
+                                        boolean languageSpecific,
+                                        Set<String> processed) {
     String langPrefix = languageSpecific ? mapper.getLanguageDomainId() + "_" : null;
     boolean isModified = false;
     for (OutPair option : editorConfigOptions) {
-      String intellijName = EditorConfigIntellijNameUtil.toIntellijName(option.getKey());
+      final String optionKey = option.getKey();
+      String intellijName = EditorConfigIntellijNameUtil.toIntellijName(optionKey);
       CodeStylePropertyAccessor accessor = findAccessor(mapper, intellijName, langPrefix);
       if (accessor != null) {
+        if (DEPENDENCIES.containsKey(optionKey)) {
+          for (String dependency : DEPENDENCIES.get(optionKey)) {
+            if (!processed.contains(dependency)) {
+              CodeStylePropertyAccessor dependencyAccessor = findAccessor(mapper, dependency, null);
+              if (dependencyAccessor != null) {
+                isModified |= dependencyAccessor.setFromString(option.getVal());
+              }
+            }
+          }
+        }
         isModified |= accessor.setFromString(option.getVal());
+        processed.add(intellijName);
       }
     }
     return isModified;

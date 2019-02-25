@@ -10,6 +10,7 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
@@ -56,11 +57,11 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
+import net.miginfocom.layout.PlatformDefaults;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.ide.PooledThreadExecutor;
 import org.picocontainer.MutablePicoContainer;
 import sun.awt.AWTAccessor;
 import sun.awt.AWTAutoShutdown;
@@ -111,7 +112,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   private static final int ourDumpThreadsOnLongWriteActionWaiting = Integer.getInteger("dump.threads.on.long.write.action.waiting", 0);
 
-  private final ExecutorService ourThreadExecutorsService = PooledThreadExecutor.INSTANCE;
+  private final ExecutorService ourThreadExecutorsService = AppExecutorUtil.getAppExecutorService();
   private boolean myLoaded;
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
@@ -386,21 +387,31 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  public void load() {
-    load(null);
-  }
-
-  @Override
   public void load(@Nullable final String configPath) {
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
+      StartupProgress startupProgress = mySplash == null ? null : (message, progress) -> mySplash.showProgress("", progress);
+
+      // before totalMeasureToken to ensure that plugin loading is not part of this
+      List<IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins(startupProgress);
+
+      if (!isHeadlessEnvironment()) {
+        // wanted for UI, but should not affect start-up time,
+        // since MigLayout is not important for start-up UI, it is ok execute it in a pooled thread
+        // (call itself is cheap but leads to loading classes)
+        AppExecutorUtil.getAppExecutorService().submit(() -> {
+          //IDEA-170295
+          PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE);
+        });
+      }
+
       ProgressIndicator indicator = mySplash == null ? null : new EmptyProgressIndicator() {
         @Override
         public void setFraction(double fraction) {
           mySplash.showProgress("", (float)fraction);
         }
       };
-      init(indicator, () -> {
+      init(plugins, indicator, () -> {
         // create ServiceManagerImpl at first to force extension classes registration
         getPicoContainer().getComponentInstance(ServiceManagerImpl.class);
 
@@ -427,6 +438,25 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           }
         }
       }, true);
+
+      StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(StartUpMeasurer.Phases.APP_INITIALIZED_CALLBACK);
+      ExtensionPoint<ApplicationInitializedListener> initializedExtensionPoint = ApplicationInitializedListener.EP_NAME.getPoint(null);
+      for (ApplicationInitializedListener listener : initializedExtensionPoint.getExtensionList()) {
+        try {
+          listener.componentsInitialized();
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+      }
+
+      try {
+        initializedExtensionPoint.reset();
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+      measureToken.end();
     }
     finally {
       token.finish();
@@ -440,32 +470,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   protected void createComponents(@Nullable ProgressIndicator indicator) {
     // we cannot wrap "init()" call because ProgressManager instance could be created only after component registration (our "componentsRegistered" callback)
-    Runnable task = () -> {
-      super.createComponents(indicator);
-      ExtensionPoint<ApplicationInitializedListener> initializedExtensionPoint = ApplicationInitializedListener.EP_NAME.getPoint(null);
-      for (ApplicationInitializedListener listener : initializedExtensionPoint.getExtensionList()) {
-        try {
-          listener.componentsInitialized();
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
-
-        try {
-          initializedExtensionPoint.reset();
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
-      }
-    };
-
     if (indicator == null) {
       // no splash, no need to to use progress manager
-      task.run();
+      super.createComponents(null);
     }
     else {
-      ProgressManager.getInstance().runProcess(task, indicator);
+      ProgressManager.getInstance().runProcess(() -> super.createComponents(indicator), indicator);
     }
   }
 
@@ -1417,12 +1427,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void saveSettings() {
-    saveSettings(false);
-  }
-
-  private void saveSettings(boolean isForceSavingAllSettings) {
     if (mySaveAllowed) {
-      StoreUtil.saveSettings(this, isForceSavingAllSettings);
+      StoreUtil.saveSettings(this, false);
     }
   }
 

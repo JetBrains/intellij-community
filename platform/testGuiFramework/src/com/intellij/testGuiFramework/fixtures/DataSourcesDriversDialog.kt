@@ -4,10 +4,7 @@ package com.intellij.testGuiFramework.fixtures
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.testGuiFramework.framework.Timeouts
-import com.intellij.testGuiFramework.impl.GuiRobotHolder
-import com.intellij.testGuiFramework.impl.GuiTestCase
-import com.intellij.testGuiFramework.impl.popupMenu
-import com.intellij.testGuiFramework.impl.waitUntilFoundList
+import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.util.step
 import org.fest.swing.core.Robot
 import org.fest.swing.fixture.ContainerFixture
@@ -22,6 +19,7 @@ class DataSourcesDriversDialog(robot: Robot, dialog: JDialog) : JDialogFixture(r
   }
 
   fun getDownloadLink(timeout: Timeout = Timeouts.seconds05): JEditorPaneFixture = jEditorPaneFixture("Download", timeout)
+  fun getSwitchLink(timeout: Timeout = Timeouts.seconds05): JEditorPaneFixture = jEditorPaneFixture("Switch", timeout)
 
   fun addDataSource(dataSource: String, settings: DataSourcesDriversDialog.() -> Unit) {
     with(this) {

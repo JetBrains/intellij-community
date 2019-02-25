@@ -11,6 +11,7 @@ import com.intellij.testGuiFramework.fixtures.extended.ExtendedButtonFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTableFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.framework.Timeouts.defaultTimeout
 import com.intellij.testGuiFramework.framework.toPrintable
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.typeMatcher
@@ -134,6 +135,17 @@ fun <C : Container> ContainerFixture<C>.treeTable(timeout: Timeout = defaultTime
   return step("search table") {
     val table: TreeTable = findComponentWithTimeout(timeout)
     return@step TreeTableFixture(robot(), table)
+  }
+}
+
+fun <C : Container> ContainerFixture<C>.treeTableWithPath(column: Int, vararg pathStrings: String, timeout: Timeout = defaultTimeout): TreeTableFixture {
+  return step("search table with column #$column and path [${pathStrings.joinToString()}] ") {
+    GuiTestUtilKt.waitUntil("table with column #$column and path [${pathStrings.joinToString()}] appears", timeout = timeout){
+      val table: TreeTable = findComponentWithTimeout(Timeouts.noTimeout)
+      TreeTableFixture(robot(), table).isPathPresent(*pathStrings)
+
+    }
+    return@step TreeTableFixture(robot(), findComponentWithTimeout(Timeouts.noTimeout))
   }
 }
 

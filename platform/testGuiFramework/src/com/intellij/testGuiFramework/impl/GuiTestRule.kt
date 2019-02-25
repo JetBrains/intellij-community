@@ -183,6 +183,8 @@ class GuiTestRule : TestRule {
       errors.addAll(checkForModalDialogs())
       LOG.info("tearDown: tearDown project")
       errors.addAll(thrownFromRunning(Runnable { this.tearDownProject() }))
+      LOG.info("tearDown: check opened modal dialogs appeared after attempt to close the project...")
+      errors.addAll(checkForModalDialogs())
       LOG.info("tearDown: waiting for welcome frame (return if necessary)...")
       errors.addAll(thrownFromRunning(Runnable { this.returnToTheFirstStepOfWelcomeFrame() }))
       LOG.info("tearDown: collecting fatal errors from IDE...")

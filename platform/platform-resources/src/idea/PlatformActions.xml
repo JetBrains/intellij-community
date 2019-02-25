@@ -23,6 +23,162 @@
     <group id="Vcs.KeymapGroup" text="Version Control Systems"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
     <group id="VcsGeneral.KeymapGroup"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
 
+    <group id="ListActions" text="List actions">
+      <action id="List-selectFirstRow" text="Select First Row"
+              description="Selects the first row."
+              class="com.intellij.ui.ListActions$Home" use-shortcut-of="EditorTextStart"/>
+      <action id="List-selectFirstRowExtendSelection" text="Extend Selection to First Row"
+              description="Scrolls to the first row and adds corresponding rows to selection."
+              class="com.intellij.ui.ListActions$ShiftHome" use-shortcut-of="EditorTextStartWithSelection"/>
+      <action id="List-selectLastRow" text="Select Last Row"
+              description="Selects the last row."
+              class="com.intellij.ui.ListActions$End" use-shortcut-of="EditorTextEnd"/>
+      <action id="List-selectLastRowExtendSelection" text="Extend Selection to Last Row"
+              description="Scrolls to the last row and adds corresponding rows to selection."
+              class="com.intellij.ui.ListActions$ShiftEnd" use-shortcut-of="EditorTextEndWithSelection"/>
+      <action id="List-selectPreviousRow" text="Select Previous Row"
+              description="Selects the previous row."
+              class="com.intellij.ui.ListActions$Up" use-shortcut-of="EditorUp"/>
+      <action id="List-selectPreviousRowExtendSelection" text="Extend Selection with Previous Row"
+              description="Adds the previous row to selection."
+              class="com.intellij.ui.ListActions$ShiftUp" use-shortcut-of="EditorUpWithSelection"/>
+      <action id="List-selectNextRow" text="Select Next Row"
+              description="Selects the next row."
+              class="com.intellij.ui.ListActions$Down" use-shortcut-of="EditorDown"/>
+      <action id="List-selectNextRowExtendSelection" text="Extend Selection with Next Row"
+              description="Adds the next row to selection."
+              class="com.intellij.ui.ListActions$ShiftDown" use-shortcut-of="EditorDownWithSelection"/>
+      <action id="List-selectPreviousColumn" text="Select Previous Column"
+              description="Selects the previous column."
+              class="com.intellij.ui.ListActions$Left" use-shortcut-of="EditorLeft"/>
+      <action id="List-selectPreviousColumnExtendSelection" text="Extend Selection to Previous Column"
+              description="Adds the previous column to selection."
+              class="com.intellij.ui.ListActions$ShiftLeft" use-shortcut-of="EditorLeftWithSelection"/>
+      <action id="List-selectNextColumn" text="Select Next Column"
+              description="Selects the next column."
+              class="com.intellij.ui.ListActions$Right" use-shortcut-of="EditorRight"/>
+      <action id="List-selectNextColumnExtendSelection" text="Extend Selection to Next Column"
+              description="Adds the next column to selection."
+              class="com.intellij.ui.ListActions$ShiftRight" use-shortcut-of="EditorRightWithSelection"/>
+      <action id="List-scrollUp" text="Scroll Page Up and Select Row"
+              description="Scrolls the surrounding scrollable area up by one page and selects the corresponding row."
+              class="com.intellij.ui.ListActions$PageUp" use-shortcut-of="EditorPageUp"/>
+      <action id="List-scrollUpExtendSelection" text="Scroll Page Up and Extend Selection"
+              description="Scrolls the surrounding scrollable area up by one page and adds corresponding rows to selection."
+              class="com.intellij.ui.ListActions$ShiftPageUp" use-shortcut-of="EditorPageUpWithSelection"/>
+      <action id="List-scrollDown" text="Scroll Page Down and Select Row"
+              description="Scrolls the surrounding scrollable area down by one page and selects the corresponding row."
+              class="com.intellij.ui.ListActions$PageDown" use-shortcut-of="EditorPageDown"/>
+      <action id="List-scrollDownExtendSelection" text="Scroll Page Down and Extend Selection"
+              description="Scrolls the surrounding scrollable area down by one page and adds corresponding rows to selection."
+              class="com.intellij.ui.ListActions$ShiftPageDown" use-shortcut-of="EditorPageDownWithSelection"/>
+      <add-to-group group-id="Other.KeymapGroup"/>
+    </group>
+
+    <group id="TableActions" text="Table actions">
+      <action id="Table-selectFirstRow" text="Select First Row"
+              description="Selects the first row."
+              class="com.intellij.ui.TableActions$CtrlHome" use-shortcut-of="EditorTextStart"/>
+      <action id="Table-selectFirstRowExtendSelection" text="Extend Selection to First Row"
+              description="Scrolls to the first row and adds corresponding rows to selection."
+              class="com.intellij.ui.TableActions$CtrlShiftHome" use-shortcut-of="EditorTextStartWithSelection"/>
+      <action id="Table-selectLastRow" text="Select Last Row"
+              description="Selects the last row."
+              class="com.intellij.ui.TableActions$CtrlEnd" use-shortcut-of="EditorTextEnd"/>
+      <action id="Table-selectLastRowExtendSelection" text="Extend Selection to Last Row"
+              description="Scrolls to the last row and adds corresponding rows to selection."
+              class="com.intellij.ui.TableActions$CtrlShiftEnd" use-shortcut-of="EditorTextEndWithSelection"/>
+      <action id="Table-selectPreviousRow" text="Select Previous Row"
+              description="Selects the previous row."
+              class="com.intellij.ui.TableActions$Up" use-shortcut-of="EditorUp"/>
+      <action id="Table-selectPreviousRowExtendSelection" text="Extend Selection with Previous Row"
+              description="Adds the previous row to selection."
+              class="com.intellij.ui.TableActions$ShiftUp" use-shortcut-of="EditorUpWithSelection"/>
+      <action id="Table-selectNextRow" text="Select Next Row"
+              description="Selects the next row."
+              class="com.intellij.ui.TableActions$Down" use-shortcut-of="EditorDown"/>
+      <action id="Table-selectNextRowExtendSelection" text="Extend Selection with Next Row"
+              description="Adds the next row to selection."
+              class="com.intellij.ui.TableActions$ShiftDown" use-shortcut-of="EditorDownWithSelection"/>
+      <action id="Table-selectPreviousColumn" text="Select Previous Column"
+              description="Selects the previous column."
+              class="com.intellij.ui.TableActions$Left" use-shortcut-of="EditorLeft"/>
+      <action id="Table-selectPreviousColumnExtendSelection" text="Extend Selection to Previous Column"
+              description="Adds the previous column to selection."
+              class="com.intellij.ui.TableActions$ShiftLeft" use-shortcut-of="EditorLeftWithSelection"/>
+      <action id="Table-selectNextColumn" text="Select Next Column"
+              description="Selects the next column."
+              class="com.intellij.ui.TableActions$Right" use-shortcut-of="EditorRight"/>
+      <action id="Table-selectNextColumnExtendSelection" text="Extend Selection to Next Column"
+              description="Adds the next column to selection."
+              class="com.intellij.ui.TableActions$ShiftRight" use-shortcut-of="EditorRightWithSelection"/>
+      <action id="Table-scrollUpChangeSelection" text="Scroll Page Up and Select Row"
+              description="Scrolls the surrounding scrollable area up by one page and selects the corresponding row."
+              class="com.intellij.ui.TableActions$PageUp" use-shortcut-of="EditorPageUp"/>
+      <action id="Table-scrollUpExtendSelection" text="Scroll Page Up and Extend Selection"
+              description="Scrolls the surrounding scrollable area up by one page and adds corresponding rows to selection."
+              class="com.intellij.ui.TableActions$ShiftPageUp" use-shortcut-of="EditorPageUpWithSelection"/>
+      <action id="Table-scrollDownChangeSelection" text="Scroll Page Down and Select Row"
+              description="Scrolls the surrounding scrollable area down by one page and selects the corresponding row."
+              class="com.intellij.ui.TableActions$PageDown" use-shortcut-of="EditorPageDown"/>
+      <action id="Table-scrollDownExtendSelection" text="Scroll Page Down and Extend Selection"
+              description="Scrolls the surrounding scrollable area down by one page and adds corresponding rows to selection."
+              class="com.intellij.ui.TableActions$ShiftPageDown" use-shortcut-of="EditorPageDownWithSelection"/>
+      <add-to-group group-id="Other.KeymapGroup"/>
+    </group>
+
+    <group id="TreeActions" text="Tree actions">
+      <action id="Tree-selectFirst" text="Select First Node"
+              description="Selects the first node."
+              class="com.intellij.ui.TreeActions$Home" use-shortcut-of="EditorTextStart"/>
+      <action id="Tree-selectFirstExtendSelection" text="Extend Selection to First Node"
+              description="Scrolls to the first node and adds corresponding nodes to selection."
+              class="com.intellij.ui.TreeActions$ShiftHome" use-shortcut-of="EditorTextStartWithSelection"/>
+      <action id="Tree-selectLast" text="Select Last Node"
+              description="Selects the last node."
+              class="com.intellij.ui.TreeActions$End" use-shortcut-of="EditorTextEnd"/>
+      <action id="Tree-selectLastExtendSelection" text="Extend Selection to Last Node"
+              description="Scrolls to the last node and adds corresponding nodes to selection."
+              class="com.intellij.ui.TreeActions$ShiftEnd" use-shortcut-of="EditorTextEndWithSelection"/>
+      <action id="Tree-selectPrevious" text="Select Previous Node"
+              description="Selects the previous node."
+              class="com.intellij.ui.TreeActions$Up" use-shortcut-of="EditorUp"/>
+      <action id="Tree-selectPreviousExtendSelection" text="Extend Selection with Previous Node"
+              description="Adds the previous node to selection."
+              class="com.intellij.ui.TreeActions$ShiftUp" use-shortcut-of="EditorUpWithSelection"/>
+      <action id="Tree-selectNext" text="Select Next Node"
+              description="Selects the next node."
+              class="com.intellij.ui.TreeActions$Down" use-shortcut-of="EditorDown"/>
+      <action id="Tree-selectNextExtendSelection" text="Extend Selection with Next Node"
+              description="Adds the next node to selection."
+              class="com.intellij.ui.TreeActions$ShiftDown" use-shortcut-of="EditorDownWithSelection"/>
+      <action id="Tree-selectParent" text="Select Parent Node"
+              description="Collapses expanded node or selects the parent node."
+              class="com.intellij.ui.TreeActions$Left" use-shortcut-of="EditorLeft"/>
+      <action id="Tree-selectParentExtendSelection" text="Extend Selection to Parent Node"
+              description="Scrolls to the parent node and adds corresponding nodes to selection."
+              class="com.intellij.ui.TreeActions$ShiftLeft" use-shortcut-of="EditorLeftWithSelection"/>
+      <action id="Tree-selectChild" text="Select Child Node"
+              description="Expands collapsed node or selects the child node."
+              class="com.intellij.ui.TreeActions$Right" use-shortcut-of="EditorRight"/>
+      <action id="Tree-selectChildExtendSelection" text="Extend Selection to Child Node"
+              description="Expands collapsed node or adds the child node to selection."
+              class="com.intellij.ui.TreeActions$ShiftRight" use-shortcut-of="EditorRightWithSelection"/>
+      <action id="Tree-scrollUpChangeSelection" text="Scroll Page Up and Select Node"
+              description="Scrolls the surrounding scrollable area up by one page and selects the corresponding node."
+              class="com.intellij.ui.TreeActions$PageUp" use-shortcut-of="EditorPageUp"/>
+      <action id="Tree-scrollUpExtendSelection" text="Scroll Page Up and Extend Selection"
+              description="Scrolls the surrounding scrollable area up by one page and adds corresponding nodes to selection."
+              class="com.intellij.ui.TreeActions$ShiftPageUp" use-shortcut-of="EditorPageUpWithSelection"/>
+      <action id="Tree-scrollDownChangeSelection" text="Scroll Page Down and Select Node"
+              description="Scrolls the surrounding scrollable area down by one page and selects the corresponding node."
+              class="com.intellij.ui.TreeActions$PageDown" use-shortcut-of="EditorPageDown"/>
+      <action id="Tree-scrollDownExtendSelection" text="Scroll Page Down and Extend Selection"
+              description="Scrolls the surrounding scrollable area down by one page and adds corresponding nodes to selection."
+              class="com.intellij.ui.TreeActions$ShiftPageDown" use-shortcut-of="EditorPageDownWithSelection"/>
+      <add-to-group group-id="Other.KeymapGroup"/>
+    </group>
+
     <group id="ScrollPaneActions" text="Scroll">
       <action id="ScrollPane-scrollHome" text="Scroll Home"
               description="Scrolls the surrounding scrollable area to the top."

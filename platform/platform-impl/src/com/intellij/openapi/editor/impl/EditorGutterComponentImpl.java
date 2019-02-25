@@ -896,6 +896,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     if (myLineToGutterRenderers == null || myLineToGutterRenderersCacheForLogicalLines != logicalLinesMatchVisualOnes()) {
       buildGutterRenderersCache();
     }
+
+    Segment focusModeRange = myEditor.getFocusModeRange();
+    if (focusModeRange != null) {
+      int start = myEditor.offsetToVisualLine(focusModeRange.getStartOffset());
+      int end = myEditor.offsetToVisualLine(focusModeRange.getEndOffset());
+      if (line < start || line > end) return null;
+    }
+
     return myLineToGutterRenderers.get(line);
   }
 

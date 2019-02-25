@@ -245,13 +245,17 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
         @Override
         public void visitExpressionList(PsiExpressionList expressionList) {
-          PsiMethod psiMethod = myContextStack.peekFirst();
+          visitArguments(expressionList, myContextStack.peekFirst());
+        }
+
+        void visitArguments(PsiExpressionList expressionList, PsiMethod psiMethod) {
           if (psiMethod != null) {
             final String methodName = psiMethod.getName();
             final PsiExpression[] expressions = expressionList.getExpressions();
             final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
             for (int idx = 0; idx < expressions.length; idx++) {
-              final String paramName = (idx < parameters.length && !parameters[idx].isVarArgs())? parameters[idx].getName() : "arg"+(idx+1);
+              final String paramName =
+                (idx < parameters.length && !parameters[idx].isVarArgs()) ? parameters[idx].getName() : "arg" + (idx + 1);
               myParamNameStack.push(methodName + ": " + paramName + ".");
               final PsiExpression argExpression = expressions[idx];
               try {
@@ -269,25 +273,43 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
         @Override
         public void visitCallExpression(final PsiCallExpression expression) {
+          int pos = -1;
+          if (myContextStack.isEmpty()) { // always move the outmost item in the group to the top
+            pos = targets.size();
+          }
           final PsiMethod psiMethod = expression.resolveMethod();
+          if (expression instanceof PsiMethodCallExpression) {
+            PsiExpression qualifier = ((PsiMethodCallExpression)expression).getMethodExpression().getQualifierExpression();
+            if (qualifier != null) {
+              qualifier.accept(this);
+            }
+            visitArguments(expression.getArgumentList(), psiMethod);
+          }
           if (psiMethod != null) {
             myContextStack.push(psiMethod);
-            StreamEx.of(targets)
-              .select(MethodSmartStepTarget.class)
-              .filter(t -> t.getMethod().equals(psiMethod))
-              .forEach(t -> t.setOrdinal(t.getOrdinal() + 1));
-            targets.add(new MethodSmartStepTarget(
+            MethodSmartStepTarget target = new MethodSmartStepTarget(
               psiMethod,
               null,
-              expression instanceof PsiMethodCallExpression?
-                ((PsiMethodCallExpression)expression).getMethodExpression().getReferenceNameElement()
-                : expression instanceof PsiNewExpression? ((PsiNewExpression)expression).getClassOrAnonymousClassReference() : expression,
+              expression instanceof PsiMethodCallExpression ?
+              ((PsiMethodCallExpression)expression).getMethodExpression().getReferenceNameElement()
+                                                            : expression instanceof PsiNewExpression ? ((PsiNewExpression)expression)
+                                                              .getClassOrAnonymousClassReference() : expression,
               myInsideLambda || (expression instanceof PsiNewExpression && ((PsiNewExpression)expression).getAnonymousClass() != null),
               null
-            ));
+            );
+            target.setOrdinal(
+              (int)StreamEx.of(targets).select(MethodSmartStepTarget.class).filter(t -> t.getMethod().equals(psiMethod)).count());
+            if (pos != -1) {
+              targets.add(pos, target);
+            }
+            else {
+              targets.add(target);
+            }
           }
           try {
-            super.visitCallExpression(expression);
+            if (!(expression instanceof PsiMethodCallExpression)) {
+              super.visitCallExpression(expression);
+            }
           }
           finally {
             if (psiMethod != null) {

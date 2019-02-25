@@ -47,6 +47,12 @@ public abstract class FileBasedIndex {
     iterateIndexableFiles(processor, project, indicator);
   }
 
+  /**
+   * @return the file which the current thread is indexing right now, or null if current thread isn't indexing.
+   */
+  @Nullable
+  public abstract VirtualFile getFileBeingCurrentlyIndexed();
+
   public abstract void registerIndexableSet(@NotNull IndexableFileSet set, @Nullable Project project);
 
   public abstract void removeIndexableSet(@NotNull IndexableFileSet set);

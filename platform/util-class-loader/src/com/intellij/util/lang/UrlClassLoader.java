@@ -15,6 +15,7 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.security.ProtectionDomain;
 import java.util.*;
 
 /**
@@ -84,6 +85,7 @@ public class UrlClassLoader extends ClassLoader {
 
   public static final class Builder {
     private List<URL> myURLs = ContainerUtilRt.emptyList();
+    private Set<URL> myURLsWithProtectionDomain = ContainerUtilRt.newHashSet();
     private ClassLoader myParent;
     private boolean myLockJars;
     private boolean myUseCache;
@@ -104,7 +106,19 @@ public class UrlClassLoader extends ClassLoader {
     public Builder urls(@NotNull URL... urls) { myURLs = Arrays.asList(urls); return this; }
     @NotNull
     public Builder parent(ClassLoader parent) { myParent = parent; return this; }
-    
+
+    /**
+     * @param urls List of URLs that are signed by Sun/Oracle and their signatures must be verified.
+     */
+    @NotNull
+    public Builder urlsWithProtectionDomain(@NotNull Set<URL> urls) { myURLsWithProtectionDomain = urls; return this; }
+
+    /**
+     * @see #urlsWithProtectionDomain(Set)
+     */
+    @NotNull
+    public Builder urlsWithProtectionDomain(@NotNull URL... urls) { return urlsWithProtectionDomain(ContainerUtilRt.newHashSet(urls)); }
+
     /**
      * ZipFile handles opened in JarLoader will be kept in SoftReference. Depending on OS, the option significantly speeds up classloading 
      * from libraries. Caveat: for Windows opened handle will lock the file preventing its modification
@@ -212,7 +226,7 @@ public class UrlClassLoader extends ClassLoader {
   protected final ClassPath createClassPath(@NotNull Builder builder) {
     return new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload,
                                 builder.myUsePersistentClasspathIndex, builder.myCachePool, builder.myCachingCondition,
-                                builder.myErrorOnMissingJar, builder.myLazyClassloadingCaches);
+                                builder.myErrorOnMissingJar, builder.myLazyClassloadingCaches, builder.myURLsWithProtectionDomain);
   }
 
   public static URL internProtocol(@NotNull URL url) {
@@ -299,11 +313,21 @@ public class UrlClassLoader extends ClassLoader {
     }
 
     byte[] b = res.getBytes();
-    return _defineClass(name, b);
+    ProtectionDomain protectionDomain = res.getProtectionDomain();
+    if (protectionDomain != null) {
+      return _defineClass(name, b, protectionDomain);
+    }
+    else {
+      return _defineClass(name, b);
+    }
   }
 
   protected Class _defineClass(final String name, final byte[] b) {
     return defineClass(name, b, 0, b.length);
+  }
+
+  private Class _defineClass(final String name, final byte[] b, @Nullable ProtectionDomain protectionDomain) {
+    return defineClass(name, b, 0, b.length, protectionDomain);
   }
 
   @Override

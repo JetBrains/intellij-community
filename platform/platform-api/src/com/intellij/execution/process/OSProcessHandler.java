@@ -82,7 +82,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
    */
   public static void checkEdtAndReadAction(@NotNull ProcessHandler processHandler) {
     Application application = ApplicationManager.getApplication();
-    if (!application.isInternal() || application.isHeadlessEnvironment()) {
+    if (application == null || !application.isInternal() || application.isHeadlessEnvironment()) {
       return;
     }
     String message = null;

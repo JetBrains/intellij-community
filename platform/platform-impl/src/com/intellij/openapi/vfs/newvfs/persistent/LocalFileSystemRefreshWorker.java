@@ -27,10 +27,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.DosFileAttributes;
-import java.nio.file.attribute.PosixFileAttributes;
-import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.*;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ForkJoinPool;
@@ -176,7 +173,13 @@ class LocalFileSystemRefreshWorker {
                                                                             Collections.singletonList(file));
 
     refreshingFileVisitor.visit(file);
-    myHelper.addAllEventsFrom(refreshingFileVisitor.getHelper());
+    addAllEventsFrom(refreshingFileVisitor);
+  }
+
+  private void addAllEventsFrom(RefreshingFileVisitor refreshingFileVisitor) {
+    synchronized (myHelper) {
+      myHelper.addAllEventsFrom(refreshingFileVisitor.getHelper());
+    }
   }
 
   private void fullDirRefresh(@NotNull VirtualDirectoryImpl dir, @NotNull RefreshContext refreshContext) {
@@ -202,7 +205,7 @@ class LocalFileSystemRefreshWorker {
           return false;
         }
 
-        myHelper.addAllEventsFrom(refreshingFileVisitor.getHelper());
+        addAllEventsFrom(refreshingFileVisitor);
         return true;
       });
       if (hasEvents) {
@@ -240,7 +243,7 @@ class LocalFileSystemRefreshWorker {
           return false;
         }
 
-        myHelper.addAllEventsFrom(refreshingFileVisitor.getHelper());
+        addAllEventsFrom(refreshingFileVisitor);
 
         return true;
       });
@@ -273,7 +276,7 @@ class LocalFileSystemRefreshWorker {
     ourCancellingCondition = condition;
   }
 
-  private class RefreshingFileVisitor extends SimpleFileVisitor<Path> {
+  private class RefreshingFileVisitor /*extends SimpleFileVisitor<Path>*/ {
     private final VfsEventGenerationHelper myHelper = new VfsEventGenerationHelper();
     private final Map<String, VirtualFile> myPersistentChildren;
     private final Set<String> myChildrenWeAreInterested; // null - no limit
@@ -297,36 +300,16 @@ class LocalFileSystemRefreshWorker {
       }
     }
 
-    @Override
-    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+    /*@Override
+    public*/ FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
       String name = file.getName(file.getNameCount() - 1).toString();
 
       if (!acceptsFileName(name)) {
         return FileVisitResult.CONTINUE;
       }
+
       NewVirtualFile child = (NewVirtualFile)myPersistentChildren.remove(name);
       boolean isDirectory = attrs.isDirectory();
-
-      if (child == null) { // new file is created
-        VirtualFile parent = myFileOrDir.isDirectory() ? myFileOrDir : myFileOrDir.getParent();
-
-        String symlinkTarget = attrs.isSymbolicLink() ? file.toRealPath().toString() : null;
-        myHelper.scheduleCreation(parent, name, toFileAttributes(file, attrs), isEmptyDir(file, attrs), symlinkTarget);
-        return FileVisitResult.CONTINUE;
-      }
-
-      if(checkCancelled(child, myRefreshContext)) {
-        return FileVisitResult.CONTINUE;
-      }
-
-      if (!child.isDirty()) {
-        return FileVisitResult.CONTINUE;
-      }
-
-      boolean oldIsDirectory = child.isDirectory();
-      boolean oldIsSymlink = child.is(VFileProperty.SYMLINK);
-      boolean oldIsSpecial = child.is(VFileProperty.SPECIAL);
-
       boolean isSpecial = attrs.isOther();
       boolean isLink = attrs.isSymbolicLink();
 
@@ -336,13 +319,49 @@ class LocalFileSystemRefreshWorker {
         isLink = true;
       }
 
+      if (isLink) {
+        try {
+          attrs = Files.readAttributes(file, BasicFileAttributes.class);
+        } catch (FileSystemException ignore) {
+          attrs = brokenSymlinkAttributes;
+        }
+        isDirectory = attrs.isDirectory();
+      } /*else if (myFileOrDir.is(VFileProperty.SYMLINK)) {
+        try {
+          attrs = Files.readAttributes(file, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+        } catch (NoSuchFileException | AccessDeniedException ignore) {
+          attrs = brokenSymlinkAttributes;
+        }
+        isLink = attrs.isSymbolicLink();
+      }*/
+
+      if (child == null) { // new file is created
+        VirtualFile parent = myFileOrDir.isDirectory() ? myFileOrDir : myFileOrDir.getParent();
+
+        String symlinkTarget = isLink ? file.toRealPath().toString() : null;
+        myHelper.scheduleCreation(parent, name, toFileAttributes(file, attrs, isLink), isEmptyDir(file, attrs), symlinkTarget);
+        return FileVisitResult.CONTINUE;
+      }
+
+        if(checkCancelled(child, myRefreshContext)) {
+          return FileVisitResult.TERMINATE;
+        }
+
+      if (!child.isDirty()) {
+        return FileVisitResult.CONTINUE;
+      }
+
+      boolean oldIsDirectory = child.isDirectory();
+      boolean oldIsSymlink = child.is(VFileProperty.SYMLINK);
+      boolean oldIsSpecial = child.is(VFileProperty.SPECIAL);
+
       if (oldIsDirectory != isDirectory ||
           oldIsSymlink != isLink ||
           oldIsSpecial != isSpecial) { // symlink or directory or special changed
         myHelper.scheduleDeletion(child);
         VirtualFile parent = myFileOrDir.isDirectory() ? myFileOrDir : myFileOrDir.getParent();
         String symlinkTarget = isLink ? file.toRealPath().toString() : null;
-        myHelper.scheduleCreation(parent, child.getName(), toFileAttributes(file, attrs), isEmptyDir(file, attrs), symlinkTarget);
+        myHelper.scheduleCreation(parent, child.getName(), toFileAttributes(file, attrs, isLink), isEmptyDir(file, attrs), symlinkTarget);
         // ignore everything else
         child.markClean();
         return FileVisitResult.CONTINUE;
@@ -353,31 +372,12 @@ class LocalFileSystemRefreshWorker {
         myHelper.scheduleAttributeChange(child, VirtualFile.PROP_NAME, currentName, name);
       }
 
-      if (!isDirectory) {
-        myHelper.checkContentChanged(child, myRefreshContext.persistence.getTimeStamp(child), attrs.lastModifiedTime().toMillis(),
-                                     myRefreshContext.persistence.getLastRecordedLength(child), attrs.size());
-      }
-      else {
-        if (myIsRecursive) {
-          myRefreshContext.submitRefreshRequest(() -> processFile(child, myRefreshContext));
+        if (!isDirectory) {
+          myHelper.checkContentChanged(child, myRefreshContext.persistence.getTimeStamp(child), attrs.lastModifiedTime().toMillis(),
+                                       myRefreshContext.persistence.getLastRecordedLength(child), attrs.size());
         }
-      }
 
-      boolean currentWritable = myRefreshContext.persistence.isWritable(child);
-      boolean isWritable;
-
-      if (attrs instanceof DosFileAttributes) {
-        DosFileAttributes dosFileAttributes = (DosFileAttributes)attrs;
-        isWritable = isDirectory || !dosFileAttributes.isReadOnly();
-      }
-      else if (attrs instanceof PosixFileAttributes) {
-        isWritable = ((PosixFileAttributes)attrs).permissions().contains(PosixFilePermission.OWNER_WRITE);
-      }
-      else {
-        isWritable = file.toFile().canWrite();
-      }
-
-      myHelper.checkWritableAttributeChange(child, currentWritable, isWritable);
+        myHelper.checkWritableAttributeChange(child, myRefreshContext.persistence.isWritable(child), isWritable(file, attrs, isDirectory));
 
       if (attrs instanceof DosFileAttributes) {
         myHelper.checkHiddenAttributeChange(child, child.is(VFileProperty.HIDDEN), ((DosFileAttributes)attrs).isHidden());
@@ -386,7 +386,13 @@ class LocalFileSystemRefreshWorker {
       if (isLink) {
         myHelper.checkSymbolicLinkChange(child, child.getCanonicalPath(), myRefreshContext.fs.resolveSymLink(child));
       }
+      
       if (!child.isDirectory()) child.markClean();
+      else {
+        if (myIsRecursive) {
+          myRefreshContext.submitRefreshRequest(() -> processFile(child, myRefreshContext));
+        }
+      }
       return FileVisitResult.CONTINUE;
     }
 
@@ -399,14 +405,21 @@ class LocalFileSystemRefreshWorker {
         Path path = Paths.get(fileOrDir.getPath());
         if (fileOrDir.isDirectory()) {
           if (myChildrenWeAreInterested == null) {
-            Files.walkFileTree(path, EnumSet.noneOf(FileVisitOption.class), 1, this);
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
+              for (Path child : stream) {
+                FileVisitResult result = visitFile(child, readAttributes(child));
+                if (result == FileVisitResult.TERMINATE) break;
+              }
+            }
+            //EnumSet<FileVisitOption> options = fileOrDir.is(VFileProperty.SYMLINK) ? EnumSet.of(FileVisitOption.FOLLOW_LINKS) : EnumSet.noneOf(FileVisitOption.class);
+            //Files.walkFileTree(path, options, 1, this);
           }
           else {
             for (String child : myChildrenWeAreInterested) {
               try {
-                Path subPath = path.resolve(child).toRealPath(LinkOption.NOFOLLOW_LINKS);
-                BasicFileAttributes attributes = Files.readAttributes(subPath, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
-                visitFile(subPath, attributes);
+                Path subPath = fixCaseIfNeeded(path.resolve(child), fileOrDir);
+                FileVisitResult result = visitFile(subPath, readAttributes(subPath));
+                if (result == FileVisitResult.TERMINATE) break;
               }
               catch (IOException ignore) {
               }
@@ -414,8 +427,7 @@ class LocalFileSystemRefreshWorker {
           }
         }
         else {
-          visitFile(path.toRealPath(LinkOption.NOFOLLOW_LINKS),
-                    Files.readAttributes(path, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS));
+          visitFile(fixCaseIfNeeded(path, fileOrDir), readAttributes(path));
         }
       }
       catch (AccessDeniedException | NoSuchFileException ignore) {
@@ -428,8 +440,10 @@ class LocalFileSystemRefreshWorker {
     @NotNull
     VfsEventGenerationHelper getHelper() {
       if (!myPersistentChildren.isEmpty()) {
-        for (VirtualFile child : myPersistentChildren.values()) {
-          myHelper.scheduleDeletion(child);
+        if (!myCancelled) {
+          for (VirtualFile child : myPersistentChildren.values()) {
+            myHelper.scheduleDeletion(child);
+          }
         }
         myPersistentChildren.clear();
       }
@@ -438,33 +452,107 @@ class LocalFileSystemRefreshWorker {
     }
   }
 
-  private static boolean isEmptyDir(@NotNull Path path, @NotNull BasicFileAttributes a) {
-    return a.isDirectory() && !LocalFileSystemBase.hasChildren(path);
+  private static BasicFileAttributes readAttributes(Path subPath) throws IOException {
+    //try {
+    //  if (subPath instanceof BasicFileAttributesHolder) {
+    //    BasicFileAttributes attributes = ((BasicFileAttributesHolder)subPath).get();
+    //    if (attributes != null) {
+    //      return attributes;
+    //    }
+    //  }
+    //}
+    //catch (Throwable ignore) {}
+    return Files.readAttributes(subPath, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
   }
 
-  @NotNull
-  private static FileAttributes toFileAttributes(@NotNull Path path, @NotNull BasicFileAttributes a) throws IOException {
-    boolean isSymlink = a.isSymbolicLink() || SystemInfo.isWindows && a.isOther() && a.isDirectory();
+  private static Path fixCaseIfNeeded(Path path, VirtualFile file) throws IOException {
+    if (SystemInfo.isFileSystemCaseSensitive) return path;
+    // Mac: toRealPath() will return current file's name wrt case
+    // Win: toRealPath(LinkOption.NOFOLLOW_LINKS) will return current file's name wrt case
+    return file.is(VFileProperty.SYMLINK) ? path.toRealPath(LinkOption.NOFOLLOW_LINKS) : path.toRealPath();
+  }
 
-    if (isSymlink) {
-      Class<? extends BasicFileAttributes> schema = SystemInfo.isWindows ? DosFileAttributes.class : PosixFileAttributes.class;
-      try {
-        a = Files.readAttributes(path, schema);
-      }
-      catch (NoSuchFileException | AccessDeniedException e) {
-        return FileAttributes.BROKEN_SYMLINK;
-      }
+  private static boolean isWritable(Path file, BasicFileAttributes a, boolean directory) {
+    boolean isWritable;
+
+    if (a instanceof DosFileAttributes) {
+      DosFileAttributes dosFileAttributes = (DosFileAttributes)a;
+      isWritable = directory || !dosFileAttributes.isReadOnly();
     }
+    else if (a instanceof PosixFileAttributes) {
+      isWritable = ((PosixFileAttributes)a).permissions().contains(PosixFilePermission.OWNER_WRITE);
+    }
+    else {
+      isWritable = file.toFile().canWrite();
+    }
+    return isWritable;
+  }
 
+  private static boolean isEmptyDir(Path path, BasicFileAttributes a) {
+    return a.isDirectory() && !LocalFileSystemBase.hasChildren(path);
+  }
+  
+  @NotNull
+  private static FileAttributes toFileAttributes(Path path, BasicFileAttributes a, boolean isSymlink) {
+    if (isSymlink && a == brokenSymlinkAttributes) return FileAttributes.BROKEN_SYMLINK;
+    
     long lastModified = a.lastModifiedTime().toMillis();
+    boolean writable = isWritable(path, a, a.isDirectory());
+
     if (SystemInfo.isWindows) {
       boolean hidden = path.getParent() != null && ((DosFileAttributes)a).isHidden();
-      boolean writable = a.isDirectory() || !((DosFileAttributes)a).isReadOnly();
       return new FileAttributes(a.isDirectory(), a.isOther(), isSymlink, hidden, a.size(), lastModified, writable);
     }
     else {
-      boolean writable = Files.isWritable(path);
       return new FileAttributes(a.isDirectory(), a.isOther(), isSymlink, false, a.size(), lastModified, writable);
     }
   }
+
+  private static final BasicFileAttributes brokenSymlinkAttributes = new BasicFileAttributes() {
+    private final FileTime myFileTime = FileTime.fromMillis(0);
+    @Override
+    public FileTime lastModifiedTime() {
+      return myFileTime;
+    }
+
+    @Override
+    public FileTime lastAccessTime() {
+      return myFileTime;
+    }
+
+    @Override
+    public FileTime creationTime() {
+      return myFileTime;
+    }
+
+    @Override
+    public boolean isRegularFile() {
+      return false;
+    }
+
+    @Override
+    public boolean isDirectory() {
+      return false;
+    }
+
+    @Override
+    public boolean isSymbolicLink() {
+      return true;
+    }
+
+    @Override
+    public boolean isOther() {
+      return false;
+    }
+
+    @Override
+    public long size() {
+      return 0;
+    }
+
+    @Override
+    public Object fileKey() {
+      return this;
+    }
+  };
 }

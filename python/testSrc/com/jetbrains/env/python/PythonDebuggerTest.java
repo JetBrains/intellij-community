@@ -21,6 +21,7 @@ import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebugValue;
+import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.debugger.PyExceptionBreakpointProperties;
 import com.jetbrains.python.debugger.PyExceptionBreakpointType;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
@@ -833,6 +834,12 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @Override
       public void before() {
         toggleBreakpoint(getScriptName(), 8);
+        PyDebuggerOptionsProvider.getInstance(myFixture.getProject()).setPyQtBackend("pyqt5");
+      }
+
+      @Override
+      public void doFinally() {
+        PyDebuggerOptionsProvider.getInstance(myFixture.getProject()).setPyQtBackend("auto");
       }
 
       @Override
@@ -854,7 +861,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return Sets.newHashSet("pyqt5");
+        return Sets.newHashSet("qt");
       }
     });
   }
@@ -872,6 +879,12 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @Override
       public void before() {
         toggleBreakpoint(getScriptName(), 10);
+        PyDebuggerOptionsProvider.getInstance(myFixture.getProject()).setPyQtBackend("pyqt5");
+      }
+
+      @Override
+      public void doFinally() {
+        PyDebuggerOptionsProvider.getInstance(myFixture.getProject()).setPyQtBackend("auto");
       }
 
       @Override
@@ -893,7 +906,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return Sets.newHashSet("pyqt5");
+        return Sets.newHashSet("qt");
       }
     });
   }
@@ -912,6 +925,12 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @Override
       public void before() {
         toggleBreakpoint(getScriptName(), 9);
+        PyDebuggerOptionsProvider.getInstance(myFixture.getProject()).setPyQtBackend("pyqt5");
+      }
+
+      @Override
+      public void doFinally() {
+        PyDebuggerOptionsProvider.getInstance(myFixture.getProject()).setPyQtBackend("auto");
       }
 
       @Override
@@ -933,11 +952,146 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return Sets.newHashSet("pyqt5");
+        return Sets.newHashSet("qt");
       }
     });
   }
 
+  @Test
+  public void testPySide2QThreadInheritor() {
+    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
+
+    runPythonTest(new PyDebuggerTask("/debug", "test_pyside2_1.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void before() {
+        toggleBreakpoint(getScriptName(), 8);
+        PyDebuggerOptionsProvider.getInstance(myFixture.getProject()).setPyQtBackend("pyside2");
+      }
+
+      @Override
+      public void doFinally() {
+        PyDebuggerOptionsProvider.getInstance(myFixture.getProject()).setPyQtBackend("auto");
+      }
+
+      @Override
+      public void testing() throws Exception {
+
+        waitForPause();
+
+        eval("i").hasValue("0");
+
+        resume();
+
+        waitForPause();
+
+        eval("i").hasValue("1");
+
+        resume();
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return Sets.newHashSet("qt");
+      }
+    });
+
+  }
+
+  @Test
+  public void testPySide2MoveToThread() {
+    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
+
+    runPythonTest(new PyDebuggerTask("/debug", "test_pyside2_2.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void before() {
+        toggleBreakpoint(getScriptName(), 10);
+        PyDebuggerOptionsProvider.getInstance(myFixture.getProject()).setPyQtBackend("pyside2");
+      }
+
+      @Override
+      public void doFinally() {
+        PyDebuggerOptionsProvider.getInstance(myFixture.getProject()).setPyQtBackend("auto");
+      }
+
+      @Override
+      public void testing() throws Exception {
+
+        waitForPause();
+
+        eval("i").hasValue("0");
+
+        resume();
+
+        waitForPause();
+
+        eval("i").hasValue("1");
+
+        resume();
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return Sets.newHashSet("qt");
+      }
+    });
+  }
+
+  @Test
+  public void testPySide2QRunnableInheritor() {
+    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
+
+    runPythonTest(new PyDebuggerTask("/debug", "test_pyside2_3.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void before() {
+        toggleBreakpoint(getScriptName(), 9);
+        PyDebuggerOptionsProvider.getInstance(myFixture.getProject()).setPyQtBackend("pyside2");
+      }
+
+      @Override
+      public void doFinally() {
+        PyDebuggerOptionsProvider.getInstance(myFixture.getProject()).setPyQtBackend("auto");
+      }
+
+      @Override
+      public void testing() throws Exception {
+
+        waitForPause();
+
+        eval("i").hasValue("0");
+
+        resume();
+
+        waitForPause();
+
+        eval("i").hasValue("1");
+
+        resume();
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return Sets.newHashSet("qt");
+      }
+    });
+  }
 
   @Test
   public void testStepOverYieldFrom() {

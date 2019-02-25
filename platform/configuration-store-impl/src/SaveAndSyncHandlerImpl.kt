@@ -192,6 +192,11 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable, Ba
     }
   }
 
+  /**
+   * On app or project closing save is performed. In EDT. It means that if there is already running save in a pooled thread,
+   * deadlock may be occurred because some save activities requires EDT with modality state "not modal" (by intention).
+   * So, save on app or project closing uses this method to process scheduled for EDT activities - instead of using regular EDT queue special one is used.
+   */
   @CalledInAwt
   override fun saveSettingsUnderModalProgress(componentManager: ComponentManager, isSaveAppAlso: Boolean): Boolean {
     if (!ApplicationManager.getApplication().isDispatchThread) {
@@ -204,6 +209,8 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable, Ba
     runInSaveOnFrameDeactivationDisabledMode {
       ProgressManager.getInstance().run(object : Task.Modal(componentManager as? Project, "Saving " + (if (componentManager is Application) "Application" else "Project"), /* canBeCancelled = */ false) {
         override fun run(indicator: ProgressIndicator) {
+          indicator.isIndeterminate = true
+
           if (project != null) {
             synchronized(saveQueue) {
               saveQueue.removeAll { it.onlyProject === project }

@@ -5,7 +5,10 @@
     "target": "es2016",
     "newLine": "LF",
     "noEmitOnError": true,
-    "noUnusedParameters": true
+    "noUnusedParameters": true,
+    "noUnusedLocals": true,
+    "outDir": "dist",
+    "sourceMap": true
   },
   "include": [
     "src/*.ts"

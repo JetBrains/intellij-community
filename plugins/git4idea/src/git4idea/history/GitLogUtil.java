@@ -282,33 +282,33 @@ public class GitLogUtil {
     if (factory == null) {
       return;
     }
-
-    Consumer<List<GitLogRecord>> consumer = records -> {
-      GitLogRecord firstRecord = notNull(getFirstItem(records));
-      String[] parents = firstRecord.getParentsHashes();
-
-      LOG.assertTrue(parents.length == 0 || parents.length == records.size(), "Not enough records for commit " +
-                                                                              firstRecord.getHash() +
-                                                                              " expected " +
-                                                                              parents.length +
-                                                                              " records, but got " +
-                                                                              records.size());
-
-      commitConsumer.consume(createCommit(project, root, records, factory, renameLimit));
-    };
-
-    GitLogRecordCollector recordCollector = preserverOrder ? new GitLogRecordCollector(project, root, consumer)
-                                                           : new GitLogUnorderedRecordCollector(project, root, consumer);
-
-    Consumer<GitLogRecord> simpleConsumer =
-      record -> commitConsumer.consume(createCommit(project, root, ContainerUtil.newArrayList(record), factory, renameLimit));
-
-    Consumer<GitLogRecord> gitLogRecordConsumer = withFullMergeDiff ? recordCollector : simpleConsumer;
     boolean withRenames = renameLimit != DiffRenameLimit.NO_RENAMES;
 
-    readRecordsFromHandler(project, root, false, true, withRenames, withFullMergeDiff, gitLogRecordConsumer, handler, parameters);
     if (withFullMergeDiff) {
+      Consumer<List<GitLogRecord>> consumer = records -> {
+        GitLogRecord firstRecord = notNull(getFirstItem(records));
+        String[] parents = firstRecord.getParentsHashes();
+
+        LOG.assertTrue(parents.length == 0 || parents.length == records.size(), "Not enough records for commit " +
+                                                                                firstRecord.getHash() +
+                                                                                " expected " +
+                                                                                parents.length +
+                                                                                " records, but got " +
+                                                                                records.size());
+
+        commitConsumer.consume(createCommit(project, root, records, factory, renameLimit));
+      };
+      GitLogRecordCollector recordCollector = preserverOrder ? new GitLogRecordCollector(project, root, consumer)
+                                                             : new GitLogUnorderedRecordCollector(project, root, consumer);
+
+      readRecordsFromHandler(project, root, false, true, withRenames, true, recordCollector, handler, parameters);
       recordCollector.finish();
+    }
+    else {
+      Consumer<GitLogRecord> consumer =
+        record -> commitConsumer.consume(createCommit(project, root, ContainerUtil.newArrayList(record), factory, renameLimit));
+
+      readRecordsFromHandler(project, root, false, true, withRenames, false, consumer, handler, parameters);
     }
   }
 

@@ -3,10 +3,11 @@ package com.intellij.openapi.application.impl;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.async.AsyncExecution;
-import com.intellij.openapi.application.async.InSmartMode;
-import com.intellij.openapi.application.async.WithDocumentsCommitted;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.NonBlockingReadAction;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -38,14 +39,14 @@ import java.util.function.Consumer;
 @VisibleForTesting
 public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
   private final @Nullable Pair<ModalityState, Consumer<T>> myEdtFinish;
-  private final List<AsyncExecution.ExpirableContextConstraint> myConstraints;
+  private final List<ContextConstraint> myConstraints;
   private final BooleanSupplier myExpireCondition;
   private final Callable<T> myComputation;
 
   private static final Set<CancellablePromise<?>> ourTasks = ContainerUtil.newConcurrentSet();
 
   NonBlockingReadActionImpl(@Nullable Pair<ModalityState, Consumer<T>> edtFinish,
-                            @NotNull List<AsyncExecution.ExpirableContextConstraint> constraints,
+                            @NotNull List<ContextConstraint> constraints,
                             @NotNull BooleanSupplier expireCondition,
                             @NotNull Callable<T> computation) {
     myEdtFinish = edtFinish;
@@ -120,9 +121,9 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
     }
 
     private void rescheduleLater() {
-      for (AsyncExecution.ExpirableContextConstraint constraint : myConstraints) {
+      for (ContextConstraint constraint : myConstraints) {
         if (!constraint.isCorrectContext()) {
-          constraint.scheduleExpirable(this::transferToBgThread);
+          constraint.schedule(this::transferToBgThread);
           return;
         }
       }
@@ -149,7 +150,7 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
     }
 
     private boolean constraintsAreSatisfied() {
-      return ContainerUtil.all(myConstraints, AsyncExecution.ContextConstraint::isCorrectContext);
+      return ContainerUtil.all(myConstraints, ContextConstraint::isCorrectContext);
     }
 
     private boolean checkObsolete() {

@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,6 +50,7 @@ public class SettingsImpl implements EditorSettings {
   private Integer myTabSize         = null;
   private Integer myCachedTabSize   = null;
   private Boolean myUseTabCharacter = null;
+  private final Object myTabSizeLock = new Object();
 
   // These comes from EditorSettingsExternalizable defaults.
   private Boolean myIsVirtualSpace                        = null;
@@ -83,7 +85,7 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myShowIntentionBulb                     = null;
 
   private List<Integer> mySoftMargins = null;
-  
+
   public SettingsImpl() {
     this(null, null);
   }
@@ -343,8 +345,10 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public void reinitSettings() {
-    myCachedTabSize = null;
-    reinitDocumentIndentOptions();
+    synchronized (myTabSizeLock) {
+      myCachedTabSize = null;
+      reinitDocumentIndentOptions();
+    }
   }
 
   private void reinitDocumentIndentOptions() {
@@ -363,33 +367,38 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public int getTabSize(Project project) {
-    if (myTabSize != null) return myTabSize.intValue();
-    if (myCachedTabSize == null) {
-      int tabSize;
-      try {
-        if (project == null || project.isDisposed()) {
-          tabSize = CodeStyle.getDefaultSettings().getTabSize(null);
-        }
-        else {
-          PsiFile file = getPsiFile(project);
-          if (myEditor != null && myEditor.isViewer()) {
-            FileType fileType = file != null ? file.getFileType() : null;
-            tabSize = CodeStyle.getSettings(project).getIndentOptions(fileType).TAB_SIZE;
+    synchronized (myTabSizeLock) { // getTabSize can be called from a background thread (e.g. from IndentsPass)
+      if (myTabSize != null) return myTabSize.intValue();
+      if (myCachedTabSize == null) {
+        int tabSize;
+        try {
+          if (project == null || project.isDisposed()) {
+            tabSize = CodeStyle.getDefaultSettings().getTabSize(null);
           }
           else {
-            tabSize = file != null ?
-                      CodeStyle.getIndentOptions(file).TAB_SIZE :
-                      CodeStyle.getSettings(project).getTabSize(null);
+            PsiFile file = getPsiFile(project);
+            if (myEditor != null && myEditor.isViewer()) {
+              FileType fileType = file != null ? file.getFileType() : null;
+              tabSize = CodeStyle.getSettings(project).getIndentOptions(fileType).TAB_SIZE;
+            }
+            else {
+              tabSize = file != null ?
+                        CodeStyle.getIndentOptions(file).TAB_SIZE :
+                        CodeStyle.getSettings(project).getTabSize(null);
+            }
           }
         }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Exception e) {
+          LOG.error("Error determining tab size", e);
+          tabSize = new CommonCodeStyleSettings.IndentOptions().TAB_SIZE;
+        }
+        myCachedTabSize = Integer.valueOf(Math.max(1, tabSize));
       }
-      catch (Exception e) {
-        LOG.error("Error determining tab size", e);
-        tabSize = new CommonCodeStyleSettings.IndentOptions().TAB_SIZE;
-      }
-      myCachedTabSize = Integer.valueOf(Math.max(1, tabSize));
+      return myCachedTabSize;
     }
-    return myCachedTabSize;
   }
 
   @Nullable
@@ -403,8 +412,10 @@ public class SettingsImpl implements EditorSettings {
   @Override
   public void setTabSize(int tabSize) {
     final Integer newValue = Integer.valueOf(Math.max(1, tabSize));
-    if (newValue.equals(myTabSize)) return;
-    myTabSize = newValue;
+    synchronized (myTabSizeLock) {
+      if (newValue.equals(myTabSize)) return;
+      myTabSize = newValue;
+    }
     fireEditorRefresh();
   }
 

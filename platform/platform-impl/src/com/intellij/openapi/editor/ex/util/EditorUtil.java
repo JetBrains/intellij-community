@@ -902,4 +902,11 @@ public final class EditorUtil {
       }
     });
   }
+
+  public static boolean isPrimaryCaretVisible(@NotNull Editor editor) {
+    Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+    Caret caret = editor.getCaretModel().getPrimaryCaret();
+    Point caretPoint = editor.visualPositionToXY(caret.getVisualPosition());
+    return visibleArea.contains(caretPoint);
+  }
 }

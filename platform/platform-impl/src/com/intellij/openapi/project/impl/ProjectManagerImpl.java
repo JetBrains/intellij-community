@@ -33,6 +33,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
@@ -485,9 +486,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @Override
   public Project loadAndOpenProject(@NotNull final String originalFilePath) throws IOException {
     final String filePath = toCanonicalName(originalFilePath);
-    final ConversionResult conversionResult = ConversionService.getInstance().convert(filePath);
+    final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(filePath);
+    final ConversionResult conversionResult = virtualFile == null ? null : ConversionService.getInstance().convert(virtualFile);
     ProjectEx project;
-    if (conversionResult.openingIsCanceled()) {
+    if (conversionResult != null && conversionResult.openingIsCanceled()) {
       project = null;
     }
     else {
@@ -498,7 +500,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
           if (!loadProjectWithProgress(project)) {
             return null;
           }
-          if (!conversionResult.conversionNotNeeded()) {
+          if (conversionResult != null && !conversionResult.conversionNotNeeded()) {
             StartupManager.getInstance(project).registerPostStartupActivity(() -> conversionResult.postStartupActivity(project));
           }
           openProject(project);
@@ -525,19 +527,18 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   /**
    * Converts and loads the project at the specified path.
    *
-   * @param filePath the path to open the project.
+   * @param path the path to open the project.
    * @return the project, or null if the user has cancelled opening the project.
    */
   @Override
   @Nullable
-  public Project convertAndLoadProject(@NotNull String filePath) throws IOException {
-    final String canonicalFilePath = toCanonicalName(filePath);
-    final ConversionResult conversionResult = ConversionService.getInstance().convert(canonicalFilePath);
+  public Project convertAndLoadProject(@NotNull VirtualFile path) throws IOException {
+    final ConversionResult conversionResult = ConversionService.getInstance().convert(path);
     if (conversionResult.openingIsCanceled()) {
       return null;
     }
 
-    ProjectEx project = createProject(null, canonicalFilePath, false);
+    ProjectEx project = createProject(null, path.getPath(), false);
     if (!loadProjectWithProgress(project)) return null;
     if (!conversionResult.conversionNotNeeded()) {
       StartupManager.getInstance(project).registerPostStartupActivity(() -> conversionResult.postStartupActivity(project));

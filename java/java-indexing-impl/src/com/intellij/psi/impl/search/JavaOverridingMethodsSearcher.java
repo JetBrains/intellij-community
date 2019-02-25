@@ -124,7 +124,7 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
 
     // use wider scope to handle public method defined in package-private class which is subclassed by public class in the same package which is subclassed by public class from another package with redefined method
     SearchScope allScope = GlobalSearchScope.allScope(project);
-    boolean success = ClassInheritorsSearch.search(containingClass, allScope, true).forEach(inheritorsProcessor);
+    boolean success = ClassInheritorsSearch.search(containingClass, allScope, true).allowParallelProcessing().forEach(inheritorsProcessor);
     assert success;
     return result;
   }

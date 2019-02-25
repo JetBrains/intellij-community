@@ -3,25 +3,19 @@ package org.jetbrains.ide;
 
 import com.google.gson.stream.JsonWriter;
 import com.intellij.ide.IdeAboutInfoUtil;
-import com.intellij.ide.StartUpPerformanceReporter;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.lang.reflect.InvocationTargetException;
 
 /**
  * @api {get} /about The application info
@@ -54,11 +48,6 @@ public class AboutHttpService extends RestService {
     return "about";
   }
 
-  @Override
-  protected boolean isMethodSupported(@NotNull HttpMethod method) {
-    return method == HttpMethod.GET;
-  }
-
   @Nullable
   @Override
   public String execute(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException {
@@ -68,15 +57,8 @@ public class AboutHttpService extends RestService {
     return null;
   }
 
-  @Override
-  protected boolean isHostTrusted(@NotNull FullHttpRequest request, @NotNull QueryStringDecoder urlDecoder) throws InterruptedException, InvocationTargetException {
-    return !getBooleanParameter("more", urlDecoder) || super.isHostTrusted(request, urlDecoder);
-  }
-
   public static void getAbout(@NotNull OutputStream out, @Nullable QueryStringDecoder urlDecoder) throws IOException {
-    final OutputStreamWriter streamWriter = new OutputStreamWriter(out, CharsetToolkit.UTF8_CHARSET);
-    JsonWriter writer = new JsonWriter(streamWriter);
-    writer.setIndent("  ");
+    JsonWriter writer = createJsonWriter(out);
     writer.beginObject();
 
     IdeAboutInfoUtil.writeAboutJson(writer);
@@ -107,18 +89,7 @@ public class AboutHttpService extends RestService {
       writer.name("homePath").value(PathManager.getHomePath());
     }
 
-    if (urlDecoder != null && getBooleanParameter("startUpMeasurement", urlDecoder)) {
-      String report = StartupActivity.POST_STARTUP_ACTIVITY.findExtensionOrFail(StartUpPerformanceReporter.class).getLastReport();
-      if (report != null) {
-        streamWriter.write(", \"startUpMeasurement\": ");
-        streamWriter.write(report);
-      }
-      streamWriter.write("\n}");
-      streamWriter.close();
-    }
-    else {
-      writer.endObject();
-      writer.close();
-    }
+    writer.endObject();
+    writer.close();
   }
 }
