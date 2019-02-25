@@ -32,6 +32,8 @@ interface LineStatusTracker<out R : Range> : LineStatusTrackerI<R> {
 
   fun scrollAndShowHint(range: Range, editor: Editor)
   fun showHint(range: Range, editor: Editor)
+
+  fun <T> readLock(task: () -> T): T
 }
 
 abstract class LocalLineStatusTracker<R : Range> constructor(override val project: Project,
@@ -140,5 +142,9 @@ abstract class LocalLineStatusTracker<R : Range> constructor(override val projec
   internal fun unfreeze() {
     documentTracker.unfreeze(Side.LEFT)
     documentTracker.unfreeze(Side.RIGHT)
+  }
+
+  override fun <T> readLock(task: () -> T): T {
+    return documentTracker.readLock(task)
   }
 }

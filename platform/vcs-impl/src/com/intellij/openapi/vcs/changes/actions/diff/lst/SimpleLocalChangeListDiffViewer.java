@@ -136,7 +136,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     try {
       indicator.checkCanceled();
 
-      TrackerData data = ReadAction.compute(() -> {
+      TrackerData data = ReadAction.compute(() -> partialTracker.readLock(() -> {
         boolean isReleased = partialTracker.isReleased();
         boolean isOperational = partialTracker.isOperational();
         List<String> affectedChangelistIds = partialTracker.getAffectedChangeListsIds();
@@ -153,7 +153,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
 
         TrackerDiffData diffData = new TrackerDiffData(ranges, localText, vcsText, trackerVcsText);
         return new TrackerData(isReleased, affectedChangelistIds, diffData);
-      });
+      }));
 
 
       if (data.isReleased) {
