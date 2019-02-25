@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 
 import javax.swing.JTable;
 
+import static com.intellij.ui.speedSearch.SpeedSearchSupply.getSupply;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
@@ -17,7 +18,8 @@ public abstract class TableActions extends SwingActionDelegate {
 
   @Override
   protected JTable getComponent(AnActionEvent event) {
-    return tryCast(super.getComponent(event), JTable.class);
+    JTable table = tryCast(super.getComponent(event), JTable.class);
+    return table == null || getSupply(table) != null ? null : table;
   }
 
   public static final class CtrlHome extends TableActions {
