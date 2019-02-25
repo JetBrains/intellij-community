@@ -24,6 +24,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Close = IconLoader.getIcon("/actions/close.svg");
     /** 16x16 */ public static final Icon CloseHovered = IconLoader.getIcon("/actions/closeHovered.svg");
     /** 16x16 */ public static final Icon Collapseall = IconLoader.getIcon("/actions/collapseall.svg");
+    /** 16x16 */ public static final Icon Colors = IconLoader.getIcon("/actions/colors.svg");
     /** 16x16 */ public static final Icon Commit = IconLoader.getIcon("/actions/commit.svg");
     /** 16x16 */ public static final Icon Compile = IconLoader.getIcon("/actions/compile.svg");
     /** 16x16 */ public static final Icon Copy = IconLoader.getIcon("/actions/copy.svg");
