@@ -283,7 +283,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
               if(pI != null){
                 pI.checkCanceled();
               }
-              FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(FileUtilRt.getExtension(file.getName()));
+              FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
               String text = new String(content, CharsetToolkit.UTF8_CHARSET);
               consumer.setCurrentFile(file.getName(), text);
               return fileType.isBinary() ? content : processTemplates(projectName, text, file, consumer);
