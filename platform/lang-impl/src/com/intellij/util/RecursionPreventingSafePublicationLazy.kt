@@ -30,9 +30,14 @@ class RecursionPreventingSafePublicationLazy<T>(initializer: () -> T) : Lazy<T?>
 
       val stamp = ourRecursionGuard.markStack()
       val newValue = ourRecursionGuard.doPreventingRecursion(this, false, initializerValue)
-      if (newValue === null || !stamp.mayCacheNow()) {
-        // In case of recursion don't update [valueRef] and don't clear [initializer].
+      // In case of recursion don't update [valueRef] and don't clear [initializer].
+      if (newValue === null) {
+        // Recursion occurred for this lazy.
         return null
+      }
+      if (!stamp.mayCacheNow()) {
+        // Recursion occurred somewhere deep.
+        return nullize(newValue)
       }
 
       if (!valueRef.compareAndSet(null, newValue)) {
