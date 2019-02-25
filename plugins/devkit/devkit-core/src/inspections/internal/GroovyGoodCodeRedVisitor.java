@@ -14,15 +14,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrAccessibilityChecker;
 import org.jetbrains.plugins.groovy.codeInspection.type.GroovyStaticTypeCheckVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessChecker;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-
-import java.util.List;
 
 public class GroovyGoodCodeRedVisitor implements GoodCodeRedVisitor {
 
@@ -34,7 +31,6 @@ public class GroovyGoodCodeRedVisitor implements GoodCodeRedVisitor {
     }
     GroovyFileBase file = (GroovyFileBase)holder.getFile();
     Project project = holder.getProject();
-    GrUnresolvedAccessChecker unresolvedAccessChecker = new GrUnresolvedAccessChecker(file, project);
     GrAccessibilityChecker accessibilityChecker = new GrAccessibilityChecker(file, project);
     GroovyStaticTypeCheckVisitor typeCheckVisitor = new GroovyStaticTypeCheckVisitor() {
       @Override
@@ -58,15 +54,9 @@ public class GroovyGoodCodeRedVisitor implements GoodCodeRedVisitor {
       @Override
       public void visitReferenceExpression(@NotNull GrReferenceExpression referenceExpression) {
         super.visitReferenceExpression(referenceExpression);
-        List<HighlightInfo> infos = unresolvedAccessChecker.checkReferenceExpression(referenceExpression);
-        if (infos != null) {
-          infos.forEach(info -> registerProblem(holder, info, referenceExpression));
-        }
-        else {
-          HighlightInfo info = accessibilityChecker.checkReferenceExpression(referenceExpression);
-          if (info != null) {
-            registerProblem(holder, info, referenceExpression);
-          }
+        HighlightInfo info = accessibilityChecker.checkReferenceExpression(referenceExpression);
+        if (info != null) {
+          registerProblem(holder, info, referenceExpression);
         }
       }
 
