@@ -12,6 +12,7 @@ import com.intellij.debugger.memory.agent.extractor.AgentExtractor;
 import com.intellij.debugger.memory.ui.JavaReferenceInfo;
 import com.intellij.debugger.memory.ui.SizedReferenceInfo;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.execution.ExecutionListener;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.JavaExecutionUtil;
@@ -31,6 +32,7 @@ import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,6 +55,7 @@ import java.util.jar.Attributes;
 
 public class MemoryAgentUtil {
   private static final Logger LOG = Logger.getInstance(MemoryAgentUtil.class);
+  private static final Key<Boolean> LISTEN_MEMORY_AGENT_STARTUP_FAILED = Key.create("LISTEN_MEMORY_AGENT_STARTUP_FAILED");
   private static final int ESTIMATE_OBJECTS_SIZE_LIMIT = 2000;
   private static final AtomicBoolean LISTENER_ADDED = new AtomicBoolean(false);
 
@@ -177,8 +180,10 @@ public class MemoryAgentUtil {
   }
 
   private static void listenIfStartupFailed() {
-    if (LISTENER_ADDED.getAndSet(true)) return;
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
+    Project project = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
+    if (project == null || Boolean.TRUE.equals(project.getUserData(LISTEN_MEMORY_AGENT_STARTUP_FAILED))) return;
+
+    project.getMessageBus().connect().subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
       @Override
       public void processTerminated(@NotNull String executorId,
                                     @NotNull ExecutionEnvironment env,
@@ -192,37 +197,40 @@ public class MemoryAgentUtil {
         if (!(console instanceof ConsoleViewImpl)) return;
 
         ConsoleViewImpl consoleView = (ConsoleViewImpl)console;
-        if (consoleView.hasDeferredOutput()) {
-          ApplicationManager.getApplication().invokeAndWait(() -> consoleView.flushDeferredText());
-        }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (consoleView.hasDeferredOutput()) {
+            consoleView.flushDeferredText();
+          }
+          String[] outputLines = StringUtil.splitByLines(consoleView.getText());
+          List<String> mentions = StreamEx.of(outputLines).skip(1).filter(x -> x.contains("memory_agent")).limit(10).toList();
+          if (outputLines.length >= 1 && outputLines[0].contains("memory_agent") && !mentions.isEmpty()) {
+            Project project = env.getProject();
+            String name = env.getRunProfile().getName();
+            String windowId = ExecutionManager.getInstance(project).getContentManager().getToolWindowIdByEnvironment(env);
 
-        String[] outputLines = StringUtil.splitByLines(consoleView.getText());
-        List<String> mentions = StreamEx.of(outputLines).skip(1).filter(x -> x.contains("memory_agent")).limit(10).toList();
-        if (outputLines.length >= 1 && outputLines[0].contains("memory_agent") && !mentions.isEmpty()) {
-          Project project = env.getProject();
-          String name = env.getRunProfile().getName();
-          String windowId = ExecutionManager.getInstance(project).getContentManager().getToolWindowIdByEnvironment(env);
-
-          Attachment[] mentionsInOutput = StreamEx.of(mentions).map(x -> new Attachment("agent_mention.txt", x))
-            .toArray(new Attachment[0]);
-          RuntimeExceptionWithAttachments exception =
-            new RuntimeExceptionWithAttachments("Could not start debug process with memory agent", mentionsInOutput);
-          String checkboxName = DebuggerBundle.message("label.debugger.general.configurable.enable.memory.agent");
-          String description =
-            "Memory agent could not be loaded. <a href=\"Disable\">Disable</a> the agent. To enable it back use \"" +
-            DebuggerBundle.message("label.debugger.general.configurable.enable.memory.agent") +
-            "\" option in File | Settings | Build, Execution, Deployment | Debugger";
-          ExecutionUtil.handleExecutionError(project, windowId, name, exception, description, new HyperlinkListener() {
-            @Override
-            public void hyperlinkUpdate(HyperlinkEvent e) {
-              if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType())) {
-                DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT = false;
+            Attachment[] mentionsInOutput = StreamEx.of(mentions).map(x -> new Attachment("agent_mention.txt", x))
+              .toArray(new Attachment[0]);
+            RuntimeExceptionWithAttachments exception =
+              new RuntimeExceptionWithAttachments("Could not start debug process with memory agent", mentionsInOutput);
+            String checkboxName = DebuggerBundle.message("label.debugger.general.configurable.enable.memory.agent");
+            String description =
+              "Memory agent could not be loaded. <a href=\"Disable\">Disable</a> the agent. To enable it back use \"" +
+              DebuggerBundle.message("label.debugger.general.configurable.enable.memory.agent") +
+              "\" option in File | Settings | Build, Execution, Deployment | Debugger";
+            ExecutionUtil.handleExecutionError(project, windowId, name, exception, description, new HyperlinkListener() {
+              @Override
+              public void hyperlinkUpdate(HyperlinkEvent e) {
+                if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType())) {
+                  DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT = false;
+                }
               }
-            }
-          });
-          LOG.error(exception);
-        }
+            });
+            LOG.error(exception);
+          }
+        });
       }
     });
+
+    project.putUserData(LISTEN_MEMORY_AGENT_STARTUP_FAILED, true);
   }
 }
