@@ -29,8 +29,8 @@ import de.undercouch.gradle.tasks.download.Download
 def currentOs = org.gradle.internal.os.OperatingSystem.current()
 
 task downloadGradleDistribution(type: Download) {
-  src "https://cache-redirector.jetbrains.com/services.gradle.org/distributions/gradle-4.4-bin.zip"
-  dest "$buildDir/android-sdk/tools/external/gradle/gradle-4.4-bin.zip"
+  src "https://cache-redirector.jetbrains.com/services.gradle.org/distributions/gradle-4.10.1-bin.zip"
+  dest "$buildDir/android-sdk/tools/external/gradle/gradle-4.10.1-bin.zip"
   onlyIf { !dest.exists() }
 }
 
@@ -41,7 +41,7 @@ task downloadGradleDistribution2(type: Download) {
 }
 
 task downloadOfflineRepo(type: Download) {
-  src "https://cache-redirector.jetbrains.com/intellij-third-party-dependencies/android-sdk-offline-repo/3.1.2/android-sdk-offline-repo.zip"
+  src "https://cache-redirector.jetbrains.com/intellij-third-party-dependencies/android-sdk-offline-repo/3.3.0/android-sdk-offline-repo.zip"
   dest "$buildDir/android-sdk/offline_repo_repo.zip"
   onlyIf { !dest.exists() && isEmpty(setupOfflineRepo.destinationDir) }
 }
@@ -66,7 +66,7 @@ task setupOfflineRepo(dependsOn: downloadOfflineRepo, type: Copy) {
 
 task downloadAndroidSdk(type: Download) {
   def osFamily = currentOs.familyName
-  src "https://cache-redirector.jetbrains.com/intellij-third-party-dependencies/android-sdk/${osFamily}.3.1.2/android-sdk.tar.gz"
+  src "https://cache-redirector.jetbrains.com/intellij-third-party-dependencies/android-sdk/${osFamily}.3.3.0/android-sdk.tar.gz"
   dest "$buildDir/android-sdk/${osFamily}.tar.gz"
   onlyIf { !dest.exists() && isEmpty(untarAndroidSdk.destinationDir) && !currentOs.isMacOsX() }
 }
