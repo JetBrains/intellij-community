@@ -622,9 +622,7 @@ class LineStatusTrackerManager(
     }
 
     private fun isTrackedEditor(editor: Editor): Boolean {
-      if (editor.project != null && editor.project != project) return false
-      if (editor.editorKind == EditorKind.PREVIEW_UNDER_READ_ACTION) return false
-      return true
+      return editor.project == null || editor.project == project
     }
   }
 
