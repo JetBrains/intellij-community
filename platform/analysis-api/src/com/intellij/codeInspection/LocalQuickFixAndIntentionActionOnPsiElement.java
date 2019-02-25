@@ -28,13 +28,14 @@ public abstract class LocalQuickFixAndIntentionActionOnPsiElement extends LocalQ
   protected LocalQuickFixAndIntentionActionOnPsiElement(@Nullable PsiElement element) {
     this(element, element);
   }
+
   protected LocalQuickFixAndIntentionActionOnPsiElement(@Nullable PsiElement startElement, @Nullable PsiElement endElement) {
     super(startElement, endElement);
   }
 
   @Override
   public final void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (file == null||myStartElement==null) return;
+    if (file == null || myStartElement == null) return;
     final PsiElement startElement = myStartElement.getElement();
     final PsiElement endElement = myEndElement == null ? startElement : myEndElement.getElement();
     if (startElement == null || endElement == null) return;
