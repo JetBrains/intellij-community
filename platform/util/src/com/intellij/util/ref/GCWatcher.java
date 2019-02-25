@@ -70,7 +70,9 @@ public class GCWatcher {
    * this method gives up after some time.
    */
   public void tryGc() {
-    GCUtil.allocateTonsOfMemory(this::isEverythingCollected);
+    if (!GCUtil.allocateTonsOfMemory(this::isEverythingCollected)) {
+      throw new IllegalStateException("Couldn't garbage-collect all passed objects, they might still be reachable from GC roots");
+    }
   }
 
 }

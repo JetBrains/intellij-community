@@ -178,7 +178,6 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     assertNull(JavaPsiFacade.getInstance(getProject()).findClass("Foo", GlobalSearchScope.allScope(getProject())));
     assertSize(0, psiFile.getClasses());
     assertEquals("", psiManager.findFile(file).getText());
-    GCWatcher.tracking(psiManager.findFile(file)).tryGc();
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 

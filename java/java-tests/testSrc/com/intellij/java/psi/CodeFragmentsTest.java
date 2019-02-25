@@ -15,7 +15,6 @@ import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.ref.GCUtil;
-import com.intellij.util.ref.GCWatcher;
 
 @PlatformTestCase.WrapInCommand
 public class CodeFragmentsTest extends LightIdeaTestCase {
@@ -69,7 +68,7 @@ public class CodeFragmentsTest extends LightIdeaTestCase {
       JavaCodeFragmentFactory.getInstance(project).createExpressionCodeFragment("a", null, null, true).getViewProvider().getVirtualFile();
     assertInstanceOf(file, LightVirtualFile.class);
 
-    GCWatcher.tracking(PsiManager.getInstance(project).findFile(file)).tryGc();
+    GCUtil.tryGcSoftlyReachableObjects();
 
     assertInstanceOf(PsiManager.getInstance(project).findFile(file), PsiExpressionCodeFragment.class);
   }

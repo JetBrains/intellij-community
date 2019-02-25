@@ -207,13 +207,15 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     assertEquals(myFile.getFirstChild(), pointer.getElement());
 
     Document document = myFile.getViewProvider().getDocument();
-    ApplicationManager.getApplication().runWriteAction(() -> document.deleteString(0, document.getTextLength()));
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      document.deleteString(0, document.getTextLength());
 
+      GCWatcher.tracking(myFile.getNode()).tryGc();
+      assertEquals(myFile.getFirstChild(), pointer.getElement());
 
-    GCWatcher.tracking(myFile.getNode()).tryGc();
-    assertEquals(myFile.getFirstChild(), pointer.getElement());
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    });
 
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     GCWatcher.tracking(myFile.getNode()).tryGc();
     assertEquals(myFile.getFirstChild(), pointer.getElement());
   }
@@ -664,7 +666,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     final SmartPsiElementPointer<PsiClass> pointer1 = createPointer(file.getClasses()[0]);
     assertNotNull(((PsiFileImpl)file).getStubTree());
 
-    GCWatcher.tracking(((PsiFileImpl)file).getStubTree()).tryGc();
+    GCWatcher.tracking(((PsiFileImpl)file).getStubTree(), file.getClasses()[0]).tryGc();
 
     final FileASTNode node = file.getNode();
     final SmartPsiElementPointer<PsiClass> pointer2 = createPointer(file.getClasses()[0]);
