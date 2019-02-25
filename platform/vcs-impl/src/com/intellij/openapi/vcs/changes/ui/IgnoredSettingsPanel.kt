@@ -2,46 +2,108 @@
 
 package com.intellij.openapi.vcs.changes.ui
 
-import com.intellij.openapi.options.Configurable
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsApplicationSettings
+import com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.ASKED_MANAGE_IGNORE_FILES_PROPERTY
+import com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.MANAGE_IGNORE_FILES_PROPERTY
+import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsPanel.ManageIgnoredOption.*
+import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
-import org.jetbrains.annotations.Nls
-import javax.swing.JCheckBox
+import javax.swing.DefaultComboBoxModel
 
-class IgnoredSettingsPanel(private val project: Project) : SearchableConfigurable, Configurable.NoScroll {
-  private lateinit var manageIgnoreFiles: JCheckBox
-
-  override fun reset() {
-    val applicationSettings = VcsApplicationSettings.getInstance()
-    manageIgnoreFiles.isSelected = applicationSettings.MANAGE_IGNORE_FILES
-  }
+internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigurable("Ignored Files",
+                                                                                      "project.propVCSSupport.Ignored.Files"), SearchableConfigurable {
+  var selectedManageIgnoreOption = getIgnoredOption()
 
   override fun apply() {
-    val applicationSettings = VcsApplicationSettings.getInstance()
-    applicationSettings.MANAGE_IGNORE_FILES = manageIgnoreFiles.isSelected
-  }
+    val modified = isModified
+    super.apply()
 
-  override fun isModified(): Boolean {
-    val applicationSettings = VcsApplicationSettings.getInstance()
-    return applicationSettings.MANAGE_IGNORE_FILES != manageIgnoreFiles.isSelected
-  }
-
-  override fun createComponent() = panel {
-    row {
-      createManageIgnoreFiles()
+    if (modified) {
+      updateIgnoredOption(selectedManageIgnoreOption)
     }
   }
 
-  private fun Row.createManageIgnoreFiles(): JCheckBox {
-    manageIgnoreFiles = checkBox("Manage ignore files").apply { setMnemonic('m') }
-    return manageIgnoreFiles
+  override fun createPanel() =
+    panel {
+      titledRow("VCS ignore settings") {
+        row {
+          cell {
+            Label("Ignore manage policy")()
+            comboBox(
+              DefaultComboBoxModel(arrayOf(None,
+                                           AllProjectsManage,
+                                           CurrentProjectManage,
+                                           DoNotManageForCurrentProject,
+                                           DoNotManageForAllProject)),
+              ::selectedManageIgnoreOption
+            )
+          }
+        }
+      }
+    }
+
+  private fun updateIgnoredOption(option: ManageIgnoredOption?) {
+    val applicationSettings = VcsApplicationSettings.getInstance()
+    val propertiesComponent = PropertiesComponent.getInstance(project)
+    when (option) {
+      DoNotManageForAllProject -> {
+        propertiesComponent.setValue(MANAGE_IGNORE_FILES_PROPERTY, false)
+        propertiesComponent.setValue(ASKED_MANAGE_IGNORE_FILES_PROPERTY, true)
+        applicationSettings.MANAGE_IGNORE_FILES = false
+        applicationSettings.DISABLE_MANAGE_IGNORE_FILES = true
+      }
+      AllProjectsManage -> {
+        propertiesComponent.setValue(MANAGE_IGNORE_FILES_PROPERTY, true)
+        propertiesComponent.setValue(ASKED_MANAGE_IGNORE_FILES_PROPERTY, true)
+        applicationSettings.MANAGE_IGNORE_FILES = true
+        applicationSettings.DISABLE_MANAGE_IGNORE_FILES = false
+      }
+      CurrentProjectManage -> {
+        propertiesComponent.setValue(MANAGE_IGNORE_FILES_PROPERTY, true)
+        propertiesComponent.setValue(ASKED_MANAGE_IGNORE_FILES_PROPERTY, true)
+        applicationSettings.MANAGE_IGNORE_FILES = false
+        applicationSettings.DISABLE_MANAGE_IGNORE_FILES = false
+      }
+      DoNotManageForCurrentProject -> {
+        propertiesComponent.setValue(MANAGE_IGNORE_FILES_PROPERTY, false)
+        propertiesComponent.setValue(ASKED_MANAGE_IGNORE_FILES_PROPERTY, true)
+        applicationSettings.MANAGE_IGNORE_FILES = false
+        applicationSettings.DISABLE_MANAGE_IGNORE_FILES = false
+      }
+      None -> {
+        propertiesComponent.setValue(MANAGE_IGNORE_FILES_PROPERTY, false)
+        propertiesComponent.setValue(ASKED_MANAGE_IGNORE_FILES_PROPERTY, false)
+        applicationSettings.MANAGE_IGNORE_FILES = false
+        applicationSettings.DISABLE_MANAGE_IGNORE_FILES = false
+      }
+    }
   }
 
-  @Nls
-  override fun getDisplayName() = "Ignored Files"
+  private fun getIgnoredOption(): ManageIgnoredOption {
+    val applicationSettings = VcsApplicationSettings.getInstance()
+    val propertiesComponent = PropertiesComponent.getInstance(project)
+    return when {
+      applicationSettings.DISABLE_MANAGE_IGNORE_FILES -> DoNotManageForAllProject
+      applicationSettings.MANAGE_IGNORE_FILES -> AllProjectsManage
+      propertiesComponent.getBoolean(MANAGE_IGNORE_FILES_PROPERTY, false) -> CurrentProjectManage
+      propertiesComponent.getBoolean(ASKED_MANAGE_IGNORE_FILES_PROPERTY, false) -> DoNotManageForCurrentProject
+      else -> None
+    }
+  }
 
-  override fun getHelpTopic() = "project.propVCSSupport.Ignored.Files"
-  override fun getId() = helpTopic
+  enum class ManageIgnoredOption(val displayName: String) {
+    None(""),
+    AllProjectsManage("Manage for all projects"),
+    CurrentProjectManage("Manage for this project only"),
+    DoNotManageForCurrentProject("Don’t manage for this project only, but show notification in other projects"),
+    DoNotManageForAllProject("Turn off app-wide");
+
+    override fun toString() = displayName
+  }
+
+  override fun getId() = helpTopic!!
 }
