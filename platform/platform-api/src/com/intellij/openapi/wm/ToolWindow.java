@@ -68,7 +68,14 @@ public interface ToolWindow extends BusyObject {
   boolean isSplitMode();
 
   /**
-   * @exception IllegalStateException if tool window isn't installed.
+   * There are four base anchors for Tool Window: TOP, LEFT, BOTTOM, RIGHT.
+   * For each anchor there are two groups tool windows - not split and split for better organizing.
+   * For example, you can see two actions in Move To group: Left Top and Left Bottom.
+   * 'Left' here is anchor or side where the button is located,
+   * 'Top' and 'Bottom' are two subsets of buttons (not split and split).
+   *
+   * @throws IllegalStateException if tool window isn't installed.
+   * @see ToolWindowAnchor
    */
   void setSplitMode(boolean split, @Nullable Runnable runnable);
 
