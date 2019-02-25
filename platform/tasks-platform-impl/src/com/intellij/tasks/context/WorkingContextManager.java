@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.tasks.context;
 
@@ -10,12 +10,12 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.tasks.Task;
-import com.intellij.util.JdomKt;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -164,7 +164,7 @@ public class WorkingContextManager {
   private boolean loadContext(String zipPostfix, String entryName) {
     return doEntryAction(zipPostfix, entryName, entry -> {
       String s = new String(entry.getData(), CharsetToolkit.UTF8_CHARSET);
-      loadContext(JdomKt.loadElement(s));
+      loadContext(JDOMUtil.load(s));
     });
   }
 

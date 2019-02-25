@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.tasks.impl;
 
@@ -17,7 +17,6 @@ import com.intellij.tasks.CommitPlaceholderProvider;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
-import com.intellij.util.JdomKt;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -212,7 +211,7 @@ public class TaskUtil {
   public static void prettyFormatXmlToLog(@NotNull Logger logger, @NotNull String xml) {
     if (logger.isDebugEnabled()) {
       try {
-        logger.debug("\n" + JDOMUtil.createOutputter("\n").outputString(JdomKt.loadElement(xml)));
+        logger.debug("\n" + JDOMUtil.createOutputter("\n").outputString(JDOMUtil.load(xml)));
       }
       catch (Exception e) {
         logger.debug(e);

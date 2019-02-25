@@ -33,12 +33,12 @@ import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.util.ComponentTreeEventDispatcher;
-import com.intellij.util.JdomKt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.UIUtil;
@@ -319,7 +319,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
         continue;
       }
       try {
-        Element root = JdomKt.loadElement(URLUtil.openStream(resource));
+        Element root = JDOMUtil.load(URLUtil.openStream(resource));
         Element attrs = ObjectUtils.notNull(root.getChild("attributes"), root);
         Element colors = root.getChild("colors");
         AbstractColorsScheme scheme = (AbstractColorsScheme)editorColorsScheme;

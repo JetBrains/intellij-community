@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.integration;
 
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManagerTestCase;
@@ -39,8 +26,6 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
-
-import static com.intellij.util.JdomKt.loadElement;
 
 /**
  * @author Mikhail Golubev
@@ -113,7 +98,7 @@ public class YouTrackIntegrationTest extends TaskManagerTestCase {
 
   @NotNull
   private String createIssue(@NotNull HttpClient client) throws IOException {
-    // http PUT "http://trackers-tests.labs.intellij.net:8067/rest/issue" project==BTYT4TT "summary==First issue created via REST API" 
+    // http PUT "http://trackers-tests.labs.intellij.net:8067/rest/issue" project==BTYT4TT "summary==First issue created via REST API"
     final PutMethod method = new PutMethod(myRepository.getUrl() + "/rest/issue");
     method.setQueryString(new NameValuePair[] {
       new NameValuePair("project", "BTYT4TT"),
@@ -133,7 +118,7 @@ public class YouTrackIntegrationTest extends TaskManagerTestCase {
     final GetMethod method = new GetMethod(myRepository.getUrl() + "/rest/issue/" + issueId);
     final int statusCode = client.executeMethod(method);
     assertEquals(HttpStatus.SC_OK, statusCode);
-    final Element root = loadElement(method.getResponseBodyAsStream());
+    final Element root = JDOMUtil.load(method.getResponseBodyAsStream());
     for (Element field : root.getChildren("field")) {
       if ("Spent time".equals(field.getAttributeValue("name"))) {
         final Element value = field.getChild("value");
