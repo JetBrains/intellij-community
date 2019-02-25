@@ -154,6 +154,7 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
     }
 
     private boolean checkObsolete() {
+      if (promise.isCancelled()) return true;
       if (myExpireCondition.getAsBoolean()) {
         promise.cancel();
         return true;
