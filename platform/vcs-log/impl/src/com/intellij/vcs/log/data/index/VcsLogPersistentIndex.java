@@ -646,7 +646,10 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
         myIndexCollector.reportResumeClick();
         if (myBigRepositoriesList.isBig(myRoot)) {
           LOG.info("Resuming indexing " + myRoot.getName());
-          myIndexingLimit.get(myRoot).updateAndGet(l -> l + getIndexingLimit());
+          myIndexingLimit.get(myRoot).updateAndGet(l -> {
+            return Math.max(l + getIndexingLimit(),
+                            (int)((time / (getIndexingLimit() * 60000) + 1) * getIndexingLimit()));
+          });
           myBigRepositoriesList.removeRepository(myRoot);
           scheduleIndex(false);
         }
