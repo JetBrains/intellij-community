@@ -247,24 +247,24 @@ public class GitLogUtil {
                                      @NotNull VirtualFile root,
                                      @NotNull Consumer<? super GitCommit> commitConsumer,
                                      boolean includeRootChanges,
-                                     boolean preserverOrder,
+                                     boolean preserveOrder,
                                      boolean lowPriorityProcess,
                                      @NotNull String... parameters) throws VcsException {
-    readFullDetails(project, root, commitConsumer, includeRootChanges, preserverOrder, lowPriorityProcess, true, true, parameters);
+    readFullDetails(project, root, commitConsumer, includeRootChanges, preserveOrder, lowPriorityProcess, true, true, parameters);
   }
 
   public static void readFullDetails(@NotNull Project project,
                                      @NotNull VirtualFile root,
                                      @NotNull Consumer<? super GitCommit> commitConsumer,
                                      boolean includeRootChanges,
-                                     boolean preserverOrder,
+                                     boolean preserveOrder,
                                      boolean lowPriorityProcess,
                                      boolean withRenames,
                                      boolean withFullMergeDiff,
                                      @NotNull String... parameters) throws VcsException {
     DiffRenameLimit renameLimit = withRenames ? DiffRenameLimit.REGISTRY : DiffRenameLimit.NO_RENAMES;
     GitLineHandler handler = createGitHandler(project, root, createConfigParameters(includeRootChanges, renameLimit), lowPriorityProcess);
-    readFullDetailsFromHandler(project, root, commitConsumer, renameLimit, handler, preserverOrder, withFullMergeDiff,
+    readFullDetailsFromHandler(project, root, commitConsumer, renameLimit, handler, preserveOrder, withFullMergeDiff,
                                parameters);
   }
 
@@ -273,7 +273,7 @@ public class GitLogUtil {
                                                  @NotNull Consumer<? super GitCommit> commitConsumer,
                                                  @NotNull DiffRenameLimit renameLimit,
                                                  @NotNull GitLineHandler handler,
-                                                 boolean preserverOrder,
+                                                 boolean preserveOrder,
                                                  boolean withFullMergeDiff,
                                                  @NotNull String... parameters) throws VcsException {
     VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
@@ -296,8 +296,8 @@ public class GitLogUtil {
 
         commitConsumer.consume(createCommit(project, root, records, factory, renameLimit));
       };
-      GitLogRecordCollector recordCollector = preserverOrder ? new GitLogRecordCollector(project, root, consumer)
-                                                             : new GitLogUnorderedRecordCollector(project, root, consumer);
+      GitLogRecordCollector recordCollector = preserveOrder ? new GitLogRecordCollector(project, root, consumer)
+                                                            : new GitLogUnorderedRecordCollector(project, root, consumer);
 
       readRecordsFromHandler(project, root, false, true, withRenames, true, recordCollector, handler, parameters);
       recordCollector.finish();
@@ -385,12 +385,12 @@ public class GitLogUtil {
                                               boolean includeRootChanges,
                                               boolean lowPriorityProcess,
                                               boolean withFullMergeDiff,
-                                              boolean preserverOrder,
+                                              boolean preserveOrder,
                                               @NotNull DiffRenameLimit renameLimit) throws VcsException {
     GitLineHandler handler = createGitHandler(project, root, createConfigParameters(includeRootChanges, renameLimit), lowPriorityProcess);
     sendHashesToStdin(vcs, hashes, handler);
 
-    readFullDetailsFromHandler(project, root, commitConsumer, renameLimit, handler, preserverOrder, withFullMergeDiff,
+    readFullDetailsFromHandler(project, root, commitConsumer, renameLimit, handler, preserveOrder, withFullMergeDiff,
                                getNoWalkParameter(vcs), STDIN);
   }
 
