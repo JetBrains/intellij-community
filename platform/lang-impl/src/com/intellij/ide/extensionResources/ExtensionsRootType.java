@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -211,28 +210,20 @@ public class ExtensionsRootType extends RootType {
   private static List<URL> getBundledResourceUrls(@NotNull PluginId pluginId, @NotNull String path) throws IOException {
     String resourcesPath = EXTENSIONS_PATH + "/" + path;
     IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
-    ClassLoader pluginClassLoader = plugin != null ? plugin.getPluginClassLoader() : null;
+    if (plugin == null) return ContainerUtil.emptyList();
+    ClassLoader pluginClassLoader = plugin.getPluginClassLoader();
+    final Enumeration<URL> resources = pluginClassLoader.getResources(resourcesPath);
+    if (resources == null) return ContainerUtil.emptyList();
+    final Set<URL> urls = ContainerUtil.newLinkedHashSet(ContainerUtil.toList(resources));
 
-    final Set<URL> urls;
-    if (pluginClassLoader instanceof UrlClassLoader) {
-      final URL resource = ((UrlClassLoader)pluginClassLoader).findResource(resourcesPath);
-      if (resource == null) return ContainerUtil.emptyList();
-      urls = ContainerUtil.newLinkedHashSet(resource);
+    for (PluginId dependentPluginId :plugin.getDependentPluginIds()) {
+      final IdeaPluginDescriptor dependentPluginDescriptor = PluginManager.getPlugin(dependentPluginId);
+      if (dependentPluginDescriptor == null) continue;
+      ClassLoader coreClassLoader = dependentPluginDescriptor.getPluginClassLoader();
+      if (coreClassLoader != pluginClassLoader && !plugin.getUseIdeaClassLoader() && !pluginId.equals(dependentPluginId)) {
+        urls.removeAll(ContainerUtil.toList(coreClassLoader.getResources(resourcesPath)));
+      }
     }
-    else if (pluginClassLoader != null) {
-      final Enumeration<URL> resources = pluginClassLoader.getResources(resourcesPath);
-      if (resources == null) return ContainerUtil.emptyList();
-      urls = ContainerUtil.newLinkedHashSet(ContainerUtil.toList(resources));
-    }
-    else return ContainerUtil.emptyList();
-
-    PluginId corePluginId = PluginId.findId(PluginManagerCore.CORE_PLUGIN_ID);
-    IdeaPluginDescriptor corePlugin = ObjectUtils.notNull(PluginManager.getPlugin(corePluginId));
-    ClassLoader coreClassLoader = corePlugin.getPluginClassLoader();
-    if (coreClassLoader != pluginClassLoader && !plugin.getUseIdeaClassLoader() && !pluginId.equals(corePluginId)) {
-      urls.removeAll(ContainerUtil.toList(coreClassLoader.getResources(resourcesPath)));
-    }
-
     return ContainerUtil.newArrayList(urls);
   }
 
