@@ -18,6 +18,7 @@ import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -114,32 +115,22 @@ public class EditRangeIntention extends BaseIntentionAction implements LowPriori
                                             JBTextField minText,
                                             JBTextField maxText) {
     JPanel panel = new JPanel(new GridBagLayout());
-
-    GridBagConstraints constraints =
-      new GridBagConstraints(0, 0, 2, 1, 4.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBUI.insets(2), 0, 0);
-    panel.add(Messages.configureMessagePaneUi(new JTextPane(), ourPrompt), constraints);
-    constraints.gridx = 0;
-    constraints.gridy = 1;
-    constraints.gridwidth = 1;
-    constraints.weightx = 1;
+    
+    GridBag c = new GridBag().setDefaultAnchor(GridBagConstraints.WEST).setDefaultFill(GridBagConstraints.HORIZONTAL)
+      .setDefaultInsets(JBUI.insets(2)).setDefaultWeightX(0, 1.0).setDefaultWeightX(1, 3.0).setDefaultWeightY(1.0);
+    panel.add(Messages.configureMessagePaneUi(new JTextPane(), ourPrompt), c.nextLine().next().coverLine());
+    
     JLabel fromLabel = new JLabel("From (inclusive):");
     fromLabel.setDisplayedMnemonic('f');
     fromLabel.setLabelFor(minText);
-    panel.add(fromLabel, constraints);
-    constraints.gridx = 1;
-    constraints.weightx = 3;
-    panel.add(minText, constraints);
-    constraints.gridx = 0;
-    constraints.gridy = 2;
-    constraints.weightx = 1;
-    constraints.gridwidth = 1;
+    panel.add(fromLabel, c.nextLine().next());
+    panel.add(minText, c.next());
+    
     JLabel toLabel = new JLabel("To (inclusive):");
     toLabel.setDisplayedMnemonic('t');
     toLabel.setLabelFor(maxText);
-    panel.add(toLabel, constraints);
-    constraints.gridx = 1;
-    constraints.weightx = 3;
-    panel.add(maxText, constraints);
+    panel.add(toLabel, c.nextLine().next());
+    panel.add(maxText, c.next());
 
     DialogBuilder builder = new DialogBuilder(project).setNorthPanel(panel).title("Edit Range");
     builder.setPreferredFocusComponent(minText);
