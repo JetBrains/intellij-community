@@ -3,6 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtilRt
@@ -17,7 +18,7 @@ import kotlin.collections.LinkedHashMap
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-class SchemeManagerIprProvider(private val subStateTagName: String, private val comparator: Comparator<String>? = null) : StreamProvider {
+class SchemeManagerIprProvider(private val subStateTagName: String, private val comparator: Comparator<String>? = null) : StreamProvider, SimpleModificationTracker() {
   private val lock = ReentrantReadWriteLock()
   private var nameToData = LinkedHashMap<String, ByteArray>()
 
@@ -34,6 +35,7 @@ class SchemeManagerIprProvider(private val subStateTagName: String, private val 
     lock.write {
       nameToData.remove(PathUtilRt.getFileName(fileSpec))
     }
+    incModificationCount()
     return true
   }
 
@@ -56,6 +58,7 @@ class SchemeManagerIprProvider(private val subStateTagName: String, private val 
     lock.write {
       nameToData.put(PathUtilRt.getFileName(fileSpec), ArrayUtil.realloc(content, size))
     }
+    incModificationCount()
   }
 
   fun load(state: Element?, keyGetter: ((Element) -> String)? = null) {
@@ -63,6 +66,7 @@ class SchemeManagerIprProvider(private val subStateTagName: String, private val 
       lock.write {
         nameToData.clear()
       }
+      incModificationCount()
       return
     }
 
@@ -100,6 +104,7 @@ class SchemeManagerIprProvider(private val subStateTagName: String, private val 
         this.nameToData.putAll(nameToData.toSortedMap(comparator))
       }
     }
+    incModificationCount()
   }
 
   fun writeState(state: Element) {
@@ -124,6 +129,7 @@ class SchemeManagerIprProvider(private val subStateTagName: String, private val 
         for (key in nameToData.keys) {
           if (!provider.nameToData.containsKey(key)) {
             provider.nameToData.put(key, nameToData.get(key)!!)
+            provider.incModificationCount()
           }
         }
       }

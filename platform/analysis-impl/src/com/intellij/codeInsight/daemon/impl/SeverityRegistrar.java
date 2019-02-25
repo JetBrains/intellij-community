@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
@@ -27,7 +28,7 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class SeverityRegistrar implements Comparator<HighlightSeverity> {
+public class SeverityRegistrar extends SimpleModificationTracker implements Comparator<HighlightSeverity> {
   /**
    * Always first {@link HighlightDisplayLevel#DO_NOT_SHOW} must be skipped during navigation, editing settings, etc.
    */
@@ -83,10 +84,13 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   }
 
   private void severitiesChanged() {
+    incModificationCount();
     myMessageBus.syncPublisher(SEVERITIES_CHANGED_TOPIC).run();
   }
 
-  public SeverityBasedTextAttributes unregisterSeverity(@NotNull HighlightSeverity severity){
+  // called only by SeverityEditorDialog and after that setOrder is called, so, severitiesChanged is not called here
+  public SeverityBasedTextAttributes unregisterSeverity(@NotNull HighlightSeverity severity) {
+    severitiesChanged();
     return myMap.remove(severity.getName());
   }
 

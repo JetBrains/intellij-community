@@ -7,7 +7,7 @@ import com.intellij.configurationStore.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.BaseState
-import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.options.SchemeManager
@@ -45,7 +45,7 @@ private val defaultSchemeDigest = JDOMUtil.load("""<component name="InspectionPr
 </component>""").digest()
 
 @State(name = "InspectionProjectProfileManager", storages = [(Storage(value = "inspectionProfiles/profiles_settings.xml", exclusive = true))])
-class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProfileManager(project.messageBus), PersistentStateComponent<Element> {
+class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProfileManager(project.messageBus), PersistentStateComponentWithModificationTracker<Element> {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): ProjectInspectionProfileManager {
@@ -135,6 +135,8 @@ class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProf
     })
   }
 
+  override fun getStateModificationCount() = state.modificationCount + severityRegistrar.modificationCount  + (schemeManagerIprProvider?.modificationCount ?: 0)
+
   @TestOnly
   fun forceLoadSchemes() {
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode)
@@ -186,11 +188,6 @@ class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProf
 
     schemeManagerIprProvider?.writeState(result)
 
-    val state = this.state
-    if (state.useProjectProfile) {
-      state.projectProfile = schemeManager.currentSchemeName
-    }
-
     serializeObjectInto(state, result, skipDefaultsSerializationFilter)
     if (!result.children.isEmpty()) {
       result.addContent(Element("version").setAttribute("value", VERSION))
@@ -230,10 +227,6 @@ class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProf
         }
       }
     }
-
-    if (newState.useProjectProfile) {
-      schemeManager.currentSchemeName = newState.projectProfile
-    }
   }
 
   override fun getScopesManager() = DependencyValidationManager.getInstance(project)
@@ -244,23 +237,21 @@ class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProf
     return schemeManager.allSchemes
   }
 
-  @Synchronized
-  fun getAvailableProfileNames() = schemeManager.allSchemeNames.toTypedArray()
-
   val projectProfile: String?
-    get() = schemeManager.currentSchemeName
+    get() = state.projectProfile
 
   @Synchronized
   override fun setRootProfile(name: String?) {
-    if (name != schemeManager.currentSchemeName) {
-      schemeManager.currentSchemeName = name
+    if (name != state.projectProfile) {
       state.useProjectProfile = name != null
+      if (name != null) {
+        state.projectProfile = name
+      }
     }
   }
 
   @Synchronized
   fun useApplicationProfile(name: String) {
-    schemeManager.currentSchemeName = null
     state.useProjectProfile = false
     // yes, we reuse the same field - useProjectProfile field will be used to distinguish - is it app or project level
     // to avoid data format change
@@ -268,9 +259,13 @@ class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProf
   }
 
   @Synchronized
+  @TestOnly
   fun setCurrentProfile(profile: InspectionProfileImpl?) {
     schemeManager.setCurrent(profile)
     state.useProjectProfile = profile != null
+    if (profile != null) {
+      state.projectProfile = profile.name
+    }
   }
 
   @Synchronized
@@ -282,7 +277,7 @@ class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProf
       } ?: applicationProfileManager.currentProfile)
     }
 
-    var currentScheme = schemeManager.activeScheme
+    var currentScheme = state.projectProfile?.let { schemeManager.findSchemeByName(it) }
     if (currentScheme == null) {
       currentScheme = schemeManager.allSchemes.firstOrNull()
       if (currentScheme == null) {

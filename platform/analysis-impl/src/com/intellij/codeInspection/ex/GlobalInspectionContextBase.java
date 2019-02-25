@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ex;
 
@@ -92,27 +92,15 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     return (T)myExtensions.get(key);
   }
 
+  @NotNull
   public InspectionProfileImpl getCurrentProfile() {
     if (myExternalProfile != null) {
       return myExternalProfile;
     }
 
     String currentProfile = ((InspectionManagerBase)InspectionManager.getInstance(myProject)).getCurrentProfile();
-    ProjectInspectionProfileManager profileManager = ProjectInspectionProfileManager.getInstance(myProject);
-    InspectionProfileImpl profile = profileManager.getProfile(currentProfile, false);
-    if (profile == null) {
-      profile = InspectionProfileManager.getInstance().getProfile(currentProfile);
-      if (profile != null) {
-        return profile;
-      }
-
-      final String[] availableProfileNames = profileManager.getAvailableProfileNames();
-      if (availableProfileNames.length == 0) {
-        throw new IllegalStateException("There should be at least one inspection profile");
-      }
-      profile = profileManager.getProfile(availableProfileNames[0], true);
-    }
-    return profile;
+    InspectionProfileImpl profile = ProjectInspectionProfileManager.getInstance(myProject).getProfile(currentProfile, false);
+    return profile == null ? InspectionProfileManager.getInstance().getProfile(currentProfile) : profile;
   }
 
   @Override

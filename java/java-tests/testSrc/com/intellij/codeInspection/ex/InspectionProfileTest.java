@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -117,13 +115,13 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
     ProjectInspectionProfileManager projectProfileManager = ProjectInspectionProfileManager.getInstance(getProject());
     try {
-      //normally on open project profile wrappers are init for both managers
+      // normally on open project profile wrappers are init for both managers
       updateProfile(profileManager, localProfile);
       InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE, InspectionToolRegistrar.getInstance(), projectProfileManager, null);
       updateProfile(projectProfileManager, profile);
       projectProfileManager.setRootProfile(profile.getName());
 
-      assertSame(projectProfileManager.getCurrentProfile(), profile);
+      assertThat(profile).isEqualTo(projectProfileManager.getCurrentProfile());
     }
     finally {
       projectProfileManager.deleteProfile(PROFILE);
@@ -663,7 +661,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                          "  <inspection_tool class=\"ThrowableNotThrown\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
                          "</profile>");
   }
-  
+
   public void testMergedRedundantStringOperationsInspections() throws Exception {
     InspectionProfileImpl profile = checkMergedNoChanges("<profile version=\"1.0\">\n" +
                                                          "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
@@ -686,7 +684,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                                                          "  </inspection_tool>\n" +
                                                          "</profile>");
     assertFalse(bothDisabled.isToolEnabled(HighlightDisplayKey.find("StringOperationCanBeSimplified"), null));
-    
+
     InspectionProfileImpl oneEnabled = checkMergedNoChanges("<profile version=\"1.0\">\n" +
                                                          "  <option name=\"myName\" value=\"ToConvert\" />\n" +
                                                          "  <inspection_tool class=\"RedundantStringOperation\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +

@@ -22,14 +22,14 @@ class ProjectInspectionManagerTest {
   companion object {
     @JvmField
     @ClassRule
-    val projectRule: ProjectRule = ProjectRule()
+    val appRule = ApplicationRule()
   }
 
   private val tempDirManager = TemporaryDirectory()
 
   @Rule
   @JvmField
-  val ruleChain: RuleChain = RuleChain(tempDirManager, InitInspectionRule())
+  val ruleChain = RuleChain(tempDirManager, InitInspectionRule())
 
   @Test
   fun component() = runBlocking {
