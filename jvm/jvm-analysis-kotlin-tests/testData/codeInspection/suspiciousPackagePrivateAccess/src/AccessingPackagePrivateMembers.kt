@@ -13,6 +13,7 @@ class AccessingPackagePrivateMembers {
   fun main() {
     <warning descr="Class xxx.PackagePrivateClass is package-private, but declared in a different module 'dep'">PackagePrivateClass()</warning>
     var variable: <warning descr="Class xxx.PackagePrivateClass is package-private, but declared in a different module 'dep'">PackagePrivateClass</warning>
+    val sam = <warning descr="Interface xxx.PackagePrivateInterface is package-private, but declared in a different module 'dep'">PackagePrivateInterface</warning> { "" }
 
     val aClass: PublicClass = PublicClass(1);
     val aClass2: PublicClassWithDefaultConstructor = PublicClassWithDefaultConstructor();
