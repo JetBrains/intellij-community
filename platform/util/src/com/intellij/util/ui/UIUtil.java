@@ -4546,7 +4546,7 @@ public class UIUtil {
     return UIManager.getColor("List.background");
   }
 
-  private static final JBValue SELECTED_ITEM_ALPHA = new JBValue.UIInteger("List.selectedItemAlpha", 60);
+  private static final JBValue SELECTED_ITEM_ALPHA = new JBValue.UIInteger("List.selectedItemAlpha", 75);
 
   @NotNull
   public static Color getListSelectionBackground(boolean focused) {
