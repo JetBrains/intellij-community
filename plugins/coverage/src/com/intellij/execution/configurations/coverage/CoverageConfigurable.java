@@ -266,7 +266,15 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     panel.add(myClassFilterEditor, bagConstraints);
 
     panel.add(new TitledSeparator(ExecutionBundle.message("exclude.coverage.filters.title")), bagConstraints);
-    myExcludeClassFilterEditor = new MyClassFilterEditor(myProject);
+    myExcludeClassFilterEditor = new MyClassFilterEditor(myProject) {
+      @NotNull
+      @Override
+      protected ClassFilter createFilter(String pattern) {
+        ClassFilter filter = super.createFilter(pattern);
+        filter.setInclude(false);
+        return filter;
+      }
+    };
     panel.add(myExcludeClassFilterEditor, bagConstraints);
 
     bagConstraints.weighty = 0;
