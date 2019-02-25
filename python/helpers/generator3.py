@@ -8,8 +8,6 @@ from pycharm_generator_utils.module_redeclarator import *
 from pycharm_generator_utils.util_methods import *
 
 BIN_BLOCK_SIZE = 64 * 1024
-FAILED_VERSION_STAMP = '.failed'
-
 
 # TODO: Move all CLR-specific functions to clr_tools
 debug_mode = True

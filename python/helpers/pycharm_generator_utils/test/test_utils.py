@@ -15,8 +15,7 @@ class FileSystemUtilTest(GeneratorTestCase):
 
     def check_copy(self, src, dst, **kwargs):
         with self.comparing_dirs():
-            copy(os.path.join(self.temp_dir, src),
-                 os.path.join(self.temp_dir, dst), **kwargs)
+            copy(os.path.join(self.temp_dir, src), os.path.join(self.temp_dir, dst))
 
     def check_delete(self, rel_name):
         with self.comparing_dirs():
@@ -62,4 +61,7 @@ class FileSystemUtilTest(GeneratorTestCase):
         self.check_copy_skeletons()
 
     def test_copy_several_skeletons(self):
+        self.check_copy_skeletons()
+
+    def test_copy_skeletons_failed_version_stamps_ignored(self):
         self.check_copy_skeletons()

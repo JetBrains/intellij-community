@@ -760,14 +760,21 @@ def mkdir(path):
             raise
 
 
-def copy(src, dst, merge=False, conflict_handler=None, post_copy_hook=None):
-    if post_copy_hook is None:
-        def post_copy_hook(p1, p2):
-            pass
+def copy(src, dst, merge=False, pre_copy_hook=None, conflict_handler=None, post_copy_hook=None):
+    if pre_copy_hook is None:
+        def pre_copy_hook(p1, p2):
+            return True
 
     if conflict_handler is None:
         def conflict_handler(p1, p2):
             return False
+
+    if post_copy_hook is None:
+        def post_copy_hook(p1, p2):
+            pass
+
+    if not pre_copy_hook(src, dst):
+        return
 
     if os.path.isdir(src):
         if not merge:
@@ -780,6 +787,7 @@ def copy(src, dst, merge=False, conflict_handler=None, post_copy_hook=None):
                 child_dst = os.path.join(dst, child)
                 try:
                     copy(child_src, child_dst, merge=merge,
+                         pre_copy_hook=pre_copy_hook,
                          conflict_handler=conflict_handler,
                          post_copy_hook=post_copy_hook)
                     post_copy_hook(child_src, child_dst)
@@ -817,7 +825,13 @@ def copy_skeletons(src_dir, dst_dir):
         elif not ext:
             delete(dst + '.py')
 
-    copy(src_dir, dst_dir, merge=True, conflict_handler=overwrite, post_copy_hook=mod_pkg_cleanup)
+    def ignore_failed_version_stamps(src, dst):
+        return os.path.basename(src) != FAILED_VERSION_STAMP
+
+    copy(src_dir, dst_dir, merge=True,
+         pre_copy_hook=ignore_failed_version_stamps,
+         conflict_handler=overwrite,
+         post_copy_hook=mod_pkg_cleanup)
 
 
 def delete(path, content=False):
