@@ -8,7 +8,7 @@
       <sourceFolder url="file://$MODULE_DIR$/helpers/third_party/thriftpy" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/helpers/pydev/build" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="Python 2.7 (ultimate)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
