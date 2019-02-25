@@ -911,6 +911,8 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Inline_edit_hovered = IconLoader.getIcon("/general/inline_edit_hovered.svg");
     /** 16x16 */ public static final Icon InlineAdd = IconLoader.getIcon("/general/inlineAdd.svg");
     /** 16x16 */ public static final Icon InlineAddHover = IconLoader.getIcon("/general/inlineAddHover.svg");
+    /** 16x16 */ public static final Icon InlineVariables = IconLoader.getIcon("/general/inlineVariables.svg");
+    /** 16x16 */ public static final Icon InlineVariablesHover = IconLoader.getIcon("/general/inlineVariablesHover.svg");
     /** 14x14 */ public static final Icon InspectionsError = IconLoader.getIcon("/general/inspectionsError.svg");
     /** 14x14 */ public static final Icon InspectionsEye = IconLoader.getIcon("/general/inspectionsEye.svg");
     /** 14x14 */ public static final Icon InspectionsOK = IconLoader.getIcon("/general/inspectionsOK.svg");
