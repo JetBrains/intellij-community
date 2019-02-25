@@ -323,7 +323,7 @@ def process_one(name, mod_file_name, doing_builtins, subdir):
         my_finder = None
         if hasattr(sys, 'meta_path'):
             my_finder = MyFinder()
-            sys.meta_path.append(my_finder)
+            sys.meta_path.insert(0, my_finder)
         else:
             imported_module_names = None
 
