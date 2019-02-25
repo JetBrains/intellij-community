@@ -1879,7 +1879,9 @@ class A {
   }
 
   void testUnresolvedPropertyWhenGetPropertyDeclared() {
-    myFixture.enableInspections(GrUnresolvedAccessInspection)
+    def inspection = new GrUnresolvedAccessInspection()
+    inspection.myHighlightIfGroovyObjectOverridden = false
+    myFixture.enableInspections(inspection)
     myFixture.configureByText('_.groovy', '''\
 class DelegatesToTest {
     void ideSupport() {
@@ -1907,8 +1909,6 @@ class DslDelegate {
 print new DslDelegate().foo   //resolved
 print new DslDelegate().<warning descr="Cannot resolve symbol 'foo'">foo</warning>() //unresolved
 ''')
-
-    GrUnresolvedAccessInspection.getInstance(myFixture.file, myFixture.project).myHighlightIfGroovyObjectOverridden = false
     myFixture.testHighlighting(true, false, true)
   }
 
