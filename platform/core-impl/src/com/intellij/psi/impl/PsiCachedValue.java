@@ -16,6 +16,7 @@
 
 package com.intellij.psi.impl;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.psi.PsiDirectory;
@@ -44,17 +45,32 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
     myLastPsiTimeStamp = hasOnlyPhysicalPsiDependencies(dependencies) ? myManager.getModificationTracker().getModificationCount() : -1;
   }
 
-  private static boolean hasOnlyPhysicalPsiDependencies(@NotNull Object[] dependencies) {
-    return dependencies.length > 0 && ContainerUtil.and(dependencies, PsiCachedValue::anyChangeImpliesPsiCounterChange);
+  private boolean hasOnlyPhysicalPsiDependencies(@NotNull Object[] dependencies) {
+    return dependencies.length > 0 && ContainerUtil.and(dependencies, this::anyChangeImpliesPsiCounterChange);
   }
 
-  private static boolean anyChangeImpliesPsiCounterChange(@NotNull Object dependency) {
-    return dependency instanceof PsiElement && ((PsiElement)dependency).isValid() && ((PsiElement)dependency).isPhysical() ||
+  private boolean anyChangeImpliesPsiCounterChange(@NotNull Object dependency) {
+    return dependency instanceof PsiElement && isVeryPhysical((PsiElement)dependency) ||
            dependency instanceof ProjectRootModificationTracker ||
            dependency instanceof PsiModificationTracker ||
            dependency == PsiModificationTracker.MODIFICATION_COUNT ||
            dependency == PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT ||
            dependency == PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT;
+  }
+
+  private boolean isVeryPhysical(@NotNull PsiElement dependency) {
+    if (!dependency.isValid()) {
+      return false;
+    }
+    if (!dependency.isPhysical()) {
+      return false;
+    }
+    // injected files are physical but can sometimes (look at you, completion)
+    // be inexplicably injected into non-physical element, in which case PSI_MODIFICATION_COUNT doesn't change and thus can't be relied upon
+    InjectedLanguageManager manager = InjectedLanguageManager.getInstance(myManager.getProject());
+    if (manager == null) return false; // tests
+    PsiFile topLevelFile = manager.getTopLevelFile(dependency);
+    return topLevelFile != null && topLevelFile.isPhysical();
   }
 
   @Override
