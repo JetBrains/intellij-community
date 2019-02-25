@@ -206,6 +206,9 @@ class SkeletonCachingTest(GeneratorTestCase):
     def test_binary_declares_multiple_modules(self):
         self.check_generator_output('mod', mod_path='mod.py')
 
+    def test_binary_declares_extra_module_that_fails(self):
+        self.check_generator_output('mod', mod_path='mod.py')
+
     def check_generator_output(self, mod_name, mod_path=None, mod_root=None, custom_required_gen=False, **kwargs):
         if custom_required_gen:
             kwargs.setdefault('required_gen_version_file_path',

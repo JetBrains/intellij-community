@@ -826,7 +826,7 @@ def copy_skeletons(src_dir, dst_dir):
             delete(dst + '.py')
 
     def ignore_failed_version_stamps(src, dst):
-        return os.path.basename(src) != FAILED_VERSION_STAMP
+        return not os.path.basename(src).startswith(FAILED_VERSION_STAMP_PREFIX)
 
     copy(src_dir, dst_dir, merge=True,
          pre_copy_hook=ignore_failed_version_stamps,

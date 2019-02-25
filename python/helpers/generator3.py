@@ -14,6 +14,7 @@ debug_mode = True
 quiet = False
 _prepopulate_cache_with_sdk_skeletons = True
 
+
 # TODO move to property of Generator3 as soon as tests finished
 def version():
     return os.environ.get(ENV_VERSION, VERSION)
@@ -51,13 +52,14 @@ def redo_module(module_name, module_file_name, doing_builtins, cache_dir, sdk_di
                 break
     if mod:
         action("restoring")
-        r = ModuleRedeclarator(mod, module_name, module_file_name,
-                               cache_dir=cache_dir,
-                               sdk_dir=sdk_dir,
-                               doing_builtins=doing_builtins)
+        r = ModuleRedeclarator(mod, module_name, module_file_name, cache_dir=cache_dir, doing_builtins=doing_builtins)
+        create_failed_version_stamp(cache_dir, module_name)
         r.redo(module_name, ".".join(mod_path[:-1]) in MODULES_INSPECT_DIR)
         action("flushing")
         r.flush()
+        delete_failed_version_stamp(cache_dir, module_name)
+        # Incrementally copy whatever we managed to successfully generate so far
+        copy_skeletons(cache_dir, sdk_dir)
     else:
         report("Failed to find imported module in sys.modules " + module_name)
 
@@ -70,7 +72,8 @@ def cut_binary_lib_suffix(path, f):
     @return f without a binary suffix (that is, an importable name) if path+f is indeed a binary lib, or None.
     Note: if for .pyc or .pyo file a .py is found, None is returned.
     """
-    if not f.endswith(".pyc") and not f.endswith(".typelib") and not f.endswith(".pyo") and not f.endswith(".so") and not f.endswith(
+    if not f.endswith(".pyc") and not f.endswith(".typelib") and not f.endswith(".pyo") and not f.endswith(
+            ".so") and not f.endswith(
             ".pyd"):
         return None
     ret = None
@@ -188,7 +191,8 @@ def list_binaries(paths):
                         note("done with %s", name)
                     file_path = os.path.join(root, f)
 
-                    res[the_name.upper()] = (the_name, file_path, os.path.getsize(file_path), int(os.stat(file_path).st_mtime))
+                    res[the_name.upper()] = (
+                    the_name, file_path, os.path.getsize(file_path), int(os.stat(file_path).st_mtime))
     return list(res.values())
 
 
@@ -384,7 +388,7 @@ def read_generator_version(skeleton_file):
 def should_update_skeleton(base_dir, mod_qname, mod_path):
     cur_version = version_to_tuple(version())
 
-    failed_version = read_failed_version_from_stamp(base_dir)
+    failed_version = read_failed_version_from_stamp(base_dir, mod_qname)
     if failed_version:
         return failed_version < cur_version
 
@@ -404,9 +408,9 @@ def should_update_skeleton(base_dir, mod_qname, mod_path):
     return True
 
 
-def read_failed_version_from_stamp(base_dir):
+def read_failed_version_from_stamp(base_dir, mod_qname):
     with ignored_os_errors(errno.ENOENT):
-        with fopen(os.path.join(base_dir, FAILED_VERSION_STAMP), 'r') as f:
+        with fopen(os.path.join(base_dir, FAILED_VERSION_STAMP_PREFIX + mod_qname), 'r') as f:
             return version_to_tuple(f.read().strip())
     # noinspection PyUnreachableCode
     return None
@@ -513,9 +517,7 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
             else:
                 imported_module_names = None
 
-            failed_version_stamp = os.path.join(mod_cache_dir, FAILED_VERSION_STAMP)
-            with fopen(failed_version_stamp, 'w') as f:
-                f.write(version())
+            create_failed_version_stamp(mod_cache_dir, name)
 
             action("importing")
             __import__(name)  # sys.modules will fill up with what we want
@@ -545,13 +547,14 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
                             sys.stdout.flush()
                         action("opening %r", mod_cache_dir)
                         try:
-                            redo_module(m, mod_file_name, doing_builtins, cache_dir=mod_cache_dir, sdk_dir=sdk_skeletons_dir)
+                            redo_module(m, mod_file_name, doing_builtins, cache_dir=mod_cache_dir,
+                                        sdk_dir=sdk_skeletons_dir)
                         finally:
                             action("closing %r", mod_cache_dir)
-            delete(failed_version_stamp)
-        note('Copying cached skeletons for %s from %r to %r', name, mod_cache_dir, sdk_skeletons_dir)
-        copy_skeletons(mod_cache_dir, sdk_skeletons_dir)
-
+        else:
+            # Copy entire skeletons directory if nothing needs to be updated
+            note('Copying cached skeletons for %s from %r to %r', name, mod_cache_dir, sdk_skeletons_dir)
+            copy_skeletons(mod_cache_dir, sdk_skeletons_dir)
     except:
         exctype, value = sys.exc_info()[:2]
         msg = "Failed to process %r while %s: %s"
@@ -564,6 +567,17 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
             raise
         return False
     return True
+
+
+def create_failed_version_stamp(base_dir, mod_qname):
+    failed_version_stamp = os.path.join(base_dir, FAILED_VERSION_STAMP_PREFIX + mod_qname)
+    with fopen(failed_version_stamp, 'w') as f:
+        f.write(version())
+    return failed_version_stamp
+
+
+def delete_failed_version_stamp(base_dir, mod_qname):
+    delete(os.path.join(base_dir, FAILED_VERSION_STAMP_PREFIX + mod_qname))
 
 
 def get_help_text():
