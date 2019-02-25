@@ -179,8 +179,7 @@ public class GitLogUtil {
     List<VcsCommitMetadata> commits = ContainerUtil.newArrayList();
 
     try {
-      GitLineHandler handler =
-        createGitHandler(project, root, createConfigParameters(false, false, DiffRenameLimit.GIT_CONFIG), lowPriorityProcess);
+      GitLineHandler handler = createGitHandler(project, root, Collections.emptyList(), lowPriorityProcess);
       readRecordsFromHandler(project, root, true, false, false, false, record -> commits.add(converter.fun(record)), handler, parameters);
     }
     catch (VcsException e) {
@@ -264,8 +263,7 @@ public class GitLogUtil {
                                      boolean withFullMergeDiff,
                                      @NotNull String... parameters) throws VcsException {
     DiffRenameLimit renameLimit = withRenames ? DiffRenameLimit.REGISTRY : DiffRenameLimit.NO_RENAMES;
-    GitLineHandler handler =
-      createGitHandler(project, root, createConfigParameters(true, includeRootChanges, renameLimit), lowPriorityProcess);
+    GitLineHandler handler = createGitHandler(project, root, createConfigParameters(includeRootChanges, renameLimit), lowPriorityProcess);
     readFullDetailsFromHandler(project, root, commitConsumer, renameLimit, handler, preserverOrder, withFullMergeDiff,
                                parameters);
   }
@@ -389,8 +387,7 @@ public class GitLogUtil {
                                               boolean withFullMergeDiff,
                                               boolean preserverOrder,
                                               @NotNull DiffRenameLimit renameLimit) throws VcsException {
-    GitLineHandler handler =
-      createGitHandler(project, root, createConfigParameters(true, includeRootChanges, renameLimit), lowPriorityProcess);
+    GitLineHandler handler = createGitHandler(project, root, createConfigParameters(includeRootChanges, renameLimit), lowPriorityProcess);
     sendHashesToStdin(vcs, hashes, handler);
 
     readFullDetailsFromHandler(project, root, commitConsumer, renameLimit, handler, preserverOrder, withFullMergeDiff,
@@ -429,11 +426,7 @@ public class GitLogUtil {
   }
 
   @NotNull
-  private static List<String> createConfigParameters(boolean withChanges,
-                                                     boolean includeRootChanges,
-                                                     @NotNull DiffRenameLimit renameLimit) {
-    if (!withChanges) return Collections.emptyList();
-
+  private static List<String> createConfigParameters(boolean includeRootChanges, @NotNull DiffRenameLimit renameLimit) {
     List<String> result = ContainerUtil.newArrayList();
     switch (renameLimit) {
       case INFINITY:
