@@ -92,14 +92,14 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   }
 
   @Override
-  public PsiLanguageInjectionHost getInjectionHost(@NotNull FileViewProvider provider) {
-    if (!(provider instanceof InjectedFileViewProvider)) return null;
-    return ((InjectedFileViewProvider)provider).getShreds().getHostPointer().getElement();
+  public PsiLanguageInjectionHost getInjectionHost(@NotNull FileViewProvider injectedProvider) {
+    if (!(injectedProvider instanceof InjectedFileViewProvider)) return null;
+    return ((InjectedFileViewProvider)injectedProvider).getShreds().getHostPointer().getElement();
   }
 
   @Override
-  public PsiLanguageInjectionHost getInjectionHost(@NotNull PsiElement element) {
-    final PsiFile file = element.getContainingFile();
+  public PsiLanguageInjectionHost getInjectionHost(@NotNull PsiElement injectedElement) {
+    final PsiFile file = injectedElement.getContainingFile();
     final VirtualFile virtualFile = file == null ? null : file.getVirtualFile();
     if (virtualFile instanceof VirtualFileWindow) {
       PsiElement host = FileContextUtil.getFileContext(file); // use utility method in case the file's overridden getContext()
@@ -277,8 +277,8 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   }
 
   @Override
-  public boolean isInjectedFragment(@NotNull final PsiFile file) {
-    return file.getViewProvider() instanceof InjectedFileViewProvider;
+  public boolean isInjectedFragment(@NotNull final PsiFile injectedFile) {
+    return injectedFile.getViewProvider() instanceof InjectedFileViewProvider;
   }
 
   @Override

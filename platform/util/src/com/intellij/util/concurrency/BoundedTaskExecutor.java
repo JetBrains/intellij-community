@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * ExecutorService which limits the number of tasks running simultaneously.
  * The number of submitted tasks is unrestricted.
+ * @see AppExecutorUtil#createBoundedApplicationPoolExecutor(String, Executor, int) instead
  */
 public class BoundedTaskExecutor extends AbstractExecutorService {
   private static final Logger LOG = Logger.getInstance(BoundedTaskExecutor.class);
@@ -59,12 +60,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
    */
   BoundedTaskExecutor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name, @NotNull Executor backendExecutor, int maxSimultaneousTasks, @NotNull Disposable parent) {
     this(name, backendExecutor, maxSimultaneousTasks);
-    Disposer.register(parent, new Disposable() {
-      @Override
-      public void dispose() {
-        shutdownNow();
-      }
-    });
+    Disposer.register(parent, () -> shutdownNow());
   }
 
   // for diagnostics
@@ -246,7 +242,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     // Submit 'myMaxTasks' runnables and wait for them all to start.
     // They will spread to all executor threads and ensure the previously submitted tasks are completed.
     // Wait for all empty runnables to finish to free up the threads.
-    List<Future> futures = ContainerUtil.map(Collections.nCopies(myMaxThreads, null), o -> {
+    List<Future> futures = ContainerUtil.map(Collections.nCopies(myMaxThreads, null), __ -> {
       LastTask wait = new LastTask(runnable);
       execute(wait);
       return wait;
