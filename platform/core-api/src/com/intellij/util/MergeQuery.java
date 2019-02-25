@@ -19,7 +19,7 @@ public class MergeQuery<T> extends AbstractQuery<T>{
 
   @Override
   protected boolean processResults(@NotNull Processor<? super T> consumer) {
-    return myQuery1.forEach(consumer) && myQuery2.forEach(consumer);
+    return delegateProcessResults(myQuery1, consumer) && delegateProcessResults(myQuery2, consumer);
   }
 
   @NotNull

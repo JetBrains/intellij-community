@@ -16,7 +16,7 @@ import java.util.List;
  * @author peter
  */
 public abstract class AbstractQuery<Result> implements Query<Result> {
-  private boolean myIsProcessing;
+  private final ThreadLocal<Boolean> myIsProcessing = new ThreadLocal<>();
 
   @Override
   @NotNull
@@ -45,7 +45,7 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
   }
 
   private void assertNotProcessing() {
-    assert !myIsProcessing : "Operation is not allowed while query is being processed";
+    assert myIsProcessing.get() == null : "Operation is not allowed while query is being processed";
   }
 
   @NotNull
@@ -57,16 +57,41 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
     return all.toArray(a);
   }
 
+  @NotNull
+  @Override
+  public Query<Result> allowParallelProcessing() {
+    return new AbstractQuery<Result>() {
+      @Override
+      protected boolean processResults(@NotNull Processor<? super Result> consumer) {
+        return AbstractQuery.this.doProcessResults(consumer);
+      }
+    };
+  }
+
+  @NotNull
+  private Processor<Result> threadSafeProcessor(@NotNull Processor<? super Result> consumer) {
+    Object lock = ObjectUtils.sentinel("AbstractQuery lock");
+    return e -> {
+      synchronized (lock) {
+        return consumer.process(e);
+      }
+    };
+  }
+
   @Override
   public boolean forEach(@NotNull Processor<? super Result> consumer) {
+    return doProcessResults(threadSafeProcessor(consumer));
+  }
+
+  private boolean doProcessResults(Processor<? super Result> consumer) {
     assertNotProcessing();
 
-    myIsProcessing = true;
+    myIsProcessing.set(true);
     try {
       return processResults(consumer);
     }
     finally {
-      myIsProcessing = false;
+      myIsProcessing.remove();
     }
   }
 
@@ -76,14 +101,27 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
     return AsyncUtil.wrapBoolean(forEach(consumer));
   }
 
+  /**
+   * Assumes consumer being capable of processing results in parallel
+   */
   protected abstract boolean processResults(@NotNull Processor<? super Result> consumer);
+
+  /**
+   * Should be called only from {@link #processResults} implementations to delegate to another query
+   */
+  protected static <T> boolean delegateProcessResults(Query<T> query, @NotNull Processor<? super T> consumer) {
+    if (query instanceof AbstractQuery) {
+      return ((AbstractQuery<T>)query).doProcessResults(consumer);
+    }
+    return query.forEach(consumer);
+  }
 
   @NotNull
   public static <T> Query<T> wrapInReadAction(@NotNull final Query<? extends T> query) {
     return new AbstractQuery<T>() {
       @Override
       protected boolean processResults(@NotNull Processor<? super T> consumer) {
-        return query.forEach(ReadActionProcessor.wrapInReadAction(consumer));
+        return AbstractQuery.delegateProcessResults(query, ReadActionProcessor.wrapInReadAction(consumer));
       }
     };
   }

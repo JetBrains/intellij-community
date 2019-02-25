@@ -37,7 +37,7 @@ public class UniqueResultsQuery<T, M> extends AbstractQuery<T> {
 
   @Override
   protected boolean processResults(@NotNull Processor<? super T> consumer) {
-    return myOriginal.forEach(new MyProcessor(Collections.synchronizedSet(new THashSet<>(myHashingStrategy)), consumer));
+    return delegateProcessResults(myOriginal, new MyProcessor(Collections.synchronizedSet(new THashSet<>(myHashingStrategy)), consumer));
   }
 
   @NotNull

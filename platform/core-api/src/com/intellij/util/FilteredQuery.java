@@ -20,7 +20,7 @@ public class FilteredQuery<T> extends AbstractQuery<T> {
 
   @Override
   protected boolean processResults(@NotNull Processor<? super T> consumer) {
-    return myOriginal.forEach(new MyProcessor(consumer));
+    return delegateProcessResults(myOriginal, new MyProcessor(consumer));
   }
 
   @NotNull

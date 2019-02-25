@@ -19,7 +19,7 @@ public class InstanceofQuery<S, T> extends AbstractQuery<T> {
 
   @Override
   protected boolean processResults(@NotNull Processor<? super T> consumer) {
-    return myDelegate.forEach(new MyProcessor(consumer));
+    return delegateProcessResults(myDelegate, new MyProcessor(consumer));
   }
 
   @NotNull
