@@ -192,9 +192,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       envs.put(IJ_COMMAND_HISTORY_FILE_ENV, commandHistoryFilePath);
     }
 
+    String workingDir = getWorkingDirectory(directory);
+    TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command);
     try {
-      TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command);
-      String workingDir = getWorkingDirectory(directory);
       long startNano = System.nanoTime();
       String[] finalCommand = command;
       PtyProcess process = TerminalSignalUtil.computeWithIgnoredSignalsResetToDefault(
@@ -208,7 +208,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       return process;
     }
     catch (IOException e) {
-      throw new ExecutionException("Failed to start " + Arrays.toString(command), e);
+      throw new ExecutionException("Failed to start " + Arrays.toString(command) + " in " + workingDir, e);
     }
   }
 
