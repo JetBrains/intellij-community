@@ -76,15 +76,19 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
         UElement uastParent = node.getUastParent();
         //we should skip 'checkAccess' here if node is part of UQualifiedReferenceExpression or UCallExpression node,
         // otherwise the same problem will be reported twice
-        if (!isSelectorOfQualifiedReference(node)
-            && !(uastParent instanceof UCallExpression && isMethodReferenceOfCallExpression(node, (UCallExpression)uastParent)
-                 && (((UCallExpression)uastParent).getKind() == UastCallKind.CONSTRUCTOR_CALL || isSelectorOfQualifiedReference((UExpression)uastParent)))) {
+        if (!isSelectorOfQualifiedReference(node) && !isReferenceToConstructorOrQualifiedMethodReference(node, uastParent)) {
           PsiElement resolved = node.resolve();
           if (resolved instanceof PsiMember) {
             checkAccess(node, (PsiMember)resolved, null);
           }
         }
         return true;
+      }
+
+      private boolean isReferenceToConstructorOrQualifiedMethodReference(@NotNull USimpleNameReferenceExpression node,
+                                                                         @Nullable UElement uastParent) {
+        return uastParent instanceof UCallExpression && isMethodReferenceOfCallExpression(node, (UCallExpression)uastParent)
+               && (((UCallExpression)uastParent).getKind() == UastCallKind.CONSTRUCTOR_CALL || isSelectorOfQualifiedReference((UExpression)uastParent));
       }
 
       private boolean isSelectorOfQualifiedReference(@Nullable UExpression expression) {
