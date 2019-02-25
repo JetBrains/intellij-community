@@ -9,11 +9,12 @@ import java.util.concurrent.atomic.AtomicReference
 /**
  * Same as [SafePublicationLazyImpl], but returns `null` in case of computation recursion occurred.
  */
-class RecursionPreventingSafePublicationLazy<T>(initializer: () -> T) : Lazy<T?> {
+class RecursionPreventingSafePublicationLazy<T>(recursionKey: Any?, initializer: () -> T) : Lazy<T?> {
 
   @Volatile
   private var initializer: (() -> T)? = { notNullize(initializer()) }
   private val valueRef: AtomicReference<T> = AtomicReference()
+  private val recursionKey: Any = recursionKey ?: this
 
   override val value: T?
     get() {
@@ -29,7 +30,7 @@ class RecursionPreventingSafePublicationLazy<T>(initializer: () -> T) : Lazy<T?>
       }
 
       val stamp = ourRecursionGuard.markStack()
-      val newValue = ourRecursionGuard.doPreventingRecursion(this, false, initializerValue)
+      val newValue = ourRecursionGuard.doPreventingRecursion(recursionKey, false, initializerValue)
       // In case of recursion don't update [valueRef] and don't clear [initializer].
       if (newValue === null) {
         // Recursion occurred for this lazy.
