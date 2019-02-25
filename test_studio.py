@@ -93,7 +93,7 @@ class StudioTests(unittest.TestCase):
       required += [
           "plugins/android/resources/simpleperf/%s/simpleperf" % abi,
           "plugins/android/resources/transport/%s/transport" % abi,
-          "plugins/android/resources/perfa/%s/libperfa.so" % abi,
+          "plugins/android/resources/transport/agent/%s/libjvmtiagent.so" % abi,
       ]
 
     name = os.path.join(dist_dir, self.artifact_prefix() + build + ".win.zip")
