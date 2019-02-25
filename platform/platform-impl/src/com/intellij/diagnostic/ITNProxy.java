@@ -4,12 +4,15 @@ package com.intellij.diagnostic;
 import com.intellij.errorreport.error.InternalEAPException;
 import com.intellij.errorreport.error.NoSuchEAPUserException;
 import com.intellij.errorreport.error.UpdateAvailableException;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -87,6 +90,11 @@ class ITNProxy {
     template.put("app.compilation.timestamp", IdeaLogger.getOurCompilationTimestamp());
     template.put("app.product.code", build.getProductCode());
     template.put("app.build.number", buildNumberWithAllDetails);
+
+    IdeaPluginDescriptor kotlinDescriptor = PluginManager.getPlugin(PluginId.getId("org.jetbrains.kotlin"));
+    if (kotlinDescriptor != null && kotlinDescriptor.getVersion() != null) {
+      template.put("app.kotlin.version", kotlinDescriptor.getVersion());
+    }
 
     return template;
   });
