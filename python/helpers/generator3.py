@@ -386,10 +386,9 @@ def read_generator_version(skeleton_file):
 def should_update_skeleton(base_dir, mod_qname, mod_path):
     cur_version = version_to_tuple(version())
 
-    with ignored_os_errors(errno.ENOENT):
-        with fopen(os.path.join(base_dir, FAILED_VERSION_STAMP), 'r') as f:
-            stamp_content = f.read().strip()
-            return stamp_content != cur_version
+    failed_version = read_failed_version_from_stamp(base_dir)
+    if failed_version:
+        return failed_version < cur_version
 
     # noinspection PyUnreachableCode
     failed_version = read_failed_version_from_legacy_blacklist(base_dir, mod_path)
@@ -405,6 +404,14 @@ def should_update_skeleton(base_dir, mod_qname, mod_path):
                 if used_version and required_version:
                     return used_version < required_version
     return True
+
+
+def read_failed_version_from_stamp(base_dir):
+    with ignored_os_errors(errno.ENOENT):
+        with fopen(os.path.join(base_dir, FAILED_VERSION_STAMP), 'r') as f:
+            return version_to_tuple(f.read().strip())
+    # noinspection PyUnreachableCode
+    return None
 
 
 def skeleton_path_candidates(base_dir, mod_qname, init_for_pkg=False):
