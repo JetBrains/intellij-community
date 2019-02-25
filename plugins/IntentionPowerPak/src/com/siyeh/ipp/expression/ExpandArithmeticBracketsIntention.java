@@ -1,10 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.expression;
 
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiJavaToken;
-import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -46,6 +43,24 @@ public class ExpandArithmeticBracketsIntention extends ExpandBracketsBaseIntenti
 
     return processPrefixed(innerExpr,
                            (op, isOpInverted) -> addReplacement(token, op, isOpInverted, fmt, sb), JavaTokenType.MINUS, JavaTokenType.PLUS);
+  }
+
+  @Override
+  protected boolean isSupportedOuterExpression(@Nullable PsiExpression outerExpr,
+                                               @NotNull PsiParenthesizedExpression expression,
+                                               @NotNull PsiPolyadicExpression innerExpr,
+                                               @NotNull IElementType[] supportedOperations,
+                                               @NotNull IElementType[] prefixes) {
+    if (super.isSupportedOuterExpression(outerExpr, expression, innerExpr, supportedOperations, prefixes)) return true;
+
+    final PsiPolyadicExpression polyadicExpression = ObjectUtils.tryCast(outerExpr, PsiPolyadicExpression.class);
+    if (polyadicExpression == null) return false;
+
+    final PsiJavaToken outerToken = polyadicExpression.getTokenBeforeOperand(expression);
+    if (outerToken == null || !JavaTokenType.MINUS.equals(outerToken.getTokenType())) return false;
+
+    final IElementType innerToken = innerExpr.getOperationTokenType();
+    return JavaTokenType.MINUS.equals(innerToken) || JavaTokenType.PLUS.equals(innerToken);
   }
 
   private static boolean addReplacement(@Nullable PsiJavaToken token, @NotNull PsiExpression innerExpr,

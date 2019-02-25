@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
+import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.util.ArrayUtil;
@@ -32,7 +33,7 @@ public abstract class ExpandBracketsBaseIntention extends Intention {
 
   @Override
   protected void processIntention(Editor editor, @NotNull PsiElement element) {
-    final List<PsiExpression> possibleInnerExpressions = getPossibleInnerExpressions(element);
+    final List<PsiExpression> possibleInnerExpressions = getPossibleInnerExpressions(element, getSupportedOperations(), getPrefixes());
     processInnerExpression(editor, possibleInnerExpressions);
   }
 
@@ -126,6 +127,11 @@ public abstract class ExpandBracketsBaseIntention extends Intention {
   @NotNull
   protected abstract IElementType[] getPrefixes();
 
+  @NotNull
+  private IElementType[] getSupportedOperations() {
+    return ArrayUtil.mergeArrays(getConjunctionTokens(), getDisjunctionTokens());
+  }
+
   @Override
   public boolean startInWriteAction() {
     return false;
@@ -134,40 +140,64 @@ public abstract class ExpandBracketsBaseIntention extends Intention {
   @NotNull
   @Override
   protected PsiElementPredicate getElementPredicate() {
-    return new ExpandBracketsPredicate(ArrayUtil.mergeArrays(getConjunctionTokens(), getDisjunctionTokens()), getPrefixes());
+    return new PsiElementPredicate() {
+      @Override
+      public boolean satisfiedBy(PsiElement element) {
+        return !getPossibleInnerExpressions(element, getSupportedOperations(), getPrefixes()).isEmpty();
+      }
+    };
   }
 
   @NotNull
-  private List<PsiExpression> getPossibleInnerExpressions(@NotNull PsiElement element) {
+  private List<PsiExpression> getPossibleInnerExpressions(@NotNull PsiElement element,
+                                                          @NotNull IElementType[] supportedOperations,
+                                                          @NotNull IElementType[] prefixes) {
     final List<PsiExpression> possibleExpressions = new ArrayList<>();
 
     if (!(element instanceof PsiJavaToken)) return possibleExpressions;
 
     while ((element = PsiTreeUtil.getParentOfType(element, PsiParenthesizedExpression.class)) != null) {
-      if (!ParenthesesUtils.areParenthesesNeeded((PsiParenthesizedExpression)element, false)) continue;
+      final PsiParenthesizedExpression expression = (PsiParenthesizedExpression)element;
 
-      final PsiElement parent = getFirstNonPrefixedParent(element);
-      if (parent == null) continue;
+      final PsiPolyadicExpression innerExpr =
+        ObjectUtils.tryCast(ParenthesesUtils.stripParentheses(expression.getExpression()), PsiPolyadicExpression.class);
+      if (!isSupportedExpression(innerExpr, supportedOperations)) continue;
 
-      possibleExpressions.add((PsiExpression)element);
+      final PsiExpression outerExpr = ObjectUtils.tryCast(expression.getParent(), PsiExpression.class);
+      if (!isSupportedOuterExpression(outerExpr, expression, innerExpr, supportedOperations, prefixes)) continue;
 
-      element = parent;
+      possibleExpressions.add(expression);
     }
 
     return possibleExpressions;
   }
 
-  @Nullable
-  private PsiElement getFirstNonPrefixedParent(@NotNull PsiElement element) {
-    PsiElement parent = element.getParent();
-    while (parent instanceof PsiPrefixExpression) {
-      final PsiPrefixExpression expression = (PsiPrefixExpression)parent;
-      if (!ArrayUtil.contains(expression.getOperationTokenType(), getPrefixes())) return null;
-
-      parent = parent.getParent();
+  protected boolean isSupportedOuterExpression(@Nullable PsiExpression outerExpr,
+                                               @NotNull PsiParenthesizedExpression expression,
+                                               @NotNull PsiPolyadicExpression innerExpr,
+                                               @NotNull IElementType[] supportedOperations,
+                                               @NotNull IElementType[] prefixes) {
+    PsiPrefixExpression prefixExpression = ObjectUtils.tryCast(outerExpr, PsiPrefixExpression.class);
+    if (prefixExpression != null) {
+      do {
+        if (!ArrayUtil.contains(prefixExpression.getOperationTokenType(), prefixes)) return false;
+        prefixExpression = ObjectUtils.tryCast(prefixExpression.getParent(), PsiPrefixExpression.class);
+      }
+      while (prefixExpression != null);
+      return true;
     }
 
-    return parent;
+    final PsiPolyadicExpression polyadicExpression = ObjectUtils.tryCast(outerExpr, PsiPolyadicExpression.class);
+    if (polyadicExpression != null) {
+      if (!isSupportedExpression(polyadicExpression, supportedOperations)) return false;
+
+      final int outerExprPrecedence = PsiPrecedenceUtil.getPrecedence(polyadicExpression);
+      final int innerExprPrecedence = PsiPrecedenceUtil.getPrecedence(innerExpr);
+
+      if (outerExprPrecedence < innerExprPrecedence) return true;
+    }
+
+    return false;
   }
 
   @Nullable
@@ -211,5 +241,10 @@ public abstract class ExpandBracketsBaseIntention extends Intention {
     }
 
     return func.apply(expression, isInverted);
+  }
+
+  private static boolean isSupportedExpression(PsiPolyadicExpression expression, @NotNull IElementType[] supportedOperations) {
+    return expression != null && expression.getOperands().length >= 2 &&
+           ArrayUtil.contains(expression.getOperationTokenType(), supportedOperations);
   }
 }
