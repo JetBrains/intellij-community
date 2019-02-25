@@ -196,7 +196,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     myAsyncUpdateProgress = ReadAction
       .nonBlocking(() -> myBreadcrumbsCollector.computeCrumbs(myFile, document, offset, forcedShown))
       .withDocumentsCommitted(myProject)
-      .expireWhen(() -> Disposer.isDisposed(this))
+      .expireWith(this)
       .finishOnUiThread(ModalityState.any(), (_crumbs) -> {
         Iterable<? extends Crumb> crumbs =
           breadcrumbs.isShowing() || ApplicationManager.getApplication().isHeadlessEnvironment() ? _crumbs : EMPTY_BREADCRUMBS;

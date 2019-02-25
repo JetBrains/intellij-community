@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.Contract;
@@ -33,11 +34,18 @@ public interface NonBlockingReadAction<T> {
   NonBlockingReadAction<T> withDocumentsCommitted(@NotNull Project project);
 
   /**
-   * @return a copy of this builder that cancels submitted read actions after they become obsolete (i.e. when the provided condition returns true). If {@code expireWhen} is called several times, any of the corresponding conditions being {@code true} is sufficient for cancelling
-   * the activity. The conditions are checked inside a read action, either on background or on UI thread.
+   * @return a copy of this builder that cancels submitted read actions after they become obsolete.
+   *         An action is considered obsolete if any of the conditions provided using {@code expireWhen} returns true).
+   *         The conditions are checked inside a read action, either on a background or on the UI thread.
    */
   @Contract(pure=true)
   NonBlockingReadAction<T> expireWhen(@NotNull BooleanSupplier expireCondition);
+
+  /**
+   * @return a copy of this builder that cancels submitted read actions once the specified disposable is disposed.
+   */
+  @Contract(pure=true)
+  NonBlockingReadAction<T> expireWith(@NotNull Disposable parentDisposable);
 
   /**
    * @return a copy of this builder that completes submitted read actions on UI thread with the given modality state.

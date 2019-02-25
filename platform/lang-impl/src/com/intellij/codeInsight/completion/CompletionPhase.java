@@ -124,6 +124,7 @@ public abstract class CompletionPhase implements Disposable {
           return completionEditor;
         })
         .withDocumentsCommitted(project)
+        .expireWith(phase)
         .expireWhen(() -> phase.isExpired())
         .finishOnUiThread(ModalityState.current(), completionEditor -> {
           if (completionEditor != null) {

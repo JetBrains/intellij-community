@@ -98,15 +98,16 @@ public class EditorNotificationsImpl extends EditorNotifications {
                                                       editor -> !(editor instanceof TextEditor)
                                                                 || AsyncEditorLoader.isEditorLoaded(((TextEditor)editor).getEditor()));
 
-      CancellablePromise<List<Runnable>> promise = ReadAction.
-        nonBlocking(() -> calcNotificationUpdates(file, editors)).
-        expireWhen(() -> !file.isValid() || myProject.isDisposed()).
-        finishOnUiThread(ModalityState.any(), updates -> {
+      CancellablePromise<List<Runnable>> promise = ReadAction
+        .nonBlocking(() -> calcNotificationUpdates(file, editors))
+        .expireWith(myProject)
+        .expireWhen(() -> !file.isValid())
+        .finishOnUiThread(ModalityState.any(), updates -> {
           for (Runnable update : updates) {
             update.run();
           }
-        }).
-        submit(ourExecutor);
+        })
+        .submit(ourExecutor);
       file.putUserData(CURRENT_UPDATE, promise);
       promise.onProcessed(__ -> file.putUserData(CURRENT_UPDATE, null));
     });

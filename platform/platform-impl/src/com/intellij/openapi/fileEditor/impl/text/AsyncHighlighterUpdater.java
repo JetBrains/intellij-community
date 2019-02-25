@@ -43,7 +43,8 @@ public class AsyncHighlighterUpdater {
   public static void updateHighlighters(@NotNull Project project, @NotNull Editor editor, @NotNull VirtualFile file) {
     CancellablePromise<EditorHighlighter> promise = ReadAction
       .nonBlocking(() -> updateHighlighter(project, editor, file))
-      .expireWhen(() -> !file.isValid() || editor.isDisposed() || project.isDisposed())
+      .expireWith(project)
+      .expireWhen(() -> !file.isValid() || editor.isDisposed())
       .finishOnUiThread(ModalityState.any(), highlighter -> ((EditorEx)editor).setHighlighter(highlighter))
       .submit(ourExecutor);
 

@@ -84,7 +84,8 @@ public class AsyncEditorLoader {
         waitForCommit(commitDeadline);
         return myTextEditor.loadEditorInBackground();
       })
-      .expireWhen(() -> myEditorComponent.isDisposed() || myProject.isDisposed())
+      .expireWith(myEditorComponent)
+      .expireWith(myProject)
       .finishOnUiThread(ModalityState.any(), result -> loadingFinished(result))
       .submit(ourExecutor);
   }
