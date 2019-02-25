@@ -16,8 +16,7 @@
 package com.intellij.json.codeinsight;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFixBase;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.icons.AllIcons;
 import com.intellij.json.JsonBundle;
@@ -30,11 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.psi.util.PsiEditorUtil;
+import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
@@ -54,6 +49,7 @@ import java.util.stream.Collectors;
  */
 public class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
   private static final String COMMENT = "$comment";
+
   @Nls
   @NotNull
   @Override
@@ -86,39 +82,47 @@ public class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
     };
   }
 
-  private static class NavigateToDuplicatesFix extends LocalQuickFixBase {
+  private static class NavigateToDuplicatesFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     @NotNull private final Collection<SmartPsiElementPointer> mySameNamedKeys;
-    @NotNull private final SmartPsiElementPointer myElement;
     @NotNull private final String myEntryKey;
 
     private NavigateToDuplicatesFix(@NotNull Collection<PsiElement> sameNamedKeys, @NotNull PsiElement element, @NotNull String entryKey) {
-      super("Navigate to duplicates");
+      super(element);
       mySameNamedKeys = ContainerUtil.map(sameNamedKeys, k -> SmartPointerManager.createPointer(k));
-      myElement = SmartPointerManager.createPointer(element);
       myEntryKey = entryKey;
     }
 
+    @NotNull
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final Editor editor =
-        PsiEditorUtil.Service.getInstance().findEditorByPsiElement(descriptor.getPsiElement());
-      if (editor == null) return;
-      applyFix(editor);
+    public String getText() {
+      return "Navigate to duplicates";
     }
 
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getText();
+    }
 
-    private void applyFix(@NotNull Editor editor) {
-      final PsiElement currentElement = myElement.getElement();
+    @Override
+    public void invoke(@NotNull Project project,
+                       @NotNull PsiFile file,
+                       @Nullable("is null when called from inspection") Editor editor,
+                       @NotNull PsiElement startElement,
+                       @NotNull PsiElement endElement) {
+      if (editor == null) return;
+
       if (mySameNamedKeys.size() == 2) {
         final Iterator<SmartPsiElementPointer> iterator = mySameNamedKeys.iterator();
         final PsiElement next = iterator.next().getElement();
-        PsiElement toNavigate = next != currentElement ? next : iterator.next().getElement();
+        PsiElement toNavigate = next != startElement ? next : iterator.next().getElement();
         if (toNavigate == null) return;
         navigateTo(editor, toNavigate);
       }
       else {
         final List<PsiElement> allElements =
-          mySameNamedKeys.stream().map(k -> k.getElement()).filter(k -> k != currentElement).collect(Collectors.toList());
+          mySameNamedKeys.stream().map(k -> k.getElement()).filter(k -> k != startElement).collect(Collectors.toList());
         JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<PsiElement>("Duplicates of '" + myEntryKey + "'", allElements) {
           @NotNull
           @Override
