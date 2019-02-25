@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.JavaSuppressionUtil;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -35,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class RemoveSuppressWarningAction implements LocalQuickFix {
@@ -72,7 +74,7 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
           if (commentOwner != null) {
             final PsiElement psiElement = JavaSuppressionUtil.getElementMemberSuppressedIn(commentOwner, myID);
             if (psiElement instanceof PsiAnnotation) {
-              removeFromAnnotation((PsiAnnotation)psiElement);
+              removeFromAnnotation((PsiAnnotation)psiElement, commentOwner);
             }
             else if (psiElement instanceof PsiDocComment) {
               removeFromJavaDoc((PsiDocComment)psiElement);
@@ -189,30 +191,50 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
     return StringUtil.join(ids, ",");
   }
 
-  private void removeFromAnnotation(final PsiAnnotation annotation) throws IncorrectOperationException {
+  private void removeFromAnnotation(PsiAnnotation annotation, PsiModifierListOwner owner) throws IncorrectOperationException {
     PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
     for (PsiNameValuePair attribute : attributes) {
       PsiAnnotationMemberValue value = attribute.getValue();
       if (value instanceof PsiArrayInitializerMemberValue) {
         PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)value).getInitializers();
         for (PsiAnnotationMemberValue initializer : initializers) {
-          if (removeFromValue(annotation, initializer, initializers.length==1)) return;
+          if (removeFromValue(annotation, initializer, initializers.length==1, owner)) return;
         }
       }
-      if (removeFromValue(annotation, value, attributes.length==1)) return;
+      assert value != null;
+      if (removeFromValue(annotation, value, attributes.length == 1, owner)) return;
     }
   }
 
-  private boolean removeFromValue(final PsiAnnotationMemberValue parent, final PsiAnnotationMemberValue value, final boolean removeParent) throws IncorrectOperationException {
-    String text = value.getText();
-    text = StringUtil.trimStart(text, "\"");
-    text = StringUtil.trimEnd(text, "\"");
+  private boolean removeFromValue(PsiAnnotation annotation, PsiAnnotationMemberValue value, boolean removeParent, PsiModifierListOwner owner) throws IncorrectOperationException {
+    String text = StringUtil.unquoteString(value.getText());
     if (myID.equals(text)) {
       if (removeParent) {
-        new CommentTracker().deleteAndRestoreComments(parent);
+        if (annotation.isPhysical()) {
+          new CommentTracker().deleteAndRestoreComments(annotation);
+        } else {
+          String qualifiedName = annotation.getQualifiedName(); //SuppressWarnings
+          assert qualifiedName != null;
+          ExternalAnnotationsManager.getInstance(annotation.getProject()).deannotate(owner, qualifiedName);
+        }
       }
       else {
-        value.delete();
+        if (annotation.isPhysical()) {
+          value.delete();
+        } else {
+          PsiAnnotation annotationCopy = (PsiAnnotation)annotation.copy();
+          PsiTreeUtil.processElements(annotationCopy, e -> {
+            if (e instanceof PsiAnnotationMemberValue && e.getText().equals(value.getText())) {
+              e.delete();
+              return false;
+            }
+            return true;
+          });
+          PsiNameValuePair[] nameValuePairs = annotationCopy.getParameterList().getAttributes();
+          String qualifiedName = annotation.getQualifiedName(); //SuppressWarnings
+          assert qualifiedName != null;
+          ExternalAnnotationsManager.getInstance(annotation.getProject()).editExternalAnnotation(owner, qualifiedName, nameValuePairs);
+        }
       }
       return true;
     }
