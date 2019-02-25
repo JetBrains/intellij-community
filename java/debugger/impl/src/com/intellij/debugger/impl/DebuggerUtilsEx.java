@@ -1075,14 +1075,22 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
                                       DebugProcessImpl process) {
     PsiClass containingClass = psiMethod.getContainingClass();
     try {
-      return containingClass != null && Objects.equals(JVMNameUtil.getClassVMName(containingClass), className) &&
-             JVMNameUtil.getJVMMethodName(psiMethod).equals(name) &&
-             JVMNameUtil.getJVMSignature(psiMethod).getName(process).equals(signature);
+      if (containingClass != null &&
+          JVMNameUtil.getJVMMethodName(psiMethod).equals(name) &&
+          JVMNameUtil.getJVMSignature(psiMethod).getName(process).equals(signature)) {
+        String methodClassName = JVMNameUtil.getClassVMName(containingClass);
+        if (Objects.equals(methodClassName, className)) {
+          return true;
+        }
+        if (methodClassName != null) {
+          return process.getVirtualMachineProxy().classesByName(className).stream().anyMatch(t -> instanceOf(t, methodClassName));
+        }
+      }
     }
     catch (EvaluateException e) {
       LOG.debug(e);
-      return false;
     }
+    return false;
   }
 
   @Nullable
