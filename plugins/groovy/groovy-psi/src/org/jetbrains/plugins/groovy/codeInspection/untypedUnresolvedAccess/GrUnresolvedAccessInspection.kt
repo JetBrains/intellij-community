@@ -1,90 +1,74 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess
 
-package org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess;
+import com.intellij.codeHighlighting.HighlightDisplayLevel
+import com.intellij.codeInsight.daemon.HighlightDisplayKey
+import com.intellij.codeInspection.InspectionProfile
+import com.intellij.codeInspection.ex.UnfairLocalInspectionTool
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
+import com.intellij.openapi.project.Project
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle.message
+import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
+import javax.swing.JComponent
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.openapi.project.Project;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
-import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+class GrUnresolvedAccessInspection : GroovySuppressableInspectionTool(), UnfairLocalInspectionTool {
 
-import javax.swing.*;
+  @JvmField
+  var myHighlightIfGroovyObjectOverridden = true
+  @JvmField
+  var myHighlightIfMissingMethodsDeclared = true
 
-/**
- * @author Maxim.Medvedev
- */
-public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTool implements UnfairLocalInspectionTool {
-  private static final String SHORT_NAME = "GrUnresolvedAccess";
-
-  public boolean myHighlightIfGroovyObjectOverridden = true;
-  public boolean myHighlightIfMissingMethodsDeclared = true;
-
-  public static boolean isSuppressed(@NotNull PsiElement ref) {
-    return isElementToolSuppressedIn(ref, SHORT_NAME);
+  override fun createOptionsPanel(): JComponent? {
+    val optionsPanel = MultipleCheckboxOptionsPanel(this)
+    optionsPanel.addCheckbox(message("highlight.if.groovy.object.methods.overridden"), "myHighlightIfGroovyObjectOverridden")
+    optionsPanel.addCheckbox(message("highlight.if.missing.methods.declared"), "myHighlightIfMissingMethodsDeclared")
+    return optionsPanel
   }
 
-  public static HighlightDisplayKey findDisplayKey() {
-    return HighlightDisplayKey.find(SHORT_NAME);
-  }
-
-  public static GrUnresolvedAccessInspection getInstance(PsiFile file, Project project) {
-    return (GrUnresolvedAccessInspection)getInspectionProfile(project).getUnwrappedTool(SHORT_NAME, file);
-  }
-
-  @Nullable
-  @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(GroovyInspectionBundle.message("highlight.if.groovy.object.methods.overridden"), "myHighlightIfGroovyObjectOverridden");
-    optionsPanel.addCheckbox(GroovyInspectionBundle.message("highlight.if.missing.methods.declared"), "myHighlightIfMissingMethodsDeclared");
-    return optionsPanel;
-  }
-
-  public static boolean isInspectionEnabled(PsiFile file, Project project) {
-    return getInspectionProfile(project).isToolEnabled(findDisplayKey(), file);
-  }
-
-  public static HighlightDisplayLevel getHighlightDisplayLevel(Project project, GrReferenceElement ref) {
-    return getInspectionProfile(project).getErrorLevel(findDisplayKey(), ref);
-  }
-
-  @NotNull
-  private static InspectionProfile getInspectionProfile(@NotNull Project project) {
-    return InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
-  }
-
-  @Override
   @Nls
-  @NotNull
-  public String getDisplayName() {
-    return getDisplayText();
-  }
+  override fun getDisplayName(): String = displayText
 
-  public static String getDisplayText() {
-    return "Access to unresolved expression";
+  companion object {
+
+    private const val SHORT_NAME = "GrUnresolvedAccess"
+
+    @JvmStatic
+    fun isSuppressed(ref: PsiElement): Boolean {
+      return GroovySuppressableInspectionTool.isElementToolSuppressedIn(ref, SHORT_NAME)
+    }
+
+    @JvmStatic
+    fun findDisplayKey(): HighlightDisplayKey? {
+      return HighlightDisplayKey.find(SHORT_NAME)
+    }
+
+    @JvmStatic
+    fun getInstance(file: PsiFile, project: Project): GrUnresolvedAccessInspection {
+      return getInspectionProfile(project).getUnwrappedTool(SHORT_NAME, file) as GrUnresolvedAccessInspection
+    }
+
+    @JvmStatic
+    fun isInspectionEnabled(file: PsiFile, project: Project): Boolean {
+      return getInspectionProfile(project).isToolEnabled(findDisplayKey(), file)
+    }
+
+    @JvmStatic
+    fun getHighlightDisplayLevel(project: Project, ref: GrReferenceElement<*>): HighlightDisplayLevel {
+      val key = findDisplayKey() ?: error("Cannot find inspection key")
+      return getInspectionProfile(project).getErrorLevel(key, ref)
+    }
+
+    private fun getInspectionProfile(project: Project): InspectionProfile {
+      return InspectionProjectProfileManager.getInstance(project).currentProfile
+    }
+
+    @JvmStatic
+    val displayText: String
+      get() = "Access to unresolved expression"
   }
 }
