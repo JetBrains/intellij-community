@@ -93,4 +93,18 @@ final class WideSelectionListUI extends BasicListUI {
     }
     return -1;
   }
+
+  @Override
+  public Rectangle getCellBounds(JList list, int index1, int index2) {
+    Rectangle bounds = super.getCellBounds(list, index1, index2);
+    if (isVerticalList(list) && (list instanceof JBList) && (index1 == index2)) {
+      if (((JBList<?>)list).getExpandableItemsHandler().getExpandedItems().contains(index1)) {
+        // increase paint area for list item with shown extendable popup
+        JScrollPane pane = JBScrollPane.findScrollPane(list);
+        JScrollBar bar = pane == null ? null : pane.getVerticalScrollBar();
+        if (bar != null && !bar.isOpaque()) bounds.width += bar.getWidth();
+      }
+    }
+    return bounds;
+  }
 }
