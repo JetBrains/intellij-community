@@ -32,6 +32,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -111,7 +112,7 @@ public class FunExprOccurrence {
       if (i == referenceContext.size() - 1) {
         return ContainerUtil.exists(candidates, m -> isCompatible(link, m, samClasses));
       }
-      qualifiers = ApproximateResolver.getDefiniteSymbolTypes(candidates);
+      qualifiers = ApproximateResolver.getDefiniteSymbolTypes(candidates, Collections.emptySet());
       if (qualifiers == null) return true;
     }
 

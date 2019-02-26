@@ -17,6 +17,8 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
@@ -43,10 +45,41 @@ public class ApproximateResolver {
 
     expression = PsiUtil.skipParenthesizedExprDown(expression);
 
-    return expression instanceof PsiTypeCastExpression ? extractClass(expression.getType()) :
+    return expression instanceof PsiTypeCastExpression || expression instanceof PsiThisExpression ? extractClass(expression.getType()) :
            expression instanceof PsiMethodCallExpression ? getCallType(expression, maxDepth) :
            expression instanceof PsiReferenceExpression ? getNonCallType((PsiReferenceExpression)expression, maxDepth) :
+           expression instanceof PsiNewExpression ? getNewType((PsiNewExpression)expression) :
+           expression instanceof PsiConditionalExpression ? getConditionalType((PsiConditionalExpression)expression, maxDepth) :
            null;
+  }
+
+  @Nullable
+  private static Set<PsiClass> getConditionalType(PsiConditionalExpression expression, int maxDepth) {
+    PsiExpression thenBranch = expression.getThenExpression();
+    PsiExpression elseBranch = expression.getElseExpression();
+    if (thenBranch != null && elseBranch != null) {
+      PsiClass thenType = ContainerUtil.getOnlyItem(getPossibleTypes(thenBranch, maxDepth / 2));
+      PsiClass elseType = ContainerUtil.getOnlyItem(getPossibleTypes(elseBranch, maxDepth / 2));
+      if (thenType != null && thenType.equals(elseType)) {
+        return Collections.singleton(thenType);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Set<PsiClass> getNewType(PsiNewExpression expression) {
+    if (expression.getArrayInitializer() != null || expression.getArrayDimensions().length > 0) return null;
+    PsiAnonymousClass aClass = expression.getAnonymousClass();
+    if (aClass != null) return Collections.singleton(aClass);
+    PsiJavaCodeReferenceElement reference = expression.getClassReference();
+    if (reference != null) {
+      PsiClass psiClass = ObjectUtils.tryCast(reference.resolve(), PsiClass.class);
+      if (psiClass != null) {
+        return Collections.singleton(psiClass);
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -59,7 +92,7 @@ public class ApproximateResolver {
     String refName = ref.getReferenceName();
     int argCount = ((PsiMethodCallExpression)expression).getArgumentList().getExpressionCount();
     List<PsiMethod> methods = refName == null || qualifierType == null ? null : getPossibleMethods(qualifierType, refName, argCount);
-    return methods == null ? null : getDefiniteSymbolTypes(methods);
+    return methods == null ? null : getDefiniteSymbolTypes(methods, qualifierType);
   }
 
   @Nullable
@@ -73,7 +106,7 @@ public class ApproximateResolver {
     Set<PsiClass> qualifierType = getPossibleTypes(qualifier, maxDepth - 1);
     String refName = expression.getReferenceName();
     List<? extends PsiMember> members = refName == null || qualifierType == null ? null : getPossibleNonMethods(qualifierType, refName);
-    return members == null ? null : getDefiniteSymbolTypes(members);
+    return members == null ? null : getDefiniteSymbolTypes(members, qualifierType);
   }
 
   @Nullable
@@ -101,7 +134,7 @@ public class ApproximateResolver {
   }
 
   @Nullable
-  public static Set<PsiClass> getDefiniteSymbolTypes(@NotNull List<? extends PsiMember> candidates) {
+  public static Set<PsiClass> getDefiniteSymbolTypes(@NotNull List<? extends PsiMember> candidates, Set<PsiClass> qualifierType) {
     Set<PsiClass> possibleTypes = new HashSet<>();
     for (PsiMember candidate : candidates) {
       if (candidate instanceof PsiClass) {
@@ -120,7 +153,20 @@ public class ApproximateResolver {
 
         PsiClass typeClass = PsiUtil.resolveClassInClassTypeOnly(type);
         if (typeClass == null || typeClass instanceof PsiTypeParameter) {
-          return null;
+          PsiClass qualifierClass = ContainerUtil.getOnlyItem(qualifierType);
+          PsiClass containingClass = candidate.getContainingClass();
+          // Sometimes we have Child extends Parent<Bar> and Parent<T> { T foo(); }
+          // In this case it's still desired to resolve that child.foo() returns Bar 
+          if (qualifierClass != null && containingClass != null && containingClass != qualifierClass) {
+            PsiSubstitutor substitutor =
+              TypeConversionUtil.getMaybeSuperClassSubstitutor(containingClass, qualifierClass, PsiSubstitutor.EMPTY);
+            if (substitutor != null) {
+              typeClass = PsiUtil.resolveClassInClassTypeOnly(type);
+            }
+          }
+          if (typeClass == null) {
+            return null;
+          }
         }
         possibleTypes.add(typeClass);
       }
