@@ -580,10 +580,10 @@
     <keyboard-shortcut first-keystroke="control shift TAB"/>
   </action>
   <action id="Diff.ApplyLeftSide">
-    <keyboard-shortcut first-keystroke="alt shift LEFT"/>
+    <keyboard-shortcut first-keystroke="alt shift RIGHT"/>
   </action>
   <action id="Diff.ApplyRightSide">
-    <keyboard-shortcut first-keystroke="alt shift RIGHT"/>
+    <keyboard-shortcut first-keystroke="alt shift LEFT"/>
   </action>
   <action id="Move">
     <keyboard-shortcut first-keystroke="F6"/>
