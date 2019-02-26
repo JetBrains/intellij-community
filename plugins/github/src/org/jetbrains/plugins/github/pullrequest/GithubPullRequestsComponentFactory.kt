@@ -5,7 +5,6 @@ import com.intellij.codeInsight.AutoPopupController
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -23,7 +22,7 @@ import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTrackerImpl
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoaderImpl
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsListLoaderImpl
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsRepositoryDataLoaderImpl
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsMetadataServiceImpl
@@ -68,8 +67,9 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
 
     private val repoDataLoader = GithubPullRequestsRepositoryDataLoaderImpl(progressManager, requestExecutor,
                                                                             account.server, repoDetails.fullPath)
-    private val dataLoader = GithubPullRequestsDataLoader(project, progressManager, git, requestExecutor, repository, remote,
-                                                          account.server, repoDetails.fullPath)
+    private val listLoader = GithubPullRequestsListLoaderImpl(progressManager, requestExecutor, account.server, repoDetails.fullPath)
+    private val dataLoader = GithubPullRequestsDataLoaderImpl(project, progressManager, git, requestExecutor, repository, remote,
+                                                              account.server, repoDetails.fullPath)
 
     private val securityService = GithubPullRequestsSecurityServiceImpl(sharedProjectSettings, accountDetails, repoDetails)
     private val busyStateTracker = GithubPullRequestsBusyStateTrackerImpl()
@@ -77,7 +77,8 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
                                                                         repoDataLoader, dataLoader, busyStateTracker,
                                                                         requestExecutor,
                                                                         avatarIconsProviderFactory, account.server, repoDetails.fullPath)
-    private val stateService = GithubPullRequestsStateServiceImpl(project, progressManager, dataLoader, busyStateTracker, requestExecutor,
+    private val stateService = GithubPullRequestsStateServiceImpl(project, progressManager, dataLoader, busyStateTracker,
+                                                                  requestExecutor,
                                                                   account.server, repoDetails.fullPath)
 
     private val changes = GithubPullRequestChangesComponent(project, pullRequestUiSettings).apply {
@@ -88,7 +89,6 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
     private val preview = GithubPullRequestPreviewComponent(changes, details)
 
     private val listSelectionHolder = GithubPullRequestsListSelectionHolderImpl()
-    private val listLoader = GithubPullRequestsListLoaderImpl(progressManager, requestExecutor, account.server, repoDetails.fullPath)
     private val list = GithubPullRequestsListWithSearchPanel(project, copyPasteManager, actionManager, autoPopupController,
                                                              avatarIconsProviderFactory,
                                                              listLoader, listLoader, listLoader, listSelectionHolder)
@@ -104,17 +104,12 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
         preview.setPreviewDataProvider(dataProvider)
       }
 
-      dataLoader.addProviderChangesListener(object : GithubPullRequestsDataLoader.ProviderChangedListener {
-        override fun providerChanged(pullRequestNumber: Long) {
-          runInEdt {
-            if (Disposer.isDisposed(preview)) return@runInEdt
-            val selection = listSelectionHolder.selection
-            if (selection != null && selection.number == pullRequestNumber) {
-              preview.setPreviewDataProvider(dataLoader.getDataProvider(pullRequestNumber))
-            }
-          }
+      dataLoader.addInvalidationListener(preview) {
+        val selection = listSelectionHolder.selection
+        if (selection != null && selection.number == it) {
+          preview.setPreviewDataProvider(dataLoader.getDataProvider(it))
         }
-      }, preview)
+      }
     }
 
     @CalledInAwt
@@ -122,12 +117,6 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
       repoDataLoader.reset()
       listLoader.reset()
       dataLoader.invalidateAllData()
-    }
-
-    //TODO: refresh in list
-    @CalledInAwt
-    fun refreshPullRequest(number: Long) {
-      dataLoader.invalidateData(number)
     }
 
     override fun getData(dataId: String): Any? {

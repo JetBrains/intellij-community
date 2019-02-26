@@ -51,8 +51,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
       }
 
       override fun onFinished() {
-        busyStateTracker.release(pullRequest)
-        dataLoader.reloadDetails(pullRequest)
+        releaseAndRefreshData(pullRequest)
       }
     })
   }
@@ -77,8 +76,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
       }
 
       override fun onFinished() {
-        busyStateTracker.release(pullRequest)
-        dataLoader.reloadDetails(pullRequest)
+        releaseAndRefreshData(pullRequest)
       }
     })
   }
@@ -120,8 +118,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
       }
 
       override fun onFinished() {
-        busyStateTracker.release(pullRequest)
-        dataLoader.reloadDetails(pullRequest)
+        releaseAndRefreshData(pullRequest)
       }
     })
   }
@@ -153,8 +150,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
       }
 
       override fun onFinished() {
-        busyStateTracker.release(pullRequest)
-        dataLoader.reloadDetails(pullRequest)
+        releaseAndRefreshData(pullRequest)
       }
     })
   }
@@ -204,9 +200,13 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
       }
 
       override fun onFinished() {
-        busyStateTracker.release(pullRequest)
-        dataLoader.reloadDetails(pullRequest)
+        releaseAndRefreshData(pullRequest)
       }
     })
+  }
+
+  private fun releaseAndRefreshData(pullRequest: Long) {
+    busyStateTracker.release(pullRequest)
+    dataLoader.findDataProvider(pullRequest)?.reloadDetails()
   }
 }

@@ -61,7 +61,7 @@ internal class GithubPullRequestDetailsComponent(private val dataLoader: GithubP
     detailsModel.details = result
     if (!result.merged && result.state == GithubIssueState.open && result.mergeable == null) {
       ApplicationManager.getApplication().invokeLater {
-        dataLoader.reloadDetails(result.number)
+        dataLoader.findDataProvider(result.number)?.reloadDetails()
       }
     }
     validate()

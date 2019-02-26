@@ -281,7 +281,7 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
 
         override fun onFinished() {
           busyStateTracker.release(pullRequest)
-          dataLoader.reloadDetails(pullRequest)
+          dataLoader.findDataProvider(pullRequest)?.reloadDetails()
         }
       })
     }
