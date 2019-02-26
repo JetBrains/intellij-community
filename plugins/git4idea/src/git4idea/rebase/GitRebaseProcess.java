@@ -599,8 +599,8 @@ public class GitRebaseProcess {
 
   private static boolean askIfShouldRebasePublishedCommit() {
     String title = "Rebasing Published Commit";
-    String message = "You're trying to rebase some commits already pushed to a protected branch.<br/>" +
-                     "Rebasing them would duplicate commits, which is not recommended and most likely unwanted";
+    String message = "<html>You're trying to rebase some commits already pushed to a protected branch.<br/>" +
+                     "Rebasing them would duplicate commits, which is not recommended and most likely unwanted.</html>";
     Ref<Boolean> rebaseAnyway = Ref.create(false);
     ApplicationManager.getApplication().invokeAndWait(() -> {
       int answer = DialogManager.showMessage(message, title, new String[]{"Rebase Anyway", "Cancel"}, 1, 1, getWarningIcon(), null);
