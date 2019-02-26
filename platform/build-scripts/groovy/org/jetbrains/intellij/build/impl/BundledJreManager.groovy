@@ -212,8 +212,11 @@ class BundledJreManager {
     def jreBuild = getExpectedJreBuild(osName)
 
     String suffix = jreArchiveSuffix(jreBuild, buildContext.options.bundledJreVersion.toString(), arch, osName)
-    String prefix = buildContext.isBundledJreModular() ? vendor.jreNamePrefix :
-                    buildContext.productProperties.toolsJarRequired ? vendor.jreWithToolsJarNamePrefix : vendor.jreNamePrefix
+    String prefix = System.getProperty("intellij.build.bundled.jre.prefix")
+    if (prefix == null) {
+      prefix = buildContext.isBundledJreModular() ? vendor.jreNamePrefix :
+               buildContext.productProperties.toolsJarRequired ? vendor.jreWithToolsJarNamePrefix : vendor.jreNamePrefix
+    }
     def jreArchive = new File(jreDir, "$prefix$suffix")
 
     if (!jreArchive.file || !jreArchive.exists()) {
