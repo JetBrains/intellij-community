@@ -437,6 +437,7 @@ public class Switcher extends AnAction implements DumbAware {
 
         {
           myLabel.setOpaque(true);
+          myPanel.setBackground(UIUtil.getListBackground());
         }
 
         @NotNull
