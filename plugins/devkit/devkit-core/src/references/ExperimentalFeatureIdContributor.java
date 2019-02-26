@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ExperimentalFeature;
+import com.intellij.openapi.application.ExperimentalFeatureImpl;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -130,7 +131,7 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
       final Project project = myElement.getProject();
 
       final PsiClass experimentalFeatureClass =
-        JavaPsiFacade.getInstance(project).findClass(ExperimentalFeature.class.getName(), myElement.getResolveScope());
+        JavaPsiFacade.getInstance(project).findClass(ExperimentalFeatureImpl.class.getName(), myElement.getResolveScope());
       if (experimentalFeatureClass == null) return;
 
       final ExtensionPointLocator extensionPointLocator = new ExtensionPointLocator(experimentalFeatureClass);
