@@ -17,5 +17,5 @@ class ServiceViewState {
   @Tag("treeState")
   public Element treeStateElement;
   @Transient
-  public TreeState treeState;
+  public TreeState treeState = TreeState.createFrom(null);
 }
