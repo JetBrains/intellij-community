@@ -327,14 +327,7 @@ def build_cache_dir_path(subdir, mod_qname, mod_path):
 def module_hash(mod_qname, mod_path):
     # Hash the content of a physical module
     if mod_path:
-        if os.environ.get(ENV_CONTENT_INDEPENDENT_HASHES_FLAG) == 'True':
-            prefix = 'sha256:' + mod_qname
-            version = getattr(__import__(mod_qname), '__version__', None)
-            if version:
-                return prefix + ':' + version
-            return prefix
-        else:
-            return physical_module_hash(mod_path)
+        return physical_module_hash(mod_path)
     else:
         return builtin_module_hash(mod_qname)
 

@@ -1,4 +1,3 @@
-import errno
 import logging
 import os
 import subprocess
@@ -10,12 +9,10 @@ import generator3
 import six
 from pycharm_generator_utils.constants import (
     ENV_TEST_MODE_FLAG,
-    ENV_CONTENT_INDEPENDENT_HASHES_FLAG,
     ENV_VERSION,
     ENV_REQUIRED_GEN_VERSION_FILE,
 )
 from pycharm_generator_utils.test import GeneratorTestCase
-from pycharm_generator_utils.util_methods import ignored_os_errors
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -34,7 +31,6 @@ class SkeletonCachingTest(GeneratorTestCase):
         return os.path.join(self.test_data_dir, rel_path)
 
     def run_generator(self, mod_qname, mod_path=None,
-                      fake_hashes=False,
                       extra_syspath_entry=None,
                       gen_version=None,
                       required_gen_version_file_path=None):
@@ -50,8 +46,6 @@ class SkeletonCachingTest(GeneratorTestCase):
             ENV_TEST_MODE_FLAG: 'True',
             ENV_VERSION: gen_version or TEST_GENERATOR_VERSION,
         }
-        if fake_hashes:
-            env[ENV_CONTENT_INDEPENDENT_HASHES_FLAG] = 'True'
         if required_gen_version_file_path:
             env[ENV_REQUIRED_GEN_VERSION_FILE] = required_gen_version_file_path
 
@@ -169,7 +163,7 @@ class SkeletonCachingTest(GeneratorTestCase):
     @unittest.skipIf(not _run_generator_in_separate_process,
                      'Importing module causing SIGSEGV cannot be done in the same interpreter')
     def test_segmentation_fault_handling(self):
-        self.check_generator_output('sigsegv', mod_path='sigsegv.py', gen_version='0.1', fake_hashes=False)
+        self.check_generator_output('sigsegv', mod_path='sigsegv.py', gen_version='0.1')
 
     def test_cache_not_updated_when_sdk_skeleton_is_up_to_date(self):
         # We can't safely updated cache from SDK skeletons (backwards) because of binaries declaring
