@@ -185,9 +185,7 @@ public class ConfigImportHelper {
         catch (IOException ignore) {
         }
       }
-      if (max != null) {
-        lastModified.put(candidate, max);
-      }
+      lastModified.put(candidate, max != null ? max : FileTime.fromMillis(0));
     }
 
     List<Path> result = new ArrayList<>(lastModified.keySet());

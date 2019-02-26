@@ -91,25 +91,69 @@ class ConfigImportHelperTest {
   @Test
   fun `sort if no anchor files`() {
     val isMacOs = true
-    fun writeStorageDir(version: String) {
-      val dir = fsRule.fs.getPath("/data/" + (constructConfigPath(version, isMacOs)))
-      dir.createDirectories()
+    fun storageDir(version: String) {
+      fsRule.fs.getPath("/data/" + (constructConfigPath(version, isMacOs))).createDirectories()
     }
 
-    val fs = fsRule.fs
-    writeStorageDir("2022.1")
-    writeStorageDir("2021.1")
-    writeStorageDir("2020.1")
+    storageDir("2022.1")
+    storageDir("2021.1")
+    storageDir("2020.1")
 
-    val newConfigPath = fs.getPath("/data/${constructConfigPath("2022.3", isMacOs)}")
+    val newConfigPath = fsRule.fs.getPath("/data/${constructConfigPath("2022.3", isMacOs)}")
     // create new config dir to test that it will be not suggested too (as on start of new version config dir can be created)
     newConfigPath.createDirectories()
 
-    assertThat(ConfigImportHelper.findRecentConfigDirectory(newConfigPath, isMacOs).joinToString("\n")).isEqualTo("""
-        /data/${constructConfigPath("2022.1", isMacOs)}
-        /data/${constructConfigPath("2021.1", isMacOs)}
-        /data/${constructConfigPath("2020.1", isMacOs)}
+    assertThat(ConfigImportHelper.findRecentConfigDirectory(newConfigPath, isMacOs)
+                 .joinToString("\n", transform = { it.fileName.toString().removePrefix("IntelliJIdea") }))
+      .isEqualTo("""
+        2022.1
+        2021.1
+        2020.1
       """.trimIndent())
+  }
+
+  @Test
+  fun `sort some real historic config dirs`() {
+    val isMacOs = true
+    fun storageDir(version: String, millis: Long) {
+      val path = fsRule.fs.getPath("/data/" + (constructConfigPath(version, isMacOs, "DataGrip")))
+      path.createDirectories()
+      if (millis > 0) {
+        val child = path.resolve(PathManager.OPTIONS_DIRECTORY + "/" + StoragePathMacros.NOT_ROAMABLE_FILE)
+        child.parent.createDirectories()
+        Files.createFile(child)
+        Files.setLastModifiedTime(child, FileTime.fromMillis(millis))
+      }
+    }
+
+    storageDir("2016.1", 1485460719000)
+    storageDir("2016.2", 1466345662000)
+    storageDir("2017.1", 1503006763000)
+    storageDir("10", 1455035096000)
+    storageDir("2018.1", 1531238044000)
+    storageDir("2017.2", 1510866492000)
+    storageDir("2016.3", 1520869009000)
+    storageDir("2017.3", 1549092322000)
+    storageDir("2018.2", 1548076635000)
+    storageDir("2019.1", 1548225505000)
+    storageDir("2019.2", 0)
+    storageDir("2018.3", 1545844523000)
+
+    val newConfigPath = fsRule.fs.getPath("/data/${constructConfigPath("2019.2", isMacOs, "DataGrip")}")
+    assertThat(ConfigImportHelper.findRecentConfigDirectory(newConfigPath, isMacOs)
+                 .joinToString("\n", transform = { it.fileName.toString().removePrefix("DataGrip") }))
+      .isEqualTo("""
+        2017.3
+        2019.1
+        2018.2
+        2018.3
+        2018.1
+        2016.3
+        2017.2
+        2017.1
+        2016.1
+        2016.2
+        10""".trimIndent())
   }
 
   private fun writeStorageFile(version: String, lastModified: Long, isMacOs: Boolean) {
@@ -119,8 +163,8 @@ class ConfigImportHelperTest {
   }
 }
 
-private fun constructConfigPath(version: String, isMacOs: Boolean): String {
-  return "${if (isMacOs) "" else "."}IntelliJIdea$version" + if (isMacOs) "" else "/${ConfigImportHelper.CONFIG}"
+private fun constructConfigPath(version: String, isMacOs: Boolean, product: String = "IntelliJIdea"): String {
+  return "${if (isMacOs) "" else "."}$product$version" + if (isMacOs) "" else "/${ConfigImportHelper.CONFIG}"
 }
 
 private fun description(block: () -> String) = object : Description() {
