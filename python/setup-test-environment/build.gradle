@@ -1,4 +1,5 @@
 import org.apache.tools.ant.taskdefs.condition.Os
+import sun.tools.jstat.Closure
 
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -17,7 +18,7 @@ plugins {
  * PYCHARM_USE_CONDA -- use conda (cPython will be used if not set)
  *
  * PYCHARM_ZIP_REPOSITORY -- to download unpacked pythons for Windows (default cpython does not support unattended installation)
- * Recommended value: http://repo.labs.intellij.net/pycharm/python-archives-windows/
+ * Recommended value: https://repo.labs.intellij.net/pycharm/python-archives-windows/
  *
  * Pitfall: TMP var on windows points to very long path inside of user local dir and may lead to errors.
  * It is recommended to create "c:\temp\" with full write access and set TMP="c:\temp\" on Windows.
