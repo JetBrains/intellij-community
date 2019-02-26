@@ -728,8 +728,7 @@
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="TypeCustomizer"
                      displayName="Type customizer inspection"
-                     bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     groupKey="other" enabledByDefault="true" level="WARNING"
+                     groupKey="inspection.other" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.resources.TypeCustomizerInspection"/>
 
     <localInspection language="Groovy"
