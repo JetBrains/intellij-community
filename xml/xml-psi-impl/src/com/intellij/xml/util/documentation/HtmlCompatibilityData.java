@@ -21,13 +21,21 @@ import java.util.Map;
 public class HtmlCompatibilityData {
   private static final Map<String, Object> ourTagsCache = new HashMap<>();
   private static final Ref<Map> ourGlobalAttributesCache = new Ref<>();
+  public static final String MATHML = "mathml";
+  public static final String SVG = "svg";
+  public static final String MATH = "math";
 
   @Nullable
   public static Map getTagData(@NotNull String namespace, @NotNull String tagName) {
+    if (tagName.equals(MATH)) {
+      namespace = MATHML;
+    } else if (tagName.equals("svg")) {
+      namespace = SVG;
+    }
     String key = tagName.equals("input") ? "input/text" : tagName;
     String cacheKey = namespace + key;
     if (!ourTagsCache.containsKey(cacheKey)) {
-      URL resource = HtmlCompatibilityData.class.getResource("compatData/" + namespace + "/elements/" + key + ".json");
+      URL resource = HtmlCompatibilityData.class.getResource("compatData" + (!namespace.isEmpty() ? "/" + namespace : "") + "/elements/" + key + ".json");
       if (resource == null) return null;
       try {
         Object json = new Gson().fromJson(new InputStreamReader(resource.openStream(), StandardCharsets.UTF_8), Object.class);
@@ -72,18 +80,18 @@ public class HtmlCompatibilityData {
   }
 
   private static String getNamespace(XmlTag tag) {
-    PsiElement element = tag.getParent();
+    PsiElement element = tag;
     while (element != null && !(element instanceof PsiFile)) {
       if (element instanceof XmlTag) {
         String name = element instanceof XmlTagImpl && ((XmlTagImpl)tag).isCaseSensitive() ?
                      ((XmlTagImpl)element).getName() :
                      ((XmlTag)element).getName().toLowerCase(Locale.US);
 
-        if ("math".equals(name)) {
-          return "mathml";
+        if (MATH.equals(name)) {
+          return MATHML;
         }
-        if ("svg".equals(name)) {
-          return "svg";
+        if (SVG.equals(name)) {
+          return SVG;
         }
       }
       element = element.getParent();

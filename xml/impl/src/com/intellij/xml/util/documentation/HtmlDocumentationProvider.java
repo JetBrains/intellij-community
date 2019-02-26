@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util.documentation;
 
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDocumentation;
 import com.intellij.lang.documentation.DocumentationProvider;
@@ -94,15 +95,15 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
     PsiElement originalElement = pointer != null ?
                                  ReadAction.compute((ThrowableComputable<PsiElement, RuntimeException>)pointer::getElement) :
                                  element;
-    final EntityDescriptor descriptor = ReadAction.compute(() -> findDocumentationDescriptor(originalElement, tag));
+    final DocEntity entity = ReadAction.compute(() -> findDocumentationEntity(element, tag));
     for (String url : docUrls) {
       if (url.contains("#attr-")) return null;
     }
 
     String mdnDoc = MdnDocumentationUtil.fetchExternalDocumentation(docUrls, () -> null);
     if (mdnDoc != null) {
-      String name = descriptor != null ? descriptor.getName() : ReadAction.compute(() -> SymbolPresentationUtil.getSymbolPresentableText(element));
-      Map mdnCompatData = ReadAction.compute(() -> getCompatData(descriptor, originalElement));
+      String name = entity != null ? entity.name : ReadAction.compute(() -> SymbolPresentationUtil.getSymbolPresentableText(element));
+      Map mdnCompatData = ReadAction.compute(() -> getCompatData(entity, originalElement));
       return MdnDocumentationUtil.buildDoc(name, mdnDoc, mdnCompatData);
     }
     return null;
@@ -122,10 +123,11 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
   public void promptToConfigureDocumentation(PsiElement element) {}
 
   public static String getUrlForHtml(PsiElement element, PsiElement originalElement, XmlTag context) {
-    final EntityDescriptor descriptor = findDocumentationDescriptor(element, context);
-    String mdnUrl = MdnDocumentationUtil.getMdnUrl(getCompatData(descriptor, originalElement));
+    final DocEntity entity = findDocumentationEntity(element, context);
+    String mdnUrl = MdnDocumentationUtil.getMdnUrl(getCompatData(entity, originalElement));
     if (mdnUrl != null) return mdnUrl;
 
+    EntityDescriptor descriptor = findDocumentationDescriptor(entity, context);
     if (descriptor instanceof HtmlAttributeDescriptor && context != null) {
       return "https://developer.mozilla.org/docs/Web/HTML/Element/" + context.getName() + "#attr-" + descriptor.getName();
     }
@@ -133,7 +135,8 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
     return descriptor != null ? descriptor.getHelpRef() : null;
   }
 
-  private static EntityDescriptor findDocumentationDescriptor(PsiElement element, XmlTag context) {
+  @NotNull
+  private static DocEntity findDocumentationEntity(PsiElement element, XmlTag context) {
     boolean isTag = true;
     PsiElement nameElement = null;
     String key = null;
@@ -183,11 +186,14 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
     if (dotIndex > 0) {
       key = key.substring(0, dotIndex);
     }
+    return new DocEntity(key, isTag);
+  }
 
-    if (isTag) {
-      return HtmlDescriptorsTable.getTagDescriptor(key);
+  private static EntityDescriptor findDocumentationDescriptor(DocEntity entity, XmlTag context) {
+    if (entity.isTag) {
+      return HtmlDescriptorsTable.getTagDescriptor(entity.name);
     } else {
-      return getDescriptor(key, context);
+      return getDescriptor(entity.name, context);
     }
   }
 
@@ -226,13 +232,14 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
   }
 
   protected String generateDocForHtml(PsiElement element, XmlTag context, PsiElement originalElement) {
-    final EntityDescriptor descriptor = findDocumentationDescriptor(element,context);
+    final DocEntity entity = findDocumentationEntity(element, context);
+    final EntityDescriptor descriptor = findDocumentationDescriptor(entity, context);
 
     if (descriptor != null) {
       String description = descriptor.getDescription();
       if (!description.endsWith(".")) description += ".";
 
-      Map mdnData = ReadAction.compute(() -> getCompatData(descriptor, originalElement));
+      Map mdnData = ReadAction.compute(() -> getCompatData(entity, originalElement));
       return MdnDocumentationUtil.buildDoc(descriptor.getName(), description, mdnData);
     }
     if (element instanceof XmlEntityDecl) {
@@ -244,15 +251,23 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
   }
 
   @Nullable
-  private static Map getCompatData(EntityDescriptor descriptor, @Nullable PsiElement element) {
-    XmlAttribute attribute = ReadAction.compute(() -> PsiTreeUtil.getParentOfType(element, XmlAttribute.class, true));
-    if (attribute != null) {
-      return HtmlCompatibilityData.getAttributeData(attribute.getParent(), attribute.getName());
-    } else if (element != null && element.getParent() instanceof XmlTag) {
-      return HtmlCompatibilityData.getTagData((XmlTag)element.getParent());
+  private static Map getCompatData(DocEntity entity, @Nullable PsiElement element) {
+    if (element != null && LookupManager.getInstance(element.getProject()).getActiveLookup() == null) {
+      XmlAttribute attribute = ReadAction.compute(() -> PsiTreeUtil.getParentOfType(element, XmlAttribute.class, true));
+      if (attribute != null) {
+        return HtmlCompatibilityData.getAttributeData(attribute.getParent(), attribute.getName());
+      }
+      else if (element.getParent() instanceof XmlTag) {
+        return HtmlCompatibilityData.getTagData((XmlTag)element.getParent());
+      }
     }
-    if (descriptor instanceof HtmlTagDescriptor) {
-      return HtmlCompatibilityData.getTagData("", descriptor.getName());
+    if (entity.isTag) {
+      return HtmlCompatibilityData.getTagData("", entity.name);
+    } else {
+      XmlTag tag = ReadAction.compute(() -> PsiTreeUtil.getParentOfType(element, XmlTag.class, true));
+      if (tag != null) {
+        return HtmlCompatibilityData.getAttributeData(tag, entity.name);
+      }
     }
     return null;
   }
@@ -361,5 +376,15 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
       }
     }
     return myStyleProvider;
+  }
+
+  private static class DocEntity {
+    String name;
+    boolean isTag;
+
+    private DocEntity(String name, boolean isTag) {
+      this.name = name;
+      this.isTag = isTag;
+    }
   }
 }
