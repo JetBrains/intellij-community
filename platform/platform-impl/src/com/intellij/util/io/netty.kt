@@ -70,10 +70,7 @@ inline fun ChannelFuture.addChannelListener(crossinline listener: (future: Chann
 
 // if NIO, so, it is shared and we must not shutdown it
 fun EventLoop.shutdownIfOio() {
-  if (this is OioEventLoopGroup) {
-    @Suppress("USELESS_CAST")
-    (this as OioEventLoopGroup).shutdownGracefully(1L, 2L, TimeUnit.NANOSECONDS)
-  }
+  (parent() as? OioEventLoopGroup)?.shutdownGracefully(1L, 2L, TimeUnit.NANOSECONDS)
 }
 
 // Event loop will be shut downed only if OIO
