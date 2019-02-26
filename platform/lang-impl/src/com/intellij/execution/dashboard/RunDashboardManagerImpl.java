@@ -9,6 +9,7 @@ import com.intellij.execution.dashboard.tree.RunDashboardGrouper;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.services.ServiceViewContributor;
 import com.intellij.execution.services.ServiceViewManager;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManagerImpl;
@@ -373,9 +374,9 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
 
   @Override
   public void updateDashboard(final boolean withStructure) {
-    if (Registry.is("ide.service.view")) {
-      ServiceViewManager.getInstance(myProject).contentChanged(withStructure);
-    }
+    myProject.getMessageBus().syncPublisher(ServiceViewContributor.TOPIC).handle(new ServiceViewContributor.ServiceEvent(
+      RunConfigurationsServiceViewContributor.class
+    ));
 
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
     if (toolWindowManager == null) return;

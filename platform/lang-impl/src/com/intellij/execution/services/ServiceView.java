@@ -133,6 +133,8 @@ class ServiceView extends JPanel implements Disposable {
       }
       return null;
     });
+
+    myProject.getMessageBus().connect(this).subscribe(ServiceViewContributor.TOPIC, myTreeModel::refresh);
   }
 
   @Nullable
@@ -459,6 +461,10 @@ class ServiceView extends JPanel implements Disposable {
     @Override
     public Object getRoot() {
       return myRoot;
+    }
+
+    void refresh(ServiceViewContributor.ServiceEvent e) {
+      refreshAll();
     }
 
     void refreshAll() {
