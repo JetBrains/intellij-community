@@ -164,7 +164,7 @@ public class ApproximateResolver {
               typeClass = PsiUtil.resolveClassInClassTypeOnly(type);
             }
           }
-          if (typeClass == null) {
+          if (typeClass == null || typeClass instanceof PsiTypeParameter) {
             return null;
           }
         }
