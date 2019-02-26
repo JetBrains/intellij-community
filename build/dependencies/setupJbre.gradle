@@ -7,7 +7,8 @@ task setupJbre()
 def targetOs = System.getProperty("intellij.build.target.os", "all")
 def jreVersion = System.getProperty("intellij.build.bundled.jre.version", "8").toInteger()
 def jreBuild = System.getProperty("intellij.build.bundled.jre.build", jdkBuild)
-createJbreTasks(jreBuild, jreVersion, targetOs)
+def jrePrefix = System.getProperty("intellij.build.bundled.jre.prefix")
+createJbreTasks(jreBuild, jreVersion, targetOs, jrePrefix)
 
 if (System.getProperty('intellij.build.bundle.second.jre', 'false').toBoolean()) {
   def secondJreBuild = System.getProperty("intellij.build.bundled.second.jre.build", secondJreBuild)
@@ -39,9 +40,9 @@ static def splitJreBuild(String jreBuild, String version) {
   }
 }
 
-def createJbreTasks(String defaultBuild, int version, String targetOs) {
+def createJbreTasks(String defaultBuild, int version, String targetOs, String prefix = null) {
   def isModular = version >= 9
-  def prefix = isModular ? 'jbr-' : 'jbrx-'
+  if (prefix == null) prefix = isModular ? 'jbr-' : 'jbrx-'
   jrePlatformsToDownload(targetOs).each { platform ->
     archToDownload(platform, !isModular).each { arch ->
       def jreBuild = project.ext.has("jreBuild_$platform") ? project.ext["jreBuild_$platform"] : defaultBuild
