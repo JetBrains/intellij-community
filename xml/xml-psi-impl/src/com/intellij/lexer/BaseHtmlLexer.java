@@ -32,9 +32,9 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
   private static final int SEEN_ATTRIBUTE = 0x80;
   private static final int SEEN_CONTENT_TYPE = 0x100;
   private static final int SEEN_STYLESHEET_TYPE = 0x200;
-  private static final int SEEN_STYLE_SCRIPT_MASK = 0xE00;
   private static final int SEEN_STYLE_SCRIPT_SHIFT = 10;
-  protected static final int BASE_STATE_SHIFT = 12;
+  private static final int SEEN_STYLE_SCRIPT_MASK = 0x7 << SEEN_STYLE_SCRIPT_SHIFT;
+  protected static final int BASE_STATE_SHIFT = 13;
   @Nullable
   protected static final Language ourDefaultLanguage = Language.findLanguageByID("JavaScript");
   @Nullable
@@ -302,11 +302,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     seenAttribute = (initialState & SEEN_ATTRIBUTE)!=0;
     seenContentType = (initialState & SEEN_CONTENT_TYPE) != 0;
     seenStylesheetType = (initialState & SEEN_STYLESHEET_TYPE) != 0;
-    if (seenTag || seenAttribute) {
-      int stack = ((initialState & SEEN_STYLE_SCRIPT_MASK) >> SEEN_STYLE_SCRIPT_SHIFT) + 1;
-      scriptStyleStack[0] = stack / 3;
-      scriptStyleStack[1] = stack % 3;
-    }
+    decodeScriptStack(((initialState & SEEN_STYLE_SCRIPT_MASK) >> SEEN_STYLE_SCRIPT_SHIFT));
     int position = scriptStyleStack[1] == 0 ? 0 : 1;
     seenStyle = scriptStyleStack[position] == STYLE;
     seenScript = scriptStyleStack[position] == SCRIPT;
@@ -422,12 +418,31 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     state |= ((seenAttribute)?SEEN_ATTRIBUTE:0);
     state |= ((seenContentType)?SEEN_CONTENT_TYPE:0);
     state |= ((seenStylesheetType)?SEEN_STYLESHEET_TYPE:0);
-
-    if (seenTag || seenAttribute) {
-      state |= (scriptStyleStack[0] * 3 + scriptStyleStack[1] - 1) << SEEN_STYLE_SCRIPT_SHIFT;
-    }
+    state |= encodeScriptStack() << SEEN_STYLE_SCRIPT_SHIFT;
 
     return state;
+  }
+
+  private int encodeScriptStack() {
+    if (scriptStyleStack[1] == 0) {
+      return scriptStyleStack[0];
+    }
+    if (scriptStyleStack[0] == 0) {
+      throw new IllegalStateException();
+    }
+    return scriptStyleStack[0] * 2 + scriptStyleStack[1];
+  }
+
+  private void decodeScriptStack(int value) {
+    if (value <= 2) {
+      scriptStyleStack[0] = value;
+      scriptStyleStack[1] = 0;
+    }
+    else {
+      value -= 3;
+      scriptStyleStack[0] = (value / 2) + 1;
+      scriptStyleStack[1] = (value % 2) + 1;
+    }
   }
 
   protected final boolean hasSeenStyle() {
