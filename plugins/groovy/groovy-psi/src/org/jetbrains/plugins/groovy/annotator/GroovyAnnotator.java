@@ -302,7 +302,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       myHolder.createInfoAnnotation(nameElement, null).setTextAttributes(GroovySyntaxHighlighter.KEYWORD);
     }
     else if (isInStaticCompilationContext(referenceExpression)) {
-      checkUnresolvedReference(referenceExpression, true, true, new AnnotationHolderHighlightSink(myHolder));
+      checkUnresolvedReference(referenceExpression, true, true, new UnresolvedReferenceAnnotatorSink(myHolder));
     }
   }
 

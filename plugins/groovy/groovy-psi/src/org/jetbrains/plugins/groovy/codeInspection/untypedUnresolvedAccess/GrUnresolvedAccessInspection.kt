@@ -34,7 +34,7 @@ class GrUnresolvedAccessInspection : GroovySuppressableInspectionTool() {
   }
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-    return GroovyPsiElementVisitor(Visitor(UnresolvedReferenceHighlightSink(holder)))
+    return GroovyPsiElementVisitor(Visitor(UnresolvedReferenceInspectionSink(holder)))
   }
 
   private inner class Visitor(private val highlightSink: HighlightSink) : GroovyElementVisitor() {

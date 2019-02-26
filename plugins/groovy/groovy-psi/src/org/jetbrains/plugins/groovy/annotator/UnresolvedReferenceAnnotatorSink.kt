@@ -7,7 +7,7 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.groovy.highlighting.HighlightSink
 
-class AnnotationHolderHighlightSink(private val annotationHolder: AnnotationHolder) : HighlightSink {
+internal class UnresolvedReferenceAnnotatorSink(private val annotationHolder: AnnotationHolder) : HighlightSink {
 
   override fun registerProblem(highlightElement: PsiElement,
                                highlightType: ProblemHighlightType,
