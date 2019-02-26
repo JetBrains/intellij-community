@@ -629,6 +629,21 @@ public class Switcher extends AnAction implements DumbAware {
       addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, "LEFT");
       addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, "control RIGHT");
       addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, "control LEFT");
+
+      fromListToList(toolWindows, files);
+      fromListToList(files, toolWindows);
+    }
+
+    private static void fromListToList(JBList from, JBList to) {
+      AbstractAction action = new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent event) {
+          to.requestFocus();
+        }
+      };
+      ActionMap map = from.getActionMap();
+      map.put("selectPreviousColumn", action);
+      map.put("selectNextColumn", action);
     }
 
     private Container getPopupFocusAncestor() {
