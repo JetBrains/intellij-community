@@ -2,8 +2,7 @@
 # module failing
 # by generator 0.2
 # no doc
-
-# imports
+# no imports
 
 # no functions
 # no classes
