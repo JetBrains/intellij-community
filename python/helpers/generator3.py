@@ -366,7 +366,34 @@ def version_to_tuple(version):
     return tuple(map(int, version.split('.')))
 
 
-def read_generator_version(skeleton_file):
+def should_update_skeleton(base_dir, mod_qname, mod_path):
+    gen_version = version_to_tuple(version())
+
+    failed_version = read_failed_version_from_stamp(base_dir, mod_qname)
+    if failed_version:
+        return failed_version < gen_version
+
+    failed_version = read_failed_version_from_legacy_blacklist(base_dir, mod_path)
+    if failed_version:
+        return failed_version < gen_version
+
+    required_version = read_required_version(mod_qname)
+    used_version = read_used_generator_version_from_skeleton_header(base_dir, mod_qname)
+    if required_version and used_version:
+        return used_version < required_version
+
+    return True
+
+
+def read_used_generator_version_from_skeleton_header(base_dir, mod_qname):
+    for path in skeleton_path_candidates(base_dir, mod_qname, init_for_pkg=True):
+        with ignored_os_errors(errno.ENOENT):
+            with fopen(path, 'r') as f:
+                return read_generator_version_from_header(f)
+    return None
+
+
+def read_generator_version_from_header(skeleton_file):
     for line in skeleton_file:
         if not line.startswith('#'):
             break
@@ -375,29 +402,6 @@ def read_generator_version(skeleton_file):
         if m:
             return version_to_tuple(m.group('version'))
     return None
-
-
-def should_update_skeleton(base_dir, mod_qname, mod_path):
-    cur_version = version_to_tuple(version())
-
-    failed_version = read_failed_version_from_stamp(base_dir, mod_qname)
-    if failed_version:
-        return failed_version < cur_version
-
-    # noinspection PyUnreachableCode
-    failed_version = read_failed_version_from_legacy_blacklist(base_dir, mod_path)
-    if failed_version:
-        return failed_version < cur_version
-
-    required_version = read_required_version(mod_qname)
-
-    for path in skeleton_path_candidates(base_dir, mod_qname, init_for_pkg=True):
-        with ignored_os_errors(errno.ENOENT):
-            with fopen(path, 'r') as f:
-                used_version = read_generator_version(f)
-                if used_version and required_version:
-                    return used_version < required_version
-    return True
 
 
 def read_failed_version_from_stamp(base_dir, mod_qname):
