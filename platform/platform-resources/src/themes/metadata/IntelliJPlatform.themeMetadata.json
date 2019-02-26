@@ -47,7 +47,7 @@
       "key": "CompletionPopup.selectionInactiveBackground"
     },
     {
-      "key": "CompletionPopup.selectionInactiveForeground"
+      "key": "CompletionPopup.selectionInactiveInfoForeground"
     },
     {
       "key": "CompletionPopup.selectionInfoForeground"
