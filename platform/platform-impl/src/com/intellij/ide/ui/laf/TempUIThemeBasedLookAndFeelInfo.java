@@ -4,26 +4,30 @@ package com.intellij.ide.ui.laf;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UITheme;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.nio.file.Path;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class TempUIThemeBasedLookAndFeelInfo extends UIThemeBasedLookAndFeelInfo {
-  private final Path myEditorSchemeFile;
+  private final VirtualFile mySchemeFile;
   private UIManager.LookAndFeelInfo myPreviousLaf;
+  private static final Logger LOG = Logger.getInstance(TempUIThemeBasedLookAndFeelInfo.class);
 
-  public TempUIThemeBasedLookAndFeelInfo(UITheme theme, Path editorSchemeFile) {
+  public TempUIThemeBasedLookAndFeelInfo(UITheme theme, VirtualFile editorSchemeFile) {
     super(theme);
-    myEditorSchemeFile = editorSchemeFile;
+    mySchemeFile = editorSchemeFile;
     myPreviousLaf = LafManager.getInstance().getCurrentLookAndFeel();
     if (myPreviousLaf instanceof TempUIThemeBasedLookAndFeelInfo) {
       myPreviousLaf = ((TempUIThemeBasedLookAndFeelInfo)myPreviousLaf).getPreviousLaf();
@@ -37,18 +41,26 @@ public class TempUIThemeBasedLookAndFeelInfo extends UIThemeBasedLookAndFeelInfo
   @Override
   protected void installEditorScheme() {
     String name = getTheme().getEditorScheme();
-    if (name != null && myEditorSchemeFile != null) {
+    if (name != null && mySchemeFile != null) {
       EditorColorsManagerImpl cm = (EditorColorsManagerImpl)EditorColorsManager.getInstance();
-      cm.getSchemeManager().loadBundledScheme(myEditorSchemeFile.toString(), this);
-      EditorColorsScheme scheme = cm.getScheme(getTheme().getEditorSchemeName());
-      if (scheme != null) {
-        EditorColorsManagerImpl.setTempScheme(scheme);
+      final DefaultColorsScheme scheme = new DefaultColorsScheme();
+      boolean loaded = false;
+      try {
+        scheme.readExternal(JDOMUtil.load(mySchemeFile.getInputStream()));
+        loaded = true;
+      }
+      catch (Exception e) {
+        LOG.warn(e);
+      }
+
+      if (loaded) {
+        EditorColorsManagerImpl.setTempScheme(scheme, mySchemeFile);
         cm.setGlobalScheme(scheme);
         MessageBusConnection connect = ApplicationManager.getApplication().getMessageBus().connect();
         connect.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
           @Override
           public void globalSchemeChange(@Nullable EditorColorsScheme editorColorsScheme) {
-            if (editorColorsScheme == scheme) {
+            if (editorColorsScheme == scheme || editorColorsScheme == null) {
               return;
             }
             cm.getSchemeManager().removeScheme(scheme);
@@ -57,6 +69,5 @@ public class TempUIThemeBasedLookAndFeelInfo extends UIThemeBasedLookAndFeelInfo
         });
       }
     }
-
   }
 }
