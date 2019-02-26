@@ -4,6 +4,7 @@ package com.intellij.openapi.application.constraints
 import com.intellij.openapi.Disposable
 import kotlinx.coroutines.*
 import java.util.concurrent.Executor
+import java.util.function.BooleanSupplier
 import kotlin.coroutines.ContinuationInterceptor
 
 /**
@@ -47,6 +48,18 @@ interface ConstrainedExecution<E : ConstrainedExecution<E>> {
   fun withConstraint(constraint: ContextConstraint, parentDisposable: Disposable): E
 
   fun expireWith(parentDisposable: Disposable): E
+
+  /**
+   * Each time when scheduling a task for execution, check the specified [condition], and if it evaluates to true, cancel the execution.
+   *
+   * Unless the execution has already expired, the condition check happens every time just before checking the constraints, which also
+   * means that context in which the condition code runs is arbitrary.
+   *
+   * This is different from [expireWith], because the latter makes the execution cancel immediately on expiration,
+   * and [cancelIf] checks the condition only before executing a task, that is, after scheduling all the necessary constraints.
+   * While this may seem to be a subtle detail, there's a differences in when the cancellation of a promise or a coroutine job happens.
+   */
+  fun cancelIf(condition: BooleanSupplier): E
 
   /**
    * Execution context is defined using a list of [ContextConstraint]s, with each constraint called to ensure the current context

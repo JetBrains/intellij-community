@@ -15,17 +15,24 @@ import java.util.function.BooleanSupplier;
  */
 public class ConstrainedTaskExecutor implements Executor {
   private final @NotNull ConstrainedExecutionScheduler myExecutionScheduler;
+  private final @Nullable BooleanSupplier myCancellationCondition;
   private final @Nullable Expiration myExpiration;
 
   public ConstrainedTaskExecutor(@NotNull ConstrainedExecutionScheduler executionScheduler,
+                                 @Nullable BooleanSupplier cancellationCondition,
                                  @Nullable Expiration expiration) {
     myExecutionScheduler = executionScheduler;
+    myCancellationCondition = cancellationCondition;
     myExpiration = expiration;
   }
 
   @Override
   public void execute(@NotNull Runnable command) {
-    final BooleanSupplier condition = (myExpiration == null) ? null : () -> !myExpiration.isExpired();
+    final BooleanSupplier condition = ((myExpiration == null) && (myCancellationCondition == null)) ? null : () -> {
+      if (myExpiration != null && myExpiration.isExpired()) return false;
+      if (myCancellationCondition != null && myCancellationCondition.getAsBoolean()) return false;
+      return true;
+    };
     myExecutionScheduler.scheduleWithinConstraints(command, condition);
   }
 
@@ -43,7 +50,15 @@ public class ConstrainedTaskExecutor implements Executor {
       promise.onProcessed(value -> expirationHandle.unregisterHandler());
     }
 
-    final BooleanSupplier condition = () -> !(myExpiration != null && myExpiration.isExpired() || promise.isCancelled());
+    final BooleanSupplier condition = () -> {
+      if (promise.isCancelled()) return false;
+      if (myExpiration != null && myExpiration.isExpired()) return false;
+      if (myCancellationCondition != null && myCancellationCondition.getAsBoolean()) {
+        promise.cancel();
+        return false;
+      }
+      return true;
+    };
     myExecutionScheduler.scheduleWithinConstraints(() -> {
       try {
         final T result = task.call();

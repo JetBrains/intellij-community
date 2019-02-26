@@ -12,6 +12,10 @@ import kotlinx.coroutines.*
  * either a Disposable (see [DisposableExpiration]), or another job (see [JobExpiration]).
  */
 interface Expiration {
+  /**
+   * Tells whether the handle has expired *and* every expiration handler has finished.
+   * Returns false when checked from inside an expiration handler.
+   */
   val isExpired: Boolean
 
   /** The caller must ensure the returned handle is properly disposed. */
@@ -41,10 +45,12 @@ abstract class AbstractExpiration : Expiration {
   protected abstract val job: Job
 
   override val isExpired: Boolean
-    get() = job.isCancelled
+    get() = job.isCompleted
 
+  @Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
+  @UseExperimental(InternalCoroutinesApi::class)
   override fun invokeOnExpiration(handler: Runnable): Expiration.Handle =
-    job.invokeOnCompletion { handler.run() }.toHandlerRegistration()
+    job.invokeOnCompletion(onCancelling = true) { handler.run() }.toHandlerRegistration()
 
   companion object {
     internal fun DisposableHandle.toHandlerRegistration(): Expiration.Handle {
@@ -74,7 +80,7 @@ class DisposableExpiration(private val disposable: Disposable) : AbstractExpirat
   }
 
   override val isExpired: Boolean
-    get() = job.isCancelled && disposable.isDisposed
+    get() = job.isCompleted && disposable.isDisposed
 
   override fun equals(other: Any?): Boolean = other is DisposableExpiration && disposable === other.disposable
   override fun hashCode(): Int = System.identityHashCode(disposable)
@@ -94,10 +100,12 @@ fun Expiration.Companion.composeExpiration(expirationSet: Collection<Expiration>
   }
 }
 
+fun Expiration.invokeOnExpiration(block: () -> Unit) = invokeOnExpiration(Runnable(block))
+
 fun Expiration.cancelJobOnExpiration(job: Job): Expiration.Handle {
-  return invokeOnExpiration(Runnable {
+  return invokeOnExpiration {
     job.cancel()
-  }).also { registration ->
+  }.also { registration ->
     job.invokeOnCompletion { registration.unregisterHandler() }
   }
 }

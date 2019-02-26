@@ -6,6 +6,7 @@ import com.intellij.openapi.application.constraints.ConstrainedExecution.Context
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Runnable
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.function.BooleanSupplier
 import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 /**
@@ -15,24 +16,32 @@ import kotlin.LazyThreadSafetyMode.PUBLICATION
  *
  * @author eldar
  */
-internal abstract class ExpirableConstrainedExecution<E : ConstrainedExecution<E>>(constraints: Array<ContextConstraint>,
-                                                                                   private val expirationSet: Set<Expiration>)
-  : BaseConstrainedExecution<E>(constraints) {
+internal abstract class ExpirableConstrainedExecution<E : ConstrainedExecution<E>>(
+  constraints: Array<ContextConstraint>,
+  protected val cancellationConditions: Array<BooleanSupplier>,
+  protected val expirationSet: Set<Expiration>
+) : BaseConstrainedExecution<E>(constraints) {
 
-  protected abstract fun cloneWith(constraints: Array<ContextConstraint>, expirationSet: Set<Expiration>): E
+  protected abstract fun cloneWith(constraints: Array<ContextConstraint>,
+                                   cancellationConditions: Array<BooleanSupplier>,
+                                   expirationSet: Set<Expiration>): E
 
-  override fun cloneWith(constraints: Array<ContextConstraint>): E = cloneWith(constraints, expirationSet)
+  override fun cloneWith(constraints: Array<ContextConstraint>): E = cloneWith(constraints, cancellationConditions, expirationSet)
 
   override fun withConstraint(constraint: ContextConstraint, parentDisposable: Disposable): E {
     val expirableHandle = DisposableExpiration(parentDisposable)
-    return cloneWith(constraints + ExpirableContextConstraint(constraint, expirableHandle),
-                     expirationSet + expirableHandle)
+    val expirableConstraint = ExpirableContextConstraint(constraint, expirableHandle)
+    return cloneWith(constraints + expirableConstraint, cancellationConditions, expirationSet + expirableHandle)
   }
 
   override fun expireWith(parentDisposable: Disposable): E {
     val expirableHandle = DisposableExpiration(parentDisposable)
-    @Suppress("UNCHECKED_CAST")
-    return if (expirableHandle in expirationSet) this as E else cloneWith(constraints, expirationSet + expirableHandle)
+    if (expirableHandle in expirationSet) @Suppress("UNCHECKED_CAST") return this as E
+    return cloneWith(constraints, cancellationConditions, expirationSet + expirableHandle)
+  }
+
+  override fun cancelIf(condition: BooleanSupplier): E {
+    return cloneWith(constraints, cancellationConditions + condition, expirationSet)
   }
 
   /** Must schedule the runnable and return immediately. */
@@ -43,6 +52,15 @@ internal abstract class ExpirableConstrainedExecution<E : ConstrainedExecution<E
   }
 
   override fun composeExpiration(): Expiration? = compositeExpiration
+
+  override fun composeCancellationCondition(): BooleanSupplier? {
+    val conditions = cancellationConditions
+    return when (conditions.size) {
+      0 -> null
+      1 -> conditions.single()
+      else -> BooleanSupplier { conditions.any { it.asBoolean } }
+    }
+  }
 
   /**
    * Wraps an expirable context constraint so that the [schedule] method guarantees to execute runnables, regardless the [expiration] state.
@@ -60,13 +78,18 @@ internal abstract class ExpirableConstrainedExecution<E : ConstrainedExecution<E
     override fun schedule(runnable: Runnable) {
       val runOnce = RunOnce()
 
-      val expirationHandle = expiration.invokeOnExpiration(Runnable {
-        runOnce {
-          // We expect the coroutine job has already been cancelled through the expirableHandle at this point.
-          // TODO[eldar] relying on the order of invocations of CompletionHandlers
-          dispatchLaterUnconstrained(runnable)
+      val invokeWhenCompletelyExpiredRunnable = object : Runnable {
+        override fun run() {
+          if (expiration.isExpired) {
+            runOnce {
+              // At this point all the expiration handlers, including the one responsible for cancelling the coroutine job, have finished.
+              runnable.run()
+            }
+          }
+          else if (runOnce.isActive) dispatchLaterUnconstrained(this)
         }
-      })
+      }
+      val expirationHandle = expiration.invokeOnExpiration(invokeWhenCompletelyExpiredRunnable)
       if (runOnce.isActive) {
         constraint.schedule(Runnable {
           runOnce {
