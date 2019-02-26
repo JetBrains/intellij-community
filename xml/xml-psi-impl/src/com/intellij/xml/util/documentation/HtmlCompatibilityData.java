@@ -3,6 +3,8 @@ package com.intellij.xml.util.documentation;
 
 import com.google.gson.Gson;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.xml.XmlTagImpl;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
@@ -21,18 +23,17 @@ public class HtmlCompatibilityData {
   private static final Ref<Map> ourGlobalAttributesCache = new Ref<>();
 
   @Nullable
-  public static Map getTagData(@NotNull String tagName) {
+  public static Map getTagData(@NotNull String namespace, @NotNull String tagName) {
     String key = tagName.equals("input") ? "input/text" : tagName;
-    if (!ourTagsCache.containsKey(key)) {
-      URL resource = HtmlCompatibilityData.class.getResource("compatData/elements/" + key + ".json");
+    String cacheKey = namespace + key;
+    if (!ourTagsCache.containsKey(cacheKey)) {
+      URL resource = HtmlCompatibilityData.class.getResource("compatData/" + namespace + "/elements/" + key + ".json");
       if (resource == null) return null;
       try {
         Object json = new Gson().fromJson(new InputStreamReader(resource.openStream(), StandardCharsets.UTF_8), Object.class);
-        Object tagHolder = ((Map)json).get("html");
-        if (tagHolder == null) tagHolder = ((Map)json).get("svg");
-        if (tagHolder == null) tagHolder = ((Map)json).get("mathml");
+        Object tagHolder = ((Map)json).get(namespace.isEmpty() ? "html" : namespace);
         if (tagHolder == null) {
-          ourTagsCache.put(key, null);
+          ourTagsCache.put(cacheKey, null);
           return null;
         }
 
@@ -45,14 +46,14 @@ public class HtmlCompatibilityData {
         } else {
           data = ((Map)elements).get(key);
         }
-        ourTagsCache.put(key, data);
+        ourTagsCache.put(cacheKey, data);
       }
       catch (IOException e) {
-        ourTagsCache.put(key, null);
+        ourTagsCache.put(cacheKey, null);
         return null;
       }
     }
-    return (Map)ourTagsCache.get(key);
+    return (Map)ourTagsCache.get(cacheKey);
   }
 
   @Nullable
@@ -67,7 +68,27 @@ public class HtmlCompatibilityData {
         key += type;
       }
     }
-    return getTagData(key);
+    return getTagData(getNamespace(tag), key);
+  }
+
+  private static String getNamespace(XmlTag tag) {
+    PsiElement element = tag.getParent();
+    while (element != null && !(element instanceof PsiFile)) {
+      if (element instanceof XmlTag) {
+        String name = element instanceof XmlTagImpl && ((XmlTagImpl)tag).isCaseSensitive() ?
+                     ((XmlTagImpl)element).getName() :
+                     ((XmlTag)element).getName().toLowerCase(Locale.US);
+
+        if ("math".equals(name)) {
+          return "mathml";
+        }
+        if ("svg".equals(name)) {
+          return "svg";
+        }
+      }
+      element = element.getParent();
+    }
+    return "";
   }
 
   @Nullable
