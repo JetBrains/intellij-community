@@ -29,7 +29,7 @@ public class EditConfigurationAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    RunDashboardRunConfigurationNode node = project == null ? null : RunDashboardActionUtils.getTargets(e).single();
+    RunDashboardRunConfigurationNode node = project == null ? null : RunDashboardActionUtils.getTarget(e);
     boolean enabled = node != null && RunManager.getInstance(node.getProject()).hasSettings(node.getConfigurationSettings());
     e.getPresentation().setEnabled(enabled);
     boolean popupPlace = ActionPlaces.isPopupPlace(e.getPlace());
@@ -42,7 +42,7 @@ public class EditConfigurationAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    RunDashboardRunConfigurationNode node = project == null ? null : RunDashboardActionUtils.getTargets(e).single();
+    RunDashboardRunConfigurationNode node = project == null ? null : RunDashboardActionUtils.getTarget(e);
     if (node == null) return;
 
     RunDialog.editConfiguration(project, node.getConfigurationSettings(),
