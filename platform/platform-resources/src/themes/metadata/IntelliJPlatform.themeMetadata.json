@@ -68,6 +68,30 @@
       "description": "Background of the selected tab in the Debugger tool window. The foreground is EditorTabs.selectedForeground."
     },
     {
+    "key": "DefaultTabs.background"
+    },
+    {
+      "key": "DefaultTabs.borderColor"
+    },
+    {
+      "key": "DefaultTabs.hoverColor"
+    },
+    {
+      "key": "DefaultTabs.hoverMaskColor"
+    },
+    {
+      "key": "DefaultTabs.inactiveMaskColor"
+    },
+    {
+      "key": "DefaultTabs.inactiveUnderlineColor"
+    },
+    {
+      "key": "DefaultTabs.underlineColor"
+    },
+    {
+      "key": "DefaultTabs.underlineHeight"
+    },
+    {
       "key": "Editor.background",
       "description": "Empty editor area"
     },
@@ -78,13 +102,26 @@
       "key": "Editor.shortcutForeground"
     },
     {
+      "key": "EditorTabs.background"
+    },
+    {
       "key": "EditorTabs.borderColor",
       "description": "The JBEditorTabs component"
+    },
+    {
+      "key": "EditorTabs.hoverColor"
+    },
+    {
+      "key": "EditorTabs.hoverMaskColor"
     },
     {
       "key": "EditorTabs.inactiveMaskColor",
       "description": "Masks inactive tabs to make them darker"
     },
+    {
+      "key": "EditorTabs.inactiveUnderlineColor"
+    },
+
     {
       "key": "EditorTabs.selectedBackground",
       "description": "Background for all tabs. Inactive tabs also use inactiveMaskColor."
@@ -96,6 +133,9 @@
     {
       "key": "EditorTabs.underlineColor",
       "description": "The line under the selected tab. Dark themes only"
+    },
+    {
+      "key": "EditorTabs.underlineHeight"
     },
     {
       "key": "FileColor.Blue",
@@ -589,6 +629,9 @@
     },
     {
       "key": "ToolWindow.HeaderTab.hoverInactiveBackground"
+    },
+    {
+      "key": "ToolWindow.HeaderTab.underlineHeight"
     },
     {
       "key": "UiDesigner.Panel.background",
