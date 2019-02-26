@@ -168,10 +168,11 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   }
 
   public static class MatchedValue implements Comparable<MatchedValue> {
-    @NotNull public final Comparable value;
+    @NotNull public final Object value;
     @NotNull final String pattern;
 
-    public MatchedValue(@NotNull Comparable value, @NotNull String pattern) {
+    public MatchedValue(@NotNull Object value, @NotNull String pattern) {
+      assert value instanceof OptionDescription || value instanceof ActionWrapper;
       this.value = value;
       this.pattern = pattern;
     }
@@ -180,8 +181,8 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     @VisibleForTesting
     public String getValueText() {
       if (value instanceof OptionDescription) return ((OptionDescription)value).getHit();
-      if (!(value instanceof ActionWrapper)) return null;
-      return ((ActionWrapper)value).getAction().getTemplatePresentation().getText();
+      if (value instanceof ActionWrapper) return ((ActionWrapper)value).getAction().getTemplatePresentation().getText();
+      return null;
     }
 
     @Nullable
@@ -212,42 +213,43 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       int diff = o.getMatchingDegree() - getMatchingDegree();
       if (diff != 0) return diff;
 
-      boolean edt = ApplicationManager.getApplication().isDispatchThread();
+      diff = getTypeWeight(o.value) - getTypeWeight(value);
+      if (diff != 0) return diff;
 
       if (value instanceof ActionWrapper && o.value instanceof ActionWrapper) {
-        if (edt || ((ActionWrapper)value).hasPresentation() && ((ActionWrapper)o.value).hasPresentation()) {
-          boolean p1Enable = ((ActionWrapper)value).isAvailable();
-          boolean p2enable = ((ActionWrapper)o.value).isAvailable();
-          if (p1Enable && !p2enable) return -1;
-          if (!p1Enable && p2enable) return 1;
-        }
-        //noinspection unchecked
-        int compared = value.compareTo(o.value);
+        ActionWrapper value1 = (ActionWrapper)value;
+        ActionWrapper value2 = (ActionWrapper)o.value;
+        int compared = value1.compareTo(value2);
         if (compared != 0) return compared;
       }
-      
-      if (value instanceof ActionWrapper && o.value instanceof BooleanOptionDescription) {
-        return edt && ((ActionWrapper)value).isAvailable() ? -1 : 1;
-      }
-      
-      if (o.value instanceof ActionWrapper && value instanceof BooleanOptionDescription) {
-        return edt && ((ActionWrapper)o.value).isAvailable() ? 1 : -1;
-      }
-      
-      if (value instanceof BooleanOptionDescription && !(o.value instanceof BooleanOptionDescription) && o.value instanceof OptionDescription) return -1;
-      if (o.value instanceof BooleanOptionDescription && !(value instanceof BooleanOptionDescription) && value instanceof OptionDescription) return 1;
-
-      if (value instanceof OptionDescription && !(o.value instanceof OptionDescription)) return 1;
-      if (o.value instanceof OptionDescription && !(value instanceof OptionDescription)) return -1;
 
       diff = StringUtil.notNullize(getValueText()).length() - StringUtil.notNullize(o.getValueText()).length();
       if (diff != 0) return diff;
-      
-      //noinspection unchecked
-      diff = value.compareTo(o.value);
-      if (diff != 0) return diff;
-      
-      return o.hashCode() - hashCode(); 
+
+      if (value instanceof OptionDescription && o.value instanceof OptionDescription) {
+        OptionDescription value1 = (OptionDescription)value;
+        OptionDescription value2 = (OptionDescription)o.value;
+        diff = value1.compareTo(value2);
+        if (diff != 0) return diff;
+      }
+
+      return o.hashCode() - hashCode();
+    }
+
+    private static int getTypeWeight(@NotNull Object value) {
+      if (value instanceof ActionWrapper) {
+        ActionWrapper actionWrapper = (ActionWrapper)value;
+        if ((ApplicationManager.getApplication().isDispatchThread() || actionWrapper.hasPresentation()) &&
+            actionWrapper.isAvailable()) {
+          return 0;
+        }
+        return 2;
+      }
+      if (value instanceof OptionDescription) {
+        if (value instanceof BooleanOptionDescription) return 1;
+        return 3;
+      }
+      throw new IllegalArgumentException(value.getClass() + " - " + value.toString());
     }
 
     @Override

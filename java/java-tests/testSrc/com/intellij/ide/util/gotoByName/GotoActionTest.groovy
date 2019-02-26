@@ -84,7 +84,6 @@ class GotoActionTest extends LightCodeInsightFixtureTestCase {
       items += matchedOption(name, pattern)
       items += matchedOption(name, pattern)
       items += matchedBooleanOption(name, pattern)
-      items += new MatchedValue(name, pattern)
     }
 
     PlatformTestUtil.assertComparisonContractNotViolated(items,

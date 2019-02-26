@@ -247,7 +247,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     DumbAwareAction.create(e -> {
       Object o = popup.getChosenElement();
       if (o instanceof GotoActionModel.MatchedValue && activeKeymap != null) {
-        Comparable value = ((GotoActionModel.MatchedValue)o).value;
+        Object value = ((GotoActionModel.MatchedValue)o).value;
         if (value instanceof GotoActionModel.ActionWrapper) {
           GotoActionModel.ActionWrapper aw = (GotoActionModel.ActionWrapper)value;
           if (aw.isAvailable()) {
