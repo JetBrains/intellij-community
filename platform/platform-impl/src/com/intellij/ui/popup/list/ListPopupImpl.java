@@ -242,9 +242,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     myList.setCellRenderer(getListElementRenderer());
 
-    myList.getActionMap().get("selectNextColumn").setEnabled(false);
-    myList.getActionMap().get("selectPreviousColumn").setEnabled(false);
-
     registerAction("handleSelection1", KeyEvent.VK_ENTER, 0, new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -252,14 +249,14 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       }
     });
 
-    registerAction("handleSelection2", KeyEvent.VK_RIGHT, 0, new AbstractAction() {
+    myList.getActionMap().put("selectNextColumn", new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         handleSelect(false);
       }
     });
 
-    registerAction("goBack2", KeyEvent.VK_LEFT, 0, new AbstractAction() {
+    myList.getActionMap().put("selectPreviousColumn", new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         if (isClosableByLeftArrow()) {
