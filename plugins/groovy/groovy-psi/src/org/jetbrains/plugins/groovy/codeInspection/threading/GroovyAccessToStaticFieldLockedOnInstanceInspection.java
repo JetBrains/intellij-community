@@ -38,12 +38,6 @@ public class GroovyAccessToStaticFieldLockedOnInstanceInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return "Access to static field locked on instance data";
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return "Access to static field <code>#ref</code> locked on instance data #loc";
   }

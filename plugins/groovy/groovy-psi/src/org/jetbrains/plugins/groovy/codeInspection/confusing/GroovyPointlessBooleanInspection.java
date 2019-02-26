@@ -45,12 +45,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyExpressionUtil.is
 public class GroovyPointlessBooleanInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return GroovyInspectionBundle.message("pointless.boolean.display.name");
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

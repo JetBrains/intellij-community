@@ -27,12 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 public class GroovyEmptyStatementBodyInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Statement with empty body";
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

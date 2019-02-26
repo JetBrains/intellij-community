@@ -30,13 +30,6 @@ public class GroovyRangeTypeCheckInspection extends BaseInspection {
     return new MyVisitor();
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return GroovyInspectionBundle.message("incorrect.range.argument");
-  }
-
   @Override
   protected GroovyFix buildFix(@NotNull PsiElement location) {
     final GrRangeExpression range = (GrRangeExpression)location;

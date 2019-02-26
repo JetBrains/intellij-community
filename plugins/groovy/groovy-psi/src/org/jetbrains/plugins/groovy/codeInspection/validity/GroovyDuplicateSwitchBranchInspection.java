@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.codeInspection.validity;
 
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
@@ -34,13 +33,6 @@ public class GroovyDuplicateSwitchBranchInspection extends BaseInspection {
   @Override
   public boolean isEnabledByDefault() {
     return true;
-  }
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Duplicate switch case";
   }
 
   @Override

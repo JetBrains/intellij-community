@@ -45,12 +45,6 @@ public class GroovyDoubleCheckedLockingInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return "Double-checked locking";
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return "Double-checked locking #loc";
   }

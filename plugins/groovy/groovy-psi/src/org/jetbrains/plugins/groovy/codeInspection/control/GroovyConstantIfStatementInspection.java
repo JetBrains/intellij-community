@@ -31,12 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 public class GroovyConstantIfStatementInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Constant if statement";
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

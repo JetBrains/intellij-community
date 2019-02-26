@@ -30,12 +30,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 public class GroovyConstantConditionalInspection extends BaseInspection {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return "Constant conditional expression";
-    }
-
-    @Override
     public boolean isEnabledByDefault() {
         return true;
     }

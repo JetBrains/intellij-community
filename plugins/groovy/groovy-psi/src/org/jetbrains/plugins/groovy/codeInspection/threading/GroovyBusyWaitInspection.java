@@ -29,12 +29,6 @@ public class GroovyBusyWaitInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return "Busy wait";
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return "Call to <code>Thread.#ref()</code> in a loop, probably busy-waiting #loc";
   }

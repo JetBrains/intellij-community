@@ -34,12 +34,6 @@ public class GroovyConditionalWithIdenticalBranchesInspection extends BaseInspec
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Conditional expression with identical branches";
-  }
-
-  @Override
   public String buildErrorString(Object... args) {
     return "Conditional expression with identical branches #loc";
   }

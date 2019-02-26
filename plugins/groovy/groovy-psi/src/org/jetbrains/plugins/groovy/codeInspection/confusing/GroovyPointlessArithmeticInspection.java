@@ -23,12 +23,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyExpressionUtil.is
 public class GroovyPointlessArithmeticInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Pointless arithmetic expression";
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return false;
   }

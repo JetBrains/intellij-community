@@ -36,12 +36,6 @@ public class GroovyDoubleNegationInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return "Double negation";
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return "Double negation #ref #loc";
   }
