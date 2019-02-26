@@ -10,6 +10,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaRootPaneUI;
+import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -430,11 +431,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
     }
   }
 
-  static boolean isFrameDecorated() {
-    return SystemInfo.isWindows && Registry.is("ide.win.frame.decoration");
-  }
-
   private boolean isDecoratedMenu() {
-    return getUI() instanceof DarculaRootPaneUI && isFrameDecorated();
+    return getUI() instanceof DarculaRootPaneUI && IdeFrameDecorator.isCustomDecoration();
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -23,7 +24,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,9 +105,10 @@ public abstract class IdeFrameDecorator implements Disposable {
           myFrame.getRootPane().putClientProperty("oldBounds", myFrame.getBounds());
         }
         myFrame.dispose();
-        //if (! (Registry.is("ide.win.frame.decoration") && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()))) {
-        //  myFrame.setUndecorated(state);
-        //}
+
+        if (!isCustomDecoration()) {
+          myFrame.setUndecorated(state);
+        }
       }
       finally {
         if (state) {
@@ -182,5 +183,9 @@ public abstract class IdeFrameDecorator implements Disposable {
       }
       return ActionCallback.DONE;
     }
+  }
+
+  public static boolean isCustomDecoration() {
+    return SystemInfo.isWindows && Registry.is("ide.win.frame.decoration") && JdkEx.isCustomDecorationSupported();
   }
 }

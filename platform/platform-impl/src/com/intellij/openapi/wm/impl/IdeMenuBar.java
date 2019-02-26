@@ -18,7 +18,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.status.ClockPanel;
@@ -126,7 +125,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       return JBUI.Borders.emptyBottom(1);
     }
 
-    if (SystemInfo.isWindows && Registry.is("ide.win.frame.decoration") && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
+    if (IdeFrameDecorator.isCustomDecoration() && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
       return null;
     }
 

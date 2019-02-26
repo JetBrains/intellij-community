@@ -96,7 +96,7 @@ open class DarculaTitleButtons constructor(myCloseAction: Action) : Destroyable 
   }
 
   protected fun addComponent(component: JComponent) {
-    panel.add(component, "growy, wmin ${JBUI.scale(38)}, hmin ${JBUI.scale(28)}")
+    panel.add(component, "growy, wmin ${JBUI.scale(39)}, hmin ${JBUI.scale(23)}")
   }
 
   protected fun getStyle(icon: Icon, hoverIcon : Icon): ComponentStyle<JComponent> {
