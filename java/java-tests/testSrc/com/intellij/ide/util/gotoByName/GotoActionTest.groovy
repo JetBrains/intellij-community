@@ -131,8 +131,8 @@ class GotoActionTest extends LightCodeInsightFixtureTestCase {
 
   void "test detected action groups"() {
     assert getPresentableGroupName(project, "Zoom", "Images.Editor.ZoomIn", false) == "Images"
-    assert getPresentableGroupName(project, "Tab", "SearchEverywhere.NextTab", false) == "Search Everywhere"
-    assert getPresentableGroupName(project, "Tab", "NextTab", false) == "Window | Editor Tabs"
+    assert getPresentableGroupName(project, "Next Tab", "SearchEverywhere.NextTab", false) == "Search Everywhere"
+    assert getPresentableGroupName(project, "Next Tab", "NextTab", false) == "Window | Editor Tabs"
     assert getPresentableGroupName(project, "Next Tab", "NextEditorTab", false) == "Tabs"
   }
 
@@ -224,7 +224,9 @@ class GotoActionTest extends LightCodeInsightFixtureTestCase {
     return computeWithCustomDataProvider(passFlag) {
       def result = getActionsFromPopup(project, pattern)
       def matches = result.findAll { it.action == testAction }
-      assert matches.size() == 1
+      if (matches.size() != 1) {
+        fail("Matches: " + matches + "\nPopup actions:  " + result.size() + " - " + result)
+      }
 
       ActionWrapper wrapper = matches[0]
       wrapper.getPresentation() // update before show
