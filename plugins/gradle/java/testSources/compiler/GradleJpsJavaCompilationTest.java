@@ -6,7 +6,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 
-public class GradleJavaCompilationTest extends GradleCompilingTestCase {
+public class GradleJpsJavaCompilationTest extends GradleJpsCompilingTestCase {
   @Test
   public void testCustomSourceSetDependencies() throws IOException {
     ExternalProjectsManagerImpl.getInstance(myProject).setStoreExternally(true);

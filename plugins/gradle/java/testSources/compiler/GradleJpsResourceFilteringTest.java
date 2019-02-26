@@ -6,7 +6,7 @@ import org.junit.Test;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleResourceFilteringTest extends GradleCompilingTestCase {
+public class GradleJpsResourceFilteringTest extends GradleJpsCompilingTestCase {
 
   @Test
   public void testHeadFilter() throws Exception {
