@@ -320,7 +320,28 @@ public class GitLogUtil {
                                              @NotNull GitLineHandler handler,
                                              @NotNull String... parameters)
     throws VcsException {
-    GitLogParser parser = createParserForDetails(handler, project, withRefs, withChanges, withRenames, withFullMergeDiff, parameters);
+    GitLogParser.GitLogOption[] options = {HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL,
+      PARENTS, SUBJECT, BODY, RAW_BODY};
+    if (withRefs) {
+      options = ArrayUtil.append(options, REF_NAMES);
+    }
+    GitLogParser parser = new GitLogParser(project, withChanges ? GitLogParser.NameStatus.STATUS : GitLogParser.NameStatus.NONE, options);
+    handler.setStdoutSuppressed(true);
+    handler.addParameters(parameters);
+    handler.addParameters(parser.getPretty(), "--encoding=UTF-8");
+    if (withRefs) {
+      handler.addParameters("--decorate=full");
+    }
+    if (withChanges) {
+      handler.addParameters("--name-status");
+    }
+    if (withRenames) {
+      handler.addParameters("-M");
+    }
+    if (withFullMergeDiff) {
+      handler.addParameters("-m");
+    }
+    handler.endOptions();
 
     StopWatch sw = StopWatch.start("loading details in [" + root.getName() + "]");
 
@@ -329,41 +350,6 @@ public class GitLogUtil {
     handlerListener.reportErrors();
 
     sw.report();
-  }
-
-  @NotNull
-  private static GitLogParser createParserForDetails(@NotNull GitTextHandler h,
-                                                     @NotNull Project project,
-                                                     boolean withRefs,
-                                                     boolean withChanges,
-                                                     boolean withRenames,
-                                                     boolean withFullMergeDiff,
-                                                     String... parameters) {
-    GitLogParser.NameStatus status = withChanges ? GitLogParser.NameStatus.STATUS : GitLogParser.NameStatus.NONE;
-    GitLogParser.GitLogOption[] options = {HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL,
-      PARENTS, SUBJECT, BODY, RAW_BODY};
-    if (withRefs) {
-      options = ArrayUtil.append(options, REF_NAMES);
-    }
-    GitLogParser parser = new GitLogParser(project, status, options);
-    h.setStdoutSuppressed(true);
-    h.addParameters(parameters);
-    h.addParameters(parser.getPretty(), "--encoding=UTF-8");
-    if (withRefs) {
-      h.addParameters("--decorate=full");
-    }
-    if (withChanges) {
-      h.addParameters("--name-status");
-    }
-    if (withRenames) {
-      h.addParameters("-M");
-    }
-    if (withFullMergeDiff) {
-      h.addParameters("-m");
-    }
-    h.endOptions();
-
-    return parser;
   }
 
   public static void readFullDetailsForHashes(@NotNull Project project,
