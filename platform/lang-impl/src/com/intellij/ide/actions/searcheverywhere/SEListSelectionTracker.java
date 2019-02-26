@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBList;
 
 import javax.swing.event.ListSelectionEvent;
@@ -14,7 +15,7 @@ class SEListSelectionTracker implements ListSelectionListener {
   private final JBList<?> myList;
   private final SearchEverywhereUI.SearchListModel myListModel;
 
-  private boolean locked;
+  private int lockCounter;
   private final List<Object> selectedItems = new ArrayList<>();
 
   SEListSelectionTracker(JBList<?> list, SearchEverywhereUI.SearchListModel model) {
@@ -24,30 +25,36 @@ class SEListSelectionTracker implements ListSelectionListener {
 
   @Override
   public void valueChanged(ListSelectionEvent e) {
-    if (locked) return;
+    if (isLocked()) return;
 
     saveSelection();
   }
 
   void saveSelection() {
     selectedItems.clear();
+
+    int[] indices = myList.getSelectedIndices();
+    if (indices.length == 1 && myListModel.isMoreElement(indices[0])) return;
+
     selectedItems.addAll(myList.getSelectedValuesList());
   }
 
   void restoreSelection() {
-    locked = true;
+    if (isLocked()) return;
+
+    lock();
     try {
       int[] indicesToSelect = calcIndicesToSelect();
 
-      if (indicesToSelect.length > 0) {
-        myList.setSelectedIndices(indicesToSelect);
+      if (indicesToSelect.length == 0) {
+        indicesToSelect = new int[]{0};
       }
-      else {
-        myList.setSelectedIndex(0);
-      }
+
+      myList.setSelectedIndices(indicesToSelect);
+      ScrollingUtil.ensureRangeIsVisible(myList, indicesToSelect[0], indicesToSelect[indicesToSelect.length - 1]);
     }
     finally {
-      locked = false;
+      unlock();
     }
   }
 
@@ -58,8 +65,16 @@ class SEListSelectionTracker implements ListSelectionListener {
     }
   }
 
-  void setLocked(boolean lock) {
-    locked = lock;
+  void lock() {
+    lockCounter++;
+  }
+
+  void unlock() {
+    if (lockCounter > 0) lockCounter--;
+  }
+
+  private boolean isLocked() {
+    return lockCounter > 0;
   }
 
   private int[] calcIndicesToSelect() {
