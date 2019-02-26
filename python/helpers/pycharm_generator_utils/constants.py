@@ -805,8 +805,8 @@ CLASS_ATTR_BLACKLIST = [
     'panda3d.core.ExecutionEnvironment.environment_variables',
 ]
 
-GENERATOR_VERSION_LINE = re.compile(r'# by generator (?P<version>\d+\.\d+)')
-REQUIRED_VERSION_LINE = re.compile(r'(?P<name>\S+)\s+(?P<version>\d+\.\d+)')
+SKELETON_HEADER_VERSION_LINE = re.compile(r'# by generator (?P<version>\d+\.\d+)')
+REQUIRED_GEN_VERSION_LINE = re.compile(r'(?P<name>\S+)\s+(?P<version>\d+\.\d+)')
 BLACKLIST_VERSION_LINE = re.compile(r'(?P<path>[^=]+) = (?P<version>\d+\.\d+) (?P<mtime>\d+)')
 
 ENV_TEST_MODE_FLAG = 'GENERATOR3_TEST_MODE'
