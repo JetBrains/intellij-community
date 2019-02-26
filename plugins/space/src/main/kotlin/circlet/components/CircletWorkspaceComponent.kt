@@ -6,10 +6,12 @@ import circlet.platform.client.*
 import circlet.settings.*
 import circlet.utils.*
 import circlet.workspaces.*
+import circlet.workspaces.WorkspaceState
 import com.intellij.openapi.components.*
 import com.intellij.openapi.options.*
 import runtime.*
 import runtime.async.*
+import runtime.json.*
 import runtime.reactive.*
 
 val circletWorkspace get() = application.getComponent<CircletWorkspaceComponent>()
@@ -34,14 +36,25 @@ class CircletWorkspaceComponent : ApplicationComponent, LifetimedComponent by Si
     override fun initComponent() {
         circletSettings.settings.view(lifetime) { lt, state ->
             val workspaceLifetime = lt.nested()
-            workspace.value = null
-            if (state.server.isNotBlank() && state.enabled) {
-                val wsConfig = ideaConfig(state.server)
-                val authenticator = IdeaAuthenticator(workspaceLifetime, wsConfig)
-                workspace.value = Workspace(workspaceLifetime, wsConfig, authenticator, IdeaPasswordSafePersistence)
-            }
-            else {
-                notifyDisconnected(workspaceLifetime)
+            launch(lt, Ui) {
+                workspace.value = null
+                if (state.server.isNotBlank() && state.enabled) {
+                    val ps = IdeaPasswordSafePersistence
+                    val wsConfig = ideaConfig(state.server)
+                    val authenticator = IdeaAuthenticator(workspaceLifetime, wsConfig)
+                    val wsStateText = ps.get(WorkspaceStateKey)
+                    if (wsStateText != null) {
+                        val wss = parseJson<WorkspaceState>(wsStateText)
+                        workspace.value = wsFromState(workspaceLifetime, wss, wsConfig, authenticator, ps)
+                    }
+                    else {
+                        notifyDisconnected(workspaceLifetime)
+                    }
+                }
+                else {
+                    notifyDisconnected(workspaceLifetime)
+                }
+
             }
         }
     }

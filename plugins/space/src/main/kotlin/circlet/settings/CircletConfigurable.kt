@@ -7,7 +7,6 @@ import circlet.common.oauth.*
 import circlet.components.*
 import circlet.messages.*
 import circlet.platform.client.*
-import circlet.workspaces.*
 import com.intellij.openapi.options.*
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.wm.*
@@ -121,13 +120,9 @@ class CircletConfigurable : SearchableConfigurable {
                     when (accessToken) {
                         is OAuthTokenResponse.Success -> {
                             connectLt.using { probleLt ->
-                                val localAuthenticator = object : Authenticator {
-                                    override suspend fun localAuthToken(): OAuthTokenResponse {
-                                        return accessToken
-                                    }
-                                }
-                                val ws = Workspace(probleLt, wsConfig, localAuthenticator, ps)
-                                val profile = ws.client.me.info().profile.resolve()
+                                val client = KCircletClient(probleLt, wsConfig.server, ps)
+                                client.start(accessToken.accessToken)
+                                val profile = client.me.info().profile.resolve()
                                 state.value = LoginState.Connected(servername, WorkspaceState(accessToken.refreshToken, profile))
                             }
 
