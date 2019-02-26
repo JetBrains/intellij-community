@@ -25,7 +25,7 @@ internal class StartUpMeasurementService : RestService() {
     // expose externally to use visualizer front-end
     // personal data is not exposed (but someone can say that 3rd plugin class names should be not exposed),
     // so, limit to dev builds only (EAP builds are not allowed too) or app in an internal mode (and still only for known hosts)
-    return isTrustedHostName(request) && ApplicationInfoEx.getInstanceEx().build.isSnapshot || ApplicationManager.getApplication().isInternal
+    return isTrustedHostName(request) && (ApplicationInfoEx.getInstanceEx().build.isSnapshot || ApplicationManager.getApplication().isInternal)
   }
 
   override fun isHostTrusted(request: FullHttpRequest, urlDecoder: QueryStringDecoder): Boolean {
