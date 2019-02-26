@@ -238,8 +238,8 @@ public class InstalledPackagesPanel extends JPanel {
               ApplicationManager.getApplication().invokeLater(() -> {
                 myPackagesTable.clearSelection();
                 updatePackages(selPackageManagementService);
-                myPackagesTable.setPaintBusy(false);
                 myCurrentlyInstalling.remove(packageName);
+                myPackagesTable.setPaintBusy(!myCurrentlyInstalling.isEmpty());
                 if (errorDescription == null) {
                   myNotificationArea.showSuccess("Package " + packageName + " successfully upgraded");
                 }
@@ -398,7 +398,7 @@ public class InstalledPackagesPanel extends JPanel {
   }
 
   private void onUpdateFinished() {
-    myPackagesTable.setPaintBusy(false);
+    myPackagesTable.setPaintBusy(!myCurrentlyInstalling.isEmpty());
     myPackagesTable.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
     updateUninstallUpgrade();
     // Action button presentations won't be updated if no events occur (e.g. mouse isn't moving, keys aren't being pressed).
@@ -533,7 +533,7 @@ public class InstalledPackagesPanel extends JPanel {
               final RepoPackage repoPackage = packageMap.get(pyPackage.getName());
               myPackagesTableModel.setValueAt(repoPackage == null ? null : repoPackage.getLatestVersion(), i, 2);
             }
-            myPackagesTable.setPaintBusy(false);
+            myPackagesTable.setPaintBusy(!myCurrentlyInstalling.isEmpty());
           }, ModalityState.stateForComponent(myPackagesTable));
         }
         catch (IOException ignored) {
