@@ -13,6 +13,7 @@ import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.Disposable;
@@ -85,26 +86,25 @@ class ServiceView extends JPanel implements Disposable {
   private final MyTreeModel myTreeModel;
   private final AsyncTreeModel myAsyncTreeModel;
   private Object myLastSelection;
-  private final List<? extends RunDashboardGrouper> myGroupers;
   private final RunDashboardStatusFilter myStatusFilter = new RunDashboardStatusFilter();
 
   @NotNull private final Project myProject;
+  @NotNull private final ServiceViewState myState;
 
   private final RecursionGuard myGuard = RecursionManager.createGuard("ServiceView.getData");
 
-  ServiceView(@NotNull Project project, @NotNull List<? extends RunDashboardGrouper> groupers) {
+  ServiceView(@NotNull Project project, @NotNull ServiceViewState state) {
     super(new BorderLayout());
     myProject = project;
-    myGroupers = groupers;
+    myState = state;
 
     myTree = new Tree();
     myTreeModel = new MyTreeModel();
     myAsyncTreeModel = new AsyncTreeModel(myTreeModel, this);
     myTree.setModel(myAsyncTreeModel);
     initTree();
-    myTreeModel.refreshAll();
 
-    mySplitter = new OnePixelSplitter(false, 0.3f);
+    mySplitter = new OnePixelSplitter(false, myState.contentProportion);
     myTreePanel = new JPanel(new BorderLayout());
     myTreePanel.add(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT), BorderLayout.CENTER);
     mySplitter.setFirstComponent(myTreePanel);
@@ -175,6 +175,9 @@ class ServiceView extends JPanel implements Disposable {
     // popup
     ActionGroup actions = (ActionGroup)ActionManager.getInstance().getAction(SERVICE_VIEW_NODE_POPUP);
     PopupHandler.installPopupHandler(myTree, actions, ActionPlaces.SERVICES_POPUP, ActionManager.getInstance());
+
+    myTreeModel.refreshAll();
+    myState.treeState.applyTo(myTree, myTreeModel.getRoot());
   }
 
   private void setTreeVisible(boolean visible) {
@@ -229,11 +232,6 @@ class ServiceView extends JPanel implements Disposable {
     treeGroup.add(collapseAllAction);
 
     treeGroup.addSeparator();
-    List<RunDashboardGrouper> groupers =
-      ContainerUtil.filter(myGroupers, grouper -> !grouper.getRule().isAlwaysEnabled());
-    if (!groupers.isEmpty()) {
-      treeGroup.add(new GroupByActionGroup(groupers));
-    }
     treeGroup.add(new StatusActionGroup());
 
     treeGroup.addSeparator();
@@ -261,12 +259,10 @@ class ServiceView extends JPanel implements Disposable {
     });
   }
 
-  float getContentProportion() {
-    return mySplitter.getProportion();
-  }
-
-  void setContentProportion(float proportion) {
-    mySplitter.setProportion(proportion);
+  ServiceViewState getState() {
+    myState.contentProportion = mySplitter.getProportion();
+    myState.treeState = TreeState.createOn(myTree);
+    return myState;
   }
 
   private class MyTreeExpander extends DefaultTreeExpander {
