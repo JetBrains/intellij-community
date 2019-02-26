@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.util.Function;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.text.FilePathHashingStrategy;
 import gnu.trove.THashMap;
@@ -29,10 +30,8 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.*;
 import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.VfsEventGenerationHelper.LOG;
 
@@ -82,19 +81,37 @@ class LocalFileSystemRefreshWorker {
   private RefreshContext createRefreshContext(@NotNull NewVirtualFileSystem fs, @NotNull PersistentFS persistentFS, @NotNull TObjectHashingStrategy<String> strategy) {
     int parallelism = Registry.intValue("vfs.use.nio-based.local.refresh.worker.parallelism", Runtime.getRuntime().availableProcessors() - 1);
     
-    if (myIsRecursive && parallelism > 0) {
-      final ForkJoinPool pool = new ForkJoinPool(parallelism);
-
+    if (myIsRecursive && parallelism > 0 && !ApplicationManager.getApplication().isDispatchThread()) {
       return new RefreshContext(fs, persistentFS, strategy) {
+        final ExecutorService service = AppExecutorUtil.createBoundedApplicationPoolExecutor("Refresh Worker", parallelism);
+        final AtomicInteger tasksScheduled = new AtomicInteger();
+        final AtomicInteger workersInProcess = new AtomicInteger();
+        final CountDownLatch refreshFinishedLatch = new CountDownLatch(1);
+
         @Override
         void submitRefreshRequest(@NotNull Runnable action) {
-          pool.submit(action);
+          tasksScheduled.incrementAndGet();
+          
+          service.submit(() -> {
+            workersInProcess.incrementAndGet();
+            try {
+              action.run();
+            } finally {
+              int workersBusy = workersInProcess.decrementAndGet();
+              int currentTasks = tasksScheduled.decrementAndGet();
+              if (workersBusy == 0 && currentTasks == 0) {
+                refreshFinishedLatch.countDown();
+              }
+            }
+          });
         }
 
         @Override
         void doWaitForRefreshToFinish() {
-          pool.awaitQuiescence(1, TimeUnit.DAYS);
-          pool.shutdown();
+          try {
+            refreshFinishedLatch.await(1, TimeUnit.DAYS);
+            service.shutdown();
+          } catch (InterruptedException ignore) {}
         }
       };
     }
