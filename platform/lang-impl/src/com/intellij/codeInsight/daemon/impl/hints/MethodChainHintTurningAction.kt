@@ -1,5 +1,5 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInsight.hints
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.codeInsight.daemon.impl.hints
 
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -14,5 +14,4 @@ class MethodChainHintTurningAction : ToggleAction() {
     CodeInsightSettings.getInstance().SHOW_METHOD_CHAIN_TYPES_INLINE = state
     MethodChainHintsPassFactory.modificationStampHolder.forceHintsUpdateOnNextPass()
   }
-
 }

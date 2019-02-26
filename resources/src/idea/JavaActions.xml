@@ -799,14 +799,6 @@
       <reference ref="EditorPopupMenu"/>
     </group>
 
-    <group id="MethodChainHintsContextMenu" popup="true">
-      <action id="MethodChainHintAction"
-              class="com.intellij.codeInsight.hints.MethodChainHintTurningAction"
-              text="Show method chain hints"/>
-      <separator/>
-      <reference ref="EditorPopupMenu"/>
-    </group>
-
     <action id="MethodOverloadSwitchUp" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchUpAction"/>
     <action id="MethodOverloadSwitchDown" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchDownAction" />
   </actions>

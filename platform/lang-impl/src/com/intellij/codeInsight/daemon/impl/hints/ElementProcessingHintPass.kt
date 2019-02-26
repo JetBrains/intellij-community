@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInsight.hints
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.codeInsight.daemon.impl.hints
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass
 import com.intellij.codeInsight.daemon.impl.HintRenderer
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.util.CaretVisualPositionKeeper
 import com.intellij.openapi.progress.ProgressIndicator
@@ -12,7 +11,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.util.DocumentUtil
 import com.intellij.util.SmartList
@@ -31,17 +29,15 @@ abstract class ElementProcessingHintPass(
 
     val virtualFile = rootElement.containingFile?.originalFile?.virtualFile ?: return
 
-    if (isAvailable(virtualFile)) {
-      val traverser = SyntaxTraverser.psiTraverser(rootElement)
-      traverser.forEach { collectElementHints(it,
-                                              { offset, hint ->
-                                                var hintList = hints.get(offset)
-                                                if (hintList == null) {
-                                                  hintList = SmartList()
-                                                  hints.put(offset, hintList)
-                                                }
-                                                hintList.add(hint)
-                                              })
+    if (!isAvailable(virtualFile)) return
+    SyntaxTraverser.psiTraverser(rootElement).forEach {
+      collectElementHints(it) { offset, hint ->
+        var hintList = hints.get(offset)
+        if (hintList == null) {
+          hintList = SmartList()
+          hints.put(offset, hintList)
+        }
+        hintList.add(hint)
       }
     }
   }
@@ -101,23 +97,5 @@ abstract class ElementProcessingHintPass(
         true
       }
     }
-  }
-}
-
-class ModificationStampHolder(private val key: Key<Long>) {
-  fun putCurrentModificationStamp(editor: Editor, file: PsiFile) {
-    editor.putUserData<Long>(key, ParameterHintsPassFactory.getCurrentModificationStamp(file))
-  }
-
-  private fun forceHintsUpdateOnNextPass(editor: Editor) {
-    editor.putUserData<Long>(key, null)
-  }
-
-  fun forceHintsUpdateOnNextPass() {
-    EditorFactory.getInstance().allEditors.forEach { forceHintsUpdateOnNextPass(it) }
-  }
-
-  fun isNotChanged(editor: Editor, file: PsiFile): Boolean {
-    return key.get(editor, 0) == ParameterHintsPassFactory.getCurrentModificationStamp(file)
   }
 }

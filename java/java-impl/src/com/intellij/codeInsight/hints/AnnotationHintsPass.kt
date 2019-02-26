@@ -5,6 +5,8 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.ExternalAnnotationsManager
 import com.intellij.codeInsight.InferredAnnotationsManager
 import com.intellij.codeInsight.daemon.impl.HintRenderer
+import com.intellij.codeInsight.daemon.impl.hints.ElementProcessingHintPass
+import com.intellij.codeInsight.daemon.impl.hints.ModificationStampHolder
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction

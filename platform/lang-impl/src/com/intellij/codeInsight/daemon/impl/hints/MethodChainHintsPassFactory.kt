@@ -1,13 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInsight.hints
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.codeInsight.daemon.impl.hints
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
+import com.intellij.codeInsight.hints.MethodChainHintsExtension
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiJavaFile
 
 class MethodChainHintsPassFactory(registrar: TextEditorHighlightingPassRegistrar) : TextEditorHighlightingPassFactory {
   init {
@@ -16,12 +16,13 @@ class MethodChainHintsPassFactory(registrar: TextEditorHighlightingPassRegistrar
 
   override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
     if (editor.isOneLineMode
-        || file !is PsiJavaFile
+        || MethodChainHintsExtension.forLanguage(file.language) == null
         || modificationStampHolder.isNotChanged(editor, file)) return null
     return MethodChainHintsPass(modificationStampHolder, file, editor)
   }
 
   companion object {
-    val modificationStampHolder: ModificationStampHolder = ModificationStampHolder(Key.create("METHOD_CHAIN_PASS_LAST_MODIFICATION_TIMESTAMP"))
+    val modificationStampHolder: ModificationStampHolder = ModificationStampHolder(
+      Key.create("METHOD_CHAIN_PASS_LAST_MODIFICATION_TIMESTAMP"))
   }
 }

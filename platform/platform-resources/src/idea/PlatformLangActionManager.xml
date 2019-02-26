@@ -64,6 +64,13 @@
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
       <add-to-group group-id="FavoritesViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
     </reference>
-  </actions>
 
+    <group id="MethodChainHintsContextMenu" popup="true">
+      <action id="MethodChainHintAction"
+              class="com.intellij.codeInsight.daemon.impl.hints.MethodChainHintTurningAction"
+              text="Show method chain hints"/>
+      <separator/>
+      <reference ref="EditorPopupMenu"/>
+    </group>
+  </actions>
 </idea-plugin>

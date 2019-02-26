@@ -435,6 +435,7 @@
                              displayName="Console"/>
 
     <projectService serviceInterface="com.intellij.semantic.SemService" serviceImplementation="com.intellij.semantic.SemServiceImpl"/>
+    <editorAppearanceConfigurable instance="com.intellij.application.options.editor.MethodChainHintsConfigurable"/>
 
     <!-- Global Code Style -->
     <projectConfigurable groupId="editor" groupWeight="170" dynamic="true" displayName="Code Style" id="preferences.sourceCode" instance="com.intellij.application.options.CodeStyleSchemesConfigurable" order="after colors"/>

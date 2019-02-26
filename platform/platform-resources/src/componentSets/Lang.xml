@@ -164,7 +164,9 @@
     <component>
       <implementation-class>com.intellij.util.indexing.FileBasedIndexProjectHandler</implementation-class>
     </component>
-
+    <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.hints.MethodChainHintsPassFactory</implementation-class>
+    </component>
     <component>
       <implementation-class>com.intellij.codeInsight.navigation.CtrlMouseHandler</implementation-class>
     </component>

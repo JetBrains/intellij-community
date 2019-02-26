@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hints
 import com.intellij.codeHighlighting.TextEditorHighlightingPass
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
+import com.intellij.codeInsight.daemon.impl.hints.ModificationStampHolder
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
@@ -22,6 +23,7 @@ class AnnotationHintsPassFactory(registrar: TextEditorHighlightingPassRegistrar)
   }
 
   companion object {
-    val modificationStampHolder: ModificationStampHolder = ModificationStampHolder(Key.create<Long>("LAST_PASS_MODIFICATION_TIMESTAMP"))
+    val modificationStampHolder: ModificationStampHolder = ModificationStampHolder(
+      Key.create<Long>("LAST_PASS_MODIFICATION_TIMESTAMP"))
   }
 }
