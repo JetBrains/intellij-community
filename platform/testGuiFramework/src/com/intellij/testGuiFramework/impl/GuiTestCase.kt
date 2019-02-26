@@ -154,6 +154,16 @@ open class GuiTestCase {
     }
   }
 
+  fun fileChooserDialog(title: String? = null,
+                        ignoreCaseTitle: Boolean = false,
+                        timeout: Timeout = Timeouts.defaultTimeout,
+                        func: FileChooserDialogFixture.() -> Unit) {
+    step("at '$title' file chooser") {
+      val dialog = findDialog(title, ignoreCaseTitle, timeout = timeout)
+      func(FileChooserDialogFixture(robot(), dialog))
+    }
+  }
+
   fun settingsDialog(timeout: Timeout = Timeouts.defaultTimeout,
                      needToKeepDialog: Boolean = false,
                      func: JDialogFixture.() -> Unit) {
