@@ -52,7 +52,7 @@ internal class GithubPullRequestDetailsComponent(private val dataLoader: GithubP
     detailsModel.details = null
   }
 
-  override fun reset() {
+  override fun resetUI() {
     detailsPanel.emptyText.text = DEFAULT_EMPTY_TEXT
     detailsModel.details = null
   }

@@ -3,12 +3,11 @@ package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.openapi.Disposable
 import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
 
 internal interface GithubPullRequestsListSelectionHolder {
   @get:CalledInAwt
   @set:CalledInAwt
-  var selection: GithubSearchedIssue?
+  var selectionNumber: Long?
 
   @CalledInAwt
   fun addSelectionChangeListener(disposable: Disposable, listener: () -> Unit)

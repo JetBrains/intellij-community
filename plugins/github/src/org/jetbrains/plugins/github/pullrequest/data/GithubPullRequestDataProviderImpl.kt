@@ -35,7 +35,7 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
                                                  private val serverPath: GithubServerPath,
                                                  private val username: String,
                                                  private val repositoryName: String,
-                                                 private val number: Long)
+                                                 override val number: Long)
   : GithubPullRequestDataProvider, Disposable {
 
   private val requestsChangesEventDispatcher = EventDispatcher.create(GithubPullRequestDataProvider.RequestsChangedListener::class.java)

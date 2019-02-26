@@ -20,7 +20,9 @@ object GithubPullRequestKeys {
   internal val PULL_REQUESTS_COMPONENT =
     DataKey.create<GithubPullRequestsComponentFactory.GithubPullRequestsComponent>("org.jetbrains.plugins.github.pullrequest.component")
   @JvmStatic
-  val SELECTED_PULL_REQUEST = DataKey.create<GithubSearchedIssue>("org.jetbrains.plugins.github.pullrequest.selected")
+  internal val SELECTED_SEARCHED_ISSUE = DataKey.create<GithubSearchedIssue>("org.jetbrains.plugins.github.pullrequest.list.selected")
+  @JvmStatic
+  val SELECTED_PULL_REQUEST = DataKey.create<Long>("org.jetbrains.plugins.github.pullrequest.selected")
   @JvmStatic
   val SELECTED_PULL_REQUEST_DATA_PROVIDER =
     DataKey.create<GithubPullRequestDataProvider>("org.jetbrains.plugins.github.pullrequest.selected.dataprovider")
