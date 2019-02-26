@@ -30,7 +30,7 @@ class SkeletonCachingTest(GeneratorTestCase):
     def get_test_data_path(self, rel_path):
         return os.path.join(self.test_data_dir, rel_path)
 
-    def run_generator(self, mod_qname, mod_path=None,
+    def run_generator(self, mod_qname=None, mod_path=None, builtins=False,
                       extra_syspath_entry=None,
                       gen_version=None,
                       required_gen_version_file_path=None):
@@ -39,7 +39,7 @@ class SkeletonCachingTest(GeneratorTestCase):
         if not extra_syspath_entry:
             extra_syspath_entry = self.test_data_dir
 
-        if not mod_path:
+        if mod_qname and not mod_path:
             mod_path = self.imported_module_path(mod_qname, extra_syspath_entry)
 
         env = {
@@ -59,10 +59,13 @@ class SkeletonCachingTest(GeneratorTestCase):
                 generator3_path,
                 '-d', output_dir,
                 '-s', extra_syspath_entry,
-                mod_qname
             ]
-            if mod_path:
-                args.append(mod_path)
+            if builtins:
+                args.append('-b')
+            else:
+                args.append(mod_qname)
+                if mod_path:
+                    args.append(mod_path)
 
             _log.info('Launching generator3 as: ' + ' '.join(args))
             subprocess.call(args, env=env)
@@ -70,8 +73,12 @@ class SkeletonCachingTest(GeneratorTestCase):
             os.environ.update(env)
             sys.path.append(extra_syspath_entry)
             try:
-                generator3.process_one(mod_qname, mod_path, mod_qname in sys.builtin_module_names, output_dir)
-            except:
+                if builtins:
+                    for mod_qname in sys.builtin_module_names:
+                        generator3.process_one(mod_qname, None, True, output_dir)
+                else:
+                    generator3.process_one(mod_qname, mod_path, mod_qname in sys.builtin_module_names, output_dir)
+            except Exception:
                 _log.error('Raised inside generator', exc_info=True)
             finally:
                 if mod_qname != 'sys':
@@ -85,6 +92,10 @@ class SkeletonCachingTest(GeneratorTestCase):
     @property
     def temp_skeletons_dir(self):
         return os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR, self.SDK_SKELETONS_DIR)
+
+    @property
+    def temp_cache_dir(self):
+        return os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR, 'cache')
 
     @staticmethod
     def imported_module_path(mod_qname, extra_syspath_entry):
@@ -108,6 +119,15 @@ class SkeletonCachingTest(GeneratorTestCase):
         sdk_skeletons/
             _ast.py
         """.format(hash=generator3.builtin_module_hash('_ast')))
+
+    def test_builtins_generation_mode_stores_all_skeletons_in_same_cache_directory(self):
+        self.run_generator(builtins=True)
+        builtins_hash = generator3.builtin_module_hash('sys')
+        builtins_cache_dir = os.path.join(self.temp_cache_dir, builtins_hash)
+        self.assertTrue(os.path.isdir(builtins_cache_dir))
+        builtin_mod_skeletons = os.listdir(builtins_cache_dir)
+        self.assertIn('_ast.py', builtin_mod_skeletons)
+        self.assertIn('sys.py', builtin_mod_skeletons)
 
     def test_layout_for_toplevel_physical_module(self):
         mod_path = os.path.join(self.test_data_dir, 'mod.py')

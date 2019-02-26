@@ -493,7 +493,9 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
 
         if should_update_skeleton(mod_cache_dir, name, mod_file_name):
             note('Updating cache for %s at %r', name, mod_cache_dir)
-            delete(mod_cache_dir)
+            # All builtin modules go into the same directory
+            if not doing_builtins:
+                delete(mod_cache_dir)
             mkdir(mod_cache_dir)
 
             old_modules = list(sys.modules.keys())
