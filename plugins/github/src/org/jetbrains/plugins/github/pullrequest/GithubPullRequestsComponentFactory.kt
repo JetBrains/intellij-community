@@ -119,6 +119,7 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
 
     @CalledInAwt
     fun refreshAllPullRequests() {
+      repoDataLoader.reset()
       listLoader.reset()
       dataLoader.invalidateAllData()
     }
