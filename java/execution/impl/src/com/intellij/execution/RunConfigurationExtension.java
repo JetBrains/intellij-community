@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution;
 
@@ -10,12 +10,21 @@ import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class RunConfigurationExtension extends RunConfigurationExtensionBase<RunConfigurationBase<?>>{
   public static final ExtensionPointName<RunConfigurationExtension> EP_NAME =
     new ExtensionPointName<>("com.intellij.runConfigurationExtension");
+
+  @ApiStatus.Experimental
+  public <T extends RunConfigurationBase> void updateJavaParameters(final T configuration,
+                                                                    final JavaParameters params,
+                                                                    RunnerSettings runnerSettings,
+                                                                    @NotNull final String executorId) throws ExecutionException {
+    updateJavaParameters(configuration,params,runnerSettings);
+  }
 
   public abstract <T extends RunConfigurationBase > void updateJavaParameters(final T configuration, final JavaParameters params, RunnerSettings runnerSettings) throws ExecutionException;
 

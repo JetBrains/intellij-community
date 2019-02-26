@@ -219,9 +219,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       ((JUnitPatcher)patcher).patchJavaParameters(project, module, javaParameters);
     }
 
-    // Append coverage parameters if appropriate
     for (RunConfigurationExtension ext : RunConfigurationExtension.EP_NAME.getExtensionList()) {
-      ext.updateJavaParameters(getConfiguration(), javaParameters, getRunnerSettings());
+      ext.updateJavaParameters(getConfiguration(), javaParameters, getRunnerSettings(), getEnvironment().getExecutor().getId());
     }
 
     if (!StringUtil.isEmptyOrSpaces(parameters)) {
