@@ -1,16 +1,30 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.actions.handlers;
 
+import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.highlighting.HighlightManagerImpl;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
+import com.intellij.execution.impl.EditorHyperlinkSupport;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -33,6 +47,7 @@ import org.jetbrains.concurrency.Promise;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.Collections;
 import java.util.List;
@@ -67,10 +82,14 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
                                                                  XSourcePosition position,
                                                                  final XDebugSession session,
                                                                  Editor editor) {
+    SmartStepData stepData = editor.getUserData(SMART_STEP_INPLACE_DATA);
+    if (stepData != null) {
+      stepData.stepInto(stepData.myCurrentVariant);
+    }
     computeVariants(handler, position)
       .onSuccess(variants -> UIUtil.invokeLaterIfNeeded(() -> {
                                                           if (!handleSimpleCases(handler, variants, session)) {
-                                                            showPopup(handler, variants, position, session, editor);
+                                                            choose(handler, variants, position, session, editor);
                                                           }
                                                         }))
       .onError(throwable -> session.stepInto());
@@ -92,6 +111,19 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
       return true;
     }
     return false;
+  }
+
+  private static <V extends XSmartStepIntoVariant> void choose(final XSmartStepIntoHandler<V> handler,
+                                                               List<V> variants,
+                                                               XSourcePosition position,
+                                                               final XDebugSession session,
+                                                               Editor editor) {
+    if (Registry.is("debugger.smart.step.inplace") && variants.stream().allMatch(v -> v.getHighlightElement() != null)) {
+      inplaceChoose(handler, variants, position, session, editor);
+    }
+    else {
+      showPopup(handler, variants, position, session, editor);
+    }
   }
 
   private static <V extends XSmartStepIntoVariant> void showPopup(final XSmartStepIntoHandler<V> handler,
@@ -156,6 +188,193 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
         LOG.error("Highlight element " + element + " is not from the current file");
       }
       highlighter.highlight(element, Collections.singletonList(element));
+    }
+  }
+
+  private static <V extends XSmartStepIntoVariant> void inplaceChoose(XSmartStepIntoHandler<V> handler,
+                                                                      List<V> variants,
+                                                                      XSourcePosition position,
+                                                                      XDebugSession session,
+                                                                      Editor editor) {
+    EditorColorsManager manager = EditorColorsManager.getInstance();
+    TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+    HighlightManager highlightManager = HighlightManager.getInstance(session.getProject());
+
+    SmartStepData<V> data = new SmartStepData<>(handler, variants, session, editor);
+    editor.putUserData(SMART_STEP_INPLACE_DATA, data);
+
+    for (V variant : variants) {
+      PsiElement element = variant.getHighlightElement();
+      if (element != null) {
+        List<RangeHighlighter> highlighters = ContainerUtil.newSmartList();
+        highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{element}, attributes, true, highlighters);
+        EditorHyperlinkSupport.associateHyperlink(highlighters.get(0), project -> data.stepInto(variant));
+      }
+    }
+
+    data.select(ContainerUtil.getFirstItem(variants));
+
+    EditorHyperlinkSupport hyperlinkSupport = editor.getUserData(EDITOR_HYPERLINK_SUPPORT_KEY);
+    if (hyperlinkSupport == null) {
+      hyperlinkSupport = new EditorHyperlinkSupport(editor, session.getProject());
+      editor.putUserData(EDITOR_HYPERLINK_SUPPORT_KEY, hyperlinkSupport);
+    }
+
+    if (!ourActionsRegistered) {
+      EditorActionManager actionManager = EditorActionManager.getInstance();
+      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_UP, new UpHandler(
+        actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)));
+      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT, new UpHandler(
+        actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT)));
+      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN, new DownHandler(
+        actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)));
+      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT, new DownHandler(
+        actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT)));
+      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_ESCAPE, new EscHandler(
+        actionManager.getActionHandler(IdeActions.ACTION_EDITOR_ESCAPE)));
+      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_ENTER, new EnterHandler(
+        actionManager.getActionHandler(IdeActions.ACTION_EDITOR_ENTER)));
+      ourActionsRegistered = true;
+    }
+  }
+
+  private static boolean ourActionsRegistered = false;
+  static final Key<SmartStepData> SMART_STEP_INPLACE_DATA = Key.create("SMART_STEP_INPLACE_DATA");
+  static final Key<EditorHyperlinkSupport> EDITOR_HYPERLINK_SUPPORT_KEY = Key.create("EDITOR_HYPERLINK_SUPPORT_KEY");
+
+  static class SmartStepData<V extends XSmartStepIntoVariant> {
+    private final XSmartStepIntoHandler<V> myHandler;
+    private final List<V> myVariants;
+    private final XDebugSession mySession;
+    private final Editor myEditor;
+    private V myCurrentVariant;
+    private RangeHighlighter myCurrentVariantHl;
+
+    SmartStepData(final XSmartStepIntoHandler<V> handler, List<V> variants, final XDebugSession session, Editor editor) {
+      myHandler = handler;
+      myVariants = variants;
+      mySession = session;
+      myEditor = editor;
+    }
+
+    void selectNext() {
+      int i = myVariants.indexOf(myCurrentVariant) + 1;
+      if (i >= myVariants.size()) {
+        i = 0;
+      }
+      select(myVariants.get(i));
+    }
+
+    void selectPrevious() {
+      int i = myVariants.indexOf(myCurrentVariant) - 1;
+      if (i < 0) {
+        i = myVariants.size() - 1;
+      }
+      select(myVariants.get(i));
+    }
+
+    void select(V variant) {
+      HighlightManager highlightManager = HighlightManager.getInstance(mySession.getProject());
+      myCurrentVariant = variant;
+      EditorColorsManager manager = EditorColorsManager.getInstance();
+      TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+      attributes = attributes.clone();
+      attributes.setEffectType(EffectType.ROUNDED_BOX);
+      attributes.setEffectColor(Color.RED);
+      if (myCurrentVariantHl != null) {
+        highlightManager.removeSegmentHighlighter(myEditor, myCurrentVariantHl);
+      }
+      List<RangeHighlighter> highlighters = ContainerUtil.newSmartList();
+      highlightManager
+        .addOccurrenceHighlights(myEditor, new PsiElement[]{variant.getHighlightElement()}, attributes, true, highlighters);
+      myCurrentVariantHl = ContainerUtil.getFirstItem(highlighters);
+    }
+
+    void stepInto(V variant) {
+      myEditor.putUserData(SMART_STEP_INPLACE_DATA, null);
+      HighlightManagerImpl highlightManager = (HighlightManagerImpl)HighlightManager.getInstance(mySession.getProject());
+      highlightManager.hideHighlights(myEditor, HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_ANY_KEY);
+      mySession.smartStepInto(myHandler, variant);
+    }
+  }
+
+  static abstract class SmartStepEditorActionHandler extends EditorActionHandler {
+    protected final EditorActionHandler myOriginalHandler;
+
+    SmartStepEditorActionHandler(EditorActionHandler originalHandler) {
+      myOriginalHandler = originalHandler;
+    }
+
+    @Override
+    protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      SmartStepData stepData = editor.getUserData(SMART_STEP_INPLACE_DATA);
+      if (stepData == null) {
+        myOriginalHandler.execute(editor, caret, dataContext);
+        return;
+      }
+      myPerform(editor, caret, dataContext, stepData);
+    }
+
+    protected abstract void myPerform(@NotNull Editor editor,
+                                      @Nullable Caret caret,
+                                      DataContext dataContext,
+                                      SmartStepData stepData);
+  }
+
+  private static class UpHandler extends SmartStepEditorActionHandler {
+    UpHandler(EditorActionHandler original) {
+      super(original);
+    }
+
+    @Override
+    protected void myPerform(@NotNull Editor editor,
+                             @Nullable Caret caret,
+                             DataContext dataContext,
+                             SmartStepData stepData) {
+      stepData.selectPrevious();
+    }
+  }
+
+  private static class DownHandler extends SmartStepEditorActionHandler {
+    DownHandler(EditorActionHandler original) {
+      super(original);
+    }
+
+    @Override
+    protected void myPerform(@NotNull Editor editor,
+                             @Nullable Caret caret,
+                             DataContext dataContext,
+                             SmartStepData stepData) {
+      stepData.selectNext();
+    }
+  }
+
+  private static class EscHandler extends SmartStepEditorActionHandler {
+    EscHandler(EditorActionHandler original) {
+      super(original);
+    }
+
+    @Override
+    protected void myPerform(@NotNull Editor editor,
+                             @Nullable Caret caret,
+                             DataContext dataContext,
+                             SmartStepData stepData) {
+      editor.putUserData(SMART_STEP_INPLACE_DATA, null);
+      myOriginalHandler.execute(editor, caret, dataContext);
+    }
+  }
+
+  private static class EnterHandler extends SmartStepEditorActionHandler {
+    EnterHandler(EditorActionHandler original) {
+      super(original);
+    }
+
+    @Override
+    protected void myPerform(@NotNull Editor editor,
+                             @Nullable Caret caret,
+                             DataContext dataContext,
+                             SmartStepData stepData) {
+      stepData.stepInto(stepData.myCurrentVariant);
     }
   }
 }
