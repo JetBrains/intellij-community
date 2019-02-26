@@ -6,6 +6,12 @@ iml_module(
     srcs = ["src"],
     iml_files = ["intellij.vcs.github.iml"],
     resources = ["resources"],
+    # do not sort: must match IML order
+    test_runtime_deps = [
+        "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
+        "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
+        "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
+    ],
     test_srcs = ["test"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
@@ -17,9 +23,7 @@ iml_module(
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
-        "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
         "//tools/idea/spellchecker:intellij.spellchecker",
-        "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
@@ -32,6 +36,7 @@ iml_module(
         "//tools/idea/platform/vcs-impl:intellij.platform.vcs.impl[module]",
         "//tools/idea/plugins/tasks/tasks-core:intellij.tasks.core[module]",
         "//tools/idea/plugins/tasks/tasks-api:intellij.tasks[module]",
+        "//tools/idea/plugins/tasks/tasks-compatibility:intellij.tasks.compatibility[module]",
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
         "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/.idea/libraries:gson",

@@ -5,11 +5,16 @@ iml_module(
     name = "intellij.java",
     srcs = ["src"],
     iml_files = ["intellij.java.iml"],
-    resources = ["resources"],
+    # do not sort: must match IML order
+    resources = [
+        "resources",
+        "compatibilityResources",
+    ],
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl",
         "//tools/idea/images:intellij.platform.images",
+        "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
         "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions",
     ],
     visibility = ["//visibility:public"],
@@ -29,11 +34,10 @@ iml_module(
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/platform/usageView:intellij.platform.usageView",
+        "//tools/idea/RegExpSupport:intellij.regexp",
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
         "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",
-        "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
         "//tools/idea/spellchecker:intellij.spellchecker",
-        "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
@@ -49,7 +53,6 @@ iml_module(
         "//tools/idea/.idea/libraries:Trove4j",
         "//tools/idea/platform/extensions:intellij.platform.extensions[module]",
         "//tools/idea/platform/icons:intellij.platform.icons[module]",
-        "//tools/idea/.idea/libraries:NanoXML",
         "//tools/idea/.idea/libraries:microba",
         "//tools/idea/.idea/libraries:jgoodies-forms",
         "//tools/idea/xml/openapi:intellij.xml[module]",

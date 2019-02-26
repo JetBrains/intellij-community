@@ -11,7 +11,6 @@ iml_module(
     exports = ["//tools/idea/plugins/gradle:intellij.gradle.common"],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
@@ -39,6 +38,7 @@ iml_module(
         "//tools/idea/.idea/libraries:swingx",
         "//tools/idea/platform/smRunner:intellij.platform.smRunner[module]",
         "//tools/idea/.idea/libraries:Kryo",
+        "//tools/idea/.idea/libraries:Objenesis",
         "//tools/idea/.idea/libraries:Ant",
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/plugins/gradle/tooling-extension-impl:intellij.gradle.toolingExtension.impl[module]",
@@ -77,6 +77,7 @@ iml_module(
         "//tools/idea/plugins/gradle/tooling-extension-impl:intellij.gradle.toolingExtension.tests[module, test]",
         "//tools/idea/plugins/maven/maven-server-api:intellij.maven.server[module, test]",
         "//tools/idea/.idea/libraries:mockito[test]",
+        "//tools/idea/java/execution/impl:intellij.java.execution.impl[module, test]",
         "//tools/idea/plugins/groovy:intellij.groovy[module, test]",
     ],
 )

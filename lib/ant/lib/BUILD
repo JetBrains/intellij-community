@@ -157,3 +157,17 @@ java_import(
     jars = ["ant-testutil.jar"],
     visibility = ["//visibility:public"],
 )
+
+# managed by go/iml_to_build
+java_import(
+    name = "ant-junitlauncher",
+    jars = ["ant-junitlauncher.jar"],
+    visibility = ["//visibility:public"],
+)
+
+# managed by go/iml_to_build
+java_import(
+    name = "ant-xz",
+    jars = ["ant-xz.jar"],
+    visibility = ["//visibility:public"],
+)

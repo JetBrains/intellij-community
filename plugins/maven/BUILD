@@ -6,7 +6,11 @@ iml_module(
     srcs = ["src/main/java"],
     iml_files = ["intellij.maven.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
-    resources = ["src/main/resources"],
+    # do not sort: must match IML order
+    resources = [
+        "src/main/resources",
+        "src/main/compatibilityResources",
+    ],
     test_srcs = ["src/test/java"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
@@ -29,7 +33,6 @@ iml_module(
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/plugins/maven/error-prone-compiler:intellij.maven.errorProne.compiler",
-        "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
@@ -67,7 +70,7 @@ iml_module(
         "//tools/idea/spellchecker:intellij.spellchecker[module]",
         "//tools/idea/platform/vcs-api:intellij.platform.vcs[module]",
         "//tools/idea/plugins/properties/properties-psi-api:intellij.properties.psi[module]",
-        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-archiver/2.4.4:jar",
+        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-archiver/3.0.3:jar",
         "//tools/idea/platform/external-system-api:intellij.platform.externalSystem[module]",
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl[module]",
         "//tools/idea/aether-dependency-resolver:intellij.java.aetherDependencyResolver[module]",
@@ -76,6 +79,8 @@ iml_module(
         "//tools/idea/platform/util:intellij.platform.util.tests[module, test]",
         "//tools/idea:intellij.java.compiler.tests[module, test]",
         "//tools/idea/plugins/maven/maven3-server-common:intellij.maven.server.m3.common[module, test]",
+        "//tools/idea/.idea/libraries:assertJ[test]",
+        "//tools/idea/.idea/libraries:NanoXML",
     ],
 )
 
@@ -104,10 +109,7 @@ iml_module(
         "//tools/idea/plugins/maven/maven2-server-impl/lib/maven2/boot:classworlds-1.1",
         "//tools/idea/plugins/maven/maven2-server-impl/lib/maven2/lib:maven-2.2.1-uber",
         "//tools/idea/plugins/maven/maven2-server-impl/lib:mercury-artifact-1.0-alpha-6",
-        "//tools/idea/lib:jaxb-api",
-        "//tools/idea/lib:jaxb-impl",
         "//tools/idea/plugins/maven/maven2-server-impl/lib:nexus-indexer-1.2.3",
-        "//prebuilts/tools/common/m2/repository/javax/activation/activation/1.1:jar",
         "//tools/idea/.idea/libraries:commons-logging",
         "//tools/idea/plugins/maven/maven2-server-impl/lib:commons-beanutils",
         "//tools/idea/plugins/maven:intellij.maven[module, test]",

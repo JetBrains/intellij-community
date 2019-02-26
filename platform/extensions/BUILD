@@ -13,7 +13,6 @@ iml_module(
         "//tools/idea/.idea/libraries:picocontainer",
         "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
-        "//tools/idea/.idea/libraries:Xerces[test]",
         "//tools/idea/.idea/libraries:assertJ[test]",
     ],
 )

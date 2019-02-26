@@ -5,14 +5,17 @@ iml_module(
     name = "intellij.java.debugger.streams",
     srcs = ["src"],
     iml_files = ["intellij.java.debugger.streams.iml"],
-    resources = ["resources"],
+    # do not sort: must match IML order
+    resources = [
+        "resources",
+        "compatibilityResources",
+    ],
     test_srcs = ["test"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
-        "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",

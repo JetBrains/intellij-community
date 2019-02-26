@@ -6,7 +6,11 @@ iml_module(
     srcs = ["src"],
     iml_files = ["intellij.ant.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
-    resources = ["resources"],
+    # do not sort: must match IML order
+    resources = [
+        "resources",
+        "compatibilityResources",
+    ],
     # do not sort: must match IML order
     test_runtime_deps = ["//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl"],
     test_srcs = ["tests/src"],
@@ -20,7 +24,6 @@ iml_module(
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
-        "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
@@ -47,5 +50,6 @@ iml_module(
         "//tools/idea/plugins/ant/jps-plugin:intellij.ant.jps[module]",
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl[module]",
         "//tools/idea/plugins/properties/properties-psi-api:intellij.properties.psi[module]",
+        "//tools/idea/.idea/libraries:NanoXML",
     ],
 )

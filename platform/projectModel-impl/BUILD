@@ -19,5 +19,6 @@ iml_module(
         "//tools/idea/jps/model-impl:intellij.platform.jps.model.impl[module]",
         "//tools/idea/jps/model-serialization:intellij.platform.jps.model.serialization[module]",
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
+        "//tools/idea/.idea/libraries:kotlinx-coroutines-jdk8",
     ],
 )

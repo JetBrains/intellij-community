@@ -10,5 +10,7 @@ iml_module(
     deps = [
         "//tools/idea/.idea/libraries:cucumber-core",
         "//tools/idea/.idea/libraries:cucumber-core_2.0.1",
+        "//tools/idea/plugins/junit_rt:intellij.junit.rt[module]",
+        "//tools/idea/java/java-runtime:intellij.java.rt[module]",
     ],
 )

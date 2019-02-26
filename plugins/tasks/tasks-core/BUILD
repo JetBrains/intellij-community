@@ -6,6 +6,11 @@ iml_module(
     srcs = ["src"],
     iml_files = ["intellij.tasks.core.iml"],
     # do not sort: must match IML order
+    resources = [
+        "resources",
+        "compatibilityResources",
+    ],
+    # do not sort: must match IML order
     test_runtime_deps = ["//tools/idea/images:intellij.platform.images"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
@@ -27,9 +32,7 @@ iml_module(
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
-        "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
         "//tools/idea/spellchecker:intellij.spellchecker",
-        "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
@@ -60,7 +63,8 @@ iml_module(
         "//tools/idea/.idea/libraries:http-client",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl[module]",
         "//tools/idea/platform/tasks-platform-api:intellij.platform.tasks[module]",
-        "//tools/idea/.idea/libraries:http-client-3.1",
+        "//tools/idea/plugins/tasks/tasks-compatibility:intellij.tasks.compatibility[module]",
         "//prebuilts/tools/common/m2/repository/commons-discovery/commons-discovery/0.4:jar",
+        "//tools/idea/.idea/libraries:javax.annotation-api",
     ],
 )

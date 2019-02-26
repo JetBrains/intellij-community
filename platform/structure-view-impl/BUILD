@@ -29,5 +29,6 @@ iml_module(
         "//tools/idea/.idea/libraries:automaton",
         "//tools/idea/platform/projectModel-api:intellij.platform.projectModel[module]",
         "//tools/idea/platform/platform-api:intellij.platform.ide[module]",
+        "//tools/idea/platform/core-impl:intellij.platform.core.impl[module]",
     ],
 )

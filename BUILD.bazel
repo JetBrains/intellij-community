@@ -30,7 +30,7 @@ iml_project(
         "//tools/idea/.idea/artifacts:xmls",
         "//tools/idea/.idea/libraries:xmls",
         "//tools/idea/build/lib:utilities",
-        "//tools/idea/build:prebuilts",
+        "//tools/idea/build/dependencies:prebuilts",
         "//tools/idea/java/jdkAnnotations",
         "//tools/idea/jps/lib:jars",
         "//tools/idea/lib:all-libs",
@@ -199,9 +199,10 @@ iml_project(
         "//tools/idea/RegExpSupport:intellij.regexp",
         "//tools/idea/aether-dependency-resolver:intellij.java.aetherDependencyResolver",
         "//tools/idea/build/cucumber-test-runner:intellij.cucumber.testRunner",
+        "//tools/idea/build/dependencies/androidSdkUpload:intellij.tools.dependencies.androidSdkUpload",
         "//tools/idea/build/dependencies/gradle-api-deps:intellij.tools.dependencies.gradle",
+        "//tools/idea/build/dependencies:intellij.tools.dependencies",
         "//tools/idea/build:intellij.idea.community.build",
-        "//tools/idea/build:intellij.tools.dependencies",
         "//tools/idea/colorSchemes:intellij.platform.colorSchemes",
         "//tools/idea/community-main-tests:intellij.idea.community.main.tests",
         "//tools/idea/community-resources:intellij.idea.community.resources",
@@ -213,6 +214,7 @@ iml_project(
         "//tools/idea/java/compiler/openapi:intellij.java.compiler",
         "//tools/idea/java/debugger/debugger-agent-storage:intellij.java.debugger.agent.storage",
         "//tools/idea/java/debugger/debugger-agent:intellij.java.debugger.agent",
+        "//tools/idea/java/debugger/memory-agent:intellij.java.debugger.memory.agent",
         "//tools/idea/java/debugger/openapi:intellij.java.debugger",
         "//tools/idea/java/execution/impl:intellij.java.execution.impl",
         "//tools/idea/java/execution/jshell-frontend:intellij.java.jshell.frontend",
@@ -337,7 +339,6 @@ iml_project(
         "//tools/idea/plugins/IntelliLang:intellij.java.langInjection",
         "//tools/idea/plugins/IntelliLang:intellij.platform.langInjection",
         "//tools/idea/plugins/IntelliLang:intellij.xml.langInjection",
-        "//tools/idea/plugins/ShortcutPromoter:intellij.shortcutPromoter",
         "//tools/idea/plugins/ant/jps-plugin:intellij.ant.jps",
         "//tools/idea/plugins/ant:intellij.ant",
         "//tools/idea/plugins/commander:intellij.commander",
@@ -347,6 +348,7 @@ iml_project(
         "//tools/idea/plugins/coverage/coverage_rt:intellij.java.coverage.rt",
         "//tools/idea/plugins/coverage:intellij.java.coverage",
         "//tools/idea/plugins/cucumber-jvm-formatter3:intellij.cucumber.jvmFormatter3",
+        "//tools/idea/plugins/cucumber-jvm-formatter4:intellij.cucumber.jvmFormatter4",
         "//tools/idea/plugins/cucumber-jvm-formatter:intellij.cucumber.jvmFormatter",
         "//tools/idea/plugins/cvs/cvs-core:intellij.vcs.cvs.core",
         "//tools/idea/plugins/cvs/cvs-plugin:intellij.vcs.cvs",
@@ -420,6 +422,7 @@ iml_project(
         "//tools/idea/plugins/svn4idea:intellij.vcs.svn",
         "//tools/idea/plugins/svn4idea:intellij.vcs.svn.tests",
         "//tools/idea/plugins/tasks/tasks-api:intellij.tasks",
+        "//tools/idea/plugins/tasks/tasks-compatibility:intellij.tasks.compatibility",
         "//tools/idea/plugins/tasks/tasks-core/jira:intellij.tasks.jira",
         "//tools/idea/plugins/tasks/tasks-core:intellij.tasks.core",
         "//tools/idea/plugins/tasks/tasks-java:intellij.tasks.java",
@@ -527,7 +530,6 @@ iml_module(
     runtime_deps = [
         "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
-        "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
@@ -575,9 +577,9 @@ iml_module(
     ],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea/.idea/libraries:jaxb-runtime",
         "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
-        "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
@@ -619,7 +621,7 @@ iml_module(
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/java/compiler/openapi:intellij.java.compiler[module]",
         "//tools/idea/lib:wadl-core",
-        "//tools/idea/.idea/libraries:netty-codec-http",
+        "//tools/idea/.idea/libraries:jaxb-api",
     ],
 )
 
@@ -640,15 +642,17 @@ iml_module(
     ],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/plugins/java-i18n:intellij.java.i18n"],
+    # do not sort: must match IML order
+    exports = [
+        "//tools/idea/plugins/java-i18n:intellij.java.i18n",
+        "//tools/idea/plugins/coverage:intellij.java.coverage",
+    ],
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/community-resources:intellij.idea.community.resources",
         "//tools/idea/plugins/IntelliLang:intellij.java.langInjection",
         "//tools/idea/plugins/IntelliLang:intellij.xml.langInjection",
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
-        "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
-        "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
@@ -693,6 +697,9 @@ iml_module(
         "//tools/idea/aether-dependency-resolver:intellij.java.aetherDependencyResolver[module, test]",
         "//tools/idea/plugins/copyright:intellij.copyright[module, test]",
         "//tools/idea/jvm/jvm-analysis-java-tests:intellij.jvm.analysis.java.tests[module, test]",
+        "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl[module, test]",
+        "//tools/idea/uast/uast-tests:intellij.platform.uast.tests[module, test]",
+        "//tools/idea/plugins/coverage:intellij.java.coverage[module]",
     ],
 )
 
@@ -927,9 +934,9 @@ iml_module(
         "//tools/idea/jps/model-serialization:intellij.platform.jps.model.serialization.tests[module, test]",
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/.idea/libraries:kotlin-test",
-        "//tools/idea/.idea/libraries:Xerces",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/.idea/libraries:netty-codec-http",
+        "//tools/idea/.idea/libraries:javax.annotation-api",
         "//tools/idea/java/openapi:intellij.java[module]",
         "//tools/idea/java/compiler/openapi:intellij.java.compiler[module]",
         "//tools/idea:intellij.java.impl[module]",
@@ -952,6 +959,7 @@ iml_module(
         "//tools/idea/resources:intellij.java.resources[module]",
         "//tools/idea/platform/xdebugger-impl:intellij.platform.debugger.impl[module]",
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
+        "//tools/idea/java/debugger/memory-agent:intellij.java.debugger.memory.agent[module]",
         "//tools/idea/.idea/libraries:sa-jdwp",
     ],
 )
@@ -967,7 +975,6 @@ iml_module(
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
-        "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
@@ -993,7 +1000,6 @@ iml_module(
     runtime_deps = [
         "//tools/idea/spellchecker:intellij.spellchecker",
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
-        "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",

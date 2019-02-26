@@ -16,7 +16,6 @@ iml_module(
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/plugins/devkit/jps-plugin:intellij.devkit.jps",
-        "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
@@ -51,6 +50,7 @@ iml_module(
         "//tools/idea/jvm/jvm-analysis-api:intellij.jvm.analysis[module]",
         "//tools/idea/.idea/libraries:protobuf",
         "//tools/idea/json:intellij.json[module]",
+        "//tools/idea/aether-dependency-resolver:intellij.java.aetherDependencyResolver[module]",
     ],
 )
 

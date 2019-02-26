@@ -10,7 +10,6 @@ iml_module(
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/.idea/libraries:KotlinPlugin",
-        "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
@@ -23,5 +22,6 @@ iml_module(
     deps = [
         "//tools/idea/plugins/devkit/devkit-tests-api:intellij.devkit.tests[module]",
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8[test]",
+        "//tools/idea/plugins/devkit/devkit-java-tests:intellij.devkit.java.tests[module, test]",
     ],
 )

@@ -11,6 +11,7 @@ iml_module(
         "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions",
     ],
     test_srcs = ["testSrc"],
+    test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -30,7 +31,6 @@ iml_module(
         "//tools/idea/resources-en:intellij.java.resources.en",
         "//tools/idea/platform/platform-resources:intellij.platform.resources",
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
-        "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/images:intellij.platform.images",
         "//tools/idea/RegExpSupport:intellij.regexp",
         "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",

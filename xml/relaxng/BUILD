@@ -8,6 +8,7 @@ iml_module(
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/images:intellij.platform.images",
+        "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
         "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions",
     ],
     test_srcs = ["test"],
@@ -16,7 +17,6 @@ iml_module(
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
-        "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
         "//tools/idea/spellchecker:intellij.spellchecker",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
@@ -35,5 +35,6 @@ iml_module(
         "//prebuilts/tools/common/m2/repository/isorelax/isorelax/20030108:jar",
         "//tools/idea/xml/relaxng/lib:trang-core",
         "//prebuilts/tools/common/m2/repository/thaiopensource/jing/20030619:jar",
+        "//tools/idea/.idea/libraries:NanoXML",
     ],
 )

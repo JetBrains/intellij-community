@@ -7,29 +7,8 @@ java_import(
 
 # managed by go/iml_to_build
 java_import(
-    name = "gherkin-2.12.2",
-    jars = ["gherkin-2.12.2.jar"],
-    visibility = ["//visibility:public"],
-)
-
-# managed by go/iml_to_build
-java_import(
-    name = "cucumber-core-1.2.4",
-    jars = ["cucumber-core-1.2.4.jar"],
-    visibility = ["//visibility:public"],
-)
-
-# managed by go/iml_to_build
-java_import(
     name = "eawtstub",
     jars = ["eawtstub.jar"],
-    visibility = ["//visibility:public"],
-)
-
-# managed by go/iml_to_build
-java_import(
-    name = "cglib-nodep-3.2.4",
-    jars = ["cglib-nodep-3.2.4.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -49,8 +28,8 @@ java_import(
 
 # managed by go/iml_to_build
 java_import(
-    name = "ecj-4.7.2",
-    jars = ["ecj-4.7.2.jar"],
+    name = "ecj-4.10",
+    jars = ["ecj-4.10.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -90,19 +69,5 @@ java_import(
 java_import(
     name = "jshell-frontend",
     jars = ["jshell-frontend.jar"],
-    visibility = ["//visibility:public"],
-)
-
-# managed by go/iml_to_build
-java_import(
-    name = "jaxb-api",
-    jars = ["jaxb-api.jar"],
-    visibility = ["//visibility:public"],
-)
-
-# managed by go/iml_to_build
-java_import(
-    name = "jaxb-impl",
-    jars = ["jaxb-impl.jar"],
     visibility = ["//visibility:public"],
 )

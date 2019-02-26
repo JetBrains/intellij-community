@@ -7,10 +7,7 @@ iml_module(
     iml_files = ["intellij.platform.indexing.impl.iml"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
-    exports = [
-        "//tools/idea/platform/indexing-api:intellij.platform.indexing",
-        "//tools/idea/.idea/libraries:NanoXML",
-    ],
+    exports = ["//tools/idea/platform/indexing-api:intellij.platform.indexing"],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/core-impl:intellij.platform.core.impl[module]",

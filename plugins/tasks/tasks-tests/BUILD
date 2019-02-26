@@ -13,7 +13,6 @@ iml_module(
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/spellchecker:intellij.spellchecker",
-        "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
@@ -25,6 +24,7 @@ iml_module(
         "//tools/idea/plugins/tasks/tasks-api:intellij.tasks[module]",
         "//tools/idea/plugins/tasks/tasks-core:intellij.tasks.core[module]",
         "//tools/idea/plugins/tasks/tasks-java:intellij.tasks.java[module]",
+        "//tools/idea/plugins/tasks/tasks-compatibility:intellij.tasks.compatibility[module]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea:intellij.platform.jps.build_and_others[module, test]",
         "//tools/idea/platform/vcs-impl:intellij.platform.vcs.impl[module]",
@@ -39,7 +39,6 @@ iml_module(
         "//tools/idea/platform/vcs-tests:intellij.platform.vcs.tests[module, test]",
         "//tools/idea/platform/tasks-platform-api:intellij.platform.tasks[module, test]",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl[module, test]",
-        "//tools/idea/.idea/libraries:http-client-3.1[test]",
         "//tools/idea/.idea/libraries:Mocks[test]",
         "//tools/idea/.idea/libraries:http-client[test]",
     ],

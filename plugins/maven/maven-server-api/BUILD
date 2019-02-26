@@ -21,5 +21,6 @@ iml_module(
         "//tools/idea/.idea/libraries:JDOM",
         "//tools/idea/.idea/libraries:Trove4j",
         "//tools/idea/plugins/maven/maven-server-api/lib:lucene-core-2.4.1",
+        "//tools/idea/.idea/libraries:NanoXML",
     ],
 )

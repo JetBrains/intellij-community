@@ -12,7 +12,6 @@ iml_module(
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
-        "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
@@ -60,7 +59,11 @@ iml_module(
     name = "intellij.gradle.common",
     srcs = ["src"],
     iml_files = ["intellij.gradle.common.iml"],
-    resources = ["resources"],
+    # do not sort: must match IML order
+    resources = [
+        "compatibilityResources",
+        "resources",
+    ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -73,7 +76,6 @@ iml_module(
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
-        "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
@@ -91,6 +93,7 @@ iml_module(
         "//tools/idea/.idea/libraries:Slf4j",
         "//tools/idea/.idea/libraries:Gradle",
         "//tools/idea/.idea/libraries:Kryo",
+        "//tools/idea/.idea/libraries:Objenesis",
         "//tools/idea/.idea/libraries:Groovy",
         "//tools/idea/.idea/libraries:gson",
     ],

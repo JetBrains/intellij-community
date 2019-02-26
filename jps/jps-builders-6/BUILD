@@ -10,7 +10,6 @@ iml_module(
     ],
     iml_files = ["intellij.platform.jps.build.javac.rt.iml"],
     visibility = ["//visibility:public"],
-    runtime_deps = ["//tools/idea/jps/lib:optimizedFileManager"],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
@@ -19,5 +18,6 @@ iml_module(
         "//tools/idea/.idea/libraries:protobuf",
         "//tools/idea/.idea/libraries:Trove4j",
         "//tools/idea/.idea/libraries:netty-codec-http",
+        "//tools/idea/.idea/libraries:javax.annotation-api",
     ],
 )

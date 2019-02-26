@@ -5,16 +5,19 @@ iml_module(
     name = "intellij.platform.tasks.impl",
     srcs = ["src"],
     iml_files = ["intellij.platform.tasks.impl.iml"],
-    resources = ["resources"],
+    # do not sort: must match IML order
+    resources = [
+        "resources",
+        "compatibilityResources",
+    ],
     test_runtime_deps = ["//tools/idea/images:intellij.platform.images"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea/RegExpSupport:intellij.regexp",
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
         "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",
-        "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
         "//tools/idea/spellchecker:intellij.spellchecker",
-        "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
@@ -31,7 +34,6 @@ iml_module(
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
         "//tools/idea/platform/xdebugger-impl:intellij.platform.debugger.impl[module]",
         "//tools/idea/platform/xdebugger-api:intellij.platform.debugger[module]",
-        "//tools/idea/.idea/libraries:http-client-3.1",
         "//tools/idea/platform/vcs-impl:intellij.platform.vcs.impl[module]",
     ],
 )

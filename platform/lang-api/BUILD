@@ -21,7 +21,6 @@ iml_module(
     deps = [
         "//tools/idea/platform/platform-api:intellij.platform.ide[module]",
         "//tools/idea/platform/lvcs-api:intellij.platform.lvcs[module]",
-        "//tools/idea/.idea/libraries:NanoXML",
         "//tools/idea/platform/indexing-api:intellij.platform.indexing[module]",
         "//tools/idea/platform/projectModel-api:intellij.platform.projectModel[module]",
         "//tools/idea/platform/analysis-api:intellij.platform.analysis[module]",

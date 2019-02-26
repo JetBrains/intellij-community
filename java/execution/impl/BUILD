@@ -16,7 +16,6 @@ iml_module(
     runtime_deps = [
         "//tools/idea/.idea/libraries:precompiled_jshell-frontend",
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
-        "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
@@ -44,5 +43,6 @@ iml_module(
         "//tools/idea/.idea/libraries:jackson",
         "//tools/idea/.idea/libraries:miglayout-swing",
         "//tools/idea/platform/vcs-impl:intellij.platform.vcs.impl[module]",
+        "//tools/idea/.idea/libraries:NanoXML",
     ],
 )

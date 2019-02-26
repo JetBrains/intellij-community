@@ -10,7 +10,11 @@ iml_module(
         "xpath-lang/gen",
     ],
     iml_files = ["intellij.xpath.iml"],
-    resources = ["xpath-lang/resources"],
+    # do not sort: must match IML order
+    resources = [
+        "xpath-lang/resources",
+        "xpath-lang/compatibilityResources",
+    ],
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/images:intellij.platform.images",
@@ -23,7 +27,6 @@ iml_module(
     runtime_deps = [
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
         "//tools/idea/spellchecker:intellij.spellchecker",
-        "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
@@ -45,5 +48,6 @@ iml_module(
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
         "//tools/idea/.idea/libraries:Groovy[test]",
+        "//tools/idea/.idea/libraries:NanoXML",
     ],
 )

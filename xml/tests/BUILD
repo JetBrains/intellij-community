@@ -4,13 +4,13 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "intellij.xml.tests",
     iml_files = ["intellij.xml.tests.iml"],
+    javacopts = ["-Xep:TryFailThrowable:WARN"],
     test_srcs = ["src"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
-        "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
@@ -34,5 +34,6 @@ iml_module(
         "//tools/idea/.idea/libraries:XmlBeans",
         "//tools/idea/platform/platform-tests:intellij.platform.tests[module, test]",
         "//tools/idea/.idea/libraries:xml-resolver[test]",
+        "//tools/idea/.idea/libraries:NanoXML",
     ],
 )

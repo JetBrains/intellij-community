@@ -66,16 +66,3 @@ iml_module(
         "//tools/idea/platform/build-scripts:intellij.platform.buildScripts[module]",
     ],
 )
-
-# managed by go/iml_to_build
-iml_module(
-    name = "intellij.tools.dependencies",
-    iml_files = ["dependencies/intellij.tools.dependencies.iml"],
-    visibility = ["//visibility:public"],
-)
-
-filegroup(
-    name = "prebuilts",
-    srcs = ["dependencies/gradle.properties"],
-    visibility = ["//visibility:public"],
-)
