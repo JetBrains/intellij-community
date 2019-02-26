@@ -371,7 +371,7 @@ def read_generator_version(skeleton_file):
         if not line.startswith('#'):
             break
 
-        m = GENERATOR_VERSION_LINE.match(line)
+        m = SKELETON_HEADER_VERSION_LINE.match(line)
         if m:
             return version_to_tuple(m.group('version'))
     return None
@@ -423,7 +423,7 @@ def read_required_gen_version_file():
         for line in f:
             if not line or line.startswith('#'):
                 continue
-            m = REQUIRED_VERSION_LINE.match(line)
+            m = REQUIRED_GEN_VERSION_LINE.match(line)
             if m:
                 result[m.group('name')] = version_to_tuple(m.group('version'))
 
