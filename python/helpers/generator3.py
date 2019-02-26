@@ -28,7 +28,7 @@ def is_test_mode():
     return ENV_TEST_MODE_FLAG in os.environ
 
 
-_helpers_dir = os.path.dirname(__file__)
+_helpers_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 def redo_module(module_name, module_file_name, doing_builtins, cache_dir, sdk_dir=None):
