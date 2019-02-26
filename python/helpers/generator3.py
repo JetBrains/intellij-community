@@ -437,6 +437,8 @@ def read_legacy_blacklist_file(sdk_skeletons_dir):
 
                 m = BLACKLIST_VERSION_LINE.match(line)
                 if m:
+                    # On Java side modification time stored in milliseconds.
+                    # Python API uses seconds for resolution in os.stat results.
                     results[m.group('path')] = (version_to_tuple(m.group('version')), int(m.group('mtime')) / 1000)
     return results
 
