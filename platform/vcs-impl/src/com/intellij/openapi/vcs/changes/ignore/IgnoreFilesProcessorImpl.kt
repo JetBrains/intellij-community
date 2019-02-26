@@ -12,13 +12,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilesProcessorWithNotificationImpl
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
-import com.intellij.openapi.vcs.changes.IgnoredFileContentProvider
-import com.intellij.openapi.vcs.changes.IgnoredFileDescriptor
-import com.intellij.openapi.vcs.changes.IgnoredFileProvider
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.ASKED_MANAGE_IGNORE_FILES_PROPERTY
 import com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.MANAGE_IGNORE_FILES_PROPERTY
-import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ignore.psi.util.addNewElementsToIgnoreBlock
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -152,7 +148,10 @@ class IgnoreFilesProcessorImpl(project: Project, parentDisposable: Disposable)
 
   private fun shouldIgnore(file: VirtualFile) = !changeListManager.isIgnoredFile(file)
 
-  override fun needDoForCurrentProject() = VcsApplicationSettings.getInstance().MANAGE_IGNORE_FILES || super.needDoForCurrentProject()
+  override fun needDoForCurrentProject(): Boolean {
+    val appSettings = VcsApplicationSettings.getInstance()
+    return !appSettings.DISABLE_MANAGE_IGNORE_FILES && (appSettings.MANAGE_IGNORE_FILES || super.needDoForCurrentProject())
+  }
 
   private fun getAffectedFile(event: VFileEvent): VirtualFile? =
     runReadAction {

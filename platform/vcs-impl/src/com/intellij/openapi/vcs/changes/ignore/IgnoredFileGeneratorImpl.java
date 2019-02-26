@@ -152,6 +152,9 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
   }
 
   private static boolean needGenerateIgnoreFile(@NotNull Project project, @NotNull VirtualFile ignoreFileRoot) {
+    VcsApplicationSettings vcsApplicationSettings = VcsApplicationSettings.getInstance();
+    if (vcsApplicationSettings.DISABLE_MANAGE_IGNORE_FILES) return false;
+
     boolean wasGeneratedPreviously = IgnoredFileRootStore.getInstance(project).containsRoot(ignoreFileRoot.getPath());
     if (wasGeneratedPreviously) {
       LOG.debug("Ignore file generated previously for root " + ignoreFileRoot.getPath());
