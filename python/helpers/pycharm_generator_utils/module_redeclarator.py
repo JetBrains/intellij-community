@@ -1,6 +1,4 @@
-import generator3
 from pycharm_generator_utils.util_methods import *
-from pycharm_generator_utils.util_methods import copy
 
 is_pregenerated = os.getenv("IS_PREGENERATED_SKELETONS", None)
 
@@ -69,7 +67,9 @@ class ModuleRedeclarator(object):
         @param cache_dir: path to skeletons cache directory (e.g. python_stubs/cache)
         @param indent_size: amount of space characters per indent
         """
+        import generator3
         self.test_mode = generator3.is_test_mode()
+        self.gen_version = generator3.version()
         self.module = module
         self.qname = mod_qname
         self.cache_dir = cache_dir
@@ -793,7 +793,7 @@ class ModuleRedeclarator(object):
             filename = getattr(self.module, "__file__", BUILT_IN_HEADER)
         if not self.test_mode:
             out(0, "# from %s" % filename)  # line 3
-        out(0, "# by generator %s" % generator3.version())  # line 4
+        out(0, "# by generator %s" % self.gen_version)  # line 4
         if p_name == BUILTIN_MOD_NAME and version[0] == 2 and version[1] >= 6:
             out(0, "from __future__ import print_function")
         out_doc_attr(out, self.module, 0)
