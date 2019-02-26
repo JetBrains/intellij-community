@@ -71,9 +71,7 @@ def cut_binary_lib_suffix(path, f):
     @return f without a binary suffix (that is, an importable name) if path+f is indeed a binary lib, or None.
     Note: if for .pyc or .pyo file a .py is found, None is returned.
     """
-    if not f.endswith(".pyc") and not f.endswith(".typelib") and not f.endswith(".pyo") and not f.endswith(
-            ".so") and not f.endswith(
-            ".pyd"):
+    if not f.endswith((".pyc", ".typelib", ".pyo", ".so", ".pyd")):
         return None
     ret = None
     match = BIN_MODULE_FNAME_PAT.match(f)
