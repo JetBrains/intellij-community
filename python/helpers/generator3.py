@@ -447,9 +447,7 @@ def read_required_version(mod_qname):
 def read_failed_version_from_legacy_blacklist(sdk_skeletons_dir, mod_path):
     blacklist = read_legacy_blacklist_file(sdk_skeletons_dir)
     record = blacklist.get('{mod_path}' if is_test_mode() else mod_path)
-    if record:
-        return record[0]
-    return record
+    return record[0] if record else None
 
 
 def read_legacy_blacklist_file(sdk_skeletons_dir):
