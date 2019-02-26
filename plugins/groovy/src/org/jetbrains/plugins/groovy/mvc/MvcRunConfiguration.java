@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.mvc;
 
@@ -278,7 +278,7 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
     protected final JavaParameters createJavaParameters() throws ExecutionException {
       JavaParameters javaParameters = createJavaParametersMVC();
       for(RunConfigurationExtension ext: RunConfigurationExtension.EP_NAME.getExtensionList()) {
-        ext.updateJavaParameters(MvcRunConfiguration.this, javaParameters, getRunnerSettings());
+        ext.updateJavaParameters(MvcRunConfiguration.this, javaParameters, getRunnerSettings(), getEnvironment().getExecutor().getId());
       }
 
       return javaParameters;

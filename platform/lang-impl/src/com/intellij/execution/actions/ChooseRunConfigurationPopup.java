@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.executors.ExecutorGroup;
 import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
@@ -573,7 +574,16 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
       }
 
       boolean isFirst = true;
-      for (final Executor executor : ExecutorRegistry.getInstance().getRegisteredExecutors()) {
+      final List<Executor> allExecutors = new ArrayList<>();
+      for (final Executor executor: ExecutorRegistry.getInstance().getRegisteredExecutors()) {
+        if (executor instanceof ExecutorGroup) {
+          allExecutors.addAll(((ExecutorGroup)executor).childExecutors());
+        }
+        else {
+          allExecutors.add(executor);
+        }
+      }
+      for (final Executor executor : allExecutors) {
         final ProgramRunner runner = ProgramRunner.getRunner(executor.getId(), settings.getConfiguration());
         if (runner != null) {
           result.add(new ActionWrapper(executor.getActionName(), executor.getIcon(), isFirst) {

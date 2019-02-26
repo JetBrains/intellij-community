@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.actions.RunContextAction;
@@ -6,6 +6,7 @@ import com.intellij.execution.compound.CompoundRunConfiguration;
 import com.intellij.execution.compound.SettingsAndEffectiveTarget;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.executors.ExecutorGroup;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -33,6 +34,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable, BaseComponent {
   private static final Logger LOG = Logger.getInstance(ExecutorRegistryImpl.class);
@@ -61,8 +64,21 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
       LOG.error("Executor with context action id: \"" + executor.getContextActionId() + "\" was already registered!");
     }
 
-    registerAction(executor.getId(), new ExecutorAction(executor), RUNNERS_GROUP, myId2Action);
-    registerAction(executor.getContextActionId(), new RunContextAction(executor), RUN_CONTEXT_GROUP, myContextActionId2Action);
+    if (executor instanceof ExecutorGroup) {
+      final ActionGroup toolbarActionGroup = new ExecutorGroupActionGroup((ExecutorGroup)executor, ExecutorAction::new);
+      toolbarActionGroup.setPopup(true);
+      final Presentation presentation = toolbarActionGroup.getTemplatePresentation();
+      presentation.setIcon(executor.getIcon());
+      presentation.setText(executor.getStartActionText());
+      presentation.setDescription(executor.getDescription());
+      final ActionGroup runContextActionGroup = new ExecutorGroupActionGroup((ExecutorGroup)executor, RunContextAction::new);
+      registerAction(executor.getId(), toolbarActionGroup, RUNNERS_GROUP, myId2Action);
+      registerAction(executor.getContextActionId(), runContextActionGroup, RUN_CONTEXT_GROUP, myContextActionId2Action);
+    }
+    else {
+      registerAction(executor.getId(), new ExecutorAction(executor), RUNNERS_GROUP, myId2Action);
+      registerAction(executor.getContextActionId(), new RunContextAction(executor), RUN_CONTEXT_GROUP, myContextActionId2Action);
+    }
 
     myExecutors.add(executor);
     myId2Executor.put(executor.getId(), executor);
@@ -333,6 +349,25 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
       if (selectedConfiguration != null) {
         run(project, selectedConfiguration.getConfiguration(), selectedConfiguration, e.getDataContext());
       }
+    }
+  }
+
+  // TODO: make private as soon as IDEA-207986 will be fixed
+  // RunExecutorSettings configurations can be modified, so we request current childExecutors on each AnAction#update call
+  public static class ExecutorGroupActionGroup extends ActionGroup {
+    private final ExecutorGroup myExecutorGroup;
+    private final Function<Executor, AnAction> myChildConverter;
+
+    private ExecutorGroupActionGroup(ExecutorGroup executorGroup, Function<Executor, AnAction> childConverter) {
+      myExecutorGroup = executorGroup;
+      myChildConverter = childConverter;
+    }
+
+    @NotNull
+    @Override
+    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+      return ((List<Executor>)myExecutorGroup.childExecutors()).stream().map(myChildConverter).collect(Collectors.toList())
+        .toArray(AnAction.EMPTY_ARRAY);
     }
   }
 }
