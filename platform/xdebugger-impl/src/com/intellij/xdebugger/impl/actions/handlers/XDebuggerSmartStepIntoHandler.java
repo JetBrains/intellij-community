@@ -14,7 +14,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.ObjectUtils;
@@ -152,8 +151,10 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     PsiElement element = variant != null ? variant.getHighlightElement() : null;
     if (element != null) {
       PsiFile currentFile = PsiDocumentManager.getInstance(session.getProject()).getPsiFile(editor.getDocument());
-      LOG.assertTrue(PsiTreeUtil.isAncestor(currentFile, element, false),
-                     "Highlight element " + element + " is not from the current file");
+      PsiFile containingFile = element.getContainingFile();
+      if (containingFile == null || !containingFile.getOriginalFile().equals(currentFile)) {
+        LOG.error("Highlight element " + element + " is not from the current file");
+      }
       highlighter.highlight(element, Collections.singletonList(element));
     }
   }
