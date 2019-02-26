@@ -4,10 +4,7 @@ package com.intellij.openapi.project.impl
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.ReopenProjectAction
-import com.intellij.ide.util.gotoByName.ChooseByNameModel
-import com.intellij.ide.util.gotoByName.ChooseByNameViewModel
-import com.intellij.ide.util.gotoByName.DefaultChooseByNameItemProvider
-import com.intellij.ide.util.gotoByName.GotoSymbolModel2
+import com.intellij.ide.util.gotoByName.*
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.JBProtocolCommand
@@ -21,32 +18,50 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.util.messages.MessageBusConnection
 
 class JBProtocolNavigateCommand : JBProtocolCommand("navigate") {
-  override fun perform(vcsId: String, parameters: Map<String, String>) {
-    // handles the path of types:
-    // jetbrains://idea/navigate?recent.project.name=IDEA&reference=com.intellij.openapi.project.impl.JBProtocolNavigateCommand.perform&selection=25:5
+  override fun perform(target: String, parameters: Map<String, String>) {
+    // handles URLs of the following types:
 
-    val recentProjectName = parameters[RECENT_PROJECT_NAME_KEY]
-    val referenceParameter = parameters[REFERENCE_KEY]
-    val selection = parameters[SELECTION]
+    // jetbrains://idea/navigate/reference?project=IDEA&reference=com.intellij.openapi.project.impl.JBProtocolNavigateCommand[.perform][#perform]
+    // [&selectionX=25:5-26:6]+
 
-    if (recentProjectName.isNullOrEmpty() || referenceParameter.isNullOrEmpty()) {
+    // jetbrains://idea/navigate/path?project=IDEA&path=com/intellij/openapi/project/impl/JBProtocolNavigateCommand.kt:23:1
+    // [&selectionX=25:5-26:6]+
+
+    val projectName = parameters[PROJECT_NAME_KEY]
+    if (projectName.isNullOrEmpty()) {
       return
+    }
+
+    val model: (Project) -> ChooseByNameModel
+    val pattern: String
+
+    when (target) {
+      REFERENCE_TARGET -> {
+        pattern = (parameters[FQN_KEY] ?: return)
+        model = { project -> GotoSymbolModel2(project) }
+      }
+      FILE_TARGET -> {
+        pattern = (parameters[PATH_KEY] ?: return)
+        model = { it -> GotoFileModel(it) }
+      }
+      else -> return
     }
 
     val recentProjectsActions = RecentProjectsManager.getInstance().getRecentProjectsActions(false)
     for (recentProjectAction in recentProjectsActions) {
       if (recentProjectAction is ReopenProjectAction) {
-        if (recentProjectAction.projectName == recentProjectName) {
-          val project = ProjectManager.getInstance().openProjects.find { project -> project.name == recentProjectName }
+        if (recentProjectAction.projectName == projectName) {
+          val project = ProjectManager.getInstance().openProjects.find { project -> project.name == projectName }
+          val selections = parseSelections(parameters)
 
           if (project != null) {
-            navigateToFile(project, referenceParameter, selection)
+            navigateToFile(project, model(project), pattern, selections)
           }
           else {
             RecentProjectsManagerBase.getInstanceEx().doOpenProject(recentProjectAction.projectPath, null, false)
 
             val appConnection = ApplicationManager.getApplication().messageBus.connect()
-            appConnection.subscribe(ProjectManager.TOPIC, NavigatableProjectListener(referenceParameter, selection, appConnection))
+            appConnection.subscribe(ProjectManager.TOPIC, NavigatableProjectListener(model, pattern, selections, appConnection))
           }
         }
       }
@@ -54,75 +69,74 @@ class JBProtocolNavigateCommand : JBProtocolCommand("navigate") {
   }
 
   companion object {
-    private const val RECENT_PROJECT_NAME_KEY = "recent.project.name"
-    private const val REFERENCE_KEY = "reference"
+    private const val PROJECT_NAME_KEY = "project"
     private const val SELECTION = "selection"
 
-    private fun parseLineNumber(path: String): Pair<String, Int> {
-      val numberString = path.substringAfterLast(':')
-      var pathString = path
-      var number = 0
-      if (numberString.isNotBlank()) {
-        number = Integer.parseInt(numberString)
-        pathString = path.substringBeforeLast(':')
-      }
-      return Pair(pathString, number)
-    }
+    private const val REFERENCE_TARGET = "reference"
+    private const val FQN_KEY = "fqn"
 
+    private const val FILE_TARGET = "file"
+    private const val PATH_KEY = "path"
 
-    private fun navigateToFile(project: Project, referenceString: String, selectionParameter: String?) {
-      var selection: Pair<LogicalPosition, LogicalPosition>? = null
-      if (selectionParameter != null) {
-        selection = parseSelection(referenceString, selectionParameter)
-      }
-
-      val model = JBProtocolNavigateChooseByNameViewModel(project, GotoSymbolModel2(project))
-      DefaultChooseByNameItemProvider.filterElements(model, referenceString, true, EmptyProgressIndicator(), null) {
+    private fun navigateToFile(project: Project,
+                               gotoModel: ChooseByNameModel,
+                               pattern: String,
+                               selections: List<Pair<LogicalPosition, LogicalPosition>>) {
+      val model = JBProtocolNavigateChooseByNameViewModel(project, gotoModel)
+      DefaultChooseByNameItemProvider.filterElements(model, pattern, true, EmptyProgressIndicator(), null) {
         if (it !is NavigationItem) {
           return@filterElements true
         }
 
-        it.navigate(true)
-        IdeFocusManager.getInstance(project)
-          .doWhenFocusSettlesDown {
-            val selectedTextEditor = FileEditorManager.getInstance(project).selectedTextEditor
-            if (selectedTextEditor != null && selection != null) {
-              val offset = selectedTextEditor.logicalPositionToOffset(selection.first)
-              val offset1 = selectedTextEditor.logicalPositionToOffset(selection.second)
-              selectedTextEditor.selectionModel.setSelection(offset, offset1)
-            }
+        if (it.canNavigate()) {
+          IdeFocusManager.getInstance(project).doWhenFocusSettlesDown {
+            it.navigate(true)
+            selections.forEach { selection -> setSelection(project, selection) }
           }
+        }
         true
       }
     }
 
-    private fun parseSelection(referenceParameter: String, selectionParameter: String): Pair<LogicalPosition, LogicalPosition> {
-      var selection = selectionParameter
-      var reference = referenceParameter
+    private fun setSelection(project: Project, selection: Pair<LogicalPosition, LogicalPosition>) {
+      val editor = FileEditorManager.getInstance(project).selectedTextEditor
+      editor?.selectionModel?.setSelection(editor.logicalPositionToOffset(selection.first),
+                                           editor.logicalPositionToOffset(selection.second))
+    }
 
-      var linesPair = parseLineNumber(reference)
-      val lineNumber = linesPair.second
-      reference = linesPair.first
+    private fun parseSelections(parameters: Map<String, String>): List<Pair<LogicalPosition, LogicalPosition>> {
+      return parameters.filterKeys { it.startsWith(SELECTION) }.values.mapNotNull {
+        val split = it.split('-')
+        if (split.size != 2) return@mapNotNull null
 
-      linesPair = parseLineNumber(reference)
-      val columnNumber = linesPair.second
+        val position1 = parsePosition(split[0])
+        val position2 = parsePosition(split[1])
 
-      var selectionPair = parseLineNumber(selection)
-      val selectionLineNumber = selectionPair.second
-      selection = selectionPair.first
+        if (position1 != null && position2 != null) {
+          return@mapNotNull Pair(position1, position1)
+        }
+        return@mapNotNull null
+      }
+    }
 
-      selectionPair = parseLineNumber(selection)
-      val selectionColumnNumber = selectionPair.second
-
-      return Pair(LogicalPosition(lineNumber, columnNumber), LogicalPosition(selectionLineNumber, selectionColumnNumber))
+    private fun parsePosition(range: String): LogicalPosition? {
+      val position = range.split(':')
+      if (position.size != 2) return null
+      try {
+        return LogicalPosition(Integer.parseInt(position[0]), Integer.parseInt(position[1]))
+      }
+      catch (e: Exception) {
+        return null
+      }
     }
   }
 
-  class NavigatableProjectListener(var path: String,
-                                   var selection: String?,
-                                   private val appConnection: MessageBusConnection) : ProjectManagerListener {
+  private class NavigatableProjectListener(private val model: (Project) -> ChooseByNameModel,
+                                           private val pattern: String,
+                                           private val selections: List<Pair<LogicalPosition, LogicalPosition>>,
+                                           private val appConnection: MessageBusConnection) : ProjectManagerListener {
     override fun projectOpened(project: Project) {
-      navigateToFile(project, path, selection)
+      navigateToFile(project, model(project), pattern, selections)
       appConnection.disconnect()
     }
   }
