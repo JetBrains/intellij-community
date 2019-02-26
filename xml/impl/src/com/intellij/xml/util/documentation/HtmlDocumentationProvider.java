@@ -252,7 +252,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
       return HtmlCompatibilityData.getTagData((XmlTag)element.getParent());
     }
     if (descriptor instanceof HtmlTagDescriptor) {
-      return HtmlCompatibilityData.getTagData(descriptor.getName());
+      return HtmlCompatibilityData.getTagData("", descriptor.getName());
     }
     return null;
   }

@@ -54,8 +54,8 @@ cp result/xhtml5-all.rnc result/xhtml5.rnc
 mv result/html5/LICENSE result
 rm -rf html5-schema
 mv result html5-schema
-rsync -r --include=*.json browser-compat-data/mathml/* ../../../xml-psi-impl/src/com/intellij/xml/util/documentation/compatData
-rsync -r --include=*.json browser-compat-data/svg/* ../../../xml-psi-impl/src/com/intellij/xml/util/documentation/compatData
 rsync -r --include=*.json browser-compat-data/html/* ../../../xml-psi-impl/src/com/intellij/xml/util/documentation/compatData
+rsync -r --include=*.json browser-compat-data/mathml/* ../../../xml-psi-impl/src/com/intellij/xml/util/documentation/compatData/mathml
+rsync -r --include=*.json browser-compat-data/svg/* ../../../xml-psi-impl/src/com/intellij/xml/util/documentation/compatData/svg
 rm -rf temp
 rm -rf browser-compat-data
