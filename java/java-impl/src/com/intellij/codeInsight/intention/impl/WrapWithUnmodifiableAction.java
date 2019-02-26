@@ -151,38 +151,20 @@ public class WrapWithUnmodifiableAction extends BaseIntentionAction {
     if (fact != null && fact.isUnmodifiable()) {
       return true;
     }
-    PsiMethodCallExpression methodCall = tryCast(expression, PsiMethodCallExpression.class);
-    if (isUnmodifiableCall(methodCall)) {
-      return true;
-    }
 
     PsiExpressionList expressionList = tryCast(ExpressionUtils.getPassThroughParent(expression), PsiExpressionList.class);
     if (expressionList != null && expressionList.getExpressionCount() == 1) {
-      methodCall = tryCast(expressionList.getParent(), PsiMethodCallExpression.class);
-      if (isUnmodifiableCall(methodCall)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private static boolean isUnmodifiableCall(@Nullable PsiMethodCallExpression methodCall) {
-    if (methodCall != null) {
-      String name = methodCall.getMethodExpression().getReferenceName();
-      if (name != null && name.startsWith("unmodifiable")) {
+      PsiMethodCallExpression methodCall = tryCast(expressionList.getParent(), PsiMethodCallExpression.class);
+      if (methodCall != null) {
         PsiMethod method = methodCall.resolveMethod();
-        if (method != null && method.hasModifierProperty(PsiModifier.STATIC)) {
-          PsiClass psiClass = method.getContainingClass();
-          if (psiClass != null && JAVA_UTIL_COLLECTIONS.equals(psiClass.getQualifiedName())) {
-            return true;
-          }
+        if (method != null && Mutability.getMutability(method) == Mutability.UNMODIFIABLE_VIEW) {
+          return true;
         }
       }
     }
+
     return false;
   }
-
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
