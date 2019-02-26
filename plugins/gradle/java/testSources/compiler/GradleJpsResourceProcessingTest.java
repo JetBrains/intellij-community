@@ -8,7 +8,7 @@ import java.io.IOException;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleResourceProcessingTest extends GradleCompilingTestCase {
+public class GradleJpsResourceProcessingTest extends GradleJpsCompilingTestCase {
 
   @Test
   public void testBasicResourceCopying() throws Exception {
