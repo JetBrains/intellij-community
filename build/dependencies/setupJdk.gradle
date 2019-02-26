@@ -137,7 +137,7 @@ static def currentPlatformName() {
 // JDK 1.6
 repositories {
   maven {
-    url 'http://repo.labs.intellij.net/java'
+    url 'https://repo.labs.intellij.net/java'
   }
 }
 
