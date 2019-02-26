@@ -76,7 +76,7 @@ open class GuiTestRunner internal constructor(open val runner: GuiTestRunnerInte
   private fun runOnServerSide(method: FrameworkMethod, notifier: RunNotifier) {
 
     val description = runner.describeChild(method)
-    SERVER_LOG.debug("DEBUG_TEST_DESCRIPTION: ${description.displayName} ${description.className} ${description.testClass} ${description.methodName}")
+    SERVER_LOG.info("DEBUG_TEST_DESCRIPTION: ${description.displayName} ${description.className} ${description.testClass} ${description.methodName}")
     val localIde = runner.ide ?: getIdeFromAnnotation(method.declaringClass)
     val systemProperties = getSystemPropertiesFromAnnotation(method.declaringClass)
 

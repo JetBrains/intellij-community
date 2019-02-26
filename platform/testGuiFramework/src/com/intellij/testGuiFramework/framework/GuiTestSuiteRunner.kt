@@ -72,6 +72,7 @@ open class GuiTestSuiteRunner(private val suiteClass: Class<*>, private val buil
     if (builder is CustomRunnerBuilder) super.runChild(runner, notifier)
     else {
       try {
+        LOG.info("DEBUG_TEST_DESCRIPTION: ${runner.description.displayName} ${description.className} ${description.testClass} ${description.methodName}")
         //let's start IDE to complete installation, import configs and etc before running tests
         if (isFirstStart) firstStart()
         val testClass = runner.description.testClass
