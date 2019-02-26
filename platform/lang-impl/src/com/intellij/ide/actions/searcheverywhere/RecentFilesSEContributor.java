@@ -54,7 +54,7 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
 
   @Override
   public int getElementPriority(@NotNull Object element, @NotNull String searchPattern) {
-    return super.getElementPriority(element, searchPattern) + 1;
+    return super.getElementPriority(element, searchPattern) + 5;
   }
 
   @Override
