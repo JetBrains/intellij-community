@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.CachedValueProfiler;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.ProfilingInfo;
@@ -136,6 +137,9 @@ public abstract class CachedValueBase<T> {
   }
 
   protected long getTimeStamp(@NotNull Object dependency) {
+    if (dependency instanceof VirtualFile) {
+      return ((VirtualFile)dependency).getModificationStamp();
+    }
     if (dependency instanceof ModificationTracker) {
       return ((ModificationTracker)dependency).getModificationCount();
     }

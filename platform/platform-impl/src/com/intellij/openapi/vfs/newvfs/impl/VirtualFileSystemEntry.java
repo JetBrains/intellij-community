@@ -90,7 +90,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public long getModificationStamp() {
-    return mySegment.getModificationStamp(myId);
+    return isValid() ? mySegment.getModificationStamp(myId) : -1;
   }
 
   public void setModificationStamp(long modificationStamp) {
