@@ -60,21 +60,19 @@ class ClassBuf(Buf):
 
 #noinspection PyBroadException
 class ModuleRedeclarator(object):
-    def __init__(self, module, mod_qname, mod_filename, cache_dir, sdk_dir=None, indent_size=4, doing_builtins=False):
+    def __init__(self, module, mod_qname, mod_filename, cache_dir, indent_size=4, doing_builtins=False):
         """
         @param module: module object
         @param mod_qname: module qualified name
         @param mod_filename: filename of binary module (the .dll or .so). Can be None for modules
             that don't have corresponding binary file
         @param cache_dir: path to skeletons cache directory (e.g. python_stubs/cache)
-        @param sdk_dir: path to interpreter specific skeletons directory
         @param indent_size: amount of space characters per indent
         """
         self.test_mode = generator3.is_test_mode()
         self.module = module
         self.qname = mod_qname
         self.cache_dir = cache_dir
-        self.sdk_dir = sdk_dir
         self.mod_filename = mod_filename
         # we write things into buffers out-of-order
         self.header_buf = Buf(self)
