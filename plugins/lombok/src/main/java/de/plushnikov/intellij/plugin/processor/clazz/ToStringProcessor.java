@@ -106,20 +106,16 @@ public class ToStringProcessor extends AbstractClassProcessor {
   public PsiMethod createToStringMethod(@NotNull PsiClass psiClass, @NotNull Collection<MemberInfo> memberInfos, @NotNull PsiAnnotation psiAnnotation) {
     final PsiManager psiManager = psiClass.getManager();
 
-    return new LombokLightMethodBuilder(psiManager, METHOD_NAME)
+    final String paramString = createParamString(psiClass, memberInfos, psiAnnotation);
+    final String blockText = String.format("return \"%s(%s)\";", getSimpleClassName(psiClass), paramString);
+
+    final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiManager, METHOD_NAME)
       .withMethodReturnType(PsiType.getJavaLangString(psiManager, GlobalSearchScope.allScope(psiClass.getProject())))
       .withContainingClass(psiClass)
       .withNavigationElement(psiAnnotation)
-      .withModifier(PsiModifier.PUBLIC)
-      .withBody(createCodeBlock(psiClass, memberInfos, psiAnnotation));
-  }
-
-  @NotNull
-  private PsiCodeBlock createCodeBlock(@NotNull PsiClass psiClass, @NotNull Collection<MemberInfo> memberInfos, @NotNull PsiAnnotation psiAnnotation) {
-    final String blockText;
-    final String paramString = createParamString(psiClass, memberInfos, psiAnnotation);
-    blockText = String.format("return \"%s(%s)\";", getSimpleClassName(psiClass), paramString);
-    return PsiMethodUtil.createCodeBlockFromText(blockText, psiClass);
+      .withModifier(PsiModifier.PUBLIC);
+    methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, methodBuilder));
+    return methodBuilder;
   }
 
   private String getSimpleClassName(@NotNull PsiClass psiClass) {

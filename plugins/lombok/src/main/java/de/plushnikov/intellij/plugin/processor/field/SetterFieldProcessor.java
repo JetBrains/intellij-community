@@ -1,7 +1,15 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
@@ -122,20 +130,20 @@ public class SetterFieldProcessor extends AbstractFieldProcessor {
     final String methodName = getSetterName(psiField, PsiType.BOOLEAN.equals(psiFieldType));
 
     PsiType returnType = getReturnType(psiField);
-    LombokLightMethodBuilder method = new LombokLightMethodBuilder(psiField.getManager(), methodName)
+    LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiField.getManager(), methodName)
       .withMethodReturnType(returnType)
       .withContainingClass(psiClass)
       .withParameter(fieldName, psiFieldType)
       .withNavigationElement(psiField);
     if (StringUtil.isNotEmpty(methodModifier)) {
-      method.withModifier(methodModifier);
+      methodBuilder.withModifier(methodModifier);
     }
     boolean isStatic = psiField.hasModifierProperty(PsiModifier.STATIC);
     if (isStatic) {
-      method.withModifier(PsiModifier.STATIC);
+      methodBuilder.withModifier(PsiModifier.STATIC);
     }
 
-    PsiParameter methodParameter = method.getParameterList().getParameters()[0];
+    PsiParameter methodParameter = methodBuilder.getParameterList().getParameters()[0];
     PsiModifierList methodParameterModifierList = methodParameter.getModifierList();
     if (null != methodParameterModifierList) {
       final Collection<String> annotationsToCopy = PsiAnnotationUtil.collectAnnotationsToCopy(psiField,
@@ -146,17 +154,18 @@ public class SetterFieldProcessor extends AbstractFieldProcessor {
       addOnXAnnotations(setterAnnotation, methodParameterModifierList, "onParam");
     }
 
-    method.withBody(createCodeBlock(psiField, psiClass, returnType, isStatic, methodParameter));
+    final String codeBlockText = createCodeBlockText(psiField, psiClass, returnType, isStatic, methodParameter);
+    methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(codeBlockText, methodBuilder));
 
-    PsiModifierList methodModifierList = method.getModifierList();
+    PsiModifierList methodModifierList = methodBuilder.getModifierList();
     copyAnnotations(psiField, methodModifierList, LombokUtils.DEPRECATED_PATTERN);
     addOnXAnnotations(setterAnnotation, methodModifierList, "onMethod");
 
-    return method;
+    return methodBuilder;
   }
 
   @NotNull
-  private PsiCodeBlock createCodeBlock(@NotNull PsiField psiField, @NotNull PsiClass psiClass, PsiType returnType, boolean isStatic, PsiParameter methodParameter) {
+  private String createCodeBlockText(@NotNull PsiField psiField, @NotNull PsiClass psiClass, PsiType returnType, boolean isStatic, PsiParameter methodParameter) {
     final String blockText;
     final String thisOrClass = isStatic ? psiClass.getName() : "this";
     blockText = String.format("%s.%s = %s; ", thisOrClass, psiField.getName(), methodParameter.getName());
@@ -166,7 +175,7 @@ public class SetterFieldProcessor extends AbstractFieldProcessor {
       codeBlockText += "return this;";
     }
 
-    return PsiMethodUtil.createCodeBlockFromText(codeBlockText, psiClass);
+    return codeBlockText;
   }
 
   private PsiType getReturnType(@NotNull PsiField psiField) {

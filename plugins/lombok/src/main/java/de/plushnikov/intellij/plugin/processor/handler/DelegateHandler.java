@@ -215,13 +215,14 @@ public class DelegateHandler {
       methodBuilder.withParameter(generatedParameterName, psiParameterType);
     }
 
-    methodBuilder.withBody(createCodeBlock(psiClass, psiElement, psiMethod, returnType, psiParameters));
+    final String codeBlockText = createCodeBlockText(psiElement, psiMethod, returnType, psiParameters);
+    methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(codeBlockText, methodBuilder));
 
     return methodBuilder;
   }
 
   @NotNull
-  private <T extends PsiModifierListOwner & PsiNamedElement> PsiCodeBlock createCodeBlock(@NotNull PsiClass psiClass, @NotNull T psiElement, @NotNull PsiMethod psiMethod, @NotNull PsiType returnType, @NotNull PsiParameter[] psiParameters) {
+  private <T extends PsiModifierListOwner & PsiNamedElement> String createCodeBlockText(@NotNull T psiElement, @NotNull PsiMethod psiMethod, @NotNull PsiType returnType, @NotNull PsiParameter[] psiParameters) {
     final String blockText;
     final StringBuilder paramString = new StringBuilder();
 
@@ -242,7 +243,7 @@ public class DelegateHandler {
       isMethodCall ? "()" : "",
       psiMethod.getName(),
       paramString.toString());
-    return PsiMethodUtil.createCodeBlockFromText(blockText, psiClass);
+    return blockText;
   }
 
   private static class DelegateAnnotationElementVisitor extends JavaElementVisitor {

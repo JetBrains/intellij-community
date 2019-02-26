@@ -1,7 +1,7 @@
 package de.plushnikov.builder.issue450;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import lombok.Singular;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -13,6 +13,7 @@ public class BuilderWithDeprecatedField {
   private String foo;
 
   @Deprecated
+  @Singular
   private List<String> xyzs;
 
   public static void main(String[] args) {

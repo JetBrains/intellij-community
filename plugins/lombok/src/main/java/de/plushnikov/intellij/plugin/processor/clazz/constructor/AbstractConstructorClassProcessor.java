@@ -252,7 +252,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
 
   private PsiMethod createConstructor(@NotNull PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String modifier, boolean suppressConstructorProperties,
                                       boolean useJavaDefaults, @NotNull Collection<PsiField> params, @NotNull PsiAnnotation psiAnnotation) {
-    LombokLightMethodBuilder constructor = new LombokLightMethodBuilder(psiClass.getManager(), getConstructorName(psiClass))
+    LombokLightMethodBuilder constructorBuilder = new LombokLightMethodBuilder(psiClass.getManager(), getConstructorName(psiClass))
       .withConstructor(true)
       .withContainingClass(psiClass)
       .withNavigationElement(psiAnnotation)
@@ -269,15 +269,15 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       String constructorPropertiesAnnotation = "java.beans.ConstructorProperties( {" +
         fieldNames.stream().collect(Collectors.joining("\", \"", "\"", "\"")) +
         "} ) ";
-      constructor.withAnnotation(constructorPropertiesAnnotation);
+      constructorBuilder.withAnnotation(constructorPropertiesAnnotation);
     }
-    constructor.withAnnotations(LombokProcessorUtil.getOnX(psiAnnotation, "onConstructor"));
+    constructorBuilder.withAnnotations(LombokProcessorUtil.getOnX(psiAnnotation, "onConstructor"));
 
     if (!useJavaDefaults) {
       final Iterator<String> fieldNameIterator = fieldNames.iterator();
       final Iterator<PsiField> fieldIterator = params.iterator();
       while (fieldNameIterator.hasNext() && fieldIterator.hasNext()) {
-        constructor.withParameter(fieldNameIterator.next(), fieldIterator.next().getType());
+        constructorBuilder.withParameter(fieldNameIterator.next(), fieldIterator.next().getType());
       }
     }
 
@@ -292,13 +292,13 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       blockText.append(String.format("this.%s = %s;\n", param.getName(), fieldInitializer));
     }
 
-    constructor.withBody(PsiMethodUtil.createCodeBlockFromText(blockText.toString(), psiClass));
+    constructorBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText.toString(), constructorBuilder));
 
-    return constructor;
+    return constructorBuilder;
   }
 
   private PsiMethod createStaticConstructor(PsiClass psiClass, @PsiModifier.ModifierConstant String methodModifier, String staticName, boolean useJavaDefaults, Collection<PsiField> params, PsiAnnotation psiAnnotation) {
-    LombokLightMethodBuilder method = new LombokLightMethodBuilder(psiClass.getManager(), staticName)
+    LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiClass.getManager(), staticName)
       .withContainingClass(psiClass)
       .withNavigationElement(psiAnnotation)
       .withModifier(methodModifier)
@@ -311,9 +311,9 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       // need to create new type parameters
       for (int index = 0; index < classTypeParameters.length; index++) {
         final PsiTypeParameter classTypeParameter = classTypeParameters[index];
-        final LightTypeParameterBuilder methodTypeParameter = createTypeParameter(method, index, classTypeParameter);
+        final LightTypeParameterBuilder methodTypeParameter = createTypeParameter(methodBuilder, index, classTypeParameter);
 
-        method.withTypeParameter(methodTypeParameter);
+        methodBuilder.withTypeParameter(methodTypeParameter);
 
         substitutor = substitutor.put(classTypeParameter, PsiSubstitutor.EMPTY.substitute(methodTypeParameter));
       }
@@ -321,17 +321,18 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
 
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
     final PsiType returnType = factory.createType(psiClass, substitutor);
-    method.withMethodReturnType(returnType);
+    methodBuilder.withMethodReturnType(returnType);
 
     if (!useJavaDefaults) {
       for (PsiField param : params) {
-        method.withParameter(StringUtil.notNullize(param.getName()), substitutor.substitute(param.getType()));
+        methodBuilder.withParameter(StringUtil.notNullize(param.getName()), substitutor.substitute(param.getType()));
       }
     }
 
-    method.withBody(createStaticCodeBlock(returnType, useJavaDefaults, method.getParameterList()));
+    final String codeBlockText = createStaticCodeBlockText(returnType, useJavaDefaults, methodBuilder.getParameterList());
+    methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(codeBlockText, methodBuilder));
 
-    return method;
+    return methodBuilder;
   }
 
   @NotNull
@@ -347,12 +348,10 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
   }
 
   @NotNull
-  private PsiCodeBlock createStaticCodeBlock(@NotNull PsiType psiType, boolean useJavaDefaults, @NotNull final PsiParameterList parameterList) {
-    final String blockText;
+  private String createStaticCodeBlockText(@NotNull PsiType psiType, boolean useJavaDefaults, @NotNull final PsiParameterList parameterList) {
     final String psiClassName = psiType.getPresentableText();
     final String paramsText = useJavaDefaults ? "" : joinParameters(parameterList);
-    blockText = String.format("return new %s(%s);", psiClassName, paramsText);
-    return PsiMethodUtil.createCodeBlockFromText(blockText, parameterList);
+    return String.format("return new %s(%s);", psiClassName, paramsText);
   }
 
   private String joinParameters(PsiParameterList parameterList) {
