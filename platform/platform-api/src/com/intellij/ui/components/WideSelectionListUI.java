@@ -97,7 +97,7 @@ final class WideSelectionListUI extends BasicListUI {
   @Override
   public Rectangle getCellBounds(JList list, int index1, int index2) {
     Rectangle bounds = super.getCellBounds(list, index1, index2);
-    if (isVerticalList(list) && (list instanceof JBList) && (index1 == index2)) {
+    if (bounds != null && index1 == index2 && list instanceof JBList && JList.VERTICAL == list.getLayoutOrientation()) {
       if (((JBList<?>)list).getExpandableItemsHandler().getExpandedItems().contains(index1)) {
         // increase paint area for list item with shown extendable popup
         JScrollPane pane = JBScrollPane.findScrollPane(list);
