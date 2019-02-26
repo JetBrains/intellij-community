@@ -47,7 +47,7 @@ class NewThemeAction: AnAction() {
     dialog.show()
 
     if (dialog.exitCode == DialogWrapper.OK_EXIT_CODE) {
-      val file = createThemeJson(dialog.name.text, dialog.isDark.isSelected, project, dir)
+      val file = createThemeJson(dialog.name.text, dialog.isDark.isSelected, project, dir, module)
       view.selectElement(file)
       FileEditorManager.getInstance(project).openFile(file.virtualFile, true)
       registerTheme(dir, file, module)
@@ -59,12 +59,23 @@ class NewThemeAction: AnAction() {
     e.presentation.isEnabled = module != null && (PsiUtil.isPluginModule(module) || PluginModuleType.get(module) is PluginModuleType)
   }
 
-  private fun createThemeJson(themeName: String, isDark: Boolean, project: Project, dir: PsiDirectory): PsiFile {
+  private fun createThemeJson(themeName: String,
+                              isDark: Boolean,
+                              project: Project,
+                              dir: PsiDirectory,
+                              module: Module): PsiFile {
     val fileName = getThemeJsonFileName(themeName)
+    val colorSchemeFilename = getThemeColorSchemeFileName(themeName)
     val template = FileTemplateManager.getInstance(project).getJ2eeTemplate(THEME_JSON_TEMPLATE)
+    val editorSchemeProps = Properties()
+    editorSchemeProps.setProperty("NAME", themeName)
+    editorSchemeProps.setProperty("PARENT_SCHEME", if (isDark)  "Darcula" else "Default")
+    val editorSchemeTemplate = FileTemplateManager.getInstance(project).getJ2eeTemplate("ThemeEditorColorScheme.xml")
+    val colorScheme = FileTemplateUtil.createFromTemplate(editorSchemeTemplate, colorSchemeFilename, editorSchemeProps, dir)
     val props = Properties()
-    props.setProperty("NAME", JsonElementGenerator(project).createStringLiteral(themeName).text)
+    props.setProperty("NAME", themeName)
     props.setProperty("IS_DARK", isDark.toString())
+    props.setProperty("COLOR_SCHEME_NAME", getRootRelativeLocation(module, colorScheme as PsiFile))
 
     val created = FileTemplateUtil.createFromTemplate(template, fileName, props, dir)
     assert(created is PsiFile)
@@ -73,6 +84,10 @@ class NewThemeAction: AnAction() {
 
   private fun getThemeJsonFileName(themeName: String): String {
     return FileUtil.sanitizeFileName(themeName) + ".theme.json"
+  }
+
+  private fun getThemeColorSchemeFileName(themeName: String): String {
+    return FileUtil.sanitizeFileName(themeName) + ".xml"
   }
 
   private fun registerTheme(dir: PsiDirectory, file: PsiFile, module: Module) {
