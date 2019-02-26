@@ -234,16 +234,32 @@ public class ColorUtil {
     return ((getLuminance(c) + 0.05) / 0.05) < 4.5;
   }
 
+  public static boolean areContrasting(@NotNull Color c1, @NotNull Color c2) {
+    return Double.compare(getContrast(c1, c2), 4.5) >= 0;
+  }
+
+  /**
+   * Contrast ratios can range from 1 to 21 (commonly written 1:1 to 21:1).
+   * Text foreground and background colors shall have contrast ration of at least 4.5:1, large-scale text - of at least 3:1.
+   * @see <a href="https://www.w3.org/TR/2008/REC-WCAG20-20081211/#contrast-ratiodef">W3C contrast ratio definition<a/>
+   */
+  public static double getContrast(@NotNull Color c1, @NotNull Color c2) {
+    double l1 = getLuminance(c1);
+    double l2 = getLuminance(c2);
+    return (Math.max(l1, l2) + 0.05) / (Math.min(l2, l1) + 0.05);
+  }
+
+  /**
+   * @see <a href="https://www.w3.org/TR/2008/REC-WCAG20-20081211/#relativeluminancedef">W3C relative luminance definition<a/>
+   */
   public static double getLuminance(@NotNull Color color) {
     return getLinearRGBComponentValue(color.getRed() / 255.0) * 0.2126 +
            getLinearRGBComponentValue(color.getGreen() / 255.0) * 0.7152 +
            getLinearRGBComponentValue(color.getBlue() / 255.0) * 0.0722;
   }
 
-  public static double getLinearRGBComponentValue(double colorValue) {
-    if (colorValue <= 0.03928) {
-      return colorValue / 12.92;
-    }
+  private static double getLinearRGBComponentValue(double colorValue) {
+    if (colorValue <= 0.03928) return colorValue / 12.92;
     return Math.pow(((colorValue + 0.055) / 1.055), 2.4);
   }
 
