@@ -3,12 +3,11 @@ package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.util.EventDispatcher
-import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
 import kotlin.properties.Delegates
 
 internal class GithubPullRequestsListSelectionHolderImpl : GithubPullRequestsListSelectionHolder {
 
-  override var selection: GithubSearchedIssue? by Delegates.observable<GithubSearchedIssue?>(null) { _, _, _ ->
+  override var selectionNumber: Long? by Delegates.observable<Long?>(null) { _, _, _ ->
     selectionChangeEventDispatcher.multicaster.eventOccurred()
   }
 

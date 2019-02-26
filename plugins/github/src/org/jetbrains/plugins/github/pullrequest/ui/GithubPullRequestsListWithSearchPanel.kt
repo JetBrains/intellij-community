@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AutoPopupController
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
@@ -22,6 +23,8 @@ import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQu
 import java.awt.Component
 import javax.swing.ListModel
 import javax.swing.ScrollPaneConstants
+import javax.swing.event.ListDataEvent
+import javax.swing.event.ListDataListener
 import javax.swing.event.ListSelectionEvent
 
 internal class GithubPullRequestsListWithSearchPanel(project: Project,
@@ -49,6 +52,8 @@ internal class GithubPullRequestsListWithSearchPanel(project: Project,
     border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
   }
 
+  private var autoSelectionNumber: Long? = null
+
   init {
     loader.addLoadingStateChangeListener(this) {
       if (loader.loading) {
@@ -75,11 +80,26 @@ internal class GithubPullRequestsListWithSearchPanel(project: Project,
       updateEmptyText()
     }
 
+    listModel.addListDataListener(object : ListDataListener {
+      override fun intervalAdded(e: ListDataEvent) {
+        if (e.type == ListDataEvent.INTERVAL_ADDED)
+          (e.index0..e.index1).find { listModel.getElementAt(it).number == autoSelectionNumber }
+            ?.run { ApplicationManager.getApplication().invokeLater { ScrollingUtil.selectItem(list, this) } }
+      }
+
+      override fun contentsChanged(e: ListDataEvent) {}
+      override fun intervalRemoved(e: ListDataEvent) {
+        if (e.type == ListDataEvent.INTERVAL_REMOVED) autoSelectionNumber = listSelectionHolder.selectionNumber
+      }
+    })
+
     list.selectionModel.addListSelectionListener { e: ListSelectionEvent ->
       if (!e.valueIsAdjusting) {
         val selectedIndex = list.selectedIndex
-        if (selectedIndex < 0 || selectedIndex >= listModel.size) listSelectionHolder.selection = null
-        else listSelectionHolder.selection = listModel.getElementAt(selectedIndex)
+        if (selectedIndex >= 0 && selectedIndex < listModel.size) {
+          listSelectionHolder.selectionNumber = listModel.getElementAt(selectedIndex).number
+          autoSelectionNumber = null
+        }
       }
     }
 
@@ -89,7 +109,7 @@ internal class GithubPullRequestsListWithSearchPanel(project: Project,
           val popupMenu = actionManager
             .createActionPopupMenu("GithubPullRequestListPopup",
                                    actionManager.getAction("Github.PullRequest.ToolWindow.List.Popup") as ActionGroup)
-          popupMenu.setTargetComponent(this@GithubPullRequestsListWithSearchPanel)
+          popupMenu.setTargetComponent(list)
           popupMenu.component.show(comp, x, y)
         }
       }

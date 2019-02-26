@@ -33,8 +33,8 @@ class GithubPullRequestCreateBranchAction : DumbAwareAction("Create New Local Br
     val dataProvider = e.getRequiredData(GithubPullRequestKeys.SELECTED_PULL_REQUEST_DATA_PROVIDER)
 
     val options = GitBranchUtil.getNewBranchNameFromUser(project, repositoryList,
-                                                         "Create New Branch From Pull Request #${pullRequest.number}",
-                                                         "pull/${pullRequest.number}") ?: return
+                                                         "Create New Branch From Pull Request #${pullRequest}",
+                                                         "pull/${pullRequest}") ?: return
 
     if (!options.checkout) {
       object : Task.Backgroundable(project, "Creating Branch From Pull Request", true) {

@@ -68,6 +68,7 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
     private val repoDataLoader = GithubPullRequestsRepositoryDataLoaderImpl(progressManager, requestExecutor,
                                                                             account.server, repoDetails.fullPath)
     private val listLoader = GithubPullRequestsListLoaderImpl(progressManager, requestExecutor, account.server, repoDetails.fullPath)
+    private val listSelectionHolder = GithubPullRequestsListSelectionHolderImpl()
     private val dataLoader = GithubPullRequestsDataLoaderImpl(project, progressManager, git, requestExecutor, repository, remote,
                                                               account.server, repoDetails.fullPath)
 
@@ -88,7 +89,6 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
                                                             avatarIconsProviderFactory)
     private val preview = GithubPullRequestPreviewComponent(changes, details)
 
-    private val listSelectionHolder = GithubPullRequestsListSelectionHolderImpl()
     private val list = GithubPullRequestsListWithSearchPanel(project, copyPasteManager, actionManager, autoPopupController,
                                                              avatarIconsProviderFactory,
                                                              listLoader, listLoader, listLoader, listSelectionHolder)
@@ -100,13 +100,13 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
       isFocusCycleRoot = true
 
       listSelectionHolder.addSelectionChangeListener(preview) {
-        val dataProvider = listSelectionHolder.selection?.number?.let(dataLoader::getDataProvider)
+        val dataProvider = listSelectionHolder.selectionNumber?.let(dataLoader::getDataProvider)
         preview.setPreviewDataProvider(dataProvider)
       }
 
       dataLoader.addInvalidationListener(preview) {
-        val selection = listSelectionHolder.selection
-        if (selection != null && selection.number == it) {
+        val selection = listSelectionHolder.selectionNumber
+        if (selection != null && selection == it) {
           preview.setPreviewDataProvider(dataLoader.getDataProvider(it))
         }
       }
@@ -128,9 +128,9 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
         GithubPullRequestKeys.SERVER_PATH.`is`(dataId) -> account.server
         GithubPullRequestKeys.API_REQUEST_EXECUTOR.`is`(dataId) -> requestExecutor
         GithubPullRequestKeys.PULL_REQUESTS_COMPONENT.`is`(dataId) -> this
-        GithubPullRequestKeys.SELECTED_PULL_REQUEST.`is`(dataId) -> listSelectionHolder.selection
+        GithubPullRequestKeys.SELECTED_PULL_REQUEST.`is`(dataId) -> listSelectionHolder.selectionNumber
         GithubPullRequestKeys.SELECTED_PULL_REQUEST_DATA_PROVIDER.`is`(dataId) ->
-          listSelectionHolder.selection?.number?.let(dataLoader::getDataProvider)
+          listSelectionHolder.selectionNumber?.let(dataLoader::getDataProvider)
         else -> null
       }
     }
