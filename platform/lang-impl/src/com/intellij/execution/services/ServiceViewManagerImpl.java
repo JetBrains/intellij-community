@@ -38,6 +38,7 @@ public class ServiceViewManagerImpl implements ServiceViewManager, PersistentSta
 
   public ServiceViewManagerImpl(@NotNull Project project) {
     myProject = project;
+    myProject.getMessageBus().connect(myProject).subscribe(ServiceViewContributor.TOPIC, this::updateToolWindow);
   }
 
   public void createToolWindowContent(@NotNull ToolWindow toolWindow) {
@@ -64,9 +65,8 @@ public class ServiceViewManagerImpl implements ServiceViewManager, PersistentSta
     });
   }
 
-  @Override
-  public void contentChanged(boolean withStructure) {
-    final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+  private void updateToolWindow(ServiceViewContributor.ServiceEvent event) {
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
     if (toolWindowManager == null) return;
 
     toolWindowManager.invokeLater(() -> {
@@ -74,26 +74,20 @@ public class ServiceViewManagerImpl implements ServiceViewManager, PersistentSta
         return;
       }
 
-      if (withStructure) {
-        boolean available = true; //hasContent();
-        ToolWindow toolWindow = toolWindowManager.getToolWindow(ToolWindowId.SERVICES);
-        if (toolWindow == null) {
-          toolWindow = createToolWindow(toolWindowManager, available);
-          if (available) {
-            toolWindow.show(null);
-          }
-          return;
-        }
-
-        boolean doShow = !toolWindow.isAvailable() && available;
-        toolWindow.setAvailable(available, null);
-        if (doShow) {
+      boolean available = true; //TODO [konstantin.aleev] hasContent();
+      ToolWindow toolWindow = toolWindowManager.getToolWindow(ToolWindowId.SERVICES);
+      if (toolWindow == null) {
+        toolWindow = createToolWindow(toolWindowManager, available);
+        if (available) {
           toolWindow.show(null);
         }
+        return;
       }
 
-      if (myServiceView != null) {
-        myServiceView.updateContent(withStructure);
+      boolean doShow = !toolWindow.isAvailable() && available;
+      toolWindow.setAvailable(available, null);
+      if (doShow) {
+        toolWindow.show(null);
       }
     });
   }
