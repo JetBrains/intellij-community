@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.ui.WindowWrapperBuilder;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,6 +66,9 @@ public class MergeWindow {
       .build();
     myWrapper.setImages(DiffUtil.DIFF_FRAME_ICONS);
     Disposer.register(myWrapper, myProcessor);
+
+    Consumer<WindowWrapper> wrapperHandler = myHints.getWindowConsumer();
+    if (wrapperHandler != null) wrapperHandler.consume(myWrapper);
   }
 
   public void show() {
