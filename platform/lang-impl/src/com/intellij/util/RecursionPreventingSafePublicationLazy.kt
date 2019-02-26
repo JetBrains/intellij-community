@@ -2,8 +2,6 @@
 package com.intellij.util
 
 import com.intellij.openapi.util.RecursionManager
-import com.intellij.util.ObjectUtils.notNullize
-import com.intellij.util.ObjectUtils.nullize
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -12,7 +10,7 @@ import java.util.concurrent.atomic.AtomicReference
 class RecursionPreventingSafePublicationLazy<T>(recursionKey: Any?, initializer: () -> T) : Lazy<T?> {
 
   @Volatile
-  private var initializer: (() -> T)? = { notNullize(initializer()) }
+  private var initializer: (() -> T)? = { ourNotNullizer.notNullize(initializer()) }
   private val valueRef: AtomicReference<T> = AtomicReference()
   private val recursionKey: Any = recursionKey ?: this
 
@@ -20,13 +18,13 @@ class RecursionPreventingSafePublicationLazy<T>(recursionKey: Any?, initializer:
     get() {
       val computedValue = valueRef.get()
       if (computedValue !== null) {
-        return nullize(computedValue)
+        return ourNotNullizer.nullize(computedValue)
       }
 
       val initializerValue = initializer
       if (initializerValue === null) {
         // Some thread managed to clear the initializer => it managed to set the value.
-        return nullize(valueRef.get())
+        return ourNotNullizer.nullize(valueRef.get())
       }
 
       val stamp = ourRecursionGuard.markStack()
@@ -38,16 +36,16 @@ class RecursionPreventingSafePublicationLazy<T>(recursionKey: Any?, initializer:
       }
       if (!stamp.mayCacheNow()) {
         // Recursion occurred somewhere deep.
-        return nullize(newValue)
+        return ourNotNullizer.nullize(newValue)
       }
 
       if (!valueRef.compareAndSet(null, newValue)) {
         // Some thread managed to set the value.
-        return nullize(valueRef.get())
+        return ourNotNullizer.nullize(valueRef.get())
       }
 
       initializer = null
-      return nullize(newValue)
+      return ourNotNullizer.nullize(newValue)
     }
 
   override fun isInitialized(): Boolean = valueRef.get() !== null
@@ -56,5 +54,6 @@ class RecursionPreventingSafePublicationLazy<T>(recursionKey: Any?, initializer:
 
   companion object {
     private val ourRecursionGuard = RecursionManager.createGuard("RecursionPreventingSafePublicationLazy")
+    private val ourNotNullizer = NotNullizer("RecursionPreventingSafePublicationLazy")
   }
 }
