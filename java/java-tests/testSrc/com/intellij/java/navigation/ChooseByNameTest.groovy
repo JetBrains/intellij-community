@@ -409,6 +409,13 @@ class Intf {
     assert gotoFile("somefb\\index.html") == [someFbFile]
   }
 
+  void "test file path matching with spaces instead of slashes"() {
+    def good = addEmptyFile("config/app.txt")
+    addEmptyFile("src/Configuration/ManagesApp.txt")
+
+    assert gotoFile("config app.txt")[0] == good
+  }
+
   void "test multiple slashes in goto file"() {
     def file = addEmptyFile("foo/bar/goo/file.txt")
     ['foo/goo/file.txt', 'foo/bar/file.txt', 'bar/goo/file.txt', 'foo/bar/goo/file.txt'].each {

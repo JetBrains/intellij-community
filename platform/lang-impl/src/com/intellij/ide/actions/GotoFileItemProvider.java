@@ -286,7 +286,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     SuffixMatches nextGroup(ChooseByNameBase base) {
       if (index >= namePattern.length()) return null;
       
-      SuffixMatches matches = new SuffixMatches(namePattern.substring(index), indicator);
+      SuffixMatches matches = new SuffixMatches(namePattern, index, indicator);
       for (String name : candidateNames.get(index)) {
         if (!matches.matchName(base, name) && index + 1 < namePattern.length()) {
           candidateNames.get(index + 1).add(name); // try later with a shorter matcher
@@ -304,9 +304,9 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     final List<MatchResult> matchingNames = new ArrayList<>();
     final ProgressIndicator indicator;
 
-    SuffixMatches(String patternSuffix, @NotNull ProgressIndicator indicator) {
-      this.patternSuffix = patternSuffix;
-      matcher = NameUtil.buildMatcher("*" + patternSuffix, NameUtil.MatchingCaseSensitivity.NONE);
+    SuffixMatches(String pattern, int from, @NotNull ProgressIndicator indicator) {
+      patternSuffix = pattern.substring(from);
+      matcher = NameUtil.buildMatcher((from > 0 ? " " : "*") + patternSuffix, NameUtil.MatchingCaseSensitivity.NONE);
       this.indicator = indicator;
     }
 
