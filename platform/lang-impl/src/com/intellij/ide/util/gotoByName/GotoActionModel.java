@@ -167,7 +167,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   public void saveInitialCheckBoxState(boolean state) {
   }
 
-  public static class MatchedValue implements Comparable<MatchedValue> {
+  public static class MatchedValue {
     @NotNull public final Object value;
     @NotNull final String pattern;
 
@@ -207,8 +207,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       return 0;
     }
 
-    @Override
-    public int compareTo(@NotNull MatchedValue o) {
+    public int compareWeights(@NotNull MatchedValue o) {
       if (o == this) return 0;
       int diff = o.getMatchingDegree() - getMatchingDegree();
       if (diff != 0) return diff;
@@ -219,7 +218,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       if (value instanceof ActionWrapper && o.value instanceof ActionWrapper) {
         ActionWrapper value1 = (ActionWrapper)value;
         ActionWrapper value2 = (ActionWrapper)o.value;
-        int compared = value1.compareTo(value2);
+        int compared = value1.compareWeights(value2);
         if (compared != 0) return compared;
       }
 
@@ -299,7 +298,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   public int compare(@NotNull Object o1, @NotNull Object o2) {
     if (ChooseByNameBase.EXTRA_ELEM.equals(o1)) return 1;
     if (ChooseByNameBase.EXTRA_ELEM.equals(o2)) return -1;
-    return ((MatchedValue)o1).compareTo((MatchedValue)o2);
+    return ((MatchedValue)o1).compareWeights((MatchedValue)o2);
   }
 
   @NotNull
@@ -587,7 +586,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     }
   }
 
-  public static class ActionWrapper implements Comparable<ActionWrapper> {
+  public static class ActionWrapper {
     @NotNull private final AnAction myAction;
     @NotNull private final MatchMode myMode;
     @Nullable private final GroupMapping myGroupMapping;
@@ -617,8 +616,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       return myMode;
     }
 
-    @Override
-    public int compareTo(@NotNull ActionWrapper o) {
+    public int compareWeights(@NotNull ActionWrapper o) {
       int compared = myMode.compareTo(o.getMode());
       if (compared != 0) return compared;
       Presentation myPresentation = myAction.getTemplatePresentation();
@@ -679,7 +677,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
     @Override
     public boolean equals(Object obj) {
-      return obj instanceof ActionWrapper && compareTo((ActionWrapper)obj) == 0;
+      return obj instanceof ActionWrapper && myAction.equals(((ActionWrapper)obj).myAction);
     }
 
     @Override

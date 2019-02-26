@@ -126,7 +126,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     Map<String, String> map = myModel.getConfigurablesNames();
     SearchableOptionsRegistrarImpl registrar = (SearchableOptionsRegistrarImpl)SearchableOptionsRegistrar.getInstance();
 
-    List<Comparable> options = ContainerUtil.newArrayList();
+    List<Object> options = ContainerUtil.newArrayList();
     final Set<String> words = registrar.getProcessedWords(pattern);
     Set<OptionDescription> optionDescriptions = null;
     final String actionManagerName = myActionManager.getComponentName();
@@ -224,10 +224,10 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
 
   private final static Logger LOG = Logger.getInstance(GotoActionItemProvider.class);
 
-  private static boolean processItems(String pattern, JBIterable<? extends Comparable> items, Processor<? super MatchedValue> consumer) {
+  private static boolean processItems(String pattern, JBIterable<?> items, Processor<? super MatchedValue> consumer) {
     List<MatchedValue> matched = ContainerUtil.newArrayList(items.map(o -> o instanceof MatchedValue ? (MatchedValue)o : new MatchedValue(o, pattern)));
     try {
-      Collections.sort(matched);
+      Collections.sort(matched, (o1, o2) -> o1.compareWeights(o2));
     }
     catch (IllegalArgumentException e) {
       LOG.error("Comparison method violates its general contract with pattern '" + pattern + "'", e);
