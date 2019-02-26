@@ -1,4 +1,6 @@
 UFile (package = )
+    UImportStatement (isOnDemand = false)
+    UImportStatement (isOnDemand = false)
     UClass (name = TryWithResources)
         UMethod (name = foo)
             UBlockExpression
