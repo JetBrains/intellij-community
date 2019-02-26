@@ -12,7 +12,6 @@ BIN_BLOCK_SIZE = 64 * 1024
 # TODO: Move all CLR-specific functions to clr_tools
 debug_mode = True
 quiet = False
-_prepopulate_cache_with_sdk_skeletons = True
 
 
 # TODO move to property of Generator3 as soon as tests finished
