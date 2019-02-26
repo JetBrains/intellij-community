@@ -810,8 +810,6 @@ class ModuleRedeclarator(object):
                 self.add_import_header_if_needed()
                 ref_notice = getattr(item, "__file__", str(item))
                 if hasattr(item, "__name__"):
-                    if self.test_mode and item_name.name in ('builtins', '__builtin__'):
-                        continue
                     self.imports_buf.out(0, "import ", item.__name__, " as ", item_name, " # ", ref_notice)
                 else:
                     self.imports_buf.out(0, item_name, " = None # ??? name unknown; ", ref_notice)
