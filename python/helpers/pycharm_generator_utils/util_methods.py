@@ -802,14 +802,6 @@ def copy(src, dst, merge=False, pre_copy_hook=None, conflict_handler=None, post_
         post_copy_hook(src, dst)
 
 
-def copy_merging_packages(src, dst):
-    def ignore_init_py(src_file, dst_file):
-        return (os.path.basename(src_file) == '__init__.py' and
-                os.path.basename(dst_file) == '__init__.py')
-
-    copy(src, dst, merge=True, conflict_handler=ignore_init_py)
-
-
 def copy_skeletons(src_dir, dst_dir):
     def overwrite(src, dst):
         delete(dst)
