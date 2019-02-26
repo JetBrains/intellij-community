@@ -34,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.util.ComponentTreeEventDispatcher;
@@ -49,7 +50,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
+import java.io.File;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -478,14 +481,29 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   }
 
   private static final String TEMP_SCHEME_KEY = "TEMP_SCHEME_KEY";
+  private static final String TEMP_SCHEME_FILE_KEY = "TEMP_SCHEME_FILE_KEY";
   public static boolean isTempScheme(EditorColorsScheme scheme) {
     if (scheme == null) return false;
 
     return StringUtil.equals(scheme.getMetaProperties().getProperty(TEMP_SCHEME_KEY), Boolean.TRUE.toString());
   }
 
-  public static void setTempScheme(EditorColorsScheme scheme) {
+  @Nullable
+  public static Path getTempSchemeOriginalFilePath(EditorColorsScheme scheme) {
+    if (isTempScheme(scheme)) {
+      String path = scheme.getMetaProperties().getProperty(TEMP_SCHEME_FILE_KEY);
+      if (path != null) {
+        return new File(path).toPath();
+      }
+    }
+    return null;
+  }
+
+  public static void setTempScheme(EditorColorsScheme scheme, @Nullable VirtualFile originalSchemeFile) {
     if (scheme == null) return;
     scheme.getMetaProperties().setProperty(TEMP_SCHEME_KEY, Boolean.TRUE.toString());
+    if (originalSchemeFile != null) {
+      scheme.getMetaProperties().setProperty(TEMP_SCHEME_FILE_KEY, originalSchemeFile.getPath());
+    }
   }
 }

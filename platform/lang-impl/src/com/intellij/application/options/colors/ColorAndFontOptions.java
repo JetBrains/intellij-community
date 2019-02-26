@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatusFactory;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -34,11 +35,12 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
+import org.jdom.Attribute;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 import java.util.function.Function;
@@ -513,10 +516,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     }
     EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
     if (EditorColorsManagerImpl.isTempScheme(globalScheme)) {
-      mySelectedScheme = ContainerUtil.getFirstItem(mySchemes.values());
-    } else {
-      mySelectedScheme = mySchemes.get(globalScheme.getName());
+      MyColorScheme schemeDelegate = new MyTempColorScheme((AbstractColorsScheme)globalScheme);
+      initScheme(schemeDelegate);
+      mySchemes.put(schemeDelegate.getName(), schemeDelegate);
     }
+    mySelectedScheme = mySchemes.get(globalScheme.getName());
+
     assert mySelectedScheme != null : globalScheme.getName() + "; myschemes=" + mySchemes;
   }
 
@@ -1041,7 +1046,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       return !areDelegatingOrEqual(getConsoleFontPreferences(), myParentScheme.getConsoleFontPreferences());
     }
 
-    private boolean apply() {
+    protected boolean apply() {
       if (!(myParentScheme instanceof ReadOnlyColorsScheme)) {
         return apply(myParentScheme);
       }
@@ -1153,6 +1158,48 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
         target.setColor(key, fileStatusColors.get(key));
       }
       target.setSaveNeeded(true);
+    }
+  }
+
+  private static class MyTempColorScheme extends MyColorScheme {
+    private MyTempColorScheme(@NotNull AbstractColorsScheme parentScheme) {
+      super(parentScheme);
+    }
+
+    @Override
+    public boolean isReadOnly() {
+      return false;
+    }
+
+    @Override
+    protected boolean apply() {
+      Element scheme = new Element("scheme");
+      ((AbstractColorsScheme)getParentScheme()).writeExternal(scheme);
+      writeExternal(scheme);
+      Path path = EditorColorsManagerImpl.getTempSchemeOriginalFilePath(getParentScheme());
+      if (path != null) {
+        try {
+          Element originalFile = JDOMUtil.load(path.toFile());
+          scheme.setName(originalFile.getName());
+          for (Attribute attribute : originalFile.getAttributes()) {
+            scheme.setAttribute(attribute.getName(), attribute.getValue());
+          }
+          getParentScheme().readExternal(scheme);
+
+          //save original metaInfo and don't add generated
+          Element metaInfo = originalFile.getChild("metaInfo");
+          if (metaInfo != null) {
+            scheme.removeChild("metaInfo");
+            metaInfo = JDOMUtil.load(JDOMUtil.writeElement(metaInfo));
+            scheme.addContent(0, metaInfo);
+          }
+          JDOMUtil.write(scheme, path.toFile());
+        }
+        catch (Exception e) {
+          LOG.warn(e);
+        }
+      }
+      return true;
     }
   }
 
