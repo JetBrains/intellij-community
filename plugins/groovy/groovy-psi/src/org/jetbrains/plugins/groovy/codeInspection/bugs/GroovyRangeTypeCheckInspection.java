@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -105,7 +105,7 @@ public class GroovyRangeTypeCheckInspection extends BaseInspection {
   protected String buildErrorString(Object... args) {
     switch (args.length) {
       case 1:
-        return GroovyInspectionBundle.message("type.doesnt.implemnt.comparable", args);
+        return GroovyInspectionBundle.message("type.doesnt.implement.comparable", args);
       case 2:
         return GroovyInspectionBundle.message("type.doesnt.contain.method", args);
       default:
