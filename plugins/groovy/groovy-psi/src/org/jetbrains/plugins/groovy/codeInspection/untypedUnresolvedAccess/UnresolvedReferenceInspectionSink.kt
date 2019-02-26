@@ -11,7 +11,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter
 import org.jetbrains.plugins.groovy.highlighting.HighlightSink
 
-internal class UnresolvedReferenceHighlightSink(private val problemsHolder: ProblemsHolder) : HighlightSink {
+internal class UnresolvedReferenceInspectionSink(private val problemsHolder: ProblemsHolder) : HighlightSink {
 
   override fun registerProblem(highlightElement: PsiElement,
                                highlightType: ProblemHighlightType,
