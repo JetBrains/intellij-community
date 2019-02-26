@@ -1433,6 +1433,11 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   public void visitAnnotationMethod(@NotNull GrAnnotationMethod annotationMethod) {
     super.visitAnnotationMethod(annotationMethod);
 
+    final PsiReferenceList list = annotationMethod.getThrowsList();
+    if (list.getReferencedTypes().length > 0) {
+      myHolder.createErrorAnnotation(list, GroovyBundle.message("throws.clause.is.not.allowed.in.at.interface"));
+    }
+
     final GrAnnotationMemberValue value = annotationMethod.getDefaultValue();
     if (value == null) return;
 

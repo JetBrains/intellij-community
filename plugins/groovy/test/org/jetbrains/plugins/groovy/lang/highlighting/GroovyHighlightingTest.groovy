@@ -898,6 +898,15 @@ new Base() {
 ''')
   }
 
+  void testAnnotationMethodThrowsList() {
+    testHighlighting '''\
+@interface A {
+  int aaa() <error descr="'throws' clause is not allowed in @interface members">throws IOException</error>;
+  int aab() throws<error descr="<type> expected, got ';'"> </error>;
+}
+'''
+  }
+
   void testAnnotationAttributeTypes() {
     testHighlighting('''\
 @interface Int {
