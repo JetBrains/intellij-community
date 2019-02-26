@@ -21,7 +21,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.io.PathKt;
-import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,10 +32,9 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.nio.file.attribute.FileTime;
 import java.util.List;
-import java.util.PropertyResourceBundle;
+import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -173,34 +171,30 @@ public class ConfigImportHelper {
       return Collections.emptyList();
     }
 
-    TObjectLongHashMap<Path> fileToLastModified = new TObjectLongHashMap<>();
+    HashMap<Path, FileTime> lastModified = new HashMap<>();
     for (Path child : candidates) {
       Path candidate = isMacOs ? child : child.resolve(CONFIG);
-      long lastModified = 0;
+      FileTime max = null;
       for (String name : OPTIONS) {
-        long modified;
         try {
-          modified = Files.getLastModifiedTime(candidate.resolve(name)).toMillis();
+          FileTime cur = Files.getLastModifiedTime(candidate.resolve(name));
+          if (max == null || cur.compareTo(max) > 0) {
+            max = cur;
+          }
         }
-        catch (IOException ignored) {
-          continue;
-        }
-
-        if (modified > lastModified) {
-          lastModified = modified;
+        catch (IOException ignore) {
         }
       }
-      fileToLastModified.put(candidate, lastModified);
+      if (max != null) {
+        lastModified.put(candidate, max);
+      }
     }
 
-    List<Path> result = new ArrayList<>();
-    for (Object key : fileToLastModified.keys()) {
-      result.add((Path)key);
-    }
+    List<Path> result = new ArrayList<>(lastModified.keySet());
     result.sort((o1, o2) -> {
-      int diff = (int)(fileToLastModified.get(o2) - fileToLastModified.get(o1));
+      int diff = lastModified.get(o2).compareTo(lastModified.get(o1));
       if (diff == 0) {
-        return StringUtil.naturalCompare(o2.toString(), o1.toString());
+        diff = StringUtil.naturalCompare(o2.toString(), o1.toString());
       }
       return diff;
     });
