@@ -42,7 +42,7 @@ public class FileTypeAssocTable<T> {
   private FileTypeAssocTable(@NotNull Map<CharSequence, T> extensionMappings,
                              @NotNull Map<CharSequence, T> exactFileNameMappings,
                              @NotNull Map<CharSequence, T> exactFileNameAnyCaseMappings,
-                             @NotNull List<Pair<FileNameMatcher, T>> matchingMappings) {
+                             @NotNull List<? extends Pair<FileNameMatcher, T>> matchingMappings) {
     myExtensionMappings = new THashMap<>(Math.max(10, extensionMappings.size()), 0.5f, CharSequenceHashingStrategy.CASE_INSENSITIVE);
     myExtensionMappings.putAll(extensionMappings);
     myExactFileNameMappings = new THashMap<>(Math.max(10, exactFileNameMappings.size()), 0.5f, CharSequenceHashingStrategy.CASE_SENSITIVE);

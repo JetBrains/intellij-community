@@ -12,8 +12,10 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public class VFileCreateEvent extends VFileEvent {
-  private final @NotNull VirtualFile myParent;
-  private final @NotNull String myChildName;
+  @NotNull
+  private final VirtualFile myParent;
+  @NotNull
+  private final String myChildName;
   private final boolean myDirectory;
   private final FileAttributes myAttributes;
   private final String mySymlinkTarget;
@@ -24,7 +26,7 @@ public class VFileCreateEvent extends VFileEvent {
                           @NotNull VirtualFile parent,
                           @NotNull String childName,
                           boolean isDirectory,
-                          @Nullable("null means read from the created file") FileAttributes attributes,
+                          @Nullable("null means should read from the created file") FileAttributes attributes,
                           @Nullable String symlinkTarget,
                           boolean isFromRefresh,
                           boolean isEmptyDirectory) {
@@ -105,10 +107,7 @@ public class VFileCreateEvent extends VFileEvent {
 
     final VFileCreateEvent event = (VFileCreateEvent)o;
 
-    if (myDirectory != event.myDirectory) return false;
-    if (!myChildName.equals(event.myChildName)) return false;
-    if (!myParent.equals(event.myParent)) return false;
-    return true;
+    return myDirectory == event.myDirectory && myChildName.equals(event.myChildName) && myParent.equals(event.myParent);
   }
 
   @Override

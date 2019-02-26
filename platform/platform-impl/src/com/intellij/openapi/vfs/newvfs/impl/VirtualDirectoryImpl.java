@@ -472,6 +472,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   // optimisation: works faster than added.forEach(this::addChild)
   public void createAndAddChildren(@NotNull List<? extends PersistentFSImpl.ChildInfo> added) {
     if (added.size()<=1) {
+      //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < added.size(); i++) {
         PersistentFSImpl.ChildInfo pair = added.get(i);
         FileAttributes attributes = pair.attributes;
@@ -490,6 +491,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     TIntArrayList mergedIds = new TIntArrayList(myData.myChildrenIds.length + added.size());
     synchronized (myData) {
+      //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < added.size(); i++) {
         PersistentFSImpl.ChildInfo pair = added.get(i);
         FileAttributes attributes = pair.attributes;
@@ -511,7 +513,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           return myData.myChildrenIds.length;
         }
       };
-      ContainerUtil.processSortedListsInOrder(added, existingChildren, pairComparator, true, pair -> mergedIds.add(pair.id));
+      ContainerUtil.processSortedListsInOrder(added, existingChildren, pairComparator, true, nextInfo -> mergedIds.add(nextInfo.id));
       myData.myChildrenIds = mergedIds.toNativeArray();
 
       assertConsistency(caseSensitive, added);
