@@ -21,10 +21,6 @@ import javax.swing.*;
 
 public class MarkedForRemovalInspection extends DeprecationInspectionBase {
 
-  {
-    IGNORE_IN_SAME_OUTERMOST_CLASS = true;
-  }
-
   @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {

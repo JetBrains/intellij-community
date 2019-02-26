@@ -42,7 +42,9 @@ public class DeprecationInspectionTest extends InspectionTestCase {
   }
 
   private void doTest() {
-    doTest("deprecation/" + getTestName(true), new DeprecationInspection());
+    DeprecationInspection tool = new DeprecationInspection();
+    tool.IGNORE_IN_SAME_OUTERMOST_CLASS = false;
+    doTest("deprecation/" + getTestName(true), tool);
   }
 
   public void testDeprecatedMethod() {
@@ -88,6 +90,11 @@ public class DeprecationInspectionTest extends InspectionTestCase {
   public void testMethodsOfDeprecatedClass() {
     final DeprecationInspection tool = new DeprecationInspection();
     tool.IGNORE_METHODS_OF_DEPRECATED = false;
+    doTest("deprecation/" + getTestName(true), tool);
+  }
+
+  public void testIgnoreInSameOutermostClass() {
+    final DeprecationInspection tool = new DeprecationInspection();
     doTest("deprecation/" + getTestName(true), tool);
   }
 
