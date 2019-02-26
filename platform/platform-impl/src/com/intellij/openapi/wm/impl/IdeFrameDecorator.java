@@ -106,7 +106,7 @@ public abstract class IdeFrameDecorator implements Disposable {
         }
         myFrame.dispose();
         //if (! (Registry.is("ide.win.frame.decoration") && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()))) {
-        //  myFrame.setUndecorated(state);
+          myFrame.setUndecorated(state);
         //}
       }
       finally {
