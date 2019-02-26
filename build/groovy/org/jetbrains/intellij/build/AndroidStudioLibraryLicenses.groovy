@@ -29,6 +29,9 @@ class AndroidStudioLibraryLicenses {
     new LibraryLicense(name: "ANTLR 4 Runtime", libraryName: "antlr4-runtime", version: "4.5.3", license: "BSD",
                        url: "http://www.antlr.org", licenseUrl: "http://www.antlr.org/license.html"),
     new LibraryLicense(name: "Android Instant Apps SDK API", libraryName: "instantapps-api-1.5", license: "Apache 2.0"),
+    // for commons-lang module library in db-compiler
+    new LibraryLicense(name: "Apache Commons Lang", libraryName: "commons-lang", version: "2.6", license: "Apache 2.0",
+                       licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "http://commons.apache.org/proper/commons-lang/"),
     // for bouncycastle module library in android.sdktools.sdk-common
     new LibraryLicense(name: "bouncycastle", version: "1.56", license: "MIT License", url: "http://bouncycastle.org",
                        licenseUrl: "http://bouncycastle.org/licence.html"),
