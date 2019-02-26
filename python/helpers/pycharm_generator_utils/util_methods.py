@@ -779,7 +779,6 @@ def copy(src, dst, merge=False, pre_copy_hook=None, conflict_handler=None, post_
     if os.path.isdir(src):
         if not merge:
             shutil.copytree(src, dst)
-            post_copy_hook(src, dst)
         else:
             mkdir(dst)
             for child in os.listdir(src):
@@ -790,7 +789,6 @@ def copy(src, dst, merge=False, pre_copy_hook=None, conflict_handler=None, post_
                          pre_copy_hook=pre_copy_hook,
                          conflict_handler=conflict_handler,
                          post_copy_hook=post_copy_hook)
-                    post_copy_hook(child_src, child_dst)
                 except OSError as e:
                     if e.errno == errno.EEXIST and not (os.path.isdir(child_src) and os.path.isdir(child_dst)):
                         if conflict_handler(child_src, child_dst):
@@ -799,7 +797,7 @@ def copy(src, dst, merge=False, pre_copy_hook=None, conflict_handler=None, post_
     else:
         mkdir(os.path.dirname(dst))
         shutil.copy2(src, dst)
-        post_copy_hook(src, dst)
+    post_copy_hook(src, dst)
 
 
 def copy_skeletons(src_dir, dst_dir):
