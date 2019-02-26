@@ -13,12 +13,12 @@ import com.intellij.ui.OnePixelSplitter
 import git4idea.commands.Git
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
-import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubRepoDetailed
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
+import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestsDataContext
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTrackerImpl
@@ -59,10 +59,8 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
   inner class GithubPullRequestsComponent(private val requestExecutor: GithubApiRequestExecutor,
                                           avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
                                           pullRequestUiSettings: GithubPullRequestsProjectUISettings,
-                                          private val repository: GitRepository, private val remote: GitRemote,
-                                          accountDetails: GithubAuthenticatedUser,
-                                          private val repoDetails: GithubRepoDetailed,
-                                          private val account: GithubAccount)
+                                          repository: GitRepository, remote: GitRemote,
+                                          accountDetails: GithubAuthenticatedUser, repoDetails: GithubRepoDetailed, account: GithubAccount)
     : OnePixelSplitter("Github.PullRequests.Component", 0.33f), Disposable, DataProvider {
 
     private val repoDataLoader = GithubPullRequestsRepositoryDataLoaderImpl(progressManager, requestExecutor,
@@ -93,6 +91,8 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
                                                              avatarIconsProviderFactory,
                                                              listLoader, listLoader, listLoader, listSelectionHolder)
 
+    private val dataContext = GithubPullRequestsDataContext(requestExecutor, repoDataLoader, listLoader, listSelectionHolder, dataLoader,
+                                                            account.server, repoDetails, accountDetails, repository, remote)
 
     init {
       firstComponent = list
@@ -112,25 +112,10 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
       }
     }
 
-    @CalledInAwt
-    fun refreshAllPullRequests() {
-      repoDataLoader.reset()
-      listLoader.reset()
-      dataLoader.invalidateAllData()
-    }
-
     override fun getData(dataId: String): Any? {
       if (Disposer.isDisposed(this)) return null
       return when {
-        GithubPullRequestKeys.REPOSITORY.`is`(dataId) -> repository
-        GithubPullRequestKeys.REMOTE.`is`(dataId) -> remote
-        GithubPullRequestKeys.REPO_DETAILS.`is`(dataId) -> repoDetails
-        GithubPullRequestKeys.SERVER_PATH.`is`(dataId) -> account.server
-        GithubPullRequestKeys.API_REQUEST_EXECUTOR.`is`(dataId) -> requestExecutor
-        GithubPullRequestKeys.PULL_REQUESTS_COMPONENT.`is`(dataId) -> this
-        GithubPullRequestKeys.SELECTED_PULL_REQUEST.`is`(dataId) -> listSelectionHolder.selectionNumber
-        GithubPullRequestKeys.SELECTED_PULL_REQUEST_DATA_PROVIDER.`is`(dataId) ->
-          listSelectionHolder.selectionNumber?.let(dataLoader::getDataProvider)
+        GithubPullRequestKeys.DATA_CONTEXT.`is`(dataId) -> dataContext
         else -> null
       }
     }
