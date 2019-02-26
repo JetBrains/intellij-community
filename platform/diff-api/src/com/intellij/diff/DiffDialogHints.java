@@ -16,6 +16,7 @@
 package com.intellij.diff;
 
 import com.intellij.openapi.ui.WindowWrapper;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,19 +33,21 @@ public class DiffDialogHints {
   //
 
   @Nullable private final WindowWrapper.Mode myMode;
-  @Nullable private Component myParent;
+  @Nullable private final Component myParent;
+  @Nullable private final Consumer<WindowWrapper> myWindowConsumer;
 
   public DiffDialogHints(@Nullable WindowWrapper.Mode mode) {
     this(mode, null);
   }
 
   public DiffDialogHints(@Nullable WindowWrapper.Mode mode, @Nullable Component parent) {
-    myMode = mode;
-    myParent = parent;
+    this(mode, parent, null);
   }
 
-  public void setParent(@Nullable Component value) {
-    myParent = value;
+  public DiffDialogHints(@Nullable WindowWrapper.Mode mode, @Nullable Component parent, @Nullable Consumer<WindowWrapper> windowConsumer) {
+    myMode = mode;
+    myParent = parent;
+    myWindowConsumer = windowConsumer;
   }
 
   //
@@ -59,5 +62,13 @@ public class DiffDialogHints {
   @Nullable
   public Component getParent() {
     return myParent;
+  }
+
+  /**
+   * NB: Consumer might not be called at all (ex: for external diff/merge tools, that do not spawn WindowWrapper)
+   */
+  @Nullable
+  public Consumer<WindowWrapper> getWindowConsumer() {
+    return myWindowConsumer;
   }
 }
