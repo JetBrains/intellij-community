@@ -404,14 +404,6 @@ def read_generator_version_from_header(skeleton_file):
     return None
 
 
-def read_failed_version_from_stamp(base_dir, mod_qname):
-    with ignored_os_errors(errno.ENOENT):
-        with fopen(os.path.join(base_dir, FAILED_VERSION_STAMP_PREFIX + mod_qname), 'r') as f:
-            return version_to_tuple(f.read().strip())
-    # noinspection PyUnreachableCode
-    return None
-
-
 def skeleton_path_candidates(base_dir, mod_qname, init_for_pkg=False):
     base_path = os.path.join(base_dir, *mod_qname.split('.'))
     if init_for_pkg:
@@ -421,27 +413,12 @@ def skeleton_path_candidates(base_dir, mod_qname, init_for_pkg=False):
     yield base_path + '.py'
 
 
-def read_required_gen_version_file():
-    result = {}
-    with fopen(required_gen_version_file_path(), 'r') as f:
-        for line in f:
-            if not line or line.startswith('#'):
-                continue
-            m = REQUIRED_GEN_VERSION_LINE.match(line)
-            if m:
-                result[m.group('name')] = version_to_tuple(m.group('version'))
-
-    return result
-
-
-def read_required_version(mod_qname):
-    mod_id = '(built-in)' if mod_qname in sys.builtin_module_names else mod_qname
-    versions = read_required_gen_version_file()
-    # TODO use glob patterns here
-    for pattern, version in versions.items():
-        if mod_id == pattern:
-            return version
-    return versions.get('(default)')
+def read_failed_version_from_stamp(base_dir, mod_qname):
+    with ignored_os_errors(errno.ENOENT):
+        with fopen(os.path.join(base_dir, FAILED_VERSION_STAMP_PREFIX + mod_qname), 'r') as f:
+            return version_to_tuple(f.read().strip())
+    # noinspection PyUnreachableCode
+    return None
 
 
 def read_failed_version_from_legacy_blacklist(sdk_skeletons_dir, mod_path):
@@ -462,6 +439,29 @@ def read_legacy_blacklist_file(sdk_skeletons_dir):
                 if m:
                     results[m.group('path')] = (version_to_tuple(m.group('version')), int(m.group('mtime')) / 1000)
     return results
+
+
+def read_required_version(mod_qname):
+    mod_id = '(built-in)' if mod_qname in sys.builtin_module_names else mod_qname
+    versions = read_required_gen_version_file()
+    # TODO use glob patterns here
+    for pattern, version in versions.items():
+        if mod_id == pattern:
+            return version
+    return versions.get('(default)')
+
+
+def read_required_gen_version_file():
+    result = {}
+    with fopen(required_gen_version_file_path(), 'r') as f:
+        for line in f:
+            if not line or line.startswith('#'):
+                continue
+            m = REQUIRED_GEN_VERSION_LINE.match(line)
+            if m:
+                result[m.group('name')] = version_to_tuple(m.group('version'))
+
+    return result
 
 
 # command-line interface
