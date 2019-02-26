@@ -190,8 +190,10 @@ def list_binaries(paths):
                         note("done with %s", name)
                     file_path = os.path.join(root, f)
 
-                    res[the_name.upper()] = (
-                    the_name, file_path, os.path.getsize(file_path), int(os.stat(file_path).st_mtime))
+                    res[the_name.upper()] = (the_name,
+                                             file_path,
+                                             os.path.getsize(file_path),
+                                             int(os.stat(file_path).st_mtime))
     return list(res.values())
 
 
