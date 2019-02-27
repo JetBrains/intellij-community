@@ -28,7 +28,7 @@ class PySdkStatusBarWidgetProvider : StatusBarWidgetProvider {
   override fun getWidget(project: Project): StatusBarWidget? = if (PlatformUtils.isPyCharm()) PySdkStatusBar(project) else null
 }
 
-class PySwitchSdkAction : AnAction("Switch Python Interpreter", null, null) {
+class PySwitchSdkAction : AnAction("Switch Project Interpreter", null, null) {
 
   override fun update(e: AnActionEvent) {
     e.presentation.isVisible = e.getData(CommonDataKeys.VIRTUAL_FILE) != null && e.project != null
@@ -110,7 +110,7 @@ private class PySdkPopupFactory(val project: Project, val module: Module) {
 
     val currentSdk = PythonSdkType.findPythonSdk(module)
     return JBPopupFactory.getInstance().createActionGroupPopup(
-      "Python Interpreter",
+      "Project Interpreter",
       group,
       context,
       JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
