@@ -194,8 +194,12 @@ def list_binaries(paths):
                     res[the_name.upper()] = (the_name,
                                              file_path,
                                              os.path.getsize(file_path),
-                                             int(os.stat(file_path).st_mtime))
+                                             file_modification_timestamp(file_path))
     return list(res.values())
+
+
+def file_modification_timestamp(path):
+    return int(os.stat(path).st_mtime)
 
 
 def list_sources(paths):
@@ -376,9 +380,10 @@ def should_update_skeleton(base_dir, mod_qname, mod_path):
     if failed_version:
         return failed_version < gen_version
 
-    failed_version = read_failed_version_from_legacy_blacklist(base_dir, mod_path)
-    if failed_version:
-        return failed_version < gen_version
+    record = read_failed_version_and_mtime_from_legacy_blacklist(base_dir, mod_path)
+    if record:
+        failed_version, mtime = record
+        return failed_version < gen_version or (mod_path and mtime < file_modification_timestamp(mod_path))
 
     required_version = read_required_version(mod_qname)
     used_version = read_used_generator_version_from_skeleton_header(base_dir, mod_qname)
@@ -424,13 +429,12 @@ def read_failed_version_from_stamp(base_dir, mod_qname):
     return None
 
 
-def read_failed_version_from_legacy_blacklist(sdk_skeletons_dir, mod_path):
-    blacklist = read_legacy_blacklist_file(sdk_skeletons_dir)
-    record = blacklist.get('{mod_path}' if is_test_mode() else mod_path)
-    return record[0] if record else None
+def read_failed_version_and_mtime_from_legacy_blacklist(sdk_skeletons_dir, mod_path):
+    blacklist = read_legacy_blacklist_file(sdk_skeletons_dir, mod_path)
+    return blacklist.get(mod_path)
 
 
-def read_legacy_blacklist_file(sdk_skeletons_dir):
+def read_legacy_blacklist_file(sdk_skeletons_dir, mod_path):
     results = {}
     with ignored_os_errors(errno.ENOENT):
         with fopen(os.path.join(sdk_skeletons_dir, '.blacklist'), 'r') as f:
@@ -440,9 +444,17 @@ def read_legacy_blacklist_file(sdk_skeletons_dir):
 
                 m = BLACKLIST_VERSION_LINE.match(line)
                 if m:
-                    # On Java side modification time stored in milliseconds.
-                    # Python API uses seconds for resolution in os.stat results.
-                    results[m.group('path')] = (version_to_tuple(m.group('version')), int(m.group('mtime')) / 1000)
+                    bin_path = m.group('path')
+                    bin_mtime = m.group('mtime')
+                    if is_test_mode() and bin_path == '{mod_path}':
+                        bin_path = mod_path
+                    if is_test_mode() and bin_mtime == '{mod_mtime}':
+                        bin_mtime = file_modification_timestamp(mod_path)
+                    else:
+                        # On Java side modification time stored in milliseconds.
+                        # Python API uses seconds for resolution in os.stat results.
+                        bin_mtime = int(m.group('mtime')) / 1000
+                    results[bin_path] = (version_to_tuple(m.group('version')), bin_mtime)
     return results
 
 
