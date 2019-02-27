@@ -29,6 +29,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -216,7 +217,9 @@ public class MemoryAgentUtil {
           if (consoleView.hasDeferredOutput()) {
             consoleView.flushDeferredText();
           }
-          String[] outputLines = StringUtil.splitByLines(consoleView.getText());
+          Editor editor = consoleView.getEditor();
+          if (editor == null) return;
+          String[] outputLines = StringUtil.splitByLines(editor.getDocument().getText());
           List<String> mentions = StreamEx.of(outputLines).skip(1).filter(x -> x.contains("memory_agent")).limit(10).toList();
           if (outputLines.length >= 1 && outputLines[0].contains("memory_agent") && !mentions.isEmpty()) {
             Project project = env.getProject();
@@ -230,22 +233,23 @@ public class MemoryAgentUtil {
             String checkboxName = DebuggerBundle.message("label.debugger.general.configurable.enable.memory.agent");
             String description =
               "Memory agent could not be loaded. <a href=\"Disable\">Disable</a> the agent. To enable it back use \"" +
-              DebuggerBundle.message("label.debugger.general.configurable.enable.memory.agent") +
-              "\" option in File | Settings | Build, Execution, Deployment | Debugger";
-            ExecutionUtil.handleExecutionError(project, windowId, name, exception, description, new HyperlinkListener() {
-              @Override
-              public void hyperlinkUpdate(HyperlinkEvent e) {
-                if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType())) {
-                  DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT = false;
-                }
-              }
-            });
+              checkboxName + "\" option in File | Settings | Build, Execution, Deployment | Debugger";
+            ExecutionUtil.handleExecutionError(project, windowId, name, exception, description, new DisablingMemoryAgentListener());
             LOG.error(exception);
           }
-        });
+        }, o -> project.isDisposed());
       }
     });
 
     project.putUserData(LISTEN_MEMORY_AGENT_STARTUP_FAILED, true);
+  }
+
+  private static class DisablingMemoryAgentListener implements HyperlinkListener {
+    @Override
+    public void hyperlinkUpdate(HyperlinkEvent e) {
+      if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType())) {
+        DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT = false;
+      }
+    }
   }
 }
