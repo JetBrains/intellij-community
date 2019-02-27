@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
-import com.intellij.openapi.externalSystem.util.CompositeRunnable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
@@ -54,11 +53,10 @@ public class AfterTestEvent extends AbstractTestEvent {
     catch (NumberFormatException ignored) {
     }
 
-    final CompositeRunnable runInEdt = new CompositeRunnable();
     final TestEventResult result = TestEventResult.fromValue(eventXml.getTestEventResultType());
     switch (result) {
       case SUCCESS:
-        runInEdt.add(testProxy::setFinished);
+        testProxy.setFinished();
         break;
       case FAILURE:
         final String failureType = eventXml.getEventTestResultFailureType();
@@ -91,30 +89,24 @@ public class AfterTestEvent extends AbstractTestEvent {
           }
 
           final Couple<String> finalComparisonPair = comparisonPair;
-          runInEdt.add(() -> {
-            if (finalComparisonPair != null) {
-              testProxy.setTestComparisonFailed(exceptionMsg, stackTrace, finalComparisonPair.second, finalComparisonPair.first);
-            }
-            else {
-              testProxy.setTestFailed(exceptionMsg, stackTrace, "error".equals(failureType));
-            }
-          });
+          if (finalComparisonPair != null) {
+            testProxy.setTestComparisonFailed(exceptionMsg, stackTrace, finalComparisonPair.second, finalComparisonPair.first);
+          }
+          else {
+            testProxy.setTestFailed(exceptionMsg, stackTrace, "error".equals(failureType));
+          }
         }
-        runInEdt.add(() -> getResultsViewer().onTestFailed(testProxy));
+        getResultsViewer().onTestFailed(testProxy);
         break;
       case SKIPPED:
-        runInEdt.add(() -> {
-          testProxy.setTestIgnored(null, null);
-          getResultsViewer().onTestIgnored(testProxy);
-        });
+        testProxy.setTestIgnored(null, null);
+        getResultsViewer().onTestIgnored(testProxy);
         break;
       case UNKNOWN_RESULT:
         break;
     }
 
-    runInEdt.add(() -> getResultsViewer().onTestFinished(testProxy));
-
-    addToInvokeLater(runInEdt);
+    getResultsViewer().onTestFinished(testProxy);
   }
 
   private static Couple<String> parseComparisonMessage(String message, final String regex) {
