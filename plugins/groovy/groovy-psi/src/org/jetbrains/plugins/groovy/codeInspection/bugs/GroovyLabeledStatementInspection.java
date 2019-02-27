@@ -20,11 +20,6 @@ public class GroovyLabeledStatementInspection extends BaseInspection {
   }
 
   @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @Override
   protected String buildErrorString(Object... args) {
     return GroovyBundle.message("label.already.used", args);
   }

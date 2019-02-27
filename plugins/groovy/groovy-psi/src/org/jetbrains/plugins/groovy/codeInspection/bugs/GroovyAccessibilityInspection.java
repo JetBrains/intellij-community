@@ -19,11 +19,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 public class GroovyAccessibilityInspection extends GroovySuppressableInspectionTool implements UnfairLocalInspectionTool {
   private static final String SHORT_NAME = "GroovyAccessibility";
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
   public static boolean isInspectionEnabled(GroovyFileBase file, Project project) {
     return getInspectionProfile(project).isToolEnabled(findDisplayKey(), file);
   }

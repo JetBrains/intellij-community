@@ -50,11 +50,6 @@ public class GrUnusedIncDecInspection extends BaseInspection {
     return new GrUnusedIncDecInspectionVisitor();
   }
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
   private static class GrUnusedIncDecInspectionVisitor extends BaseInspectionVisitor {
     @Override
     public void visitUnaryExpression(@NotNull GrUnaryExpression expression) {

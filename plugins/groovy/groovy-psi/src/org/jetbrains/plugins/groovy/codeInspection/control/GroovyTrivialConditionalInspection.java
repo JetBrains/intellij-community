@@ -32,11 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.ErrorUtil;
 
 public class GroovyTrivialConditionalInspection extends BaseInspection {
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
   @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {

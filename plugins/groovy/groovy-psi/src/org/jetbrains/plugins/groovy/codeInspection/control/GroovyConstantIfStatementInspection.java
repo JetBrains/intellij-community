@@ -31,11 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 public class GroovyConstantIfStatementInspection extends BaseInspection {
 
   @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @Override
   @NotNull
   protected String buildErrorString(Object... args) {
     return "#ref statement can be simplified #loc";

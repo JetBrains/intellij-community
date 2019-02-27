@@ -29,11 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 
 public class GroovyConstantConditionalInspection extends BaseInspection {
 
-    @Override
-    public boolean isEnabledByDefault() {
-        return true;
-    }
-
     @NotNull
     @Override
     public BaseInspectionVisitor buildVisitor() {

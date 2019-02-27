@@ -67,9 +67,4 @@ public class SecondUnsafeCallInspection extends GroovySuppressableInspectionTool
   public String getShortName() {
     return "SecondUnsafeCall";
   }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
 }

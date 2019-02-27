@@ -28,10 +28,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCondit
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 public class GroovyConditionalWithIdenticalBranchesInspection extends BaseInspection {
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
 
   @Override
   public String buildErrorString(Object... args) {

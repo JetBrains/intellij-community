@@ -14,10 +14,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
 public class GroovyIfStatementWithIdenticalBranchesInspection extends BaseInspection {
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
 
   @Override
   public String buildErrorString(Object... args) {

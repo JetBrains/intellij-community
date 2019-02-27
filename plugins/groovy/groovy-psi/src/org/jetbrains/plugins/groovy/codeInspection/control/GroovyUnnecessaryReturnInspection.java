@@ -39,11 +39,6 @@ public class GroovyUnnecessaryReturnInspection extends BaseInspection {
     return "#ref is unnecessary as the last statement in a method with no return value #loc";
   }
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
   @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {

@@ -30,10 +30,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class GroovyDuplicateSwitchBranchInspection extends BaseInspection {
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
 
   @Override
   @Nullable

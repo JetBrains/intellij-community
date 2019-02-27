@@ -44,11 +44,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyExpressionUtil.is
 
 public class GroovyPointlessBooleanInspection extends BaseInspection {
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
   @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {

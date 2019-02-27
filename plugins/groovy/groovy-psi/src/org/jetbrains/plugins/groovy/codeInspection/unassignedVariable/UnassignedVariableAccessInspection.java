@@ -54,11 +54,6 @@ public class UnassignedVariableAccessInspection extends GroovyLocalInspectionBas
   }
 
   @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @Override
   protected void check(@NotNull GrControlFlowOwner owner, @NotNull ProblemsHolder problemsHolder) {
     Instruction[] flow = owner.getControlFlow();
     ReadWriteVariableInstruction[] reads = ControlFlowBuilderUtil.getReadsWithoutPriorWrites(flow, true);

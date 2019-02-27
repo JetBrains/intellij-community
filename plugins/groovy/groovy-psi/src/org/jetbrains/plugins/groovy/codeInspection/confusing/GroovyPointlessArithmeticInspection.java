@@ -22,11 +22,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyExpressionUtil.is
 
 public class GroovyPointlessArithmeticInspection extends BaseInspection {
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return false;
-  }
-
   @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {

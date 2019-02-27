@@ -40,11 +40,6 @@ public class GroovyUnnecessaryContinueInspection extends BaseInspection {
 
   }
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
   @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {

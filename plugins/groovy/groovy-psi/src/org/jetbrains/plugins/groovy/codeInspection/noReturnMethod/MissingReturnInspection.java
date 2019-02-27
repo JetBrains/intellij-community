@@ -197,9 +197,4 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
   public String getShortName() {
     return "GroovyMissingReturnStatement";
   }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
 }

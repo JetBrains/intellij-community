@@ -24,11 +24,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
  */
 public class GrReassignedInClosureLocalVarInspection extends BaseInspection {
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
   @NotNull
   @Override
   protected BaseInspectionVisitor buildVisitor() {

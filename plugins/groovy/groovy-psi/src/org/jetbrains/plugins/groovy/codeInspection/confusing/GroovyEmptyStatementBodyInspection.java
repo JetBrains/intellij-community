@@ -27,11 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 public class GroovyEmptyStatementBodyInspection extends BaseInspection {
 
   @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @Override
   public String buildErrorString(Object... args) {
     if (args[0] instanceof GrIfStatement) {
       return "'#ref' statement has empty branch";

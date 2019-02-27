@@ -35,11 +35,6 @@ public class GroovyDivideByZeroInspection extends BaseInspection {
 
   }
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
   @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {

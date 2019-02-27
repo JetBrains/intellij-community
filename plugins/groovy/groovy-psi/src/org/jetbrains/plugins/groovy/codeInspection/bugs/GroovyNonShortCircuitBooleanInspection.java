@@ -40,11 +40,6 @@ public class GroovyNonShortCircuitBooleanInspection extends BaseInspection {
   }
 
   @Override
-  public boolean isEnabledByDefault() {
-    return false;
-  }
-
-  @Override
   public GroovyFix buildFix(@NotNull PsiElement location) {
     return new NonShortCircuitBooleanFix();
   }

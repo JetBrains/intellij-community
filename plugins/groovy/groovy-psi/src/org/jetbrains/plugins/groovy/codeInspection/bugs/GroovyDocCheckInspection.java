@@ -26,11 +26,6 @@ public class GroovyDocCheckInspection extends BaseInspection {
     return (String)args[0];
   }
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
   @NotNull
   @Override
   protected BaseInspectionVisitor buildVisitor() {

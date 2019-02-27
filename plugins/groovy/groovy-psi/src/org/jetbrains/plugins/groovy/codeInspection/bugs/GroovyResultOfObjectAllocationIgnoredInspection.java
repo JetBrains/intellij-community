@@ -37,11 +37,6 @@ public class GroovyResultOfObjectAllocationIgnoredInspection extends BaseInspect
 
   }
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
   @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {

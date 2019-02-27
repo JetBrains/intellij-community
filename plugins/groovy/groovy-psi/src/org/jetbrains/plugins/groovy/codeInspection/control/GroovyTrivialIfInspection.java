@@ -45,11 +45,6 @@ public class GroovyTrivialIfInspection extends BaseInspection {
   }
 
   @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @Override
   public String buildErrorString(Object... args) {
     return "#ref statement can be simplified #loc";
   }

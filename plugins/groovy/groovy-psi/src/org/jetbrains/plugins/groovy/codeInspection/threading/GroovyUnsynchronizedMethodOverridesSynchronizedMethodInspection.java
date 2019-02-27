@@ -12,11 +12,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 public class GroovyUnsynchronizedMethodOverridesSynchronizedMethodInspection extends BaseInspection {
 
   @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Unsynchronized method '#ref' overrides a synchronized method #loc";

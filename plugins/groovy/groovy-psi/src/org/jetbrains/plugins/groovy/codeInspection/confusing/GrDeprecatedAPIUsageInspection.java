@@ -19,10 +19,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
  * @author Max Medvedev
  */
 public class GrDeprecatedAPIUsageInspection extends BaseInspection {
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
 
   @NotNull
   @Override

@@ -31,11 +31,6 @@ public class GroovyInfiniteLoopStatementInspection extends BaseInspection {
 
   }
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
   @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {

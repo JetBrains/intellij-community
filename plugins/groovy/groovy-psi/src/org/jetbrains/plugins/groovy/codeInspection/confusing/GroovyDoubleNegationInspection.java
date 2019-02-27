@@ -46,11 +46,6 @@ public class GroovyDoubleNegationInspection extends BaseInspection {
     return new DoubleNegationFix();
   }
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
   private static class DoubleNegationFix extends GroovyFix {
 
     @Override

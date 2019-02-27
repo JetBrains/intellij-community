@@ -83,11 +83,6 @@ public class UnnecessaryQualifiedReferenceInspection extends BaseInspection {
     return GroovyQuickFixFactory.getInstance().createReplaceWithImportFix();
   }
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
   private static boolean canBeSimplified(PsiElement element) {
     if (PsiTreeUtil.getParentOfType(element, PsiComment.class) != null) return false;
 

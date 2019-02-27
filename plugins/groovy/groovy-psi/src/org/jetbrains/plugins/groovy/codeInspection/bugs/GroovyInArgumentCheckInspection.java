@@ -60,7 +60,7 @@ public class GroovyInArgumentCheckInspection extends BaseInspection {
       }
 
       if (component == null) return;
-      
+
       if (TypesUtil.isAssignableWithoutConversions(component, ltype)) return;
 
       registerError(expression, ltype, rtype);
@@ -83,10 +83,5 @@ public class GroovyInArgumentCheckInspection extends BaseInspection {
 
       registerError(expression, ltype, rtype);
     }
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
   }
 }
