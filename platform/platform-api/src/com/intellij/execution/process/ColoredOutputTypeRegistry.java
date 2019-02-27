@@ -30,7 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.IntStream;
 
 /**
  * @author yole
@@ -43,24 +44,42 @@ public class ColoredOutputTypeRegistry {
   private final Map<String, ProcessOutputType> myStdoutAttrsToKeyMap = ContainerUtil.newConcurrentMap();
   private final Map<String, ProcessOutputType> myStderrAttrsToKeyMap = ContainerUtil.newConcurrentMap();
 
-  private static final TextAttributesKey[] myAnsiColorKeys = new TextAttributesKey[]{
-    ConsoleHighlighter.BLACK,
-    ConsoleHighlighter.RED,
-    ConsoleHighlighter.GREEN,
-    ConsoleHighlighter.YELLOW,
-    ConsoleHighlighter.BLUE,
-    ConsoleHighlighter.MAGENTA,
-    ConsoleHighlighter.CYAN,
-    ConsoleHighlighter.GRAY,
+  private static class AnsiColorInfo {
+    private Color myOriginalColor;
+    private TextAttributesKey myColorKey;
 
-    ConsoleHighlighter.DARKGRAY,
-    ConsoleHighlighter.RED_BRIGHT,
-    ConsoleHighlighter.GREEN_BRIGHT,
-    ConsoleHighlighter.YELLOW_BRIGHT,
-    ConsoleHighlighter.BLUE_BRIGHT,
-    ConsoleHighlighter.MAGENTA_BRIGHT,
-    ConsoleHighlighter.CYAN_BRIGHT,
-    ConsoleHighlighter.WHITE,
+    private AnsiColorInfo(Color originalColor, TextAttributesKey colorKey) {
+      myOriginalColor = originalColor;
+      myColorKey = colorKey;
+    }
+
+    private Color getOriginalColor() {
+      return myOriginalColor;
+    }
+
+    private TextAttributesKey getColorKey() {
+      return myColorKey;
+    }
+  }
+
+  private static final AnsiColorInfo[] myAnsiColorInfos = new AnsiColorInfo[]{
+    new AnsiColorInfo(new Color(0, 0, 0), ConsoleHighlighter.BLACK),
+    new AnsiColorInfo(new Color(128, 0, 0), ConsoleHighlighter.RED),
+    new AnsiColorInfo(new Color(0, 128, 0), ConsoleHighlighter.GREEN),
+    new AnsiColorInfo(new Color(128, 128, 0), ConsoleHighlighter.YELLOW),
+    new AnsiColorInfo(new Color(0, 0, 128), ConsoleHighlighter.BLUE),
+    new AnsiColorInfo(new Color(128, 0, 128), ConsoleHighlighter.MAGENTA),
+    new AnsiColorInfo(new Color(0, 128, 128), ConsoleHighlighter.CYAN),
+    new AnsiColorInfo(new Color(192, 192, 192), ConsoleHighlighter.GRAY),
+
+    new AnsiColorInfo(new Color(128, 128, 128), ConsoleHighlighter.DARKGRAY),
+    new AnsiColorInfo(new Color(255, 0, 0), ConsoleHighlighter.RED_BRIGHT),
+    new AnsiColorInfo(new Color(0, 255, 0), ConsoleHighlighter.GREEN_BRIGHT),
+    new AnsiColorInfo(new Color(255, 255, 0), ConsoleHighlighter.YELLOW_BRIGHT),
+    new AnsiColorInfo(new Color(0, 0, 255), ConsoleHighlighter.BLUE_BRIGHT),
+    new AnsiColorInfo(new Color(255, 0, 255), ConsoleHighlighter.MAGENTA_BRIGHT),
+    new AnsiColorInfo(new Color(0, 255, 255), ConsoleHighlighter.CYAN_BRIGHT),
+    new AnsiColorInfo(new Color(255, 255, 255), ConsoleHighlighter.WHITE)
   };
 
   /*
@@ -161,7 +180,57 @@ public class ColoredOutputTypeRegistry {
     if (value >= 16) {
       return ConsoleViewContentType.NORMAL_OUTPUT_KEY;
     }
-    return myAnsiColorKeys[value];
+    return myAnsiColorInfos[value].getColorKey();
+  }
+
+  private static Color parseColor(@NotNull Iterator<String> strings) {
+    int formatCode = Integer.parseInt(strings.next());
+
+    if (formatCode == 2) { // 24-bit color format
+      int red = Integer.parseInt(strings.next());
+      int green = Integer.parseInt(strings.next());
+      int blue = Integer.parseInt(strings.next());
+      return new Color(red, green, blue);
+    }
+
+    if (formatCode == 5) { // 8-bit color format
+      int value = Integer.parseInt(strings.next());
+
+      // Standard colors or high intensity colors
+      if (value >= 0 && value < 16) {
+        return myAnsiColorInfos[value].getOriginalColor();
+      }
+
+      // 6 × 6 × 6 cube (216 colors): 16 + 36 × r + 6 × g + b (0 ≤ r, g, b ≤ 5)
+      if (value >= 16 && value < 232) {
+        int red = (value - 16) / 36 * 51;
+        int green = (value - 16) % 36 / 6 * 51;
+        int blue = (value - 16) % 6 * 51;
+        return new Color(red, green, blue);
+      }
+
+      // Grayscale from black to white in 24 steps
+      if (value >= 232 && value < 256) {
+        int grayscale = (value - 232) * 10 + 81;
+        return new Color(grayscale, grayscale, grayscale);
+      }
+    }
+
+    throw new IllegalArgumentException("Invalid color format: " + formatCode);
+  }
+
+  private static int getNearestColorAttribute(Color color) {
+    return IntStream.range(0, myAnsiColorInfos.length)
+      .boxed()
+      .min(Comparator.comparingDouble(i -> getHypotForColors(myAnsiColorInfos[i].getOriginalColor(), color)))
+      .orElse(-1);
+  }
+
+  private static double getHypotForColors(Color from, Color to) {
+    int dRed = from.getRed() - to.getRed();
+    int dGreen = from.getGreen() - to.getGreen();
+    int dBlue = from.getBlue() - to.getBlue();
+    return Math.sqrt(dRed * dRed + dGreen * dGreen + dBlue * dBlue);
   }
 
   @NotNull
@@ -171,8 +240,9 @@ public class ColoredOutputTypeRegistry {
     boolean inverse = false;
     EffectType effectType = null;
     int fontType = -1;
-    final String[] strings = attribute.split(";");
-    for (String string : strings) {
+    final Iterator<String> strings = ContainerUtil.iterate(attribute.split(";"));
+    while (strings.hasNext()) {
+      String string = strings.next();
       int value;
       try {
         value = Integer.parseInt(string);
@@ -199,7 +269,12 @@ public class ColoredOutputTypeRegistry {
         foregroundColor = value - 30;
       }
       else if (value == 38) {
-        //TODO: 256 colors foreground
+        try {
+          foregroundColor = getNearestColorAttribute(parseColor(strings));
+        }
+        catch (IllegalArgumentException | NoSuchElementException e) {
+          // continue;
+        }
       }
       else if (value == 39) {
         foregroundColor = -1;
@@ -208,7 +283,12 @@ public class ColoredOutputTypeRegistry {
         backgroundColor = value - 40;
       }
       else if (value == 48) {
-        //TODO: 256 colors background
+        try {
+          backgroundColor = getNearestColorAttribute(parseColor(strings));
+        }
+        catch (IllegalArgumentException | NoSuchElementException e) {
+          // continue;
+        }
       }
       else if (value == 49) {
         backgroundColor = -1;
