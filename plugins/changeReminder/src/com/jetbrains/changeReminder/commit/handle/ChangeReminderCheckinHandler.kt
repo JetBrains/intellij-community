@@ -84,16 +84,10 @@ class ChangeReminderCheckinHandler(private val panel: CheckinProjectPanel,
     }
     return predictedFilePaths.mapNotNull {
       val currentChange = changeListManager.getChange(it)
-      if (currentChange != null) {
-        PredictedChange(currentChange)
-      }
-      else {
-        if (it.virtualFile != null) {
-          PredictedFilePath(it)
-        }
-        else {
-          null
-        }
+      when {
+        currentChange != null -> PredictedChange(currentChange)
+        it.virtualFile != null -> PredictedFilePath(it)
+        else -> null
       }
     }
   }
