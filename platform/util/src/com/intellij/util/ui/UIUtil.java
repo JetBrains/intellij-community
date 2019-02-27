@@ -1179,12 +1179,6 @@ public class UIUtil {
     return JBColor.namedColor("Component.infoForeground", JBColor.GRAY);
   }
 
-  @NotNull
-  public static Color getSlightlyDarkerColor(@NotNull Color c) {
-    float[] hsl = Color.RGBtoHSB(c.getRed(), c.getGreen(), c.getBlue(), new float[3]);
-    return new Color(Color.HSBtoRGB(hsl[0], hsl[1], hsl[2] - .08f > 0 ? hsl[2] - .08f : hsl[2]));
-  }
-
   /**
    * @deprecated use com.intellij.util.ui.UIUtil#getTextFieldBackground()
    */
