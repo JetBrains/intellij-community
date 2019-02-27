@@ -25,6 +25,9 @@ import com.jetbrains.changeReminder.predict.PredictedFile
 import com.jetbrains.changeReminder.predict.PredictedFilePath
 import com.jetbrains.changeReminder.predict.PredictionProvider
 import com.jetbrains.changeReminder.repository.FilesHistoryProvider
+import git4idea.GitCommit
+import git4idea.GitVcs
+import git4idea.history.GitLogUtil
 import java.util.function.Consumer
 
 class ChangeReminderCheckinHandler(private val panel: CheckinProjectPanel,
@@ -55,10 +58,22 @@ class ChangeReminderCheckinHandler(private val panel: CheckinProjectPanel,
     if (isAmend) {
       val ref = findBranch(dataManager.dataPack.refsModel, root, "HEAD")
       if (ref != null) {
-        filesSet.addAll(
-          dataGetter.getChangedPaths(
-            dataManager.storage.getCommitIndex(ref.commitHash, root)
-          )
+        val hash = ref.commitHash.asString()
+        GitLogUtil.readFullDetailsForHashes(
+          project,
+          root,
+          GitVcs.getInstance(project),
+          com.intellij.util.Consumer<GitCommit> { commit ->
+            if (commit != null) {
+              filesSet.addAll(commit.changes.mapNotNull { it.afterRevision?.file ?: it.beforeRevision?.file })
+            }
+          },
+          listOf(hash),
+          true,
+          false,
+          false,
+          false,
+          GitLogUtil.DiffRenameLimit.NO_RENAMES
         )
       }
     }
