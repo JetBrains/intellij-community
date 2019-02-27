@@ -31,6 +31,14 @@ def is_test_mode():
     return ENV_TEST_MODE_FLAG in os.environ
 
 
+# Future generator mode where all the checks will be performed on Python side.
+# Not it works in transitional mode where validity of existing SDK skeletons is checked on
+# Java side (see PySkeletonRefresher), and generator itself inspects only the cache.
+@cached
+def is_standalone_mode():
+    return ENV_STANDALONE_MODE_FLAG in os.environ
+
+
 _helpers_dir = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -503,7 +511,7 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
         global_cache_dir = os.path.join(python_stubs_dir, CACHE_DIR_NAME)
         mod_cache_dir = build_cache_dir_path(global_cache_dir, name, mod_file_name)
         # At the moment this is actually enforced on Java-side
-        if not should_update_skeleton(sdk_skeletons_dir, name, mod_file_name):
+        if is_standalone_mode() and not should_update_skeleton(sdk_skeletons_dir, name, mod_file_name):
             return True
 
         if should_update_skeleton(mod_cache_dir, name, mod_file_name):

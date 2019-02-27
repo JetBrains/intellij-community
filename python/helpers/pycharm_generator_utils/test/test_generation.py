@@ -12,6 +12,7 @@ from pycharm_generator_utils.constants import (
     ENV_VERSION,
     ENV_REQUIRED_GEN_VERSION_FILE,
     CACHE_DIR_NAME,
+    ENV_STANDALONE_MODE_FLAG,
 )
 from pycharm_generator_utils.test import GeneratorTestCase
 
@@ -34,7 +35,8 @@ class SkeletonCachingTest(GeneratorTestCase):
     def run_generator(self, mod_qname=None, mod_path=None, builtins=False,
                       extra_syspath_entry=None,
                       gen_version=None,
-                      required_gen_version_file_path=None):
+                      required_gen_version_file_path=None,
+                      extra_env=None):
         output_dir = self.temp_skeletons_dir
 
         if not extra_syspath_entry:
@@ -49,6 +51,9 @@ class SkeletonCachingTest(GeneratorTestCase):
         }
         if required_gen_version_file_path:
             env[ENV_REQUIRED_GEN_VERSION_FILE] = required_gen_version_file_path
+
+        if extra_env:
+            env.update(extra_env)
 
         if _run_generator_in_separate_process:
             generator3_path = os.path.abspath(generator3.__file__)
@@ -190,7 +195,8 @@ class SkeletonCachingTest(GeneratorTestCase):
         # We can't safely updated cache from SDK skeletons (backwards) because of binaries declaring
         # multiple modules. Skeletons for them are scattered across SDK skeletons directory, and we can't
         # collect them reliably.
-        self.check_generator_output('mod', mod_path='mod.py', gen_version='0.2', custom_required_gen=True)
+        self.check_generator_output('mod', mod_path='mod.py', gen_version='0.2', custom_required_gen=True,
+                                    standalone_mode=True)
 
     def test_cache_skeleton_reused_when_sdk_skeleton_is_missing(self):
         self.check_generator_output('mod', mod_path='mod.py', gen_version='0.2', custom_required_gen=True)
@@ -208,7 +214,8 @@ class SkeletonCachingTest(GeneratorTestCase):
         self.check_generator_output('mod', mod_path='mod.py', gen_version='0.3', custom_required_gen=True)
 
     def test_cache_skeleton_not_regenerated_when_sdk_skeleton_generation_failed_for_same_version_and_same_binary(self):
-        self.check_generator_output('mod', mod_path='mod.py', gen_version='0.1', custom_required_gen=True)
+        self.check_generator_output('mod', mod_path='mod.py', gen_version='0.1', custom_required_gen=True,
+                                    standalone_mode=True)
 
     def test_cache_skeleton_regenerated_when_sdk_skeleton_generation_failed_for_modified_binary(self):
         self.check_generator_output('mod', mod_path='mod.py', gen_version='0.1', custom_required_gen=True)
@@ -227,10 +234,13 @@ class SkeletonCachingTest(GeneratorTestCase):
     def test_binary_declares_extra_module_that_fails(self):
         self.check_generator_output('mod', mod_path='mod.py')
 
-    def check_generator_output(self, mod_name, mod_path=None, mod_root=None, custom_required_gen=False, **kwargs):
+    def check_generator_output(self, mod_name, mod_path=None, mod_root=None,
+                               custom_required_gen=False, standalone_mode=False, **kwargs):
         if custom_required_gen:
             kwargs.setdefault('required_gen_version_file_path',
                               os.path.join(self.test_data_dir, 'required_gen_version'))
+        if standalone_mode:
+            kwargs.setdefault('extra_env', {})[ENV_STANDALONE_MODE_FLAG] = 'True'
 
         if not mod_root:
             mod_root = self.test_data_dir
