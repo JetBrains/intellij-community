@@ -19,14 +19,6 @@ class FilesHistoryProvider(private val project: Project, private val root: Virtu
     return dataGetter.filter(listOf(structureFilter))
   }
 
-  private fun getFilesData(files: Collection<FilePath>): Map<FilePath, Collection<Int>> {
-    val filesData = mutableMapOf<FilePath, Collection<Int>>()
-    files.forEach {
-      filesData[it] = getCommitHashesWithFile(it)
-    }
-    return filesData
-  }
-
   private fun getCommitsData(commits: Collection<Int>): Map<Int, Commit> {
     val hashes = mutableMapOf<String, Int>()
     for (commit in commits) {
@@ -60,23 +52,13 @@ class FilesHistoryProvider(private val project: Project, private val root: Virtu
     return commitsData
   }
 
-  private fun collectFilesHistory(
-    filesData: Map<FilePath, Collection<Int>>,
-    commitsData: Map<Int, Commit>
-  ): Map<FilePath, Set<Commit>> {
-    val filesHistory = mutableMapOf<FilePath, Set<Commit>>()
-    for ((file, fileCommits) in filesData) {
-      val commits = fileCommits.mapNotNull { commitsData[it] }.toSet()
-      filesHistory[file] = commits
-    }
-    return filesHistory
-  }
-
   fun getFilesHistory(files: Collection<FilePath>): Map<FilePath, Set<Commit>> {
-    val filesData = getFilesData(files)
+    val filesData = files.associateWith { getCommitHashesWithFile(it) }
     val commits = filesData.values.flatten().toSet()
     val commitsData = getCommitsData(commits)
 
-    return collectFilesHistory(filesData, commitsData)
+    return filesData.mapValues { entry ->
+      entry.value.mapNotNull { commitsData[it] }.toSet()
+    }
   }
 }
