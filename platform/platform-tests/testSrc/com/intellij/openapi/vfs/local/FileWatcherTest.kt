@@ -292,14 +292,20 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     val top = tempDir.newFolder("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
-    val junction = IoTestUtil.createJunction("${top.path}/dir1/dir2", "${top}/link")
-    val fileLink = File(top, "link/dir3/test.txt")
-    refresh(top)
+    val junctionPath = "${top}/link"
+    val junction = IoTestUtil.createJunction("${top.path}/dir1/dir2", junctionPath)
+    try {
+      val fileLink = File(top, "link/dir3/test.txt")
+      refresh(top)
 
-    watch(junction)
-    assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U'))
-    assertEvents({ file.delete() }, mapOf(fileLink to 'D'))
-    assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C'))
+      watch(junction)
+      assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U'))
+      assertEvents({ file.delete() }, mapOf(fileLink to 'D'))
+      assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C'))
+    }
+    finally {
+      IoTestUtil.deleteJunction(junctionPath)
+    }
   }
 
   @Test fun testJunctionAboveWatchRoot() {
@@ -307,16 +313,22 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     val top = tempDir.newFolder("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
-    IoTestUtil.createJunction("${top.path}/dir1/dir2", "${top}/link")
-    val watchRoot = File(top, "link/dir3")
-    val fileLink = File(watchRoot, file.name)
-    refresh(top)
+    val junctionPath = "${top}/link"
+    IoTestUtil.createJunction("${top.path}/dir1/dir2", junctionPath)
+    try {
+      val watchRoot = File(top, "link/dir3")
+      val fileLink = File(watchRoot, file.name)
+      refresh(top)
 
-    watch(watchRoot)
+      watch(watchRoot)
 
-    assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U'))
-    assertEvents({ file.delete() }, mapOf(fileLink to 'D'))
-    assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C'))
+      assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U'))
+      assertEvents({ file.delete() }, mapOf(fileLink to 'D'))
+      assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C'))
+    }
+    finally {
+      IoTestUtil.deleteJunction(junctionPath)
+    }
   }
 
   /*
