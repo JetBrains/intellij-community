@@ -28,7 +28,6 @@ import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.containers.*;
-import gnu.trove.THashSet;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -232,8 +231,8 @@ public class LiveVariablesAnalyzer {
       queue.addLast(new InstructionState(i, new BitSet()));
     }
 
-    int limit = Math.min(myForwardMap.size() * 100, 500_000);
-    Set<InstructionState> processed = new THashSet<>();
+    int limit = myForwardMap.size() * 100;
+    Set<InstructionState> processed = ContainerUtil.newHashSet();
     while (!queue.isEmpty()) {
       int steps = processed.size();
       if (steps > limit) {
