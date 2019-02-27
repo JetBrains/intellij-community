@@ -96,7 +96,8 @@ class LocalFileSystemRefreshWorker {
             workersInProcess.incrementAndGet();
             try {
               action.run();
-            } finally {
+            }
+            finally {
               int workersBusy = workersInProcess.decrementAndGet();
               int currentTasks = tasksScheduled.decrementAndGet();
               if (workersBusy == 0 && currentTasks == 0) {
@@ -111,7 +112,8 @@ class LocalFileSystemRefreshWorker {
           try {
             refreshFinishedLatch.await(1, TimeUnit.DAYS);
             service.shutdown();
-          } catch (InterruptedException ignore) {}
+          }
+          catch (InterruptedException ignore) {}
         }
       };
     }
@@ -339,14 +341,17 @@ class LocalFileSystemRefreshWorker {
       if (isLink) {
         try {
           attrs = Files.readAttributes(file, BasicFileAttributes.class);
-        } catch (FileSystemException ignore) {
+        }
+        catch (FileSystemException ignore) {
           attrs = brokenSymlinkAttributes;
         }
         isDirectory = attrs.isDirectory();
-      } else if (myFileOrDir.is(VFileProperty.SYMLINK)) {
+      }
+      else if (myFileOrDir.is(VFileProperty.SYMLINK)) {
         try {
           attrs = Files.readAttributes(file, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
-        } catch (NoSuchFileException | AccessDeniedException ignore) {
+        }
+        catch (NoSuchFileException | AccessDeniedException ignore) {
           attrs = brokenSymlinkAttributes;
         }
         isLink = attrs.isSymbolicLink();
@@ -360,9 +365,9 @@ class LocalFileSystemRefreshWorker {
         return FileVisitResult.CONTINUE;
       }
 
-        if(checkCancelled(child, myRefreshContext)) {
-          return FileVisitResult.TERMINATE;
-        }
+      if(checkCancelled(child, myRefreshContext)) {
+        return FileVisitResult.TERMINATE;
+      }
 
       if (!child.isDirty()) {
         return FileVisitResult.CONTINUE;
@@ -389,12 +394,12 @@ class LocalFileSystemRefreshWorker {
         myHelper.scheduleAttributeChange(child, VirtualFile.PROP_NAME, currentName, name);
       }
 
-        if (!isDirectory) {
-          myHelper.checkContentChanged(child, myRefreshContext.persistence.getTimeStamp(child), attrs.lastModifiedTime().toMillis(),
-                                       myRefreshContext.persistence.getLastRecordedLength(child), attrs.size());
-        }
+      if (!isDirectory) {
+        myHelper.checkContentChanged(child, myRefreshContext.persistence.getTimeStamp(child), attrs.lastModifiedTime().toMillis(),
+                                     myRefreshContext.persistence.getLastRecordedLength(child), attrs.size());
+      }
 
-        myHelper.checkWritableAttributeChange(child, myRefreshContext.persistence.isWritable(child), isWritable(file, attrs, isDirectory));
+      myHelper.checkWritableAttributeChange(child, myRefreshContext.persistence.isWritable(child), isWritable(file, attrs, isDirectory));
 
       if (attrs instanceof DosFileAttributes) {
         myHelper.checkHiddenAttributeChange(child, child.is(VFileProperty.HIDDEN), ((DosFileAttributes)attrs).isHidden());
@@ -403,12 +408,12 @@ class LocalFileSystemRefreshWorker {
       if (isLink) {
         myHelper.checkSymbolicLinkChange(child, child.getCanonicalPath(), myRefreshContext.fs.resolveSymLink(child));
       }
-      
-      if (!child.isDirectory()) child.markClean();
-      else {
-        if (myIsRecursive) {
-          myRefreshContext.submitRefreshRequest(() -> processFile(child, myRefreshContext));
-        }
+
+      if (!child.isDirectory()) {
+        child.markClean();
+      }
+      else if (myIsRecursive) {
+        myRefreshContext.submitRefreshRequest(() -> processFile(child, myRefreshContext));
       }
       return FileVisitResult.CONTINUE;
     }
