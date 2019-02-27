@@ -4,35 +4,19 @@ package org.jetbrains.idea.devkit.references;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ExperimentalFeature;
 import com.intellij.openapi.application.ExperimentalFeatureImpl;
 import com.intellij.openapi.application.Experiments;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.references.PomService;
 import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.ProcessingContext;
-import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomManager;
-import com.intellij.util.xml.DomTarget;
 import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Extension;
-import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender;
-import org.jetbrains.idea.devkit.util.ExtensionCandidate;
-import org.jetbrains.idea.devkit.util.ExtensionLocatorKt;
-import org.jetbrains.idea.devkit.util.ExtensionPointCandidate;
-import org.jetbrains.idea.devkit.util.ExtensionPointLocator;
-import org.jetbrains.uast.UExpression;
 
 import java.util.List;
 
@@ -49,15 +33,9 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
                                      injectionHostUExpression().methodCallParameter(0, psiMethod()
                                        .withName(string().oneOf("isFeatureEnabled", "setFeatureEnabled"))
                                        .definedInClass(Experiments.class.getName())),
-                                     new UastInjectionHostReferenceProvider() {
-                                       @NotNull
-                                       @Override
-                                       public PsiReference[] getReferencesForInjectionHost(@NotNull UExpression uExpression,
-                                                                                           @NotNull PsiLanguageInjectionHost host,
-                                                                                           @NotNull ProcessingContext context) {
-                                         return new PsiReference[]{new ExperimentalFeatureIdReference(host)};
-                                       }
-                                     }, PsiReferenceRegistrar.DEFAULT_PRIORITY);
+                                     UastReferenceRegistrar.uastInjectionHostReferenceProvider(
+                                       (expression, host) -> new PsiReference[]{new ExperimentalFeatureIdReference(host)}),
+                                     PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 
 
