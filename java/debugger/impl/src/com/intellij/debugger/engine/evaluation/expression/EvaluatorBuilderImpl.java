@@ -418,6 +418,11 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
+    public void visitEmptyStatement(PsiEmptyStatement statement) {
+      // do nothing
+    }
+
+    @Override
     public void visitExpressionStatement(PsiExpressionStatement statement) {
       statement.getExpression().accept(this);
     }
