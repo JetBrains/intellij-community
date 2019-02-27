@@ -8,6 +8,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
@@ -16,6 +18,7 @@ import org.jetbrains.yaml.psi.YAMLValue;
 import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
 import org.jetbrains.yaml.psi.impl.YAMLBlockSequenceImpl;
 
+import java.util.Collection;
 import java.util.List;
 
 public class YAMLSameLineCompositeValueErrorAnnotator implements Annotator {
@@ -25,6 +28,9 @@ public class YAMLSameLineCompositeValueErrorAnnotator implements Annotator {
       return;
     }
     YAMLKeyValue keyValue = ((YAMLKeyValue)element);
+    if (hasOuterElements(keyValue)) {
+      return;
+    }
 
     PsiFile file = keyValue.getContainingFile();
     if (file == null) {
@@ -70,5 +76,10 @@ public class YAMLSameLineCompositeValueErrorAnnotator implements Annotator {
     }
 
     return !StringUtil.containsLineBreak(documentContent.subSequence(start1,start2));
+  }
+
+  private static boolean hasOuterElements(PsiElement element) {
+    Collection<OuterLanguageElement> outerElements = PsiTreeUtil.findChildrenOfType(element, OuterLanguageElement.class);
+    return !outerElements.isEmpty();
   }
 }
