@@ -576,7 +576,6 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
    * @return a descriptive name for the instance to help a tree identification
    * @see Invoker#Invoker(String, Disposable)
    */
-  @SuppressWarnings("JavadocReference")
   @Override
   public String toString() {
     return description;

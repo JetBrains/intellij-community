@@ -373,7 +373,6 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
    *
    * Please use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions(ExtensionPointName, List, Disposable)} instead of direct usage.
    */
-  @SuppressWarnings("JavadocReference")
   @TestOnly
   public synchronized void maskAll(@NotNull List<T> list, @NotNull Disposable parentDisposable) {
     if (POINTS_IN_READONLY_MODE == null) {

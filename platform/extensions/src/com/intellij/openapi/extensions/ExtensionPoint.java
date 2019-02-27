@@ -15,7 +15,6 @@ import java.util.stream.Stream;
 /**
  * @see com.intellij.testFramework.PlatformTestUtil#maskExtensions
  */
-@SuppressWarnings("JavadocReference")
 public interface ExtensionPoint<T> {
   @NotNull
   String getName();

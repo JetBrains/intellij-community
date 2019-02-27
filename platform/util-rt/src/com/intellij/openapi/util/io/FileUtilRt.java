@@ -183,7 +183,6 @@ public class FileUtilRt {
    * Please note that this method is symlink-unfriendly (i.e. result of "/path/to/link/../next" most probably will differ from
    * what {@link File#getCanonicalPath()} will return), so if the path may contain symlinks, consider using {@link com.intellij.openapi.util.io.FileUtil#toCanonicalPath(String, boolean)} instead.
    */
-  @SuppressWarnings("JavadocReference")
   @Contract("null, _, _ -> null")
   public static String toCanonicalPath(@Nullable String path, char separatorChar, boolean removeLastSlash) {
     return toCanonicalPath(path, separatorChar, removeLastSlash, null);
