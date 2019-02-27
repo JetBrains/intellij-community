@@ -255,7 +255,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
    */
   @Override
   public synchronized void setMaximizedBounds(Rectangle bounds) {
-    super.setMaximizedBounds(IdeFrameDecorator.isCustomDecoration() ? bounds : null);
+    super.setMaximizedBounds(null);
   }
 
   private void setupCloseAction() {
