@@ -126,6 +126,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
 
     VirtualFile newEntry = findByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR + "some.txt");
     assertEquals("some text", VfsUtilCore.loadText(newEntry));
+    JarFileSystemImpl.cleanupForNextTest();
   }
 
   @Test
@@ -191,6 +192,9 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     }
     catch (TimeoutException e) {
       fail("Deadlock detected");
+    }
+    finally {
+      JarFileSystemImpl.cleanupForNextTest();
     }
   }
 
@@ -269,6 +273,8 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
       assertSame(is1.getClass(), is2.getClass());
       assertNotSame(is1.getClass(), il.getClass());
     }
+
+    JarFileSystemImpl.cleanupForNextTest();
   }
 
   private static VirtualFile findByPath(String path) {
