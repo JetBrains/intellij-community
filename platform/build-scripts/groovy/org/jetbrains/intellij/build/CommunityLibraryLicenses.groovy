@@ -193,7 +193,7 @@ class CommunityLibraryLicenses {
                        url: "https://github.com/codehaus/gant", licenseUrl: "https://github.com/codehaus/gant/blob/master/LICENCE.txt"),
     new LibraryLicense(name: "Gherkin keywords", attachedTo: "intellij.gherkin", version: "2.12.2", license: "MIT",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://github.com/cucumber/gherkin"),
-    new LibraryLicense(name: "Gradle", version: "4.10.3", license: "Apache 2.0", url: "http://gradle.org/",
+    new LibraryLicense(name: "Gradle", version: "5.2.1", license: "Apache 2.0", url: "http://gradle.org/",
                        licenseUrl: "http://gradle.org/license"),
     new LibraryLicense(name: "Groovy", version: "2.4.6", license: "Apache 2.0", url: "http://groovy-lang.org/"),
     new LibraryLicense(name: "Gson", version: "2.8.4", libraryName: "gson", license: "Apache 2.0",
