@@ -76,7 +76,7 @@ internal class ExtensionByExtensionPointLocator(private val project: Project,
   private fun processCandidates(processor: (XmlTag) -> Boolean) {
     // We must search for the last part of EP name, because for instance 'com.intellij.console.folding' extension
     // may be declared as <extensions defaultExtensionNs="com"><intellij.console.folding ...
-    val epNameToSearch = if (pointQualifiedName == "com.intellij.compiler.task") "compiler.task" else StringUtil.substringAfterLast(pointQualifiedName, ".") ?: return
+    val epNameToSearch = StringUtil.substringAfterLast(pointQualifiedName, ".") ?: return
     processExtensionDeclarations(epNameToSearch, project, false /* not strict match */) { extension, tag ->
       val ep = extension.extensionPoint ?: return@processExtensionDeclarations true
       if (ep.effectiveQualifiedName == pointQualifiedName && (extensionId == null || extensionId == extension.id.stringValue)) {
