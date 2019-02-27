@@ -61,13 +61,12 @@ public class DfaBinOpValue extends DfaValue {
 
   @Override
   public String toString() {
-    String delimiter;
-    if (myOp == BinOp.PLUS && myRight instanceof DfaConstValue &&
-        ((DfaConstValue)myRight).getValue() instanceof Long &&
-        (Long)((DfaConstValue)myRight).getValue() < 0) {
-      delimiter = "";
-    } else {
-      delimiter = myOp.toString();
+    String delimiter = myOp.toString();
+    if (myOp == BinOp.PLUS && myRight instanceof DfaConstValue) {
+      Object value = ((DfaConstValue)myRight).getValue();
+      if (value instanceof Long && (Long)value < 0) {
+        delimiter = "";
+      }
     }
     return myLeft + delimiter + myRight;
   }
