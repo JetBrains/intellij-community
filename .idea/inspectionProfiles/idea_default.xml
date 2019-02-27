@@ -878,7 +878,7 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="Field" within="" contains="" />
         <constraint name="Type" within="" contains="" />
-        <constraint name="elements" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="elements" maxCount="2147483647" within="" contains="" />
       </replaceConfiguration>
     </inspection_tool>
     <inspection_tool class="SafeVarargsDetector" enabled="false" level="WARNING" enabled_by_default="false" />
