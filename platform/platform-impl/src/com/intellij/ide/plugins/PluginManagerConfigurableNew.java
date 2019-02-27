@@ -85,7 +85,7 @@ public class PluginManagerConfigurableNew
 
   @SuppressWarnings("UseJBColor")
   public static final Color MAIN_BG_COLOR =
-    JBColor.namedColor("Plugins.background", new JBColor(() -> JBColor.isBright() ? UIUtil.getListBackground() : new Color(0x313335)));
+    JBColor.namedColor("Plugins.background", new JBColor(UIUtil.getListBackground(), new Color(0x313335)));
 
   private static final Color SEARCH_BG_COLOR = JBColor.namedColor("Plugins.SearchField.background", MAIN_BG_COLOR);
 
