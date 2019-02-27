@@ -139,6 +139,6 @@ public class FilteringListModel<T> extends AbstractListModel<T> {
   }
 
   public void remove(int index) {
-    ((DefaultListModel<T>)myOriginalModel).removeElement(myData.get(index));
+    ((CollectionListModel<T>)myOriginalModel).remove(myData.get(index));
   }
 }
