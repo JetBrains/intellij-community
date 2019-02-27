@@ -220,7 +220,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     }
 
     for (RunConfigurationExtension ext : RunConfigurationExtension.EP_NAME.getExtensionList()) {
-      ext.updateJavaParameters(getConfiguration(), javaParameters, getRunnerSettings(), getEnvironment().getExecutor().getId());
+      ext.updateJavaParameters(getConfiguration(), javaParameters, getRunnerSettings(), getEnvironment().getExecutor());
     }
 
     if (!StringUtil.isEmptyOrSpaces(parameters)) {

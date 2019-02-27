@@ -22,7 +22,7 @@ public abstract class RunConfigurationExtension extends RunConfigurationExtensio
   public <T extends RunConfigurationBase> void updateJavaParameters(final T configuration,
                                                                     final JavaParameters params,
                                                                     RunnerSettings runnerSettings,
-                                                                    @NotNull final String executorId) throws ExecutionException {
+                                                                    @NotNull final Executor executor) throws ExecutionException {
     updateJavaParameters(configuration,params,runnerSettings);
   }
 

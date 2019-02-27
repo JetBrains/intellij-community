@@ -29,7 +29,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     JavaParametersUtil.configureConfiguration(params, myConfiguration);
 
     for (RunConfigurationExtension ext : RunConfigurationExtension.EP_NAME.getExtensions()) {
-      ext.updateJavaParameters(getConfiguration(), params, getRunnerSettings(), getEnvironment().getExecutor().getId());
+      ext.updateJavaParameters(getConfiguration(), params, getRunnerSettings(), getEnvironment().getExecutor());
     }
   }
 
