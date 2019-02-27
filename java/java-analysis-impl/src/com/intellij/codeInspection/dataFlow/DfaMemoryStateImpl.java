@@ -1137,7 +1137,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     DfaConstValue leftConst = getConstantValue(unboxedLeft);
     DfaConstValue rightConst = getConstantValue(unboxedRight);
     if (leftConst != null && rightConst != null) {
-      return leftConst.getValue().equals(rightConst.getValue()) != negated;
+      return Objects.equals(leftConst.getValue(), rightConst.getValue()) != negated;
     }
     if (negated && (PsiType.FLOAT.equals(unboxedLeft.getType()) || PsiType.DOUBLE.equals(unboxedLeft.getType()))) {
       // If floating point wrappers are not equal, unboxed versions could still be equal if they are 0.0 and -0.0
