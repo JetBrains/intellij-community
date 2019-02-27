@@ -372,6 +372,30 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     int parentId = getFileId(parent);
     int[] children = FSRecords.list(parentId);
 
+    int childId = findExistingId(childName, children, fs);
+    if (childId > 0) return childId;
+
+    Pair<FileAttributes, String> childData = getChildData(fs, parent, childName, null, null);
+    if (childData != null) {
+      String oldChildName = childName;
+      childName = fs.getCanonicallyCasedName(new FakeVirtualFile(parent, oldChildName));
+      if (childName.isEmpty()) return 0;
+      
+      if (!childName.equals(oldChildName)) {
+        childId = findExistingId(childName, children, fs);
+        if (childId > 0) return childId;
+      }
+      childId = makeChildRecord(parentId, childName, childData, fs);
+      FSRecords.updateList(parentId, ArrayUtil.append(children, childId));
+      return childId;
+    }
+
+    return 0;
+  }
+
+  private static int findExistingId(@NotNull String childName,
+                                    int[] children,
+                                    @NotNull NewVirtualFileSystem fs) {
     if (children.length > 0) {
       // fast path, check that some child has same nameId as given name, this avoid O(N) on retrieving names for processing non-cached children
       int nameId = FSRecords.getNameId(childName);
@@ -386,14 +410,6 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     for (int childId : children) {
       if (namesEqual(fs, childName, FSRecords.getNameSequence(childId))) return childId;
     }
-
-    Pair<FileAttributes, String> childData = getChildData(fs, parent, childName, null, null);
-    if (childData != null) {
-      int childId = makeChildRecord(parentId, childName, childData, fs);
-      FSRecords.updateList(parentId, ArrayUtil.append(children, childId));
-      return childId;
-    }
-
     return 0;
   }
 
@@ -1231,8 +1247,9 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
                                                            @Nullable FileAttributes attributes,
                                                            @Nullable String symlinkTarget) {
     if (attributes == null) {
-      attributes = fs.getAttributes(new FakeVirtualFile(parent, name));
-      symlinkTarget = attributes != null && attributes.isSymLink() ? fs.resolveSymLink(new FakeVirtualFile(parent, name)) : null;
+      FakeVirtualFile virtualFile = new FakeVirtualFile(parent, name);
+      attributes = fs.getAttributes(virtualFile);
+      symlinkTarget = attributes != null && attributes.isSymLink() ? fs.resolveSymLink(virtualFile) : null;
     }
     return attributes == null ? null : pair(attributes, symlinkTarget);
   }

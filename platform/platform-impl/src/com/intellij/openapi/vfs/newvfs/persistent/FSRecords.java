@@ -1122,7 +1122,7 @@ public class FSRecords {
     });
   }
 
-  static int getNameId(int id) {
+  public static int getNameId(int id) {
     return readAndHandleErrors(() -> doGetNameId(id));
   }
 

@@ -131,12 +131,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return NULL_VIRTUAL_FILE;
     }
 
-    if (ensureCanonicalName) {
-      VirtualFile fake = new FakeVirtualFile(this, name);
-      name = delegate.getCanonicallyCasedName(fake);
-      if (name.isEmpty()) return null;
-    }
-
     VirtualFileSystemEntry child;
     synchronized (myData) {
       // maybe another doFindChild() sneaked in the middle
@@ -148,6 +142,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
       // do not extract getId outside the synchronized block since it will cause a concurrency problem.
       int id = ourPersistence.getId(this, name, delegate);
+      // N.B. name can change if file record was created
       if (id <= 0) {
         myData.addAdoptedName(name, caseSensitive);
         return null;
@@ -155,7 +150,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
       FileAttributes attributes = PersistentFS.toFileAttributes(ourPersistence.getFileAttributes(id));
       boolean isEmptyDirectory = attributes.isDirectory() && !ourPersistence.mayHaveChildren(id);
-      child = createChild(FileNameCache.storeName(name), id, delegate, attributes, isEmptyDirectory);
+      child = createChild(FSRecords.getNameId(id), id, delegate, attributes, isEmptyDirectory);
 
       addChild(child);
 
