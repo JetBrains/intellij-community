@@ -13,7 +13,7 @@ cache:
 
 env:
   - IDEA_VERSION=LATEST-EAP-SNAPSHOT  UPLOAD_BUILD=true
-  - IDEA_VERSION=2018.3.4             UPLOAD_BUILD=false
+  - IDEA_VERSION=2018.3.5             UPLOAD_BUILD=false
   - IDEA_VERSION=2018.3               UPLOAD_BUILD=true
   - IDEA_VERSION=2018.2               UPLOAD_BUILD=true
   - IDEA_VERSION=2018.1               UPLOAD_BUILD=true

@@ -1,7 +1,12 @@
 package de.plushnikov.intellij.plugin;
 
-import com.intellij.notification.*;
-import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import de.plushnikov.intellij.plugin.settings.LombokSettings;
 import org.jetbrains.annotations.NotNull;
@@ -9,10 +14,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Shows update notification
  */
-public class LombokPluginUpdateProjectComponent extends AbstractProjectComponent {
+public class LombokPluginUpdateProjectComponent implements ProjectComponent {
 
-  protected LombokPluginUpdateProjectComponent(Project project) {
-    super(project);
+  private final Project myProject;
+
+  public LombokPluginUpdateProjectComponent(Project project) {
+    myProject = project;
   }
 
   @NotNull

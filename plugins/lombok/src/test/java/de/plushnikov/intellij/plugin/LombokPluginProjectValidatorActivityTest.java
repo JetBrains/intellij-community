@@ -9,14 +9,14 @@ import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class LombokPluginProjectValidatorComponentTest {
+public class LombokPluginProjectValidatorActivityTest {
 
-  private LombokPluginProjectValidatorComponent component;
+  private LombokPluginProjectValidatorActivity component;
   private OrderEntry orderEntry;
 
   @Before
   public void setUp() {
-    component = new LombokPluginProjectValidatorComponent(null);
+    component = new LombokPluginProjectValidatorActivity();
     orderEntry = mock(OrderEntry.class);
   }
 

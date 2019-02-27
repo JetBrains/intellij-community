@@ -18,9 +18,6 @@
     <component>
       <implementation-class>de.plushnikov.intellij.plugin.LombokPluginUpdateProjectComponent</implementation-class>
     </component>
-    <component>
-      <implementation-class>de.plushnikov.intellij.plugin.LombokPluginProjectValidatorComponent</implementation-class>
-    </component>
   </project-components>
 
   <extensionPoints>
@@ -29,6 +26,8 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="de.plushnikov.intellij.plugin.LombokPluginProjectValidatorActivity"/>
+
     <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.handler.BuilderHandler"/>
     <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.handler.DelegateHandler"/>
     <applicationService
