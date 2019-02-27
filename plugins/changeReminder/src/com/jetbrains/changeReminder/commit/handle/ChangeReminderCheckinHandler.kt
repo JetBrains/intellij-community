@@ -109,7 +109,7 @@ class ChangeReminderCheckinHandler(private val panel: CheckinProjectPanel,
           ThrowableComputable<List<PredictedFile>, Exception> {
             getPredictedFiles(rootFiles, isAmend, threshold)
           },
-          "ChangeReminder Plugin",
+          "Calculating whether something should be added to this commit",
           true,
           project
         )
