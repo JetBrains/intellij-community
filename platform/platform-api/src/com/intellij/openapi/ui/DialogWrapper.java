@@ -1973,7 +1973,7 @@ public abstract class DialogWrapper {
     myErrorTextAlarm.cancelAllRequests();
     Runnable clearErrorRunnable = () -> {
       if (myErrorText != null) {
-        myErrorText.clearError();
+        myErrorText.clearError(info.isEmpty());
       }
     };
     if (headless) {
@@ -2115,17 +2115,18 @@ public abstract class DialogWrapper {
                              baseInsets.right > contentInsets.right ? baseInsets.right - contentInsets.right : 0);
     }
 
-    private void clearError() {
+    private void clearError(boolean full) {
       errors.clear();
-      myLabel.setBounds(0, 0, 0, 0);
-      myLabel.setText("");
-      setVisible(false);
-      updateSize();
+      if (full) {
+        myLabel.setBounds(0, 0, 0, 0);
+        myLabel.setText("");
+        setVisible(false);
+        updateSize();
+      }
     }
 
     private void appendError(String text) {
       errors.add(text);
-      myLabel.setBounds(0, 0, 0, 0);
       StringBuilder sb = new StringBuilder("<html><font color='#" + ColorUtil.toHex(ERROR_FOREGROUND_COLOR) + "'>");
       errors.forEach(error -> sb.append("<left>").append(error).append("</left><br/>"));
       sb.append("</font></html>");
