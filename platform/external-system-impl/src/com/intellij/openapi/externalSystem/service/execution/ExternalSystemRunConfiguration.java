@@ -446,7 +446,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
 
       final JavaParameters extensionsJP = new JavaParameters();
       for (RunConfigurationExtension ext : RunConfigurationExtension.EP_NAME.getExtensionList()) {
-        ext.updateJavaParameters(myConfiguration, extensionsJP, myEnv.getRunnerSettings(), myEnv.getExecutor().getId());
+        ext.updateJavaParameters(myConfiguration, extensionsJP, myEnv.getRunnerSettings(), myEnv.getExecutor());
       }
 
       String jvmAgentSetup;
