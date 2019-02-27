@@ -5,11 +5,11 @@
 
 package org.toml.lang.psi
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
+import org.toml.ide.icons.TomlIcons
 import org.toml.lang.TomlLanguage
 
 class TomlTokenType(debugName: String) : IElementType(debugName, TomlLanguage)
@@ -20,7 +20,7 @@ object TomlFileType : LanguageFileType(TomlLanguage) {
     override fun getDescription() = "TOML file"
     override fun getDefaultExtension() = "toml"
 
-    override fun getIcon() = AllIcons.FileTypes.Text!!
+    override fun getIcon() = TomlIcons.TOML_FILE
 
     override fun getCharset(file: VirtualFile, content: ByteArray) = "UTF-8"
 }
