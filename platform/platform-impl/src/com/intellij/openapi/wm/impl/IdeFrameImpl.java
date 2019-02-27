@@ -40,7 +40,10 @@ import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.status.*;
-import com.intellij.ui.*;
+import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.BalloonLayout;
+import com.intellij.ui.BalloonLayoutImpl;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -55,7 +58,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.Set;
@@ -143,7 +145,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
     myFrameDecorator = IdeFrameDecorator.decorate(this);
 
-    if (IdeRootPane.isFrameDecorated()) JdkEx.setHasCustomDecoration(this);
+    if (IdeFrameDecorator.isCustomDecoration()) JdkEx.setHasCustomDecoration(this);
 
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt()    {
       @Override
@@ -535,27 +537,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   public void paint(@NotNull Graphics g) {
     UISettings.setupAntialiasing(g);
     super.paint(g);
-    //if (IdeRootPane.isFrameDecorated() && !isInFullScreen()) {
-    //  final BufferedImage shadow = ourShadowPainter.createShadow(getRootPane(), getWidth(), getHeight());
-    //  g.drawImage(shadow, 0, 0, null);
-    //}
-  }
-
-  //@Override
-  //public Color getBackground() {
-  //  return IdeRootPane.isFrameDecorated() ? Gray.x00.withAlpha(0) : super.getBackground();
-  //}
-
-  @Override
-  public void doLayout() {
-    super.doLayout();
-    //if (!isInFullScreen() && IdeRootPane.isFrameDecorated()) {
-    //  final int leftSide = AllIcons.Ide.Shadow.Left.getIconWidth();
-    //  final int rightSide = AllIcons.Ide.Shadow.Right.getIconWidth();
-    //  final int top = AllIcons.Ide.Shadow.Top.getIconHeight();
-    //  final int bottom = AllIcons.Ide.Shadow.Bottom.getIconHeight();
-    //  getRootPane().setBounds(leftSide, top, getWidth() - leftSide - rightSide, getHeight() - top - bottom);
-    //}
   }
 
   @Override
