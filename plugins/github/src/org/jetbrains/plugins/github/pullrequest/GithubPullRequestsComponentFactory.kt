@@ -73,12 +73,13 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
     private val securityService = GithubPullRequestsSecurityServiceImpl(sharedProjectSettings, accountDetails, repoDetails)
     private val busyStateTracker = GithubPullRequestsBusyStateTrackerImpl()
     private val metadataService = GithubPullRequestsMetadataServiceImpl(project, progressManager,
-                                                                        repoDataLoader, dataLoader, busyStateTracker,
-                                                                        requestExecutor,
-                                                                        avatarIconsProviderFactory, account.server, repoDetails.fullPath)
-    private val stateService = GithubPullRequestsStateServiceImpl(project, progressManager, dataLoader, busyStateTracker,
-                                                                  requestExecutor,
-                                                                  account.server, repoDetails.fullPath)
+                                                                        repoDataLoader, listLoader, dataLoader,
+                                                                        busyStateTracker,
+                                                                        requestExecutor, avatarIconsProviderFactory, account.server,
+                                                                        repoDetails.fullPath)
+    private val stateService = GithubPullRequestsStateServiceImpl(project, progressManager, listLoader, dataLoader,
+                                                                  busyStateTracker,
+                                                                  requestExecutor, account.server, repoDetails.fullPath)
 
     private val changes = GithubPullRequestChangesComponent(project, pullRequestUiSettings).apply {
       diffAction.registerCustomShortcutSet(this@GithubPullRequestsComponent, this@GithubPullRequestsComponent)
