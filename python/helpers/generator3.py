@@ -1,13 +1,10 @@
 # encoding: utf-8
 import atexit
-import hashlib
 import zipfile
 
 from pycharm_generator_utils.clr_tools import *
 from pycharm_generator_utils.module_redeclarator import *
 from pycharm_generator_utils.util_methods import *
-
-BIN_BLOCK_SIZE = 64 * 1024
 
 # TODO: Move all CLR-specific functions to clr_tools
 debug_mode = True
@@ -350,7 +347,7 @@ def builtin_module_hash(mod_qname):
     # Hash the content of interpreter executable, i.e. it will be the same for all built-in modules.
     # Also, it's the same for a virtualenv interpreter and its base.
     with fopen(sys.executable, 'rb') as f:
-        return sha256(f)
+        return sha256_digest(f)
 
 
 def physical_module_hash(mod_path):
@@ -358,23 +355,10 @@ def physical_module_hash(mod_path):
     if pure_py:
         # Open .py files in text mode to avoid LF/CRLF conversion issues. It should happen only in tests.
         with fopen(mod_path, 'r') as f:
-            return sha256(f.read().encode(OUT_ENCODING))
+            return sha256_digest(f.read().encode(OUT_ENCODING))
     else:
         with fopen(mod_path, 'rb') as f:
-            return sha256(f)
-
-
-def sha256(binary_or_file):
-    if isinstance(binary_or_file, bytes):
-        return hashlib.sha256(binary_or_file).hexdigest()
-    else:
-        acc = hashlib.sha256()
-        while True:
-            block = binary_or_file.read(BIN_BLOCK_SIZE)
-            if not block:
-                break
-            acc.update(block)
-        return acc.hexdigest()
+            return sha256_digest(f)
 
 
 def version_to_tuple(version):

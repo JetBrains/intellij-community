@@ -1,6 +1,7 @@
 import ast
 import errno
 import functools
+import hashlib
 import keyword
 import shutil
 from contextlib import contextmanager
@@ -11,6 +12,9 @@ try:
     import inspect
 except ImportError:
     inspect = None
+
+BIN_READ_BLOCK = 64 * 1024
+
 
 def create_named_tuple():   #TODO: user-skeleton
     return """
@@ -850,3 +854,17 @@ def cached(func):
         return result
 
     return wrapper
+
+
+def sha256_digest(binary_or_file):
+    # "bytes" type is available in Python 2.7
+    if isinstance(binary_or_file, bytes):
+        return hashlib.sha256(binary_or_file).hexdigest()
+    else:
+        acc = hashlib.sha256()
+        while True:
+            block = binary_or_file.read(BIN_READ_BLOCK)
+            if not block:
+                break
+            acc.update(block)
+        return acc.hexdigest()
