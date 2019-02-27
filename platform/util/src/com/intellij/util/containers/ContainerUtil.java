@@ -594,7 +594,7 @@ public class ContainerUtil extends ContainerUtilRt {
       return myStore.length;
     }
 
-    // override for more efficient arraycopy vs. iterator() creation/traversing
+    // overridden for more efficient arraycopy vs. iterator() creation/traversing
     @NotNull
     @Override
     public <T> T[] toArray(@NotNull T[] a) {
@@ -803,7 +803,6 @@ public class ContainerUtil extends ContainerUtilRt {
     return EmptyIterable.getInstance();
   }
 
-  @Nullable
   @Contract(pure=true)
   public static <T> T find(@NotNull T[] array, @NotNull Condition<? super T> condition) {
     for (T element : array) {
@@ -850,30 +849,25 @@ public class ContainerUtil extends ContainerUtilRt {
     return true;
   }
 
-  @Nullable
   @Contract(pure=true)
   public static <T, V extends T> V find(@NotNull Iterable<? extends V> iterable, @NotNull Condition<? super T> condition) {
     return ContainerUtilRt.find(iterable, condition);
   }
 
-  @Nullable
   @Contract(pure=true)
   public static <T> T find(@NotNull Iterable<? extends T> iterable, @NotNull final T equalTo) {
     return find(iterable, (Condition<T>)object -> equalTo == object || equalTo.equals(object));
   }
 
-  @Nullable
   @Contract(pure=true)
   public static <T> T find(@NotNull Iterator<? extends T> iterator, @NotNull final T equalTo) {
     return find(iterator, (Condition<T>)object -> equalTo == object || equalTo.equals(object));
   }
 
-  @Nullable
   public static <T, V extends T> V find(@NotNull Iterator<? extends V> iterator, @NotNull Condition<? super T> condition) {
     return ContainerUtilRt.find(iterator, condition);
   }
 
-  @Nullable
   @Contract(pure = true)
   public static <T, V extends T> V findLast(@NotNull List<? extends V> list, @NotNull Condition<? super T> condition) {
     int index = lastIndexOf(list, condition);
@@ -1332,7 +1326,6 @@ public class ContainerUtil extends ContainerUtilRt {
     return (U)find(iterator, FilteringIterator.instanceOf(aClass));
   }
 
-  @Nullable
   @Contract(pure=true)
   public static <T, U extends T> U findInstance(@NotNull T[] array, @NotNull Class<? extends U> aClass) {
     return findInstance(Arrays.asList(array), aClass);
@@ -1568,13 +1561,11 @@ public class ContainerUtil extends ContainerUtilRt {
     return result;
   }
 
-  @Nullable
   @Contract(pure=true)
   public static <T> T getFirstItem(@Nullable Collection<? extends T> items) {
     return getFirstItem(items, null);
   }
 
-  @Nullable
   @Contract(pure=true)
   public static <T> T getFirstItem(@Nullable List<? extends T> items) {
     return items == null || items.isEmpty() ? null : items.get(0);
@@ -1592,7 +1583,6 @@ public class ContainerUtil extends ContainerUtilRt {
    * @param <T> type of collection element
    * @return the only collection element or null
    */
-  @Nullable
   @Contract(pure=true)
   public static <T> T getOnlyItem(@Nullable final Collection<? extends T> items) {
     return getOnlyItem(items, null);
@@ -1621,7 +1611,6 @@ public class ContainerUtil extends ContainerUtilRt {
     return maxItems >= items.size() ? items : items.subList(0, maxItems);
   }
 
-  @Nullable
   @Contract(pure=true)
   public static <T> T iterateAndGetLastItem(@NotNull Iterable<? extends T> items) {
     Iterator<? extends T> itr = items.iterator();
@@ -1703,13 +1692,11 @@ public class ContainerUtil extends ContainerUtilRt {
     };
   }
 
-  @Nullable
   @Contract(pure=true)
   public static <T, L extends List<T>> T getLastItem(@Nullable L list, @Nullable T def) {
     return ContainerUtilRt.getLastItem(list, def);
   }
 
-  @Nullable
   @Contract(pure=true)
   public static <T, L extends List<T>> T getLastItem(@Nullable L list) {
     return ContainerUtilRt.getLastItem(list);
@@ -2400,7 +2387,6 @@ public class ContainerUtil extends ContainerUtilRt {
     return -1;
   }
 
-  @Nullable
   @Contract(pure = true)
   public static <T, U extends T> U findLastInstance(@NotNull List<? extends T> list, @NotNull final Class<? extends U> clazz) {
     int i = lastIndexOf(list, (Condition<T>)clazz::isInstance);

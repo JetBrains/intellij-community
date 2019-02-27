@@ -439,6 +439,7 @@ public class ContainerUtilRt {
    */
   @Deprecated
   @NotNull
+  @Contract(pure=true)
   public static <T> T[] toArray(@NotNull List<T> collection, @NotNull T[] array) {
     return collection.toArray(array);
   }
@@ -448,17 +449,16 @@ public class ContainerUtilRt {
    */
   @Deprecated
   @NotNull
+  @Contract(pure=true)
   public static <T> T[] toArray(@NotNull Collection<? extends T> c, @NotNull T[] sample) {
     return c.toArray(sample);
   }
 
-  @Nullable
   @Contract(pure=true)
   public static <T, L extends List<T>> T getLastItem(@Nullable L list, @Nullable T def) {
     return isEmpty(list) ? def : list.get(list.size() - 1);
   }
 
-  @Nullable
   @Contract(pure=true)
   public static <T, L extends List<T>> T getLastItem(@Nullable L list) {
     return getLastItem(list, null);
@@ -469,13 +469,12 @@ public class ContainerUtilRt {
     return collection == null || collection.isEmpty();
   }
 
-  @Nullable
   @Contract(pure=true)
   public static <T, V extends T> V find(@NotNull Iterable<? extends V> iterable, @NotNull Condition<? super T> condition) {
     return find(iterable.iterator(), condition);
   }
 
-  @Nullable
+  @Contract(pure=true)
   public static <T, V extends T> V find(@NotNull Iterator<? extends V> iterator, @NotNull Condition<? super T> condition) {
     while (iterator.hasNext()) {
       V value = iterator.next();
@@ -494,5 +493,4 @@ public class ContainerUtilRt {
     }
     return -1;
   }
-
 }
