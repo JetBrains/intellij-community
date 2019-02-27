@@ -7,8 +7,10 @@ import com.intellij.ui.components.JBList;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 class SEListSelectionTracker implements ListSelectionListener {
@@ -43,7 +45,10 @@ class SEListSelectionTracker implements ListSelectionListener {
     }
     else {
       moreSelected = false;
-      selectedItemsList = myList.getSelectedValuesList();
+      selectedItemsList = Arrays.stream(indices)
+        .filter(i -> !myListModel.isMoreElement(i))
+        .mapToObj(i -> myListModel.getElementAt(i))
+        .collect(Collectors.toList());
     }
 
     selectedItems.addAll(selectedItemsList);
