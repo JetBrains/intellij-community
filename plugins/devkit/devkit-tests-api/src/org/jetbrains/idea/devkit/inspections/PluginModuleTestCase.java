@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,10 +42,29 @@ public abstract class PluginModuleTestCase extends LightCodeInsightFixtureTestCa
     return ourProjectDescriptor;
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      getPluginBuildConfiguration().cleanupForNextTest();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
+  }
+
   protected void setPluginXml(@TestDataFile String pluginXml) {
     final VirtualFile file = myFixture.copyFileToProject(pluginXml, "META-INF/plugin.xml");
+    final PluginBuildConfiguration pluginBuildConfiguration = getPluginBuildConfiguration();
+    pluginBuildConfiguration.setPluginXmlFromVirtualFile(file);
+  }
+
+  @NotNull
+  private PluginBuildConfiguration getPluginBuildConfiguration() {
     final PluginBuildConfiguration pluginBuildConfiguration = PluginBuildConfiguration.getInstance(myModule);
     assertNotNull(pluginBuildConfiguration);
-    pluginBuildConfiguration.setPluginXmlFromVirtualFile(file);
+    return pluginBuildConfiguration;
   }
 }
