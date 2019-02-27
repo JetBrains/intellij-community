@@ -4,12 +4,10 @@ package com.jetbrains.changeReminder.repository
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.Consumer
 import com.intellij.vcs.log.data.index.IndexDataGetter
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
-import git4idea.GitCommit
-import git4idea.GitVcs
-import git4idea.history.GitLogUtil
+import com.jetbrains.changeReminder.changedFilePaths
+import com.jetbrains.changeReminder.processCommitsFromHashes
 
 data class Commit(val id: Int, val time: Long, val files: Set<FilePath>)
 
@@ -27,28 +25,15 @@ class FilesHistoryProvider(private val project: Project, private val root: Virtu
     }
 
     val commitsData = mutableMapOf<Int, Commit>()
-    GitLogUtil.readFullDetailsForHashes(
-      project,
-      root,
-      GitVcs.getInstance(project),
-      Consumer<GitCommit> { commit ->
-        if (commit != null && commit.changes.isNotEmpty()) {
-          val id = hashes[commit.id.asString()] ?: return@Consumer
-          val time = commit.commitTime
-          val files = commit.changes
-            .mapNotNull { it.afterRevision?.file ?: it.beforeRevision?.file }
-            .toSet()
-          commitsData[id] = Commit(id, time, files)
-        }
-      },
-      hashes.keys.toList(),
-      true,
-      false,
-      false,
-      false,
-      GitLogUtil.DiffRenameLimit.NO_RENAMES
-    )
 
+    processCommitsFromHashes(project, root, hashes.keys.toList()) consume@{ commit ->
+      if (commit.changes.isNotEmpty()) {
+        val id = hashes[commit.id.asString()] ?: return@consume
+        val time = commit.commitTime
+        val files = commit.changedFilePaths().toSet()
+        commitsData[id] = Commit(id, time, files)
+      }
+    }
     return commitsData
   }
 

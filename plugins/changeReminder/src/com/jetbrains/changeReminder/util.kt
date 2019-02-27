@@ -7,9 +7,12 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.Consumer
 import com.intellij.vcsUtil.VcsUtil
+import git4idea.GitCommit
 import git4idea.GitVcs
 import git4idea.checkin.GitCheckinEnvironment
+import git4idea.history.GitLogUtil
 
 fun CheckinProjectPanel.isAmend(): Boolean {
   if (this !is CommitChangeListDialog) return false
@@ -36,3 +39,21 @@ fun CheckinProjectPanel.getGitRootFiles(project: Project): Map<VirtualFile, Coll
 
   return rootFiles
 }
+
+fun processCommitsFromHashes(project: Project, root: VirtualFile, hashes: List<String>, commitConsumer: (GitCommit) -> Unit): Unit =
+  GitLogUtil.readFullDetailsForHashes(
+    project,
+    root,
+    GitVcs.getInstance(project),
+    Consumer<GitCommit> {
+      commitConsumer(it)
+    },
+    hashes.toList(),
+    true,
+    false,
+    false,
+    false,
+    GitLogUtil.DiffRenameLimit.NO_RENAMES
+  )
+
+fun GitCommit.changedFilePaths(): List<FilePath> = this.changes.mapNotNull { it.afterRevision?.file ?: it.beforeRevision?.file }

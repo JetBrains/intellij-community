@@ -18,6 +18,7 @@ import com.intellij.util.PairConsumer
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.IndexDataGetter
 import com.intellij.vcs.log.util.VcsLogUtil.findBranch
+import com.jetbrains.changeReminder.changedFilePaths
 import com.jetbrains.changeReminder.commit.handle.ui.ChangeReminderDialog
 import com.jetbrains.changeReminder.getGitRootFiles
 import com.jetbrains.changeReminder.isAmend
@@ -26,10 +27,8 @@ import com.jetbrains.changeReminder.predict.PredictedChange
 import com.jetbrains.changeReminder.predict.PredictedFile
 import com.jetbrains.changeReminder.predict.PredictedFilePath
 import com.jetbrains.changeReminder.predict.PredictionProvider
+import com.jetbrains.changeReminder.processCommitsFromHashes
 import com.jetbrains.changeReminder.repository.FilesHistoryProvider
-import git4idea.GitCommit
-import git4idea.GitVcs
-import git4idea.history.GitLogUtil
 import java.util.function.Consumer
 
 class ChangeReminderCheckinHandler(private val panel: CheckinProjectPanel,
@@ -61,22 +60,9 @@ class ChangeReminderCheckinHandler(private val panel: CheckinProjectPanel,
       val ref = findBranch(dataManager.dataPack.refsModel, root, "HEAD")
       if (ref != null) {
         val hash = ref.commitHash.asString()
-        GitLogUtil.readFullDetailsForHashes(
-          project,
-          root,
-          GitVcs.getInstance(project),
-          com.intellij.util.Consumer<GitCommit> { commit ->
-            if (commit != null) {
-              filesSet.addAll(commit.changes.mapNotNull { it.afterRevision?.file ?: it.beforeRevision?.file })
-            }
-          },
-          listOf(hash),
-          true,
-          false,
-          false,
-          false,
-          GitLogUtil.DiffRenameLimit.NO_RENAMES
-        )
+        processCommitsFromHashes(project, root, listOf(hash)) { commit ->
+          filesSet.addAll(commit.changedFilePaths())
+        }
       }
     }
     if (filesSet.size > 25) {
