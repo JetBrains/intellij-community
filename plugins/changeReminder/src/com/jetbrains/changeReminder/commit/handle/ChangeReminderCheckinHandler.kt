@@ -19,6 +19,8 @@ import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.IndexDataGetter
 import com.intellij.vcs.log.util.VcsLogUtil.findBranch
 import com.jetbrains.changeReminder.commit.handle.ui.ChangeReminderDialog
+import com.jetbrains.changeReminder.getGitRootFiles
+import com.jetbrains.changeReminder.isAmend
 import com.jetbrains.changeReminder.plugin.UserSettings
 import com.jetbrains.changeReminder.predict.PredictedChange
 import com.jetbrains.changeReminder.predict.PredictedFile
