@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.navigationToolbar.ui;
 
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
 
@@ -31,6 +32,6 @@ public class AquaNavBarUI extends AbstractNavBarUI {
 
   @Override
   protected Color getBackgroundColor() {
-    return UIUtil.getSlightlyDarkerColor(Gray._200);
+    return ColorUtil.darker(Gray._200, 1);
   }
 }
