@@ -4,7 +4,6 @@ package org.jetbrains.idea.devkit.references;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ExperimentalFeature;
 import com.intellij.openapi.application.ExperimentalFeatureImpl;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
@@ -32,26 +31,32 @@ import org.jetbrains.idea.devkit.util.ExtensionCandidate;
 import org.jetbrains.idea.devkit.util.ExtensionLocatorKt;
 import org.jetbrains.idea.devkit.util.ExtensionPointCandidate;
 import org.jetbrains.idea.devkit.util.ExtensionPointLocator;
+import org.jetbrains.uast.UExpression;
 
 import java.util.List;
 
-import static com.intellij.patterns.PsiJavaPatterns.*;
+import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
+import static com.intellij.patterns.PsiJavaPatterns.string;
+import static com.intellij.patterns.uast.UastPatterns.injectionHostUExpression;
 
 class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
+
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
-    registrar.registerReferenceProvider(
-      psiLiteral()
-        .methodCallParameter(0, psiMethod().withName("isFeatureEnabled", "setFeatureEnabled")
-          .inClass(psiClass().withQualifiedName(Experiments.class.getName()))),
-      new PsiReferenceProvider() {
-        @NotNull
-        @Override
-        public PsiReference[] getReferencesByElement(@NotNull PsiElement element,
-                                                     @NotNull ProcessingContext context) {
-          return new PsiReference[]{new ExperimentalFeatureIdReference(element)};
-        }
-      }, PsiReferenceRegistrar.HIGHER_PRIORITY);
+    UastReferenceRegistrar
+      .registerUastReferenceProvider(registrar,
+                                     injectionHostUExpression().methodCallParameter(0, psiMethod()
+                                       .withName(string().oneOf("isFeatureEnabled", "setFeatureEnabled"))
+                                       .definedInClass(Experiments.class.getName())),
+                                     new UastInjectionHostReferenceProvider() {
+                                       @NotNull
+                                       @Override
+                                       public PsiReference[] getReferencesForInjectionHost(@NotNull UExpression uExpression,
+                                                                                           @NotNull PsiLanguageInjectionHost host,
+                                                                                           @NotNull ProcessingContext context) {
+                                         return new PsiReference[]{new ExperimentalFeatureIdReference(host)};
+                                       }
+                                     }, PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 
   private static class ExperimentalFeatureIdReference extends PsiReferenceBase<PsiElement> {
