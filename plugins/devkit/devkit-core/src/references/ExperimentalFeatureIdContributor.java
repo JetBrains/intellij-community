@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.references;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ExperimentalFeature;
 import com.intellij.openapi.application.ExperimentalFeatureImpl;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
@@ -59,30 +60,22 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
                                      }, PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 
-  private static class ExperimentalFeatureIdReference extends PsiReferenceBase<PsiElement> {
+
+  private static class ExperimentalFeatureIdReference extends ExtensionPointReferenceBase {
 
     private ExperimentalFeatureIdReference(PsiElement element) {
       super(element);
     }
 
-    @Nullable
     @Override
-    public PsiElement resolve() {
-      final String myId = getValue();
-      final CommonProcessors.FindProcessor<Extension> resolveProcessor = new CommonProcessors.FindProcessor<Extension>() {
-        @Override
-        protected boolean accept(Extension extension) {
-          return myId.equals(extension.getId().getStringValue());
-        }
-      };
-      processCandidates(resolveProcessor);
+    protected String getExtensionPointClassname() {
+      return ExperimentalFeatureImpl.class.getName();
+    }
 
-      final Extension value = resolveProcessor.getFoundValue();
-      if (value == null) {
-        return null;
-      }
-      final DomTarget target = DomTarget.getTarget(value);
-      return target != null ? PomService.convertToPsi(target) : value.getXmlElement();
+    @NotNull
+    @Override
+    public String getUnresolvedMessagePattern() {
+      return "Cannot resolve feature '" + getValue() + "'";
     }
 
     @NotNull
@@ -120,40 +113,6 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
         return ((ExtensionDomExtender.SimpleTagValue)element).getTagValue();
       }
       return null;
-    }
-
-    @Nullable
-    private static String getAttributeValue(Extension extension, String attributeName) {
-      final DomAttributeChildDescription attributeDescription = extension.getGenericInfo().getAttributeChildDescription(attributeName);
-      if (attributeDescription == null) {
-        return null;
-      }
-
-      return attributeDescription.getDomAttributeValue(extension).getStringValue();
-    }
-
-    private void processCandidates(Processor<Extension> processor) {
-      final Project project = myElement.getProject();
-
-      final PsiClass experimentalFeatureClass =
-        JavaPsiFacade.getInstance(project).findClass(ExperimentalFeatureImpl.class.getName(), myElement.getResolveScope());
-      if (experimentalFeatureClass == null) return;
-
-      final ExtensionPointLocator extensionPointLocator = new ExtensionPointLocator(experimentalFeatureClass);
-      final ExtensionPointCandidate extensionPointCandidate = ContainerUtil.getFirstItem(extensionPointLocator.findDirectCandidates());
-      if (extensionPointCandidate == null) return;
-
-      final DomManager manager = DomManager.getDomManager(project);
-      final DomElement extensionPointDomElement = manager.getDomElement(extensionPointCandidate.pointer.getElement());
-      if (!(extensionPointDomElement instanceof ExtensionPoint)) return;
-
-      for (ExtensionCandidate candidate : ExtensionLocatorKt.locateExtensionsByExtensionPoint((ExtensionPoint)extensionPointDomElement)) {
-        final XmlTag element = candidate.pointer.getElement();
-        final DomElement domElement = manager.getDomElement(element);
-        if (domElement instanceof Extension) {
-          if (!processor.process((Extension)domElement)) return;
-        }
-      }
     }
   }
 }

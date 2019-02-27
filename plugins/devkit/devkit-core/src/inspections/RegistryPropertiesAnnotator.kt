@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,11 +84,14 @@ class RegistryPropertiesAnnotator : Annotator {
 
   companion object {
 
-    @NonNls private const val REGISTRY_PROPERTIES_FILENAME = "registry.properties"
+    @NonNls
+    private const val REGISTRY_PROPERTIES_FILENAME = "registry.properties"
 
-    @NonNls private const val DESCRIPTION_SUFFIX = ".description"
+    @NonNls
+    const val DESCRIPTION_SUFFIX = ".description"
 
-    @NonNls private const val RESTART_REQUIRED_SUFFIX = ".restartRequired"
+    @NonNls
+    const val RESTART_REQUIRED_SUFFIX = ".restartRequired"
 
     @JvmStatic
     fun isImplicitUsageKey(keyName: String): Boolean =

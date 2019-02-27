@@ -32,7 +32,7 @@ public class Registry  {
   private static final Registry ourInstance = new Registry();
 
   @NotNull
-  public static RegistryValue get(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) @NotNull String key) {
+  public static RegistryValue get(@NotNull String key) {
     final Registry registry = getInstance();
 
     RegistryValue value = registry.myValues.get(key);
@@ -42,11 +42,11 @@ public class Registry  {
     return value;
   }
 
-  public static boolean is(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) @NotNull String key) throws MissingResourceException {
+  public static boolean is(@NotNull String key) throws MissingResourceException {
     return get(key).asBoolean();
   }
 
-  public static boolean is(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) @NotNull String key, boolean defaultValue) {
+  public static boolean is(@NotNull String key, boolean defaultValue) {
     try {
       return get(key).asBoolean();
     }
@@ -55,11 +55,11 @@ public class Registry  {
     }
   }
 
-  public static int intValue(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) @NotNull String key) throws MissingResourceException {
+  public static int intValue(@NotNull String key) throws MissingResourceException {
     return get(key).asInteger();
   }
 
-  public static int intValue(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) @NotNull String key, int defaultValue) {
+  public static int intValue(@NotNull String key, int defaultValue) {
     try {
       return get(key).asInteger();
     }
@@ -68,16 +68,16 @@ public class Registry  {
     }
   }
 
-  public static double doubleValue(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) @NotNull String key) throws MissingResourceException {
+  public static double doubleValue(@NotNull String key) throws MissingResourceException {
     return get(key).asDouble();
   }
 
   @NotNull
-  public static String stringValue(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) @NotNull String key) throws MissingResourceException {
+  public static String stringValue(@NotNull String key) throws MissingResourceException {
     return get(key).asString();
   }
 
-  public static Color getColor(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) @NotNull String key, Color defaultValue) throws MissingResourceException {
+  public static Color getColor(@NotNull String key, Color defaultValue) throws MissingResourceException {
     return get(key).asColor(defaultValue);
   }
 
