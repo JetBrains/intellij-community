@@ -134,7 +134,7 @@ public class ApproximateResolver {
   }
 
   @Nullable
-  public static Set<PsiClass> getDefiniteSymbolTypes(@NotNull List<? extends PsiMember> candidates, Set<PsiClass> qualifierType) {
+  public static Set<PsiClass> getDefiniteSymbolTypes(@NotNull List<? extends PsiMember> candidates, @NotNull Set<PsiClass> qualifierType) {
     Set<PsiClass> possibleTypes = new HashSet<>();
     for (PsiMember candidate : candidates) {
       if (candidate instanceof PsiClass) {
@@ -152,19 +152,26 @@ public class ApproximateResolver {
         }
 
         PsiClass typeClass = PsiUtil.resolveClassInClassTypeOnly(type);
-        if (typeClass == null || typeClass instanceof PsiTypeParameter) {
-          PsiClass qualifierClass = ContainerUtil.getOnlyItem(qualifierType);
+        if (typeClass == null) return null;
+        if (typeClass instanceof PsiTypeParameter) {
           PsiClass containingClass = candidate.getContainingClass();
+          if (containingClass == null) return null;
+          typeClass = null;
           // Sometimes we have Child extends Parent<Bar> and Parent<T> { T foo(); }
-          // In this case it's still desired to resolve that child.foo() returns Bar 
-          if (qualifierClass != null && containingClass != null && containingClass != qualifierClass) {
+          // In this case it's still desired to resolve that child.foo() returns Bar
+          for (PsiClass qualifierClass : qualifierType) {
             PsiSubstitutor substitutor =
               TypeConversionUtil.getMaybeSuperClassSubstitutor(containingClass, qualifierClass, PsiSubstitutor.EMPTY);
             if (substitutor != null) {
-              typeClass = PsiUtil.resolveClassInClassTypeOnly(type);
+              PsiClass substitutedTypeClass = PsiUtil.resolveClassInClassTypeOnly(substitutor.substitute(type));
+              if (substitutedTypeClass instanceof PsiTypeParameter || substitutedTypeClass == null ||
+                  (typeClass != null && substitutedTypeClass != typeClass)) {
+                return null;
+              }
+              typeClass = substitutedTypeClass;
             }
           }
-          if (typeClass == null || typeClass instanceof PsiTypeParameter) {
+          if (typeClass == null) {
             return null;
           }
         }

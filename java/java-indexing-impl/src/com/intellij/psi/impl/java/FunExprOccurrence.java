@@ -112,7 +112,7 @@ public class FunExprOccurrence {
       if (i == referenceContext.size() - 1) {
         return ContainerUtil.exists(candidates, m -> isCompatible(link, m, samClasses));
       }
-      qualifiers = ApproximateResolver.getDefiniteSymbolTypes(candidates, Collections.emptySet());
+      qualifiers = ApproximateResolver.getDefiniteSymbolTypes(candidates, qualifiers != null ? qualifiers : Collections.emptySet());
       if (qualifiers == null) return true;
     }
 
