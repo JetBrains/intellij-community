@@ -4544,9 +4544,11 @@ public class UIUtil {
 
   // background
 
+  private static final Color LIST_BACKGROUND = JBColor.namedColor("List.background", new JBColor(0xffffff, 0x3c3f41));
+
   @NotNull
   public static Color getListBackground() {
-    return UIManager.getColor("List.background");
+    return LIST_BACKGROUND;
   }
 
   private static final JBValue SELECTED_ITEM_ALPHA = new JBValue.UIInteger("List.selectedItemAlpha", 75);
