@@ -12,11 +12,10 @@ cache:
     - $HOME/.gradle/wrapper/
 
 env:
-  - IDEA_VERSION=LATEST-EAP-SNAPSHOT  UPLOAD_BUILD=true
-  - IDEA_VERSION=2018.3.5             UPLOAD_BUILD=false
-  - IDEA_VERSION=2018.3               UPLOAD_BUILD=true
-  - IDEA_VERSION=2018.2               UPLOAD_BUILD=true
-  - IDEA_VERSION=2018.1               UPLOAD_BUILD=true
+  - IDEA_VERSION=LATEST-EAP-SNAPSHOT
+  - IDEA_VERSION=2018.3
+  - IDEA_VERSION=2018.2
+  - IDEA_VERSION=2018.1
 
 before_install:
   - chmod +x gradlew
