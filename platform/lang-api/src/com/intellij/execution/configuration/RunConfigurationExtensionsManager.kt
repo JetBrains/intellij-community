@@ -8,7 +8,9 @@ import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.options.ExtendableSettingsEditor
 import com.intellij.openapi.options.SettingsEditorGroup
+import com.intellij.openapi.options.ExtensionSettingsEditor
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.WriteExternalException
@@ -88,10 +90,21 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
   }
 
   fun <V : U> appendEditors(configuration: U, group: SettingsEditorGroup<V>) {
+    appendEditors(configuration, group, null)
+  }
+
+  /**
+   * Appends {@code SettingsEditor} to group or to {@param mainEditor} (if editor implements marker interface {@code ExtensionSettingsEditor}
+   */
+  fun <V : U> appendEditors(configuration: U, group: SettingsEditorGroup<V>, mainEditor: ExtendableSettingsEditor<V>?) {
     processApplicableExtensions(configuration) {
       @Suppress("UNCHECKED_CAST")
       val editor = it.createEditor(configuration as V) ?: return@processApplicableExtensions
-      group.addEditor(it.editorTitle, editor)
+      if (mainEditor != null && editor is ExtensionSettingsEditor) {
+        mainEditor.addExtensionEditor(editor)
+      } else {
+        group.addEditor(it.editorTitle, editor)
+      }
     }
   }
 
