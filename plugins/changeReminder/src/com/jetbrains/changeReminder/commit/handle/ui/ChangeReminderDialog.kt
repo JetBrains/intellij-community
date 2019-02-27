@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
 import com.intellij.ui.components.JBLabel
@@ -73,12 +74,7 @@ class ChangeReminderDialog(private val project: Project, private val files: List
     if (unmodifiedFilesCount > 0) {
       append("modify ")
     }
-    if (files.size > 1) {
-      append("these files")
-    }
-    else {
-      append("this file")
-    }
+    append("${StringUtil.pluralize("this", files.size)} ${StringUtil.pluralize("file", files.size)}")
   }
 
   override fun createCenterPanel() = panel {
