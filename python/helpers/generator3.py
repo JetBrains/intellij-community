@@ -15,15 +15,18 @@ quiet = False
 
 
 # TODO move to property of Generator3 as soon as tests finished
+@cached
 def version():
     return os.environ.get(ENV_VERSION, VERSION)
 
 
 # TODO move to property of Generator3 as soon as tests finished
+@cached
 def required_gen_version_file_path():
     return os.environ.get(ENV_REQUIRED_GEN_VERSION_FILE, os.path.join(_helpers_dir, 'required_gen_version'))
 
 
+@cached
 def is_test_mode():
     return ENV_TEST_MODE_FLAG in os.environ
 
