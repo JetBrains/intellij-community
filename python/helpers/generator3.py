@@ -485,7 +485,7 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
     sdk_skeletons_dir = sdk_skeletons_dir.rstrip(os.path.sep)
     try:
         python_stubs_dir = os.path.dirname(sdk_skeletons_dir)
-        global_cache_dir = os.path.join(python_stubs_dir, 'cache')
+        global_cache_dir = os.path.join(python_stubs_dir, CACHE_DIR_NAME)
         mod_cache_dir = build_cache_dir_path(global_cache_dir, name, mod_file_name)
         # At the moment this is actually enforced on Java-side
         if not should_update_skeleton(sdk_skeletons_dir, name, mod_file_name):
