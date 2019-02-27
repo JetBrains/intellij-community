@@ -6,9 +6,9 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonConfigurationType;
 import com.jetbrains.python.run.PythonRunConfiguration;
@@ -19,10 +19,11 @@ import java.util.Collection;
 /**
  * @author Mikhail Golubev
  */
-public class PyRunConfigurationTest extends PyTestCase {
+public class PyRunConfigurationTest extends CodeInsightFixtureTestCase {
 
   public void testPythonPathPreservesAdditionOrderOfSourceRoots() {
     myFixture.copyDirectoryToProject(getTestName(false), "");
+    String root = myFixture.getTempDirPath();
     final VirtualFile sourceRoot1 = myFixture.findFileInTempDir("src1");
     final VirtualFile sourceRoot2 = myFixture.findFileInTempDir("src2");
 
@@ -35,13 +36,13 @@ public class PyRunConfigurationTest extends PyTestCase {
     configuration.setAddSourceRoots(true);
 
     Collection<String> path = collectProjectPythonPathEntries(configuration);
-    assertContainsOrdered(path, "/src", "/src/src1", "/src/src2");
+    assertContainsOrdered(path, root, root + "/src1", root + "/src2");
 
     PsiTestUtil.removeSourceRoot(module, sourceRoot1);
     PsiTestUtil.addSourceRoot(module, sourceRoot1);
 
     path = collectProjectPythonPathEntries(configuration);
-    assertContainsOrdered(path, "/src", "/src/src2", "/src/src1");
+    assertContainsOrdered(path, root, root + "/src2", root + "/src1");
   }
 
   @NotNull
@@ -51,7 +52,12 @@ public class PyRunConfigurationTest extends PyTestCase {
   }
 
   @Override
-  protected String getTestDataPath() {
-    return super.getTestDataPath() + "/runConfig/";
+  protected boolean isCommunity() {
+    return true;
+  }
+
+  @Override
+  protected String getBasePath() {
+    return "/python/testData/runConfig/";
   }
 }
