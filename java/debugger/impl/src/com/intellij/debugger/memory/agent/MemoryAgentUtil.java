@@ -233,16 +233,8 @@ public class MemoryAgentUtil {
             String checkboxName = DebuggerBundle.message("label.debugger.general.configurable.enable.memory.agent");
             String description =
               "Memory agent could not be loaded. <a href=\"Disable\">Disable</a> the agent. To enable it back use \"" +
-              DebuggerBundle.message("label.debugger.general.configurable.enable.memory.agent") +
-              "\" option in File | Settings | Build, Execution, Deployment | Debugger";
-            ExecutionUtil.handleExecutionError(project, windowId, name, exception, description, new HyperlinkListener() {
-              @Override
-              public void hyperlinkUpdate(HyperlinkEvent e) {
-                if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType())) {
-                  DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT = false;
-                }
-              }
-            });
+              checkboxName + "\" option in File | Settings | Build, Execution, Deployment | Debugger";
+            ExecutionUtil.handleExecutionError(project, windowId, name, exception, description, new DisablingMemoryAgentListener());
             LOG.error(exception);
           }
         }, o -> project.isDisposed());
@@ -250,5 +242,14 @@ public class MemoryAgentUtil {
     });
 
     project.putUserData(LISTEN_MEMORY_AGENT_STARTUP_FAILED, true);
+  }
+
+  private static class DisablingMemoryAgentListener implements HyperlinkListener {
+    @Override
+    public void hyperlinkUpdate(HyperlinkEvent e) {
+      if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType())) {
+        DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT = false;
+      }
+    }
   }
 }
