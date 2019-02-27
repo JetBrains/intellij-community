@@ -64,7 +64,7 @@ public class GCUtil {
     try {
       for (int i = 0; i < 1000 && !until.getAsBoolean(); i++) {
         // full gc is caused by allocation of large enough array below, SoftReference will be cleared after two full gc
-        int bytes = Math.min((int)(freeMemory * 0.05), Integer.MAX_VALUE / 2);
+        int bytes = Math.min((int)(Runtime.getRuntime().freeMemory() / 10), Integer.MAX_VALUE / 2);
         list.add(new SoftReference<Object>(new byte[bytes]));
       }
     }
