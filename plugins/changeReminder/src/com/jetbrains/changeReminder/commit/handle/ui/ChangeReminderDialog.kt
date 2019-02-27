@@ -37,27 +37,26 @@ class ChangeReminderDialog(private val project: Project, private val files: List
     return arrayOf(cancel, commitAnyway)
   }
 
-  private fun createActionsPanel(predictionTreeChange: ChangesTree): JPanel {
+  private fun createActionsPanel(): JPanel {
     val group = DefaultActionGroup()
     group.add(ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP))
     val toolbar = ActionManager.getInstance()
       .createActionToolbar("ChangeReminder.PredictionDialog", group, true)
-    toolbar.setTargetComponent(predictionTreeChange)
-    return TreeActionsToolbarPanel(toolbar, predictionTreeChange)
+    toolbar.setTargetComponent(tree)
+    return TreeActionsToolbarPanel(toolbar, tree)
   }
 
-  private fun createTreeScrollPane(predictionTreeChange: ChangesTree): JBScrollPane {
-    val scrollPane = JBScrollPane(predictionTreeChange)
+  private fun createTreeScrollPane(): JBScrollPane {
+    val scrollPane = JBScrollPane(tree)
     scrollPane.preferredSize = JBDimension(400, 300)
     return scrollPane
   }
 
   private fun createTreePanel(): JPanel {
-    val predictionTreeChange = PredictedFilesTreeImpl(project, false, false, files)
-    tree = predictionTreeChange
+    tree = PredictedFilesTreeImpl(project, false, false, files)
     val panel = JPanel(BorderLayout())
-    panel.add(createActionsPanel(predictionTreeChange), BorderLayout.PAGE_START)
-    panel.add(createTreeScrollPane(predictionTreeChange), BorderLayout.CENTER)
+    panel.add(createActionsPanel(), BorderLayout.PAGE_START)
+    panel.add(createTreeScrollPane(), BorderLayout.CENTER)
 
     return panel
   }
