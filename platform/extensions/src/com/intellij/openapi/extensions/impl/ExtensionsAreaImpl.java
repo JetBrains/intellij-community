@@ -97,25 +97,24 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   @Override
   public void registerExtensionPoint(@NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionPointElement) {
-    assert pluginDescriptor.getPluginId() != null;
-    final String pluginId = pluginDescriptor.getPluginId().getIdString();
     String pointName = extensionPointElement.getAttributeValue("qualifiedName");
     if (pointName == null) {
       final String name = extensionPointElement.getAttributeValue("name");
       if (name == null) {
-        throw new RuntimeException("'name' attribute not specified for extension point in '" + pluginId + "' plugin");
+        throw new RuntimeException("'name' attribute not specified for extension point in '" + pluginDescriptor + "' plugin");
       }
-      pointName = pluginId + '.' + name;
+      assert pluginDescriptor.getPluginId() != null;
+      pointName = pluginDescriptor.getPluginId().getIdString() + '.' + name;
     }
 
     String beanClassName = extensionPointElement.getAttributeValue("beanClass");
     String interfaceClassName = extensionPointElement.getAttributeValue("interface");
     if (beanClassName == null && interfaceClassName == null) {
-      throw new RuntimeException("Neither 'beanClass' nor 'interface' attribute is specified for extension point '" + pointName + "' in '" + pluginId + "' plugin");
+      throw new RuntimeException("Neither 'beanClass' nor 'interface' attribute is specified for extension point '" + pointName + "' in '" + pluginDescriptor + "' plugin");
     }
 
     if (beanClassName != null && interfaceClassName != null) {
-      throw new RuntimeException("Both 'beanClass' and 'interface' attributes are specified for extension point '" + pointName + "' in '" + pluginId + "' plugin");
+      throw new RuntimeException("Both 'beanClass' and 'interface' attributes are specified for extension point '" + pointName + "' in '" + pluginDescriptor + "' plugin");
     }
 
     ExtensionPointImpl<Object> point;
