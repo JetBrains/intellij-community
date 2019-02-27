@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.notification.impl.IdeNotificationArea;
@@ -531,6 +532,12 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
                                                                           AllIcons.Ide.Shadow.BottomLeft,
                                                                           AllIcons.Ide.Shadow.Left,
                                                                           AllIcons.Ide.Shadow.TopLeft);
+
+  @Override
+  public void paint(@NotNull Graphics g) {
+    UISettings.setupAntialiasing(g);
+    super.paint(g);
+  }
 
   @Override
   public Rectangle suggestChildFrameBounds() {
