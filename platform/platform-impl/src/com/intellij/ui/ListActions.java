@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.JList;
 
@@ -23,98 +24,130 @@ public abstract class ListActions extends SwingActionDelegate {
   }
 
   public static final class Home extends ListActions {
+    @NonNls public static final String ID = "selectFirstRow";
+
     public Home() {
-      super("selectFirstRow");
+      super(ID);
     }
   }
 
   public static final class ShiftHome extends ListActions {
+    @NonNls public static final String ID = "selectFirstRowExtendSelection";
+
     public ShiftHome() {
-      super("selectFirstRowExtendSelection");
+      super(ID);
     }
   }
 
   public static final class End extends ListActions {
+    @NonNls public static final String ID = "selectLastRow";
+
     public End() {
-      super("selectLastRow");
+      super(ID);
     }
   }
 
   public static final class ShiftEnd extends ListActions {
+    @NonNls public static final String ID = "selectLastRowExtendSelection";
+
     public ShiftEnd() {
-      super("selectLastRowExtendSelection");
+      super(ID);
     }
   }
 
   public static final class Up extends ListActions {
+    @NonNls public static final String ID = "selectPreviousRow";
+
     public Up() {
-      super("selectPreviousRow");
+      super(ID);
     }
   }
 
   public static final class ShiftUp extends ListActions {
+    @NonNls public static final String ID = "selectPreviousRowExtendSelection";
+
     public ShiftUp() {
-      super("selectPreviousRowExtendSelection");
+      super(ID);
     }
   }
 
   public static final class Down extends ListActions {
+    @NonNls public static final String ID = "selectNextRow";
+
     public Down() {
-      super("selectNextRow");
+      super(ID);
     }
   }
 
   public static final class ShiftDown extends ListActions {
+    @NonNls public static final String ID = "selectNextRowExtendSelection";
+
     public ShiftDown() {
-      super("selectNextRowExtendSelection");
+      super(ID);
     }
   }
 
   public static final class Left extends ListActions {
+    @NonNls public static final String ID = "selectPreviousColumn";
+
     public Left() {
-      super("selectPreviousColumn");
+      super(ID);
     }
   }
 
   public static final class ShiftLeft extends ListActions {
+    @NonNls public static final String ID = "selectPreviousColumnExtendSelection";
+
     public ShiftLeft() {
-      super("selectPreviousColumnExtendSelection");
+      super(ID);
     }
   }
 
   public static final class Right extends ListActions {
+    @NonNls public static final String ID = "selectNextColumn";
+
     public Right() {
-      super("selectNextColumn");
+      super(ID);
     }
   }
 
   public static final class ShiftRight extends ListActions {
+    @NonNls public static final String ID = "selectNextColumnExtendSelection";
+
     public ShiftRight() {
-      super("selectNextColumnExtendSelection");
+      super(ID);
     }
   }
 
   public static final class PageUp extends ListActions {
+    @NonNls public static final String ID = "scrollUp";
+
     public PageUp() {
-      super("scrollUp");
+      super(ID);
     }
   }
 
   public static final class ShiftPageUp extends ListActions {
+    @NonNls public static final String ID = "scrollUpExtendSelection";
+
     public ShiftPageUp() {
-      super("scrollUpExtendSelection");
+      super(ID);
     }
   }
 
   public static final class PageDown extends ListActions {
+    @NonNls public static final String ID = "scrollDown";
+
     public PageDown() {
-      super("scrollDown");
+      super(ID);
     }
   }
 
   public static final class ShiftPageDown extends ListActions {
+    @NonNls public static final String ID = "scrollDownExtendSelection";
+
     public ShiftPageDown() {
-      super("scrollDownExtendSelection");
+      super(ID);
     }
   }
 }

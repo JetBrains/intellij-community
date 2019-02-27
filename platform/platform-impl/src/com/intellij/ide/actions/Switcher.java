@@ -642,8 +642,8 @@ public class Switcher extends AnAction implements DumbAware {
         }
       };
       ActionMap map = from.getActionMap();
-      map.put("selectPreviousColumn", action);
-      map.put("selectNextColumn", action);
+      map.put(ListActions.Left.ID, action);
+      map.put(ListActions.Right.ID, action);
     }
 
     private Container getPopupFocusAncestor() {
