@@ -21,19 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiCall;
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiExpressionStatement;
-import com.intellij.psi.PsiImportStaticStatement;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.PsiStatement;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
@@ -59,6 +47,7 @@ public class LombokInlineMethodHandler extends JavaInlineActionHandler {
   }
 
   public void inlineElement(final Project project, Editor editor, PsiElement element) {
+    // dont' use getNavigationElement() -> is PsiField for lombok elements
     final PsiMethod method = (PsiMethod) element;
 
     final PsiCodeBlock methodBody = method.getBody();
@@ -83,9 +72,11 @@ public class LombokInlineMethodHandler extends JavaInlineActionHandler {
         return;
       }
     }
-
+    boolean allowInlineThisOnly = false;
     if (InlineMethodProcessor.checkBadReturns(method) && !InlineUtil.allUsagesAreTailCalls(method)) {
-      if (reference == null || InlineUtil.getTailCallType(reference) == InlineUtil.TailCallType.None) {
+      if (reference != null && InlineUtil.getTailCallType(reference) != InlineUtil.TailCallType.None) {
+        allowInlineThisOnly = true;
+      } else {
         String message = RefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow", REFACTORING_NAME);
         CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_METHOD);
         return;
@@ -99,7 +90,7 @@ public class LombokInlineMethodHandler extends JavaInlineActionHandler {
     }
 
     if (reference != null) {
-      final String errorMessage = InlineMethodProcessor.checkCalledInSuperOrThisExpr(methodBody, reference.getElement());
+      final String errorMessage = InlineMethodProcessor.checkUnableToInsertCodeBlock(methodBody, reference.getElement());
       if (errorMessage != null) {
         CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, REFACTORING_NAME, HelpID.INLINE_METHOD);
         return;
@@ -119,6 +110,7 @@ public class LombokInlineMethodHandler extends JavaInlineActionHandler {
           CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_CONSTRUCTOR);
           return;
         }
+        allowInlineThisOnly = true;
       }
       if (reference != null) {
         final PsiElement refElement = reference.getElement();

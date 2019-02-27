@@ -10,8 +10,9 @@ public class TestJavaClass {
   private String field;
 
   void aFunction() {
-    if (this.field == null) {
-      System.out.println("sss");
+    String value = getField();
+    if (field == null) {
+      System.out.println("Field: " + value);
     }
   }
 }

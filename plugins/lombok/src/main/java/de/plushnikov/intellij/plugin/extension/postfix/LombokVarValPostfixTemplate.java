@@ -13,7 +13,9 @@ public class LombokVarValPostfixTemplate extends PostfixTemplateWithExpressionSe
   private final String selectedTypeFQN;
 
   LombokVarValPostfixTemplate(String name, String example, String selectedTypeFQN) {
-    super(name, example, JavaPostfixTemplatesUtils.selectorAllExpressionsWithCurrentOffset(JavaPostfixTemplatesUtils.IS_NON_VOID));
+    super(null, name, example,
+      JavaPostfixTemplatesUtils.selectorAllExpressionsWithCurrentOffset(JavaPostfixTemplatesUtils.IS_NON_VOID),
+      null);
     this.selectedTypeFQN = selectedTypeFQN;
   }
 

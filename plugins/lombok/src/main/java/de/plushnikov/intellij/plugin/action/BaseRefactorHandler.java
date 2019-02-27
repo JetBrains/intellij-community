@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.action;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.generation.ClassMember;
 import com.intellij.codeInsight.generation.EncapsulatableClassMember;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
@@ -10,6 +9,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -23,7 +23,7 @@ import java.util.List;
 public abstract class BaseRefactorHandler implements Runnable {
   protected final Project project;
   protected final Editor editor;
-  protected final MemberChooser<ClassMember> chooser;
+  private final MemberChooser<ClassMember> chooser;
 
   public BaseRefactorHandler(DataContext dataContext, Project project) {
     this.project = project;
@@ -65,7 +65,7 @@ public abstract class BaseRefactorHandler implements Runnable {
 
   @Override
   public void run() {
-    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) {
+    if (!EditorModificationUtil.checkModificationAllowed(editor)) {
       return;
     }
     if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
