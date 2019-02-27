@@ -41,7 +41,11 @@ class ReprocessContentRootDataActivity : StartupActivity, DumbAware {
       }
       finally {
         if (modifiableModelsProvider.isInitialized()) {
-          ExternalSystemApiUtil.doWriteAction { modifiableModelsProvider.value.commit() }
+          ExternalSystemApiUtil.doWriteAction {
+            if (!project.isDisposed) {
+              modifiableModelsProvider.value.commit()
+            }
+          }
         }
       }
     }
