@@ -26,6 +26,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatusFactory;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.DependencyValidationManagerImpl;
 import com.intellij.psi.codeStyle.DisplayPriority;
@@ -58,6 +60,7 @@ import java.util.stream.Collectors;
 import static com.intellij.ide.actions.QuickChangeColorSchemeAction.changeLafIfNecessary;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 import static com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT;
+import static com.intellij.openapi.util.JDOMUtil.isAttributesEqual;
 
 public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   implements EditorOptionsProvider, SchemesModel<EditorColorsScheme> {
@@ -1175,7 +1178,9 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     protected boolean apply() {
       Element scheme = new Element("scheme");
       ((AbstractColorsScheme)getParentScheme()).writeExternal(scheme);
-      writeExternal(scheme);
+      Element changes = new Element("scheme");
+      writeExternal(changes);
+      deepMerge(scheme, changes);
       Path path = EditorColorsManagerImpl.getTempSchemeOriginalFilePath(getParentScheme());
       if (path != null) {
         try {
@@ -1186,20 +1191,58 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
           }
           getParentScheme().readExternal(scheme);
 
+          scheme.removeChild("metaInfo");
           //save original metaInfo and don't add generated
           Element metaInfo = originalFile.getChild("metaInfo");
           if (metaInfo != null) {
-            scheme.removeChild("metaInfo");
             metaInfo = JDOMUtil.load(JDOMUtil.writeElement(metaInfo));
             scheme.addContent(0, metaInfo);
           }
           JDOMUtil.write(scheme, path.toFile());
+          VirtualFileManager.getInstance().syncRefresh();
         }
         catch (Exception e) {
           LOG.warn(e);
         }
       }
       return true;
+    }
+
+    private static void deepMerge(Element to, Element from) {
+      List<Element> children = from.getChildren();
+      Map<Pair<String, String>, Element> index = createNamedIndex(to);
+      if (children.isEmpty()) {
+        Pair<String, String> key = indexKey(from);
+        Element el = index.get(key);
+        if (el == null) {
+          if (!"".equals(from.getAttributeValue("value"))) {
+            to.getParent().addContent(from.clone());
+          }
+          to.getParent().removeContent(to);
+        }
+      } else {
+        for (Element child : children) {
+          Element el = index.get(indexKey(child));
+          if (el != null) {
+            deepMerge(el, child);
+          } else {
+            to.addContent(child.clone());
+          }
+        }
+      }
+    }
+
+    private static Map<Pair<String, String>, Element> createNamedIndex(Element e) {
+      HashMap<Pair<String, String>, Element> index = new HashMap<Pair<String, String>, Element>();
+      for (Element child : e.getChildren()) {
+        index.put(indexKey(child), child);
+      }
+      return index;
+    }
+
+    @NotNull
+    private static Pair<String, String> indexKey(Element e) {
+      return Pair.create(e.getName(), e.getAttributeValue("name"));
     }
   }
 
