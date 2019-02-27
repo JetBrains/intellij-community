@@ -487,6 +487,8 @@ public class ExpectedTypesProvider {
       if (myExpr.equals(statement.getIteratedValue())) {
         PsiType type = statement.getIterationParameter().getType();
 
+        if (PsiType.NULL.equals(type)) return;
+          
         PsiType arrayType = type.createArrayType();
         myResult.add(createInfoImpl(arrayType, arrayType));
 
@@ -494,7 +496,7 @@ public class ExpectedTypesProvider {
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
         PsiClass iterableClass =
           JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Iterable", statement.getResolveScope());
-        if (iterableClass != null && iterableClass.getTypeParameters().length == 1 && !PsiType.NULL.equals(type)) {
+        if (iterableClass != null && iterableClass.getTypeParameters().length == 1) {
           Map<PsiTypeParameter, PsiType> map = new HashMap<>();
           map.put(iterableClass.getTypeParameters()[0], PsiWildcardType.createExtends(manager, type));
           PsiType iterableType = factory.createType(iterableClass, factory.createSubstitutor(map));
