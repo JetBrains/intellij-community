@@ -113,6 +113,6 @@ public abstract class BaseSyncScrollable implements SyncScrollSupport.SyncScroll
 
   @NotNull
   public static Range idRange(int line) {
-    return new Range(line, line + 1, line, line - 1);
+    return new Range(line, line + 1, line, line + 1);
   }
 }
