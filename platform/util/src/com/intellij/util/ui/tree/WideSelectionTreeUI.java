@@ -89,6 +89,35 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     }
   };
 
+  private static final TreeUIAction COLLAPSE_OR_SELECT_PREVIOUS = new TreeUIAction() {
+    @Override
+    public void actionPerformed(ActionEvent event) {
+      Object source = event.getSource();
+      if (source instanceof JTree) {
+        JTree tree = (JTree)source;
+        TreePath path = tree.getLeadSelectionPath();
+        if (path != null) {
+          if (tree.isExpanded(path)) {
+            tree.collapsePath(path);
+          }
+          else {
+            TreePath parent = path.getParentPath();
+            if (parent != null) {
+              if (!tree.isRootVisible() && null == parent.getParentPath()) {
+                int row = tree.getRowForPath(path);
+                parent = row < 1 ? null : tree.getPathForRow(row - 1);
+              }
+              if (parent != null) {
+                tree.setSelectionPath(parent);
+                tree.scrollPathToVisible(parent);
+              }
+            }
+          }
+        }
+      }
+    }
+  };
+
   public WideSelectionTreeUI() {
     this(true, Conditions.alwaysTrue());
   }
@@ -176,7 +205,8 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   protected void installKeyboardActions() {
     super.installKeyboardActions();
     ActionMap map = tree.getActionMap();
-    if (map != null) map.put("selectChild", EXPAND_OR_SELECT_NEXT);
+    map.put("selectChild", EXPAND_OR_SELECT_NEXT);
+    map.put("selectParent", COLLAPSE_OR_SELECT_PREVIOUS);
   }
 
   public void setForceDontPaintLines() {
