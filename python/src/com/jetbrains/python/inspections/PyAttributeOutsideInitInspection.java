@@ -23,10 +23,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.inspections.quickfix.PyMoveAttributeToInitQuickFix;
-import com.jetbrains.python.psi.Property;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.testing.PythonUnitTestUtil;
@@ -110,6 +107,7 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
         if (attributeName == null) continue;
         if (!declaredAttributes.containsKey(attributeName) &&
             !inheritedProperties.contains(attributeName) &&
+            !localProperties.containsKey(attributeName) &&
             !isDefinedByProperty(attribute, localProperties.values(), declaredAttributes)) {
           registerProblem(attribute, PyBundle.message("INSP.attribute.$0.outside.init", attributeName),
                           new PyMoveAttributeToInitQuickFix());
@@ -140,7 +138,9 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
     if (setter == null) {
       return null;
     }
-    return ControlFlowCache.getScope(setter).getTargetExpressions();
+    return StreamEx.of(ControlFlowCache.getScope(setter).getTargetExpressions())
+      .filter(PyUtil::isInstanceAttribute)
+      .toList();
   }
 
   /**
