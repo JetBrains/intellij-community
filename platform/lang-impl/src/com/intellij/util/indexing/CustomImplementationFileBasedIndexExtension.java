@@ -26,7 +26,6 @@ import java.io.IOException;
 
 public abstract class CustomImplementationFileBasedIndexExtension<K, V, I> extends FileBasedIndexExtension<K, V> {
   @NotNull
-  public abstract UpdatableIndex<K, V, I> createIndexImplementation(@NotNull FileBasedIndexExtension<K, V> extension,
-                                                                    @NotNull IndexStorage<K, V> storage)
+  public abstract UpdatableIndex<K, V, I> createIndexImplementation(@NotNull IndexStorage<K, V> storage)
     throws StorageException, IOException;
 }

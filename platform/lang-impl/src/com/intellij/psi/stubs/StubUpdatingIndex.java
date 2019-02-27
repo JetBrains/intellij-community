@@ -353,8 +353,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
   @NotNull
   @Override
-  public UpdatableIndex<Integer, SerializedStubTree, FileContent> createIndexImplementation(@NotNull final FileBasedIndexExtension<Integer, SerializedStubTree> extension,
-                                                                                            @NotNull IndexStorage<Integer, SerializedStubTree> storage)
+  public UpdatableIndex<Integer, SerializedStubTree, FileContent> createIndexImplementation(@NotNull IndexStorage<Integer, SerializedStubTree> storage)
     throws StorageException, IOException {
     if (storage instanceof MemoryIndexStorage) {
       final MemoryIndexStorage<Integer, SerializedStubTree> memStorage = (MemoryIndexStorage<Integer, SerializedStubTree>)storage;
@@ -370,7 +369,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         }
       });
     }
-    return new MyIndex(extension, storage);
+    return new MyIndex(this, storage);
   }
 
   private static void updateStubIndices(@NotNull final Collection<StubIndexKey> indexKeys,
