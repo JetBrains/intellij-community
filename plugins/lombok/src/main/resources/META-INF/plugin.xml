@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <idea-plugin url="https://github.com/mplushnikov/lombok-intellij-plugin">
   <id>Lombook Plugin</id>
-  <name>Lombok Plugin</name>
+  <name>Lombok</name>
   <vendor url="https://github.com/mplushnikov/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
-  <version>0.21</version>
+  <version>XXX</version>
 
   <idea-version since-build="171.00"/>
 
@@ -14,19 +14,14 @@
   <depends>com.intellij.modules.platform</depends>
   <depends>com.intellij.modules.java</depends>
 
-  <project-components>
-    <component>
-      <implementation-class>de.plushnikov.intellij.plugin.LombokPluginUpdateProjectComponent</implementation-class>
-    </component>
-  </project-components>
-
   <extensionPoints>
     <extensionPoint name="processor" interface="de.plushnikov.intellij.plugin.processor.Processor"/>
     <extensionPoint name="modifierProcessor" interface="de.plushnikov.intellij.plugin.processor.modifier.ModifierProcessor"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <postStartupActivity implementation="de.plushnikov.intellij.plugin.LombokPluginProjectValidatorActivity"/>
+    <postStartupActivity implementation="de.plushnikov.intellij.plugin.activity.LombokPluginUpdateActivity"/>
+    <postStartupActivity implementation="de.plushnikov.intellij.plugin.activity.LombokProjectValidatorActivity"/>
 
     <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.handler.BuilderHandler"/>
     <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.handler.DelegateHandler"/>

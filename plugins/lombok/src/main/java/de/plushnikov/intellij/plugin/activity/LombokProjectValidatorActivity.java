@@ -1,4 +1,4 @@
-package de.plushnikov.intellij.plugin;
+package de.plushnikov.intellij.plugin.activity;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.options.AnnotationProcessorsConfigurable;
@@ -18,6 +18,8 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiPackage;
+import de.plushnikov.intellij.plugin.LombokBundle;
+import de.plushnikov.intellij.plugin.Version;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +33,7 @@ import java.util.regex.Pattern;
  *
  * @author Alexej Kubarev
  */
-public class LombokPluginProjectValidatorActivity implements StartupActivity {
+public class LombokProjectValidatorActivity implements StartupActivity {
 
   @Override
   public void runActivity(@NotNull Project project) {

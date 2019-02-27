@@ -1,4 +1,4 @@
-package de.plushnikov.intellij.plugin;
+package de.plushnikov.intellij.plugin.activity;
 
 import com.intellij.openapi.roots.OrderEntry;
 import org.junit.Before;
@@ -9,14 +9,14 @@ import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class LombokPluginProjectValidatorActivityTest {
+public class LombokProjectValidatorActivityTest {
 
-  private LombokPluginProjectValidatorActivity component;
+  private LombokProjectValidatorActivity component;
   private OrderEntry orderEntry;
 
   @Before
   public void setUp() {
-    component = new LombokPluginProjectValidatorActivity();
+    component = new LombokProjectValidatorActivity();
     orderEntry = mock(OrderEntry.class);
   }
 
