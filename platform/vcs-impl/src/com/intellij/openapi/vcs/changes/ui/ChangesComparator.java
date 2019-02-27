@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.util.text.NaturalFileNameComparator;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListChange;
@@ -44,14 +45,11 @@ public class ChangesComparator {
 
 
   private static int comparePaths(@NotNull FilePath filePath1, @NotNull FilePath filePath2, boolean flattened) {
-    if (!flattened) {
-      return HierarchicalFilePathComparator.IGNORE_CASE.compare(filePath1, filePath2);
-    }
-    else {
-      int delta = filePath1.getName().compareToIgnoreCase(filePath2.getName());
+    if (flattened) {
+      int delta = NaturalFileNameComparator.INSTANCE.compare(filePath1.getName(), filePath2.getName());
       if (delta != 0) return delta;
-      return filePath1.getPath().compareTo(filePath2.getPath());
     }
+    return HierarchicalFilePathComparator.NATURAL.compare(filePath1, filePath2);
   }
 
   private static class VirtualFileComparator implements Comparator<VirtualFile> {
