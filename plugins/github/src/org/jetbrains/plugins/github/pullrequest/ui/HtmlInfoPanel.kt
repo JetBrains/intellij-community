@@ -9,7 +9,7 @@ import javax.swing.JEditorPane
 import javax.swing.event.HyperlinkEvent
 import javax.swing.text.html.HTMLEditorKit
 
-class HtmlErrorPanel : Wrapper() {
+class HtmlInfoPanel : Wrapper() {
   private var currentSeverity: Severity? = null
   private var currentLinkActivationListener: ((HyperlinkEvent) -> Unit)? = null
 
@@ -17,7 +17,8 @@ class HtmlErrorPanel : Wrapper() {
     editorKit = UIUtil.getHTMLEditorKit()
     val linkColor = JBUI.CurrentTheme.Link.linkColor()
     //language=CSS
-    (editorKit as HTMLEditorKit).styleSheet.addRule("a {color: rgb(${linkColor.red}, ${linkColor.green}, ${linkColor.blue})}")
+    (editorKit as HTMLEditorKit).styleSheet.addRule("a {color: rgb(${linkColor.red}, ${linkColor.green}, ${linkColor.blue})} " +
+                                                    "body {text-align: center}")
     addHyperlinkListener { e ->
       if (e.eventType == HyperlinkEvent.EventType.ACTIVATED) {
         currentLinkActivationListener?.invoke(e)
@@ -39,24 +40,23 @@ class HtmlErrorPanel : Wrapper() {
     isVisible = false
   }
 
-  fun setError(errorText: String?) {
-    if (errorText == null) {
+  fun setInfo(text: String?, severity: Severity = Severity.INFO, linkActivationListener: ((HyperlinkEvent) -> Unit)? = null) {
+    if (text == null) {
+      errorPane.text = ""
       currentSeverity = null
       currentLinkActivationListener = null
-      errorPane.text = ""
       isVisible = false
+      return
     }
-    else setError(errorText)
-  }
 
-  fun setError(errorText: String, severity: Severity = Severity.ERROR, linkActivationListener: ((HyperlinkEvent) -> Unit)? = null) {
     val currentSevPriority = currentSeverity?.ordinal
     if (currentSevPriority != null && currentSevPriority > severity.ordinal) return
 
-    errorPane.text = errorText
+    errorPane.text = text
     currentSeverity = severity
     currentLinkActivationListener = linkActivationListener
     background = when (severity) {
+      Severity.INFO -> UIUtil.getPanelBackground()
       Severity.ERROR -> JBUI.CurrentTheme.Validator.errorBackgroundColor()
       Severity.WARNING -> JBUI.CurrentTheme.Validator.warningBackgroundColor()
     }
@@ -64,6 +64,6 @@ class HtmlErrorPanel : Wrapper() {
   }
 
   enum class Severity {
-    WARNING, ERROR
+    INFO, WARNING, ERROR
   }
 }

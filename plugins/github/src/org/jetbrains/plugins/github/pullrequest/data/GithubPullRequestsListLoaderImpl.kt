@@ -47,6 +47,10 @@ internal class GithubPullRequestsListLoaderImpl(private val progressManager: Pro
   }
   private var hasNext = true
 
+  override var outdated: Boolean by Delegates.observable(false) { _, _, _ ->
+    outdatedStateEventDispatcher.multicaster.eventOccurred()
+  }
+
   override var searchQuery: GithubPullRequestSearchQuery
     by Delegates.observable(GithubPullRequestSearchQuery(emptyList())) { _, _, _ ->
       initialRequest = GithubApiRequests.Search.Issues.get(serverPath, buildQuery(searchQuery))
@@ -55,6 +59,7 @@ internal class GithubPullRequestsListLoaderImpl(private val progressManager: Pro
 
   private val loadingStateChangeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
   private val errorChangeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
+  private val outdatedStateEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
   init {
     requestExecutor.addListener(this) { reset() }
@@ -112,6 +117,7 @@ internal class GithubPullRequestsListLoaderImpl(private val progressManager: Pro
     error = null
     hasNext = true
     loading = false
+    outdated = false
 
     listModelDelegate.removeAll()
   }
@@ -124,6 +130,9 @@ internal class GithubPullRequestsListLoaderImpl(private val progressManager: Pro
 
   override fun addErrorChangeListener(disposable: Disposable, listener: () -> Unit) =
     SimpleEventListener.addDisposableListener(errorChangeEventDispatcher, disposable, listener)
+
+  override fun addOutdatedStateChangeListener(disposable: Disposable, listener: () -> Unit) =
+    SimpleEventListener.addDisposableListener(outdatedStateEventDispatcher, disposable, listener)
 
   override fun dispose() = progressIndicator.cancel()
 }

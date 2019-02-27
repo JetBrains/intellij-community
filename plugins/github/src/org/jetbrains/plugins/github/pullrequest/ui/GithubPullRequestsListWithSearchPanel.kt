@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.*
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
@@ -45,8 +46,9 @@ internal class GithubPullRequestsListWithSearchPanel(project: Project,
     border = JBUI.Borders.empty()
     verticalScrollBar.model.addChangeListener { potentiallyLoadMore() }
   }
-  private val errorPanel = HtmlErrorPanel()
-  private val progressStripe = ProgressStripe(scrollPane, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
+  private val infoPanel = HtmlInfoPanel()
+  private val progressStripe = ProgressStripe(simplePanel(scrollPane).addToTop(infoPanel), this,
+                                              ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
 
   private val search = GithubPullRequestSearchPanel(project, autoPopupController, searchQueryHolder).apply {
     border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
@@ -56,28 +58,17 @@ internal class GithubPullRequestsListWithSearchPanel(project: Project,
 
   init {
     loader.addLoadingStateChangeListener(this) {
-      if (loader.loading) {
-        progressStripe.startLoading()
-      }
-      else {
-        progressStripe.stopLoading()
-        scrollPane.viewport.validate()
-        if (loader.error == null) potentiallyLoadMore()
-      }
+      updateProgress()
       updateEmptyText()
     }
 
     loader.addErrorChangeListener(this) {
-      if (listModel.size == 0) errorPanel.setError(null)
-      else if (loader.error != null) {
-        //language=HTML
-        errorPanel.setError(
-          "<html><body>${getErrorPrefix()}<br/>${getLoadingErrorText(loader.error!!, "<br/>")}<a href=''>Retry</a></body></html>",
-          HtmlErrorPanel.Severity.ERROR) {
-          loader.reset()
-        }
-      }
+      updateInfoPanel()
       updateEmptyText()
+    }
+
+    loader.addOutdatedStateChangeListener(this) {
+      updateInfoPanel()
     }
 
     listModel.addListDataListener(object : ListDataListener {
@@ -116,16 +107,26 @@ internal class GithubPullRequestsListWithSearchPanel(project: Project,
     }
     list.addMouseListener(popupHandler)
 
-    val tableWithError = JBUI.Panels
-      .simplePanel(progressStripe)
-      .addToTop(errorPanel)
-
     addToTop(search)
-    addToCenter(tableWithError)
+    addToCenter(progressStripe)
 
     resetSearch()
+    updateProgress()
+    updateInfoPanel()
+    updateEmptyText()
 
     Disposer.register(this, list)
+  }
+
+  private fun updateProgress() {
+    if (loader.loading) {
+      progressStripe.startLoading()
+    }
+    else {
+      progressStripe.stopLoading()
+      scrollPane.viewport.validate()
+      if (loader.error == null) potentiallyLoadMore()
+    }
   }
 
   private fun updateEmptyText() {
@@ -153,6 +154,20 @@ internal class GithubPullRequestsListWithSearchPanel(project: Project,
         }
       }
     }
+  }
+
+  private fun updateInfoPanel() {
+    val error = loader.error
+    if (error != null && listModel.size != 0) {
+      infoPanel.setInfo(
+        "<html><body>${getErrorPrefix()}<br/>${getLoadingErrorText(error, "<br/>")}<a href=''>Retry</a></body></html>",
+        HtmlInfoPanel.Severity.ERROR) { loader.reset() }
+    }
+    else if (loader.outdated) {
+      infoPanel.setInfo("<html><body>The list is outdated. <a href=''>Refresh</a></body></html>",
+                        HtmlInfoPanel.Severity.INFO) { loader.reset() }
+    }
+    else infoPanel.setInfo(null)
   }
 
   private fun getErrorPrefix() = if (listModel.size == 0) "Can't load pull requests." else "Can't load full pull requests list."

@@ -9,6 +9,8 @@ internal interface GithubPullRequestsListLoader {
   val loading: Boolean
   @get:CalledInAwt
   val error: Throwable?
+  @get:CalledInAwt
+  var outdated: Boolean
 
   @CalledInAwt
   fun canLoadMore(): Boolean
@@ -24,4 +26,7 @@ internal interface GithubPullRequestsListLoader {
 
   @CalledInAwt
   fun addErrorChangeListener(disposable: Disposable, listener: () -> Unit)
+
+  @CalledInAwt
+  fun addOutdatedStateChangeListener(disposable: Disposable, listener: () -> Unit)
 }
