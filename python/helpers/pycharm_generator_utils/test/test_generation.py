@@ -11,6 +11,7 @@ from pycharm_generator_utils.constants import (
     ENV_TEST_MODE_FLAG,
     ENV_VERSION,
     ENV_REQUIRED_GEN_VERSION_FILE,
+    CACHE_DIR_NAME,
 )
 from pycharm_generator_utils.test import GeneratorTestCase
 
@@ -95,7 +96,7 @@ class SkeletonCachingTest(GeneratorTestCase):
 
     @property
     def temp_cache_dir(self):
-        return os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR, 'cache')
+        return os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR, CACHE_DIR_NAME)
 
     @staticmethod
     def imported_module_path(mod_qname, extra_syspath_entry):
