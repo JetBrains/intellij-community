@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.JTree;
 
@@ -23,98 +24,130 @@ public abstract class TreeActions extends SwingActionDelegate {
   }
 
   public static final class Home extends TreeActions {
+    @NonNls public static final String ID = "selectFirst";
+
     public Home() {
-      super("selectFirst");
+      super(ID);
     }
   }
 
   public static final class ShiftHome extends TreeActions {
+    @NonNls public static final String ID = "selectFirstExtendSelection";
+
     public ShiftHome() {
-      super("selectFirstExtendSelection");
+      super(ID);
     }
   }
 
   public static final class End extends TreeActions {
+    @NonNls public static final String ID = "selectLast";
+
     public End() {
-      super("selectLast");
+      super(ID);
     }
   }
 
   public static final class ShiftEnd extends TreeActions {
+    @NonNls public static final String ID = "selectLastExtendSelection";
+
     public ShiftEnd() {
-      super("selectLastExtendSelection");
+      super(ID);
     }
   }
 
   public static final class Up extends TreeActions {
+    @NonNls public static final String ID = "selectPrevious";
+
     public Up() {
-      super("selectPrevious");
+      super(ID);
     }
   }
 
   public static final class ShiftUp extends TreeActions {
+    @NonNls public static final String ID = "selectPreviousExtendSelection";
+
     public ShiftUp() {
-      super("selectPreviousExtendSelection");
+      super(ID);
     }
   }
 
   public static final class Down extends TreeActions {
+    @NonNls public static final String ID = "selectNext";
+
     public Down() {
-      super("selectNext");
+      super(ID);
     }
   }
 
   public static final class ShiftDown extends TreeActions {
+    @NonNls public static final String ID = "selectNextExtendSelection";
+
     public ShiftDown() {
-      super("selectNextExtendSelection");
+      super(ID);
     }
   }
 
   public static final class Left extends TreeActions {
+    @NonNls public static final String ID = "selectParent";
+
     public Left() {
-      super("selectParent");
+      super(ID);
     }
   }
 
   public static final class ShiftLeft extends TreeActions {
+    @NonNls public static final String ID = "selectParentExtendSelection";
+
     public ShiftLeft() {
-      super("selectParentExtendSelection");
+      super(ID);
     }
   }
 
   public static final class Right extends TreeActions {
+    @NonNls public static final String ID = "selectChild";
+
     public Right() {
-      super("selectChild");
+      super(ID);
     }
   }
 
   public static final class ShiftRight extends TreeActions {
+    @NonNls public static final String ID = "selectChildExtendSelection";
+
     public ShiftRight() {
-      super("selectChildExtendSelection");
+      super(ID);
     }
   }
 
   public static final class PageUp extends TreeActions {
+    @NonNls public static final String ID = "scrollUpChangeSelection";
+
     public PageUp() {
-      super("scrollUpChangeSelection");
+      super(ID);
     }
   }
 
   public static final class ShiftPageUp extends TreeActions {
+    @NonNls public static final String ID = "scrollUpExtendSelection";
+
     public ShiftPageUp() {
-      super("scrollUpExtendSelection");
+      super(ID);
     }
   }
 
   public static final class PageDown extends TreeActions {
+    @NonNls public static final String ID = "scrollDownChangeSelection";
+
     public PageDown() {
-      super("scrollDownChangeSelection");
+      super(ID);
     }
   }
 
   public static final class ShiftPageDown extends TreeActions {
+    @NonNls public static final String ID = "scrollDownExtendSelection";
+
     public ShiftPageDown() {
-      super("scrollDownExtendSelection");
+      super(ID);
     }
   }
 }
