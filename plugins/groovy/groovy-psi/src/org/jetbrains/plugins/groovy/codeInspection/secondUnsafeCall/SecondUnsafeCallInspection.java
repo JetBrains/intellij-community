@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.codeInspection.secondUnsafeCall;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.inspections.SecondUnsafeCallQuickFix;
@@ -59,12 +58,5 @@ public class SecondUnsafeCallInspection extends GroovySuppressableInspectionTool
           }
         }
     }
-  }
-
-  @Override
-  @NonNls
-  @NotNull
-  public String getShortName() {
-    return "SecondUnsafeCall";
   }
 }
