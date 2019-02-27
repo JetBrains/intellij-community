@@ -45,6 +45,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -611,7 +612,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     return result;
   }
 
-  // visible for testing
+  @TestOnly
   JTree getTree() {
     return myTree;
   }
