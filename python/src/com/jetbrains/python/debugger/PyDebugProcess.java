@@ -108,6 +108,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private PyReferrersLoader myReferrersProvider;
   private final List<PyFrameListener> myFrameListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean isCythonWarningShown = false;
+  private boolean isStandardModulesShadowingWarningShown = false;
   @Nullable private XCompositeNode myCurrentRootNode;
 
   public PyDebugProcess(@NotNull XDebugSession session,
@@ -133,7 +134,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     super(session);
 
     session.setPauseActionSupported(true);
-
+    checkStandardModulesShadowing();
     myDebugger = debuggerFactory.createDebugger(this);
 
     List<XBreakpointHandler> breakpointHandlers = new ArrayList<>();
@@ -384,6 +385,14 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       else {
         consoleView.inputReceived();
       }
+    }
+  }
+
+  @Override
+  public void checkStandardModulesShadowing() {
+    if (!isStandardModulesShadowingWarningShown) {
+      PyStandardModulesShadowingWarning.showStandartModulesShadowingWarning(getSession().getProject());
+      isStandardModulesShadowingWarningShown = true;
     }
   }
 

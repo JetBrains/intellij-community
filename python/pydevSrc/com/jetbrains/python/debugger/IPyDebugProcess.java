@@ -41,5 +41,7 @@ public interface IPyDebugProcess extends PyFrameAccessor {
 
   void showCythonWarning();
 
+  void checkStandardModulesShadowing();
+
   XDebugSession getSession();
 }
