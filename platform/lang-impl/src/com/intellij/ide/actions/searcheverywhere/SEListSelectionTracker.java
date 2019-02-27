@@ -7,6 +7,7 @@ import com.intellij.ui.components.JBList;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -17,6 +18,7 @@ class SEListSelectionTracker implements ListSelectionListener {
 
   private int lockCounter;
   private final List<Object> selectedItems = new ArrayList<>();
+  private boolean moreSelected = false;
 
   SEListSelectionTracker(JBList<?> list, SearchEverywhereUI.SearchListModel model) {
     myList = list;
@@ -34,9 +36,17 @@ class SEListSelectionTracker implements ListSelectionListener {
     selectedItems.clear();
 
     int[] indices = myList.getSelectedIndices();
-    if (indices.length == 1 && myListModel.isMoreElement(indices[0])) return;
+    List<?> selectedItemsList;
+    if (indices.length == 1 && myListModel.isMoreElement(indices[0])) {
+      moreSelected = true;
+      selectedItemsList = Collections.singletonList(myListModel.getElementAt(indices[0] - 1));
+    }
+    else {
+      moreSelected = false;
+      selectedItemsList = myList.getSelectedValuesList();
+    }
 
-    selectedItems.addAll(myList.getSelectedValuesList());
+    selectedItems.addAll(selectedItemsList);
   }
 
   void restoreSelection() {
@@ -45,6 +55,9 @@ class SEListSelectionTracker implements ListSelectionListener {
     lock();
     try {
       int[] indicesToSelect = calcIndicesToSelect();
+      if (moreSelected && indicesToSelect.length == 1) {
+        indicesToSelect[0] += 1;
+      }
 
       if (indicesToSelect.length == 0) {
         indicesToSelect = new int[]{0};

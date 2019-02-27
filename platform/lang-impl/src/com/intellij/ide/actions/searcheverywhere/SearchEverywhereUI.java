@@ -861,7 +861,6 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
 
   private void showMoreElements(SearchEverywhereContributor contributor) {
     featureTriggered(SearchEverywhereUsageTriggerCollector.MORE_ITEM_SELECTED, null);
-    mySearchListener.startMoreSearchMode();
     Map<SearchEverywhereContributor<?>, Collection<SESearcher.ElementInfo>> found = myListModel.getFoundElementsMap();
     int limit = myListModel.getItemsForContributor(contributor)
                 + (mySelectedTab.getContributor().isPresent() ? SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT : MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT);
@@ -1522,12 +1521,6 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
 
   private final SearchListener mySearchListener = new SearchListener();
   private class SearchListener implements SESearcher.Listener {
-    private boolean moreSearchMode;
-
-    public void startMoreSearchMode() {
-      moreSearchMode = true;
-      mySelectionTracker.lock();
-    }
 
     @Override
     public void elementsAdded(@NotNull List<SESearcher.ElementInfo> list) {
@@ -1561,14 +1554,6 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       myResultsList.setEmptyText(getSearchPattern().isEmpty() ? "" : getNotFoundText());
       hasMoreContributors.forEach(myListModel::setHasMore);
 
-      if (moreSearchMode) {
-        int[] indices = myResultsList.getSelectedIndices();
-        if (indices.length > 0) {
-          myResultsList.setSelectedIndex(indices[0]);
-        }
-        mySelectionTracker.unlock();
-        moreSearchMode = false;
-      }
       mySelectionTracker.resetSelectionIfNeeded();
     }
   }
