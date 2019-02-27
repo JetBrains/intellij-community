@@ -207,7 +207,10 @@ class SkeletonCachingTest(GeneratorTestCase):
         # Generation failed for version 0.1, cache skeleton version is 0.2
         self.check_generator_output('mod', mod_path='mod.py', gen_version='0.3', custom_required_gen=True)
 
-    def test_cache_skeleton_not_regenerated_when_sdk_skeleton_generation_failed_for_same_version(self):
+    def test_cache_skeleton_not_regenerated_when_sdk_skeleton_generation_failed_for_same_version_and_same_binary(self):
+        self.check_generator_output('mod', mod_path='mod.py', gen_version='0.1', custom_required_gen=True)
+
+    def test_cache_skeleton_regenerated_when_sdk_skeleton_generation_failed_for_modified_binary(self):
         self.check_generator_output('mod', mod_path='mod.py', gen_version='0.1', custom_required_gen=True)
 
     @unittest.skipUnless(six.PY3, "Python 3 version of the test")
