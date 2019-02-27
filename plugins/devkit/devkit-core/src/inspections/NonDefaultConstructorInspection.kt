@@ -159,7 +159,7 @@ private val classesToCheck = THashSet<String>(listOf(
 
 private fun isExtensionBean(aClass: UClass): Boolean {
   var found = false
-  !InheritanceUtil.processSupers(aClass.javaPsi, true, Processor {
+  InheritanceUtil.processSupers(aClass.javaPsi, true, Processor {
     val qualifiedName = it.qualifiedName
     found = (if (it.isInterface) interfacesToCheck else classesToCheck).contains(qualifiedName)
     !found
