@@ -141,10 +141,7 @@ public abstract class LexerTestCase extends UsefulTestCase {
     }
     catch (Throwable t) {
       LOG.error("Restarting impossible from offset " + start, t);
-    }
-    lexer.getTokenType();
-    if (lexer.getState() != state) {
-      lexer.getTokenType();
+      throw new RuntimeException(t);
     }
     while (lexer.getTokenType() != null) {
       allTokens.add(Trinity.create(lexer.getTokenType(), lexer.getTokenStart(), lexer.getState()));
