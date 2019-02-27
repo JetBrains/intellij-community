@@ -5,7 +5,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.IndexId;
-import com.intellij.util.indexing.impl.KeyCollectionBasedForwardIndex;
+import com.intellij.util.indexing.impl.KeyCollectionForwardIndexAccessor;
+import com.intellij.util.indexing.impl.MapBasedForwardIndex;
 import com.intellij.util.indexing.impl.MapIndexStorage;
 import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.io.*;
@@ -14,18 +15,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 
 public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList, UsedSources> {
   protected DiscoveredTestsIndex(@NotNull File file) throws IOException {
-    super(INDEX_EXTENSION, new MyIndexStorage(file), new MyForwardIndex() {
-      @NotNull
-      @Override
-      public PersistentHashMap<Integer, Collection<Integer>> createMap() throws IOException {
-        return new PersistentHashMap<>(new File(file, "forward.idx"), EnumeratorIntegerDescriptor.INSTANCE,
-                                       new IntCollectionDataExternalizer());
-      }
-    });
+    super(INDEX_EXTENSION, new MyIndexStorage(file),
+          new MapBasedForwardIndex(new File(file, "forward.idx"), true),
+          new KeyCollectionForwardIndexAccessor<>(new IntCollectionDataExternalizer()));
   }
 
   @Override
@@ -39,7 +34,7 @@ public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList,
   }
 
   public boolean containsDataFrom(int testId) throws IOException {
-    return ((MyForwardIndex)myForwardIndex).containsDataFrom(testId);
+    return myForwardIndex.getInputData(testId) != null;
   }
 
   private static class MyIndexStorage extends MapIndexStorage<Integer, TIntArrayList> {
@@ -81,15 +76,4 @@ public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList,
       return DiscoveredTestDataHolder.VERSION;
     }
   };
-
-
-  private abstract static class MyForwardIndex extends KeyCollectionBasedForwardIndex<Integer, TIntArrayList> {
-    protected MyForwardIndex() throws IOException {
-      super(INDEX_EXTENSION);
-    }
-
-    public boolean containsDataFrom(int testId) throws IOException {
-      return getInput(testId) != null;
-    }
-  }
 }

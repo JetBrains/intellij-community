@@ -467,7 +467,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
                                                                @NotNull final MemoryIndexStorage<K, V> storage)
     throws StorageException, IOException {
     return extension instanceof CustomImplementationFileBasedIndexExtension
-           ? ((CustomImplementationFileBasedIndexExtension<K, V, FileContent>)extension).createIndexImplementation(extension, storage)
+           ? ((CustomImplementationFileBasedIndexExtension<K, V, FileContent>)extension).createIndexImplementation(storage)
            : new VfsAwareMapReduceIndex<>(extension, storage);
   }
 

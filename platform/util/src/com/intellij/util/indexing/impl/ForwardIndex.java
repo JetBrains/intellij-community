@@ -15,6 +15,7 @@
  */
 package com.intellij.util.indexing.impl;
 
+import com.intellij.openapi.util.io.ByteArraySequence;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
@@ -37,9 +38,15 @@ public interface ForwardIndex<Key, Value> {
    */
   void putInputData(int inputId, @NotNull Map<Key, Value> data) throws IOException;
 
-  void flush();
+  default void flush() {
 
-  void clear() throws IOException;
+  }
 
-  void close() throws IOException;
+  default void clear() throws IOException {
+
+  }
+
+  default void close() throws IOException {
+
+  }
 }

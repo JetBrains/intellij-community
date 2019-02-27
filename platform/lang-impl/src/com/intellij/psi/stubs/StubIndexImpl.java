@@ -573,7 +573,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     }
 
     MyIndex(@NotNull IndexExtension<K, StubIdList, Void> extension, @NotNull IndexStorage<K, StubIdList> storage) throws IOException {
-      super(extension, storage, null);
+      super(extension, storage, null, null);
     }
 
     @Override

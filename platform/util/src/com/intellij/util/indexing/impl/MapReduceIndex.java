@@ -49,7 +49,8 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   private final AtomicLong myModificationStamp = new AtomicLong();
   private final DataIndexer<Key, Value, Input> myIndexer;
 
-  protected final ForwardIndex<Key, Value> myForwardIndex;
+  protected final ForwardIndex myForwardIndex;
+  protected final ForwardIndexAccessor<Key, Value, Input> myForwardIndexAccessor;
 
   private final ReentrantReadWriteLock myLock = createLock();
   private volatile boolean myDisposed;
@@ -76,13 +77,16 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
 
   protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
                            @NotNull IndexStorage<Key, Value> storage,
-                           @Nullable ForwardIndex<Key, Value> forwardIndex) {
+                           @Nullable ForwardIndex forwardIndex,
+                           @Nullable ForwardIndexAccessor<Key, Value, Input> forwardIndexAccessor) {
     myIndexId = extension.getName();
     myExtension = extension;
     myIndexer = myExtension.getIndexer();
     myStorage = storage;
     myValueExternalizer = extension.getValueExternalizer();
     myForwardIndex = forwardIndex;
+    myForwardIndexAccessor = forwardIndexAccessor;
+    LOG.assertTrue((myForwardIndex == null) == (myForwardIndexAccessor == null));
   }
 
   @NotNull
@@ -231,20 +235,20 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     return createUpdateData(data, new ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException>() {
       @Override
       public InputDataDiffBuilder<Key, Value> compute() throws IOException {
-        return getKeysDiffBuilder(inputId);
+        return getKeysDiffBuilder(inputId, content);
       }
     }, new ThrowableRunnable<IOException>() {
       @Override
       public void run() throws IOException {
-        if (myForwardIndex != null) myForwardIndex.putInputData(inputId, data);
+        if (myForwardIndex != null) myForwardIndex.putInputData(inputId, myForwardIndexAccessor.serialize(data, content));
       }
     });
   }
 
   @NotNull
-  protected InputDataDiffBuilder<Key, Value> getKeysDiffBuilder(int inputId) throws IOException {
+  protected InputDataDiffBuilder<Key, Value> getKeysDiffBuilder(int inputId, Input content) throws IOException {
     if (myForwardIndex != null) {
-      return myForwardIndex.getDiffBuilder(inputId);
+      return myForwardIndexAccessor.getDiffBuilder(inputId, myForwardIndex.getInputData(inputId), content);
     }
     return new EmptyInputDataDiffBuilder<>(inputId);
   }

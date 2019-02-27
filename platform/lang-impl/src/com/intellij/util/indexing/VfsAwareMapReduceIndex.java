@@ -8,6 +8,7 @@ import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -46,16 +47,26 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
 
   public VfsAwareMapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
                                 @NotNull IndexStorage<Key, Value> storage) throws IOException {
-    this(extension, storage, getForwardIndex(extension));
+    this(extension, storage, getForwardIndex(extension), getForwardIndexAccessor(extension));
     if (!(myIndexId instanceof ID<?, ?>)) {
       throw new IllegalArgumentException("myIndexId should be instance of com.intellij.util.indexing.ID");
     }
   }
 
+  @Nullable
+  private static <Key, Value, Input> ForwardIndexAccessor<Key, Value, Input> getForwardIndexAccessor(@NotNull IndexExtension<Key, Value, Input> extension) {
+    if (hasSnapshotMapping(extension)) return null;
+    if (extension instanceof CustomInputsIndexFileBasedIndexExtension) {
+      return new KeyCollectionForwardIndexAccessor<>(((CustomInputsIndexFileBasedIndexExtension<Key>)extension).createExternalizer());
+    }
+    return new MapForwardIndexAccessorImpl<>(extension);
+  }
+
   public VfsAwareMapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
                                 @NotNull IndexStorage<Key, Value> storage,
-                                @Nullable ForwardIndex<Key, Value> forwardIndex) throws IOException {
-    super(extension, storage, forwardIndex);
+                                @Nullable ForwardIndex forwardIndex,
+                                @Nullable ForwardIndexAccessor<Key, Value, Input> forwardIndexAccessor) throws IOException {
+    super(extension, storage, forwardIndex, forwardIndexAccessor);
     SharedIndicesData.registerIndex((ID<Key, Value>)myIndexId, extension);
     mySnapshotInputMappings = myForwardIndex == null && hasSnapshotMapping(extension)?
                               new SnapshotInputMappings<>(extension) :
@@ -100,7 +111,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
           return new MapInputDataDiffBuilder<>(inputId, mySnapshotInputMappings.readInputKeys(inputId));
         }
       }
-      return getKeysDiffBuilder(inputId);
+      return getKeysDiffBuilder(inputId, content);
     }, () -> {
       if (myInMemoryMode.get()) {
         synchronized (myInMemoryKeysAndValues) {
@@ -110,7 +121,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
         if (mySnapshotInputMappings != null ) {
           mySnapshotInputMappings.putInputHash(inputId, hashId);
         } else {
-          myForwardIndex.putInputData(inputId, data);
+          myForwardIndex.putInputData(inputId, myForwardIndexAccessor.serialize(data, content));
         }
       }
     });
@@ -146,31 +157,13 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
 
       try {
         removeTransientDataForKeys(inputId, keyCollection);
-
-        InputDataDiffBuilder<Key, Value> builder;
+        Collection<Key> keys;
         if (mySnapshotInputMappings != null) {
-          builder =  new MapInputDataDiffBuilder<>(inputId, mySnapshotInputMappings.readInputKeys(inputId));
+          keys = ObjectUtils.notNull(mySnapshotInputMappings.readInputKeys(inputId), Collections.<Key, Value>emptyMap()).keySet();
         } else {
-          builder = getKeysDiffBuilder(inputId);
+          keys = myForwardIndexAccessor.getKeys(myForwardIndex.getInputData(inputId));
         }
-
-        if (builder instanceof CollectionInputDataDiffBuilder<?, ?>) {
-          Collection<Key> keyCollectionFromDisk = ((CollectionInputDataDiffBuilder<Key, Value>)builder).getSeq();
-          if (keyCollectionFromDisk != null) {
-            removeTransientDataForKeys(inputId, keyCollectionFromDisk);
-          }
-        } else {
-          Set<Key> diskKeySet = new THashSet<>();
-
-          builder.differentiate(
-            Collections.emptyMap(),
-            (key, value, inputId1) -> {
-            },
-            (key, value, inputId1) -> {},
-            (key, inputId1) -> diskKeySet.add(key)
-          );
-          removeTransientDataForKeys(inputId, diskKeySet);
-        }
+        removeTransientDataForKeys(inputId, keys);
       } catch (Throwable throwable) {
         throw new RuntimeException(throwable);
       }
@@ -179,7 +172,8 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     }
   }
 
-  public void removeTransientDataForKeys(int inputId, @NotNull Collection<? extends Key> keys) {
+  public void removeTransientDataForKeys(int inputId, @Nullable Collection<? extends Key> keys) {
+    if (keys == null) return;
     MemoryIndexStorage memoryIndexStorage = (MemoryIndexStorage)getStorage();
     for (Key key : keys) {
       memoryIndexStorage.clearMemoryMapForId(key, inputId);
@@ -204,11 +198,10 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     Lock lock = getReadLock();
     lock.lock();
     try {
-      if (myForwardIndex instanceof KeyValueProviderForwardIndex) {
-        return ObjectUtils.notNull(((KeyValueProviderForwardIndex<Key, Value>)myForwardIndex).getInput(fileId), Collections.emptyMap());
+      if (mySnapshotInputMappings != null) {
+        return mySnapshotInputMappings.readInputKeys(fileId);
       }
-      LOG.assertTrue(mySnapshotInputMappings != null && myForwardIndex == null);
-      return mySnapshotInputMappings.readInputKeys(fileId);
+      return ((AbstractForwardIndexAccessor<Key, Value, Map<Key, Value>, Input>)myForwardIndexAccessor).getData(myForwardIndex.getInputData(fileId));
     }
     catch (IOException e) {
       throw new StorageException(e);
@@ -269,65 +262,11 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
   }
 
   @Nullable
-  private static <Key, Value> ForwardIndex<Key, Value> getForwardIndex(@NotNull IndexExtension<Key, Value, ?> indexExtension)
-    throws IOException {
+  private static ForwardIndex getForwardIndex(@NotNull IndexExtension<?, ?, ?> indexExtension) throws IOException {
     if (hasSnapshotMapping(indexExtension)) return null;
-
-    if (!(indexExtension instanceof CustomInputsIndexFileBasedIndexExtension)) {
-      return new MyMapBasedForwardIndex<>(indexExtension);
-    }
-    KeyCollectionBasedForwardIndex<Key, Value> backgroundIndex =
-      !SharedIndicesData.ourFileSharedIndicesEnabled || SharedIndicesData.DO_CHECKS ? new MyForwardIndex<>(indexExtension) : null;
-    return new SharedMapBasedForwardIndex<>(indexExtension, backgroundIndex);
-  }
-
-  private static class MyMapBasedForwardIndex<Key, Value>
-    extends MapBasedForwardIndex<Key, Value, Map<Key, Value>>
-    implements KeyValueProviderForwardIndex<Key, Value> {
-    protected MyMapBasedForwardIndex(IndexExtension<Key, Value, ?> indexExtension) throws IOException {
-      super(indexExtension);
-    }
-
-    @NotNull
-    @Override
-    public PersistentHashMap<Integer, Map<Key, Value>> createMap() throws IOException {
-      PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
-      try {
-        final File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile((ID<?, ?>)myIndexExtension.getName());
-        return new PersistentHashMap<>(indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, new MapDataExternalizer<>(myIndexExtension));
-      } finally {
-        PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.FALSE);
-      }
-    }
-
-    @NotNull
-    @Override
-    protected Map<Key, Value> convertToMapValueType(int inputId, @NotNull Map<Key, Value> map) {
-      return map;
-    }
-  }
-
-  private static class MyForwardIndex<Key, Value> extends KeyCollectionBasedForwardIndex<Key, Value> {
-    protected MyForwardIndex(IndexExtension<Key, Value, ?> indexExtension) throws IOException {
-      super(indexExtension);
-    }
-
-    @NotNull
-    @Override
-    public PersistentHashMap<Integer, Collection<Key>> createMap() throws IOException {
-      PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
-      try {
-        return createIdToDataKeysIndex(myIndexExtension);
-      } finally {
-        PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.FALSE);
-      }
-    }
-
-    @NotNull
-    private static <K> PersistentHashMap<Integer, Collection<K>> createIdToDataKeysIndex(@NotNull IndexExtension<K, ?, ?> extension) throws IOException {
-      final File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile((ID<?, ?>)extension.getName());
-      return new PersistentHashMap<>(indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, createInputsIndexExternalizer(extension));
-    }
+    return SharedIndicesData.ourFileSharedIndicesEnabled
+           ? new SharedMapBasedForwardIndex(indexExtension)
+           : new MapBasedForwardIndex(IndexInfrastructure.getInputIndexStorageFile((ID<?, ?>)indexExtension.getName()), false);
   }
 
   private boolean isContentPhysical(Input content) {

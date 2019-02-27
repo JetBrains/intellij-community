@@ -17,31 +17,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public abstract class VcsLogPathsForwardIndex
-  extends MapBasedForwardIndex<Integer, List<VcsLogPathsIndex.ChangeKind>, List<Collection<Integer>>> {
+public class VcsLogPathsForwardIndex extends MapBasedForwardIndex {
 
-  protected VcsLogPathsForwardIndex(@NotNull IndexExtension<Integer, List<VcsLogPathsIndex.ChangeKind>, VcsIndexableDetails> extension)
-    throws IOException {
-    super(extension);
-  }
-
-  @NotNull
-  @Override
-  public InputDataDiffBuilder<Integer, List<VcsLogPathsIndex.ChangeKind>> getDiffBuilder(int inputId,
-                                                                                         @Nullable List<Collection<Integer>> oldData) {
-    return new VcsLogPathsDiffBuilder(inputId, oldData);
-  }
-
-  @NotNull
-  @Override
-  protected List<Collection<Integer>> convertToMapValueType(int inputId, @NotNull Map<Integer, List<VcsLogPathsIndex.ChangeKind>> map) {
-    return convertToMapValueType(map);
+  protected VcsLogPathsForwardIndex(@NotNull File file) throws IOException {
+    super(file, true);
   }
 
   @NotNull

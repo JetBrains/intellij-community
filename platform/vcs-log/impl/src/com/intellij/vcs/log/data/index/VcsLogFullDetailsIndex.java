@@ -19,12 +19,14 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.Consumer;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.VoidDataExternalizer;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.util.StorageId;
@@ -38,7 +40,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.ObjIntConsumer;
 
-public class VcsLogFullDetailsIndex<T, D extends VcsFullCommitDetails> implements Disposable {
+public abstract class VcsLogFullDetailsIndex<T, D extends VcsFullCommitDetails> implements Disposable {
   protected static final String INDEX = "index";
   @NotNull protected final MyMapReduceIndex myMapReduceIndex;
   @NotNull protected final StorageId myStorageId;
@@ -67,14 +69,18 @@ public class VcsLogFullDetailsIndex<T, D extends VcsFullCommitDetails> implement
   @NotNull
   private MyMapReduceIndex createMapReduceIndex(@NotNull DataExternalizer<T> dataExternalizer) throws IOException {
     MyIndexExtension<T, D> extension = new MyIndexExtension<>(myName, myIndexer, dataExternalizer, myStorageId.getVersion());
-    ForwardIndex<Integer, T> forwardIndex = createForwardIndex(extension);
-    return new MyMapReduceIndex(extension, new MyMapIndexStorage<>(myName, myStorageId, dataExternalizer), forwardIndex);
+    ForwardIndex forwardIndex = createForwardIndex(extension);
+    ForwardIndexAccessor<Integer, T, D> forwardIndexAccessor = createForwardIndexAccessor(extension);
+    return new MyMapReduceIndex(extension, new MyMapIndexStorage<>(myName, myStorageId, dataExternalizer), forwardIndex, forwardIndexAccessor);
+  }
+
+  protected AbstractForwardIndexAccessor<Integer, T, ?, D> createForwardIndexAccessor(@NotNull IndexExtension<Integer, T, D> extension) throws IOException {
+    return new EmptyForwardIndexAccessor<>();
   }
 
   @NotNull
-  protected ForwardIndex<Integer, T> createForwardIndex(@NotNull IndexExtension<Integer, T, D> extension)
-    throws IOException {
-    return new EmptyForwardIndex<>();
+  protected ForwardIndex createForwardIndex(@NotNull IndexExtension<Integer, T, D> extension) throws IOException {
+    return new EmptyForwardIndex();
   }
 
   @NotNull
@@ -114,11 +120,8 @@ public class VcsLogFullDetailsIndex<T, D extends VcsFullCommitDetails> implement
   }
 
   @Nullable
-  protected <MapIndexType> MapIndexType getKeysForCommit(int commit) throws IOException {
-    InputDataProviderForwardIndex<Integer, T, MapIndexType> index = myMapReduceIndex.getForwardIndex();
-    if (index == null) return null;
-
-    return index.getInput(commit);
+  protected Object getKeysForCommit(int commit) throws IOException {
+    return ((AbstractForwardIndexAccessor)myMapReduceIndex.getForwardIndexAccessor()).getData(myMapReduceIndex.getForwardIndex().getInputData(commit));
   }
 
   public void update(int commitId, @NotNull D details) {
@@ -144,19 +147,22 @@ public class VcsLogFullDetailsIndex<T, D extends VcsFullCommitDetails> implement
   private class MyMapReduceIndex extends MapReduceIndex<Integer, T, D> {
     MyMapReduceIndex(@NotNull MyIndexExtension<T, D> extension,
                      @NotNull MyMapIndexStorage<T> mapIndexStorage,
-                     @NotNull ForwardIndex<Integer, T> forwardIndex) {
-      super(extension, mapIndexStorage, forwardIndex);
+                     @NotNull ForwardIndex forwardIndex,
+                     @NotNull ForwardIndexAccessor<Integer, T, D> forwardIndexAccessor) {
+      super(extension, mapIndexStorage, forwardIndex, forwardIndexAccessor);
     }
 
-    @Nullable
-    public <MapIndexType> MapBasedForwardIndex<Integer, T, MapIndexType> getForwardIndex() {
-      if (myForwardIndex instanceof MapBasedForwardIndex) {
-        return ((MapBasedForwardIndex<Integer, T, MapIndexType>)myForwardIndex);
-      }
-      return null;
+    @NotNull
+    public ForwardIndex getForwardIndex() {
+      return myForwardIndex;
     }
 
-    @Override
+    @NotNull
+    public ForwardIndexAccessor<Integer, T, D> getForwardIndexAccessor() {
+      return myForwardIndexAccessor;
+    }
+
+
     public void checkCanceled() {
       ProgressManager.checkCanceled();
     }
@@ -224,27 +230,32 @@ public class VcsLogFullDetailsIndex<T, D extends VcsFullCommitDetails> implement
     }
   }
 
-  private static class EmptyForwardIndex<T> implements ForwardIndex<Integer, T> {
-    @NotNull
+  private static class EmptyForwardIndex implements ForwardIndex {
+    @Nullable
     @Override
-    public InputDataDiffBuilder<Integer, T> getDiffBuilder(int inputId) {
-      return new EmptyInputDataDiffBuilder<>(inputId);
+    public ByteArraySequence getInputData(int inputId) {
+      return null;
     }
 
     @Override
-    public void putInputData(int inputId, @NotNull Map<Integer, T> data) {
+    public void putInputData(int inputId, @Nullable ByteArraySequence data) {
+    }
+  }
+
+  private static class EmptyForwardIndexAccessor<K, V, I> extends AbstractForwardIndexAccessor<K, V, Void, I> {
+    protected EmptyForwardIndexAccessor() {
+      super(VoidDataExternalizer.INSTANCE);
+    }
+
+    @Nullable
+    @Override
+    protected Void convertToDataType(@Nullable Map<K, V> map, @Nullable I i) {
+      return null;
     }
 
     @Override
-    public void flush() {
-    }
-
-    @Override
-    public void clear() {
-    }
-
-    @Override
-    public void close() {
+    protected Collection<K> getKeysFromData(@Nullable Void aVoid) {
+      return null;
     }
   }
 }

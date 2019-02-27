@@ -15,43 +15,49 @@
  */
 package com.intellij.util.indexing.impl;
 
-import com.intellij.util.indexing.IndexExtension;
-import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.PersistentHashMap;
+import com.intellij.openapi.util.io.ByteArraySequence;
+import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 
-public abstract class MapBasedForwardIndex<Key, Value, MapValueType>
-  extends AbstractForwardIndex<Key,Value>
-  implements InputDataProviderForwardIndex<Key, Value, MapValueType> {
+public class MapBasedForwardIndex implements ForwardIndex {
   @NotNull
-  private volatile PersistentHashMap<Integer, MapValueType> myInputsIndex;
+  private volatile PersistentHashMap<Integer, ByteArraySequence> myInputsIndex;
+  @NotNull
+  private final File myIndexFile;
+  private final boolean myUseChunks;
 
-  protected MapBasedForwardIndex(IndexExtension<Key, Value, ?> indexExtension) throws IOException {
-    super(indexExtension);
+  public MapBasedForwardIndex(@NotNull File indexFile, boolean useChunks) throws IOException {
+    myIndexFile = indexFile;
+    myUseChunks = useChunks;
     myInputsIndex = createMap();
   }
 
   @NotNull
-  public abstract PersistentHashMap<Integer, MapValueType> createMap() throws IOException;
-
-  @NotNull
-  protected abstract MapValueType convertToMapValueType(int inputId, @NotNull Map<Key, Value> map) throws IOException;
+  private PersistentHashMap<Integer, ByteArraySequence> createMap()
+    throws IOException {
+    PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(!myUseChunks);
+    try {
+      return new PersistentHashMap<>(myIndexFile, EnumeratorIntegerDescriptor.INSTANCE, ByteSequenceDataExternalizer.INSTANCE);
+    }
+    finally {
+      PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.FALSE);
+    }
+  }
 
   @Override
   @Nullable
-  public MapValueType getInput(int inputId) throws IOException {
+  public ByteArraySequence getInputData(int inputId) throws IOException {
     return myInputsIndex.get(inputId);
   }
 
   @Override
-  public void putInputData(int inputId, @NotNull Map<Key, Value> data) throws IOException {
-    if (!data.isEmpty()) {
-      myInputsIndex.put(inputId, convertToMapValueType(inputId, data));
+  public void putInputData(int inputId, @Nullable ByteArraySequence data) throws IOException {
+    if (data != null) {
+      myInputsIndex.put(inputId, data);
     }
     else {
       myInputsIndex.remove(inputId);

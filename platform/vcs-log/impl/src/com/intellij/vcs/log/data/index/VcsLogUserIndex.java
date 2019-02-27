@@ -23,7 +23,7 @@ import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.impl.ForwardIndex;
-import com.intellij.util.indexing.impl.KeyCollectionBasedForwardIndex;
+import com.intellij.util.indexing.impl.MapBasedForwardIndex;
 import com.intellij.util.io.*;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsUser;
@@ -63,16 +63,9 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsFullCommitD
 
   @NotNull
   @Override
-  protected ForwardIndex<Integer, Void> createForwardIndex(@NotNull IndexExtension<Integer, Void, VcsFullCommitDetails> extension)
+  protected ForwardIndex createForwardIndex(@NotNull IndexExtension<Integer, Void, VcsFullCommitDetails> extension)
     throws IOException {
-    return new KeyCollectionBasedForwardIndex<Integer, Void>(extension) {
-      @NotNull
-      @Override
-      public PersistentHashMap<Integer, Collection<Integer>> createMap() throws IOException {
-        File storageFile = myStorageId.getStorageFile(myName + ".idx");
-        return new PersistentHashMap<>(storageFile, new IntInlineKeyDescriptor(), new IntCollectionDataExternalizer(), Page.PAGE_SIZE);
-      }
-    };
+    return new MapBasedForwardIndex(myStorageId.getStorageFile(myName + ".idx"), true);
   }
 
   @NotNull
@@ -93,7 +86,7 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsFullCommitD
 
   @Nullable
   public VcsUser getAuthorForCommit(int commit) throws IOException {
-    Collection<Integer> userIds = getKeysForCommit(commit);
+    Collection<Integer> userIds = (Collection<Integer>)getKeysForCommit(commit);
     if (userIds == null || userIds.isEmpty()) return null;
     LOG.assertTrue(userIds.size() == 1);
     return myUserIndexer.getUserById(notNull(getFirstItem(userIds)));

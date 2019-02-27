@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
@@ -16,7 +17,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.StorageException;
+import com.intellij.util.indexing.impl.AbstractForwardIndexAccessor;
 import com.intellij.util.indexing.impl.ForwardIndex;
+import com.intellij.util.indexing.impl.ForwardIndexAccessor;
+import com.intellij.util.indexing.impl.MapBasedForwardIndex;
 import com.intellij.util.io.*;
 import com.intellij.vcs.log.VcsLogIndexService;
 import com.intellij.vcs.log.data.VcsLogStorage;
@@ -55,19 +59,28 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     myPathsIndexer.setFatalErrorConsumer(e -> fatalErrorHandler.consume(this, e));
   }
 
-  @NotNull
   @Override
-  protected ForwardIndex<Integer, List<VcsLogPathsIndex.ChangeKind>> createForwardIndex(@NotNull IndexExtension<Integer, List<ChangeKind>, VcsIndexableDetails> extension)
-    throws IOException {
-    if (!VcsLogIndexService.isPathsForwardIndexRequired()) return super.createForwardIndex(extension);
-    return new VcsLogPathsForwardIndex(extension) {
-      @NotNull
+  protected AbstractForwardIndexAccessor<Integer, List<ChangeKind>, ?, VcsIndexableDetails> createForwardIndexAccessor(@NotNull IndexExtension<Integer, List<ChangeKind>, VcsIndexableDetails> extension) {
+    return new AbstractForwardIndexAccessor<Integer, List<ChangeKind>, List<Collection<Integer>>, VcsIndexableDetails>(new VcsLogPathsForwardIndex.IntCollectionListExternalizer()) {
+      @Nullable
       @Override
-      public PersistentHashMap<Integer, List<Collection<Integer>>> createMap() throws IOException {
-        File storageFile = myStorageId.getStorageFile(myName + ".idx");
-        return new PersistentHashMap<>(storageFile, new IntInlineKeyDescriptor(), new IntCollectionListExternalizer(), Page.PAGE_SIZE);
+      protected List<Collection<Integer>> convertToDataType(@Nullable Map<Integer, List<ChangeKind>> map,
+                                                            @Nullable VcsIndexableDetails details) {
+        return null;
+      }
+
+      @Override
+      protected Collection<Integer> getKeysFromData(@Nullable List<Collection<Integer>> collections) {
+        return null;
       }
     };
+  }
+
+  @NotNull
+  @Override
+  protected ForwardIndex createForwardIndex(@NotNull IndexExtension<Integer, List<ChangeKind>, VcsIndexableDetails> extension) throws IOException {
+    if (!VcsLogIndexService.isPathsForwardIndexRequired()) return super.createForwardIndex(extension);
+    return new MapBasedForwardIndex(myStorageId.getStorageFile(myName + ".idx"), true);
   }
 
   @NotNull
@@ -120,7 +133,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
 
   @NotNull
   public Set<FilePath> getPathsChangedInCommit(int commit, int parentIndex) throws IOException {
-    List<Collection<Integer>> keysForCommit = getKeysForCommit(commit);
+    List<Collection<Integer>> keysForCommit = (List<Collection<Integer>>)getKeysForCommit(commit);
     if (keysForCommit == null || keysForCommit.size() <= parentIndex) return Collections.emptySet();
 
     Set<FilePath> paths = ContainerUtil.newHashSet();

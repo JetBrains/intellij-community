@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -231,17 +232,8 @@ public class CompilerReferenceIndex<Input> {
       throws IOException {
       super(extension,
             createIndexStorage(extension.getKeyDescriptor(), extension.getValueExternalizer(), extension.getName(), indexDir, readOnly),
-            readOnly ? null : new KeyCollectionBasedForwardIndex<Key, Value>(extension) {
-              @NotNull
-              @Override
-              public PersistentHashMap<Integer, Collection<Key>> createMap() throws IOException {
-                IndexId<Key, Value> id = getIndexExtension().getName();
-                return new PersistentHashMap<>(new File(indexDir, id.getName() + ".inputs"),
-                                               EnumeratorIntegerDescriptor.INSTANCE,
-                                               new InputIndexDataExternalizer<>(extension.getKeyDescriptor(),
-                                                                                id));
-              }
-            });
+            readOnly ? null : new MapBasedForwardIndex(new File(indexDir, extension.getName().getName() + ".inputs"), true),
+            readOnly ? null : new KeyCollectionForwardIndexAccessor<>(extension));
     }
 
     @Override

@@ -15,8 +15,10 @@
  */
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.indexing.impl.*;
+import com.intellij.util.io.ByteSequenceDataExternalizer;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,67 +27,21 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
-class SharedMapBasedForwardIndex<Key, Value> extends AbstractForwardIndex<Key,Value> implements KeysProviderForwardIndex<Key, Value> {
-  private final DataExternalizer<Collection<Key>> mySnapshotIndexExternalizer;
-  private final KeyCollectionBasedForwardIndex<Key, Value> myUnderlying;
+class SharedMapBasedForwardIndex implements ForwardIndex {
+  private final IndexId<?, ?> myIndexId;
 
-  SharedMapBasedForwardIndex(IndexExtension<Key, Value, ?> extension, @Nullable KeyCollectionBasedForwardIndex<Key, Value> underlying) {
-    super(extension);
-    myUnderlying = underlying;
-    mySnapshotIndexExternalizer = VfsAwareMapReduceIndex.createInputsIndexExternalizer(extension);
-    assert myUnderlying != null || (SharedIndicesData.ourFileSharedIndicesEnabled && !SharedIndicesData.DO_CHECKS);
+  SharedMapBasedForwardIndex(IndexExtension<?, ?, ?> extension) {
+    myIndexId = extension.getName();
   }
 
   @Nullable
   @Override
-  public Collection<Key> getInput(int inputId) throws IOException {
-    Collection<Key> keys;
-    if (SharedIndicesData.ourFileSharedIndicesEnabled) {
-      keys = SharedIndicesData.recallFileData(inputId, (ID<Key, ?>)myIndexId, mySnapshotIndexExternalizer);
-      if (myUnderlying != null) {
-        Collection<Key> keysFromInputsIndex = myUnderlying.getInput(inputId);
-
-        if (keys == null && keysFromInputsIndex != null ||
-            !DebugAssertions.equals(keysFromInputsIndex, keys, myKeyDescriptor)
-        ) {
-          SharedIndicesData.associateFileData(inputId, (ID<Key, ?>)myIndexId, keysFromInputsIndex, mySnapshotIndexExternalizer);
-          if (keys != null) {
-            DebugAssertions.error(
-              "Unexpected indexing diff " + myIndexId.getName() + ", file:" + IndexInfrastructure.findFileById(PersistentFS.getInstance(), inputId)
-              + "," + keysFromInputsIndex + "," + keys);
-          }
-          keys = keysFromInputsIndex;
-        }
-      }
-    } else {
-      keys = myUnderlying.getInput(inputId);
-    }
-    return keys;
+  public ByteArraySequence getInputData(int inputId) throws IOException {
+    return SharedIndicesData.recallFileData(inputId, (ID<?, ?>)myIndexId, new ByteSequenceDataExternalizer());
   }
 
   @Override
-  public void putInputData(int inputId, @NotNull Map<Key, Value> data)
-    throws IOException {
-    Collection<Key> keySeq = data.keySet();
-    if (myUnderlying != null) myUnderlying.putInputData(inputId, data);
-    if (SharedIndicesData.ourFileSharedIndicesEnabled) {
-      if (keySeq.isEmpty()) keySeq = null;
-      SharedIndicesData.associateFileData(inputId, (ID<Key, ?>)myIndexId, keySeq, mySnapshotIndexExternalizer);
-    }
-  }
-
-  @Override
-  public void flush() {
-    if (myUnderlying != null) myUnderlying.flush();
-  }
-
-  @Override
-  public void clear() throws IOException {
-    if (myUnderlying != null) myUnderlying.clear();
-  }
-
-  @Override
-  public void close() throws IOException {
-    if (myUnderlying != null) myUnderlying.close();
+  public void putInputData(int inputId, @Nullable ByteArraySequence data) throws IOException {
+    SharedIndicesData.associateFileData(inputId, (ID<?, ?>)myIndexId, data, new ByteSequenceDataExternalizer());
   }
 }

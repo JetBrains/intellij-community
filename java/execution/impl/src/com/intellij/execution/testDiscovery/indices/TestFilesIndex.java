@@ -16,14 +16,8 @@ import java.util.Collection;
 
 public class TestFilesIndex extends MapReduceIndex<Integer, Void, UsedSources> {
   protected TestFilesIndex(@NotNull File file) throws IOException {
-    super(INDEX_EXTENSION, new MyIndexStorage(file), new MyForwardIndex() {
-      @NotNull
-      @Override
-      public PersistentHashMap<Integer, Collection<Integer>> createMap() throws IOException {
-        return new PersistentHashMap<>(new File(file, "forward.idx"), EnumeratorIntegerDescriptor.INSTANCE,
-                                       new IntCollectionDataExternalizer());
-      }
-    });
+    super(INDEX_EXTENSION, new MyIndexStorage(file), new MapBasedForwardIndex(new File(file, "forward.idx"), true),
+          new KeyCollectionForwardIndexAccessor<>(new IntCollectionDataExternalizer()));
   }
 
   @Override
@@ -38,7 +32,7 @@ public class TestFilesIndex extends MapReduceIndex<Integer, Void, UsedSources> {
 
   @Nullable
   Collection<Integer> getTestDataFor(int testId) throws IOException {
-    return ((MyForwardIndex)myForwardIndex).getInput(testId);
+    return myForwardIndexAccessor.getKeys(myForwardIndex.getInputData(testId));
   }
 
   private static class MyIndexStorage extends MapIndexStorage<Integer, Void> {
@@ -80,11 +74,4 @@ public class TestFilesIndex extends MapReduceIndex<Integer, Void, UsedSources> {
       return DiscoveredTestDataHolder.VERSION;
     }
   };
-
-
-  private abstract static class MyForwardIndex extends KeyCollectionBasedForwardIndex<Integer, Void> {
-    protected MyForwardIndex() throws IOException {
-      super(INDEX_EXTENSION);
-    }
-  }
 }
