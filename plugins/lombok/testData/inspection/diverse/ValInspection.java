@@ -20,7 +20,7 @@ public class ValInspection {
     <error descr="'val' is not compatible with array initializer expressions. Use the full form (new int[] { ... } instead of just { ... })">val e = <error descr="Array initializer is not allowed here">{"xyz"}</error>;</error>
 
     // 'val' is not allowed with lambda expressions.
-    <error descr="'val' is not allowed with lambda expressions.">val f = <error descr="Lambda expressions are not supported at language level '7'">() -> "xyz"</error>;</error>
+    <error descr="'val' is not allowed with lambda expressions.">val f = <error descr="<lambda expression> is not a functional interface">() -> "xyz"</error>;</error>
 
     // 'val' on a local variable requires an initializer expression
     <error descr="'val' on a local variable requires an initializer expression">val g;</error>

@@ -39,12 +39,12 @@ public abstract class LombokInspectionTest extends LightInspectionTestCase {
     return new DefaultLightProjectDescriptor() {
       @Override
       public Sdk getSdk() {
-        return JavaSdk.getInstance().createJdk("java 1.7", "lib/mockJDK-1.7", false);
+        return JavaSdk.getInstance().createJdk("java 1.8", "lib/mockJDK-1.8", false);
       }
 
       @Override
       public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-        model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_7);
+        model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_8);
       }
     };
   }
