@@ -308,11 +308,17 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     @Override
     protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       SmartStepData stepData = editor.getUserData(SMART_STEP_INPLACE_DATA);
-      if (stepData == null) {
-        myOriginalHandler.execute(editor, caret, dataContext);
-        return;
+      if (stepData != null) {
+        myPerform(editor, caret, dataContext, stepData);
       }
-      myPerform(editor, caret, dataContext, stepData);
+      else {
+        myOriginalHandler.execute(editor, caret, dataContext);
+      }
+    }
+
+    @Override
+    protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+      return editor.getUserData(SMART_STEP_INPLACE_DATA) != null || myOriginalHandler.isEnabled(editor, caret, dataContext);
     }
 
     protected abstract void myPerform(@NotNull Editor editor,
