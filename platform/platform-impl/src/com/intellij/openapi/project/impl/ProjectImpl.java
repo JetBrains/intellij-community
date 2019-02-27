@@ -3,6 +3,7 @@ package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.Application;
@@ -10,10 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.components.ComponentConfig;
-import com.intellij.openapi.components.ExtensionAreas;
-import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.components.StorageScheme;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.ProjectPathMacroManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
@@ -192,6 +190,12 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @Override
   public List<ComponentConfig> getMyComponentConfigsFromDescriptor(@NotNull IdeaPluginDescriptor plugin) {
     return plugin.getProjectComponents();
+  }
+
+  @NotNull
+  @Override
+  protected List<ServiceDescriptor> getServices(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+    return ((IdeaPluginDescriptorImpl)pluginDescriptor).getProjectServices();
   }
 
   @Nullable

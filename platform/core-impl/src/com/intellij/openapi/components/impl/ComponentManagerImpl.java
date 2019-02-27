@@ -100,6 +100,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
           componentConfigCount++;
         }
       }
+
+      registerServices(plugin);
     }
 
     if (measureToken != null) {
@@ -125,6 +127,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     if (isNeededToMeasure) {
       totalMeasureToken.end("component count: " + getComponentConfigCount());
     }
+  }
+
+  protected void registerServices(@NotNull IdeaPluginDescriptor pluginDescriptor) {
   }
 
   protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {

@@ -15,6 +15,8 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.ExtensionAreas;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.extensions.impl.PicoPluginExtensionInitializationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -675,12 +677,6 @@ public class PluginManagerCore {
     return null;
   }
 
-  private static IdeaPluginDescriptorImpl loadDescriptorFromJar(@NotNull File file, @NotNull String pathName, @SuppressWarnings("SameParameterValue") boolean bundled) {
-    try (LoadingContext context = new LoadingContext(null, bundled, true)) {
-      return loadDescriptorFromJar(file, pathName, JDOMXIncluder.DEFAULT_PATH_RESOLVER, context, null);
-    }
-  }
-
   @Nullable
   private static IdeaPluginDescriptorImpl loadDescriptorFromJar(@NotNull File file,
                                                                 @NotNull String fileName,
@@ -695,7 +691,8 @@ public class PluginManagerCore {
       ZipEntry entry = zipFile.getEntry(entryName);
       if (entry != null) {
         IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(notNull(pluginPath, file), context.isBundled);
-        descriptor.readExternal(JDOMUtil.load(zipFile.getInputStream(entry), context.getXmlFactory()), jarURL, pathResolver);
+        SafeJdomFactory factory = context.getXmlFactory();
+        descriptor.readExternal(JDOMUtil.load(zipFile.getInputStream(entry), factory), jarURL, pathResolver, factory == null ? null : factory.stringInterner());
         context.myLastZipFileContainingDescriptor = file;
         return descriptor;
       }
@@ -735,6 +732,9 @@ public class PluginManagerCore {
     final boolean isBundled;
     final boolean isEssential;
 
+    /**
+     * parentContext is null only for CoreApplicationEnvironment - it is not valid otherwise because in this case XML is not interned.
+     */
     LoadingContext(@Nullable LoadDescriptorsContext parentContext, boolean isBundled, boolean isEssential) {
       myParentContext = parentContext;
       this.isBundled = isBundled;
@@ -1449,12 +1449,12 @@ public class PluginManagerCore {
       }
     }
 
-    registerExtensionPointsAndExtensions(Extensions.getRootArea(), result);
+    registerExtensionPointsAndExtensions((ExtensionsAreaImpl)Extensions.getRootArea(), result);
     //noinspection deprecation
     Extensions.AREA_LISTENER_EXTENSION_POINT.getPoint(null).registerExtension(new AreaListener() {
       @Override
       public void areaCreated(@NotNull String areaClass, @NotNull AreaInstance areaInstance) {
-        registerExtensionPointsAndExtensions(Extensions.getArea(areaInstance), result);
+        registerExtensionPointsAndExtensions((ExtensionsAreaImpl)Extensions.getArea(areaInstance), result);
       }
     });
 
@@ -1542,37 +1542,43 @@ public class PluginManagerCore {
     }
   }
 
-  private static void registerExtensionPointsAndExtensions(@NotNull ExtensionsArea area, @NotNull List<? extends IdeaPluginDescriptorImpl> loadedPlugins) {
+  private static void registerExtensionPointsAndExtensions(@NotNull ExtensionsAreaImpl area, @NotNull List<? extends IdeaPluginDescriptorImpl> loadedPlugins) {
     for (IdeaPluginDescriptorImpl descriptor : loadedPlugins) {
       descriptor.registerExtensionPoints(area);
     }
 
-    ExtensionPoint[] extensionPoints = area.getExtensionPoints();
+    ExtensionPointImpl[] extensionPoints = area.getExtensionPoints();
     for (IdeaPluginDescriptorImpl descriptor : loadedPlugins) {
-      for (ExtensionPoint extensionPoint : extensionPoints) {
-        descriptor.registerExtensions(area, extensionPoint);
-      }
+      descriptor.registerExtensions(extensionPoints, area.getPicoContainer());
     }
+
+    // to avoid clearing cache for each plugin on registration, cache is cleared only now
+    // in general, on init extension point should be not initialized yet, but who knows (later maybe revisited, for now preserve old behaviour to be sure)
+    area.extensionsRegistered(extensionPoints);
   }
 
   /**
    * Load extensions points and extensions from a configuration file in plugin.xml format
+   *
+   * Use it only for CoreApplicationEnvironment. Do not use otherwise. For IntelliJ Platform application and tests plugins are loaded in parallel (including other optimizations).
+   *
    * @param pluginRoot jar file or directory which contains the configuration file
    * @param fileName name of the configuration file located in 'META-INF' directory under {@code pluginRoot}
    * @param area area which extension points and extensions should be registered (e.g. {@link Extensions#getRootArea()} for application-level extensions)
    */
   public static void registerExtensionPointAndExtensions(@NotNull File pluginRoot, @NotNull String fileName, @NotNull ExtensionsArea area) {
     IdeaPluginDescriptorImpl descriptor;
-    if (pluginRoot.isDirectory()) {
-      try (LoadingContext context = new LoadingContext(null, true, true)) {
+    try (LoadingContext context = new LoadingContext(null, true, true)) {
+      if (pluginRoot.isDirectory()) {
         descriptor = loadDescriptorFromDir(pluginRoot, fileName, null, context);
       }
+      else {
+        descriptor = loadDescriptorFromJar(pluginRoot, fileName, JDOMXIncluder.DEFAULT_PATH_RESOLVER, context, null);
+      }
     }
-    else {
-      descriptor = loadDescriptorFromJar(pluginRoot, fileName, true);
-    }
+
     if (descriptor != null) {
-      registerExtensionPointsAndExtensions(area, Collections.singletonList(descriptor));
+      registerExtensionPointsAndExtensions((ExtensionsAreaImpl)area, Collections.singletonList(descriptor));
     }
     else {
       getLogger().error("Cannot load " + fileName + " from " + pluginRoot);

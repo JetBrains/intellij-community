@@ -31,7 +31,7 @@ public class Extensions {
   @NotNull
   private static ExtensionsAreaImpl createRootArea() {
     ExtensionsAreaImpl rootArea = new ExtensionsAreaImpl(null, null, null);
-    rootArea.registerExtensionPoint(new InterfaceExtensionPoint<>(AREA_LISTENER_EXTENSION_POINT.getName(), AreaListener.class, rootArea));
+    rootArea.registerExtensionPoint(new InterfaceExtensionPoint<>(AREA_LISTENER_EXTENSION_POINT.getName(), AreaListener.class, rootArea.getPicoContainer()));
     return rootArea;
   }
 

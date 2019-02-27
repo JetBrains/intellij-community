@@ -137,7 +137,7 @@ public class ExtensionPointImplTest {
   public void testIncompatibleAdapter() {
     ExtensionPointImpl<Integer> extensionPoint = buildExtensionPoint(Integer.class);
 
-    extensionPoint.registerExtensionAdapter(stringAdapter());
+    extensionPoint.addExtensionAdapter(stringAdapter());
 
     try {
       assertThat(extensionPoint.getExtensionList()).isEmpty();
@@ -179,7 +179,7 @@ public class ExtensionPointImplTest {
 
     // registers a wrapping adapter
     extensionPoint.registerExtension("second", LoadingOrder.FIRST, null);
-    ((ExtensionPointImpl)extensionPoint).registerExtensionAdapter(adapter);
+    ((ExtensionPointImpl)extensionPoint).addExtensionAdapter(adapter);
     adapter.setFire(firework);
 
     if (expectedErrorClass == null) {
@@ -221,7 +221,7 @@ public class ExtensionPointImplTest {
     extensionPoint.registerExtension("second", LoadingOrder.FIRST, disposable);
 
     MyShootingComponentAdapter adapter = stringAdapter();
-    ((ExtensionPointImpl)extensionPoint).registerExtensionAdapter(adapter);
+    ((ExtensionPointImpl)extensionPoint).addExtensionAdapter(adapter);
     adapter.setFire(() -> {
       throw new ProcessCanceledException();
     });
@@ -249,12 +249,7 @@ public class ExtensionPointImplTest {
 
   @NotNull
   private static <T> ExtensionPointImpl<T> buildExtensionPoint(@NotNull Class<T> aClass) {
-    return new InterfaceExtensionPoint<>(ExtensionsImplTest.EXTENSION_POINT_NAME_1, aClass, buildExtensionArea());
-  }
-
-  @NotNull
-  private static ExtensionsAreaImpl buildExtensionArea() {
-    return new ExtensionsAreaImpl(null, null, new DefaultPicoContainer());
+    return new InterfaceExtensionPoint<>(ExtensionsImplTest.EXTENSION_POINT_NAME_1, aClass, new DefaultPicoContainer());
   }
 
   private static MyShootingComponentAdapter stringAdapter() {

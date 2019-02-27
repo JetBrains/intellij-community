@@ -20,8 +20,6 @@ public interface ExtensionPoint<T> {
   @NotNull
   String getName();
 
-  AreaInstance getArea();
-
   /**
    * @deprecated Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions} or {@link #registerExtension(Object, Disposable)}.
    */

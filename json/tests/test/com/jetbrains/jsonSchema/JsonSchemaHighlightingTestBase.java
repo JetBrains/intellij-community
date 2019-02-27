@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.extensions.AreaPicoContainer;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -15,6 +14,7 @@ import com.intellij.util.containers.Predicate;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
 import java.io.IOException;
@@ -61,7 +61,7 @@ public abstract class JsonSchemaHighlightingTestBase extends DaemonAnalyzerTestC
     FileUtil.writeToFile(child, schema);
     VirtualFile schemaFile = getVirtualFile(child);
     JsonSchemaTestServiceImpl.setProvider(new JsonSchemaTestProvider(schemaFile, getAvailabilityPredicate()));
-    AreaPicoContainer container = Extensions.getArea(project).getPicoContainer();
+    MutablePicoContainer container = Extensions.getArea(project).getPicoContainer();
     String key = JsonSchemaService.class.getName();
     container.unregisterComponent(key);
     container.registerComponentImplementation(key, JsonSchemaTestServiceImpl.class);

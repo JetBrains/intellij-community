@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
 import java.util.Collection;
@@ -30,7 +31,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   private static final boolean DEBUG_REGISTRATION = Boolean.FALSE.booleanValue(); // not compile-time constant to avoid yellow code
 
-  private final AreaPicoContainer myPicoContainer;
+  private final MutablePicoContainer myPicoContainer;
   private final Map<String, ExtensionPointImpl> myExtensionPoints = ContainerUtil.newConcurrentMap();
   private final Map<String,Throwable> myEPTraces = DEBUG_REGISTRATION ? new THashMap<>() : null;
   private final MultiMap<String, ExtensionPointAvailabilityListener> myAvailabilityListeners = MultiMap.createSmart(); // guarded by myAvailabilityListeners
@@ -42,11 +43,6 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     myAreaInstance = areaInstance;
     myPicoContainer = new DefaultPicoContainer(parentPicoContainer);
     initialize();
-  }
-
-  @Nullable
-  AreaInstance getAreaInstance() {
-    return myAreaInstance;
   }
 
   @TestOnly
@@ -86,7 +82,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   @NotNull
   @Override
-  public AreaPicoContainer getPicoContainer() {
+  public MutablePicoContainer getPicoContainer() {
     return myPicoContainer;
   }
 
@@ -119,10 +115,10 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
     ExtensionPointImpl<Object> point;
     if (interfaceClassName == null) {
-      point = new BeanExtensionPoint<>(pointName, beanClassName, this, pluginDescriptor);
+      point = new BeanExtensionPoint<>(pointName, beanClassName, myPicoContainer, pluginDescriptor);
     }
     else {
-      point = new InterfaceExtensionPoint<>(pointName, interfaceClassName, this, pluginDescriptor);
+      point = new InterfaceExtensionPoint<>(pointName, interfaceClassName, myPicoContainer, pluginDescriptor);
     }
     registerExtensionPoint(point);
   }
@@ -136,7 +132,14 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   // Used in Upsource
   @Override
   public void registerExtension(@NotNull final ExtensionPoint extensionPoint, @NotNull final PluginDescriptor pluginDescriptor, @NotNull final Element extensionElement) {
-    ((ExtensionPointImpl)extensionPoint).createAndRegisterAdapter(extensionElement, pluginDescriptor);
+    ((ExtensionPointImpl)extensionPoint).createAndRegisterAdapter(extensionElement, pluginDescriptor, myPicoContainer);
+  }
+
+  // don't want to expose clearCache directly
+  public void extensionsRegistered(@NotNull ExtensionPointImpl[] points) {
+    for (ExtensionPointImpl point : points) {
+      point.clearCache();
+    }
   }
 
   @NotNull
@@ -156,7 +159,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   private void initialize() {
     InterfaceExtensionPoint<EPAvailabilityListenerExtension> point =
-      new InterfaceExtensionPoint<>(EPAvailabilityListenerExtension.EXTENSION_POINT_NAME, EPAvailabilityListenerExtension.class, this);
+      new InterfaceExtensionPoint<>(EPAvailabilityListenerExtension.EXTENSION_POINT_NAME, EPAvailabilityListenerExtension.class, myPicoContainer);
     registerExtensionPoint(point);
     point.addExtensionPointListener(new ExtensionPointListener<EPAvailabilityListenerExtension>() {
       @Override
@@ -256,10 +259,10 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     PluginDescriptor pluginDescriptor = new UndefinedPluginDescriptor();
     ExtensionPointImpl<Object> point;
     if (kind == ExtensionPoint.Kind.INTERFACE) {
-      point = new InterfaceExtensionPoint<>(extensionPointName, extensionPointBeanClass, this, pluginDescriptor);
+      point = new InterfaceExtensionPoint<>(extensionPointName, extensionPointBeanClass, myPicoContainer, pluginDescriptor);
     }
     else {
-      point = new BeanExtensionPoint<>(extensionPointName, extensionPointBeanClass, this, pluginDescriptor);
+      point = new BeanExtensionPoint<>(extensionPointName, extensionPointBeanClass, myPicoContainer, pluginDescriptor);
     }
     registerExtensionPoint(point);
   }
@@ -322,8 +325,8 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   @NotNull
   @Override
-  public ExtensionPoint[] getExtensionPoints() {
-    return myExtensionPoints.values().toArray(new ExtensionPoint[0]);
+  public ExtensionPointImpl[] getExtensionPoints() {
+    return myExtensionPoints.values().toArray(new ExtensionPointImpl[0]);
   }
 
   @Override

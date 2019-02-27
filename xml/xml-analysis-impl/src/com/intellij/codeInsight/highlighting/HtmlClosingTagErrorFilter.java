@@ -1,11 +1,9 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
-import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
@@ -13,12 +11,9 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author spleaner
- */
-public class HtmlClosingTagErrorFilter extends HighlightErrorFilter {
-  public HtmlClosingTagErrorFilter(XmlHighlightVisitor xmlHighlightVisitor) {
-    assert xmlHighlightVisitor != null;
+final class HtmlClosingTagErrorFilter extends HighlightErrorFilter {
+  HtmlClosingTagErrorFilter(@SuppressWarnings("unused") @NotNull Project project) {
+    //HighlightVisitor.EP_HIGHLIGHT_VISITOR.findExtensionOrFail(XmlHighlightVisitor.class, project);
   }
 
   @Override

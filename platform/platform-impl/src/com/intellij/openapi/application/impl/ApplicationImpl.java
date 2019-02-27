@@ -11,6 +11,7 @@ import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
@@ -21,9 +22,9 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
-import com.intellij.openapi.components.impl.ServiceManagerImpl;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
@@ -412,9 +413,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         }
       };
       init(plugins, indicator, () -> {
-        // create ServiceManagerImpl at first to force extension classes registration
-        getPicoContainer().getComponentInstance(ServiceManagerImpl.class);
-
         String effectiveConfigPath = FileUtilRt.toSystemIndependentName(configPath == null ? PathManager.getConfigPath() : configPath);
         List<ApplicationLoadListener> applicationLoadListeners = ApplicationLoadListener.EP_NAME.getExtensionList();
         for (ApplicationLoadListener listener : applicationLoadListeners) {
@@ -1489,5 +1487,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   protected String measureTokenNamePrefix() {
     return "app ";
+  }
+
+  @NotNull
+  @Override
+  protected List<ServiceDescriptor> getServices(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+    return ((IdeaPluginDescriptorImpl)pluginDescriptor).getAppServices();
   }
 }

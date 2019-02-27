@@ -82,4 +82,10 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
     //noinspection ConstantConditions
     return findExtension(this, instanceOf, null, true);
   }
+
+  @NotNull
+  public <V extends T> V findExtensionOrFail(@NotNull Class<V> instanceOf, @Nullable AreaInstance areaInstance) {
+    //noinspection ConstantConditions
+    return findExtension(this, instanceOf, areaInstance, true);
+  }
 }

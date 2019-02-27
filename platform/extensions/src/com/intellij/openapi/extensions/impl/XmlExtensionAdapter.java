@@ -65,7 +65,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
     }
   }
 
-  static class PicoComponentAdapter extends XmlExtensionAdapter implements AssignableToComponentAdapter {
+  private static class PicoComponentAdapter extends XmlExtensionAdapter implements AssignableToComponentAdapter {
     PicoComponentAdapter(@NotNull String implementationClassName,
                          @Nullable PluginDescriptor pluginDescriptor,
                          @Nullable String orderId,

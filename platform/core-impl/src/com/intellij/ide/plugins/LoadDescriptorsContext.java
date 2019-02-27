@@ -83,13 +83,15 @@ final class LoadDescriptorsContext implements AutoCloseable {
   private final static class PluginXmlFactory extends SafeJdomFactory.BaseSafeJdomFactory {
     // doesn't make sense to intern class name since it is unique
     // ouch, do we really cannot agree how to name implementation class attribute?
-    private static final Set<String> CLASS_NAMES = ContainerUtil.newIdentityTroveSet(Arrays.asList(
+    private static final List<String> CLASS_NAME_LIST = Arrays.asList(
       "implementation-class", "implementation",
       "serviceImplementation", "class", "className", "beanClass",
       "serviceInterface", "interface", "interfaceClass", "instance",
-      "qualifiedName"));
+      "qualifiedName");
 
-    private final Interner<String> stringInterner = new Interner<String>(CLASS_NAMES) {
+    private static final Set<String> CLASS_NAMES = ContainerUtil.newIdentityTroveSet(CLASS_NAME_LIST);
+
+    private final Interner<String> stringInterner = new Interner<String>(ContainerUtil.concat(CLASS_NAME_LIST, IdeaPluginDescriptorImpl.SERVICE_QUALIFIED_ELEMENT_NAMES)) {
       @NotNull
       @Override
       public String intern(@NotNull String name) {
@@ -97,6 +99,12 @@ final class LoadDescriptorsContext implements AutoCloseable {
         return name.length() < 64 ? super.intern(name) : name;
       }
     };
+
+    @NotNull
+    @Override
+    public Interner<String> stringInterner() {
+      return stringInterner;
+    }
 
     @NotNull
     @Override

@@ -6,28 +6,20 @@ import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.ComponentAdapter;
+import org.picocontainer.MutablePicoContainer;
 
 public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
-  public InterfaceExtensionPoint(@NotNull String name, @NotNull Class<T> clazz, @NotNull ExtensionsAreaImpl owner) {
-    super(name, clazz.getName(), owner, new UndefinedPluginDescriptor());
+  public InterfaceExtensionPoint(@NotNull String name, @NotNull Class<T> clazz, @NotNull MutablePicoContainer picoContainer) {
+    super(name, clazz.getName(), picoContainer, new UndefinedPluginDescriptor());
 
     myExtensionClass = clazz;
   }
 
   InterfaceExtensionPoint(@NotNull String name,
                           @NotNull String className,
-                          @NotNull ExtensionsAreaImpl owner,
+                          @NotNull MutablePicoContainer picoContainer,
                           @NotNull PluginDescriptor pluginDescriptor) {
-    super(name, className, owner, pluginDescriptor);
-  }
-
-  // no need to register bean extension - only InterfaceExtensionPoint registers
-  @Override
-  @NotNull
-  ExtensionComponentAdapter createAndRegisterAdapter(@NotNull Element extensionElement, @NotNull PluginDescriptor pluginDescriptor) {
-    ExtensionComponentAdapter adapter = super.createAndRegisterAdapter(extensionElement, pluginDescriptor);
-    myOwner.getPicoContainer().registerComponent((ComponentAdapter)adapter);
-    return adapter;
+    super(name, className, picoContainer, pluginDescriptor);
   }
 
   @Override
@@ -36,7 +28,7 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
     //noinspection NonPrivateFieldAccessedInSynchronizedContext
     for (ExtensionComponentAdapter adapter : myAdapters) {
       if (adapter instanceof ComponentAdapter) {
-        myOwner.getPicoContainer().unregisterComponent(((ComponentAdapter)adapter).getComponentKey());
+        myPicoContainer.unregisterComponent(((ComponentAdapter)adapter).getComponentKey());
       }
     }
 
@@ -45,13 +37,16 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
 
   @Override
   @NotNull
-  protected ExtensionComponentAdapter createAdapter(@NotNull Element extensionElement, @NotNull PluginDescriptor pluginDescriptor) {
+  protected ExtensionComponentAdapter createAdapterAndRegisterInPicoContainerIfNeeded(@NotNull Element extensionElement, @NotNull PluginDescriptor pluginDescriptor, @NotNull MutablePicoContainer picoContainer) {
     String implementationClassName = extensionElement.getAttributeValue("implementation");
     if (implementationClassName == null) {
       throw new RuntimeException("'implementation' attribute not specified for '" + getName() + "' extension in '"
                                  + pluginDescriptor.getPluginId() + "' plugin");
     }
-    return doCreateAdapter(implementationClassName, extensionElement, shouldDeserializeInstance(extensionElement), pluginDescriptor, true);
+    ExtensionComponentAdapter adapter = doCreateAdapter(implementationClassName, extensionElement, shouldDeserializeInstance(extensionElement), pluginDescriptor, true);
+    // no need to register bean extension - only InterfaceExtensionPoint registers
+    picoContainer.registerComponent((ComponentAdapter)adapter);
+    return adapter;
   }
 
   private static boolean shouldDeserializeInstance(@NotNull Element extensionElement) {

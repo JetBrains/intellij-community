@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.MainHighlightingPassFactory;
@@ -6,6 +6,7 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.impl.ProgressableTextEditorHighlightingPass.EmptyPass;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -13,21 +14,26 @@ import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class GeneralHighlightingPassFactory implements MainHighlightingPassFactory {
+final class GeneralHighlightingPassFactory implements MainHighlightingPassFactory, BaseComponent {
   private final Project myProject;
 
-  public GeneralHighlightingPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar, DefaultHighlightVisitor dhi) {
+  GeneralHighlightingPassFactory(@NotNull Project project) {
     myProject = project;
-    highlightingPassRegistrar.registerTextEditorHighlightingPass(this,
-                                                                 null,
-                                                                 new int[]{Pass.UPDATE_FOLDING}, false, Pass.UPDATE_ALL);
-    assert dhi != null;
   }
 
   @Override
-  @Nullable
+  public void initComponent() {
+    TextEditorHighlightingPassRegistrar.getInstance(myProject).registerTextEditorHighlightingPass(this,
+                                                                                                  null,
+                                                                                                  new int[]{Pass.UPDATE_FOLDING}, false,
+                                                                                                  Pass.UPDATE_ALL);
+    // todo do we really need this assert?
+    HighlightVisitor.EP_HIGHLIGHT_VISITOR.findExtensionOrFail(DefaultHighlightVisitor.class, myProject);
+  }
+
+  @NotNull
+  @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL);
     if (textRange == null) return new EmptyPass(myProject, editor.getDocument());

@@ -6,9 +6,6 @@
 
   <application-components>
     <component>
-      <implementation-class>com.intellij.openapi.components.impl.ServiceManagerImpl</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.openapi.util.registry.RegistryState</implementation-class>
     </component>
     <component>
@@ -16,12 +13,6 @@
       <implementation-class>com.intellij.configurationStore.PlatformLangProjectStoreClassProvider</implementation-class>
     </component>
   </application-components>
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.openapi.components.impl.ServiceManagerImpl</implementation-class>
-      <loadForDefaultProject/>
-    </component>
-  </project-components>
   <project-components>
      <component>
        <implementation-class>com.intellij.profile.codeInspection.ProjectInspectionProfileManager</implementation-class>

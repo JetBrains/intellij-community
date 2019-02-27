@@ -3,10 +3,10 @@ package com.intellij.openapi.module.impl;
 
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.impl.ModuleServiceManagerImpl;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AreaInstance;
@@ -73,8 +73,6 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   @Override
   public void init(@Nullable Runnable beforeComponentCreation) {
     init(PluginManagerCore.getLoadedPlugins(null), null, () -> {
-      // create ServiceManagerImpl at first to force extension classes registration
-      getPicoContainer().getComponentInstance(ModuleServiceManagerImpl.class);
       if (beforeComponentCreation != null) {
         beforeComponentCreation.run();
       }
@@ -157,6 +155,12 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   @Override
   public List<ComponentConfig> getMyComponentConfigsFromDescriptor(@NotNull IdeaPluginDescriptor plugin) {
     return plugin.getModuleComponents();
+  }
+
+  @NotNull
+  @Override
+  protected List<ServiceDescriptor> getServices(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+    return ((IdeaPluginDescriptorImpl)pluginDescriptor).getModuleServices();
   }
 
   @Override

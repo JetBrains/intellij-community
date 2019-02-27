@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.ComponentAdapter;
+import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
 import java.util.*;
@@ -44,12 +45,12 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   @Nullable
   private volatile T[] myExtensionsCacheAsArray;
 
-  protected final ExtensionsAreaImpl myOwner;
+  protected final MutablePicoContainer myPicoContainer;
   private final PluginDescriptor myDescriptor;
 
   // guarded by this
   @NotNull
-  List<ExtensionComponentAdapter> myAdapters = Collections.emptyList();
+  protected List<ExtensionComponentAdapter> myAdapters = Collections.emptyList();
 
   @SuppressWarnings("unchecked")
   @NotNull
@@ -61,11 +62,11 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   ExtensionPointImpl(@NotNull String name,
                      @NotNull String className,
-                     @NotNull ExtensionsAreaImpl owner,
+                     @NotNull MutablePicoContainer picoContainer,
                      @NotNull PluginDescriptor pluginDescriptor) {
     myName = name;
     myClassName = className;
-    myOwner = owner;
+    myPicoContainer = picoContainer;
     myDescriptor = pluginDescriptor;
   }
 
@@ -75,16 +76,12 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     return myName;
   }
 
-  @Override
-  public AreaInstance getArea() {
-    return myOwner.getAreaInstance();
-  }
-
   @NotNull
   @Override
   public String getClassName() {
     return myClassName;
   }
+
 
   @Override
   public void registerExtension(@NotNull T extension) {
@@ -120,7 +117,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     }
 
     ObjectComponentAdapter<T> adapter = new ObjectComponentAdapter<>(extension, order);
-    registerExtensionAdapter(adapter);
+    addExtensionAdapter(adapter);
     notifyListenersOnAdd(extension, adapter.getPluginDescriptor(), myListeners);
 
     if (parentDisposable == null) {
@@ -298,7 +295,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         try {
           boolean isNotifyThatAdded = listeners.length != 0 && !adapter.isInstanceCreated();
           // do not call CHECK_CANCELED here in loop because it is called by createInstance()
-          @SuppressWarnings("unchecked") T extension = (T)adapter.createInstance(myOwner.getPicoContainer());
+          @SuppressWarnings("unchecked") T extension = (T)adapter.createInstance(myPicoContainer);
           if (!duplicates.add(extension)) {
             T duplicate = duplicates.get(extension);
             LOG.error("Duplicate extension found: " + extension + "; " +
@@ -376,6 +373,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
    *
    * Please use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions(ExtensionPointName, List, Disposable)} instead of direct usage.
    */
+  @SuppressWarnings("JavadocReference")
   @TestOnly
   public synchronized void maskAll(@NotNull List<T> list, @NotNull Disposable parentDisposable) {
     if (POINTS_IN_READONLY_MODE == null) {
@@ -549,9 +547,8 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     return true;
   }
 
-  private synchronized boolean removeListener(@NotNull ExtensionPointListener<T> listener) {
+  private synchronized void removeListener(@NotNull ExtensionPointListener<T> listener) {
     myListeners = ArrayUtil.remove(myListeners, listener, listenerArrayFactory());
-    return true;
   }
 
   @Override
@@ -650,7 +647,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   // private, internal only for tests
-  synchronized void registerExtensionAdapter(@NotNull ExtensionComponentAdapter adapter) {
+  synchronized void addExtensionAdapter(@NotNull ExtensionComponentAdapter adapter) {
     if (myAdapters == Collections.<ExtensionComponentAdapter>emptyList()) {
       myAdapters = new ArrayList<>();
     }
@@ -658,7 +655,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     clearCache();
   }
 
-  private synchronized void clearCache() {
+  synchronized void clearCache() {
     myExtensionsCache = null;
     myExtensionsCacheAsArray = null;
 
@@ -674,7 +671,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   private synchronized void removeAdapter(@NotNull ExtensionComponentAdapter adapter, int index) {
     if (adapter instanceof ComponentAdapter) {
-      myOwner.getPicoContainer().unregisterComponent(((ComponentAdapter)adapter).getComponentKey());
+      myPicoContainer.unregisterComponent(((ComponentAdapter)adapter).getComponentKey());
     }
     myAdapters.remove(index);
 
@@ -697,13 +694,36 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   @NotNull
-  protected abstract ExtensionComponentAdapter createAdapter(@NotNull Element extensionElement, @NotNull PluginDescriptor pluginDescriptor);
+  protected abstract ExtensionComponentAdapter createAdapterAndRegisterInPicoContainerIfNeeded(@NotNull Element extensionElement,
+                                                                                               @NotNull PluginDescriptor pluginDescriptor,
+                                                                                               @NotNull MutablePicoContainer picoContainer);
 
-  @NotNull
-  ExtensionComponentAdapter createAndRegisterAdapter(@NotNull Element extensionElement, @NotNull PluginDescriptor pluginDescriptor) {
-    ExtensionComponentAdapter adapter = createAdapter(extensionElement, pluginDescriptor);
-    registerExtensionAdapter(adapter);
-    return adapter;
+  void createAndRegisterAdapter(@NotNull Element extensionElement, @NotNull PluginDescriptor pluginDescriptor, @NotNull MutablePicoContainer picoContainer) {
+    addExtensionAdapter(createAdapterAndRegisterInPicoContainerIfNeeded(extensionElement, pluginDescriptor, picoContainer));
+  }
+
+  /**
+   * {@link #clearCache} is not called, use {@link ExtensionsAreaImpl#extensionsRegistered(ExtensionPointImpl[])} if needed.
+   */
+  public final synchronized void createAndRegisterAdapters(@NotNull Collection<Element> extensionElements,
+                                                           @NotNull PluginDescriptor pluginDescriptor,
+                                                           @NotNull MutablePicoContainer picoContainer) {
+    if (extensionElements.isEmpty()) {
+      return;
+    }
+
+    List<ExtensionComponentAdapter> adapters = myAdapters;
+    if (adapters == Collections.<ExtensionComponentAdapter>emptyList()) {
+      adapters = new ArrayList<>(extensionElements.size());
+      myAdapters = adapters;
+    }
+    else {
+      ((ArrayList<ExtensionComponentAdapter>)adapters).ensureCapacity(adapters.size() + extensionElements.size());
+    }
+
+    for (Element extensionElement : extensionElements) {
+      adapters.add(createAdapterAndRegisterInPicoContainerIfNeeded(extensionElement, pluginDescriptor, picoContainer));
+    }
   }
 
   @NotNull
