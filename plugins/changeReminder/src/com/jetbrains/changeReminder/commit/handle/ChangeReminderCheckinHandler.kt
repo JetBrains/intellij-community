@@ -18,16 +18,11 @@ import com.intellij.util.PairConsumer
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.IndexDataGetter
 import com.intellij.vcs.log.util.VcsLogUtil.findBranch
-import com.jetbrains.changeReminder.changedFilePaths
+import com.jetbrains.changeReminder.*
 import com.jetbrains.changeReminder.commit.handle.ui.ChangeReminderDialog
-import com.jetbrains.changeReminder.getGitRootFiles
-import com.jetbrains.changeReminder.isAmend
 import com.jetbrains.changeReminder.plugin.UserSettings
-import com.jetbrains.changeReminder.predict.PredictedChange
 import com.jetbrains.changeReminder.predict.PredictedFile
-import com.jetbrains.changeReminder.predict.PredictedFilePath
 import com.jetbrains.changeReminder.predict.PredictionProvider
-import com.jetbrains.changeReminder.processCommitsFromHashes
 import com.jetbrains.changeReminder.repository.FilesHistoryProvider
 import java.util.function.Consumer
 
@@ -53,7 +48,7 @@ class ChangeReminderCheckinHandler(private val panel: CheckinProjectPanel,
   }
 
 
-  private fun getPredictedFilePaths(files: Collection<FilePath>, root: VirtualFile, isAmend: Boolean, threshold: Double): List<FilePath> {
+  private fun getPredictedFiles(files: Collection<FilePath>, root: VirtualFile, isAmend: Boolean, threshold: Double): List<PredictedFile> {
     val repository = FilesHistoryProvider(project, root, dataGetter)
     val filesSet = files.toMutableSet()
     if (isAmend) {
@@ -69,28 +64,22 @@ class ChangeReminderCheckinHandler(private val panel: CheckinProjectPanel,
       return emptyList()
     }
 
-    return PredictionProvider(minProb = threshold).predictForgottenFiles(repository.getFilesHistory(filesSet))
+    return PredictionProvider(minProb = threshold)
+      .predictForgottenFiles(repository.getFilesHistory(filesSet))
+      .toPredictedFiles(changeListManager)
   }
 
   private fun getPredictedFiles(rootFiles: Map<VirtualFile, Collection<FilePath>>,
                                 isAmend: Boolean,
-                                threshold: Double): List<PredictedFile> {
-    val predictedFilePaths = mutableListOf<FilePath>()
-    for ((root, files) in rootFiles) {
-      if (!dataManager.index.isIndexed(root)) {
-        continue
+                                threshold: Double): List<PredictedFile> =
+    rootFiles.mapNotNull { (root, files) ->
+      if (dataManager.index.isIndexed(root)) {
+        getPredictedFiles(files, root, isAmend, threshold)
       }
-      predictedFilePaths.addAll(getPredictedFilePaths(files, root, isAmend, threshold))
-    }
-    return predictedFilePaths.mapNotNull {
-      val currentChange = changeListManager.getChange(it)
-      when {
-        currentChange != null -> PredictedChange(currentChange)
-        it.virtualFile != null -> PredictedFilePath(it)
-        else -> null
+      else {
+        null
       }
-    }
-  }
+    }.flatten()
 
   override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>?): ReturnResult {
     try {

@@ -5,10 +5,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
 import com.intellij.vcsUtil.VcsUtil
+import com.jetbrains.changeReminder.predict.PredictedChange
+import com.jetbrains.changeReminder.predict.PredictedFilePath
 import git4idea.GitCommit
 import git4idea.GitVcs
 import git4idea.checkin.GitCheckinEnvironment
@@ -57,3 +60,12 @@ fun processCommitsFromHashes(project: Project, root: VirtualFile, hashes: List<S
   )
 
 fun GitCommit.changedFilePaths(): List<FilePath> = this.changes.mapNotNull { it.afterRevision?.file ?: it.beforeRevision?.file }
+
+fun Collection<FilePath>.toPredictedFiles(changeListManager: ChangeListManager) = this.mapNotNull {
+  val currentChange = changeListManager.getChange(it)
+  when {
+    currentChange != null -> PredictedChange(currentChange)
+    it.virtualFile != null -> PredictedFilePath(it)
+    else -> null
+  }
+}
