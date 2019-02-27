@@ -6,11 +6,12 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.jvm.JvmClassKind
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiParameterList
+import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.xml.XmlTag
+import com.intellij.util.Processor
 import com.intellij.util.SmartList
 import gnu.trove.THashSet
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
@@ -20,7 +21,7 @@ import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.convert
 import org.jetbrains.uast.getLanguagePlugin
 
-internal class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
+class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
   override fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
     val javaPsi = aClass.javaPsi
     // Groovy from test data - ignore it
@@ -157,24 +158,11 @@ private val classesToCheck = THashSet<String>(listOf(
 ))
 
 private fun isExtensionBean(aClass: UClass): Boolean {
-  var p = aClass
-  while (true) {
-    if (checkInterfaces(p.javaPsi.interfaces)) {
-      return true
-    }
-
-    p = p.superClass ?: return false
-    if (classesToCheck.contains(p.qualifiedName)) {
-      return true
-    }
-  }
-}
-
-private fun checkInterfaces(list: Array<PsiClass>): Boolean {
-  for (interfaceClass in list) {
-    if (interfacesToCheck.contains(interfaceClass.qualifiedName) || checkInterfaces(interfaceClass.interfaces)) {
-      return true
-    }
-  }
-  return false
+  var found = false
+  !InheritanceUtil.processSupers(aClass.javaPsi, true, Processor {
+    val qualifiedName = it.qualifiedName
+    found = (if (it.isInterface) interfacesToCheck else classesToCheck).contains(qualifiedName)
+    !found
+  })
+  return found
 }
