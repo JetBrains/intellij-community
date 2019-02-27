@@ -1,8 +1,10 @@
 import errno
 import os
+from collections import defaultdict
+from unittest import TestCase
 
 from pycharm_generator_utils.test import GeneratorTestCase
-from pycharm_generator_utils.util_methods import copy, delete, mkdir, copy_skeletons
+from pycharm_generator_utils.util_methods import copy, delete, mkdir, copy_skeletons, cached
 
 
 class FileSystemUtilTest(GeneratorTestCase):
@@ -56,3 +58,28 @@ class FileSystemUtilTest(GeneratorTestCase):
 
     def test_copy_skeletons_failed_version_stamps_ignored(self):
         self.check_copy_skeletons()
+
+
+class MiscellaneousUtilTest(TestCase):
+    def test_cached_decorator(self):
+        computation_count = defaultdict(int)
+
+        @cached
+        def compute(num):
+            computation_count[num] += 1
+            return num
+
+        self.assertEqual(0, computation_count[1])
+        self.assertEqual(0, computation_count[2])
+
+        self.assertEqual(1, compute(1))
+        self.assertEqual(1, computation_count[1])
+
+        self.assertEqual(2, compute(2))
+        self.assertEqual(1, computation_count[2])
+
+        self.assertEqual(1, compute(1))
+        self.assertEqual(1, computation_count[1])
+
+        self.assertEqual(2, compute(2))
+        self.assertEqual(1, computation_count[2])

@@ -1,5 +1,6 @@
 import ast
 import errno
+import functools
 import keyword
 import shutil
 from contextlib import contextmanager
@@ -834,6 +835,21 @@ def delete(path, content=False):
                     delete(child)
         else:
             os.remove(path)
+
+
+def cached(func):
+    func._results = {}
+    unknown = object()
+
+    # noinspection PyProtectedMember
+    @functools.wraps(func)
+    def wrapper(*args):
+        result = func._results.get(args, unknown)
+        if result is unknown:
+            result = func._results[args] = func(*args)
+        return result
+
+    return wrapper
 
 
 def is_text_file(path):
