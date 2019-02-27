@@ -50,6 +50,12 @@ class RecursionManagerTest extends TestCase {
     }
   }
 
+  void "test no memoization after exiting SOE loop inside another preventing call"() {
+    prevent("unrelated") {
+      testNoMemoizationAfterExit()
+    }
+  }
+
   void testMayCache() {
     def doo1 = myGuard.markStack()
     assert "doo-return" == prevent("doo") {
@@ -108,9 +114,7 @@ class RecursionManagerTest extends TestCase {
       assert "2-return" == prevent("2") { fail() }
       assert !stamp.mayCacheNow()
 
-      stamp = myGuard.markStack()
-      assert "3-return" == prevent("3") { fail() }
-      assert !stamp.mayCacheNow()
+      assert "3-another-return" == prevent("3") { "3-another-return" } // call to 3 doesn't depend on 2 now, so recalculate
 
       return "1-return"
     }

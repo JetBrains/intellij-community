@@ -3,16 +3,15 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * A utility to prevent endless recursion and ensure the caching returns stable results if such endless recursion is prevented.<p></p>
@@ -57,7 +56,6 @@ import java.util.*;
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class RecursionManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.RecursionManager");
-  private static final Object NULL = ObjectUtils.sentinel("RecursionManager.NULL");
   private static final ThreadLocal<CalculationStack> ourStack = ThreadLocal.withInitial(CalculationStack::new);
   private static boolean ourAssertOnPrevention;
 
@@ -91,17 +89,13 @@ public class RecursionManager {
         }
 
         if (memoize) {
-          Object o = stack.getMemoizedValue(realKey);
-          if (o != null) {
-            Map<MyKey, Object> map = stack.intermediateCache.get(realKey);
-            if (map != null) {
-              for (MyKey noCacheUntil : map.keySet()) {
-                stack.prohibitResultCaching(noCacheUntil);
-              }
+          MemoizedValue memoized = stack.getMemoizedValue(realKey);
+          if (memoized != null) {
+            for (MyKey noCacheUntil : memoized.dependencies) {
+              stack.prohibitResultCaching(noCacheUntil);
             }
-
             //noinspection unchecked
-            return o == NULL ? null : (T)o;
+            return (T)memoized.value;
           }
         }
 
@@ -110,13 +104,13 @@ public class RecursionManager {
         final int sizeBefore = stack.progressMap.size();
         stack.beforeComputation(realKey);
         final int sizeAfter = stack.progressMap.size();
-        int startStamp = stack.memoizationStamp;
+        Set<MyKey> preventionsBefore = memoize ? ContainerUtil.newTroveSet(stack.preventions) : Collections.emptySet();
 
         try {
           T result = computation.compute();
 
           if (memoize) {
-            stack.maybeMemoize(realKey, result == null ? NULL : result, startStamp);
+            stack.maybeMemoize(realKey, result, preventionsBefore);
           }
 
           return result;
@@ -163,8 +157,7 @@ public class RecursionManager {
       public void prohibitResultCaching(@NotNull Object since) {
         MyKey realKey = new MyKey(id, since, false);
         final CalculationStack stack = ourStack.get();
-        stack.enableMemoization(realKey, stack.prohibitResultCaching(realKey));
-        stack.memoizationStamp++;
+        stack.prohibitResultCaching(realKey);
       }
 
     };
@@ -204,41 +197,25 @@ public class RecursionManager {
 
   private static class CalculationStack {
     private int reentrancyCount;
-    private int memoizationStamp;
     private int depth;
     private final LinkedHashMap<MyKey, Integer> progressMap = new LinkedHashMap<>();
-    private final Set<MyKey> toMemoize = new THashSet<>();
-    private final THashMap<MyKey, MyKey> key2ReentrancyDuringItsCalculation = new THashMap<>();
-    private final Map<MyKey, Map<MyKey, Object>> intermediateCache = ContainerUtil.createSoftMap();
+    private final Set<MyKey> preventions = ContainerUtil.newIdentityTroveSet();
+    private final Map<MyKey, List<MemoizedValue>> intermediateCache = ContainerUtil.createSoftMap();
     private int enters;
     private int exits;
 
     boolean checkReentrancy(MyKey realKey) {
       if (progressMap.containsKey(realKey)) {
-        enableMemoization(realKey, prohibitResultCaching(realKey));
-
+        prohibitResultCaching(realKey);
         return true;
       }
       return false;
     }
 
     @Nullable
-    Object getMemoizedValue(MyKey realKey) {
-      Map<MyKey, Object> map = intermediateCache.get(realKey);
-      if (map == null) return null;
-
-      if (depth == 0) {
-        throw new AssertionError("Memoized values with empty stack");
-      }
-
-      for (MyKey key : map.keySet()) {
-        final Object result = map.get(key);
-        if (result != null) {
-          return result;
-        }
-      }
-
-      return null;
+    MemoizedValue getMemoizedValue(MyKey realKey) {
+      List<MemoizedValue> values = intermediateCache.get(realKey);
+      return values != null ? ContainerUtil.find(values, v -> v.isActual(this)) : null;
     }
 
     final void beforeComputation(MyKey realKey) {
@@ -262,15 +239,10 @@ public class RecursionManager {
       }
     }
 
-    final void maybeMemoize(MyKey realKey, @NotNull Object result, int startStamp) {
-      if (memoizationStamp == startStamp && toMemoize.contains(realKey)) {
-        Map<MyKey, Object> map = intermediateCache.get(realKey);
-        if (map == null) {
-          intermediateCache.put(realKey, map = ContainerUtil.createSoftKeySoftValueMap());
-        }
-        final MyKey reentered = key2ReentrancyDuringItsCalculation.get(realKey);
-        assert reentered != null;
-        map.put(reentered, result);
+    void maybeMemoize(MyKey realKey, @Nullable Object result, Set<MyKey> preventionsBefore) {
+      if (preventions.size() > preventionsBefore.size()) {
+        List<MyKey> added = ContainerUtil.findAll(preventions, key -> key != realKey && !preventionsBefore.contains(key));
+        intermediateCache.computeIfAbsent(realKey, __ -> new SmartList<>()).add(new MemoizedValue(result, added.toArray(new MyKey[0])));
       }
     }
 
@@ -286,17 +258,10 @@ public class RecursionManager {
 
       Integer value = progressMap.remove(realKey);
       depth--;
-      toMemoize.remove(realKey);
-      key2ReentrancyDuringItsCalculation.remove(realKey);
+      preventions.remove(realKey);
 
       if (depth == 0) {
         intermediateCache.clear();
-        if (!key2ReentrancyDuringItsCalculation.isEmpty()) {
-          LOG.error("non-empty key2ReentrancyDuringItsCalculation: " + new HashMap<>(key2ReentrancyDuringItsCalculation));
-        }
-        if (!toMemoize.isEmpty()) {
-          LOG.error("non-empty toMemoize: " + new HashSet<>(toMemoize));
-        }
       }
 
       if (sizeBefore != progressMap.size()) {
@@ -308,33 +273,20 @@ public class RecursionManager {
 
     }
 
-    private void enableMemoization(MyKey realKey, Set<MyKey> loop) {
-      toMemoize.addAll(loop);
-      List<MyKey> stack = new ArrayList<>(progressMap.keySet());
-
-      for (MyKey key : loop) {
-        final MyKey existing = key2ReentrancyDuringItsCalculation.get(key);
-        if (existing == null || stack.indexOf(realKey) >= stack.indexOf(key)) {
-          key2ReentrancyDuringItsCalculation.put(key, realKey);
-        }
-      }
-    }
-
-    private Set<MyKey> prohibitResultCaching(MyKey realKey) {
+    private void prohibitResultCaching(MyKey realKey) {
       reentrancyCount++;
 
       if (!checkZero()) {
         throw new AssertionError("zero1");
       }
 
-      Set<MyKey> loop = new THashSet<>();
       boolean inLoop = false;
       for (Map.Entry<MyKey, Integer> entry: new ArrayList<>(progressMap.entrySet())) {
         if (inLoop) {
           entry.setValue(reentrancyCount);
-          loop.add(entry.getKey());
         }
         else if (entry.getKey().equals(realKey)) {
+          preventions.add(entry.getKey());
           inLoop = true;
         }
       }
@@ -342,7 +294,6 @@ public class RecursionManager {
       if (!checkZero()) {
         throw new AssertionError("zero2");
       }
-      return loop;
     }
 
     private void checkDepth(String s) {
@@ -361,6 +312,20 @@ public class RecursionManager {
       return true;
     }
 
+  }
+
+  private static class MemoizedValue {
+    final Object value;
+    final MyKey[] dependencies;
+
+    MemoizedValue(Object value, MyKey[] dependencies) {
+      this.value = value;
+      this.dependencies = dependencies;
+    }
+
+    boolean isActual(CalculationStack stack) {
+      return Stream.of(dependencies).allMatch(stack.progressMap::containsKey);
+    }
   }
 
   @TestOnly
