@@ -26,6 +26,7 @@ public final class StartUpMeasurer {
     public static final String INIT_PLUGINS = "plugins initialization";
 
     public static final String INITIALIZE_COMPONENTS_SUFFIX = "components initialization";
+    // actually, now it is also registers services, not only components,but it doesn't worth to rename
     public static final String REGISTER_COMPONENTS_SUFFIX = "components registration";
     public static final String COMPONENTS_REGISTERED_CALLBACK_SUFFIX = "components registered callback";
     public static final String CREATE_COMPONENTS_SUFFIX = "components creation";
@@ -44,6 +45,9 @@ public final class StartUpMeasurer {
   public static final class Activities {
     public static final String APP_COMPONENT = "_appComponent";
     public static final String PROJECT_COMPONENT = "_projectComponent";
+
+    public static final String APP_SERVICE = "_appService";
+    public static final String PROJECT_SERVICE = "_projectService";
 
     public static final String PRELOAD_ACTIVITY = "_preloadActivity";
 

@@ -2,17 +2,24 @@
 import * as am4core from "@amcharts/amcharts4/core"
 
 import am4themes_animated from "@amcharts/amcharts4/themes/animated"
-import {ComponentsChartManager, TopHitProviderChart} from "./ItemChartManager"
+import {ComponentChartManager, ServiceChartManager, TopHitProviderChart} from "./ItemChartManager"
 import {TimelineChartManager} from "./TimeLineChartManager"
 import {ChartManager, getButtonElement, getInputElement, InputData} from "./core"
 
 const storageKeyPort = "ijPort"
 const storageKeyData = "inputIjFormat"
 
+function renderDataForCharts(chartManagers: Array<ChartManager>, lastData: InputData, offset: number = 0) {
+  for (const chartManager of (offset == 0 ? chartManagers : chartManagers.slice(offset))) {
+    chartManager.render(lastData)
+  }
+}
+
 function main(): void {
   am4core.useTheme(am4themes_animated)
 
-  const chartManagers: Array<ChartManager> = [new TimelineChartManager(document.getElementById("visualization")!!)]
+  const chartManagers: Array<ChartManager> = []
+  createTimeLineChart(chartManagers)
   createItemChartManagers(chartManagers)
 
   const global = window as any
@@ -31,9 +38,16 @@ function main(): void {
       chartManagers.length = 1
       createItemChartManagers(chartManagers)
       if (lastData != null) {
-        for (const chartManager of chartManagers.slice(1)) {
-          chartManager.render(lastData)
-        }
+        renderDataForCharts(chartManagers, lastData, 1)
+      }
+    })
+    module.hot.accept("./core", function() {
+      // reload all charts (and only charts, ignore)
+      chartManagers.length = 0
+      createTimeLineChart(chartManagers)
+      createItemChartManagers(chartManagers)
+      if (lastData != null) {
+        renderDataForCharts(chartManagers, lastData)
       }
     })
 
@@ -42,8 +56,13 @@ function main(): void {
   }
 }
 
+function createTimeLineChart(chartManagers: Array<ChartManager>): void {
+  chartManagers.push(new TimelineChartManager(document.getElementById("visualization")!!))
+}
+
 function createItemChartManagers(chartManagers: Array<ChartManager>): void {
-  chartManagers.push(new ComponentsChartManager(document.getElementById("componentChart")!!))
+  chartManagers.push(new ComponentChartManager(document.getElementById("componentChart")!!))
+  chartManagers.push(new ServiceChartManager(document.getElementById("serviceChart")!!))
   chartManagers.push(new TopHitProviderChart(document.getElementById("optionsTopHitProviderChart")!!))
 }
 

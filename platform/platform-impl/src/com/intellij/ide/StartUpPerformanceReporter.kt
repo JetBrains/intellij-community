@@ -108,7 +108,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     writer.setIndent("  ")
     writer.beginObject()
 
-    writer.name("version").value("1")
+    writer.name("version").value("2")
 
     val startTime = if (activationNumber == 0) StartUpMeasurer.getStartTime() else items.first().start
 

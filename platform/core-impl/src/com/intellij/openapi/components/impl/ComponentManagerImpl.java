@@ -6,7 +6,6 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
@@ -469,15 +468,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
             return instance;
           }
 
-          StartUpMeasurer.MeasureToken measureToken;
-          if (LOG.isDebugEnabled() || ApplicationInfoImpl.getShadowInstance().isEAP()) {
-            // if it will be module component, then get rid of such component instead of measurement
-            measureToken = StartUpMeasurer.start(ComponentManagerImpl.this instanceof Application ? StartUpMeasurer.Activities.APP_COMPONENT : StartUpMeasurer.Activities.PROJECT_COMPONENT);
-          }
-          else {
-            measureToken = null;
-          }
-
+          // if it will be module component, then get rid of such component instead of measurement
+          StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(ComponentManagerImpl.this instanceof Application ? StartUpMeasurer.Activities.APP_COMPONENT : StartUpMeasurer.Activities.PROJECT_COMPONENT);
           instance = super.getComponentInstance(picoContainer);
 
           if (myInitializing) {
@@ -505,9 +497,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
               ((BaseComponent)instance).initComponent();
             }
 
-            if (measureToken != null) {
-              measureToken.endWithThreshold(instance.getClass());
-            }
+            measureToken.endWithThreshold(instance.getClass());
           }
           finally {
             myInitializing = false;

@@ -8,9 +8,7 @@ export class TimelineChartManager extends XYChartManager {
   private maxRowIndex = 0
 
   constructor(container: HTMLElement) {
-    super(container)
-
-    this.addDisposeHandler(module.hot)
+    super(container, module.hot)
 
     this.configureDurationAxis()
     const levelAxis = this.configureLevelAxis()
@@ -25,6 +23,8 @@ export class TimelineChartManager extends XYChartManager {
     levelAxis.renderer.minGridDistance = 1
     disableGridButKeepBorderLines(levelAxis)
     levelAxis.renderer.labels.template.disabled = true
+    // level is is internal property - not interested for user
+    levelAxis.cursorTooltipEnabled = false
     return levelAxis
   }
 
@@ -34,13 +34,28 @@ export class TimelineChartManager extends XYChartManager {
     durationAxis.durationFormatter.durationFormat = "S"
     durationAxis.min = 0
     durationAxis.strictMinMax = true
-    // durationAxis.renderer.grid.template.disabled = true
+
+    // cursor tooltip is distracting
+    durationAxis.cursorTooltipEnabled = false
   }
 
   private configureSeries() {
     const series = this.chart.series.push(new am4charts.ColumnSeries())
     // series.columns.template.width = am4core.percent(80)
-    series.columns.template.tooltipText = "{name}: {duration}\nlevel: {level}\nrange: {start}-{end}\n{description}"
+    // https://github.com/amcharts/amcharts4/issues/989#issuecomment-467862120
+    series.columns.template.tooltipText = "{name}: {duration}\nlevel: {level}\nrange: {start}-{end}"
+    series.columns.template.adapter.add("tooltipText", (value, target, _key) => {
+      const dataItem = target.dataItem
+      const index = dataItem == null ? -1 : dataItem.index
+      const data = this.chart.data
+      const item = index >= 0 && index < data.length ? data[index] as TimeLineItem : null
+      if (item == null || item.description == null || item.description.length === 0) {
+        return value
+      }
+      else {
+        return `${value}\n{description}`
+      }
+    })
     series.dataFields.openDateX = "start"
     series.dataFields.openValueX = "start"
     series.dataFields.dateX = "end"
@@ -77,7 +92,7 @@ export class TimelineChartManager extends XYChartManager {
     const items = ijData.items
 
     const data = this.transformIjData(ijData)
-    this.chart.data = data
+      this.chart.data = data
 
     const originalItems = items
     const durationAxis = this.chart.xAxes.getIndex(0) as am4charts.DurationAxis

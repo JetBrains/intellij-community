@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.StartUpMeasurer;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.pico.AssignableToComponentAdapter;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
@@ -39,7 +40,7 @@ import java.util.List;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
-public class ServiceManagerImpl implements Disposable {
+public final class ServiceManagerImpl implements Disposable {
   private static final Logger LOG = Logger.getInstance(ServiceManagerImpl.class);
 
   static void registerServices(@NotNull List<ServiceDescriptor> services, @NotNull IdeaPluginDescriptor pluginDescriptor, @NotNull ComponentManagerEx componentManager) {
@@ -211,7 +212,7 @@ public class ServiceManagerImpl implements Disposable {
         }
 
         // heavy to prevent storages from flushing and blocking FS
-        try (AccessToken ignore = HeavyProcessLatch.INSTANCE.processStarted("Creating component '" + implementation + "'")) {
+        try (AccessToken ignore = HeavyProcessLatch.INSTANCE.processStarted("Creating service '" + implementation + "'")) {
           Runnable runnable = () -> myInitializedComponentInstance = createAndInitialize(container);
           if (ProgressIndicatorProvider.getGlobalProgressIndicator() != null) {
             ProgressManager.getInstance().executeNonCancelableSection(runnable);
@@ -226,12 +227,15 @@ public class ServiceManagerImpl implements Disposable {
 
     @NotNull
     private Object createAndInitialize(@NotNull PicoContainer container) {
+      // if it will be module service, then get rid of such component instead of measurement
+      StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(myComponentManager instanceof Application ? StartUpMeasurer.Activities.APP_SERVICE : StartUpMeasurer.Activities.PROJECT_SERVICE);
       Object instance = getDelegate().getComponentInstance(container);
       if (instance instanceof Disposable) {
         Disposer.register(myComponentManager, (Disposable)instance);
       }
 
       myComponentManager.initializeComponent(instance, true);
+      measureToken.endWithThreshold(instance.getClass());
       return instance;
     }
 

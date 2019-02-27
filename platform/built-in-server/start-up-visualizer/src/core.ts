@@ -20,6 +20,9 @@ export interface InputData {
   appComponents?: Array<Item>
   projectComponents?: Array<Item>
 
+  appServices?: Array<Item>
+  projectServices?: Array<Item>
+
   preloadActivities?: Array<Item>
   appOptionsTopHitProviders?: Array<Item>
   projectOptionsTopHitProviders?: Array<Item>
@@ -36,17 +39,27 @@ function configureCommonChartSettings(chart: am4charts.XYChart) {
   chart.exporting.menu = new am4core.ExportMenu()
   chart.mouseWheelBehavior = "zoomX"
   chart.scrollbarX = new am4core.Scrollbar()
-  // chart.cursor = new am4charts.XYCursor()
+
+  const cursor = new am4charts.XYCursor()
+  cursor.lineY.disabled = true
+  cursor.lineX.disabled = true
+  // todo y axis for ItemChart doesn't work as expected (not scaled according to current data) because of 2 series for axis (and so, no chart data is set)
+  cursor.behavior = "zoomXY"
+  chart.cursor = cursor
 }
 
 export abstract class XYChartManager implements ChartManager {
   protected readonly chart: am4charts.XYChart
 
-  protected constructor(container: HTMLElement) {
+  protected constructor(container: HTMLElement, childHot: __WebpackModuleApi.Hot | null | undefined) {
     this.chart = am4core.create(container, am4charts.XYChart)
     configureCommonChartSettings(this.chart)
 
+    this.addDisposeHandler(childHot)
+
     if (module != null && module.hot != null) {
+      this.addDisposeHandler(module.hot)
+
       let devState: DevState | null = null
       const handler = () => {
         const axis = this.chart.xAxes.getIndex(0)!!
@@ -92,19 +105,27 @@ export abstract class XYChartManager implements ChartManager {
   }
 
   // module.hot must be passed here explicitly, because module in this context related only to this module
-  protected addDisposeHandler(hot: __WebpackModuleApi.Hot | null | undefined) {
+  private addDisposeHandler(hot: __WebpackModuleApi.Hot | null | undefined) {
     if (hot == null) {
       return
     }
 
     hot.dispose(_data => {
-      this.chart.dispose()
+      const chart = this.chart
+      if (chart == null) {
+        return
+      }
+
+      (this as any).chart = null
+      chart.dispose()
+      // const exportingMenu = chart.exporting.menu
+      // if (exportingMenu != null) {
+      //   exportingMenu.dispose()
+      // }
     })
   }
 
   abstract render(data: InputData): void
-
-  // abstract render(data: InputData): void
 }
 
 interface DevState {

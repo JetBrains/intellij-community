@@ -2,7 +2,7 @@
 
 import {InputData} from "./core"
 import {TimelineChartManager} from "./TimeLineChartManager"
-import {ComponentsChartManager, TopHitProviderChart} from "./ItemChartManager"
+import {ComponentChartManager, TopHitProviderChart} from "./ItemChartManager"
 
 const data: InputData = {
   "version": "1",
@@ -580,12 +580,12 @@ const data: InputData = {
 }
 
 function main() {
-  ComponentsChartManager
+  ComponentChartManager
   TimelineChartManager
   TopHitProviderChart
 
   const container = document.getElementById("visualization")!!
-  // const chartManager = new ComponentsChartManager(container)
+  // const chartManager = new ComponentChartManager(container)
   // const chartManager = new TimelineChartManager(container)
   const chartManager = new TopHitProviderChart(container)
   chartManager.render(data)

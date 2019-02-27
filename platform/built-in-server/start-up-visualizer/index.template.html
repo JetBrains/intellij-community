@@ -12,9 +12,9 @@
 
   <!-- for security reasons official source of scripts is not used - versioned URL must be used  -->
   <!-- jsdelivr cannot handle amcharts package (>50MB), so, use https://www.srihash.org/ to compute integrity -->
-  <script src="https://cdn.jsdelivr.net/gh/amcharts/amcharts4@4.1.11/dist/script/core.js" integrity="sha384-PsQiHaSv7tAeZR6KSjTw51TF0NcswEHzG6mqFYN6ncdtAY50NWHwuyjWQK2q7LA/" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/gh/amcharts/amcharts4@4.1.11/dist/script/charts.js" integrity="sha384-bPDXFb1ACdfO04ncNlNWC3q0orsZZ0Sok39fO9ztr/3kt7OuKZyEGnIlb6f3Nr4w" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/gh/amcharts/amcharts4@4.1.11/dist/script/themes/animated.js" integrity="sha384-2WR4/PAikFSwy8DTue1g8Cb6Bht0j1T3VoB1WthzSBLIf98n5BHhNHtOmfcPsqvk" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/gh/amcharts/amcharts4@4.1.13/dist/script/core.js" integrity="sha384-0HDDTNDAhQn9j4s7gmgU6BqbINySsv1pNylznb13zwJkJrRse54yhyWVKmAbMhl0" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/gh/amcharts/amcharts4@4.1.13/dist/script/charts.js" integrity="sha384-bfPyQpCTkSYRPZUdnLxTkTvPAya+trlCw3p88R3V0FYrp6gETXtkydsXEK3aGIJk" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/gh/amcharts/amcharts4@4.1.13/dist/script/themes/animated.js" integrity="sha384-2WR4/PAikFSwy8DTue1g8Cb6Bht0j1T3VoB1WthzSBLIf98n5BHhNHtOmfcPsqvk" crossorigin="anonymous"></script>
 </head>
 <body>
 <div class="container">
@@ -30,13 +30,20 @@
   </div>
 </div>
 
-<p><small>For timeline no threshold, for other charts threshold is 10ms. End time equals to last dumb-aware project start-up activity (so, preload activities may be out of end time).</small></p>
+<p>
+  <small>For timeline no threshold, for other charts threshold is 10ms. End time equals to last dumb-aware project start-up activity.</small>
+  <br/>
+  <small>So, preload activities and services may be out of end time — first vertical dark-blue separator means app initialized, second one out of ready.</small>
+</p>
 
 <h2>Timeline</h2>
 <div id="visualization"></div>
 
 <h2>Components</h2>
 <div id="componentChart" class="activityChart"></div>
+
+<h2>Services</h2>
+<div id="serviceChart" class="activityChart"></div>
 
 <h2>Options Top Hit Providers</h2>
 <div id="optionsTopHitProviderChart" class="activityChart"></div>
