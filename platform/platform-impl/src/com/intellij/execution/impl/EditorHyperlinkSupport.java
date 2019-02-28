@@ -234,7 +234,7 @@ public class EditorHyperlinkSupport {
   }
 
   /**
-   * @deprecated Use {@link #get(Editor, Project)} and then {@link #createHyperlink(RangeHighlighter, HyperlinkInfo)}
+   * @deprecated Use {@link #get(Editor)} and then {@link #createHyperlink(RangeHighlighter, HyperlinkInfo)}
    */
   @Deprecated
   public static void associateHyperlink(@NotNull RangeHighlighter highlighter, @NotNull HyperlinkInfo hyperlinkInfo) {
