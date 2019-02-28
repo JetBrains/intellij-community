@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator
 
 import com.intellij.lang.annotation.AnnotationHolder
@@ -111,5 +111,10 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
   override fun visitArrayInitializer(arrayInitializer: GrArrayInitializer) {
     super.visitArrayInitializer(arrayInitializer)
     holder.createErrorAnnotation(arrayInitializer, message("unsupported.array.initializers"))
+  }
+
+  override fun visitLambdaExpression(expression: GrLambdaExpression) {
+    super.visitLambdaExpression(expression)
+    holder.createErrorAnnotation(expression.arrow, message("unsupported.lambda"))
   }
 }
