@@ -68,4 +68,12 @@ I i = {3}
   void 'test constructor reference static access'() {
     highlightingTest GrUnresolvedAccessInspection
   }
+
+  void 'test reassigned var in lambda'() {
+    highlightingTest GrUnresolvedAccessInspection
+  }
+
+  void 'test reassigned var in lambda 2'() {
+    highlightingTest GrUnresolvedAccessInspection
+  }
 }
