@@ -19,11 +19,13 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -658,6 +660,15 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
         }
         notification.expire();
       }));
+      notification.setContextHelpAction(new DumbAwareAction("Why is it helpful?",
+                                                            "Indexing speeds up search and other operations in " +
+                                                            vcsName + " Log and in File History." +
+                                                            " Old style File History is shown if no index is available.",
+                                                            null) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+        }
+      });
       // if our bg thread is cancelled, calling VcsNotifier.getInstance in it will throw PCE
       // so using invokeLater here
       ApplicationManager.getApplication().invokeLater(() -> VcsNotifier.getInstance(myProject).notify(notification));
