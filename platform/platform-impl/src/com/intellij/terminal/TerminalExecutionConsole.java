@@ -49,10 +49,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -65,9 +61,9 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   private final Project myProject;
   private final AppendableTerminalDataStream myDataStream;
   private final AtomicBoolean myAttachedToProcess = new AtomicBoolean(false);
-  private final Collection<ChangeListener> myChangeListeners = new CopyOnWriteArraySet<>();
   private volatile boolean myLastCR = false;
   private final PendingTasksRunner myOnResizedRunner;
+  private final TerminalConsoleContentHelper myContentHelper = new TerminalConsoleContentHelper(this);
 
   private final TerminalKeyEncoder myKeyEncoder = new TerminalKeyEncoder();
 
@@ -102,13 +98,12 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     if (contentType != null) {
       myDataStream.append((char)CharUtils.ESC + "[39m"); //restore color
     }
-    fireContentAdded(ObjectUtils.notNull(contentType, ConsoleViewContentType.NORMAL_OUTPUT));
+    myContentHelper.onContentTypePrinted(ObjectUtils.notNull(contentType, ConsoleViewContentType.NORMAL_OUTPUT));
   }
 
   @Override
   public void addChangeListener(@NotNull ChangeListener listener, @NotNull Disposable parent) {
-    myChangeListeners.add(listener);
-    Disposer.register(parent, () -> myChangeListeners.remove(listener));
+    myContentHelper.addChangeListener(listener, parent);
   }
 
   private static String encodeColor(Color color) {
@@ -154,13 +149,6 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
       textCRLF += LineSeparator.CR.getSeparatorString();
     }
     return textCRLF;
-  }
-
-  private void fireContentAdded(@NotNull ConsoleViewContentType contentType) {
-    List<ConsoleViewContentType> contentTypes = Collections.singletonList(contentType);
-    for (ChangeListener listener : myChangeListeners) {
-      listener.contentAdded(contentTypes);
-    }
   }
 
   /**
