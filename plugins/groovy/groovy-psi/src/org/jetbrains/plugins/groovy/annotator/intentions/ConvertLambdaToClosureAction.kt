@@ -34,7 +34,6 @@ class ConvertLambdaToClosureAction(lambda: GrLambdaExpression) : IntentionAction
 
   private fun closureText(lambda: GrLambdaExpression): String? {
     val parameterList = lambda.parameterList
-    val arrow = lambda.arrow
     val body = lambda.body ?: return null
 
     val closureText = StringBuilder()
@@ -42,9 +41,7 @@ class ConvertLambdaToClosureAction(lambda: GrLambdaExpression) : IntentionAction
     if (parameterList.parametersCount != 0) {
       appendTextBetween(closureText, parameterList.text, parameterList.lParen, parameterList.rParen)
     }
-    appendElements(closureText, parameterList, arrow)
-    closureText.append(arrow.text)
-    appendElements(closureText, arrow, body)
+    appendElements(closureText, parameterList, body)
     if (body is GrBlockLambdaBody) {
       appendTextBetween(closureText, body.text, body.lBrace, body.rBrace)
     }
