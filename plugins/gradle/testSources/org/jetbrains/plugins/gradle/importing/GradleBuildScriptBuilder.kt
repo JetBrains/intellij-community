@@ -2,9 +2,7 @@
 package org.jetbrains.plugins.gradle.importing
 
 import java.util.ArrayList
-import kotlin.collections.Iterable
 import kotlin.collections.LinkedHashSet
-import kotlin.collections.addAll
 
 open class GradleBuildScriptBuilder {
 
@@ -154,10 +152,10 @@ open class GradleBuildScriptBuilder {
     appendBuildScript()
     appendPlugins()
     applyPlugins()
-    appendPrefix(prefixes, "")
+    appendText(prefixes, "")
     appendRepositories(repositories, "")
     appendDependencies(dependencies, "")
-    appendPostfix(postfixes, "")
+    appendText(postfixes, "")
   }.toString()
 
   private fun StringBuilder.appendImports() = apply {
@@ -179,15 +177,17 @@ open class GradleBuildScriptBuilder {
   }
 
   private fun StringBuilder.appendBuildScript() = appendBlock("buildscript") {
-    appendPrefix(buildScriptPrefixes, "  ")
+    appendText(buildScriptPrefixes, "  ")
     appendRepositories(buildScriptRepositories, "  ")
     appendDependencies(buildScriptDependencies, "  ")
-    appendPostfix(buildScriptPostfixes, "  ")
+    appendText(buildScriptPostfixes, "  ")
   }
 
-  private fun StringBuilder.appendPrefix(prefixes: Iterable<String>, indent: String) = apply {
-    for (prefix in prefixes) {
-      append(indent).appendln(prefix)
+  private fun StringBuilder.appendText(text: Iterable<String>, indent: String) = apply {
+    for (paragraph in text) {
+      for (line in paragraph.split('\n')) {
+        append(indent).appendln(line)
+      }
     }
   }
 
@@ -200,12 +200,6 @@ open class GradleBuildScriptBuilder {
   private fun StringBuilder.appendDependencies(dependencies: Iterable<String>, indent: String) = appendBlock("dependencies", indent) {
     for (dependency in dependencies) {
       append("  ").append(indent).appendln(dependency)
-    }
-  }
-
-  private fun StringBuilder.appendPostfix(postfixes: Iterable<String>, indent: String) = apply {
-    for (postfix in postfixes) {
-      append(indent).appendln(postfix)
     }
   }
 
