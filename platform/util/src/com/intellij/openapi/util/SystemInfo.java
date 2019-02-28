@@ -6,6 +6,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Locale;
 
@@ -87,6 +90,28 @@ public class SystemInfo extends SystemInfoRt {
 
   public static final boolean isFileSystemCaseSensitive = SystemInfoRt.isFileSystemCaseSensitive;
   public static final boolean areSymLinksSupported = isUnix || isWinVistaOrNewer;
+  public static final boolean isSymLinkCreationSupported = isUnix || isWinVistaOrNewer && holdsEnoughPrivilegesToCreateSymlinks();
+
+  private static boolean holdsEnoughPrivilegesToCreateSymlinks() {
+    try {
+      File src = File.createTempFile("tempSrc", ".txt");
+      src.delete();
+      File dest = File.createTempFile("tempDst", ".txt");
+      try {
+        Files.createSymbolicLink(src.toPath(), dest.toPath());
+      }
+      catch (IOException e) {
+        return false;
+      }
+      finally {
+        dest.delete();
+      }
+    }
+    catch (IOException e) {
+      return false;
+    }
+    return true;
+  }
 
   public static final boolean is32Bit = SystemInfoRt.is32Bit;
   public static final boolean is64Bit = SystemInfoRt.is64Bit;

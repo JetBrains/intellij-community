@@ -10,6 +10,8 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Assume;
+import org.junit.AssumptionViolatedException;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -80,6 +82,10 @@ public class IoTestUtil {
     }
     assertEquals("target=" + target + ", link=" + linkFile, shouldExist, linkFile.exists());
     return linkFile;
+  }
+
+  public static void assumeSymLinkCreationIsSupported() throws AssumptionViolatedException {
+    Assume.assumeTrue("Expected can create symlinks", SystemInfo.isSymLinkCreationSupported);
   }
 
   @NotNull

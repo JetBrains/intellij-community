@@ -571,7 +571,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testSymlinkTargetBlink() throws IOException {
-    assumeTrue(SystemInfo.areSymLinksSupported);
+    IoTestUtil.assumeSymLinkCreationIsSupported();
 
     File target = tempDir.newFolder("target");
     File link = new File(tempDir.getRoot(), "link");
@@ -700,7 +700,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testBrokenSymlinkMove() {
-    assumeTrue(SystemInfo.areSymLinksSupported);
+    IoTestUtil.assumeSymLinkCreationIsSupported();
 
     runInEdtAndWait(() -> {
       File srcDir = tempDir.newFolder("src");

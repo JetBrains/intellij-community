@@ -32,12 +32,9 @@ import com.intellij.util.Alarm
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.After
+import org.junit.*
 import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -228,6 +225,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
   // ensure that flat roots set via symbolic paths behave correctly and do not report dirty files returned from other recursive roots
   @Test fun testSymbolicLinkIntoFlatRoot() {
+    IoTestUtil.assumeSymLinkCreationIsSupported()
     val root = tempDir.newFolder("root")
     val cDir = tempDir.newFolder("root/A/B/C")
     val aLink = File(root, "aLink")
@@ -243,6 +241,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testMultipleSymbolicLinkPathsToFile() {
+    IoTestUtil.assumeSymLinkCreationIsSupported()
+
     val root = tempDir.newFolder("root")
     val file = tempDir.newFile("root/A/B/C/test.txt")
     val bLink = File(root, "bLink")
@@ -261,6 +261,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testSymbolicLinkWatchRoot() {
+    IoTestUtil.assumeSymLinkCreationIsSupported()
     val top = tempDir.newFolder("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
     val link = Files.createSymbolicLink(Paths.get(top.path, "link"), Paths.get("${top.path}/dir1/dir2")).toFile()
@@ -274,6 +275,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testSymbolicLinkAboveWatchRoot() {
+    IoTestUtil.assumeSymLinkCreationIsSupported()
     val top = tempDir.newFolder("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
     val link = Files.createSymbolicLink(Paths.get(top.path, "link"), Paths.get("${top.path}/dir1/dir2")).toFile()
@@ -474,7 +476,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testLineBreaksInName() {
-    assumeTrue(SystemInfo.isUnix)
+    assumeTrue("Expected Unix", SystemInfo.isUnix)
 
     val root = tempDir.newFolder("root")
     val file = tempDir.newFile("root/weird\ndir\nname/weird\nfile\nname")

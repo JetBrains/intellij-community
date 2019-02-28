@@ -24,7 +24,7 @@ public class ProjectRootUtilSymlinkedFilesTest extends PlatformTestCase {
 
   @Override
   protected boolean shouldRunTest() {
-    return super.shouldRunTest() && SystemInfo.areSymLinksSupported;
+    return super.shouldRunTest() && SystemInfo.isSymLinkCreationSupported;
   }
 
   @Override
