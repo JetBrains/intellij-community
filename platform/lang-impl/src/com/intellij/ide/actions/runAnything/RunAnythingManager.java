@@ -51,7 +51,8 @@ public class RunAnythingManager {
       .setResizable(true)
       .setMovable(true)
       .setDimensionServiceKey(project, LOCATION_SETTINGS_KEY, true)
-      .setLocateWithinScreenBounds(false)
+      .setStoreLocationRelativeToFrameCenter(true)
+      .setLocateWithinScreenBounds(true)
       .createPopup();
     Disposer.register(myBalloon, myRunAnythingUI);
     if (project != null) {

@@ -67,6 +67,7 @@ public class AbstractPopup implements JBPopup {
   public static final String FIRST_TIME_SIZE = "FirstTimeSize";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.AbstractPopup");
+  private static final String REL_FRAME_CENTER_POSTIFX = ".rel.frame.center";
 
   private PopupComponent myPopup;
   private MyContentPanel myContent;
@@ -82,6 +83,7 @@ public class AbstractPopup implements JBPopup {
   private CaptionPanel myCaption;
   private JComponent myComponent;
   private String              myDimensionServiceKey;
+  private boolean myRememberLocationRelativeToFrameCenter;
   private Computable<Boolean> myCallBack;
   private Project              myProject;
   private boolean              myCancelOnClickOutside;
@@ -190,6 +192,7 @@ public class AbstractPopup implements JBPopup {
                      boolean focusable,
                      boolean movable,
                      String dimensionServiceKey,
+                     boolean storeLocationRelativeToFrameCenter,
                      boolean resizable,
                      @Nullable String caption,
                      @Nullable Computable<Boolean> callback,
@@ -298,6 +301,7 @@ public class AbstractPopup implements JBPopup {
     myRequestFocus = requestFocus;
     myFocusable = focusable;
     myDimensionServiceKey = dimensionServiceKey;
+    myRememberLocationRelativeToFrameCenter = storeLocationRelativeToFrameCenter;
     myCallBack = callback;
     myCancelOnClickOutside = cancelOnClickOutside;
     myCancelOnMouseOutCallback = cancelOnMouseOutCallback;
@@ -820,12 +824,37 @@ public class AbstractPopup implements JBPopup {
       myContent.setPreferredSize(sizeToSet);
     }
 
+    myOwner = getFrameOrDialog(owner); // use correct popup owner for non-modal dialogs too
+    if (myOwner == null) {
+      myOwner = owner;
+    }
+
     Point xy = new Point(aScreenX, aScreenY);
     boolean adjustXY = true;
     if (myUseDimServiceForXYLocation && myDimensionServiceKey != null) {
-      final Point storedLocation = DimensionService.getInstance().getLocation(myDimensionServiceKey, myProject);
-      if (storedLocation != null) {
-        xy = storedLocation;
+      Point loadedXY = null;
+      if (myRememberLocationRelativeToFrameCenter) {
+        final Point xyRelToFrameCenter = DimensionService.getInstance().getLocation(myDimensionServiceKey + REL_FRAME_CENTER_POSTIFX, myProject, true);
+        if (myRememberLocationRelativeToFrameCenter && xyRelToFrameCenter != null) {
+          Point centerOfIde = getLocationOnScreen(myOwner);
+          centerOfIde.x += myOwner.getWidth() / 2;
+          centerOfIde.y += myOwner.getHeight() / 2;
+          Point computed = new Point(centerOfIde.x + xyRelToFrameCenter.x, centerOfIde.y + xyRelToFrameCenter.y);
+          if (ScreenUtil.getScreenRectangle(computed).contains(computed) || myLocateWithinScreen) {
+            loadedXY = computed;
+          }
+        }
+      }
+
+      if (loadedXY == null) {
+        final Point storedXY = DimensionService.getInstance().getLocation(myDimensionServiceKey, myProject);
+        if (storedXY != null && ScreenUtil.getScreenRectangle(storedXY).contains(storedXY) || myLocateWithinScreen) {
+          loadedXY = storedXY;
+        }
+      }
+
+      if (loadedXY != null) {
+        xy = loadedXY;
         adjustXY = false;
       }
     }
@@ -855,11 +884,6 @@ public class AbstractPopup implements JBPopup {
 
     if (myMouseOutCanceller != null) {
       myMouseOutCanceller.myEverEntered = targetBounds.equals(original);
-    }
-
-    myOwner = getFrameOrDialog(owner); // use correct popup owner for non-modal dialogs too
-    if (myOwner == null) {
-      myOwner = owner;
     }
 
     myRequestorComponent = owner;
@@ -1476,6 +1500,15 @@ public class AbstractPopup implements JBPopup {
   private void storeLocation(final Point xy) {
     if (myDimensionServiceKey != null) {
       DimensionService.getInstance().setLocation(myDimensionServiceKey, xy, myProject);
+      if (myRememberLocationRelativeToFrameCenter) {
+        Point centerOfOwner = getLocationOnScreen(myOwner);
+        centerOfOwner.x += myOwner.getWidth() / 2;
+        centerOfOwner.y += myOwner.getHeight() / 2;
+        Point xyRelToFrameCenter = new Point();
+        xyRelToFrameCenter.x = xy.x - centerOfOwner.x;
+        xyRelToFrameCenter.y = xy.y - centerOfOwner.y;
+        DimensionService.getInstance().setLocation(myDimensionServiceKey + REL_FRAME_CENTER_POSTIFX, xyRelToFrameCenter, myProject);
+      }
     }
   }
 
