@@ -154,7 +154,7 @@ public class PyCompatibilityInspection extends PyInspection {
   private static class Visitor extends CompatibilityVisitor {
     private final ProblemsHolder myHolder;
     private final Set<String> myUsedImports = Collections.synchronizedSet(new HashSet<>());
-    private final Set<String> fromCompatibilityLibs = Collections.synchronizedSet(new HashSet<>());
+    private final Set<String> myFromCompatibilityLibs = Collections.synchronizedSet(new HashSet<>());
 
     Visitor(ProblemsHolder holder, List<LanguageLevel> versionsToProcess) {
       super(versionsToProcess);
@@ -183,12 +183,13 @@ public class PyCompatibilityInspection extends PyInspection {
     @Override
     public void visitPyCallExpression(PyCallExpression node) {
       super.visitPyCallExpression(node);
-      if (node.getCallee() != null && importedFromCompatibilityLibs(node.getCallee())) {
+      PyExpression callee = node.getCallee();
+      if (callee != null && importedFromCompatibilityLibs(callee)) {
         return;
       }
 
       final PsiElement resolvedCallee = Optional
-        .ofNullable(node.getCallee())
+        .ofNullable(callee)
         .map(PyExpression::getReference)
         .map(PsiReference::resolve)
         .orElse(null);
@@ -199,7 +200,7 @@ public class PyCompatibilityInspection extends PyInspection {
         final String originalFunctionName = function.getName();
 
         final String functionName = containingClass != null && PyNames.INIT.equals(originalFunctionName)
-                                    ? node.getCallee().getText()
+                                    ? callee.getText()
                                     : originalFunctionName;
 
         if (containingClass != null) {
@@ -256,7 +257,7 @@ public class PyCompatibilityInspection extends PyInspection {
       final QualifiedName qName = getImportedFullyQName(importElement);
       if (qName != null && !qName.matches("builtins") && !qName.matches("__builtin__")) {
         if (COMPATIBILITY_LIBS.contains(qName.getFirstComponent())) {
-          fromCompatibilityLibs.add(qName.getLastComponent());
+          myFromCompatibilityLibs.add(qName.getLastComponent());
         }
         final String moduleName = qName.toString();
 
@@ -389,9 +390,9 @@ public class PyCompatibilityInspection extends PyInspection {
     private boolean importedFromCompatibilityLibs(@NotNull PyExpression callee) {
       if (callee instanceof PyQualifiedExpression) {
         QualifiedName qualifiedName = ((PyQualifiedExpression) callee).asQualifiedName();
-        return qualifiedName != null && fromCompatibilityLibs.contains(qualifiedName.getFirstComponent());
+        return qualifiedName != null && myFromCompatibilityLibs.contains(qualifiedName.getFirstComponent());
       }
-      return fromCompatibilityLibs.contains(callee.getName());
+      return myFromCompatibilityLibs.contains(callee.getName());
     }
   }
 }
