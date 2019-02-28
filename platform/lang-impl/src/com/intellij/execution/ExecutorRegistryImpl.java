@@ -64,6 +64,8 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
       LOG.error("Executor with context action id: \"" + executor.getContextActionId() + "\" was already registered!");
     }
 
+    final AnAction toolbarAction;
+    final AnAction runContextAction;
     if (executor instanceof ExecutorGroup) {
       final ActionGroup toolbarActionGroup = new ExecutorGroupActionGroup((ExecutorGroup)executor, ExecutorAction::new);
       toolbarActionGroup.setPopup(true);
@@ -71,14 +73,16 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
       presentation.setIcon(executor.getIcon());
       presentation.setText(executor.getStartActionText());
       presentation.setDescription(executor.getDescription());
-      final ActionGroup runContextActionGroup = new ExecutorGroupActionGroup((ExecutorGroup)executor, RunContextAction::new);
-      registerAction(executor.getId(), toolbarActionGroup, RUNNERS_GROUP, myId2Action);
-      registerAction(executor.getContextActionId(), runContextActionGroup, RUN_CONTEXT_GROUP, myContextActionId2Action);
+      toolbarAction = toolbarActionGroup;
+      runContextAction = new ExecutorGroupActionGroup((ExecutorGroup)executor, RunContextAction::new);
     }
     else {
-      registerAction(executor.getId(), new ExecutorAction(executor), RUNNERS_GROUP, myId2Action);
-      registerAction(executor.getContextActionId(), new RunContextAction(executor), RUN_CONTEXT_GROUP, myContextActionId2Action);
+      toolbarAction = new ExecutorAction(executor);
+      runContextAction = new RunContextAction(executor);
     }
+    final Executor.ActionWrapper customizer = executor.runnerActionsGroupExecutorActionCustomizer();
+    registerAction(executor.getId(), customizer != null ? customizer.wrap(toolbarAction) : toolbarAction, RUNNERS_GROUP, myId2Action);
+    registerAction(executor.getContextActionId(), runContextAction, RUN_CONTEXT_GROUP, myContextActionId2Action);
 
     myExecutors.add(executor);
     myId2Executor.put(executor.getId(), executor);
@@ -354,7 +358,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
 
   // TODO: make private as soon as IDEA-207986 will be fixed
   // RunExecutorSettings configurations can be modified, so we request current childExecutors on each AnAction#update call
-  public static class ExecutorGroupActionGroup extends ActionGroup {
+  public static class ExecutorGroupActionGroup extends ActionGroup implements DumbAware {
     private final ExecutorGroup myExecutorGroup;
     private final Function<Executor, AnAction> myChildConverter;
 
