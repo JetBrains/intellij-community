@@ -94,8 +94,11 @@
   </extensions>
 
   <actions>
+    <action id="NewDirectoryProject" class="com.jetbrains.python.newProject.PyCharmNewProjectAction">
+      <add-to-group group-id="NewProjectOrModuleGroup"/>
+    </action>
     <group id="PlatformOpenProjectGroup">
-      <action id="NewDirectoryProject" class="com.jetbrains.python.newProject.PyCharmNewProjectAction"/>
+      <reference ref="NewProjectOrModuleGroup"/>
       <action id="NewElement" class="com.intellij.ide.actions.NewElementAction" />
       <reference ref="NewScratchFile" />
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
