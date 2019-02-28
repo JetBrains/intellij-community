@@ -198,10 +198,13 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     Lock lock = getReadLock();
     lock.lock();
     try {
+      Map<Key, Value> map;
       if (mySnapshotInputMappings != null) {
-        return mySnapshotInputMappings.readInputKeys(fileId);
+        map = mySnapshotInputMappings.readInputKeys(fileId);
+      } else {
+        map = ((AbstractForwardIndexAccessor<Key, Value, Map<Key, Value>, Input>)myForwardIndexAccessor).getData(myForwardIndex.getInputData(fileId));
       }
-      return ((AbstractForwardIndexAccessor<Key, Value, Map<Key, Value>, Input>)myForwardIndexAccessor).getData(myForwardIndex.getInputData(fileId));
+      return ObjectUtils.notNull(map, Collections.emptyMap());
     }
     catch (IOException e) {
       throw new StorageException(e);
