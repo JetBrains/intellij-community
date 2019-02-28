@@ -31,6 +31,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager;
@@ -176,15 +177,19 @@ public class JsonPointerReferenceProvider extends PsiReferenceProvider {
       if (schemaFile == null) return null;
     }
 
+    PsiFile psiFile = element.getManager().findFile(schemaFile);
+
     final String normalized = normalizeId(splitter.getRelativePath());
-    if (!alwaysRoot && (StringUtil.isEmptyOrSpaces(normalized) || split(normalizeSlashes(normalized)).size() == 0)) {
-      return element.getManager().findFile(schemaFile);
+    if (!alwaysRoot && (StringUtil.isEmptyOrSpaces(normalized) || split(normalizeSlashes(normalized)).size() == 0)
+      || !(psiFile instanceof JsonFile)) {
+      return psiFile;
     }
     final List<String> chain = split(normalizeSlashes(normalized));
     final JsonSchemaObject schemaObject = service.getSchemaObjectForSchemaFile(schemaFile);
     if (schemaObject == null) return null;
 
-    return new JsonPointerResolver(schemaObject.getJsonObject(), StringUtil.join(chain, "/")).resolve();
+    JsonValue value = ((JsonFile)psiFile).getTopLevelValue();
+    return value == null ? psiFile : new JsonPointerResolver(value, StringUtil.join(chain, "/")).resolve();
   }
 
   public static class JsonSchemaIdReference extends JsonSchemaBaseReference<JsonValue> {

@@ -764,8 +764,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       @Override
       public void doCheck() {
         final Collection<JsonStringLiteral> strings = PsiTreeUtil.findChildrenOfType(myFile, JsonStringLiteral.class);
-        final List<JsonStringLiteral> list = strings.stream()
-          .filter(expression -> expression.getText().contains("#/definitions")).collect(Collectors.toList());
+        final List<JsonStringLiteral> list = ContainerUtil.filter(strings, expression -> expression.getText().contains("#/definitions"));
         Assert.assertEquals(3, list.size());
         list.forEach(literal -> checkNavigationTo("{\n" +
                                                   "      \"type\": \"object\",\n" +

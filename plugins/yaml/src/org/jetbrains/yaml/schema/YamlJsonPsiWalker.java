@@ -32,8 +32,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class YamlJsonPsiWalker implements JsonLikePsiWalker {
+  public static final YamlJsonPsiWalker INSTANCE = new YamlJsonPsiWalker();
 
-  public YamlJsonPsiWalker() {
+  private YamlJsonPsiWalker() {
   }
 
   @Override
@@ -343,5 +344,25 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
   public PsiElement getParentContainer(PsiElement element) {
     return PsiTreeUtil.getParentOfType(PsiTreeUtil.getParentOfType(element, YAMLKeyValue.class),
                                        YAMLMapping.class, YAMLSequence.class);
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getRoot(@NotNull PsiFile file) {
+    if (!(file instanceof YAMLFile)) return null;
+    List<YAMLDocument> documents = ((YAMLFile)file).getDocuments();
+    if (documents.size() != 1) {
+      return null;
+    }
+
+    YAMLDocument document = documents.get(0);
+    YAMLValue topLevelValue = document.getTopLevelValue();
+    return topLevelValue == null ? document : topLevelValue;
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getPropertyNameElement(PsiElement property) {
+    return property instanceof YAMLKeyValue ? ((YAMLKeyValue)property).getKey() : null;
   }
 }

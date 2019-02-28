@@ -2,6 +2,7 @@ package com.intellij.json;
 
 import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.json.psi.JsonStringLiteral;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -52,7 +53,8 @@ public class JsonSpellcheckerStrategy extends SpellcheckingStrategy {
     final VirtualFile file = PsiUtilCore.getVirtualFile(element);
     if (file == null) return false;
 
-    final JsonSchemaService service = JsonSchemaService.Impl.get(element.getProject());
+    Project project = element.getProject();
+    final JsonSchemaService service = JsonSchemaService.Impl.get(project);
     if (!service.isApplicableToFile(file)) return false;
     final JsonSchemaObject rootSchema = service.getSchemaObject(file);
     if (rootSchema == null) return false;
@@ -67,7 +69,7 @@ public class JsonSpellcheckerStrategy extends SpellcheckingStrategy {
     final JsonPointerPosition position = walker.findPosition(checkable, isName == ThreeState.NO);
     if (position == null || position.isEmpty() && isName == ThreeState.NO) return false;
 
-    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(rootSchema, false, position).resolve();
+    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(project, rootSchema, false, position).resolve();
     if (schemas.isEmpty()) return false;
 
     return schemas.stream().anyMatch(s -> s.getProperties().keySet().contains(value)

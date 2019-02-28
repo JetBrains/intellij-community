@@ -3,15 +3,11 @@ package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.JsonBundle;
 import com.intellij.json.pointer.JsonPointerPosition;
-import com.intellij.json.psi.JsonContainer;
-import com.intellij.json.psi.JsonObject;
-import com.intellij.json.psi.JsonProperty;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -21,7 +17,6 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonArrayValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
-import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,12 +33,14 @@ class JsonSchemaAnnotatorChecker {
   private static final Set<JsonSchemaType> PRIMITIVE_TYPES =
     ContainerUtil.set(JsonSchemaType._integer, JsonSchemaType._number, JsonSchemaType._boolean, JsonSchemaType._string, JsonSchemaType._null);
   private final Map<PsiElement, JsonValidationError> myErrors;
-  private final JsonComplianceCheckerOptions myOptions;
+  @NotNull private final Project myProject;
+  @NotNull private final JsonComplianceCheckerOptions myOptions;
   private boolean myHadTypeError;
   private static final String ENUM_MISMATCH_PREFIX = "Value should be one of: ";
   private static final String ACTUAL_PREFIX = "Actual: ";
 
-  protected JsonSchemaAnnotatorChecker(JsonComplianceCheckerOptions options) {
+  protected JsonSchemaAnnotatorChecker(@NotNull Project project, @NotNull JsonComplianceCheckerOptions options) {
+    myProject = project;
     myOptions = options;
     myErrors = new HashMap<>();
   }
@@ -56,25 +53,26 @@ class JsonSchemaAnnotatorChecker {
     return myHadTypeError;
   }
 
-  public static JsonSchemaAnnotatorChecker checkByMatchResult(@NotNull JsonValueAdapter elementToCheck,
+  public static JsonSchemaAnnotatorChecker checkByMatchResult(@NotNull Project project,
+                                                              @NotNull JsonValueAdapter elementToCheck,
                                                               @NotNull final MatchResult result,
                                                               @NotNull JsonComplianceCheckerOptions options) {
     final List<JsonSchemaAnnotatorChecker> checkers = new ArrayList<>();
     if (result.myExcludingSchemas.isEmpty() && result.mySchemas.size() == 1) {
-      final JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker(options);
+      final JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker(project, options);
       checker.checkByScheme(elementToCheck, result.mySchemas.iterator().next());
       checkers.add(checker);
     }
     else {
       if (!result.mySchemas.isEmpty()) {
-        checkers.add(processSchemasVariants(result.mySchemas, elementToCheck, false, options).getSecond());
+        checkers.add(processSchemasVariants(project, result.mySchemas, elementToCheck, false, options).getSecond());
       }
       if (!result.myExcludingSchemas.isEmpty()) {
         // we can have several oneOf groups, each about, for instance, a part of properties
         // - then we should allow properties from neighbour schemas (even if additionalProperties=false)
         final List<JsonSchemaAnnotatorChecker> list =
-          ContainerUtil.map(result.myExcludingSchemas, group -> processSchemasVariants(group, elementToCheck, true, options).getSecond());
-        checkers.add(mergeErrors(list, options, result.myExcludingSchemas));
+          ContainerUtil.map(result.myExcludingSchemas, group -> processSchemasVariants(project, group, elementToCheck, true, options).getSecond());
+        checkers.add(mergeErrors(project, list, options, result.myExcludingSchemas));
       }
     }
     if (checkers.isEmpty()) return null;
@@ -86,10 +84,11 @@ class JsonSchemaAnnotatorChecker {
       .orElse(checkers.get(0));
   }
 
-  private static JsonSchemaAnnotatorChecker mergeErrors(@NotNull List<JsonSchemaAnnotatorChecker> list,
+  private static JsonSchemaAnnotatorChecker mergeErrors(@NotNull Project project,
+                                                        @NotNull List<JsonSchemaAnnotatorChecker> list,
                                                         @NotNull JsonComplianceCheckerOptions options,
-                                                        List<Collection<? extends JsonSchemaObject>> excludingSchemas) {
-    final JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker(options);
+                                                        @NotNull List<Collection<? extends JsonSchemaObject>> excludingSchemas) {
+    final JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker(project, options);
 
     for (JsonSchemaAnnotatorChecker ch: list) {
       for (Map.Entry<PsiElement, JsonValidationError> element: ch.myErrors.entrySet()) {
@@ -218,25 +217,25 @@ class JsonSchemaAnnotatorChecker {
     }
 
     if (schema.getNot() != null) {
-      final MatchResult result = new JsonSchemaResolver(schema.getNot()).detailedResolve();
+      final MatchResult result = new JsonSchemaResolver(myProject, schema.getNot()).detailedResolve();
       if (result.mySchemas.isEmpty() && result.myExcludingSchemas.isEmpty()) return;
 
       // if 'not' uses reference to owning schema back -> do not check, seems it does not make any sense
-      if (result.mySchemas.stream().anyMatch(s -> schema.getJsonObject().equals(s.getJsonObject())) ||
+      if (result.mySchemas.stream().anyMatch(s -> schema.equals(s)) ||
           result.myExcludingSchemas.stream().flatMap(Collection::stream)
-            .anyMatch(s -> schema.getJsonObject().equals(s.getJsonObject()))) return;
+            .anyMatch(s -> schema.equals(s))) return;
 
-      final JsonSchemaAnnotatorChecker checker = checkByMatchResult(value, result, myOptions);
+      final JsonSchemaAnnotatorChecker checker = checkByMatchResult(myProject, value, result, myOptions);
       if (checker == null || checker.isCorrect()) error("Validates against 'not' schema", value.getDelegate(), JsonErrorPriority.NOT_SCHEMA);
     }
 
     List<IfThenElse> ifThenElseList = schema.getIfThenElse();
     if (ifThenElseList != null) {
       for (IfThenElse ifThenElse : ifThenElseList) {
-        MatchResult result = new JsonSchemaResolver(ifThenElse.getIf()).detailedResolve();
+        MatchResult result = new JsonSchemaResolver(myProject, ifThenElse.getIf()).detailedResolve();
         if (result.mySchemas.isEmpty() && result.myExcludingSchemas.isEmpty()) return;
 
-        final JsonSchemaAnnotatorChecker checker = checkByMatchResult(value, result, myOptions);
+        final JsonSchemaAnnotatorChecker checker = checkByMatchResult(myProject, value, result, myOptions);
         if (checker != null) {
           if (checker.isCorrect()) {
             JsonSchemaObject then = ifThenElse.getThen();
@@ -256,7 +255,7 @@ class JsonSchemaAnnotatorChecker {
   }
 
   private void checkObjectBySchemaRecordErrors(@NotNull JsonSchemaObject schema, @NotNull JsonValueAdapter object) {
-    final JsonSchemaAnnotatorChecker checker = checkByMatchResult(object, new JsonSchemaResolver(schema).detailedResolve(), myOptions);
+    final JsonSchemaAnnotatorChecker checker = checkByMatchResult(myProject, object, new JsonSchemaResolver(myProject, schema).detailedResolve(), myOptions);
     if (checker != null) {
       myHadTypeError = checker.isHadTypeError();
       myErrors.putAll(checker.getErrors());
@@ -338,7 +337,7 @@ class JsonSchemaAnnotatorChecker {
       }
     }
 
-    validateAsJsonSchema(object.getDelegate());
+    //validateAsJsonSchema(object.getDelegate());
   }
 
   @Nullable
@@ -355,7 +354,7 @@ class JsonSchemaAnnotatorChecker {
   }
 
   @NotNull
-  private static JsonValidationError.MissingMultiplePropsIssueData createMissingPropertiesData(@NotNull JsonSchemaObject schema,
+  private JsonValidationError.MissingMultiplePropsIssueData createMissingPropertiesData(@NotNull JsonSchemaObject schema,
                                                                                                HashSet<String> requiredNames) {
     List<JsonValidationError.MissingPropertyIssueData> allProps = ContainerUtil.newArrayList();
     for (String req: requiredNames) {
@@ -372,7 +371,7 @@ class JsonSchemaAnnotatorChecker {
           defaultValue = valueFromEnum;
         }
         else {
-          result = new JsonSchemaResolver(propertySchema).detailedResolve();
+          result = new JsonSchemaResolver(myProject, propertySchema).detailedResolve();
           if (result.mySchemas.size() == 1) {
             valueFromEnum = getDefaultValueFromEnum(result.mySchemas.get(0), enumCount);
             if (valueFromEnum != null) {
@@ -383,7 +382,7 @@ class JsonSchemaAnnotatorChecker {
         type = propertySchema.getType();
         if (type == null) {
           if (result == null) {
-            result = new JsonSchemaResolver(propertySchema).detailedResolve();
+            result = new JsonSchemaResolver(myProject, propertySchema).detailedResolve();
           }
           if (result.mySchemas.size() == 1) {
             type = result.mySchemas.get(0).getType();
@@ -416,68 +415,6 @@ class JsonSchemaAnnotatorChecker {
       }
     }
     return null;
-  }
-
-  private void validateAsJsonSchema(@NotNull PsiElement objElement) {
-    final JsonObject object = ObjectUtils.tryCast(objElement, JsonObject.class);
-    if (object == null) return;
-
-    if (!JsonSchemaService.isSchemaFile(objElement.getContainingFile())) {
-      return;
-    }
-
-    final VirtualFile schemaFile = object.getContainingFile().getVirtualFile();
-    if (schemaFile == null) return;
-
-    final JsonSchemaObject schemaObject = JsonSchemaService.Impl.get(object.getProject()).getSchemaObjectForSchemaFile(schemaFile);
-    if (schemaObject == null) return;
-
-    final JsonPointerPosition position = JsonOriginalPsiWalker.INSTANCE.findPosition(object, true);
-    if (position == null) return;
-    // !! not root schema, because we validate the schema written in the file itself
-    final MatchResult result = new JsonSchemaResolver(schemaObject, false, position).detailedResolve();
-    for (JsonSchemaObject s: result.mySchemas) {
-      reportInvalidPatternProperties(s);
-      reportPatternErrors(s);
-    }
-    result.myExcludingSchemas.stream().flatMap(Collection::stream).filter(s -> schemaFile.equals(s.getSchemaFile()))
-      .forEach(schema -> {
-        reportInvalidPatternProperties(schema);
-        reportPatternErrors(schema);
-      });
-  }
-
-  private void reportPatternErrors(JsonSchemaObject schema) {
-    for (JsonSchemaObject prop : schema.getProperties().values()) {
-      final String patternError = prop.getPatternError();
-      if (patternError == null || prop.getPattern() == null) {
-        continue;
-      }
-
-      final JsonContainer element = prop.getJsonObject();
-      if (!(element instanceof JsonObject) || !element.isValid()) {
-        continue;
-      }
-
-      final JsonProperty pattern = ((JsonObject)element).findProperty("pattern");
-      if (pattern != null) {
-        error(StringUtil.convertLineSeparators(patternError), pattern.getValue(), JsonErrorPriority.LOW_PRIORITY);
-      }
-    }
-  }
-
-  private void reportInvalidPatternProperties(JsonSchemaObject schema) {
-    final Map<JsonContainer, String> invalidPatternProperties = schema.getInvalidPatternProperties();
-    if (invalidPatternProperties == null) return;
-
-    for (Map.Entry<JsonContainer, String> entry : invalidPatternProperties.entrySet()) {
-      final JsonContainer element = entry.getKey();
-      if (element == null || !element.isValid()) continue;
-      final PsiElement parent = element.getParent();
-      if (parent instanceof JsonProperty) {
-        error(StringUtil.convertLineSeparators(entry.getValue()), ((JsonProperty)parent).getNameElement(), JsonErrorPriority.LOW_PRIORITY);
-      }
-    }
   }
 
   private static boolean checkEnumValue(@NotNull Object object,
@@ -564,10 +501,10 @@ class JsonSchemaAnnotatorChecker {
 
   @NotNull
   private static Pair<JsonSchemaObject, JsonSchemaAnnotatorChecker> processSchemasVariants(
-    @NotNull final Collection<? extends JsonSchemaObject> collection,
+    @NotNull Project project, @NotNull final Collection<? extends JsonSchemaObject> collection,
     @NotNull final JsonValueAdapter value, boolean isOneOf, JsonComplianceCheckerOptions options) {
 
-    final JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker(options);
+    final JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker(project, options);
     final JsonSchemaType type = JsonSchemaType.getType(value);
     JsonSchemaObject selected = null;
     if (type == null) {
@@ -680,7 +617,7 @@ class JsonSchemaAnnotatorChecker {
     if (schema.getContainsSchema() != null) {
       boolean match = false;
       for (JsonValueAdapter item: list) {
-        final JsonSchemaAnnotatorChecker checker = checkByMatchResult(item, new JsonSchemaResolver(schema.getContainsSchema()).detailedResolve(), myOptions);
+        final JsonSchemaAnnotatorChecker checker = checkByMatchResult(myProject, item, new JsonSchemaResolver(myProject, schema.getContainsSchema()).detailedResolve(), myOptions);
         if (checker == null || checker.myErrors.size() == 0 && !checker.myHadTypeError) {
           match = true;
           break;
@@ -913,7 +850,7 @@ class JsonSchemaAnnotatorChecker {
       // skip it if something JS awaited, we do not process it currently
       if (object.isShouldValidateAgainstJSType()) continue;
 
-      final JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker(myOptions);
+      final JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker(myProject, myOptions);
       checker.checkByScheme(value, object);
 
       if (checker.isCorrect()) {
@@ -1003,7 +940,7 @@ class JsonSchemaAnnotatorChecker {
     final List<JsonSchemaObject> candidateErroneousSchemas = ContainerUtil.newArrayList();
 
     for (JsonSchemaObject object : anyOf) {
-      final JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker(myOptions);
+      final JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker(myProject, myOptions);
       checker.checkByScheme(value, object);
       if (checker.isCorrect()) {
         return object;

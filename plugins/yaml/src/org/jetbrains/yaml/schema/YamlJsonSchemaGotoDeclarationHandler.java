@@ -29,11 +29,11 @@ public class YamlJsonSchemaGotoDeclarationHandler implements GotoDeclarationHand
     final PsiFile containingFile = literal.getContainingFile();
     final VirtualFile file = containingFile.getVirtualFile();
     if (file == null || !service.isApplicableToFile(file)) return null;
-    final JsonPointerPosition steps = new YamlJsonPsiWalker().findPosition(literal, true);
+    final JsonPointerPosition steps = YamlJsonPsiWalker.INSTANCE.findPosition(literal, true);
     if (steps == null) return null;
     final JsonSchemaObject schemaObject = service.getSchemaObject(file);
     if (schemaObject != null) {
-      final PsiElement target = new JsonSchemaResolver(schemaObject, false, steps)
+      final PsiElement target = new JsonSchemaResolver(sourceElement.getProject(), schemaObject, false, steps)
         .findNavigationTarget(literal.getValue(),
                               JsonSchemaService.isSchemaFile(containingFile));
       if (target != null) {
