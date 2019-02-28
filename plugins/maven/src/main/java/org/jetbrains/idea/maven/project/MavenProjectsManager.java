@@ -186,7 +186,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       CompilerManager.getInstance(myProject).addBeforeTask(new CompileTask() {
         @Override
         public boolean execute(CompileContext context) {
-          ApplicationManager.getApplication().runReadAction(() -> new MavenResourceCompilerConfigurationGenerator(myProject, myProjectsTree).generateBuildConfiguration(context.isRebuild()));
+          ApplicationManager.getApplication().runReadAction(() -> new MavenResourceCompilerConfigurationGenerator(myProject, myProjectsTree)
+            .generateBuildConfiguration(context.isRebuild()));
           return true;
         }
       });
@@ -392,7 +393,9 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private void listenForProjectsTreeChanges() {
     myProjectsTree.addListener(new MavenProjectsTree.Listener() {
       @Override
-      public void projectsIgnoredStateChanged(@NotNull List<MavenProject> ignored, @NotNull List<MavenProject> unignored, boolean fromImport) {
+      public void projectsIgnoredStateChanged(@NotNull List<MavenProject> ignored,
+                                              @NotNull List<MavenProject> unignored,
+                                              boolean fromImport) {
         if (!fromImport) scheduleImport();
       }
 
@@ -510,7 +513,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       if (isUnitTestMode()) {
         PathKt.delete(getProjectsTreesDir());
       }
-    } finally {
+    }
+    finally {
       initLock.unlock();
     }
   }
@@ -846,7 +850,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         toResolve = new LinkedHashSet<>(myProjectsToResolve);
         myProjectsToResolve.clear();
       }
-      if(toResolve.isEmpty()) {
+      if (toResolve.isEmpty()) {
         result.setResult(Collections.emptyList());
         return;
       }
@@ -1204,7 +1208,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     MavenProjectImporter projectImporter = importer.get();
     List<Module> createdModules = projectImporter == null ? Collections.emptyList() : projectImporter.getCreatedModules();
     if (!projectsToImportWithChanges.isEmpty()) {
-      myProject.getMessageBus().syncPublisher(MavenImportListener.TOPIC).importFinished(projectsToImportWithChanges.keySet(), createdModules);
+      myProject.getMessageBus().syncPublisher(MavenImportListener.TOPIC)
+        .importFinished(projectsToImportWithChanges.keySet(), createdModules);
     }
     return createdModules;
   }

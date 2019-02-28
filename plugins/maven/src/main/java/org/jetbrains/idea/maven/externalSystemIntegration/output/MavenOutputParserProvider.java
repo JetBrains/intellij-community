@@ -8,7 +8,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputParserProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.idea.maven.externalSystemIntegration.output.events.*;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.*;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public class MavenOutputParserProvider implements ExternalSystemOutputParserProv
 
   @Override
   public List<BuildOutputParser> getBuildOutputParsers(ExternalSystemTask task) {
-    return ContainerUtil.list(createMavenOutputParser(task.getId()));
+    throw new UnsupportedOperationException();
   }
 
   public static MavenLogOutputParser createMavenOutputParser(ExternalSystemTaskId taskId) {
@@ -33,7 +33,8 @@ public class MavenOutputParserProvider implements ExternalSystemOutputParserProv
                                       new KotlinBuildErrorNotification(),
                                       new ProjectScanning(),
                                       new WarningNotifier(),
-                                      new CommonErrorParser()
+                                      new CommonErrorParser(),
+                                      new MavenBadConfigEventParser()
                                     ));
   }
 }

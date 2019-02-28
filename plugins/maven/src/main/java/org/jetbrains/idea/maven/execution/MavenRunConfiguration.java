@@ -311,8 +311,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       final ConsoleView console = createConsoleViewAndAttachToProcess(executor, processHandler);
 
       DefaultExecutionResult res = new DefaultExecutionResult(console, processHandler, createActions(console, processHandler, executor));
-      if (executor.getId().equals(ToolWindowId.RUN)
-          && MavenResumeAction.isApplicable(getEnvironment().getProject(), getJavaParameters(), MavenRunConfiguration.this)) {
+      if (MavenResumeAction.isApplicable(getEnvironment().getProject(), getJavaParameters(), MavenRunConfiguration.this)) {
         MavenResumeAction resumeAction = new MavenResumeAction(res.getProcessHandler(), runner, getEnvironment());
         res.setRestartActions(resumeAction);
       }

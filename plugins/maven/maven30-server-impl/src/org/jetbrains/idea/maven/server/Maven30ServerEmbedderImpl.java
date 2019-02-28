@@ -2,12 +2,15 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtilRt;
 import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.apache.commons.cli.ParseException;
 import org.apache.maven.*;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.InvalidRepositoryException;
@@ -187,6 +190,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
         m.invoke(cli, cliRequest);
       }
     }
+
     catch (InstantiationException e) {
       throw new RuntimeException(e);
     }
@@ -197,6 +201,11 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       throw new RuntimeException(e);
     }
     catch (InvocationTargetException e) {
+      ParseException cause = ExceptionUtilRt.findCause(e, ParseException.class);
+      if (cause != null) {
+        String workingDir = System.getProperty("user.dir");
+        throw new MavenConfigParseException(cause.getMessage(), workingDir);
+      }
       throw new RuntimeException(e);
     }
 
