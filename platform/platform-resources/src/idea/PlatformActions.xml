@@ -178,6 +178,28 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
+    <group id="PopupMenuActions" text="Popup menu actions">
+      <action id="PopupMenu-selectPrevious" text="Select Previous Menu Item"
+              description="Selects the previous menu item."
+              class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="EditorUp"/>
+      <action id="PopupMenu-selectNext" text="Select Next Menu Item"
+              description="Selects the next menu item."
+              class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="EditorDown"/>
+      <action id="PopupMenu-selectParent" text="Select Parent Menu Item"
+              description="Closes a child menu and selects the corresponding item in a parent menu."
+              class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="EditorLeft"/>
+      <action id="PopupMenu-selectChild" text="Select Child Menu Item"
+              description="Opens a child menu and selects the corresponding item in it."
+              class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="EditorRight"/>
+      <action id="PopupMenu-return" text="Invoke Selected Action"
+              description="Opens a child menu or invokes an action from selected menu item."
+              class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="EditorEnter"/>
+      <action id="PopupMenu-cancel" text="Close Context Menu"
+              description="Closes a context menu."
+              class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="EditorEscape"/>
+      <add-to-group group-id="Other.KeymapGroup"/>
+    </group>
+
     <group id="ScrollPaneActions" text="Scroll">
       <action id="ScrollPane-scrollHome" text="Scroll Home"
               description="Scrolls the surrounding scrollable area to the top."

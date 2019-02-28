@@ -189,7 +189,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
         // It is needed to ignore ENTER KEY_TYPED events which sometimes can reach editor when an action
         // is invoked from main menu via Enter key.
         setState(KeyState.STATE_PROCESSED);
-        return false;
+        return processMenuActions(e, selectedPath[0]);
       }
     }
 
@@ -947,5 +947,40 @@ public final class IdeKeyEventDispatcher implements Disposable {
         }
       }
     }
+  }
+
+  private static final String POPUP_MENU_PREFIX = "PopupMenu-"; // see PlatformActions.xml
+
+  private static boolean processMenuActions(KeyEvent event, MenuElement element) {
+    if (KeyEvent.KEY_PRESSED == event.getID() && Registry.is("ide.popup.navigation.via.actions")) {
+      KeymapManager manager = KeymapManager.getInstance();
+      if (manager != null) {
+        // search for action holder
+        Component component = element.getComponent();
+        if (component instanceof JPopupMenu) {
+          // BasicPopupMenuUI.MenuKeyboardHelper#stateChanged
+          JPopupMenu menu = (JPopupMenu)component;
+          JRootPane pane = SwingUtilities.getRootPane(menu.getInvoker());
+          if (pane != null) {
+            Keymap keymap = manager.getActiveKeymap();
+            if (keymap != null) {
+              // iterate through actions for the specified event
+              for (String id : keymap.getActionIds(KeyStroke.getKeyStrokeForEvent(event))) {
+                if (id.startsWith(POPUP_MENU_PREFIX)) {
+                  String actionId = id.substring(POPUP_MENU_PREFIX.length());
+                  Action action = pane.getActionMap().get(actionId);
+                  if (action != null) {
+                    action.actionPerformed(new ActionEvent(pane, ActionEvent.ACTION_PERFORMED, actionId));
+                    event.consume();
+                    return true; // notify dispatcher that event is processed
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
   }
 }
