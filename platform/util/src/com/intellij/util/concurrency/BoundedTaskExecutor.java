@@ -1,12 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
-import com.intellij.Patches;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.*;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.Nls;
@@ -147,19 +149,9 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     }
   }
 
-  static {
-    assert Patches.USE_REFLECTION_TO_ACCESS_JDK8;
-  }
-  // todo replace with myStatus.getAndUpdate()
   private long incrementCounterAndTimestamp() {
-    long status;
-    long newStatus;
-    do {
-      status = myStatus.get();
-      // avoid "tasks number" bits to be garbled on overflow
-      newStatus = status + 1 + (1L << 32) & 0x7fffffffffffffffL;
-    } while (!myStatus.compareAndSet(status, newStatus));
-    return newStatus;
+    // avoid "tasks number" bits to be garbled on overflow
+    return myStatus.updateAndGet(status -> status + 1 + (1L << 32) & 0x7fffffffffffffffL);
   }
 
   // return next task taken from the queue if it can be executed now
