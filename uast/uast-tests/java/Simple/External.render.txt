@@ -1,4 +1,5 @@
 import java.util.LinkedList
+import java.util.List
 import java.util.Collections.emptyList
 
 public class External {
@@ -6,7 +7,7 @@ public class External {
         return LinkedList() === LinkedList()
     }
     public static fun bar() : boolean {
-        var list: List<Integer> = LinkedList()
+        var list: java.util.List<java.lang.Integer> = LinkedList()
         return list === list
     }
     public static fun baz() : boolean {

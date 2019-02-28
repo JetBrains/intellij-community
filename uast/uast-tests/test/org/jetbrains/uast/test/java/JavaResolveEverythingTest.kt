@@ -12,6 +12,12 @@ class JavaResolveEverythingTest : AbstractJavaResolveEverythingTest() {
   fun testAnonymous() = doTest("Simple/Anonymous.java")
 
   @Test
+  fun testAnonymousClassWithParameters() = doTest("Simple/AnonymousClassWithParameters.java")
+
+  @Test
+  fun testExternal() = doTest("Simple/External.java")
+
+  @Test
   fun testTryWithResources() = doTest("Simple/TryWithResources.java")
 
   @Test
