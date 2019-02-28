@@ -431,12 +431,8 @@ public class Switcher extends AnAction implements DumbAware {
 
       final VirtualFilesRenderer filesRenderer = new VirtualFilesRenderer(this) {
         final JPanel myPanel = new NonOpaquePanel(new BorderLayout());
-        final JLabel myLabel = new JLabel();
-
-        final Icon emptyIcon = EmptyIcon.create(AllIcons.General.Modified);
 
         {
-          myLabel.setOpaque(true);
           myPanel.setBackground(UIUtil.getListBackground());
         }
 
@@ -451,10 +447,7 @@ public class Switcher extends AnAction implements DumbAware {
           final Component c = super.getListCellRendererComponent(list, value, index, selected, selected);
           final Color bg = UIUtil.getListBackground();
           final Color fg = UIUtil.getListForeground();
-          myLabel.setIcon(open ? selected ? AllIcons.General.ModifiedSelected : AllIcons.General.Modified : emptyIcon);
-          myLabel.setBackground(c.getBackground());
           myPanel.removeAll();
-          myPanel.add(myLabel, BorderLayout.WEST);
           myPanel.add(c, BorderLayout.CENTER);
 
           // Note: Name=name rendered in cell, Description=path to file, as displayed in bottom panel
