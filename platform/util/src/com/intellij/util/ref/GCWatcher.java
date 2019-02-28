@@ -2,14 +2,16 @@
 package com.intellij.util.ref;
 
 import com.intellij.openapi.util.Ref;
+import com.intellij.util.MemoryDumpHelper;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.lang.ref.PhantomReference;
+import java.io.File;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
@@ -28,7 +30,7 @@ public class GCWatcher {
   private GCWatcher(@NotNull Collection<?> objects) {
     for (Object o : objects) {
       if (o != null) {
-        myReferences.add(new PhantomReference<>(o, myQueue));
+        myReferences.add(new WeakReference<>(o, myQueue));
       }
     }
   }
@@ -71,6 +73,16 @@ public class GCWatcher {
    */
   public void tryGc() {
     if (!GCUtil.allocateTonsOfMemory(this::isEverythingCollected)) {
+      try {
+        File file = new File(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir")), "GCWatcher.hprof.zip");
+        MemoryDumpHelper.captureMemoryDumpZipped(file);
+
+        //noinspection UseOfSystemOutOrSystemErr
+        System.out.println("##teamcity[publishArtifacts '" + file.getPath() + "']");
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
       throw new IllegalStateException("Couldn't garbage-collect all passed objects, they might still be reachable from GC roots");
     }
   }
