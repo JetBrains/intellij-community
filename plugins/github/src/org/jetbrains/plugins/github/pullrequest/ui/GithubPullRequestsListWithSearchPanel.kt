@@ -144,10 +144,13 @@ internal class GithubPullRequestsListWithSearchPanel(project: Project,
       }
       else {
         if (searchQueryHolder.searchQuery.isEmpty()) {
-          list.emptyText.text = "No pull requests loaded."
+          list.emptyText.text = "No pull requests loaded. "
+          list.emptyText.appendSecondaryText("Refresh", SimpleTextAttributes.LINK_ATTRIBUTES) {
+            loader.reset()
+          }
         }
         else {
-          list.emptyText.text = "No pull requests matching filters."
+          list.emptyText.text = "No pull requests matching filters. "
           list.emptyText.appendSecondaryText("Reset Filters", SimpleTextAttributes.LINK_ATTRIBUTES) {
             resetSearch()
           }
