@@ -1,13 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.util.scenarios
 
-import com.intellij.testGuiFramework.util.FinderPredicate
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
-import com.intellij.testGuiFramework.util.Predicate
-import com.intellij.testGuiFramework.util.logInfo
-import com.intellij.testGuiFramework.util.step
+import com.intellij.testGuiFramework.util.*
 import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
 import org.fest.swing.exception.ComponentLookupException
@@ -241,11 +238,5 @@ fun RunConfigurationModel.changeOneValue(expectedField: RunConfigurationModel.Co
       if (!isFieldPresent()) throw ComponentLookupException("Cannot find component with label `$title`")
       setFieldValue(newValue)
     }
-  }
-}
-
-fun RunConfigurationModel.printHierarchy() {
-  with(connectDialog()) {
-    println(ScreenshotOnFailure.getHierarchy())
   }
 }

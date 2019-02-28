@@ -35,6 +35,7 @@ import com.intellij.testGuiFramework.launcher.GuiTestOptions.videoDuration
 import com.intellij.testGuiFramework.remote.transport.MessageType
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
 import com.intellij.testGuiFramework.util.Key
+import com.intellij.testGuiFramework.util.ScreenshotTaker
 import com.intellij.ui.Splash
 import com.intellij.ui.components.labels.ActionLink
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -92,7 +93,8 @@ class GuiTestRule : TestRule {
 
   override fun apply(base: Statement?, description: Description?): Statement {
     myTestName = "${description!!.className}#${description.methodName}"
-    myTestShortName = "${description.testClass.simpleName}#${description.methodName}"
+    myTestShortName = "${description.testClass.simpleName}-${description.methodName}"
+    GuiTestNameHolder.initialize(myTestShortName)
     //do not apply timeout rule if it is already applied to a test class
     return if (description.testClass.fields.any { it.type == Timeout::class.java })
       myRuleChain.apply(base, description)
@@ -142,7 +144,7 @@ class GuiTestRule : TestRule {
             Assume.assumeTrue("IDE error list is empty", GuiTestUtilKt.fatalErrorsFromIde().isEmpty())
             assumeOnlyWelcomeFrameShowing()
           } catch (e: Exception) {
-            ScreenshotOnFailure.takeScreenshot("$myTestName.welcomeFrameCheckFail")
+            ScreenshotTaker.takeScreenshotAndHierarchy("welcomeFrameCheckFail")
             throw e
           }
           setUp()
@@ -192,7 +194,7 @@ class GuiTestRule : TestRule {
       LOG.info("tearDown: double checking return to the first step on a welcome frame")
       if (!isWelcomeFrameFirstStep() || anyIdeFrame(Timeouts.seconds01) != null) {
         LOG.warn("tearDown: IDE cannot return to welcome frame, need to restart IDE")
-        ScreenshotOnFailure.takeScreenshot("$myTestName.thrownFromTearDown")
+        ScreenshotTaker.takeScreenshotAndHierarchy("thrownFromTearDown")
         GuiTestThread.client?.send(TransportMessage(MessageType.RESTART_IDE_AFTER_TEST,
                                                     "IDE cannot return to the Welcome frame")
         )
@@ -234,7 +236,7 @@ class GuiTestRule : TestRule {
         emptyList()
       }
       catch (e: Throwable) {
-        ScreenshotOnFailure.takeScreenshot("$myTestName.thrownFromRunning")
+        ScreenshotTaker.takeScreenshotAndHierarchy("thrownFromRunning")
         listOf(e)
       }
 
@@ -253,7 +255,7 @@ class GuiTestRule : TestRule {
           }
           else {
             closedModalDialogSet.add(modalDialog)
-            ScreenshotOnFailure.takeScreenshot("$myTestName.checkForModalDialogFail")
+            ScreenshotTaker.takeScreenshotAndHierarchy("checkForModalDialogFail")
             if (isProcessIsRunningDialog(modalDialog))
               closeProcessIsRunningDialog(modalDialog)
             else

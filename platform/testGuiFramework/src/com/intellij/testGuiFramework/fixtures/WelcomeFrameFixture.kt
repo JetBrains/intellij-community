@@ -4,7 +4,6 @@ package com.intellij.testGuiFramework.fixtures
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
-import com.intellij.testGuiFramework.util.currentTimeInHumanString
 import com.intellij.testGuiFramework.util.step
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
@@ -18,7 +17,6 @@ class WelcomeFrameFixture private constructor(robot: Robot,
   WelcomeFrameFixture::class.java, robot, target), ContainerFixture<FlatWelcomeFrame> {
 
   fun createNewProject(): WelcomeFrameFixture {
-    ScreenshotOnFailure.takeScreenshot("${currentTimeInHumanString}_before click Create New Project")
     findActionLinkByActionId("WelcomeScreen.CreateNewProject").click()
     return this
   }

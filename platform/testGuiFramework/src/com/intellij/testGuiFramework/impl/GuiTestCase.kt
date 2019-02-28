@@ -31,6 +31,7 @@ import org.junit.Rule
 import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import java.awt.Component
+import java.awt.Rectangle
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
@@ -80,8 +81,6 @@ open class GuiTestCase {
   //  val defaultSettingsTitle: String = if (isMac()) "Default Preferences" else "Default Settings"
   val defaultSettingsTitle: String = if (isMac()) "Preferences for New Projects" else "Settings for New Projects"
   val slash: String = File.separator
-
-  private val screenshotTaker: ScreenshotTaker = ScreenshotTaker()
 
   @Rule
   @JvmField
@@ -378,25 +377,13 @@ open class GuiTestCase {
   fun invokeAction(actionId: String) = GuiTestUtil.invokeAction(actionId)
 
   /**
-   * Take a screenshot for a specific component. Screenshot remain scaling and represent it in name of file.
+   * Take a screenshot for a full screen and put a file with hierarchy nearby
+   * @param screenshotName name of create screenshot, added after timestamp
+   * if [screenshotName] is empty the screenshot is create with only timestamp as a name
    */
-  fun screenshot(component: Component, screenshotName: String) {
-
-    val extension = "${getScaleSuffix()}.jpg"
-    val pathWithTestFolder = testScreenshotDirPath.path + slash + this.guiTestRule.getTestName()
-    val fileWithTestFolder = File(pathWithTestFolder)
-    FileUtil.ensureExists(fileWithTestFolder)
-    var screenshotFilePath = File(fileWithTestFolder, screenshotName + extension)
-    if (screenshotFilePath.isFile) {
-      val format = SimpleDateFormat("MM-dd-yyyy.HH.mm.ss")
-      val now = format.format(GregorianCalendar().time)
-      screenshotFilePath = File(fileWithTestFolder, "$screenshotName.$now$extension")
-    }
-    screenshotTaker.safeTakeScreenshotAndSave(screenshotFilePath, component)
-    println(message = "Screenshot for a component \"$component\" taken and stored at ${screenshotFilePath.path}")
-
+  fun screenshot(screenshotName: String = ""){
+    ScreenshotTaker.takeScreenshotAndHierarchy(screenshotName)
   }
-
 
   /**
    * Finds JDialog with a specific title (if title is null showing dialog should be only one) and returns created JDialogFixture

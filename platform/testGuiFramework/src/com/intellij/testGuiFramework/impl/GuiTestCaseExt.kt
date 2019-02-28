@@ -210,7 +210,7 @@ fun GuiTestCase.waitForGradleReimport(rootPath: String): Boolean {
                 fixtureByTextAnyState.isEnabled
               }
               catch (e: Exception) {
-                logInfo("$currentTimeInHumanString: waitForGradleReimport.actionButton: ${e::class.simpleName} - ${e.message}")
+                logInfo("waitForGradleReimport.actionButton: ${e::class.simpleName} - ${e.message}")
                 false
               }
               logInfo("'$text' button is ${if(isReimportButtonEnabled) "enabled" else "disabled"}")

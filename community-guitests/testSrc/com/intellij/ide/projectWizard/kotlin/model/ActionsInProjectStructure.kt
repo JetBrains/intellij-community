@@ -3,7 +3,6 @@ package com.intellij.ide.projectWizard.kotlin.model
 
 import com.intellij.testGuiFramework.impl.ScreenshotOnFailure
 import com.intellij.testGuiFramework.impl.jTree
-import com.intellij.testGuiFramework.util.currentTimeInHumanString
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel
 import com.intellij.testGuiFramework.util.scenarios.checkLibraryPresent
 import com.intellij.testGuiFramework.util.scenarios.checkModule
@@ -19,7 +18,7 @@ fun ProjectStructureDialogModel.checkFacetInOneModule(expectedFacet: FacetStruct
         try {
           val tree = jTree(*path)
           tree.clickPath()
-          ScreenshotOnFailure.takeScreenshot(currentTimeInHumanString)
+          screenshot()
           assert(tree.isPathSelected()) {
             "path ${path.joinToString()} is not selected"
           }
