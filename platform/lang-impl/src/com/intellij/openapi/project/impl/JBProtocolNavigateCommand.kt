@@ -8,6 +8,7 @@ import com.intellij.ide.util.gotoByName.*
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.JBProtocolCommand
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -17,14 +18,13 @@ import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.util.messages.MessageBusConnection
 
-class JBProtocolNavigateCommand : JBProtocolCommand("navigate") {
+class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
   override fun perform(target: String, parameters: Map<String, String>) {
     // handles URLs of the following types:
 
-    // jetbrains://idea/navigate/reference?project=IDEA&reference=com.intellij.openapi.project.impl.JBProtocolNavigateCommand[.perform][#perform]
-    // [&selectionX=25:5-26:6]+
-
-    // jetbrains://idea/navigate/path?project=IDEA&path=com/intellij/openapi/project/impl/JBProtocolNavigateCommand.kt:23:1
+    // jetbrains://idea/navigate/reference?project=IDEA
+    // [&reference=com.intellij.openapi.project.impl.JBProtocolNavigateCommand[.perform][#perform]]+
+    // [&path=com/intellij/openapi/project/impl/JBProtocolNavigateCommand.kt:23:1]+
     // [&selectionX=25:5-26:6]+
 
     val projectName = parameters[PROJECT_NAME_KEY]
@@ -32,36 +32,22 @@ class JBProtocolNavigateCommand : JBProtocolCommand("navigate") {
       return
     }
 
-    val model: (Project) -> ChooseByNameModel
-    val pattern: String
-
-    when (target) {
-      REFERENCE_TARGET -> {
-        pattern = (parameters[FQN_KEY] ?: return)
-        model = { project -> GotoSymbolModel2(project) }
-      }
-      FILE_TARGET -> {
-        pattern = (parameters[PATH_KEY] ?: return)
-        model = { it -> GotoFileModel(it) }
-      }
-      else -> return
+    if (target != REFERENCE_TARGET) {
+      LOG.warn("JB navigate action supports only reference target, got $target")
+      return
     }
 
     val recentProjectsActions = RecentProjectsManager.getInstance().getRecentProjectsActions(false)
     for (recentProjectAction in recentProjectsActions) {
       if (recentProjectAction is ReopenProjectAction) {
         if (recentProjectAction.projectName == projectName) {
-          val project = ProjectManager.getInstance().openProjects.find { project -> project.name == projectName }
-          val selections = parseSelections(parameters)
-
-          if (project != null) {
-            navigateToFile(project, model(project), pattern, selections)
-          }
-          else {
+          ProjectManager.getInstance().openProjects.find { project -> project.name == projectName }?.let {
+            findAndNavigateToReference(it, parameters)
+          } ?: run {
             RecentProjectsManagerBase.getInstanceEx().doOpenProject(recentProjectAction.projectPath, null, false)
 
             val appConnection = ApplicationManager.getApplication().messageBus.connect()
-            appConnection.subscribe(ProjectManager.TOPIC, NavigatableProjectListener(model, pattern, selections, appConnection))
+            appConnection.subscribe(ProjectManager.TOPIC, NavigatableProjectListener(appConnection, parameters))
           }
         }
       }
@@ -69,21 +55,36 @@ class JBProtocolNavigateCommand : JBProtocolCommand("navigate") {
   }
 
   companion object {
-    private const val PROJECT_NAME_KEY = "project"
-    private const val SELECTION = "selection"
+    private val LOG = Logger.getInstance(JBProtocolNavigateCommand::class.java)
+    const val NAVIGATE_COMMAND = "navigate"
+    const val PROJECT_NAME_KEY = "project"
+    const val REFERENCE_TARGET = "reference"
+    const val PATH_KEY = "path"
+    const val FQN_KEY = "fqn"
+    const val SELECTION = "selection"
 
-    private const val REFERENCE_TARGET = "reference"
-    private const val FQN_KEY = "fqn"
+    private fun findAndNavigateToReference(project: Project, parameters: Map<String, String>) {
+      val selections = parseSelections(parameters)
+      navigateToReference(parameters, project, selections, FQN_KEY, GotoSymbolModel2(project))
+      navigateToReference(parameters, project, selections, PATH_KEY, GotoFileModel(project))
 
-    private const val FILE_TARGET = "file"
-    private const val PATH_KEY = "path"
+    }
 
-    private fun navigateToFile(project: Project,
-                               gotoModel: ChooseByNameModel,
-                               pattern: String,
-                               selections: List<Pair<LogicalPosition, LogicalPosition>>) {
-      val model = JBProtocolNavigateChooseByNameViewModel(project, gotoModel)
-      DefaultChooseByNameItemProvider.filterElements(model, pattern, true, EmptyProgressIndicator(), null) {
+    private fun navigateToReference(parameters: Map<String, String>,
+                                    project: Project,
+                                    selections: List<Pair<LogicalPosition, LogicalPosition>>,
+                                    parameterKey: String,
+                                    model: ChooseByNameModel) {
+      parameters.filter { it.key.startsWith(parameterKey) }.forEach {
+        navigate(model, it.value, project, selections)
+      }
+    }
+
+    private fun navigate(model: ChooseByNameModel,
+                         pattern: String,
+                         project: Project,
+                         selections: List<Pair<LogicalPosition, LogicalPosition>>) {
+      DefaultChooseByNameItemProvider.filterElements(MySearchModel(project, model), pattern, true, EmptyProgressIndicator(), null) {
         if (it !is NavigationItem) {
           return@filterElements true
         }
@@ -131,19 +132,16 @@ class JBProtocolNavigateCommand : JBProtocolCommand("navigate") {
     }
   }
 
-  private class NavigatableProjectListener(private val model: (Project) -> ChooseByNameModel,
-                                           private val pattern: String,
-                                           private val selections: List<Pair<LogicalPosition, LogicalPosition>>,
-                                           private val appConnection: MessageBusConnection) : ProjectManagerListener {
+  private class NavigatableProjectListener(private val appConnection: MessageBusConnection,
+                                           private val parameters: Map<String, String>) : ProjectManagerListener {
     override fun projectOpened(project: Project) {
-      navigateToFile(project, model(project), pattern, selections)
+      findAndNavigateToReference(project, parameters)
       appConnection.disconnect()
     }
   }
 
-  //todo duplicates
-  private class JBProtocolNavigateChooseByNameViewModel(private val project: Project,
-                                                        private val model: ChooseByNameModel) : ChooseByNameViewModel {
+  //todo duplicate
+  private class MySearchModel(private val project: Project, private val model: ChooseByNameModel) : ChooseByNameViewModel {
     override fun canShowListForEmptyPattern() = false
 
     override fun isSearchInAnyPlace(): Boolean = false

@@ -667,7 +667,7 @@
 
     <extensionPoint name="qualifiedNameProvider" interface="com.intellij.ide.actions.QualifiedNameProvider"/>
     <extensionPoint name="virtualFileQualifiedNameProvider"
-                    interface="com.intellij.ide.actions.CopyReferenceAction$VirtualFileQualifiedNameProvider"/>
+                    interface="com.intellij.ide.actions.VirtualFileQualifiedNameProvider"/>
 
     <extensionPoint name="completionData"
                     beanClass="com.intellij.codeInsight.completion.CompletionDataEP"/>
