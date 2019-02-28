@@ -1,110 +1,98 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.svn.actions;
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.idea.svn.actions
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vcs.changes.ui.ChangesListView;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnLocallyDeletedChange;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.api.Depth;
-
-import java.util.Collections;
-import java.util.List;
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Ref
+import com.intellij.openapi.vcs.AbstractVcsHelper
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
+import com.intellij.openapi.vcs.changes.ui.ChangesListView
+import org.jetbrains.idea.svn.SvnBundle
+import org.jetbrains.idea.svn.SvnLocallyDeletedChange
+import org.jetbrains.idea.svn.SvnVcs
+import org.jetbrains.idea.svn.api.Depth
 
 /**
  * @author irengrig
  */
-public class MarkLocallyDeletedTreeConflictResolvedAction extends DumbAwareAction {
-  public MarkLocallyDeletedTreeConflictResolvedAction() {
-    super(SvnBundle.message("action.mark.tree.conflict.resolved.text"));
-  }
+class MarkLocallyDeletedTreeConflictResolvedAction : DumbAwareAction(SvnBundle.message("action.mark.tree.conflict.resolved.text")) {
 
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    final MyLocallyDeletedChecker locallyDeletedChecker = new MyLocallyDeletedChecker(e);
-    if (! locallyDeletedChecker.isEnabled()) return;
+  override fun actionPerformed(e: AnActionEvent) {
+    val locallyDeletedChecker = MyLocallyDeletedChecker(e)
+    if (!locallyDeletedChecker.isEnabled) return
 
-    final String markText = SvnBundle.message("action.mark.tree.conflict.resolved.confirmation.title");
-    final Project project = locallyDeletedChecker.getProject();
-    final int result = Messages.showYesNoDialog(project,
-                                                SvnBundle.message("action.mark.tree.conflict.resolved.confirmation.text"), markText,
-                                                Messages.getQuestionIcon());
+    val markText = SvnBundle.message("action.mark.tree.conflict.resolved.confirmation.title")
+    val project = locallyDeletedChecker.project
+    val result = Messages.showYesNoDialog(project,
+                                          SvnBundle.message("action.mark.tree.conflict.resolved.confirmation.text"), markText,
+                                          Messages.getQuestionIcon())
     if (result == Messages.YES) {
-      final Ref<VcsException> exception = new Ref<>();
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, markText, true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          resolveLocallyDeletedTextConflict(locallyDeletedChecker, exception);
+      val exception = Ref<VcsException>()
+      ProgressManager.getInstance().run(object : Task.Backgroundable(project, markText, true) {
+        override fun run(indicator: ProgressIndicator) {
+          resolveLocallyDeletedTextConflict(locallyDeletedChecker, exception)
         }
-      });
-      if (! exception.isNull()) {
-        AbstractVcsHelper.getInstance(project).showError(exception.get(), markText);
+      })
+      if (!exception.isNull) {
+        AbstractVcsHelper.getInstance(project).showError(exception.get(), markText)
       }
     }
   }
 
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    final MyLocallyDeletedChecker locallyDeletedChecker = new MyLocallyDeletedChecker(e);
-    e.getPresentation().setVisible(locallyDeletedChecker.isEnabled());
-    e.getPresentation().setEnabled(locallyDeletedChecker.isEnabled());
+  override fun update(e: AnActionEvent) {
+    val locallyDeletedChecker = MyLocallyDeletedChecker(e)
+    e.presentation.isVisible = locallyDeletedChecker.isEnabled
+    e.presentation.isEnabled = locallyDeletedChecker.isEnabled
     //e.getPresentation().setText(SvnBundle.message("action.mark.tree.conflict.resolved.text"));
   }
 
-  private void resolveLocallyDeletedTextConflict(MyLocallyDeletedChecker checker, Ref<VcsException> exception) {
-    final FilePath path = checker.getPath();
-    resolve(checker.getProject(), exception, path);
-    VcsDirtyScopeManager.getInstance(checker.getProject()).filePathsDirty(Collections.singletonList(path), null);
+  private fun resolveLocallyDeletedTextConflict(checker: MyLocallyDeletedChecker, exception: Ref<VcsException>) {
+    val path = checker.path
+    resolve(checker.project, exception, path!!)
+    VcsDirtyScopeManager.getInstance(checker.project!!).filePathsDirty(listOf(path), null)
   }
 
-  private void resolve(Project project, Ref<VcsException> exception, FilePath path) {
-    SvnVcs vcs = SvnVcs.getInstance(project);
+  private fun resolve(project: Project?, exception: Ref<VcsException>, path: FilePath) {
+    val vcs = SvnVcs.getInstance(project!!)
 
     try {
-      vcs.getFactory(path.getIOFile()).createConflictClient().resolve(path.getIOFile(), Depth.EMPTY, false, false, true);
+      vcs.getFactory(path.ioFile).createConflictClient().resolve(path.ioFile, Depth.EMPTY, false, false, true)
     }
-    catch (VcsException e) {
-      exception.set(e);
+    catch (e: VcsException) {
+      exception.set(e)
     }
+
   }
 
-  private static class MyLocallyDeletedChecker {
-    private final boolean myEnabled;
-    private final FilePath myPath;
-    private final Project myProject;
+  private class MyLocallyDeletedChecker internal constructor(e: AnActionEvent) {
+    var isEnabled: Boolean
+    var path: FilePath?
+    val project: Project?
 
-    MyLocallyDeletedChecker(final AnActionEvent e) {
-      final DataContext dc = e.getDataContext();
-      myProject = CommonDataKeys.PROJECT.getData(dc);
-      if (myProject == null) {
-        myPath = null;
-        myEnabled = false;
-        return;
+    init {
+      val dc = e.dataContext
+      project = CommonDataKeys.PROJECT.getData(dc)
+      if (project == null) {
+        path = null
+        isEnabled = false
       }
+      else {
+        val missingFiles = e.getData(ChangesListView.LOCALLY_DELETED_CHANGES)
 
-      final List<LocallyDeletedChange> missingFiles = e.getData(ChangesListView.LOCALLY_DELETED_CHANGES);
-
-      if (missingFiles == null || missingFiles.isEmpty()) {
-        myPath = null;
-        myEnabled = false;
-        return;
-      }
-      /*if (missingFiles == null || missingFiles.size() != 1) {
+        if (missingFiles == null || missingFiles.isEmpty()) {
+          path = null
+          isEnabled = false
+        }
+        else {
+          /*if (missingFiles == null || missingFiles.size() != 1) {
         final Change[] changes = e.getData(VcsDataKeys.CHANGES);
         if (changes == null || changes.length != 1 || changes[0].getAfterRevision() != null) {
           myPath = null;
@@ -120,26 +108,16 @@ public class MarkLocallyDeletedTreeConflictResolvedAction extends DumbAwareActio
         return;
       } */
 
-      final LocallyDeletedChange change = missingFiles.get(0);
-      myEnabled = change instanceof SvnLocallyDeletedChange && ((SvnLocallyDeletedChange) change).getConflictState().isTree();
-      if (myEnabled) {
-        myPath = change.getPath();
+          val change = missingFiles[0]
+          isEnabled = change is SvnLocallyDeletedChange && change.conflictState.isTree
+          if (isEnabled) {
+            path = change.path
+          }
+          else {
+            path = null
+          }
+        }
       }
-      else {
-        myPath = null;
-      }
-    }
-
-    public boolean isEnabled() {
-      return myEnabled;
-    }
-
-    public FilePath getPath() {
-      return myPath;
-    }
-
-    public Project getProject() {
-      return myProject;
     }
   }
 }
