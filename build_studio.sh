@@ -95,7 +95,9 @@ echo "## BAZEL: $BAZEL"
 readonly BAZEL_BIN="$($BAZEL info "bazel-bin")"
 echo "## BAZEL_BIN: $BAZEL_BIN"
 
-$ANT "-Dintellij.build.output.root=$OUT" "-Dbuild.number=$BNUM" "$ASWB_PROPERTY" "-Dbundle.ui.tests=$UITESTS" -Dbundle.gradle.release.plugin=true build
+readonly BUILD_NUMBER="$(sed "s/SNAPSHOT/${BNUM}/" build.txt)"
+
+$ANT "-Dintellij.build.output.root=$OUT" "-Dbuild.number=$BUILD_NUMBER" "$ASWB_PROPERTY" "-Dbundle.ui.tests=$UITESTS" -Dbundle.gradle.release.plugin=true build
 
 $ANT "-Dintellij.build.output.root=$OUT/updater" fullupdater
 
@@ -122,7 +124,7 @@ $BAZEL test \
     --test_output=streamed \
     --test_arg=--out="$OUT" \
     --test_arg=--dist="$DIST" \
-    --test_arg=--build=$BNUM \
+    --test_arg=--build=$BUILD_NUMBER \
     --test_arg=--aswb=$ASWB \
     --test_strategy=standalone \
     --spawn_strategy=standalone \

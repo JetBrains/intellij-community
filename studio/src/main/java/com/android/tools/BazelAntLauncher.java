@@ -19,6 +19,7 @@ import java.io.*;
 import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.util.Arrays;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.Path;
@@ -125,17 +126,19 @@ class BazelAntLauncher {
     int status = process.start().waitFor();
     System.out.println("Ant process ended with status: " + status);
     if (status == 0) {
+        String buildNumber = Files.readAllLines(Paths.get("tools/idea/build.txt"), Charset.defaultCharset()).get(0);
+        String filePrefix = "android-studio-" + buildNumber;
         if (win != null) {
-            Files.move(Paths.get(tmp, "artifacts", "android-studio-SNAPSHOT.win.zip"), Paths.get(win));
+            Files.move(Paths.get(tmp, "artifacts", filePrefix + ".win.zip"), Paths.get(win));
         }
         if (win32 != null) {
-            Files.move(Paths.get(tmp, "artifacts", "android-studio-SNAPSHOT.win32.zip"), Paths.get(win32));
+            Files.move(Paths.get(tmp, "artifacts", filePrefix + ".win32.zip"), Paths.get(win32));
         }
         if (mac != null) {
-            Files.move(Paths.get(tmp, "artifacts", "android-studio-SNAPSHOT.mac.zip"), Paths.get(mac));
+            Files.move(Paths.get(tmp, "artifacts", filePrefix + ".mac.zip"), Paths.get(mac));
         }
         if (linux != null) {
-            Files.move(Paths.get(tmp, "artifacts", "android-studio-SNAPSHOT.tar.gz"), Paths.get(linux));
+            Files.move(Paths.get(tmp, "artifacts", filePrefix + ".tar.gz"), Paths.get(linux));
         }
     } else {
         try (Stream<String> stream = Files.lines(output.toPath())) {
