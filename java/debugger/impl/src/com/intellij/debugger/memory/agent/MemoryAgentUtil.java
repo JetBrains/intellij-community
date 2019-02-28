@@ -13,6 +13,7 @@ import com.intellij.debugger.memory.ui.JavaReferenceInfo;
 import com.intellij.debugger.memory.ui.SizedReferenceInfo;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
+import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionListener;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.JavaExecutionUtil;
@@ -33,7 +34,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -41,6 +44,7 @@ import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -76,7 +80,7 @@ public class MemoryAgentUtil {
     String errorMessage = null;
     long start = System.currentTimeMillis();
     try {
-      agentFile = getAgentFile(isInDebugMode);
+      agentFile = getAgentFile(isInDebugMode, parameters.getJdkPath());
     }
     catch (InterruptedException e) {
       errorMessage = "Interrupted";
@@ -87,6 +91,9 @@ public class MemoryAgentUtil {
     }
     catch (TimeoutException e) {
       errorMessage = "Timeout";
+    }
+    catch (CantRunException e) {
+      errorMessage = "JDK home not found";
     }
     if (errorMessage != null || agentFile == null) {
       LOG.warn("Could not extract agent: " + errorMessage);
@@ -181,7 +188,8 @@ public class MemoryAgentUtil {
     return vendor != null && StringUtil.containsIgnoreCase(vendor, "ibm");
   }
 
-  private static File getAgentFile(boolean isInDebugMode) throws InterruptedException, ExecutionException, TimeoutException {
+  private static File getAgentFile(boolean isInDebugMode, String jdkPath)
+    throws InterruptedException, ExecutionException, TimeoutException {
     if (isInDebugMode) {
       String debugAgentPath = Registry.get("debugger.memory.agent.debug.path").asString();
       if (!debugAgentPath.isEmpty()) {
@@ -190,8 +198,20 @@ public class MemoryAgentUtil {
       }
     }
 
-    return ApplicationManager.getApplication()
-      .executeOnPooledThread(() -> new AgentExtractor().extract()).get(1, TimeUnit.SECONDS);
+    return ApplicationManager.getApplication().executeOnPooledThread(() -> new AgentExtractor().extract(detectAgentKind(jdkPath)))
+      .get(1, TimeUnit.SECONDS);
+  }
+
+  private static AgentExtractor.AgentLibraryType detectAgentKind(String jdkPath) {
+    if (SystemInfo.isLinux) return AgentExtractor.AgentLibraryType.LINUX;
+    if (SystemInfo.isMac) return AgentExtractor.AgentLibraryType.MACOS;
+    JdkVersionDetector.JdkVersionInfo versionInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(jdkPath);
+    if (versionInfo == null) {
+      LOG.warn("Could not detect jdk bitness. x64 will be used.");
+      return AgentExtractor.AgentLibraryType.WINDOWS64;
+    }
+
+    return Bitness.x32.equals(versionInfo.bitness) ? AgentExtractor.AgentLibraryType.WINDOWS32 : AgentExtractor.AgentLibraryType.WINDOWS64;
   }
 
   private static void listenIfStartupFailed() {
