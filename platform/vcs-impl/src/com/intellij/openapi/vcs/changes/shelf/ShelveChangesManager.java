@@ -851,7 +851,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   }
 
   @NotNull
-  public List<ShelvedChangeList> shelveChangesInSeparatedLists(@NotNull Collection<? extends Change> changes) {
+  private List<ShelvedChangeList> shelveChangesInSeparatedLists(@NotNull Collection<? extends Change> changes) {
     List<String> failedChangeLists = newArrayList();
     List<ShelvedChangeList> result = newArrayList();
     List<Change> shelvedChanges = newArrayList();
