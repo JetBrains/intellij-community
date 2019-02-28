@@ -15,6 +15,7 @@
  */
 package org.fest.swing.core
 
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.util.step
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.ui.EdtInvocationManager
@@ -48,7 +49,7 @@ class SmartWaitRobot : Robot {
   }
 
   override fun moveMouse(component: Component, point: Point) {
-    val translatedPoint = translate(component, point.x, point.y)
+    val translatedPoint = performOnEdt { translate(component, point.x, point.y) }
     requireNotNull(translatedPoint) {  "Translated point should be not null" }
     moveMouse(translatedPoint.x, translatedPoint.y)
   }
