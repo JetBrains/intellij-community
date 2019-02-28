@@ -74,14 +74,14 @@ class ConfigImportHelperTest {
     // create new config dir to test that it will be not suggested too (as on start of new version config dir can be created)
     newConfigPath.createDirectories()
 
-    assertThat(ConfigImportHelper.findRecentConfigDirectory(newConfigPath, isMacOs).joinToString("\n")).isEqualTo("""
+    assertThat(ConfigImportHelper.findConfigDirectories(newConfigPath, isMacOs, false).joinToString("\n")).isEqualTo("""
         /data/${constructConfigPath("2022.1", isMacOs)}
         /data/${constructConfigPath("2021.1", isMacOs)}
         /data/${constructConfigPath("2020.1", isMacOs)}
       """.trimIndent())
 
     writeStorageFile("2021.1", 400, isMacOs)
-    assertThat(ConfigImportHelper.findRecentConfigDirectory(newConfigPath, isMacOs).joinToString("\n")).isEqualTo("""
+    assertThat(ConfigImportHelper.findConfigDirectories(newConfigPath, isMacOs, false).joinToString("\n")).isEqualTo("""
         /data/${constructConfigPath("2021.1", isMacOs)}
         /data/${constructConfigPath("2022.1", isMacOs)}
         /data/${constructConfigPath("2020.1", isMacOs)}
@@ -103,7 +103,7 @@ class ConfigImportHelperTest {
     // create new config dir to test that it will be not suggested too (as on start of new version config dir can be created)
     newConfigPath.createDirectories()
 
-    assertThat(ConfigImportHelper.findRecentConfigDirectory(newConfigPath, isMacOs)
+    assertThat(ConfigImportHelper.findConfigDirectories(newConfigPath, isMacOs, false)
                  .joinToString("\n", transform = { it.fileName.toString().removePrefix("IntelliJIdea") }))
       .isEqualTo("""
         2022.1
@@ -140,7 +140,7 @@ class ConfigImportHelperTest {
     storageDir("2018.3", 1545844523000)
 
     val newConfigPath = fsRule.fs.getPath("/data/${constructConfigPath("2019.2", isMacOs, "DataGrip")}")
-    assertThat(ConfigImportHelper.findRecentConfigDirectory(newConfigPath, isMacOs)
+    assertThat(ConfigImportHelper.findConfigDirectories(newConfigPath, isMacOs, false)
                  .joinToString("\n", transform = { it.fileName.toString().removePrefix("DataGrip") }))
       .isEqualTo("""
         2017.3

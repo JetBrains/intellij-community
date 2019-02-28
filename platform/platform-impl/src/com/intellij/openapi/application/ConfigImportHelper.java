@@ -43,9 +43,11 @@ import java.util.zip.ZipFile;
 import static com.intellij.ide.GeneralSettings.IDE_GENERAL_XML;
 import static com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY;
 import static com.intellij.openapi.util.Pair.pair;
+import static com.intellij.openapi.util.text.StringUtil.startsWithIgnoreCase;
 
 /**
  * @author max
+ * @noinspection SSBasedInspection
  */
 public class ConfigImportHelper {
   private static final String FIRST_SESSION_KEY = "intellij.first.ide.session";
@@ -68,7 +70,7 @@ public class ConfigImportHelper {
 
     ConfigImportSettings settings = getConfigImportSettings();
     Path newConfigDir = Paths.get(newConfigPath);
-    List<Path> guessedOldConfigDirs = findRecentConfigDirectory(newConfigDir, SystemInfo.isMac);
+    List<Path> guessedOldConfigDirs = findConfigDirectories(newConfigDir, SystemInfo.isMac, true);
 
     ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(guessedOldConfigDirs, f -> findConfigDirectoryByPath(f));
     dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
@@ -138,33 +140,42 @@ public class ConfigImportHelper {
   }
 
   @NotNull
-  public static List<Path> findRecentConfigDirectory(@NotNull Path newConfigDir, boolean isMacOs) {
+  public static List<Path> findConfigDirectories(@NotNull Path newConfigDir, boolean isMacOs, boolean checkDefaultLocation) {
     // looks for the most recent existing config directory in the vicinity of the new one, assuming standard layout
     // ("~/Library/<selector_prefix><selector_version>" on macOS, "~/.<selector_prefix><selector_version>/config" on other OSes)
 
-    Path configsHome = (isMacOs ? newConfigDir : newConfigDir.getParent()).getParent();
-    if (configsHome == null || !Files.isDirectory(configsHome)) {
-      return Collections.emptyList();
-    }
-
-    String nameWithSelector = PathManager.getPathsSelector();
-    if (nameWithSelector == null) {
-      nameWithSelector = (isMacOs ? newConfigDir : newConfigDir.getParent()).getFileName().toString();
-    }
+    List<Path> homes = ContainerUtilRt.newArrayListWithCapacity(2);
+    homes.add((isMacOs ? newConfigDir : newConfigDir.getParent()).getParent());
+    String nameWithSelector = StringUtil.notNullize(
+      PathManager.getPathsSelector(),
+      (isMacOs ? newConfigDir : newConfigDir.getParent()).getFileName().toString());
     String prefix = getPrefixFromSelector(nameWithSelector, isMacOs);
-    if (prefix == null) {
-      return Collections.emptyList();
+
+    String defaultPrefix = StringUtil.replace(StringUtil.notNullize(
+      ApplicationNamesInfo.getInstance().getFullProductName(), PlatformUtils.getPlatformPrefix()), " ", "");
+    if (checkDefaultLocation) {
+      Path configDir = Paths.get(PathManager.getDefaultConfigPathFor(defaultPrefix));
+      Path configHome = (isMacOs ? configDir : configDir.getParent()).getParent();
+      if (!homes.contains(configHome)) homes.add(configHome);
     }
 
-    final List<Path> candidates;
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(configsHome, it -> {
-      //noinspection CodeBlock2Expr
-      return StringUtil.startsWithIgnoreCase(it.getFileName().toString(), prefix) && !it.equals(isMacOs ? newConfigDir : newConfigDir.getParent());
-    })) {
-      candidates = ContainerUtilRt.newArrayList(stream);
-    }
-    catch (IOException ignore) {
-      return Collections.emptyList();
+    List<Path> candidates = ContainerUtil.newArrayList();
+    for (Path dir : homes) {
+      if (dir == null || !Files.isDirectory(dir)) continue;
+
+      try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, it -> {
+        String fileName = it.getFileName().toString();
+        if ((prefix == null || !startsWithIgnoreCase(fileName, prefix)) &&
+            !startsWithIgnoreCase(fileName, defaultPrefix)) return false;
+        if (!Files.isDirectory(it)) return false;
+        return !it.equals(isMacOs ? newConfigDir : newConfigDir.getParent());
+      })) {
+        for (Path path : stream) {
+          candidates.add(path);
+        }
+      }
+      catch (IOException ignore) {
+      }
     }
 
     if (candidates.isEmpty()) {
