@@ -63,8 +63,9 @@ class ModuleRedeclarator(object):
         @param module: module object
         @param mod_qname: module qualified name
         @param mod_filename: filename of binary module (the .dll or .so). Can be None for modules
-            that don't have corresponding binary file
-        @param cache_dir: path to skeletons cache directory (e.g. python_stubs/cache)
+            that don't have corresponding binary files (e.g. builtins)
+        @param cache_dir: per-binary cache directory where the generated stub will be stored.
+            Normally, it's "<IDE system dir>/python_stubs/cache/<sha256 digest>/".
         @param indent_size: amount of space characters per indent
         """
         import generator3
