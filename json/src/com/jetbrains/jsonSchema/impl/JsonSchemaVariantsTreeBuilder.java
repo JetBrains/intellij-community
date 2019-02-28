@@ -210,7 +210,7 @@ public class JsonSchemaVariantsTreeBuilder {
         }
         // this definition was already expanded; do not cycle
         if (!visited.add(definition)) break;
-        current = merge(current, definition, current);
+        current = JsonSchemaObject.merge(current, definition, current);
       }
       final Operation expandOperation = createExpandOperation(current, myService);
       if (expandOperation != null) myChildOperations.add(expandOperation);
@@ -302,7 +302,7 @@ public class JsonSchemaVariantsTreeBuilder {
   private static List<JsonSchemaObject> andGroup(@NotNull JsonSchemaObject object, @NotNull List<JsonSchemaObject> group) {
     List<JsonSchemaObject> list = ContainerUtil.newArrayListWithCapacity(group.size());
     for (JsonSchemaObject s: group) {
-      JsonSchemaObject schemaObject = merge(object, s, s);
+      JsonSchemaObject schemaObject = JsonSchemaObject.merge(object, s, s);
       if (schemaObject.isValidByExclusion()) {
         list.add(schemaObject);
       }
@@ -364,17 +364,6 @@ public class JsonSchemaVariantsTreeBuilder {
         }
       }
     }
-  }
-
-  @NotNull
-  public static JsonSchemaObject merge(@NotNull JsonSchemaObject base,
-                                       @NotNull JsonSchemaObject other,
-                                       @NotNull JsonSchemaObject pointTo) {
-    final JsonSchemaObject object = new JsonSchemaObject(pointTo.getFileUrl(), pointTo.getPointer());
-    object.mergeValues(other);
-    object.mergeValues(base);
-    object.setRef(other.getRef());
-    return object;
   }
 
   private static boolean conflictingSchema(JsonSchemaObject schema) {

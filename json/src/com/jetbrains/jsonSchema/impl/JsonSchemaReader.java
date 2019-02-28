@@ -43,10 +43,10 @@ public class JsonSchemaReader {
     fillMap();
   }
 
-  @Nullable private final String myFileId;
+  @Nullable private final VirtualFile myFile;
 
   public JsonSchemaReader(@Nullable VirtualFile file) {
-    myFileId = file == null ? null : file.getUrl();
+    myFile = file;
     myQueue = new ArrayDeque<>();
   }
 
@@ -101,7 +101,7 @@ public class JsonSchemaReader {
 
   @Nullable
   private JsonSchemaObject read(@NotNull final PsiElement object, @NotNull JsonLikePsiWalker walker) {
-    final JsonSchemaObject root = new JsonSchemaObject(myFileId, "/");
+    final JsonSchemaObject root = new JsonSchemaObject(myFile, "/");
     JsonValueAdapter rootAdapter = walker.createValueAdapter(object);
     if (rootAdapter == null) return null;
     enqueue(myQueue, root, rootAdapter);
@@ -122,7 +122,7 @@ public class JsonSchemaReader {
           final MyReader reader = READERS_MAP.get(name);
           JsonValueAdapter value = values.iterator().next();
           if (reader != null) {
-            reader.read(value, currentSchema, myQueue, myFileId);
+            reader.read(value, currentSchema, myQueue, myFile);
           }
           else {
             readSingleDefinition(name, value, currentSchema, pointer);
@@ -151,7 +151,7 @@ public class JsonSchemaReader {
                                     @NotNull JsonSchemaObject schema,
                                     String pointer) {
     String nextPointer = getNewPointer(name, pointer);
-    final JsonSchemaObject defined = enqueue(myQueue, new JsonSchemaObject(myFileId, nextPointer), value);
+    final JsonSchemaObject defined = enqueue(myQueue, new JsonSchemaObject(myFile, nextPointer), value);
     Map<String, JsonSchemaObject> definitions = schema.getDefinitionsMap();
     if (definitions == null) schema.setDefinitionsMap(definitions = new HashMap<>());
     definitions.put(name, defined);
@@ -466,7 +466,7 @@ public class JsonSchemaReader {
   @NotNull
   private static Map<String, JsonSchemaObject> readInnerObject(String parentPointer, @NotNull JsonValueAdapter element,
                                                                @NotNull Collection<Pair<JsonSchemaObject, JsonValueAdapter>> queue,
-                                                               String virtualFileId) {
+                                                               VirtualFile virtualFile) {
     final Map<String, JsonSchemaObject> map = new HashMap<>();
     if (!(element instanceof JsonObjectValueAdapter)) return map;
     final List<JsonPropertyAdapter> properties = ((JsonObjectValueAdapter)element).getPropertyList();
@@ -478,11 +478,11 @@ public class JsonSchemaReader {
       if (propertyName == null) continue;
       if (value.isBooleanLiteral()) {
         // schema v7: `propName: true` is equivalent to `propName: {}`
-        map.put(propertyName, new JsonSchemaObject(virtualFileId, getNewPointer(propertyName, parentPointer)));
+        map.put(propertyName, new JsonSchemaObject(virtualFile, getNewPointer(propertyName, parentPointer)));
         continue;
       }
       if (!value.isObject()) continue;
-      map.put(propertyName, enqueue(queue, new JsonSchemaObject(virtualFileId, getNewPointer(propertyName, parentPointer)), value));
+      map.put(propertyName, enqueue(queue, new JsonSchemaObject(virtualFile, getNewPointer(propertyName, parentPointer)), value));
     }
     return map;
   }
@@ -505,6 +505,6 @@ public class JsonSchemaReader {
     void read(@NotNull JsonValueAdapter source,
               @NotNull JsonSchemaObject target,
               @NotNull Collection<Pair<JsonSchemaObject, JsonValueAdapter>> processingQueue,
-              @Nullable String virtualFileId);
+              @Nullable VirtualFile file);
   }
 }

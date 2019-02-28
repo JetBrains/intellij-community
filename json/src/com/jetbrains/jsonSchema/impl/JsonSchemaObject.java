@@ -37,6 +37,7 @@ import static com.jetbrains.jsonSchema.JsonPointerUtil.*;
 public class JsonSchemaObject {
   private static final Logger LOG = Logger.getInstance(JsonSchemaObject.class);
 
+  public static final String MOCK_URL = "mock:///";
   @NonNls public static final String DEFINITIONS = "definitions";
   @NonNls public static final String PROPERTIES = "properties";
   @NonNls public static final String ITEMS = "items";
@@ -44,6 +45,7 @@ public class JsonSchemaObject {
   @NonNls public static final String X_INTELLIJ_HTML_DESCRIPTION = "x-intellij-html-description";
   @Nullable private final String myFileUrl;
   @NotNull private final String myPointer;
+  @Nullable private final VirtualFile myRawFile;
   @Nullable private Map<String, JsonSchemaObject> myDefinitionsMap;
   @NotNull public static final JsonSchemaObject NULL_OBJ = new JsonSchemaObject("$_NULL_$");
   @NotNull private final ConcurrentMap<String, JsonSchemaObject> myComputedRefs = new ConcurrentHashMap<>();
@@ -119,8 +121,16 @@ public class JsonSchemaObject {
 
   private boolean myIsValidByExclusion = true;
 
-  public JsonSchemaObject(@Nullable String fileUrl, @NotNull String pointer) {
+  public JsonSchemaObject(@Nullable VirtualFile file, @NotNull String pointer) {
+    myFileUrl = file == null ? null : file.getUrl();
+    myRawFile = myFileUrl != null && myFileUrl.startsWith(MOCK_URL) ? file : null;
+    myPointer = pointer;
+    myProperties = new HashMap<>();
+  }
+
+  private JsonSchemaObject(@Nullable VirtualFile rawFile, @Nullable String fileUrl, @NotNull String pointer) {
     myFileUrl = fileUrl;
+    myRawFile = rawFile;
     myPointer = pointer;
     myProperties = new HashMap<>();
   }
@@ -150,6 +160,15 @@ public class JsonSchemaObject {
   @Nullable
   public String getFileUrl() {
     return myFileUrl;
+  }
+
+  /**
+   * NOTE: Raw files are stored only in very specific cases such as mock files
+   * This API should be used only as a fallback to trying to resolve file via its url returned by getFileUrl()
+   */
+  @Nullable
+  public VirtualFile getRawFile() {
+    return myRawFile;
   }
 
   @Nullable
@@ -311,7 +330,7 @@ public class JsonSchemaObject {
       }
       else {
         JsonSchemaObject existingProp = thisObject.myProperties.get(key);
-        thisObject.myProperties.put(key, JsonSchemaVariantsTreeBuilder.merge(existingProp, otherProp, otherProp));
+        thisObject.myProperties.put(key, merge(existingProp, otherProp, otherProp));
       }
     }
   }
@@ -1088,6 +1107,17 @@ public class JsonSchemaObject {
       LOG.debug(String.format("Definition not found by reference: '%s' in file %s", path, schemaFile == null ? "(no file)" : schemaFile.getPath()));
     }
     return definition;
+  }
+
+  @NotNull
+  public static JsonSchemaObject merge(@NotNull JsonSchemaObject base,
+                                       @NotNull JsonSchemaObject other,
+                                       @NotNull JsonSchemaObject pointTo) {
+    final JsonSchemaObject object = new JsonSchemaObject(pointTo.myRawFile, pointTo.myFileUrl, pointTo.getPointer());
+    object.mergeValues(other);
+    object.mergeValues(base);
+    object.setRef(other.getRef());
+    return object;
   }
 
   private static class PropertyNamePattern {
