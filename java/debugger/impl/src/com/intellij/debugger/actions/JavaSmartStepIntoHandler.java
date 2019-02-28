@@ -13,6 +13,7 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.MethodBytecodeUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,7 +21,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.DocumentUtil;
@@ -69,7 +69,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
   @NotNull
   @Override
   public Promise<List<SmartStepTarget>> findStepIntoTargets(SourcePosition position, DebuggerSession session) {
-    if (Registry.is("debugger.smart.step.always")) {
+    if (DebuggerSettings.getInstance().ALWAYS_SMART_STEP_INTO) {
       return findSmartStepTargetsAsync(position, session);
     }
     return Promises.rejectedPromise();
