@@ -602,7 +602,7 @@ public class PyCallExpressionHelper {
   }
 
   @NotNull
-  private static Maybe<PyType> getSuperCallType(@NotNull PyCallExpression call, TypeEvalContext context) {
+  private static Maybe<PyType> getSuperCallType(@NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
     final PyExpression callee = call.getCallee();
     if (callee instanceof PyReferenceExpression) {
       PsiElement must_be_super_init = ((PyReferenceExpression)callee).getReference().resolve();
@@ -613,7 +613,7 @@ public class PyCallExpressionHelper {
           if (argumentList != null) {
             final PyClass containingClass = PsiTreeUtil.getParentOfType(call, PyClass.class);
             PyExpression[] args = argumentList.getArguments();
-            if (args.length > 1) {
+            if (containingClass != null && args.length > 1) {
               PyExpression first_arg = args[0];
               if (first_arg instanceof PyReferenceExpression) {
                 final PyReferenceExpression firstArgRef = (PyReferenceExpression)first_arg;
@@ -648,7 +648,9 @@ public class PyCallExpressionHelper {
   }
 
   @Nullable
-  private static PyType getSuperCallTypeForArguments(TypeEvalContext context, PyClass firstClass, PyExpression second_arg) {
+  private static PyType getSuperCallTypeForArguments(@NotNull TypeEvalContext context,
+                                                     @NotNull PyClass firstClass,
+                                                     @Nullable PyExpression second_arg) {
     // check 2nd argument, too; it should be an instance
     if (second_arg != null) {
       PyType second_type = context.getType(second_arg);
