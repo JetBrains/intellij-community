@@ -25,12 +25,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
 import one.util.streamex.StreamEx;
+import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,6 +55,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
       "for.loop.replaceable.by.while.display.name");
   }
 
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
@@ -97,8 +100,8 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      final PsiForStatement forStatement = (PsiForStatement)element.getParent();
-      assert forStatement != null;
+      final PsiForStatement forStatement = ObjectUtils.tryCast(element.getParent(), PsiForStatement.class);
+      if (forStatement == null) return;
       CommentTracker commentTracker = new CommentTracker();
       PsiStatement initialization = forStatement.getInitialization();
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
