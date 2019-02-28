@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.impl
 import com.intellij.psi.*
 import com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP
 import com.intellij.psi.util.TypeConversionUtil
+import com.intellij.util.recursionSafeLazy
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMapProperty
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyPropertyBase
 
@@ -29,7 +30,7 @@ class GroovyMapPropertyImpl(
     return mapSubstitutor?.substitute(mapClass.typeParameters[1])
   }
 
-  private val myPropertyType by lazy(::computePropertyType)
+  private val myPropertyType by recursionSafeLazy(initializer = ::computePropertyType)
 
   override fun getPropertyType(): PsiType? = myPropertyType
 
