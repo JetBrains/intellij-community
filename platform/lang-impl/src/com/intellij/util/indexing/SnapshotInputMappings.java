@@ -16,16 +16,11 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ThreadLocalCachedByteArray;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.CompressionUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
@@ -37,7 +32,6 @@ import com.intellij.util.io.DataOutputStream;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +50,7 @@ class SnapshotInputMappings<Key, Value, Input> {
   private volatile PersistentHashMap<Integer, String> myIndexingTrace;
 
   private final boolean myIsPsiBackedIndex;
+  private final FileContentHasher myHasher = Sha1FileContentHasher.getInstance();
 
   SnapshotInputMappings(IndexExtension<Key, Value, Input> indexExtension) throws IOException {
     myIndexId = (ID<Key, Value>)indexExtension.getName();
@@ -105,7 +100,7 @@ class SnapshotInputMappings<Key, Value, Input> {
 
     try {
       FileContent fileContent = (FileContent)content;
-      hashId = getHashOfContent(fileContent);
+      hashId = myHasher.getEnumeratedHash(fileContent, myIsPsiBackedIndex);
       if (doReadSavedPersistentData) {
         if (myContents == null || !myContents.isBusyReading() || DebugAssertions.EXTRA_SANITY_CHECKS) { // avoid blocking read, we can calculate index value
           ByteArraySequence bytes = readContents(hashId);
@@ -334,57 +329,6 @@ class SnapshotInputMappings<Key, Value, Input> {
 
     return myMapExternalizer.read(stream);
   }
-
-  private Integer getHashOfContent(FileContent content) throws IOException {
-    FileType fileType = content.getFileType();
-    if (myIsPsiBackedIndex && content instanceof FileContentImpl) {
-      // psi backed index should use existing psi to build index value (FileContentImpl.getPsiFileForPsiDependentIndex())
-      // so we should use different bytes to calculate hash(Id)
-      Integer previouslyCalculatedUncommittedHashId = content.getUserData(ourSavedUncommittedHashIdKey);
-
-      if (previouslyCalculatedUncommittedHashId == null) {
-        Document document = FileDocumentManager.getInstance().getCachedDocument(content.getFile());
-
-        if (document != null) {  // if document is not committed
-          PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(content.getProject());
-
-          if (psiDocumentManager.isUncommited(document)) {
-            PsiFile file = psiDocumentManager.getCachedPsiFile(document);
-            Charset charset = ((FileContentImpl)content).getCharset();
-
-            if (file != null) {
-              previouslyCalculatedUncommittedHashId = ContentHashesSupport
-                .calcContentHashIdWithFileType(file.getText().getBytes(charset), charset,
-                                               fileType);
-              content.putUserData(ourSavedUncommittedHashIdKey, previouslyCalculatedUncommittedHashId);
-            }
-          }
-        }
-      }
-      if (previouslyCalculatedUncommittedHashId != null) return previouslyCalculatedUncommittedHashId;
-    }
-
-    Integer previouslyCalculatedContentHashId = content.getUserData(ourSavedContentHashIdKey);
-    if (previouslyCalculatedContentHashId == null) {
-      byte[] hash = content instanceof FileContentImpl ? ((FileContentImpl)content).getHash():null;
-      if (hash == null) {
-        if (fileType.isBinary()) {
-          previouslyCalculatedContentHashId = ContentHashesSupport.calcContentHashId(content.getContent(), fileType);
-        } else {
-          Charset charset = content instanceof FileContentImpl ? ((FileContentImpl)content).getCharset() : null;
-          previouslyCalculatedContentHashId = ContentHashesSupport
-            .calcContentHashIdWithFileType(content.getContent(), charset, fileType);
-        }
-      } else {
-        previouslyCalculatedContentHashId =  ContentHashesSupport.enumerateHash(hash);
-      }
-      content.putUserData(ourSavedContentHashIdKey, previouslyCalculatedContentHashId);
-    }
-    return previouslyCalculatedContentHashId;
-  }
-  private static final com.intellij.openapi.util.Key<Integer> ourSavedContentHashIdKey = com.intellij.openapi.util.Key.create("saved.content.hash.id");
-  private static final com.intellij.openapi.util.Key<Integer> ourSavedUncommittedHashIdKey = com.intellij.openapi.util.Key.create("saved.uncommitted.hash.id");
-
 
   private StringBuilder buildDiff(Map<Key, Value> data, Map<Key, Value> contentData) {
     StringBuilder moreInfo = new StringBuilder();
