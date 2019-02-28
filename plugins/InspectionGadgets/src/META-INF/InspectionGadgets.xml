@@ -386,6 +386,10 @@
                      key="suspicious.indent.after.control.statement.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.SuspiciousIndentAfterControlStatementInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SuspiciousAssignmentOperator" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="suspicious.assignment.operator.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.bugs.SuspiciousAssignmentOperatorInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SuspiciousSystemArraycopy" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="suspicious.system.arraycopy.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
