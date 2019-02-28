@@ -25,7 +25,6 @@ class NotRoamableUiSettings : PersistentStateComponent<NotRoamableUiOptions> {
 
   internal fun fixFontSettings() {
     val state = state
-    state.initDefFont()
 
     // 1. Sometimes system font cannot display standard ASCII symbols. If so we have
     // find any other suitable font withing "preferred" fonts first.
@@ -51,35 +50,26 @@ class NotRoamableUiSettings : PersistentStateComponent<NotRoamableUiOptions> {
   }
 }
 
-internal fun NotRoamableUiOptions.initDefFont() {
-  val fontData = systemFontFaceAndSize
-  if (fontFace == null) {
-    fontFace = fontData.first
-  }
-  if (fontSize <= 0) {
-    fontSize = fontData.second
-  }
-  if (fontScale <= 0) {
-    fontScale = UISettings.defFontScale
-  }
-}
-
 class NotRoamableUiOptions : BaseState() {
   var ideAAType by property(AntialiasingType.SUBPIXEL)
 
   var editorAAType by property(AntialiasingType.SUBPIXEL)
 
-  // These font properties should not be set in the default ctor,
-  // so that to make the serialization logic judge if a property
-  // should be stored or shouldn't by the provided filter only.
   @get:Property(filter = FontFilter::class)
   var fontFace by string()
 
   @get:Property(filter = FontFilter::class)
-  var fontSize by property(UISettingsState.defFontSize)
+  var fontSize by property(0)
 
   @get:Property(filter = FontFilter::class)
   var fontScale by property(0f)
+
+  init {
+    val fontData = systemFontFaceAndSize
+    fontFace = fontData.first
+    fontSize = fontData.second
+    fontScale = UISettings.defFontScale
+  }
 }
 
 private class FontFilter : SerializationFilter {
