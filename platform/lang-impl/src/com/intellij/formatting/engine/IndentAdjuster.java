@@ -36,7 +36,7 @@ public class IndentAdjuster {
    * 
    * @return new current block if we need to rollback, null otherwise
    */
-  public LeafBlockWrapper adjustIndent(LeafBlockWrapper block) {
+  LeafBlockWrapper adjustIndent(LeafBlockWrapper block) {
     AlignmentImpl alignment = CoreFormatterUtil.getAlignment(block);
     WhiteSpace whiteSpace = block.getWhiteSpace();
 

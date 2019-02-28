@@ -81,7 +81,7 @@ public class WrapBlocksState extends State {
     return myBlockRangesMap;
   }
   
-  public DependentSpacingEngine getDependentSpacingEngine() {
+  DependentSpacingEngine getDependentSpacingEngine() {
     assertDone();
     if (myDependentSpacingEngine == null) {
       myDependentSpacingEngine = new DependentSpacingEngine(getBlockRangesMap());
@@ -89,12 +89,12 @@ public class WrapBlocksState extends State {
     return myDependentSpacingEngine;
   }
   
-  public Set<Alignment> getAlignmentsInsideRangesToModify() {
+  Set<Alignment> getAlignmentsInsideRangesToModify() {
     assertDone();
     return myWrapper.getAlignmentsInsideRangeToModify();
   }
   
-  public AlignmentHelper getAlignmentHelper() {
+  AlignmentHelper getAlignmentHelper() {
     assertDone();
     if (myAlignmentHelper == null) {
       Document document = myWrapper.getFormattingDocumentModel().getDocument();
@@ -111,12 +111,12 @@ public class WrapBlocksState extends State {
     return myIndentAdjuster;
   }
   
-  public MultiMap<ExpandableIndent, AbstractBlockWrapper> getExpandableIndent() {
+  MultiMap<ExpandableIndent, AbstractBlockWrapper> getExpandableIndent() {
     assertDone();
     return myWrapper.getExpandableIndentsBlocks();
   }
   
-  public WrapProcessor getWrapProcessor() {
+  WrapProcessor getWrapProcessor() {
     assertDone();
     if (myWrapProcessor == null) {
       int rightMargin = myBlockIndentOptions.getRightMargin();
@@ -125,11 +125,11 @@ public class WrapBlocksState extends State {
     return myWrapProcessor;
   }
 
-  public BlockIndentOptions getBlockIndentOptions() {
+  BlockIndentOptions getBlockIndentOptions() {
     return myBlockIndentOptions;
   }
   
-  private void assertDone() {
+  void assertDone() {
     if (!isDone()) throw new IllegalStateException();
   }
   
