@@ -149,6 +149,8 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
   }
 
   public void testLocalVar() { doTest(); }
+  public void testLocalVarAnnotated() { doTest(); }
+  public void testLocalVarImplicit() { doTest(); }
 
   public void testSlashComment() { doTest(); }
   public void testDocComment() { doTest(); }
