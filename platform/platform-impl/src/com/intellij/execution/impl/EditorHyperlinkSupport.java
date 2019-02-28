@@ -53,9 +53,8 @@ public class EditorHyperlinkSupport {
   private final AsyncFilterRunner myFilterRunner;
 
   /**
-   * @deprecated use {@link #get(Editor, Project)} instead
+   * If your editor has a project inside, better use {@link #get(Editor)}
    */
-  @Deprecated
   public EditorHyperlinkSupport(@NotNull final Editor editor, @NotNull final Project project) {
     myEditor = (EditorEx)editor;
     myProject = project;
@@ -85,9 +84,11 @@ public class EditorHyperlinkSupport {
     );
   }
 
-  public static EditorHyperlinkSupport get(@NotNull final Editor editor, @NotNull final Project project) {
+  public static EditorHyperlinkSupport get(@NotNull final Editor editor) {
     EditorHyperlinkSupport instance = editor.getUserData(EDITOR_HYPERLINK_SUPPORT_KEY);
     if (instance == null) {
+      Project project = editor.getProject();
+      assert project != null;
       instance = new EditorHyperlinkSupport(editor, project);
       editor.putUserData(EDITOR_HYPERLINK_SUPPORT_KEY, instance);
     }

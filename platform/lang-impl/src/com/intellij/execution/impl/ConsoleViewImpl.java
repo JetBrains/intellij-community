@@ -451,7 +451,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myEditor.getScrollPane().addMouseWheelListener(mouseListener);
     myEditor.getScrollPane().getVerticalScrollBar().addMouseListener(mouseListener);
     myEditor.getScrollPane().getVerticalScrollBar().addMouseMotionListener(mouseListener);
-    myHyperlinks = EditorHyperlinkSupport.get(myEditor, myProject);
+    myHyperlinks = EditorHyperlinkSupport.get(myEditor);
     myEditor.getScrollingModel().addVisibleAreaListener(e -> {
       // There is a possible case that the console text is populated while the console is not shown (e.g. we're debugging and
       // 'Debugger' tab is active while 'Console' is not). It's also possible that newly added text contains long lines that

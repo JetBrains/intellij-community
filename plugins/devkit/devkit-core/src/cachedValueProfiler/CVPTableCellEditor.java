@@ -61,7 +61,7 @@ class CVPTableCellEditor extends AbstractCellEditor implements TableCellEditor {
     ExceptionFilter filter = new ExceptionFilter(GlobalSearchScope.allScope(myProject));
     Filter.Result result = filter.applyFilter(text, text.length());
     if (result != null) {
-      EditorHyperlinkSupport hyperlinkSupport = EditorHyperlinkSupport.get(editor, myProject);
+      EditorHyperlinkSupport hyperlinkSupport = EditorHyperlinkSupport.get(editor);
       for (Filter.ResultItem item : result.getResultItems()) {
         HyperlinkInfo hyperlinkInfo = item.getHyperlinkInfo();
         if (hyperlinkInfo != null) {

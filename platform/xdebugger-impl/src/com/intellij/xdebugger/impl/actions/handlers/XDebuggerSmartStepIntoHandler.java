@@ -200,7 +200,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     SmartStepData<V> data = new SmartStepData<>(handler, variants, session, editor);
     editor.putUserData(SMART_STEP_INPLACE_DATA, data);
 
-    EditorHyperlinkSupport hyperlinkSupport = EditorHyperlinkSupport.get(editor, session.getProject());
+    EditorHyperlinkSupport hyperlinkSupport = EditorHyperlinkSupport.get(editor);
     for (V variant : variants) {
       PsiElement element = variant.getHighlightElement();
       if (element != null) {
