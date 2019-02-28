@@ -47,11 +47,18 @@ public class WarDirectory implements Serializable {
    */
   public static final WarDirectory WEB_INF_LIB = new WarDirectory("/WEB-INF/lib");
   /**
+   * Spring-Boot convention directory of provided library
+   * Subdirectory can store JAR files used by the Web module,
+   * that are required when running embedded but are not required when deploying to a traditional web container.
+   */
+  public static final WarDirectory WEB_INF_LIB_PROVIDED = new WarDirectory("/WEB-INF/lib-provided");
+  /**
    * Subdirectory contains the compiled Java code for the Web module.
    */
   public static final WarDirectory WEB_INF_CLASSES = new WarDirectory("/WEB-INF/classes");
 
-  private static final WarDirectory[] WAR_DIRECTORIES = new WarDirectory[]{WAR_ROOT, META_INF, WEB_INF, WEB_INF_LIB, WEB_INF_CLASSES};
+  private static final WarDirectory[] WAR_DIRECTORIES =
+    new WarDirectory[]{WAR_ROOT, META_INF, WEB_INF, WEB_INF_LIB, WEB_INF_LIB_PROVIDED, WEB_INF_CLASSES};
 
   @NotNull
   private final String myRelativePath;
