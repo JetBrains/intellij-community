@@ -201,7 +201,11 @@ fun Path.writeSafe(outConsumer: (OutputStream) -> Unit): Path {
 @Throws(IOException::class)
 fun Path.write(data: String): Path {
   parent?.createDirectories()
+  return writeUnsafe(data)
+}
 
+@Throws(IOException::class)
+fun Path.writeUnsafe(data: String): Path {
   Files.write(this, data.toByteArray())
   return this
 }
@@ -301,3 +305,19 @@ fun sanitizeFileName(name: String, replacement: String? = "_", isTruncate: Boole
 
 val Path.isWritable: Boolean
   get() = Files.isWritable(this)
+
+fun isDirectory(attributes: BasicFileAttributes?): Boolean {
+  return attributes != null && attributes.isDirectory
+}
+
+fun isSymbolicLink(attributes: BasicFileAttributes?): Boolean {
+  return attributes != null && attributes.isSymbolicLink
+}
+
+fun Path.deleteRegularFile() {
+  try {
+    Files.delete(this)
+  }
+  catch (ignore: Exception) {
+  }
+}
