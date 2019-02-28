@@ -945,7 +945,7 @@ public class PluginManagerConfigurableNew
                 }
               }
 
-              title = myTitlePrefix + " (" + count + ")";
+              title = count == 0 ? myTitlePrefix : myTitlePrefix + " (" + count + ")";
               updateTitle();
               rightAction.setVisible(count > 0);
             }
@@ -1661,7 +1661,7 @@ public class PluginManagerConfigurableNew
   private static class CountTabName implements Computable<String> {
     private final TabHeaderComponent myTabComponent;
     private final String myBaseName;
-    private int myCount = -1;
+    private int myCount;
 
     CountTabName(@NotNull TabHeaderComponent component, @NotNull String baseName) {
       myTabComponent = component;
@@ -1677,7 +1677,7 @@ public class PluginManagerConfigurableNew
 
     @Override
     public String compute() {
-      return myCount == -1 ? myBaseName : myBaseName + " (" + myCount + ")";
+      return myCount == 0 ? myBaseName : myBaseName + " (" + myCount + ")";
     }
   }
 
