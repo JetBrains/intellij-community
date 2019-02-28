@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit
 task setupJdks(dependsOn: ['setupJdk', 'checkJdk', 'setupJdk16'])
 cleanSetupJdks.dependsOn('cleanSetupJdk', 'cleanSetupJdk16', 'cleanDownloadJdk')
 
-project.ext.jdkRepo = 'https://cache-redirector.jetbrains.com/intellij-jdk'
+project.ext.jdkRepo = 'https://cache-redirector.jetbrains.com/intellij-jbr'
 project.ext.jdkVersion = System.getProperty('intellij.build.jdk.version', '8').toInteger()
 def isModular = jdkVersion > 8
 project.ext.jdkArtifactPrefix = isModular ? 'jbr-' : 'jbrsdk-'
