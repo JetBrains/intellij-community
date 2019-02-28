@@ -1,19 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.gradle.service.project;
+package org.jetbrains.plugins.gradle.model;
 
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.ProjectImportExtraModelProvider;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class ClassSetProjectImportExtraModelProvider implements ProjectImportExtraModelProvider {
-  @NotNull private Set<Class> classSet = new LinkedHashSet<>();
+  @NotNull private final Set<Class> classSet = new LinkedHashSet<Class>();
 
   public ClassSetProjectImportExtraModelProvider(@NotNull Collection<Class> classes) {
     classSet.addAll(classes);
