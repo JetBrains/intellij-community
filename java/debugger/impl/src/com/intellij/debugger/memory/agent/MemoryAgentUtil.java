@@ -58,7 +58,6 @@ public class MemoryAgentUtil {
   private static final Logger LOG = Logger.getInstance(MemoryAgentUtil.class);
   private static final Key<Boolean> LISTEN_MEMORY_AGENT_STARTUP_FAILED = Key.create("LISTEN_MEMORY_AGENT_STARTUP_FAILED");
   private static final int ESTIMATE_OBJECTS_SIZE_LIMIT = 2000;
-  private static final AtomicBoolean LISTENER_ADDED = new AtomicBoolean(false);
 
   public static void addMemoryAgent(@NotNull JavaParameters parameters) {
     if (!DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT) {
@@ -237,7 +236,7 @@ public class MemoryAgentUtil {
             ExecutionUtil.handleExecutionError(project, windowId, name, exception, description, new DisablingMemoryAgentListener());
             LOG.error(exception);
           }
-        }, o -> project.isDisposed());
+        }, project.getDisposed());
       }
     });
 
