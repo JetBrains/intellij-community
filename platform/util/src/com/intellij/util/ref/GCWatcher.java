@@ -2,6 +2,7 @@
 package com.intellij.util.ref;
 
 import com.intellij.openapi.util.Ref;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.MemoryDumpHelper;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
@@ -73,6 +74,9 @@ public class GCWatcher {
    */
   public void tryGc() {
     if (!GCUtil.allocateTonsOfMemory(this::isEverythingCollected)) {
+      String message = "Couldn't garbage-collect some objects, they might still be reachable from GC roots: " +
+                       ContainerUtil.mapNotNull(myReferences, SoftReference::dereference);
+
       try {
         File file = new File(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir")), "GCWatcher.hprof.zip");
         MemoryDumpHelper.captureMemoryDumpZipped(file);
@@ -83,7 +87,7 @@ public class GCWatcher {
       catch (Exception e) {
         throw new RuntimeException(e);
       }
-      throw new IllegalStateException("Couldn't garbage-collect all passed objects, they might still be reachable from GC roots");
+      throw new IllegalStateException(message);
     }
   }
 

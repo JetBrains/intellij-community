@@ -32,7 +32,7 @@ public class GCUtil {
    * In tests, if you can exactly point to objects you want to GC, use {@code GCWatcher.tracking(objects).tryGc()}
    * which is faster and has more chances to succeed.
    * <p></p>
-   * Commits / hours of tweaking method code: 7 / 6
+   * Commits / hours of tweaking method code: 10 / 6
    */
   @TestOnly
   public static void tryGcSoftlyReachableObjects() {
