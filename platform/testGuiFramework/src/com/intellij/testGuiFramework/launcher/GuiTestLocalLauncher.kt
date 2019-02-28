@@ -278,7 +278,7 @@ object GuiTestLocalLauncher {
       .plus("-ea")
       .plus("-Xbootclasspath/p:${GuiTestOptions.bootClasspath}")
       .plus("-Dsun.awt.disablegrab=true")
-      .plus("-Dsun.io.useCanonCaches=false")
+      .plus("-Dsun.io.useCanonPrefixCache=false")
       .plus("-Djava.net.preferIPv4Stack=true")
       .plus("-Dapple.laf.useScreenMenuBar=${GuiTestOptions.useAppleScreenMenuBar}")
       .plus("-Didea.is.internal=${GuiTestOptions.isInternal}")
