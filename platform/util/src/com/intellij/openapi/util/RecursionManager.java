@@ -3,6 +3,7 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -200,7 +201,7 @@ public class RecursionManager {
     private int depth;
     private final LinkedHashMap<MyKey, Integer> progressMap = new LinkedHashMap<>();
     private final Set<MyKey> preventions = ContainerUtil.newIdentityTroveSet();
-    private final Map<MyKey, List<MemoizedValue>> intermediateCache = ContainerUtil.createSoftMap();
+    private final Map<MyKey, List<SoftReference<MemoizedValue>>> intermediateCache = ContainerUtil.createSoftMap();
     private int enters;
     private int exits;
 
@@ -214,8 +215,16 @@ public class RecursionManager {
 
     @Nullable
     MemoizedValue getMemoizedValue(MyKey realKey) {
-      List<MemoizedValue> values = intermediateCache.get(realKey);
-      return values != null ? ContainerUtil.find(values, v -> v.isActual(this)) : null;
+      List<SoftReference<MemoizedValue>> refs = intermediateCache.get(realKey);
+      if (refs != null) {
+        for (SoftReference<MemoizedValue> ref : refs) {
+          MemoizedValue value = SoftReference.dereference(ref);
+          if (value != null && value.isActual(this)) {
+            return value;
+          }
+        }
+      }
+      return null;
     }
 
     final void beforeComputation(MyKey realKey) {
@@ -242,7 +251,8 @@ public class RecursionManager {
     void maybeMemoize(MyKey realKey, @Nullable Object result, Set<MyKey> preventionsBefore) {
       if (preventions.size() > preventionsBefore.size()) {
         List<MyKey> added = ContainerUtil.findAll(preventions, key -> key != realKey && !preventionsBefore.contains(key));
-        intermediateCache.computeIfAbsent(realKey, __ -> new SmartList<>()).add(new MemoizedValue(result, added.toArray(new MyKey[0])));
+        intermediateCache.computeIfAbsent(realKey, __ -> new SmartList<>())
+          .add(new SoftReference<>(new MemoizedValue(result, added.toArray(new MyKey[0]))));
       }
     }
 
