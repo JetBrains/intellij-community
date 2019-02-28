@@ -6,12 +6,10 @@ import com.intellij.codeInsight.highlighting.HighlightManagerImpl;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.execution.impl.EditorHyperlinkSupport;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.EffectType;
@@ -119,7 +117,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
                                                                final XDebugSession session,
                                                                Editor editor) {
     if (Registry.is("debugger.smart.step.inplace") && variants.stream().allMatch(v -> v.getHighlightElement() != null)) {
-      inplaceChoose(handler, variants, position, session, editor);
+      inplaceChoose(handler, variants, session, editor);
     }
     else {
       showPopup(handler, variants, position, session, editor);
@@ -193,7 +191,6 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
 
   private static <V extends XSmartStepIntoVariant> void inplaceChoose(XSmartStepIntoHandler<V> handler,
                                                                       List<V> variants,
-                                                                      XSourcePosition position,
                                                                       XDebugSession session,
                                                                       Editor editor) {
     EditorColorsManager manager = EditorColorsManager.getInstance();
@@ -203,44 +200,20 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     SmartStepData<V> data = new SmartStepData<>(handler, variants, session, editor);
     editor.putUserData(SMART_STEP_INPLACE_DATA, data);
 
+    EditorHyperlinkSupport hyperlinkSupport = EditorHyperlinkSupport.get(editor, session.getProject());
     for (V variant : variants) {
       PsiElement element = variant.getHighlightElement();
       if (element != null) {
         List<RangeHighlighter> highlighters = ContainerUtil.newSmartList();
         highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{element}, attributes, true, highlighters);
-        EditorHyperlinkSupport.associateHyperlink(highlighters.get(0), project -> data.stepInto(variant));
+        hyperlinkSupport.createHyperlink(highlighters.get(0), project -> data.stepInto(variant));
       }
     }
 
     data.select(ContainerUtil.getFirstItem(variants));
+ }
 
-    EditorHyperlinkSupport hyperlinkSupport = editor.getUserData(EDITOR_HYPERLINK_SUPPORT_KEY);
-    if (hyperlinkSupport == null) {
-      hyperlinkSupport = new EditorHyperlinkSupport(editor, session.getProject());
-      editor.putUserData(EDITOR_HYPERLINK_SUPPORT_KEY, hyperlinkSupport);
-    }
-
-    if (!ourActionsRegistered) {
-      EditorActionManager actionManager = EditorActionManager.getInstance();
-      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_UP, new UpHandler(
-        actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)));
-      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT, new UpHandler(
-        actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT)));
-      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN, new DownHandler(
-        actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)));
-      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT, new DownHandler(
-        actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT)));
-      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_ESCAPE, new EscHandler(
-        actionManager.getActionHandler(IdeActions.ACTION_EDITOR_ESCAPE)));
-      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_ENTER, new EnterHandler(
-        actionManager.getActionHandler(IdeActions.ACTION_EDITOR_ENTER)));
-      ourActionsRegistered = true;
-    }
-  }
-
-  private static boolean ourActionsRegistered = false;
   static final Key<SmartStepData> SMART_STEP_INPLACE_DATA = Key.create("SMART_STEP_INPLACE_DATA");
-  static final Key<EditorHyperlinkSupport> EDITOR_HYPERLINK_SUPPORT_KEY = Key.create("EDITOR_HYPERLINK_SUPPORT_KEY");
 
   static class SmartStepData<V extends XSmartStepIntoVariant> {
     private final XSmartStepIntoHandler<V> myHandler;
@@ -327,7 +300,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
                                       SmartStepData stepData);
   }
 
-  private static class UpHandler extends SmartStepEditorActionHandler {
+  static class UpHandler extends SmartStepEditorActionHandler {
     UpHandler(EditorActionHandler original) {
       super(original);
     }
@@ -341,7 +314,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     }
   }
 
-  private static class DownHandler extends SmartStepEditorActionHandler {
+  static class DownHandler extends SmartStepEditorActionHandler {
     DownHandler(EditorActionHandler original) {
       super(original);
     }
@@ -355,7 +328,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     }
   }
 
-  private static class EscHandler extends SmartStepEditorActionHandler {
+  static class EscHandler extends SmartStepEditorActionHandler {
     EscHandler(EditorActionHandler original) {
       super(original);
     }
@@ -366,11 +339,13 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
                              DataContext dataContext,
                              SmartStepData stepData) {
       editor.putUserData(SMART_STEP_INPLACE_DATA, null);
-      myOriginalHandler.execute(editor, caret, dataContext);
+      if (myOriginalHandler.isEnabled(editor, caret, dataContext)) {
+        myOriginalHandler.execute(editor, caret, dataContext);
+      }
     }
   }
 
-  private static class EnterHandler extends SmartStepEditorActionHandler {
+  static class EnterHandler extends SmartStepEditorActionHandler {
     EnterHandler(EditorActionHandler original) {
       super(original);
     }

@@ -51,6 +51,19 @@
 
     <statistics.projectUsagesCollector implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointsStatisticsCollector"/>
     <statistics.counterUsagesCollector groupId="debugger.breakpoints.usage" version="1"/>
+
+    <editorActionHandler action="EditorUp" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$UpHandler"
+                         id="smart-step-into-up"/>
+    <editorActionHandler action="EditorDown" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$DownHandler"
+                         id="smart-step-into-down"/>
+    <editorActionHandler action="EditorLeft" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$UpHandler"
+                         id="smart-step-into-left"/>
+    <editorActionHandler action="EditorRight" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$DownHandler"
+                         id="smart-step-into-right"/>
+    <editorActionHandler action="EditorEnter" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$EnterHandler"
+                         id="smart-step-into-enter"/>
+    <editorActionHandler action="EditorEscape" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$EscHandler"
+                         order="before hide-search" id="smart-step-into-escape"/>
   </extensions>
   
   <actions>

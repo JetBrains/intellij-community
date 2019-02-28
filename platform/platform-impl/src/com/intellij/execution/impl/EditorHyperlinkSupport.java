@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.filters.Filter;
@@ -46,11 +46,16 @@ import java.util.Map;
 public class EditorHyperlinkSupport {
   private static final Key<TextAttributes> OLD_HYPERLINK_TEXT_ATTRIBUTES = Key.create("OLD_HYPERLINK_TEXT_ATTRIBUTES");
   private static final Key<HyperlinkInfoTextAttributes> HYPERLINK = Key.create("HYPERLINK");
+  private static final Key<EditorHyperlinkSupport> EDITOR_HYPERLINK_SUPPORT_KEY = Key.create("EDITOR_HYPERLINK_SUPPORT_KEY");
 
   private final EditorEx myEditor;
   @NotNull private final Project myProject;
   private final AsyncFilterRunner myFilterRunner;
 
+  /**
+   * @deprecated use {@link #get(Editor, Project)} instead
+   */
+  @Deprecated
   public EditorHyperlinkSupport(@NotNull final Editor editor, @NotNull final Project project) {
     myEditor = (EditorEx)editor;
     myProject = project;
@@ -78,6 +83,15 @@ public class EditorHyperlinkSupport {
       }
     }
     );
+  }
+
+  public static EditorHyperlinkSupport get(@NotNull final Editor editor, @NotNull final Project project) {
+    EditorHyperlinkSupport instance = editor.getUserData(EDITOR_HYPERLINK_SUPPORT_KEY);
+    if (instance == null) {
+      instance = new EditorHyperlinkSupport(editor, project);
+      editor.putUserData(EDITOR_HYPERLINK_SUPPORT_KEY, instance);
+    }
+    return instance;
   }
 
   public void clearHyperlinks() {
@@ -188,6 +202,10 @@ public class EditorHyperlinkSupport {
     createHyperlink(highlightStartOffset, highlightEndOffset, highlightAttributes, hyperlinkInfo);
   }
 
+  public void createHyperlink(@NotNull RangeHighlighter highlighter, @NotNull HyperlinkInfo hyperlinkInfo) {
+    associateHyperlink(highlighter, hyperlinkInfo, null);
+  }
+
   @NotNull
   public RangeHighlighter createHyperlink(int highlightStartOffset,
                                           int highlightEndOffset,
@@ -214,6 +232,10 @@ public class EditorHyperlinkSupport {
     return highlighter;
   }
 
+  /**
+   * @deprecated Use {@link #get(Editor, Project)} and then {@link #createHyperlink(RangeHighlighter, HyperlinkInfo)}
+   */
+  @Deprecated
   public static void associateHyperlink(@NotNull RangeHighlighter highlighter, @NotNull HyperlinkInfo hyperlinkInfo) {
     associateHyperlink(highlighter, hyperlinkInfo, null);
   }

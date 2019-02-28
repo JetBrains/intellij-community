@@ -64,7 +64,7 @@ class EventLogConsole {
     @NotNull
     @Override
     protected EditorHyperlinkSupport compute() {
-      return new EditorHyperlinkSupport(getConsoleEditor(), myProjectModel.getProject());
+      return EditorHyperlinkSupport.get(getConsoleEditor(), myProjectModel.getProject());
     }
   };
   private final LogModel myProjectModel;

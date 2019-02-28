@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.cachedValueProfiler;
 
 import com.intellij.execution.filters.ExceptionFilter;
@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
-import java.util.List;
 
 class CVPTableCellEditor extends AbstractCellEditor implements TableCellEditor {
   private final Project myProject;
@@ -56,15 +55,14 @@ class CVPTableCellEditor extends AbstractCellEditor implements TableCellEditor {
   }
 
   private void addHyperLinks(@NotNull Editor editor, @NotNull String text) {
-    EditorHyperlinkSupport hyperlinkSupport = new EditorHyperlinkSupport(editor, myProject);
     TextAttributes attributes =
       EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES);
 
     ExceptionFilter filter = new ExceptionFilter(GlobalSearchScope.allScope(myProject));
     Filter.Result result = filter.applyFilter(text, text.length());
     if (result != null) {
-      List<Filter.ResultItem> items = result.getResultItems();
-      for (Filter.ResultItem item : items) {
+      EditorHyperlinkSupport hyperlinkSupport = EditorHyperlinkSupport.get(editor, myProject);
+      for (Filter.ResultItem item : result.getResultItems()) {
         HyperlinkInfo hyperlinkInfo = item.getHyperlinkInfo();
         if (hyperlinkInfo != null) {
           hyperlinkSupport.createHyperlink(item.getHighlightStartOffset(), item.getHighlightEndOffset(), attributes, hyperlinkInfo);
