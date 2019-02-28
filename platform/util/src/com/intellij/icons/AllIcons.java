@@ -1546,7 +1546,7 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Modified */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Base = General.Modified;
+    public static final Icon Base = AllIcons.General.Modified;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Hierarchy.Subtypes */
     @SuppressWarnings("unused")
