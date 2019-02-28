@@ -2,31 +2,20 @@
 
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
 import com.intellij.util.indexing.impl.*;
 import com.intellij.util.indexing.snapshot.AbstractSnapshotIndex;
 import com.intellij.util.indexing.snapshot.FileContentHasher;
 import com.intellij.util.indexing.snapshot.Sha1FileContentHasher;
 import com.intellij.util.indexing.snapshot.SnapshotInputMappings;
 import com.intellij.util.io.*;
-import gnu.trove.THashMap;
-import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 
 /**

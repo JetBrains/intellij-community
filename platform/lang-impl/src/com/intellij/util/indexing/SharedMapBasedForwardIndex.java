@@ -16,16 +16,11 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.indexing.impl.*;
 import com.intellij.util.io.ByteSequenceDataExternalizer;
-import com.intellij.util.io.DataExternalizer;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
 
 class SharedMapBasedForwardIndex implements ForwardIndex {
   private final IndexId<?, ?> myIndexId;
