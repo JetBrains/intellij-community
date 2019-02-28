@@ -12,6 +12,7 @@ import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.stubs.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,13 +108,11 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
         return PyPsiUtils.asQualifiedName(superClassExpression);
       }
 
-      final Optional<QualifiedName> qualifiedName = PyResolveUtil.resolveLocally(reference)
-        .stream()
-        .filter(PyImportElement.class::isInstance)
-        .map(PyImportElement.class::cast)
+      final Optional<QualifiedName> qualifiedName = StreamEx.of(PyResolveUtil.resolveLocally(reference))
+        .select(PyImportElement.class)
         .filter(element -> element.getAsName() != null)
         .map(PyImportElement::getImportedQName)
-        .findAny();
+        .findAny(Objects::nonNull);
 
       if (qualifiedName.isPresent()) {
         return qualifiedName.get();
