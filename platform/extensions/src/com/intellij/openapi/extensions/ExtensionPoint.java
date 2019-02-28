@@ -91,7 +91,7 @@ public interface ExtensionPoint<T> {
    *
    * Consider to use {@link ExtensionNotApplicableException} instead.
    */
-  boolean unregisterExtensions(@NotNull BiPredicate<String, ExtensionComponentAdapter> extensionClassFilter, boolean stopAfterFirstMatch);
+  boolean unregisterExtensions(@NotNull BiPredicate<? super String, ? super ExtensionComponentAdapter> extensionClassFilter, boolean stopAfterFirstMatch);
 
   @Deprecated
   void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener);
