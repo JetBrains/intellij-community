@@ -336,8 +336,6 @@ class JsonSchemaAnnotatorChecker {
         }
       }
     }
-
-    //validateAsJsonSchema(object.getDelegate());
   }
 
   @Nullable
