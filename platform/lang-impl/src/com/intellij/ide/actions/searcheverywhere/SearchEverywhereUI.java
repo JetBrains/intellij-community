@@ -386,7 +386,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
         return new Extension() {
           @Override
           public Icon getIcon(boolean hovered) {
-            return AllIcons.Actions.Find;
+            return AllIcons.Actions.Search;
           }
 
           @Override
