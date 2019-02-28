@@ -171,6 +171,7 @@ class GitPushResultNotification extends Notification {
       case REJECTED_NO_FF:
         description = formDescriptionBasedOnUpdateResult(result.getUpdateResult(), targetBranch);
         break;
+      case REJECTED_STALE_INFO:
       case REJECTED_OTHER:
         description = String.format("push %s to %s was rejected by remote", sourceBranch, targetBranch);
         break;

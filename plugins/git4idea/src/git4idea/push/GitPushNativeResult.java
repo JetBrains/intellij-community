@@ -29,6 +29,7 @@ public class GitPushNativeResult {
 
   public static final String NO_FF_REJECT_REASON = "non-fast-forward";
   static final String FETCH_FIRST_REASON = "fetch first";
+  static final String STALE_INFO_REASON = "stale info";
 
   public enum Type {
     SUCCESS,
@@ -76,9 +77,14 @@ public class GitPushNativeResult {
   }
 
   boolean isNonFFUpdate() {
-    return myType == Type.REJECTED &&
-           myReason != null &&
-           (StringUtil.containsIgnoreCase(myReason, NO_FF_REJECT_REASON) || StringUtil.containsIgnoreCase(myReason, FETCH_FIRST_REASON));
+    return myType == Type.REJECTED && myReason != null &&
+           (StringUtil.containsIgnoreCase(myReason, NO_FF_REJECT_REASON) ||
+            StringUtil.containsIgnoreCase(myReason, FETCH_FIRST_REASON));
+  }
+
+  boolean isStaleInfo() {
+    return myType == Type.REJECTED && myReason != null &&
+           StringUtil.containsIgnoreCase(myReason, STALE_INFO_REASON);
   }
 
   @Override
