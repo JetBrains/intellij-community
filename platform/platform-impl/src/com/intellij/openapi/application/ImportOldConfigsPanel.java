@@ -31,6 +31,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.function.Function;
 
@@ -85,9 +86,9 @@ class ImportOldConfigsPanel extends JDialog {
       myComboBoxOldPaths.setSelectedItem(myGuessedOldConfigDirs.get(0));
       myRbImportAuto.setSelected(true);
     }
-
-    myRbImport.addChangeListener(e -> update());
-
+    for (Enumeration<AbstractButton> e = group.getElements(); e.hasMoreElements(); ) {
+      e.nextElement().addChangeListener(event -> update());
+    }
     if (SystemInfo.isMac) {
       myLastSelection = new CoreLocalFileSystem().findFileByPath("/Applications");
     }
@@ -152,6 +153,7 @@ class ImportOldConfigsPanel extends JDialog {
   }
 
   private void update() {
+    myComboBoxOldPaths.setEnabled(myRbImportAuto.isSelected());
     myPrevInstallation.setEnabled(myRbImport.isSelected());
   }
 
