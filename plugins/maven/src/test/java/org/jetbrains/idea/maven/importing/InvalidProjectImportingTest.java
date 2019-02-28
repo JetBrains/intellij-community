@@ -20,6 +20,7 @@ import com.intellij.openapi.application.WriteAction;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -735,6 +736,18 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     MavenProject root = getRootProjects().get(0);
     assertProblems(root, "'profiles.xml' has syntax errors");
+  }
+
+  public void testInvalidMavenConfig() throws IOException {
+    createProjectPom("<groupId>test</groupId>" +
+          "<artifactId>project</artifactId>" +
+           "<version>1</version>");
+    createProjectSubFile(".mvn/maven.config", "bad command line");
+    importProjectWithErrors();
+    assertModules("project");
+
+    MavenProject root = getRootProjects().get(0);
+    assertProblems(root, "Unrecognized maven.config entries: [bad, command, line]");
   }
 
   private void importProjectWithErrors(@Language(value = "XML", prefix = "<project>", suffix = "</project>") String s) {

@@ -43,9 +43,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.DisposeAwareRunnable;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
@@ -1035,7 +1033,31 @@ public class MavenUtil {
     return Stream.of(root.getChildren()).filter(file -> isPomFile(project, file));
   }
 
-  public static boolean isExternalBuildSystem() {
-    return Registry.is("MAVEN.experimental.externalBuild");
+  public static void restartConfigHighlightning(Collection<MavenProject> projects) {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      FileContentUtilCore.reparseFiles(getConfigFiles(projects));
+    });
+  }
+
+  public static VirtualFile[] getConfigFiles(Collection<MavenProject> projects) {
+    List<VirtualFile> result = new SmartList<>();
+    for (MavenProject project : projects) {
+      VirtualFile file = getConfigFile(project, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
+      if (file != null) {
+        result.add(file);
+      }
+    }
+    if (result.isEmpty()) {
+      return VirtualFile.EMPTY_ARRAY;
+    }
+    return result.toArray(VirtualFile.EMPTY_ARRAY);
+  }
+
+  public static VirtualFile getConfigFile(MavenProject mavenProject, String fileRelativePath) {
+    VirtualFile baseDir = VfsUtil.findFileByIoFile(getBaseDir(mavenProject.getDirectoryFile()), false);
+    if (baseDir != null) {
+      return baseDir.findFileByRelativePath(fileRelativePath);
+    }
+    return null;
   }
 }
