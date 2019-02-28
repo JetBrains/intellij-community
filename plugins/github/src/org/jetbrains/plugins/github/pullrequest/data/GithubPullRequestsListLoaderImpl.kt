@@ -26,6 +26,7 @@ import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.NonReusableEmptyProgressIndicator
 import org.jetbrains.plugins.github.util.handleOnEdt
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionException
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import javax.swing.ListModel
@@ -94,7 +95,7 @@ internal class GithubPullRequestsListLoaderImpl(private val progressManager: Pro
         if (indicator.isCanceled) return@handleOnEdt
         when {
           error != null && !GithubAsyncUtil.isCancellation(error) -> {
-            this.error = error
+            this.error = if (error is CompletionException) error.cause!! else error
           }
           responsePage != null -> {
             listModelDelegate.add(responsePage.items)
