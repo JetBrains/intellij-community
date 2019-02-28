@@ -94,23 +94,29 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
 
     List<String> parts = StringUtil.split(pattern, " ");
     if (!parts.isEmpty()) {
-      doConsumeTopHits(provider, pattern, parts, collector, project);
+      doConsumeTopHits(provider, pattern, parts.get(0), collector, project);
     }
   }
 
   private static void doConsumeTopHits(@NotNull OptionsSearchTopHitProvider provider,
                                        @NotNull String pattern,
-                                       @NotNull List<String> parts,
+                                       @NotNull String id,
                                        @NotNull Consumer<Object> collector,
                                        @Nullable Project project) {
-    String id = parts.get(0);
     if (provider.getId().startsWith(id) || pattern.startsWith(" ")) {
       pattern = pattern.startsWith(" ") ? pattern.trim() : pattern.substring(id.length()).trim().toLowerCase(Locale.ENGLISH);
-      final MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
-      for (OptionDescription option : getCachedOptions(provider, project)) {
-        if (matcher.matches(option.getOption())) {
-          collector.accept(option);
-        }
+      MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
+      consumeTopHitsForApplicableProvider(provider, matcher, collector, project);
+    }
+  }
+
+  private static void consumeTopHitsForApplicableProvider(@NotNull OptionsSearchTopHitProvider provider,
+                                                          @NotNull MinusculeMatcher matcher,
+                                                          @NotNull Consumer<Object> collector,
+                                                          @Nullable Project project) {
+    for (OptionDescription option : getCachedOptions(provider, project)) {
+      if (matcher.matches(option.getOption())) {
+        collector.accept(option);
       }
     }
   }
@@ -179,7 +185,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
 
   // ours ProjectLevelProvider registered in ours projectOptionsTopHitProvider extension point,
   // not in common topHitProvider, so, this adapter is required to expose ours project level providers.
-  static final class ProjectLevelProvidersAdapter implements SearchTopHitProvider {
+  public static final class ProjectLevelProvidersAdapter implements SearchTopHitProvider {
     @Override
     public void consumeTopHits(@NotNull String pattern, @NotNull Consumer<Object> collector, @Nullable Project project) {
       if (project == null) {
@@ -197,7 +203,14 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
       }
 
       for (OptionsSearchTopHitProvider.ProjectLevelProvider provider : PROJECT_LEVEL_EP.getExtensionList()) {
-        doConsumeTopHits(provider, pattern, parts, collector, project);
+        doConsumeTopHits(provider, pattern, parts.get(0), collector, project);
+      }
+    }
+
+    public void consumeAllTopHits(@NotNull String pattern, @NotNull Consumer<Object> collector, @Nullable Project project) {
+      MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
+      for (OptionsSearchTopHitProvider.ProjectLevelProvider provider : PROJECT_LEVEL_EP.getExtensionList()) {
+        consumeTopHitsForApplicableProvider(provider, matcher, collector, project);
       }
     }
   }

@@ -4,6 +4,7 @@ package com.intellij.ide.util.gotoByName;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.actions.ApplyIntentionAction;
+import com.intellij.ide.ui.OptionsSearchTopHitProvider;
 import com.intellij.ide.ui.OptionsTopHitProvider;
 import com.intellij.ide.ui.search.ActionFromOptionDescriptorProvider;
 import com.intellij.ide.ui.search.OptionDescription;
@@ -101,10 +102,16 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     String commandAccelerator = SearchTopHitProvider.getTopHitAccelerator();
     for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
       //noinspection deprecation
-      if (provider instanceof OptionsTopHitProvider.CoveredByToggleActions) continue;
-      if (provider instanceof OptionsTopHitProvider && !StringUtil.startsWith(pattern, commandAccelerator)) {
-        String prefix = commandAccelerator + ((OptionsTopHitProvider)provider).getId() + " ";
+      if (provider instanceof OptionsTopHitProvider.CoveredByToggleActions) {
+        continue;
+      }
+
+      if (provider instanceof OptionsSearchTopHitProvider && !StringUtil.startsWith(pattern, commandAccelerator)) {
+        String prefix = commandAccelerator + ((OptionsSearchTopHitProvider)provider).getId() + " ";
         provider.consumeTopHits(prefix + pattern, collector, project);
+      }
+      else if (project != null && provider instanceof OptionsTopHitProvider.ProjectLevelProvidersAdapter) {
+        ((OptionsTopHitProvider.ProjectLevelProvidersAdapter)provider).consumeAllTopHits(pattern, collector, project);
       }
       provider.consumeTopHits(pattern, collector, project);
     }
