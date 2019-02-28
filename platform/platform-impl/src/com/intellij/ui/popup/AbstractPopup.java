@@ -158,11 +158,16 @@ public class AbstractPopup implements JBPopup {
   private boolean myMayBeParent;
   private JLabel myAdComponent;
   private boolean myDisposed;
+  private boolean myNormalWindowLevel;
 
   private UiActivity myActivityKey;
   private Disposable myProjectDisposable;
 
   private volatile State myState = State.NEW;
+
+  public void setNormalWindowLevel(boolean normalWindowLevel) {
+    myNormalWindowLevel = normalWindowLevel;
+  }
 
   private enum State {NEW, INIT, SHOWING, SHOWN, CANCEL, DISPOSE}
 
@@ -1015,6 +1020,9 @@ public class AbstractPopup implements JBPopup {
     myContent.getRootPane().putClientProperty("SIMPLE_WINDOW", "SIMPLE_WINDOW".equals(data) || popupIsSimpleWindow);
 
     myWindow = window;
+    if (myNormalWindowLevel) {
+      myWindow.setType(Window.Type.NORMAL);
+    }
     setMinimumSize(myMinSize);
 
     final Disposable tb = TouchBarsManager.showPopupBar(this, myContent);

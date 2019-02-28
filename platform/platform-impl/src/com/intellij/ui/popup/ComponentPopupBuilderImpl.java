@@ -82,6 +82,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private int myAdAlignment = SwingConstants.LEFT;
   private BooleanFunction<KeyEvent> myKeyEventHandler;
   private Color myBorderColor;
+  private boolean myNormalWindowLevel;
 
   public ComponentPopupBuilderImpl(@NotNull JComponent component, JComponent preferredFocusedComponent) {
     myComponent = component;
@@ -239,6 +240,9 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
       false, myKeyboardActions, mySettingsButtons, myPinCallback, myMayBeParent,
       myShowShadow, myShowBorder, myBorderColor, myCancelOnWindowDeactivation, myKeyEventHandler
     );
+
+    popup.setNormalWindowLevel(myNormalWindowLevel);
+
     if (myUserData != null) {
       popup.setUserData(myUserData);
     }
@@ -358,6 +362,13 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   @Override
   public ComponentPopupBuilder setShowBorder(boolean show) {
     myShowBorder = show;
+    return this;
+  }
+
+  @NotNull
+  @Override
+  public ComponentPopupBuilder setNormalWindowLevel(boolean b) {
+    myNormalWindowLevel = b;
     return this;
   }
 

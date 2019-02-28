@@ -160,6 +160,9 @@ public interface ComponentPopupBuilder {
   ComponentPopupBuilder setShowBorder(boolean show);
 
   @NotNull
+  ComponentPopupBuilder setNormalWindowLevel(boolean b);
+
+  @NotNull
   default ComponentPopupBuilder setBorderColor(Color color) {
     return this;
   }
