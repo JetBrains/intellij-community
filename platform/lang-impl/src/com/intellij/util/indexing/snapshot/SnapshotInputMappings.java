@@ -1,19 +1,5 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.intellij.util.indexing;
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.util.indexing.snapshot;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
@@ -25,123 +11,90 @@ import com.intellij.util.CompressionUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.DebugAssertions;
 import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-class SnapshotInputMappings<Key, Value, Input> {
+public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotIndex<Key, Value> {
   private static final Logger LOG = Logger.getInstance(SnapshotInputMappings.class);
   private static final boolean doReadSavedPersistentData = SystemProperties.getBooleanProperty("idea.read.saved.persistent.index", true);
 
   private final ID<Key, Value> myIndexId;
-  private final VfsAwareMapReduceIndex.MapDataExternalizer<Key, Value> myMapExternalizer;
-  private final DataIndexer<Key, Value, Input> myIndexer;
+  private final MapDataExternalizer<Key, Value> myMapExternalizer;
+  private final DataIndexer<Key, Value, FileContent> myIndexer;
   private volatile PersistentHashMap<Integer, ByteArraySequence> myContents;
-  private volatile PersistentHashMap<Integer, Integer> myInputsSnapshotMapping;
   private volatile PersistentHashMap<Integer, String> myIndexingTrace;
 
-  private final boolean myIsPsiBackedIndex;
-  private final FileContentHasher myHasher = Sha1FileContentHasher.getInstance();
+  private final FileContentHasher myHasher;
 
-  SnapshotInputMappings(IndexExtension<Key, Value, Input> indexExtension) throws IOException {
+  public SnapshotInputMappings(IndexExtension<Key, Value, FileContent> indexExtension) throws IOException {
     myIndexId = (ID<Key, Value>)indexExtension.getName();
-    myIsPsiBackedIndex = indexExtension instanceof PsiDependentIndex;
-    myMapExternalizer = new VfsAwareMapReduceIndex.MapDataExternalizer<>(indexExtension);
+    myMapExternalizer = new MapDataExternalizer<>(indexExtension);
     myIndexer = indexExtension.getIndexer();
+    myHasher = new Sha1FileContentHasher(indexExtension instanceof PsiDependentIndex);
     createMaps();
   }
 
-  @NotNull
-  Map<Key, Value> readInputKeys(int inputId) throws IOException {
-    Integer currentHashId = readInputHashId(inputId);
-    if (currentHashId != null) {
-      ByteArraySequence byteSequence = readContents(currentHashId);
-      if (byteSequence != null) {
-        return deserializeSavedPersistentData(byteSequence);
-      }
-    }
-    return Collections.emptyMap();
+  @Nullable
+  @Override
+  public Map<Key, Value> readSnapshot(int hashId) throws IOException {
+    ByteArraySequence byteSequence = readContents(hashId);
+    return byteSequence == null ? null : deserializeSavedPersistentData(byteSequence);
   }
 
-  static class Snapshot<Key, Value> {
-    private final Map<Key, Value> myData;
-    private final int hashId;
-
-    private Snapshot(@NotNull Map<Key, Value> data, int id) {
-      myData = data;
-      hashId = id;
-    }
-
-    @NotNull
-    Map<Key, Value> getData() {
-      return myData;
-    }
-
-    int getHashId() {
-      return hashId;
-    }
-  }
-
-  @NotNull
-  Snapshot<Key, Value> readPersistentDataOrMap(@NotNull Input content) {
+  @Override
+  public Map<Key, Value> readOrPutSnapshot(int hashId, @NotNull FileContent content) throws IOException {
     Map<Key, Value> data = null;
     boolean havePersistentData = false;
-    int hashId;
     boolean skippedReadingPersistentDataButMayHaveIt = false;
 
-    try {
-      FileContent fileContent = (FileContent)content;
-      hashId = myHasher.getEnumeratedHash(fileContent, myIsPsiBackedIndex);
-      if (doReadSavedPersistentData) {
-        if (myContents == null || !myContents.isBusyReading() || DebugAssertions.EXTRA_SANITY_CHECKS) { // avoid blocking read, we can calculate index value
-          ByteArraySequence bytes = readContents(hashId);
+    hashId = myHasher.getEnumeratedHash(content);
+    if (doReadSavedPersistentData) {
+      if (myContents == null || !myContents.isBusyReading() || DebugAssertions.EXTRA_SANITY_CHECKS) { // avoid blocking read, we can calculate index value
+        ByteArraySequence bytes = readContents(hashId);
 
-          if (bytes != null) {
-            data = deserializeSavedPersistentData(bytes);
-            havePersistentData = true;
-            if (DebugAssertions.EXTRA_SANITY_CHECKS) {
-              Map<Key, Value> contentData = myIndexer.map(content);
-              boolean sameValueForSavedIndexedResultAndCurrentOne = contentData.equals(data);
-              if (!sameValueForSavedIndexedResultAndCurrentOne) {
-                DebugAssertions.error(
-                  "Unexpected difference in indexing of %s by index %s, file type %s, charset %s\ndiff %s\nprevious indexed info %s",
-                  fileContent.getFile(),
-                  myIndexId,
-                  fileContent.getFileType().getName(),
-                  ((FileContentImpl)fileContent).getCharset(),
-                  buildDiff(data, contentData),
-                  myIndexingTrace.get(hashId)
-                );
-              }
+        if (bytes != null) {
+          data = deserializeSavedPersistentData(bytes);
+          havePersistentData = true;
+          if (DebugAssertions.EXTRA_SANITY_CHECKS) {
+            Map<Key, Value> contentData = myIndexer.map(content);
+            boolean sameValueForSavedIndexedResultAndCurrentOne = contentData.equals(data);
+            if (!sameValueForSavedIndexedResultAndCurrentOne) {
+              DebugAssertions.error(
+                "Unexpected difference in indexing of %s by index %s, file type %s, charset %s\ndiff %s\nprevious indexed info %s",
+                content.getFile(),
+                myIndexId,
+                content.getFileType().getName(),
+                ((FileContentImpl)content).getCharset(),
+                buildDiff(data, contentData),
+                myIndexingTrace.get(hashId)
+              );
             }
           }
         }
-        else {
-          skippedReadingPersistentDataButMayHaveIt = true;
-        }
       }
       else {
-        havePersistentData = myContents.containsMapping(hashId);
+        skippedReadingPersistentDataButMayHaveIt = true;
       }
     }
-    catch (IOException ex) {
-      // todo:
-      throw new RuntimeException(ex);
+    else {
+      havePersistentData = myContents.containsMapping(hashId);
     }
 
     if (data == null) {
       data = myIndexer.map(content);
       if (DebugAssertions.DEBUG) {
-        MapReduceIndex.checkValuesHaveProperEqualsAndHashCode(data, myIndexId, myMapExternalizer.myValueExternalizer);
+        MapReduceIndex.checkValuesHaveProperEqualsAndHashCode(data, myIndexId, myMapExternalizer.getValueExternalizer());
       }
     }
 
@@ -150,13 +103,12 @@ class SnapshotInputMappings<Key, Value, Input> {
       if (DebugAssertions.EXTRA_SANITY_CHECKS) {
         if (saved) {
 
-          FileContent fileContent = (FileContent)content;
           try {
-            myIndexingTrace.put(hashId, ((FileContentImpl)fileContent).getCharset() +
+            myIndexingTrace.put(hashId, ((FileContentImpl)content).getCharset() +
                                         "," +
-                                        fileContent.getFileType().getName() +
+                                        content.getFileType().getName() +
                                         "," +
-                                        fileContent.getFile().getPath() +
+                                        content.getFile().getPath() +
                                         "," +
                                         ExceptionUtil.getThrowableText(new Throwable()));
           }
@@ -166,30 +118,18 @@ class SnapshotInputMappings<Key, Value, Input> {
         }
       }
     }
-
-    return new Snapshot<>(data, hashId);
+    return data;
   }
 
-  void putInputHash(int inputId, int hashId) {
-    try {
-      if (SharedIndicesData.ourFileSharedIndicesEnabled) {
-        SharedIndicesData.associateFileData(inputId, myIndexId, hashId, EnumeratorIntegerDescriptor.INSTANCE);
-      }
-      if (myInputsSnapshotMapping != null) myInputsSnapshotMapping.put(inputId, hashId);
-    }
-    catch (IOException ex) {
-      throw new RuntimeException(ex);
-    }
-  }
-
+  @Override
   public void flush() {
     if (myContents != null) myContents.force();
-    if (myInputsSnapshotMapping != null) myInputsSnapshotMapping.force();
     if (myIndexingTrace != null) myIndexingTrace.force();
   }
 
+  @Override
   public void clear() throws IOException {
-    List<File> baseDirs = ContainerUtil.list(myContents, myIndexingTrace, myInputsSnapshotMapping)
+    List<File> baseDirs = ContainerUtil.list(myContents, myIndexingTrace)
       .stream()
       .filter(Objects::nonNull)
       .map(PersistentHashMap::getBaseFile)
@@ -204,17 +144,15 @@ class SnapshotInputMappings<Key, Value, Input> {
     createMaps();
   }
 
+  @Override
   public void close() throws IOException {
     if (myContents != null) myContents.close();
-    if (myInputsSnapshotMapping != null) myInputsSnapshotMapping.close();
     if (myIndexingTrace != null) myIndexingTrace.close();
   }
 
   private void createMaps() throws IOException {
     myContents = createContentsIndex();
     myIndexingTrace = DebugAssertions.EXTRA_SANITY_CHECKS ? createIndexingTrace() : null;
-    myInputsSnapshotMapping =
-      !SharedIndicesData.ourFileSharedIndicesEnabled || SharedIndicesData.DO_CHECKS ? createInputSnapshotMapping() : null;
   }
 
   private PersistentHashMap<Integer, ByteArraySequence> createContentsIndex() throws IOException {
@@ -225,23 +163,6 @@ class SnapshotInputMappings<Key, Value, Input> {
     }
     catch (IOException ex) {
       IOUtil.deleteAllFilesStartingWith(saved);
-      throw ex;
-    }
-  }
-
-  private PersistentHashMap<Integer, Integer> createInputSnapshotMapping() throws IOException {
-    final File fileIdToHashIdFile = new File(IndexInfrastructure.getIndexRootDir(myIndexId), "fileIdToHashId");
-    try {
-      return new PersistentHashMap<Integer, Integer>(fileIdToHashIdFile, EnumeratorIntegerDescriptor.INSTANCE,
-                                                     EnumeratorIntegerDescriptor.INSTANCE, 4096) {
-        @Override
-        protected boolean wantNonNegativeIntegralValues() {
-          return true;
-        }
-      };
-    }
-    catch (IOException ex) {
-      IOUtil.deleteAllFilesStartingWith(fileIdToHashIdFile);
       throw ex;
     }
   }
@@ -268,35 +189,6 @@ class SnapshotInputMappings<Key, Value, Input> {
       IOUtil.deleteAllFilesStartingWith(mapFile);
       throw ex;
     }
-  }
-
-  private Integer readInputHashId(int inputId) throws IOException {
-    if (SharedIndicesData.ourFileSharedIndicesEnabled) {
-      Integer hashId = SharedIndicesData.recallFileData(inputId, myIndexId, EnumeratorIntegerDescriptor.INSTANCE);
-      if (hashId == null) hashId = 0;
-      if (myInputsSnapshotMapping == null) return hashId;
-
-      Integer hashIdFromInputSnapshotMapping = myInputsSnapshotMapping.get(inputId);
-      if (hashId == 0 && hashIdFromInputSnapshotMapping != 0 ||
-          !Comparing.equal(hashIdFromInputSnapshotMapping, hashId)) {
-        SharedIndicesData.associateFileData(inputId, myIndexId, hashIdFromInputSnapshotMapping,
-                                            EnumeratorIntegerDescriptor.INSTANCE);
-        if (hashId != 0) {
-          LOG.error("Unexpected indexing diff with hash id " +
-                    myIndexId +
-                    ", file:" +
-                    IndexInfrastructure.findFileById(PersistentFS.getInstance(), inputId)
-                    +
-                    "," +
-                    hashIdFromInputSnapshotMapping +
-                    "," +
-                    hashId);
-        }
-        hashId = hashIdFromInputSnapshotMapping;
-      }
-      return hashId;
-    }
-    return myInputsSnapshotMapping.get(inputId);
   }
 
   private ByteArraySequence readContents(Integer hashId) throws IOException {

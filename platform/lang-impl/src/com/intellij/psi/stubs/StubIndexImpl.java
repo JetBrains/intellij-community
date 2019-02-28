@@ -5,8 +5,10 @@
  */
 package com.intellij.psi.stubs;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -25,6 +27,7 @@ import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.*;
+import com.intellij.util.indexing.VfsAwareMapReduceIndex;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.KeyDescriptor;
@@ -564,7 +567,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     }
   }
 
-  private static class MyIndex<K> extends VfsAwareMapReduceIndex<K, StubIdList, Void> {
+  private static class MyIndex<K> extends VfsAwareMapReduceIndexBase<K, StubIdList, Void> {
     @NotNull
     @Override
     protected ReentrantReadWriteLock createLock() {
@@ -572,7 +575,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
       return ((MapReduceIndex)index).getLock();
     }
 
-    MyIndex(@NotNull IndexExtension<K, StubIdList, Void> extension, @NotNull IndexStorage<K, StubIdList> storage) throws IOException {
+    MyIndex(@NotNull IndexExtension<K, StubIdList, Void> extension, @NotNull IndexStorage<K, StubIdList> storage) {
       super(extension, storage, null, null);
     }
 

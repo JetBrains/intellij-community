@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.intellij.util.indexing;
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.util.indexing.snapshot;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vfs.newvfs.persistent.ContentHashesUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
+import com.intellij.util.indexing.IndexInfrastructure;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,10 +18,10 @@ import java.security.MessageDigest;
 /**
  * @author Maxim.Mossienko
  */
-class ContentHashesSupport {
+public class ContentHashesSupport {
   private static volatile ContentHashesUtil.HashEnumerator ourHashesWithFileType;
 
-  static void initContentHashesEnumerator() throws IOException {
+  public static void initContentHashesEnumerator() throws IOException {
     if (ourHashesWithFileType != null) return;
     synchronized (ContentHashesSupport.class) {
       if (ourHashesWithFileType != null) return;
@@ -52,11 +39,11 @@ class ContentHashesSupport {
     }
   }
 
-  static void flushContentHashes() {
+  public static void flushContentHashes() {
     if (ourHashesWithFileType != null && ourHashesWithFileType.isDirty()) ourHashesWithFileType.force();
   }
 
-  static byte[] calcContentHash(@NotNull byte[] bytes, @NotNull FileType fileType) {
+  public static byte[] calcContentHash(@NotNull byte[] bytes, @NotNull FileType fileType) {
     MessageDigest messageDigest = ContentHashesUtil.HASHER_CACHE.getValue();
 
     Charset defaultCharset = Charset.defaultCharset();
@@ -80,7 +67,7 @@ class ContentHashesSupport {
     return ourHashesWithFileType.enumerate(digest);
   }
 
-  static byte[] calcContentHashWithFileType(@NotNull byte[] bytes, @Nullable Charset charset, @NotNull FileType fileType) {
+  public static byte[] calcContentHashWithFileType(@NotNull byte[] bytes, @Nullable Charset charset, @NotNull FileType fileType) {
     MessageDigest messageDigest = ContentHashesUtil.HASHER_CACHE.getValue();
 
     Charset defaultCharset = Charset.defaultCharset();

@@ -13,7 +13,7 @@ import java.util.Map;
 
 public class MapForwardIndexAccessorImpl<Key, Value, Input> extends AbstractForwardIndexAccessor<Key, Value, Map<Key, Value>, Input> {
   public MapForwardIndexAccessorImpl(IndexExtension<Key, Value, Input> extension) {
-    super(new VfsAwareMapReduceIndex.MapDataExternalizer<>(extension));
+    super(new MapDataExternalizer<>(extension));
   }
 
   @Nullable

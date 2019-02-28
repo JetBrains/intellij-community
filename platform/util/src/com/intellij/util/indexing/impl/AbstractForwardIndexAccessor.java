@@ -23,9 +23,9 @@ public abstract class AbstractForwardIndexAccessor<Key, Value, Data, Input> impl
   }
 
   @Nullable
-  protected abstract Data convertToDataType(@Nullable Map<Key, Value> map, @Nullable Input input);
+  protected abstract Data convertToDataType(@Nullable Map<Key, Value> map, @Nullable Input input) throws IOException;
 
-  protected abstract Collection<Key> getKeysFromData(@Nullable Data data);
+  protected abstract Collection<Key> getKeysFromData(@Nullable Data data) throws IOException;
 
   public Data getData(@Nullable ByteArraySequence bytes) throws IOException {
     if (bytes == null) return null;
