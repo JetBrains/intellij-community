@@ -40,8 +40,8 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
 
   @NotNull
   @Override
-  protected Runnable loadEditorInBackground() {
-    Runnable baseResult = super.loadEditorInBackground();
+  protected AsyncEditorLoader.LoadEditorResult loadEditorInBackground() {
+    AsyncEditorLoader.LoadEditorResult baseResult = super.loadEditorInBackground();
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(myFile);
     Document document = FileDocumentManager.getInstance().getDocument(myFile);
     boolean shouldBuildInitialFoldings =
@@ -52,25 +52,26 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
 
     List<? extends Segment> zones = FocusModePassFactory.calcFocusZones(psiFile);
 
-    return () -> {
-      baseResult.run();
-      Editor editor = getEditor();
+    return new AsyncEditorLoader.LoadEditorResult(baseResult.continuationValidator.and(d -> psiFile == null || psiFile.isValid()),
+                                                  () -> {
+                                                    baseResult.continuation.run();
+                                                    Editor editor = getEditor();
 
-      if (foldingState != null) {
-        foldingState.setToEditor(editor);
-      }
+                                                    if (foldingState != null) {
+                                                      foldingState.setToEditor(editor);
+                                                    }
 
-      if (zones != null) {
-        FocusModePassFactory.setToEditor(zones, editor);
-        if (editor instanceof EditorImpl) {
-          ((EditorImpl)editor).applyFocusMode();
-        }
-      }
+                                                    if (zones != null) {
+                                                      FocusModePassFactory.setToEditor(zones, editor);
+                                                      if (editor instanceof EditorImpl) {
+                                                        ((EditorImpl)editor).applyFocusMode();
+                                                      }
+                                                    }
 
-      if (psiFile != null && psiFile.isValid()) {
-        DaemonCodeAnalyzer.getInstance(myProject).restart(psiFile);
-      }
-    };
+                                                    if (psiFile != null && psiFile.isValid()) {
+                                                      DaemonCodeAnalyzer.getInstance(myProject).restart(psiFile);
+                                                    }
+                                                  });
   }
 
   @NotNull

@@ -3,6 +3,7 @@ package com.intellij.testFramework;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AutoPopupController;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.ide.GeneratedSourceFileChangeTracker;
 import com.intellij.ide.GeneratedSourceFileChangeTrackerImpl;
 import com.intellij.ide.highlighter.ModuleFileType;
@@ -964,7 +965,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   public static void waitForProjectLeakingThreads(@NotNull Project project, long timeout, @NotNull TimeUnit timeUnit) throws Exception {
-    NonBlockingReadActionImpl.cancelAllTasks();
+    DaemonCodeAnalyzerImpl.waitForAllEditorsFinallyLoaded(project, timeout, timeUnit);
     GeneratedSourceFileChangeTrackerImpl tracker = (GeneratedSourceFileChangeTrackerImpl)project.getComponent(GeneratedSourceFileChangeTracker.class);
     if (tracker != null) {
       tracker.cancelAllAndWait(timeout, timeUnit);
