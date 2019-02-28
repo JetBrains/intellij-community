@@ -5,10 +5,13 @@ package com.intellij.tasks.context;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
@@ -48,6 +51,7 @@ public class WorkingContextManager {
   @NonNls private static final String TASK_XML_POSTFIX = ".task.xml";
   private static final String CONTEXT_ZIP_POSTFIX = ".contexts.zip";
   private static final Comparator<JBZipEntry> ENTRY_COMPARATOR = (o1, o2) -> Long.signum(o2.getTime() - o1.getTime());
+  private boolean ENABLED;
 
   public static WorkingContextManager getInstance(Project project) {
     return ServiceManager.getService(project, WorkingContextManager.class);
@@ -55,6 +59,13 @@ public class WorkingContextManager {
 
   public WorkingContextManager(Project project) {
     myProject = project;
+    ENABLED = !ApplicationManager.getApplication().isUnitTestMode();
+  }
+
+  @TestOnly
+  public void enableUntil(@NotNull Disposable disposable) {
+    ENABLED = true;
+    Disposer.register(disposable, ()-> ENABLED = false);
   }
 
   public void loadContext(Element fromElement) {
@@ -105,6 +116,7 @@ public class WorkingContextManager {
 
 
   private synchronized void saveContext(@Nullable String entryName, String zipPostfix, @Nullable String comment) {
+    if (!ENABLED) return;
     try (JBZipFile archive = getTasksArchive(zipPostfix)) {
       if (entryName == null) {
         int i = archive.getEntries().size();
