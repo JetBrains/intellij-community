@@ -5,6 +5,7 @@ import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.ThreeState;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
@@ -55,6 +56,8 @@ public interface JsonLikePsiWalker {
 
   default boolean acceptsEmptyRoot() { return false; }
 
+  @Nullable PsiElement getRoot(@NotNull PsiFile file);
+
   @Nullable
   static JsonLikePsiWalker getWalker(@NotNull final PsiElement element, JsonSchemaObject schemaObject) {
     if (JSON_ORIGINAL_PSI_WALKER.handles(element)) return JSON_ORIGINAL_PSI_WALKER;
@@ -79,4 +82,7 @@ public interface JsonLikePsiWalker {
   default PsiElement getParentContainer(PsiElement element) {
     return null;
   }
+
+  @Nullable
+  PsiElement getPropertyNameElement(@Nullable PsiElement property);
 }

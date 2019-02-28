@@ -3,7 +3,6 @@ package com.jetbrains.jsonSchema.ide;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
@@ -30,6 +29,9 @@ public interface JsonSchemaService {
   }
 
   boolean isSchemaFile(@NotNull VirtualFile file);
+  boolean isSchemaFile(@NotNull JsonSchemaObject schemaObject);
+
+  @NotNull Project getProject();
 
   @Nullable
   JsonSchemaVersion getSchemaVersion(@NotNull VirtualFile file);
@@ -59,9 +61,13 @@ public interface JsonSchemaService {
   @Nullable
   JsonSchemaFileProvider getSchemaProvider(@NotNull final VirtualFile schemaFile);
 
-  void reset();
+  @Nullable
+  JsonSchemaFileProvider getSchemaProvider(@NotNull final JsonSchemaObject schemaObject);
 
-  ModificationTracker getAnySchemaChangeTracker();
+  @Nullable
+  VirtualFile resolveSchemaFile(@NotNull final JsonSchemaObject schemaObject);
+
+  void reset();
 
   List<JsonSchemaInfo> getAllUserVisibleSchemas();
 

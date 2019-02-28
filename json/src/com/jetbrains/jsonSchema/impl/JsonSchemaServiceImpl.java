@@ -3,14 +3,12 @@ package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.json.JsonUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,7 +42,6 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   @NotNull private final ClearableLazyValue<Set<String>> myBuiltInSchemaIds;
   @NotNull private final Set<String> myRefs = ContainerUtil.newConcurrentSet();
   private final AtomicLong myAnyChangeCount = new AtomicLong(0);
-  private final ModificationTracker myAnySchemaChangeTracker;
 
   @NotNull private final JsonSchemaCatalogManager myCatalogManager;
 
@@ -58,7 +55,6 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
         return myState.getFiles().stream().map(f -> JsonCachedValues.getSchemaId(f, myProject)).collect(Collectors.toSet());
       }
     };
-    myAnySchemaChangeTracker = () -> myAnyChangeCount.get();
     myCatalogManager = new JsonSchemaCatalogManager(myProject);
 
     MessageBusConnection connection = project.getMessageBus().connect();
@@ -69,11 +65,6 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     });
     JsonSchemaVfsListener.startListening(project, this, connection);
     myCatalogManager.startUpdates();
-  }
-
-  @Override
-  public ModificationTracker getAnySchemaChangeTracker() {
-    return myAnySchemaChangeTracker;
   }
 
   @NotNull
@@ -104,6 +95,13 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     return myState.getProvider(schemaFile);
   }
 
+  @Nullable
+  @Override
+  public JsonSchemaFileProvider getSchemaProvider(@NotNull JsonSchemaObject schemaObject) {
+    VirtualFile file = resolveSchemaFile(schemaObject);
+    return file == null ? null : getSchemaProvider(file);
+  }
+
   @Override
   public void reset() {
     myState.reset();
@@ -113,6 +111,12 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
       action.run();
     }
     DaemonCodeAnalyzer.getInstance(myProject).restart();
+  }
+
+  @Override
+  @NotNull
+  public Project getProject() {
+    return myProject;
   }
 
   @Override
@@ -311,9 +315,15 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   @Override
   public boolean isSchemaFile(@NotNull VirtualFile file) {
-    return JsonUtil.isJsonFile(file) && (isMappedSchema(file)
-                                         || isSchemaByProvider(file)
-                                         || hasSchemaSchema(file));
+    return isMappedSchema(file)
+           || isSchemaByProvider(file)
+           || hasSchemaSchema(file);
+  }
+
+  @Override
+  public boolean isSchemaFile(@NotNull JsonSchemaObject schemaObject) {
+    VirtualFile file = resolveSchemaFile(schemaObject);
+    return file != null && isSchemaFile(file);
   }
 
   private boolean isMappedSchema(@NotNull VirtualFile file) {
@@ -526,5 +536,12 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
       }
     }
     return provider.getSchemaFile();
+  }
+
+  @Nullable
+  @Override
+  public VirtualFile resolveSchemaFile(@NotNull JsonSchemaObject schemaObject) {
+    String fileId = schemaObject.getFileUrl();
+    return fileId == null ? null : VirtualFileManager.getInstance().findFileByUrl(fileId);
   }
 }

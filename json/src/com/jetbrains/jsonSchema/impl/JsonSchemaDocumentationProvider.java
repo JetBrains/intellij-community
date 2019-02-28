@@ -93,7 +93,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
         position.replaceStep(position.size() - 1, forcedPropName);
       }
     }
-    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(rootSchema, true, position).resolve();
+    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(element.getProject(), rootSchema, true, position).resolve();
 
     String htmlDescription = null;
     boolean deprecated = false;
@@ -159,7 +159,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
                                              @NotNull JsonSchemaObject rootSchema) {
     JsonSchemaService service = JsonSchemaService.Impl.get(element.getProject());
     String apiInfo = "";
-    JsonSchemaFileProvider provider = service.getSchemaProvider(rootSchema.getSchemaFile());
+    JsonSchemaFileProvider provider = service.getSchemaProvider(rootSchema);
     if (provider != null) {
       String information = provider.getThirdPartyApiInformation();
       if (information != null) {

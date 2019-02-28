@@ -3,6 +3,7 @@ package org.jetbrains.yaml.schema;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.json.pointer.JsonPointerPosition;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
@@ -32,6 +33,7 @@ public class YamlJsonSchemaDeprecationInspection extends YamlJsonSchemaInspectio
     if (walker == null || schema == null) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
+    Project project = root.getProject();
     return new YamlPsiElementVisitor() {
       @Override
       public void visitKeyValue(@NotNull YAMLKeyValue keyValue) {
@@ -49,7 +51,7 @@ public class YamlJsonSchemaDeprecationInspection extends YamlJsonSchemaInspectio
           return;
         }
 
-        final MatchResult result = new JsonSchemaResolver(schema, false, position).detailedResolve();
+        final MatchResult result = new JsonSchemaResolver(project, schema, false, position).detailedResolve();
         for (JsonSchemaObject object : result.mySchemas) {
           String message = object.getDeprecationMessage();
           if (message != null) {

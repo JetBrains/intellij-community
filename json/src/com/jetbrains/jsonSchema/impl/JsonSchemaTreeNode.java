@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -145,7 +146,7 @@ public class JsonSchemaTreeNode {
     if (myAny != node.myAny) return false;
     if (myNothing != node.myNothing) return false;
     if (myResolveState != node.myResolveState) return false;
-    if (mySchema != null ? !mySchema.equals(node.mySchema) : node.mySchema != null) return false;
+    if (!Objects.equals(mySchema, node.mySchema)) return false;
     //noinspection RedundantIfStatement
     if (!myPosition.equals(node.myPosition)) return false;
 
@@ -173,8 +174,7 @@ public class JsonSchemaTreeNode {
     else if (!SchemaResolveState.normal.equals(myResolveState)) sb.append(myResolveState.name());
     else {
       assert mySchema != null;
-      final String name = mySchema.getSchemaFile().getName();
-      sb.append("schema from file: ").append(name).append("\n");
+      sb.append("schema").append("\n");
       if (mySchema.getRef() != null) sb.append("$ref: ").append(mySchema.getRef()).append("\n");
       else if (!mySchema.getProperties().isEmpty()) {
         sb.append("properties: ");
