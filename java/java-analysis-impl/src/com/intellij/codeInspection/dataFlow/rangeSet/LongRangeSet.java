@@ -92,6 +92,13 @@ public abstract class LongRangeSet {
   public abstract long max();
 
   /**
+   * @return a constant value if this set represents a constant; null otherwise
+   */
+  public Long getConstantValue() {
+    return null;
+  }
+
+  /**
    * Checks if current set and other set have at least one common element
    *
    * @param other other set to check whether intersection exists
@@ -956,6 +963,11 @@ public abstract class LongRangeSet {
 
     @Override
     public long max() {
+      return myValue;
+    }
+
+    @Override
+    public Long getConstantValue() {
       return myValue;
     }
 

@@ -617,8 +617,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (constValue != null) return constValue;
       DfaVariableState state = getExistingVariableState((DfaVariableValue)value);
       LongRangeSet range = state != null ? state.getFact(DfaFactType.RANGE) : null;
-      if (range != null && !range.isEmpty() && range.min() == range.max()) {
-        return myFactory.getConstFactory().createFromValue(range.min(), PsiType.LONG);
+      Long constantValue = range == null ? null : range.getConstantValue();
+      if (constantValue != null) {
+        return myFactory.getConstFactory().createFromValue(constantValue, PsiType.LONG);
       }
     }
     return null;
@@ -764,8 +765,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         rightConstraint = leftRange.minus(appliedRange, isLong);
         break;
       case REM:
-        if (rightRange.min() == rightRange.max()) {
-          leftConstraint = LongRangeSet.fromRemainder(rightRange.min(), appliedRange.intersect(result));
+        Long value = rightRange.getConstantValue();
+        if (value != null) {
+          leftConstraint = LongRangeSet.fromRemainder(value, appliedRange.intersect(result));
         }
         break;
     }
@@ -1092,7 +1094,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
           } else if(pair.getSecond() == eqClass) {
             if (!applyRelationRangeToClass(pair.getFirst(), appliedRange, RelationType.LT)) return false;
           }
-        } else if(appliedRange.min() == appliedRange.max()) {
+        } else if(appliedRange.getConstantValue() != null) {
           EqClass other = pair.getFirst() == eqClass ? pair.getSecond() : pair.getSecond() == eqClass ? pair.getFirst() : null;
           if (other != null) {
             if (!applyRelationRangeToClass(other, appliedRange, RelationType.NE)) return false;
