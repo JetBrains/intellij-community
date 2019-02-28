@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.Couple;
@@ -16,10 +16,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 /**
  * @author peter
@@ -69,10 +68,27 @@ public abstract class GrMapType extends GrLiteralClassType {
   public abstract boolean isEmpty();
 
   @NotNull
-  protected abstract PsiType[] getAllKeyTypes();
+  protected PsiType[] getAllKeyTypes() {
+    Set<PsiType> result = new HashSet<>();
+    if (!getStringEntries().isEmpty()) {
+      result.add(GroovyPsiManager.getInstance(myFacade.getProject()).createTypeByFQClassName(JAVA_LANG_STRING, getResolveScope()));
+    }
+    for (Couple<PsiType> entry : getOtherEntries()) {
+      result.add(entry.first);
+    }
+    result.remove(null);
+    return result.toArray(createArray(result.size()));
+  }
 
   @NotNull
-  protected abstract PsiType[] getAllValueTypes();
+  protected PsiType[] getAllValueTypes() {
+    Set<PsiType> result = new HashSet<>(getStringEntries().values());
+    for (Couple<PsiType> entry : getOtherEntries()) {
+      result.add(entry.second);
+    }
+    result.remove(null);
+    return result.toArray(createArray(result.size()));
+  }
 
   @NotNull
   protected abstract List<Couple<PsiType>> getOtherEntries();
