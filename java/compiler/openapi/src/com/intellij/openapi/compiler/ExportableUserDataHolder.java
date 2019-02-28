@@ -24,9 +24,8 @@ import java.util.Map;
 /**
  * @author Eugene Zhuravlev
  */
-public interface ExportableUserDataHolder extends UserDataHolder{
+public interface ExportableUserDataHolder extends UserDataHolder {
 
   @NotNull
   Map<Key, Object> exportUserData();
-
 }
