@@ -25,6 +25,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -61,6 +62,7 @@ import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -247,14 +249,18 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   private void saveColumnOrderToSettings() {
     if (myProperties.exists(CommonUiProperties.COLUMN_ORDER)) {
-      List<Integer> columnOrder = ContainerUtil.newArrayList();
-
-      for (int i = 0; i < getColumnModel().getColumnCount(); i++) {
-        columnOrder.add(getColumnModel().getColumn(i).getModelIndex());
-      }
-
-      myProperties.set(CommonUiProperties.COLUMN_ORDER, columnOrder);
+      myProperties.set(CommonUiProperties.COLUMN_ORDER, getVisibleColumns());
     }
+  }
+
+  @NotNull
+  private List<Integer> getVisibleColumns() {
+    List<Integer> columnOrder = ContainerUtil.newArrayList();
+
+    for (int i = 0; i < getColumnModel().getColumnCount(); i++) {
+      columnOrder.add(getColumnModel().getColumn(i).getModelIndex());
+    }
+    return columnOrder;
   }
 
   public void reLayout() {
@@ -501,13 +507,14 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   public void performCopy(@NotNull DataContext dataContext) {
     StringBuilder sb = new StringBuilder();
 
+    List<Integer> visibleColumns = getVisibleColumns();
     int[] selectedRows = getSelectedRows();
     for (int i = 0; i < Math.min(VcsLogUtil.MAX_SELECTED_COMMITS, selectedRows.length); i++) {
       int row = selectedRows[i];
-      for (int j = ROOT_COLUMN + 1; j < getModel().getColumnCount(); j++) {
-        sb.append(getModel().getValueAt(row, j).toString());
-        if (j < getModel().getColumnCount() - 1) sb.append(" ");
-      }
+      sb.append(StringUtil.join(visibleColumns, j -> {
+        if (j == ROOT_COLUMN) return "";
+        else return getModel().getValueAt(row, j).toString();
+      }, " "));
       if (i != selectedRows.length - 1) sb.append("\n");
     }
 
