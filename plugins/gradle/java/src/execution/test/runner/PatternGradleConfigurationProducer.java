@@ -24,6 +24,7 @@ import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
+import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.*;
@@ -55,6 +56,7 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
     assert contextLocation != null;
     Project project = context.getProject();
     List<String> tests = getTestPatterns(context);
+    if (tests.isEmpty()) return false;
     TestMappings testMappings = getTestMappings(project, tests);
     Function1<String, VirtualFile> findTestSource = test -> getSourceFile(testMappings.getClasses().get(test));
     Function1<String, String> createFilter = (test) ->
@@ -62,7 +64,7 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
     Module module = getModuleFromContext(context);
     if (module == null) return false;
     if (!applyTestConfiguration(settings, module, tests, findTestSource, createFilter)) return false;
-    configuration.setName(tests.size() > 1 ? String.format("%s and %d more", tests.get(0), tests.size() - 1) : tests.get(0));
+    configuration.setName(suggestConfigurationName(tests));
     JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, contextLocation);
     return true;
   }
@@ -89,6 +91,11 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
     ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
     Project project = context.getProject();
     List<String> tests = getTestPatterns(context);
+    if (tests.isEmpty()) {
+      LOG.warn("Cannot find runnable tests from context, uses raw run configuration");
+      performRunnable.run();
+      return;
+    }
     TestMappings testMappings = getTestMappings(project, tests);
     getTestTasksChooser().chooseTestTasks(project, context.getDataContext(), testMappings.getClasses().values(), tasks -> {
       ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
@@ -100,9 +107,16 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
         performRunnable.run();
         return;
       }
-      configuration.setName(tests.size() > 1 ? String.format("%s and %d more", tests.get(0), tests.size() - 1) : tests.get(0));
+      configuration.setName(suggestConfigurationName(tests));
       performRunnable.run();
     });
+  }
+
+  @NotNull
+  private static String suggestConfigurationName(List<String> tests) {
+    if (tests.isEmpty()) return "";
+    if (tests.size() == 1) return tests.get(0);
+    return GradleBundle.message("gradle.tests.pattern.producer.configuration.name", tests.get(0), tests.size() - 1);
   }
 
   @Nullable
