@@ -29,7 +29,7 @@ final class GeneralHighlightingPassFactory implements MainHighlightingPassFactor
                                                                                                   new int[]{Pass.UPDATE_FOLDING}, false,
                                                                                                   Pass.UPDATE_ALL);
     // todo do we really need this assert?
-    HighlightVisitor.EP_HIGHLIGHT_VISITOR.findExtensionOrFail(DefaultHighlightVisitor.class, myProject);
+    //HighlightVisitor.EP_HIGHLIGHT_VISITOR.findExtensionOrFail(DefaultHighlightVisitor.class, myProject);
   }
 
   @NotNull
