@@ -29,7 +29,7 @@ def is_test_mode():
 
 
 # Future generator mode where all the checks will be performed on Python side.
-# Not it works in transitional mode where validity of existing SDK skeletons is checked on
+# Now it works in transitional mode where validity of existing SDK skeletons is checked on
 # Java side (see PySkeletonRefresher), and generator itself inspects only the cache.
 @cached
 def is_standalone_mode():
