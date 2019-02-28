@@ -83,6 +83,9 @@ fun GuiTestCase.waitAMoment() {
           catch (ignore: IllegalStateException) {
             // asyncIcon searched earlier might disappear at all (it's ok)
           }
+          catch (ignore: IllegalArgumentException) {
+            // asyncIcon searched earlier might disappear at all (it's ok)
+          }
           catch (e: WaitTimedOutError) {
             throw WaitTimedOutError("Background process hadn't finished after ${timeoutForBackgroundTasks.toPrintable()}")
           }
