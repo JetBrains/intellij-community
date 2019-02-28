@@ -98,9 +98,9 @@ class LocalFileSystemRefreshWorker {
               action.run();
             }
             finally {
-              int workersBusy = workersInProcess.decrementAndGet();
+              workersInProcess.decrementAndGet();
               int currentTasks = tasksScheduled.decrementAndGet();
-              if (workersBusy == 0 && currentTasks == 0) {
+              if (currentTasks == 0 && workersInProcess.get() == 0) {
                 refreshFinishedLatch.countDown();
               }
             }
