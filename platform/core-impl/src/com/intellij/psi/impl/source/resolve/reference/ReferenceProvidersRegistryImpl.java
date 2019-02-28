@@ -126,7 +126,9 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
       final PsiReference[] refs = getReferences(context, trinity);
       if ((ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal())
           && Registry.is("ide.check.reference.provider.underlying.element")) {
+/* Android Studio: b/126956711
         assertReferenceUnderlyingElement(context, refs, trinity.provider);
+Android Studio: b/126956711 */
       }
       if (refs.length > 0) {
         map.putValue(trinity.priority, refs);
