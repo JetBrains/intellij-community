@@ -59,7 +59,7 @@ public final class HierarchyNodeRenderer extends NodeRenderer {
   @Override
   protected Icon fixIconIfNeeded(Icon icon, boolean selected, boolean hasFocus) {
     return IconUtil.replaceInnerIcon(super.fixIconIfNeeded(icon, selected, hasFocus),
-                                     selected ? AllIcons.General.Modified : AllIcons.General.Modified_selected,
-                                     selected ? AllIcons.General.Modified_selected : AllIcons.General.Modified);
+                                     selected ? AllIcons.General.Modified : AllIcons.General.ModifiedSelected,
+                                     selected ? AllIcons.General.ModifiedSelected : AllIcons.General.Modified);
   }
 }

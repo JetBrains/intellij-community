@@ -929,7 +929,7 @@ public class AllIcons {
     /** 14x14 */ public static final Icon LinkDropTriangle = IconLoader.getIcon("/general/linkDropTriangle.svg");
     /** 16x16 */ public static final Icon Locate = IconLoader.getIcon("/general/locate.svg");
     /** 13x13 */ public static final Icon Modified = IconLoader.getIcon("/general/modified.svg");
-    /** 13x13 */ public static final Icon Modified_selected = IconLoader.getIcon("/general/modified_selected.svg");
+    /** 13x13 */ public static final Icon ModifiedSelected = IconLoader.getIcon("/general/modifiedSelected.svg");
     /** 16x16 */ public static final Icon MoreTabs = IconLoader.getIcon("/general/moreTabs.svg");
     /** 16x16 */ public static final Icon Mouse = IconLoader.getIcon("/general/mouse.svg");
     /** 16x16 */ public static final Icon Note = IconLoader.getIcon("/general/note.svg");

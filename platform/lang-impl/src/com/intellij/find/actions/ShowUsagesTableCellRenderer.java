@@ -131,7 +131,7 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     switch(column) {
       case CURRENT_ASTERISK_COL:
         if (isOriginUsage) {
-          panel.add(new JLabel(isSelected ? AllIcons.General.Modified_selected : AllIcons.General.Modified));
+          panel.add(new JLabel(isSelected ? AllIcons.General.ModifiedSelected : AllIcons.General.Modified));
         }
         break;
       case FILE_GROUP_COL:
