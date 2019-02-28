@@ -5,6 +5,7 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.psi.PsiModifier
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.GroovyBundle.message
+import org.jetbrains.plugins.groovy.annotator.intentions.ConvertLambdaToClosureAction
 import org.jetbrains.plugins.groovy.annotator.intentions.ReplaceDotFix
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
@@ -115,6 +116,8 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
 
   override fun visitLambdaExpression(expression: GrLambdaExpression) {
     super.visitLambdaExpression(expression)
-    holder.createErrorAnnotation(expression.arrow, message("unsupported.lambda"))
+    holder.createErrorAnnotation(expression.arrow, message("unsupported.lambda")).apply {
+      registerFix(ConvertLambdaToClosureAction(expression))
+    }
   }
 }
