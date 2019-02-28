@@ -35,8 +35,9 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
 
   public boolean handles(@NotNull PsiElement element) {
     PsiElement parent = element.getParent();
-    return parent != null && (element instanceof JsonElement || element instanceof LeafPsiElement && parent instanceof JsonElement)
-           && JsonDialectUtil.isStandardJson(CompletionUtil.getOriginalOrSelf(parent));
+    return element instanceof JsonFile && JsonDialectUtil.isStandardJson(element)
+           || parent != null && (element instanceof JsonElement || element instanceof LeafPsiElement && parent instanceof JsonElement)
+             && JsonDialectUtil.isStandardJson(CompletionUtil.getOriginalOrSelf(parent));
   }
 
   @Override

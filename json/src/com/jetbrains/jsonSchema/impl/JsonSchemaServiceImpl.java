@@ -541,7 +541,16 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   @Nullable
   @Override
   public VirtualFile resolveSchemaFile(@NotNull JsonSchemaObject schemaObject) {
-    String fileId = schemaObject.getFileUrl();
-    return fileId == null ? null : VirtualFileManager.getInstance().findFileByUrl(fileId);
+    VirtualFile rawFile = schemaObject.getRawFile();
+    if (rawFile != null) {
+      return rawFile;
+    }
+
+    String fileUrl = schemaObject.getFileUrl();
+    if (fileUrl == null) {
+      return null;
+    }
+
+    return VirtualFileManager.getInstance().findFileByUrl(fileUrl);
   }
 }
