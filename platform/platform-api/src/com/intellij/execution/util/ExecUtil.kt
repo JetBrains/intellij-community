@@ -133,10 +133,11 @@ object ExecUtil {
       }
       SystemInfo.isMac -> {
         val escapedCommand = StringUtil.join(command, { escapeAppleScriptArgument(it) }, " & \" \" & ")
+        val messageArg = if (SystemInfo.isMacOSYosemite) " with prompt \"${prompt}\"" else ""
         val escapedScript =
           "tell current application\n" +
           "   activate\n" +
-          "   do shell script " + escapedCommand + " with administrator privileges without altering line endings\n" +
+          "   do shell script ${escapedCommand}${messageArg} with administrator privileges without altering line endings\n" +
           "end tell"
         GeneralCommandLine(osascriptPath, "-e", escapedScript)
       }
