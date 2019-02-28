@@ -26,6 +26,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.jediterm.terminal.RequestOrigin;
@@ -60,7 +61,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   }
 
   public void run() {
-    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Running the terminal", false) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Running the Terminal", false) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         indicator.setText("Running the terminal...");
@@ -217,37 +218,51 @@ public abstract class AbstractTerminalRunner<T extends Process> {
             TerminalStarter.resizeTerminal(terminalWidget.getTerminal(), connector, size, RequestOrigin.User);
           }
           catch (Exception e) {
-            LOG.warn("Cannot resize right after creation, process.isAlive: " + process.isAlive(), e);
+            LOG.info("Cannot resize right after creation, process.isAlive: " + process.isAlive(), e);
           }
         }
 
         ApplicationManager.getApplication().invokeLater(() -> {
           try {
             terminalWidget.createTerminalSession(connector);
+          }
+          catch (Exception e) {
+            printError(terminalWidget, "Cannot create terminal session for " + runningTargetName(), e);
+          }
+          try {
             terminalWidget.start();
             terminalWidget.getComponent().revalidate();
             terminalWidget.notifyStarted();
           }
           catch (RuntimeException e) {
-            showCannotOpenTerminalDialog(e);
+            printError(terminalWidget, "Cannot open " + runningTargetName(), e);
           }
         }, modalityState);
       }
       catch (Exception e) {
-        LOG.info("Cannot open " + runningTargetName(), e);
-        ApplicationManager.getApplication().invokeLater(() -> {
-          terminalWidget.getTerminal().writeCharacters(e.getMessage());
-          terminalWidget.getTerminal().newLine();
-          terminalWidget.getTerminal().newLine();
-          terminalWidget.getTerminal().carriageReturn();
-          terminalWidget.getTerminal().writeCharacters("See your idea.log (Help | " + ShowLogAction.getActionName() + ") for the details.");
-          terminalWidget.getTerminalPanel().setCursorVisible(false);
-        }, modalityState, myProject.getDisposed());
+        printError(terminalWidget, "Cannot open " + runningTargetName(), e);
       }
     });
   }
 
-  private void showCannotOpenTerminalDialog(@NotNull Throwable e) {
-    Messages.showErrorDialog(e.getMessage(), "Can't Open " + runningTargetName());
+  private void printError(@NotNull JBTerminalWidget terminalWidget, @NotNull String errorMessage, @NotNull Exception e) {
+    LOG.info(errorMessage, e);
+    if (terminalWidget.getTerminal().getCursorX() > 1) {
+      terminalWidget.getTerminal().newLine();
+      terminalWidget.getTerminal().carriageReturn();
+    }
+    terminalWidget.getTerminal().writeCharacters(errorMessage);
+    terminalWidget.getTerminal().newLine();
+    terminalWidget.getTerminal().carriageReturn();
+    terminalWidget.getTerminal().writeCharacters(e.getMessage());
+    terminalWidget.getTerminal().newLine();
+    terminalWidget.getTerminal().newLine();
+    terminalWidget.getTerminal().carriageReturn();
+    terminalWidget.getTerminal().writeCharacters("See your idea.log (Help | " + ShowLogAction.getActionName() + ") for the details.");
+    AppUIUtil.invokeOnEdt(() -> {
+      if (!Disposer.isDisposed(terminalWidget)) {
+        terminalWidget.getTerminalPanel().setCursorVisible(false);
+      }
+    }, myProject.getDisposed());
   }
 }
