@@ -89,7 +89,6 @@ object GuiTestUtil {
 
   const val JDK_HOME_FOR_TESTS = "JDK_HOME_FOR_TESTS"
   const val TEST_DATA_DIR = "GUI_TEST_DATA_DIR"
-  const val FIRST_START = "GUI_FIRST_START"
   private val SYSTEM_EVENT_QUEUE = Toolkit.getDefaultToolkit().systemEventQueue
 
   val gradleHomePath: File?
@@ -185,8 +184,6 @@ object GuiTestUtil {
 
   // Called by GuiTestPaths via reflection.
   fun waitForIdeToStart() {
-    val firstStart = getSystemPropertyOrEnvironmentVariable(FIRST_START)
-    val isFirstStart = firstStart != null && firstStart.toLowerCase() == "true"
     GuiActionRunner.executeInEDT(false)
     var robot: Robot? = null
     try {

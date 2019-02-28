@@ -288,6 +288,8 @@ object GuiTestLocalLauncher {
       .plus("-Didea.system.path=${GuiTestOptions.systemPath}")
       .plus("-Didea.gui.tests.log.file=${GuiTestOptions.guiTestLogFile}")
       .plus("-Dfile.encoding=${GuiTestOptions.encoding}")
+      .plus("-Djb.privacy.policy.text=<!--999.999-->")
+      .plus("-Djb.consents.confirmation.enabled=false")
       .plusIf(System.getProperty("java.io.tmpdir") != null, "-Djava.io.tmpdir=${System.getProperty("java.io.tmpdir")}")
       .plusIf(!ide.ideType.platformPrefix.isNullOrEmpty(), "-Didea.platform.prefix=${ide.ideType.platformPrefix}")
       .plus(ide.ideType.ideSpecificOptions)

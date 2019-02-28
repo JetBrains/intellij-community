@@ -3,12 +3,10 @@ package com.intellij.ide.projectWizard.kotlin.createProject
 
 import com.intellij.ide.projectWizard.kotlin.installKotlinPlugin.CreateSdksGuiTest
 import com.intellij.ide.projectWizard.kotlin.installKotlinPlugin.InstallPluginGuiTest
-import com.intellij.testGuiFramework.framework.FirstStartWith
 import com.intellij.testGuiFramework.framework.GuiTestSuite
 import com.intellij.testGuiFramework.framework.GuiTestSuiteRunner
 import com.intellij.testGuiFramework.framework.RunWithIde
 import com.intellij.testGuiFramework.launcher.ide.CommunityIde
-import com.intellij.testGuiFramework.launcher.ide.CommunityIdeFirstStart
 import com.intellij.testGuiFramework.testCases.CreateJdkGuiTest
 import org.junit.runner.RunWith
 import org.junit.runners.Suite
@@ -70,7 +68,6 @@ class ConfigureKotlinReleaseGuiTestSuite : GuiTestSuite()
 
 @RunWith(GuiTestSuiteRunner::class)
 @RunWithIde(CommunityIde::class)
-@FirstStartWith(CommunityIdeFirstStart::class)
 @Suite.SuiteClasses(
   InstallPluginGuiTest::class
   , CreateSdksGuiTest::class

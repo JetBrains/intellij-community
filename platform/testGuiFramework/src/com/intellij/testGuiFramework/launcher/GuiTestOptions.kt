@@ -27,7 +27,13 @@ object GuiTestOptions {
 
   private const val NO_NEED_TO_FILTER_TESTS: String = "NO_NEED_TO_FILTER_TESTS"
 
-  val configPath: String by lazy { getSystemProperty("idea.config.path", configDefaultPath) }
+  val configPath: String by lazy {
+    val configDir = File(getSystemProperty("idea.config.path", configDefaultPath))
+    if (!configDir.exists()) {
+      configDir.mkdir()
+    }
+    configDir.absolutePath
+  }
   val systemPath: String by lazy { getSystemProperty("idea.system.path", systemDefaultPath) }
   val guiTestLogFile: String by lazy { javaClass.classLoader.getResource("gui-test-log.xml").file }
   val guiTestRootDirPath: String? by lazy { System.getProperty("idea.gui.tests.root.dir.path", null) }

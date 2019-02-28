@@ -4,7 +4,6 @@ package com.intellij.testGuiFramework.util.scenarios
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
-import com.intellij.testGuiFramework.impl.FirstStart.Utils.exists
 import com.intellij.testGuiFramework.util.*
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonFinish
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonNext
@@ -571,13 +570,13 @@ fun NewProjectDialogModel.setLibrariesAndFrameworks(libs: LibrariesSet) {
           for((option, value) in lib.options)
             step("Set option '$option' to value '$value' ")innerStep@{
               when {
-                exists {checkbox(option, Timeouts.seconds05)} -> {
+                guiTestCase.exists {checkbox(option, Timeouts.seconds05)} -> {
                   val component = checkbox(option, Timeouts.noTimeout)
                   if(component.isSelected != value.toBoolean())
                     component.click()
                 }
-                exists { combobox(option, Timeouts.seconds05) } -> combobox(option, Timeouts.noTimeout).selectItem(value)
-                exists { radioButton(option, Timeouts.seconds05) } -> radioButton(option, Timeouts.noTimeout).select()
+                guiTestCase.exists { combobox(option, Timeouts.seconds05) } -> combobox(option, Timeouts.noTimeout).selectItem(value)
+                guiTestCase.exists { radioButton(option, Timeouts.seconds05) } -> radioButton(option, Timeouts.noTimeout).select()
                 else -> throw IllegalStateException("Unsupported kind of option '$option' - not checkbox, radiobutton or combobox")
               }
               return@innerStep

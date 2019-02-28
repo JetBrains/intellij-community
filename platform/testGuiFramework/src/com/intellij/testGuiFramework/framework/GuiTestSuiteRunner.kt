@@ -17,19 +17,10 @@ import org.junit.runners.model.RunnerBuilder
 
 open class GuiTestSuiteRunner(private val suiteClass: Class<*>, private val builder: RunnerBuilder) : Suite(suiteClass, builder) {
 
-  //IDE type to run suite tests with
-  var isFirstStart: Boolean = true
-
   @Volatile
   var customName: String? = null
 
   protected val myIde: Ide = getIdeFromAnnotation(suiteClass)
-  protected val UNDEFINED_FIRST_CLASS = "undefined"
-  protected val myFirstStartClassName: String by lazy {
-    val annotation = suiteClass.getAnnotation(FirstStartWith::class.java)
-    val value = annotation?.value
-    if (value != null) value.java.canonicalName else UNDEFINED_FIRST_CLASS
-  }
   private val LOG: Logger = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.GuiTestSuiteRunner")!!
 
   private val testsFilter by lazy {
@@ -73,8 +64,6 @@ open class GuiTestSuiteRunner(private val suiteClass: Class<*>, private val buil
     else {
       try {
         LOG.info("DEBUG_TEST_DESCRIPTION: ${runner.description.displayName} ${description.className} ${description.testClass} ${description.methodName}")
-        //let's start IDE to complete installation, import configs and etc before running tests
-        if (isFirstStart) firstStart()
         val testClass = runner.description.testClass
         val guiTestLocalRunner = createGuiTestLocalRunner(testClass, suiteClass, myIde)
         super.runChild(guiTestLocalRunner, notifier)
@@ -84,13 +73,6 @@ open class GuiTestSuiteRunner(private val suiteClass: Class<*>, private val buil
         notifier?.fireTestFailure(Failure(runner.description, e))
       }
     }
-  }
-
-  protected open fun firstStart() {
-    if (myFirstStartClassName == UNDEFINED_FIRST_CLASS) return
-    LOG.info("IDE is configuring for the first time...")
-    GuiTestLocalLauncher.firstStartIdeLocally(myIde, myFirstStartClassName)
-    isFirstStart = false
   }
 
 }
