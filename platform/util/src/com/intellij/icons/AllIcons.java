@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.icons;
 
 import com.intellij.openapi.util.IconLoader;
@@ -92,8 +92,11 @@ public class AllIcons {
     /** 16x16 */ public static final Icon PreviewDetailsVertically = IconLoader.getIcon("/actions/previewDetailsVertically.svg");
     /** 16x16 */ public static final Icon PreviousOccurence = IconLoader.getIcon("/actions/previousOccurence.svg");
     /** 16x16 */ public static final Icon Profile = IconLoader.getIcon("/actions/profile.svg");
+    /** 16x16 */ public static final Icon ProfileBlue = IconLoader.getIcon("/actions/profileBlue.svg");
     /** 16x16 */ public static final Icon ProfileCPU = IconLoader.getIcon("/actions/profileCPU.svg");
     /** 16x16 */ public static final Icon ProfileMemory = IconLoader.getIcon("/actions/profileMemory.svg");
+    /** 16x16 */ public static final Icon ProfileRed = IconLoader.getIcon("/actions/profileRed.svg");
+    /** 16x16 */ public static final Icon ProfileYellow = IconLoader.getIcon("/actions/profileYellow.svg");
     /** 16x16 */ public static final Icon ProjectDirectory = IconLoader.getIcon("/actions/projectDirectory.svg");
     /** 16x16 */ public static final Icon Properties = IconLoader.getIcon("/actions/properties.svg");
     /** 16x16 */ public static final Icon QuickfixBulb = IconLoader.getIcon("/actions/quickfixBulb.svg");
