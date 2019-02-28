@@ -81,6 +81,10 @@ public class GCWatcher {
         File file = new File(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir")), "GCWatcher.hprof.zip");
         MemoryDumpHelper.captureMemoryDumpZipped(file);
 
+        if (isEverythingCollected()) {
+          message += "\nEverything is collected after taking the heap dump.";
+        }
+
         //noinspection UseOfSystemOutOrSystemErr
         System.out.println("##teamcity[publishArtifacts '" + file.getPath() + "']");
       }
