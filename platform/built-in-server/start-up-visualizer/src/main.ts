@@ -4,12 +4,13 @@ import * as am4core from "@amcharts/amcharts4/core"
 import am4themes_animated from "@amcharts/amcharts4/themes/animated"
 import {ComponentChartManager, ServiceChartManager, TopHitProviderChart} from "./ItemChartManager"
 import {TimelineChartManager} from "./TimeLineChartManager"
-import {ChartManager, getButtonElement, getInputElement, InputData} from "./core"
+import {ChartManager, getButtonElement, getInputElement} from "./core"
+import {DataManager, InputData} from "./data"
 
 const storageKeyPort = "ijPort"
 const storageKeyData = "inputIjFormat"
 
-function renderDataForCharts(chartManagers: Array<ChartManager>, lastData: InputData, offset: number = 0) {
+function renderDataForCharts(chartManagers: Array<ChartManager>, lastData: DataManager, offset: number = 0) {
   for (const chartManager of (offset == 0 ? chartManagers : chartManagers.slice(offset))) {
     chartManager.render(lastData)
   }
@@ -25,11 +26,11 @@ function main(): void {
   const global = window as any
   global.chartManagers = chartManagers
 
-  let lastData: InputData | null = null
+  let lastData: DataManager | null = null
   new InputFormManager(data => {
-    lastData = data
+    lastData = new DataManager(data)
     for (const chartManager of chartManagers) {
-      chartManager.render(data)
+      chartManager.render(lastData)
     }
   })
 

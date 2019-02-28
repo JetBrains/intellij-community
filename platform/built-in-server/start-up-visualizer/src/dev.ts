@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-import {InputData} from "./core"
 import {TimelineChartManager} from "./TimeLineChartManager"
 import {ComponentChartManager, TopHitProviderChart} from "./ItemChartManager"
+import {DataManager, InputData} from "./data"
 
 const data: InputData = {
   "version": "1",
@@ -588,7 +588,7 @@ function main() {
   // const chartManager = new ComponentChartManager(container)
   // const chartManager = new TimelineChartManager(container)
   const chartManager = new TopHitProviderChart(container)
-  chartManager.render(data)
+  chartManager.render(new DataManager(data))
 
   const global = window as any
   global.lastData = data

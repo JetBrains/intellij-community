@@ -1,8 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-import {InputData, XYChartManager} from "./core"
+import {XYChartManager} from "./core"
 import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
 import {computeLevels, disableGridButKeepBorderLines, TimeLineItem} from "./timeLineChartHelper"
+import {DataManager, InputData} from "./data"
 
 export class TimelineChartManager extends XYChartManager {
   private maxRowIndex = 0
@@ -88,13 +89,10 @@ export class TimelineChartManager extends XYChartManager {
     })
   }
 
-  render(ijData: InputData) {
-    const items = ijData.items
+  render(data: DataManager) {
+    this.chart.data = this.transformIjData(data.data)
 
-    const data = this.transformIjData(ijData)
-      this.chart.data = data
-
-    const originalItems = items
+    const originalItems = data.data.items
     const durationAxis = this.chart.xAxes.getIndex(0) as am4charts.DurationAxis
     durationAxis.max = originalItems[originalItems.length - 1].end
   }

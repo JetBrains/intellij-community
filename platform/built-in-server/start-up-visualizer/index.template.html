@@ -30,11 +30,7 @@
   </div>
 </div>
 
-<p>
-  <small>For timeline no threshold, for other charts threshold is 10ms. End time equals to last dumb-aware project start-up activity.</small>
-  <br/>
-  <small>So, preload activities and services may be out of end time — first vertical dark-blue separator means app initialized, second one out of ready.</small>
-</p>
+<p><small>For timeline no threshold, for other charts threshold is 10ms. End time equals to last dumb-aware project start-up activity (so, preload activities may be out of end time).</small></p>
 
 <h2>Timeline</h2>
 <div id="visualization"></div>
@@ -47,5 +43,13 @@
 
 <h2>Options Top Hit Providers</h2>
 <div id="optionsTopHitProviderChart" class="activityChart"></div>
+
+<br/>
+<hr>
+<ul>
+  <li><small>app initialized: end of phase <code>app initialized callback</code>.</small></li>
+  <li><small>project initialized: end of phase <code>module loading</code>.</small></li>
+</ul>
+<br/>
 </body>
 </html>

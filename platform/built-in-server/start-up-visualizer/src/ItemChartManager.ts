@@ -1,7 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import * as am4charts from "@amcharts/amcharts4/charts"
-import {InputData, Item, XYChartManager} from "./core"
+import {XYChartManager} from "./core"
 import * as am4core from "@amcharts/amcharts4/core"
+import {DataManager, Item} from "./data"
 
 export type ComponentProviderSourceNames = "appComponents" | "projectComponents"
 export type ServiceProviderSourceNames = "appServices" | "projectServices"
@@ -110,13 +111,13 @@ export abstract class ItemChartManager extends XYChartManager {
     return series
   }
 
-  render(data: InputData) {
+  render(data: DataManager) {
     const sources: Array<Array<Item>> = []
     const series = this.chart.series
     let seriesIndex = 0
     const axisData = []
     for (const sourceName of this.sourceNames) {
-      const items = data[sourceName] || []
+      const items = data.data[sourceName] || []
       sources.push(items)
       ItemChartManager.assignShortName(items)
       series.getIndex(seriesIndex++)!!.data = items
@@ -134,46 +135,33 @@ export abstract class ItemChartManager extends XYChartManager {
     this.chart.invalidateData()
   }
 
-  protected computeRangeMarkers(data: InputData) {
+  protected computeRangeMarkers(data: DataManager) {
     const nameAxis = this.nameAxis
-    const appInitialized = data.items.find(it => it.name === "app initialized callback")
-
-    let outOfInitialized: ClassItem | null = null
-    let outOfReady: ClassItem | null = null
-    for (const item of nameAxis.data) {
-      if (outOfInitialized == null && appInitialized != null && item.start >= appInitialized.end) {
-        outOfInitialized = item as ClassItem
-      }
-      if (outOfReady == null && item.start >= data.totalDurationActual) {
-        outOfReady = item as ClassItem
-      }
-
-      if (outOfInitialized != null && outOfReady != null) {
-        break
-      }
-    }
 
     nameAxis.axisRanges.clear()
-    this.createRangeMarker(nameAxis, outOfInitialized, "app initialized")
-    this.createRangeMarker(nameAxis, outOfReady, "ready")
+    for (const guideLineDescriptor of data.computeGuides(nameAxis.data)) {
+      this.createRangeMarker(nameAxis, guideLineDescriptor.item as ClassItem, guideLineDescriptor.label)
+    }
   }
 
-  private createRangeMarker(axis: am4charts.CategoryAxis, item: ClassItem | null, label: string) {
-    if (item == null) {
-      return
-    }
-
+  private createRangeMarker(axis: am4charts.CategoryAxis, item: ClassItem, label: string) {
     const range = axis.axisRanges.create()
     range.category = item.shortName
-    range.label.tooltipText = label
-    // range.label.text = label
-    // range.label.inside = true
-    // range.label.rotation = 0
-    // range.label.verticalCenter = "middle"
-    // range.label.horizontalCenter = "right"
-    range.grid.stroke = am4core.color("#396478")
-    range.grid.strokeWidth = 2
+    range.label.inside = true
+    range.label.horizontalCenter = "middle"
+    range.label.valign = "bottom"
+    range.label.text = label
+    range.label.rotation = 0
+    range.grid.stroke = am4core.color("#000000")
+    range.grid.strokeDasharray = "2,2"
     range.grid.strokeOpacity = 1
+
+    range.label.adapter.add("dy", (_y, _target) => {
+      return -this.chart.yAxes.getIndex(0)!!.pixelHeight
+    })
+    range.label.adapter.add("x", (_x, _target) => {
+      return range.point.x
+    })
   }
 
   private static assignShortName(items: Array<Item>) {
@@ -192,7 +180,7 @@ export class ComponentChartManager extends ItemChartManager {
 
   // doesn't make sense for components - cannot be outside of ready, and app initialized is clear
   // because color for app/project bars is different
-  protected computeRangeMarkers(_data: InputData) {
+  protected computeRangeMarkers(_data: DataManager) {
   }
 }
 
