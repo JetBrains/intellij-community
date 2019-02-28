@@ -43,7 +43,7 @@ public abstract class AbstractForwardIndexAccessor<Key, Value, Data, Input> impl
   @Nullable
   @Override
   public ByteArraySequence serialize(@Nullable Map<Key, Value> map, @Nullable Input input) throws IOException {
-    if (map == null) return null;
+    if (map == null || map.isEmpty()) return null;
     BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(ourSpareByteArray.getBuffer(4 * map.size()));
     DataOutputStream stream = new DataOutputStream(out);
     myDataExternalizer.save(stream, convertToDataType(map, input));

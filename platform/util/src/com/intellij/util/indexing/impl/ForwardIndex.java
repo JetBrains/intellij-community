@@ -17,26 +17,20 @@ package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * Represents a <a href="https://en.wikipedia.org/wiki/Search_engine_indexing#The_forward_index">forward index data structure</>:
  * an index intended to hold a mappings of inputId-s to contained keys.
  */
 @ApiStatus.Experimental
-public interface ForwardIndex<Key, Value> {
-  /**
-   * Creates a diff builder for given inputId.
-   */
-  @NotNull
-  InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId) throws IOException;
+public interface ForwardIndex {
+  @Nullable
+  ByteArraySequence getInputData(int inputId) throws IOException;
 
-  /**
-   * Update data for inputId.
-   */
-  void putInputData(int inputId, @NotNull Map<Key, Value> data) throws IOException;
+  void putInputData(int inputId, @Nullable ByteArraySequence data) throws IOException;
 
   default void flush() {
 
