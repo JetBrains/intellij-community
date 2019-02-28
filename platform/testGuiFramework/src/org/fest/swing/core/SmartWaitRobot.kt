@@ -81,7 +81,7 @@ class SmartWaitRobot : Robot {
 
   override fun click(component: Component, point: Point) {
     step("click at component ${component.loggedOutput()} at point ${point.loggedOutput()}") {
-      moveMouse(component)
+      moveMouse(component, point)
       basicRobot.click(component, point)
     }
   }
