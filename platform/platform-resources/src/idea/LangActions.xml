@@ -74,6 +74,8 @@
       -->
     </action>
 
+    <group id="NewProjectOrModuleGroup">
+    </group>
 
     <group id="PrintExportGroup">
       <separator/>
