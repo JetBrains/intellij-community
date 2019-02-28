@@ -922,8 +922,8 @@ public class PyStubsTest extends PyTestCase {
         checker.check("b", false, true, true);
         checker.check("c", false, false, false);
         checker.check("d", false, false, true);
-        checker.check("e", false, false, false);
-        checker.check("f", false, false, false);
+        checker.check("e", false, false, true); // fallback `init` value
+        checker.check("f", false, false, true); // fallback `init` value
         checker.check("g", false, false, true); // fallback `init` value
         checker.check("h", false, false, true);
         checker.check("i", false, false, true);
