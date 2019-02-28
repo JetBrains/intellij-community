@@ -14,6 +14,9 @@ import org.jetbrains.concurrency.Promise;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * @see com.intellij.ide.impl.dataRules.GetDataRule
+ */
 public abstract class DataManager {
   public static DataManager getInstance() {
     return ApplicationManager.getApplication().getComponent(DataManager.class);
@@ -58,23 +61,21 @@ public abstract class DataManager {
    * @return {@link DataContext} constructed be the specified {@code component}
    * and the point specified by {@code x} and {@code y} coordinate inside the
    * component.
-   *
-   * @exception IllegalArgumentException if point {@code (x, y)} is not inside
-   * component's bounds
+   * @throws IllegalArgumentException if point {@code (x, y)} is not inside component's bounds
    */
   @NotNull
   public abstract DataContext getDataContext(@NotNull Component component, int x, int y);
 
   /**
    * @param dataContext should be instance of {@link com.intellij.openapi.util.UserDataHolder}
-   * @param dataKey key to store value
-   * @param data value to store
+   * @param dataKey     key to store value
+   * @param data        value to store
    */
   public abstract <T> void saveInDataContext(@Nullable DataContext dataContext, @NotNull Key<T> dataKey, @Nullable T data);
 
   /**
    * @param dataContext find by key if instance of {@link com.intellij.openapi.util.UserDataHolder}
-   * @param dataKey key to find value by
+   * @param dataKey     key to find value by
    * @return value stored by {@link #saveInDataContext(DataContext, Key, Object)}
    */
   @Nullable
