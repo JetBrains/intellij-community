@@ -713,42 +713,6 @@ def test() {
 """, GrUnresolvedAccessInspection)
   }
 
-  void testReassignedVarInLambda() {
-    addCompileStatic()
-    testHighlighting("""
-$IMPORT_COMPILE_STATIC
-
-@CompileStatic
-def test() {
-    def var = "abc"
-    def cl = () -> {
-        var = new Date()
-    }
-    cl()
-    var.<error descr="Cannot resolve symbol 'toUpperCase'">toUpperCase</error>()
-}
-""", GrUnresolvedAccessInspection)
-  }
-
-  void testReassignedVarInLambda2() {
-    addCompileStatic()
-    testHighlighting("""
-$IMPORT_COMPILE_STATIC
-
-@CompileStatic
-def test() {
-    def cl = () -> {
-        def var
-        var = new Date()
-    }
-    def var = "abc"
-
-    cl()
-    var.toUpperCase()  //no errors
-}
-""", GrUnresolvedAccessInspection)
-  }
-
   void testReassignedVarInClosure3() {
     addCompileStatic()
     testHighlighting("""
