@@ -3,7 +3,6 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.lang.html.HTMLLanguage;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
@@ -12,10 +11,6 @@ import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
 
 final class HtmlClosingTagErrorFilter extends HighlightErrorFilter {
-  HtmlClosingTagErrorFilter(@SuppressWarnings("unused") @NotNull Project project) {
-    //HighlightVisitor.EP_HIGHLIGHT_VISITOR.findExtensionOrFail(XmlHighlightVisitor.class, project);
-  }
-
   @Override
   public boolean shouldHighlightErrorElement(@NotNull final PsiErrorElement element) {
     final PsiFile psiFile = element.getContainingFile();
