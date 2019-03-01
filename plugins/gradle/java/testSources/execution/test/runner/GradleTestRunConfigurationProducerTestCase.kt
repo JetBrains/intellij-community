@@ -31,7 +31,7 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
       put(LangDataKeys.PROJECT, myProject)
       put(LangDataKeys.MODULE, ModuleUtilCore.findModuleForPsiElement(elements[0]))
       put(Location.DATA_KEY, PsiLocation.fromPsiElement(elements[0]))
-      put(Location.DATA_KEYS, elements.map { PsiLocation.fromPsiElement(it) }.toTypedArray())
+      put(LangDataKeys.PSI_ELEMENT_ARRAY, elements)
     }
     return object : ConfigurationContext(elements[0]) {
       override fun getDataContext() = dataContext
@@ -79,6 +79,10 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     }
   }
 
+  protected fun GradleTestRunConfigurationProducer.createTemplateConfiguration(): ExternalSystemRunConfiguration {
+    return configurationFactory.createTemplateConfiguration(myProject) as ExternalSystemRunConfiguration
+  }
+
   protected fun generateAndImportTemplateProject(): ProjectData {
     val testCaseFile = createProjectSubFile("src/test/java/TestCase.java", """
       import org.junit.Test;
@@ -107,7 +111,7 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     """.trimIndent())
     val abstractTestCaseFile = createProjectSubFile("src/test/java/AbstractTestCase.java", """
       import org.junit.Test;
-      public class AbstractTestCase {
+      public abstract class AbstractTestCase {
         @Test public void test() {}
       }
     """.trimIndent())
@@ -138,9 +142,13 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     """.trimIndent())
     val buildScript = GradleBuildScriptBuilderEx()
       .withJavaPlugin()
+      .withIdeaPlugin()
       .withJUnit("4.12")
       .withGroovyPlugin("2.4.14")
       .addPrefix("""
+        idea.module {
+          testSourceDirs += file('automation')
+        }
         sourceSets {
           automation.java.srcDirs = ['automation']
           automation.compileClasspath += sourceSets.test.runtimeClasspath
