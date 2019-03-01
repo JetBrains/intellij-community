@@ -216,12 +216,14 @@ public class ExtensionsRootType extends RootType {
     if (resources == null) return ContainerUtil.emptyList();
     final Set<URL> urls = ContainerUtil.newLinkedHashSet(ContainerUtil.toList(resources));
 
+    if (plugin.getUseIdeaClassLoader()) return ContainerUtil.newArrayList(urls);
+
     // exclude parent classloader resources from list
     for (PluginId dependentPluginId :plugin.getDependentPluginIds()) {
       final IdeaPluginDescriptor dependentPluginDescriptor = PluginManager.getPlugin(dependentPluginId);
       if (dependentPluginDescriptor == null) continue;
       ClassLoader dependentPluginClassLoader = dependentPluginDescriptor.getPluginClassLoader();
-      if (dependentPluginClassLoader != pluginClassLoader && !plugin.getUseIdeaClassLoader() && !pluginId.equals(dependentPluginId)) {
+      if (dependentPluginClassLoader != pluginClassLoader) {
         urls.removeAll(ContainerUtil.toList(dependentPluginClassLoader.getResources(resourcesPath)));
       }
     }
