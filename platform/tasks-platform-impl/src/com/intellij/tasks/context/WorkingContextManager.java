@@ -181,6 +181,8 @@ public class WorkingContextManager {
   }
 
   private synchronized boolean doEntryAction(String zipPostfix, String entryName, ThrowableConsumer<JBZipEntry, Exception> action) {
+    if (!ENABLED) return false;
+
     try (JBZipFile archive = getTasksArchive(zipPostfix)) {
       JBZipEntry entry = archive.getEntry(StringUtil.startsWithChar(entryName, '/') ? entryName : "/" + entryName);
       if (entry != null) {
@@ -199,6 +201,7 @@ public class WorkingContextManager {
   }
 
   private synchronized List<ContextInfo> getContextHistory(String zipPostfix) {
+    if (!ENABLED) return Collections.emptyList();
     try (JBZipFile archive = getTasksArchive(zipPostfix)) {
       List<JBZipEntry> entries = archive.getEntries();
       return ContainerUtil.mapNotNull(entries, (NullableFunction<JBZipEntry, ContextInfo>)entry -> entry.getName().startsWith("/context") ? new ContextInfo(entry.getName(), entry.getTime(), entry.getComment()) : null);
@@ -222,6 +225,7 @@ public class WorkingContextManager {
   }
 
   private void removeContext(String name, String postfix) {
+    if (!ENABLED) return;
     try (JBZipFile archive = getTasksArchive(postfix)) {
       JBZipEntry entry = archive.getEntry(name);
       if (entry != null) {
@@ -239,6 +243,7 @@ public class WorkingContextManager {
   }
 
   private synchronized void pack(int max, int delta, String zipPostfix) {
+    if (!ENABLED) return;
     try (JBZipFile archive = getTasksArchive(zipPostfix)) {
       List<JBZipEntry> entries = archive.getEntries();
       if (entries.size() > max + delta) {
