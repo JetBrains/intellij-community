@@ -45,12 +45,12 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   @Nullable
   private volatile T[] myExtensionsCacheAsArray;
 
-  protected final MutablePicoContainer myPicoContainer;
+  final MutablePicoContainer myPicoContainer;
   private final PluginDescriptor myDescriptor;
 
   // guarded by this
   @NotNull
-  protected List<ExtensionComponentAdapter> myAdapters = Collections.emptyList();
+  List<ExtensionComponentAdapter> myAdapters = Collections.emptyList();
 
   @SuppressWarnings("unchecked")
   @NotNull
@@ -124,23 +124,21 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     addExtensionAdapter(adapter);
     notifyListenersOnAdd(extension, adapter.getPluginDescriptor(), myListeners);
 
-    if (parentDisposable == null) {
-      return;
-    }
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable, () -> {
+        synchronized (this) {
+          List<ExtensionComponentAdapter> list = myAdapters;
+          int index = ContainerUtil.indexOfIdentity(list, adapter);
+          if (index < 0) {
+            LOG.error("Extension to be removed not found: " + adapter.myComponentInstance);
+          }
 
-    Disposer.register(parentDisposable, () -> {
-      synchronized (this) {
-        List<ExtensionComponentAdapter> list = myAdapters;
-        int index = ContainerUtil.indexOfIdentity(list, adapter);
-        if (index < 0) {
-          LOG.error("Extension to be removed not found: " + adapter.myComponentInstance);
+          list.remove(index);
+          clearCache();
+          notifyListenersOnRemove(adapter.myComponentInstance, adapter.getPluginDescriptor(), myListeners);
         }
-
-        list.remove(index);
-        clearCache();
-        notifyListenersOnRemove(adapter.myComponentInstance, adapter.getPluginDescriptor(), myListeners);
-      }
-    });
+      });
+    }
   }
 
   /**
@@ -708,7 +706,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   /**
    * {@link #clearCache} is not called, use {@link ExtensionsAreaImpl#extensionsRegistered(ExtensionPointImpl[])} if needed.
    */
-  public final synchronized void createAndRegisterAdapters(@NotNull Collection<Element> extensionElements,
+  public final synchronized void createAndRegisterAdapters(@NotNull Collection<? extends Element> extensionElements,
                                                            @NotNull PluginDescriptor pluginDescriptor,
                                                            @NotNull MutablePicoContainer picoContainer) {
     if (extensionElements.isEmpty()) {

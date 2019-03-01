@@ -79,7 +79,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return null;
   }
 
-  protected final void init(@NotNull List<IdeaPluginDescriptor> plugins, @Nullable ProgressIndicator indicator, @Nullable Runnable componentsRegistered, boolean isNeededToMeasure) {
+  protected final void init(@NotNull List<? extends IdeaPluginDescriptor> plugins, @Nullable ProgressIndicator indicator, @Nullable Runnable componentsRegistered, boolean isNeededToMeasure) {
     StartUpMeasurer.MeasureToken totalMeasureToken = isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix() + StartUpMeasurer.Phases.INITIALIZE_COMPONENTS_SUFFIX) : null;
 
     final Application app = ApplicationManager.getApplication();
@@ -295,7 +295,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   protected boolean isComponentSuitable(@NotNull ComponentConfig componentConfig) {
     Map<String, String> options = componentConfig.options;
-    return options == null || ((!Boolean.parseBoolean(options.get("internal")) || ApplicationManager.getApplication().isInternal()));
+    return options == null || !Boolean.parseBoolean(options.get("internal")) || ApplicationManager.getApplication().isInternal();
   }
 
   @Override
