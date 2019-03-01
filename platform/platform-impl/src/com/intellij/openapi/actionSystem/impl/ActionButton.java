@@ -366,7 +366,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
                          ((ActionToolbarImpl)parent).getOrientation() == SwingConstants.HORIZONTAL;
     int x = horizontal ? JBUI.scale(6) : JBUI.scale(5);
     int y = horizontal ? JBUI.scale(5) : JBUI.scale(6);
-    AllIcons.General.Dropdown.paintIcon(this, g, x, y);
+    if (isButtonEnabled()) {
+      AllIcons.General.Dropdown.paintIcon(this, g, x, y);
+    } else {
+      IconLoader.getDisabledIcon(AllIcons.General.Dropdown).paintIcon(this, g, x, y);
+    }
   }
 
   protected void paintButtonLook(Graphics g) {
