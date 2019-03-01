@@ -23,7 +23,7 @@ import org.jetbrains.idea.svn.api.Depth
 /**
  * @author irengrig
  */
-class MarkLocallyDeletedTreeConflictResolvedAction : DumbAwareAction(SvnBundle.message("action.mark.tree.conflict.resolved.text")) {
+class MarkLocallyDeletedTreeConflictResolvedAction : DumbAwareAction(SvnBundle.message("action.Subversion.MarkTreeResolved.text")) {
 
   override fun actionPerformed(e: AnActionEvent) {
     val locallyDeletedChecker = MyLocallyDeletedChecker(e)
@@ -51,7 +51,6 @@ class MarkLocallyDeletedTreeConflictResolvedAction : DumbAwareAction(SvnBundle.m
     val locallyDeletedChecker = MyLocallyDeletedChecker(e)
     e.presentation.isVisible = locallyDeletedChecker.isEnabled
     e.presentation.isEnabled = locallyDeletedChecker.isEnabled
-    //e.getPresentation().setText(SvnBundle.message("action.mark.tree.conflict.resolved.text"));
   }
 
   private fun resolveLocallyDeletedTextConflict(checker: MyLocallyDeletedChecker, exception: Ref<VcsException>) {
