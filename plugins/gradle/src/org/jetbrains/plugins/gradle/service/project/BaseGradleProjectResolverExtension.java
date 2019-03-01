@@ -74,6 +74,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.*;
@@ -995,7 +996,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     if (gradleExecutionSettings != null && projectGradleVersionString != null) {
       final GradleVersion projectGradleVersion = GradleVersion.version(projectGradleVersionString);
       if (projectGradleVersion.compareTo(GradleVersion.version("4.0")) < 0) {
-        final IdeaModule dependencyModule = dependency.getDependencyModule();
+        final IdeaModule dependencyModule = getDependencyModuleByReflection(dependency);
         if (dependencyModule != null) {
           final ModuleData moduleData =
             gradleExecutionSettings.getExecutionWorkspace().findModuleDataByModule(resolverContext, dependencyModule);
@@ -1025,6 +1026,24 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       "Can't parse gradle module dependency '%s'. Reason: no module with such name (%s) is found. Registered modules: %s",
       dependency, moduleName, registeredModulesIndex.keySet()
     ));
+  }
+
+  @Nullable
+  private static IdeaModule getDependencyModuleByReflection(@NotNull IdeaModuleDependency dependency) {
+    Method getDependencyModule = ReflectionUtil.getMethod(dependency.getClass(), "getDependencyModule");
+    if (getDependencyModule != null) {
+      try {
+        Object result = getDependencyModule.invoke(dependency);
+        return (IdeaModule)result;
+      }
+      catch (IllegalAccessException e) {
+        LOG.info("Failed to get dependency module for [" + dependency + "]", e);
+      }
+      catch (InvocationTargetException e) {
+        LOG.info("Failed to get dependency module for [" + dependency + "]", e);
+      }
+    }
+    return null;
   }
 
   @NotNull
