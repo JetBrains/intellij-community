@@ -226,7 +226,11 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
           buildInfo.statusMessage = event.getMessage();
         }
 
-        myViewMap.get(buildInfo).onEvent(event);
+        // Android Studio: Change pending from IDEA https://github.com/JetBrains/intellij-community/pull/1073
+        BuildView view = myViewMap.get(buildInfo);
+        if (view != null) {
+          view.onEvent(event);
+        }
       }
     });
 
