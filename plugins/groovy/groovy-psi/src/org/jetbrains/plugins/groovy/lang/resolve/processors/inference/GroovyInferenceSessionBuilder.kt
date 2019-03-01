@@ -9,6 +9,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.TypeConversionUtil
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer
@@ -16,7 +17,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
-import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
@@ -90,10 +90,7 @@ fun getMostTopLevelExpression(start: GrExpression): GrExpression {
   var current: GrExpression = start
   while (true) {
     val parent = current.parent
-    current = if (parent is GrMethodCall && current in parent.expressionArguments) {
-      parent
-    }
-    else if (parent is GrArgumentList) {
+    current = if (parent is GrArgumentList) {
       val grandParent = parent.parent
       if (grandParent is GrCallExpression && grandParent.advancedResolve() is MethodResolveResult) {
         grandParent
