@@ -18,6 +18,10 @@ public abstract class AbstractMapProviderForwardIndexAccessor<Key, Value, Data, 
   @Nullable
   public abstract Map<Key, Value> getMapFromData(@Nullable Data data) throws IOException;
 
+  public Map<Key, Value> getMap(@Nullable ByteArraySequence bytes) throws IOException {
+    return getMapFromData(getData(bytes));
+  };
+
   @Nullable
   @Override
   protected Collection<Key> getKeysFromData(@Nullable Data data) throws IOException {

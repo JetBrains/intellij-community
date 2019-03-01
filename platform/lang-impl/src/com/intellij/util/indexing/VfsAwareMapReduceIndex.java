@@ -60,7 +60,7 @@ public class VfsAwareMapReduceIndex<Key, Value> extends VfsAwareMapReduceIndexBa
     Lock lock = getReadLock();
     lock.lock();
     try {
-      Map<Key, Value> map = (Map<Key, Value>)((AbstractForwardIndexAccessor<Key, Value, ?, FileContent>)myForwardIndexAccessor).getData(myForwardIndex.getInputData(fileId));
+      Map<Key, Value> map = ((AbstractMapProviderForwardIndexAccessor<Key, Value, ?, FileContent>)myForwardIndexAccessor).getMap(myForwardIndex.getInputData(fileId));
       return ObjectUtils.notNull(map, Collections.emptyMap());
     }
     catch (IOException e) {
