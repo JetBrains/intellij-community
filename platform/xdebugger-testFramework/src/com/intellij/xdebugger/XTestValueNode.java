@@ -15,10 +15,10 @@ import java.util.concurrent.Semaphore;
 import java.util.function.BiFunction;
 
 public class XTestValueNode extends XValueNodePresentationConfigurator.ConfigurableXValueNodeImpl {
-  public Icon myIcon;
-  public String myName;
-  public String myType;
-  public String myValue;
+  public @Nullable Icon myIcon;
+  public @NotNull String myName;
+  public @Nullable String myType;
+  public @NotNull String myValue;
   public boolean myHasChildren;
 
   public XFullValueEvaluator myFullValueEvaluator;
