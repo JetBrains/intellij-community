@@ -53,8 +53,11 @@ public abstract class EditorAction extends AnAction implements DumbAware, Update
       for (int i = extensions.size() - 1; i >= 0; i--) {
         final EditorActionHandlerBean handlerBean = extensions.get(i);
         if (handlerBean.action.equals(id)) {
-          myHandler = handlerBean.getHandler(myHandler);
-          myHandler.setWorksInInjected(isInInjectedContext());
+          EditorActionHandler handler = handlerBean.getHandler(myHandler);
+          if (handler != null) {
+            myHandler = handler;
+            myHandler.setWorksInInjected(isInInjectedContext());
+          }
         }
       }
     }
