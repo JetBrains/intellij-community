@@ -400,7 +400,8 @@ public class XDebuggerTestUtil {
       assertEquals(name, node.myName);
     }
     if (typePattern != null) {
-      assertTrue("Expected type: " + typePattern + " Actual type: " + node.myType, node.myType.matches(typePattern));
+      assertTrue("Expected type: " + typePattern + " Actual type: " + node.myType,
+                 node.myType != null && node.myType.matches(typePattern));
     }
   }
 
