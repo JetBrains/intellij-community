@@ -8,6 +8,6 @@ foo {
 foo {
   closure
 }
-.bar {
-  closure
-}
+    .bar {
+      closure
+    }
