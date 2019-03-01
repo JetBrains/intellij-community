@@ -20,11 +20,13 @@ import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import org.jetbrains.annotations.NotNull;
@@ -150,6 +152,29 @@ public class PyDefUseUtil {
     for (Instruction instruction : instructions[instr].allSucc()) {
       getPostRefs(var, instructions, instruction.num(), visited, result);
     }
+  }
+
+  public static boolean isDefinedBefore(@NotNull final PsiElement searched, @NotNull final PsiElement target) {
+    ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(searched);
+    Ref<Boolean> definedBefore = Ref.create(false);
+    if (scopeOwner != null) {
+      Instruction[] instructions = ControlFlowCache.getControlFlow(scopeOwner).getInstructions();
+      int index = ControlFlowUtil.findInstructionNumberByElement(instructions, target);
+      if (index >= 0) {
+        ControlFlowUtil.iteratePrev(index, instructions, instruction -> {
+          if (instruction.getElement() == searched) {
+            boolean isImport = searched instanceof PyImportedNameDefiner;
+            boolean isWriteAccess = instruction instanceof ReadWriteInstruction && ((ReadWriteInstruction)instruction).getAccess().isWriteAccess();
+            if (isImport || isWriteAccess) {
+              definedBefore.set(true);
+              return ControlFlowUtil.Operation.BREAK;
+            }
+          }
+          return ControlFlowUtil.Operation.NEXT;
+        });
+      }
+    }
+    return definedBefore.get();
   }
 
   public static class InstructionNotFoundException extends RuntimeException {

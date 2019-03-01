@@ -8,6 +8,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
@@ -24,7 +25,6 @@ import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -45,13 +45,14 @@ public class PyClassNameCompletionContributor extends PyExtendedCompletionContri
     final PsiElement element = parameters.getPosition();
     final PsiElement parent = element.getParent();
     final ScopeOwner originalScope = ScopeUtil.getScopeOwner(parameters.getOriginalPosition());
+    final Condition<PsiElement> fromAnotherScope = e -> ScopeUtil.getScopeOwner(e) != originalScope;
 
     addVariantsFromIndex(result,
                          originalFile,
                          PyClassNameIndex.KEY,
                          parent instanceof PyStringLiteralExpression ? getStringLiteralInsertHandler() : getImportingInsertHandler(),
                          // TODO: implement autocompletion for inner classes
-                         withSameScopeFilter(originalScope, PyUtil::isTopLevel),
+                         Conditions.and(fromAnotherScope, PyUtil::isTopLevel),
                          PyClass.class,
                          createClassElementHandler(originalFile));
 
@@ -59,7 +60,7 @@ public class PyClassNameCompletionContributor extends PyExtendedCompletionContri
                          originalFile,
                          PyFunctionNameIndex.KEY,
                          getFunctionInsertHandler(parent),
-                         withSameScopeFilter(originalScope, PyUtil::isTopLevel),
+                         Conditions.and(fromAnotherScope, PyUtil::isTopLevel),
                          PyFunction.class,
                          Function.identity());
 
@@ -67,21 +68,9 @@ public class PyClassNameCompletionContributor extends PyExtendedCompletionContri
                          originalFile,
                          PyVariableNameIndex.KEY,
                          parent instanceof PyStringLiteralExpression ? getStringLiteralInsertHandler() : getImportingInsertHandler(),
-                         withSameScopeFilter(originalScope, PyUtil::isTopLevel),
+                         Conditions.and(fromAnotherScope, PyUtil::isTopLevel),
                          PyTargetExpression.class,
                          Function.identity());
-  }
-
-  @NotNull
-  private static <T extends PsiElement> Condition<T> withSameScopeFilter(@Nullable ScopeOwner originalScope,
-                                                                         @NotNull Condition<T> additionalFilter) {
-    return element -> {
-      if (ScopeUtil.getScopeOwner(element) == originalScope) {
-        // suggestions with the same scope have already been filtered by {PyReference#getVariants}
-        return false;
-      }
-      return additionalFilter.value(element);
-    };
   }
 
   @NotNull
