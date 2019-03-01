@@ -133,7 +133,6 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
     if (editor.getSettings().isShowIntentionBulb()) {
       component.showIntentionHintImpl(!showExpanded);
     }
-    Disposer.register(project, component);
     if (showExpanded) {
       ApplicationManager.getApplication().invokeLater(() -> {
         if (!editor.isDisposed() && editor.getComponent().isShowing()) {
