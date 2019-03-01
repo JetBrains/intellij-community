@@ -13,19 +13,17 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class TerminalConsoleContentHelper implements Disposable {
+class TerminalConsoleContentHelper implements Disposable {
 
   private static final int FLUSH_TIMEOUT = 200;
 
-  private final TerminalExecutionConsole myConsole;
   private final Collection<ObservableConsoleView.ChangeListener> myChangeListeners = new CopyOnWriteArraySet<>();
   private final Set<ConsoleViewContentType> myContentTypes = ContainerUtil.newConcurrentSet();
   private final Alarm myAlarm;
   private final AtomicBoolean myRequested = new AtomicBoolean(false);
   private volatile boolean myDisposed = false;
 
-  public TerminalConsoleContentHelper(@NotNull TerminalExecutionConsole console) {
-    myConsole = console;
+  TerminalConsoleContentHelper(@NotNull TerminalExecutionConsole console) {
     myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD /* won't be disposed to call addRequest safely */);
     Disposer.register(console, this);
   }
