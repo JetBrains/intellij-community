@@ -417,21 +417,21 @@ public class HighlightControlFlowUtil {
   }
 
   private static boolean inInnerClass(@NotNull PsiElement psiElement, @Nullable PsiClass containingClass) {
-    PsiElement element = psiElement;
-    while (element != null) {
+    for (PsiElement element = psiElement;element != null;element = element.getParent()) {
       if (element instanceof PsiClass) {
         final boolean innerClass = !psiElement.getManager().areElementsEquivalent(element, containingClass);
         if (innerClass) {
           if (element instanceof PsiAnonymousClass) {
-            return !(PsiTreeUtil.isAncestor(((PsiAnonymousClass)element).getArgumentList(), psiElement, false) ||
-                     insideClassInitialization(containingClass, (PsiClass)element));
+            if (PsiTreeUtil.isAncestor(((PsiAnonymousClass)element).getArgumentList(), psiElement, false)) {
+              continue;
+            }
+            return !insideClassInitialization(containingClass, (PsiClass)element);
           }
           final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(psiElement, PsiLambdaExpression.class);
           return lambdaExpression == null || !insideClassInitialization(containingClass, (PsiClass)element);
         }
         return false;
       }
-      element = element.getParent();
     }
     return false;
   }
