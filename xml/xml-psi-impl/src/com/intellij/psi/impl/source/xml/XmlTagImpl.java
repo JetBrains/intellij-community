@@ -666,12 +666,16 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   @Override
   @NotNull
   public XmlTag[] getSubTags() {
-    boolean processIncludes = FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() == null &&
-                              !XmlUtil.isStubBuilding(); // todo the first condition should be enough
+    boolean processIncludes = shouldProcessIncludesNow();
     Key<CachedValue<XmlTag[]>> key = processIncludes ? SUBTAGS_WITH_INCLUDES_KEY : SUBTAGS_WITHOUT_INCLUDES_KEY;
     XmlTag[] cached = CachedValuesManager.getCachedValue(this, key, () ->
       Result.create(calcSubTags(processIncludes), PsiModificationTracker.MODIFICATION_COUNT));
     return cached.clone();
+  }
+
+  public static boolean shouldProcessIncludesNow() {
+    return FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() == null &&
+           !XmlUtil.isStubBuilding(); // todo the first condition should be enough
   }
 
   @NotNull
