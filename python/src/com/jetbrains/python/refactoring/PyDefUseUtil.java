@@ -154,10 +154,15 @@ public class PyDefUseUtil {
     }
   }
 
+  /**
+   * Iterates back through instructions starting at the second element and looks for the first one.
+   *
+   * @return false for elements from different scopes, true if searched is defined/imported before target
+   */
   public static boolean isDefinedBefore(@NotNull final PsiElement searched, @NotNull final PsiElement target) {
     ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(searched);
     Ref<Boolean> definedBefore = Ref.create(false);
-    if (scopeOwner != null) {
+    if (scopeOwner != null && scopeOwner == ScopeUtil.getScopeOwner(target)) {
       Instruction[] instructions = ControlFlowCache.getControlFlow(scopeOwner).getInstructions();
       int index = ControlFlowUtil.findInstructionNumberByElement(instructions, target);
       if (index >= 0) {
