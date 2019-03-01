@@ -118,6 +118,7 @@
       <action id="PopupHector" class="com.intellij.codeInsight.daemon.impl.PopupHectorAction"/>
       <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction"/>
     </group>
+    <action id="Unscramble" class="com.intellij.unscramble.AnalyzeStacktraceAction"/>
   </actions>
 
   <xi:include href="/idea/JavaActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
