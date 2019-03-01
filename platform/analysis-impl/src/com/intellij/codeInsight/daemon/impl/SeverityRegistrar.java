@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.util.IncorrectOperationException;
@@ -28,7 +29,7 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class SeverityRegistrar extends SimpleModificationTracker implements Comparator<HighlightSeverity> {
+public class SeverityRegistrar implements Comparator<HighlightSeverity>, ModificationTracker {
   /**
    * Always first {@link HighlightDisplayLevel#DO_NOT_SHOW} must be skipped during navigation, editing settings, etc.
    */
@@ -47,6 +48,8 @@ public class SeverityRegistrar extends SimpleModificationTracker implements Comp
   private JDOMExternalizableStringList myReadOrder;
 
   private static final Map<String, HighlightInfoType> STANDARD_SEVERITIES = ContainerUtil.newConcurrentMap();
+
+  private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
 
   public SeverityRegistrar(@NotNull MessageBus messageBus) {
     myMessageBus = messageBus;
@@ -72,6 +75,11 @@ public class SeverityRegistrar extends SimpleModificationTracker implements Comp
            : InspectionProfileManager.getInstance(project).getCurrentProfile().getProfileManager().getSeverityRegistrar();
   }
 
+  @Override
+  public long getModificationCount() {
+    return myModificationTracker.getModificationCount();
+  }
+
   public void registerSeverity(@NotNull SeverityBasedTextAttributes info, Color renderColor) {
     final HighlightSeverity severity = info.getType().getSeverity(null);
     myMap.put(severity.getName(), info);
@@ -84,7 +92,7 @@ public class SeverityRegistrar extends SimpleModificationTracker implements Comp
   }
 
   private void severitiesChanged() {
-    incModificationCount();
+    myModificationTracker.incModificationCount();
     myMessageBus.syncPublisher(SEVERITIES_CHANGED_TOPIC).run();
   }
 
