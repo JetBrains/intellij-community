@@ -92,6 +92,7 @@ public class JsonPointerReferenceProvider extends PsiReferenceProvider {
         for (int i = 0; i < parts2.size(); i++) {
           int length = parts2.get(i).length();
           if (i == parts2.size() - 1) length--;
+          if (length <= 0) break;
           refs.add(new JsonPointerReference((JsonValue)element, new TextRange(start, start + length),
                                               (id == null ? "" : id) + "#/" + StringUtil.join(strings, 0, i + 1, "/")));
           start += length + 1;
