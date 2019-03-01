@@ -12,11 +12,6 @@ import org.junit.Test;
 import java.util.Arrays;
 
 public class PtyCommandLineTest extends GeneralCommandLineTest {
-  @Ignore
-  @Test
-  @Override
-  public void redirectInput() { }
-
   @NotNull
   @Override
   protected String filterExpectedOutput(@NotNull String output) {
@@ -51,4 +46,7 @@ public class PtyCommandLineTest extends GeneralCommandLineTest {
 
     return sb.toString();
   }
+
+  @Ignore @Test @Override
+  public void redirectInput() { }
 }
