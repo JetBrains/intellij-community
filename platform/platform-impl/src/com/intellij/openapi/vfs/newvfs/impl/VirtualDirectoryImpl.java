@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
@@ -142,15 +143,26 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
       // do not extract getId outside the synchronized block since it will cause a concurrency problem.
       int id = ourPersistence.getId(this, name, delegate);
-      // N.B. name can change if file record was created
       if (id <= 0) {
         myData.addAdoptedName(name, caseSensitive);
         return null;
       }
 
+      final int nameId = FSRecords.getNameId(id); // name can change if file record was created
+      
+      if (ensureCanonicalName) {
+        CharSequence persistedName = FileNameCache.getVFileName(nameId);
+        if (!Comparing.equal(name, persistedName)) {
+          name = persistedName.toString();
+          child = doFindChildInArray(name, caseSensitive);
+          if (child != null) return child;
+        }
+      }
+
       FileAttributes attributes = PersistentFS.toFileAttributes(ourPersistence.getFileAttributes(id));
       boolean isEmptyDirectory = attributes.isDirectory() && !ourPersistence.mayHaveChildren(id);
-      child = createChild(FSRecords.getNameId(id), id, delegate, attributes, isEmptyDirectory);
+      
+      child = createChild(nameId, id, delegate, attributes, isEmptyDirectory);
 
       addChild(child);
 
