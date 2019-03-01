@@ -64,7 +64,7 @@ public class ExtensionPointImplTest {
   public void testRegistrationOrder() {
     ExtensionPoint<Integer> extensionPoint = buildExtensionPoint(Integer.class);
     extensionPoint.registerExtension(new Integer(123), disposable);
-    extensionPoint.registerExtension(new Integer(321), LoadingOrder.FIRST, null);
+    extensionPoint.registerExtension(new Integer(321), LoadingOrder.FIRST, disposable);
     Object[] extensions = extensionPoint.getExtensions();
     assertThat(extensions).hasSize(2);
     assertThat(extensions[0]).isEqualTo(new Integer(321));
@@ -178,7 +178,7 @@ public class ExtensionPointImplTest {
     assertThat(extensionPoint.getExtensionList()).hasSize(1);
 
     // registers a wrapping adapter
-    extensionPoint.registerExtension("second", LoadingOrder.FIRST, null);
+    extensionPoint.registerExtension("second", LoadingOrder.FIRST, disposable);
     ((ExtensionPointImpl)extensionPoint).addExtensionAdapter(adapter);
     adapter.setFire(firework);
 

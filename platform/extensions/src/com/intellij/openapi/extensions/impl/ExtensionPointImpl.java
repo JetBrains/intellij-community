@@ -85,17 +85,17 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   @Override
   public void registerExtension(@NotNull T extension) {
-    registerExtension(extension, LoadingOrder.ANY, null);
+    doRegisterExtension(extension, LoadingOrder.ANY, null);
   }
 
   @Override
   public void registerExtension(@NotNull T extension, @NotNull LoadingOrder order) {
-    registerExtension(extension, order, null);
+    doRegisterExtension(extension, order, null);
   }
 
   @Override
   public void registerExtension(@NotNull T extension, @NotNull Disposable parentDisposable) {
-    registerExtension(extension, LoadingOrder.ANY, parentDisposable);
+    doRegisterExtension(extension, LoadingOrder.ANY, parentDisposable);
   }
 
   @NotNull
@@ -103,9 +103,13 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     return myDescriptor;
   }
 
-  // extension will be not part of pico container
   @Override
-  public synchronized void registerExtension(@NotNull T extension, @NotNull LoadingOrder order, @Nullable Disposable parentDisposable) {
+  public synchronized void registerExtension(@NotNull T extension, @NotNull LoadingOrder order, @NotNull Disposable parentDisposable) {
+    doRegisterExtension(extension, order, parentDisposable);
+  }
+
+  // extension will be not part of pico container
+  private synchronized void doRegisterExtension(@NotNull T extension, @NotNull LoadingOrder order, @Nullable Disposable parentDisposable) {
     assertNotReadOnlyMode();
     checkExtensionType(extension, null);
 
@@ -421,7 +425,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   @Override
-  public synchronized void unregisterExtensions(@NotNull Predicate<T> filter) {
+  public synchronized void unregisterExtensions(@NotNull Predicate<? super T> filter) {
     List<T> extensions = getExtensionList();
     List<ExtensionComponentAdapter> adapters = myAdapters;
     ExtensionPointListener<T>[] listeners = myListeners;

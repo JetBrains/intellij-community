@@ -74,7 +74,7 @@ public interface ExtensionPoint<T> {
    * @deprecated Use another solutions to unregister not applicable extension, because this method instantiate all extensions.
    */
   @Deprecated
-  void unregisterExtensions(@NotNull Predicate<T> extension);
+  void unregisterExtensions(@NotNull Predicate<? super T> extension);
 
   /**
    * Unregisters an extension of the specified type.
