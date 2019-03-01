@@ -137,11 +137,11 @@ public class ExpectedTypesProvider {
   }
 
   @NotNull
-  public static ExpectedTypeInfo[] getExpectedTypes(@Nullable PsiExpression expr,
-                                                    boolean forCompletion,
-                                                    ExpectedClassProvider classProvider,
-                                                    boolean voidable,
-                                                    boolean usedAfter, int maxCandidates) {
+  private static ExpectedTypeInfo[] getExpectedTypes(@Nullable PsiExpression expr,
+                                                     boolean forCompletion,
+                                                     ExpectedClassProvider classProvider,
+                                                     boolean voidable,
+                                                     boolean usedAfter, int maxCandidates) {
     if (expr == null) return ExpectedTypeInfo.EMPTY_ARRAY;
     PsiElement parent = expr.getParent();
     PsiFunctionalExpression functionalExpression = extractFunctionalExpression(expr);
