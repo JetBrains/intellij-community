@@ -14,7 +14,7 @@ import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.incremental.*;
-import org.jetbrains.jps.incremental.storage.Timestamps;
+import org.jetbrains.jps.incremental.storage.StampsStorage;
 import org.jetbrains.jps.model.JpsModel;
 
 import java.io.DataInputStream;
@@ -157,7 +157,7 @@ public class BuildFSState {
     myInitialScanPerformed.add(target);
   }
 
-  public void registerDeleted(@Nullable CompileContext context, BuildTarget<?> target, final File file, @Nullable Timestamps tsStorage) throws IOException {
+  public void registerDeleted(@Nullable CompileContext context, BuildTarget<?> target, final File file, @Nullable StampsStorage tsStorage) throws IOException {
     registerDeleted(context, target, file);
     if (tsStorage != null) {
       tsStorage.removeStamp(file, target);
@@ -233,11 +233,11 @@ public class BuildFSState {
    * Note: marked file will well be visible as "dirty" only on the next compilation round!
    * @throws IOException
    */
-  public final boolean markDirty(@Nullable CompileContext context, File file, final BuildRootDescriptor rd, @Nullable Timestamps tsStorage, boolean saveEventStamp) throws IOException {
+  public final boolean markDirty(@Nullable CompileContext context, File file, final BuildRootDescriptor rd, @Nullable StampsStorage tsStorage, boolean saveEventStamp) throws IOException {
     return markDirty(context, CompilationRound.NEXT, file, rd, tsStorage, saveEventStamp);
   }
 
-  public boolean markDirty(@Nullable CompileContext context, CompilationRound round, File file, final BuildRootDescriptor rd, @Nullable Timestamps tsStorage, boolean saveEventStamp) throws IOException {
+  public boolean markDirty(@Nullable CompileContext context, CompilationRound round, File file, final BuildRootDescriptor rd, @Nullable StampsStorage tsStorage, boolean saveEventStamp) throws IOException {
     final FilesDelta roundDelta = getRoundDelta(round == CompilationRound.NEXT? NEXT_ROUND_DELTA_KEY : CURRENT_ROUND_DELTA_KEY, context);
     if (roundDelta != null && isInCurrentContextTargets(context, rd)) {
       roundDelta.markRecompile(rd, file);
@@ -281,7 +281,7 @@ public class BuildFSState {
     return targets.contains(rd.getTarget());
   }
 
-  public boolean markDirtyIfNotDeleted(@Nullable CompileContext context, CompilationRound round, File file, final BuildRootDescriptor rd, @Nullable Timestamps tsStorage) throws IOException {
+  public boolean markDirtyIfNotDeleted(@Nullable CompileContext context, CompilationRound round, File file, final BuildRootDescriptor rd, @Nullable StampsStorage tsStorage) throws IOException {
     final boolean marked = getDelta(rd.getTarget()).markRecompileIfNotDeleted(rd, file);
     if (marked && tsStorage != null) {
       tsStorage.removeStamp(file, rd.getTarget());
@@ -366,7 +366,7 @@ public class BuildFSState {
   /**
    * @return true if marked something, false otherwise
    */
-  public boolean markAllUpToDate(CompileContext context, final BuildRootDescriptor rd, final Timestamps stamps) throws IOException {
+  public boolean markAllUpToDate(CompileContext context, final BuildRootDescriptor rd, final StampsStorage<StampsStorage.Stamp> stampsStorage) throws IOException {
     boolean marked = false;
     final BuildTarget<?> target = rd.getTarget();
     final FilesDelta delta = getDelta(target);
@@ -380,6 +380,7 @@ public class BuildFSState {
         for (File file : files) {
           if (scope.isAffected(target, file)) {
             final long currentFileStamp = FSOperations.lastModified(file);
+            StampsStorage.Stamp stamp = stampsStorage.lastModified(file);
             if (!rd.isGenerated() && (currentFileStamp > targetBuildStartStamp || getEventRegistrationStamp(file) > targetBuildStartStamp)) {
               // if the file was modified after the compilation had started,
               // do not save the stamp considering file dirty
@@ -393,7 +394,7 @@ public class BuildFSState {
             }
             else {
               marked = true;
-              stamps.saveStamp(file, target, currentFileStamp);
+              stampsStorage.saveStamp(file, target, stamp); // todo: ask jeka
             }
           }
           else {

@@ -167,7 +167,7 @@ public class IncProjectBuilder {
     final LowMemoryWatcher memWatcher = LowMemoryWatcher.register(() -> {
       JavacMain.clearCompilerZipFileCache();
       myProjectDescriptor.dataManager.flush(false);
-      myProjectDescriptor.timestamps.getStorage().force();
+      myProjectDescriptor.projectStamps.getStorage().force();
     });
 
     startTempDirectoryCleanupTask();
@@ -310,7 +310,7 @@ public class IncProjectBuilder {
   private static void flushContext(CompileContext context) {
     if (context != null) {
       final ProjectDescriptor pd = context.getProjectDescriptor();
-      pd.timestamps.getStorage().force();
+      pd.projectStamps.getStorage().force();
       pd.dataManager.flush(false);
     }
     final ExternalJavacManager server = ExternalJavacManager.KEY.get(context);
@@ -489,7 +489,7 @@ public class IncProjectBuilder {
     finally {
       if (cleanCaches) {
         try {
-          projectDescriptor.timestamps.getStorage().clean();
+          projectDescriptor.projectStamps.getStorage().clean();
         }
         catch (IOException e) {
           if (ex == null) {

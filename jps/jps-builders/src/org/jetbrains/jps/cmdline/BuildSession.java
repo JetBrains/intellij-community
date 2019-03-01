@@ -20,10 +20,13 @@ import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.MessageHandler;
+import org.jetbrains.jps.incremental.RebuildRequestedException;
+import org.jetbrains.jps.incremental.TargetTypeRegistry;
+import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.*;
-import org.jetbrains.jps.incremental.storage.Timestamps;
+import org.jetbrains.jps.incremental.storage.StampsStorage;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.CannotLoadJpsModelException;
 import org.jetbrains.jps.service.SharedThreadPool;
@@ -374,7 +377,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       return;
     }
 
-    final Timestamps timestamps = pd.timestamps.getStorage();
+    final StampsStorage<? extends StampsStorage.Stamp> stampsStorage = pd.projectStamps.getStorage();
     boolean cacheCleared = false;
     for (String deleted : event.getDeletedPathsList()) {
       final File file = new File(deleted);
@@ -387,7 +390,7 @@ final class BuildSession implements Runnable, CanceledStatus {
           LOG.debug("Applying deleted path from fs event: " + file.getPath());
         }
         for (BuildRootDescriptor rootDescriptor : descriptor) {
-          pd.fsState.registerDeleted(null, rootDescriptor.getTarget(), file, timestamps);
+          pd.fsState.registerDeleted(null, rootDescriptor.getTarget(), file, stampsStorage);
         }
       }
       else {
@@ -403,18 +406,18 @@ final class BuildSession implements Runnable, CanceledStatus {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Applying dirty path from fs event: " + changed);
         }
-        long fileStamp = -1L;
+        StampsStorage.Stamp fileStamp = null;
         for (BuildRootDescriptor descriptor : descriptors) {
           if (!descriptor.isGenerated()) { // ignore generates sources as they are processed at the time of generation
-            if (fileStamp == -1L) {
-              fileStamp = FSOperations.lastModified(file); // lazy init
+            if (fileStamp == null) {
+              fileStamp = stampsStorage.lastModified(file); // lazy init
             }
-            final long stamp = timestamps.getStamp(file, descriptor.getTarget());
-            if (stamp != fileStamp) {
+            StampsStorage.Stamp stamp = stampsStorage.getStamp(file, descriptor.getTarget());
+            if (!stamp.equals(fileStamp)) {
               if (!cacheCleared) {
                 cacheCleared = true;
               }
-              pd.fsState.markDirty(null, file, descriptor, timestamps, saveEventStamp);
+              pd.fsState.markDirty(null, file, descriptor, stampsStorage, saveEventStamp);
             }
             else {
               if (LOG.isDebugEnabled()) {

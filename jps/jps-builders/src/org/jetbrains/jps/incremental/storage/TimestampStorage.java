@@ -5,16 +5,21 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.incremental.FSOperations;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.attribute.BasicFileAttributes;
+
+import static org.jetbrains.jps.incremental.storage.TimestampStorage.Timestamp;
+import static org.jetbrains.jps.incremental.storage.TimestampStorage.TimestampPerTarget;
 
 /**
  * @author Eugene Zhuravlev
  */
-public class TimestampStorage extends AbstractStateStorage<File, TimestampStorage.TimestampPerTarget[]> implements Timestamps {
+public class TimestampStorage extends AbstractStateStorage<File, TimestampPerTarget[]> implements StampsStorage<Timestamp> {
   private final BuildTargetsState myTargetsState;
 
   public TimestampStorage(File storePath, BuildTargetsState targetsState) throws IOException {
@@ -33,23 +38,34 @@ public class TimestampStorage extends AbstractStateStorage<File, TimestampStorag
   }
 
   @Override
-  public long getStamp(File file, BuildTarget<?> target) throws IOException {
+  public Timestamp getStamp(File file, BuildTarget<?> target) throws IOException {
     final TimestampPerTarget[] state = getState(file);
     if (state != null) {
       int targetId = myTargetsState.getBuildTargetId(target);
       for (TimestampPerTarget timestampPerTarget : state) {
         if (timestampPerTarget.targetId == targetId) {
-          return timestampPerTarget.timestamp;
+          return Timestamp.fromLong(timestampPerTarget.timestamp);
         }
       }
     }
-    return -1L;
+    return Timestamp.MINUS_ONE;
   }
 
   @Override
-  public void saveStamp(File file, BuildTarget<?> buildTarget, long timestamp) throws IOException {
+  public Timestamp lastModified(File file) {
+    return Timestamp.fromLong(FSOperations.lastModified(file));
+  }
+
+  @Override
+  public Timestamp lastModified(File file, @NotNull BasicFileAttributes attrs) {
+    // for symlinks the attr structure reflects the symlink's timestamp and not symlink's target timestamp
+    return attrs.isRegularFile() ? Timestamp.fromLong(attrs.lastModifiedTime().toMillis()) : lastModified(file);
+  }
+
+  @Override
+  public void saveStamp(File file, BuildTarget<?> buildTarget, Timestamp stamp) throws IOException {
     int targetId = myTargetsState.getBuildTargetId(buildTarget);
-    update(file, updateTimestamp(getState(file), targetId, timestamp));
+    update(file, updateTimestamp(getState(file), targetId, stamp.asLong()));
   }
 
   @NotNull
@@ -88,11 +104,11 @@ public class TimestampStorage extends AbstractStateStorage<File, TimestampStorag
     }
   }
 
-  public static class TimestampPerTarget {
+  static class TimestampPerTarget {
     public final int targetId;
     public final long timestamp;
 
-    public TimestampPerTarget(int targetId, long timestamp) {
+    private TimestampPerTarget(int targetId, long timestamp) {
       this.targetId = targetId;
       this.timestamp = timestamp;
     }
@@ -118,6 +134,35 @@ public class TimestampStorage extends AbstractStateStorage<File, TimestampStorag
         targets[i] = new TimestampPerTarget(id, timestamp);
       }
       return targets;
+    }
+  }
+
+  static class Timestamp implements StampsStorage.Stamp {
+    static final Timestamp MINUS_ONE = new Timestamp(-1L);
+    private final long myTimestamp;
+
+    Timestamp(long timestamp) {
+      myTimestamp = timestamp;
+    }
+
+    long asLong() {
+      return myTimestamp;
+    }
+
+    static Timestamp fromLong(long l) {
+      return new Timestamp(l);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      return myTimestamp == ((Timestamp)o).myTimestamp;
+    }
+
+    @Override
+    public int hashCode() {
+      return (int)(myTimestamp ^ (myTimestamp >>> 32));
     }
   }
 }

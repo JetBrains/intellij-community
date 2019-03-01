@@ -35,7 +35,7 @@ public class ProjectTimestamps {
     myTimestamps = new TimestampStorage(new File(myTimestampsRoot, "data"), targetsState);
   }
 
-  public TimestampStorage getStorage() {
+  public StampsStorage<? extends StampsStorage.Stamp> getStorage() {
     return myTimestamps;
   }
 

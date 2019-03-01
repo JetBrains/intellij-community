@@ -39,7 +39,7 @@ import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
-import org.jetbrains.jps.incremental.storage.Timestamps;
+import org.jetbrains.jps.incremental.storage.StampsStorage;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.indices.impl.IgnoredFileIndexImpl;
 import org.jetbrains.jps.indices.impl.ModuleExcludeIndexImpl;
@@ -198,7 +198,7 @@ public class BuildRunner {
       includeDependenciesToScope(targetTypes, targets, targetTypesToForceBuild, pd);
     }
 
-    final Timestamps timestamps = pd.timestamps.getStorage();
+    final StampsStorage<? extends StampsStorage.Stamp> stampsStorage = pd.projectStamps.getStorage();
     if (!paths.isEmpty()) {
       boolean forceBuildAllModuleBasedTargets = false;
       for (BuildTargetType<?> type : targetTypesToForceBuild) {
@@ -221,7 +221,7 @@ public class BuildRunner {
           if (added) {
             final BuildTargetType<?> targetType = descriptor.getTarget().getTargetType();
             if (targetTypesToForceBuild.contains(targetType) || (forceBuildAllModuleBasedTargets && targetType instanceof ModuleBasedBuildTargetType)) {
-              pd.fsState.markDirty(null, file, descriptor, timestamps, false);
+              pd.fsState.markDirty(null, file, descriptor, stampsStorage, false);
             }
           }
         }
