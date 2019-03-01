@@ -69,6 +69,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
         return null;
       }
 
+      @Nullable
       @Override
       protected Collection<Integer> getKeysFromData(@Nullable List<Collection<Integer>> collections) {
         return null;

@@ -253,6 +253,7 @@ public abstract class VcsLogFullDetailsIndex<T, D extends VcsFullCommitDetails> 
       return null;
     }
 
+    @Nullable
     @Override
     protected Collection<K> getKeysFromData(@Nullable Void aVoid) {
       return null;
