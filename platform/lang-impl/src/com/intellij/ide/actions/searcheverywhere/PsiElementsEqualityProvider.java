@@ -12,19 +12,19 @@ public class PsiElementsEqualityProvider implements SEResultsEqualityProvider {
 
   @NotNull
   @Override
-  public Action compareItems(@NotNull SESearcher.ElementInfo newItemInfo, @NotNull SESearcher.ElementInfo alreadyFoundItemInfo) {
+  public SEEqualElementsActionType compareItems(@NotNull SearchEverywhereFoundElementInfo newItemInfo, @NotNull SearchEverywhereFoundElementInfo alreadyFoundItemInfo) {
     PsiElement newElementPsi = toPsi(newItemInfo.getElement());
     PsiElement alreadyFoundPsi = toPsi(alreadyFoundItemInfo.getElement());
 
     if (newElementPsi == null || alreadyFoundPsi == null) {
-      return Action.DO_NOTHING;
+      return SEEqualElementsActionType.DO_NOTHING;
     }
 
     if (Objects.equals(newElementPsi, alreadyFoundPsi)) {
-      return newItemInfo.priority > alreadyFoundItemInfo.priority ? Action.REPLACE : Action.SKIP;
+      return newItemInfo.priority > alreadyFoundItemInfo.priority ? SEEqualElementsActionType.REPLACE : SEEqualElementsActionType.SKIP;
     }
 
-    return Action.DO_NOTHING;
+    return SEEqualElementsActionType.DO_NOTHING;
   }
 
   @Nullable

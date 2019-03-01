@@ -45,7 +45,7 @@ class SingleThreadSearcher implements SESearcher {
   }
 
   @Override
-  public ProgressIndicator findMoreItems(@NotNull Map<? extends SearchEverywhereContributor<?>, Collection<ElementInfo>> alreadyFound,
+  public ProgressIndicator findMoreItems(@NotNull Map<? extends SearchEverywhereContributor<?>, Collection<SearchEverywhereFoundElementInfo>> alreadyFound,
                                          @NotNull String pattern,
                                          boolean useNonProjectItems,
                                          @NotNull SearchEverywhereContributor<?> contributorToExpand,
@@ -63,10 +63,10 @@ class SingleThreadSearcher implements SESearcher {
                                                  int newLimit,
                                                  String pattern,
                                                  boolean useNonProjectItems,
-                                                 Map<? extends SearchEverywhereContributor<?>, Collection<ElementInfo>> alreadyFound,
+                                                 Map<? extends SearchEverywhereContributor<?>, Collection<SearchEverywhereFoundElementInfo>> alreadyFound,
                                                  Function<? super SearchEverywhereContributor<?>, ? extends SearchEverywhereContributorFilter<?>> filterSupplier,
                                                  ProgressIndicator indicator) {
-    List<ElementInfo> alreadyFoundList = alreadyFound.values()
+    List<SearchEverywhereFoundElementInfo> alreadyFoundList = alreadyFound.values()
       .stream()
       .collect(Collector.of(() -> new ArrayList<>(), (list, infos) -> list.addAll(infos), (left, right) -> {
         left.addAll(right);
@@ -78,14 +78,14 @@ class SingleThreadSearcher implements SESearcher {
   }
 
   private static class UpdateInfo {
-    private final List<ElementInfo> addedElements = new ArrayList<>();
-    private final List<ElementInfo> removedElements = new ArrayList<>();
+    private final List<SearchEverywhereFoundElementInfo> addedElements = new ArrayList<>();
+    private final List<SearchEverywhereFoundElementInfo> removedElements = new ArrayList<>();
     private boolean hasMore = false;
   }
 
   private static <T> UpdateInfo calculateUpdates(SearchEverywhereContributor<T> contributor, String pattern, int limit, boolean everywhere,
                                                  SearchEverywhereContributorFilter<?> filter, ProgressIndicator progressIndicator,
-                                                 Collection<ElementInfo> alreadyFound, SEResultsEqualityProvider equalityProvider) {
+                                                 Collection<SearchEverywhereFoundElementInfo> alreadyFound, SEResultsEqualityProvider equalityProvider) {
     UpdateInfo res = new UpdateInfo();
 
     contributor.fetchElements(pattern, everywhere, (SearchEverywhereContributorFilter<T>) filter, progressIndicator, newElement -> {
@@ -99,7 +99,7 @@ class SingleThreadSearcher implements SESearcher {
       }
 
       int priority = contributor.getElementPriority(newElement, pattern);
-      ElementInfo newInfo = new ElementInfo(newElement, priority, contributor);
+      SearchEverywhereFoundElementInfo newInfo = new SearchEverywhereFoundElementInfo(newElement, priority, contributor);
       boolean shouldBeAdded = processSameElements(newInfo, alreadyFound, res, equalityProvider);
       if (!shouldBeAdded) {
         return true;
@@ -116,19 +116,20 @@ class SingleThreadSearcher implements SESearcher {
   /**
    * @return true if new element should be added to result or false if it should be skipped
    */
-  private static boolean processSameElements(ElementInfo newInfo, Collection<ElementInfo> alreadyFound, UpdateInfo res, SEResultsEqualityProvider equalityProvider) {
-    Map<SEResultsEqualityProvider.Action, Collection<ElementInfo>> sameItemsMap = new EnumMap<>(SEResultsEqualityProvider.Action.class);
-    sameItemsMap.put(SEResultsEqualityProvider.Action.SKIP, new ArrayList<>());
-    sameItemsMap.put(SEResultsEqualityProvider.Action.REPLACE, new ArrayList<>());
+  private static boolean processSameElements(SearchEverywhereFoundElementInfo newInfo, Collection<SearchEverywhereFoundElementInfo> alreadyFound, UpdateInfo res, SEResultsEqualityProvider equalityProvider) {
+    Map<SEResultsEqualityProvider.SEEqualElementsActionType, Collection<SearchEverywhereFoundElementInfo>> sameItemsMap = new EnumMap<>(
+      SEResultsEqualityProvider.SEEqualElementsActionType.class);
+    sameItemsMap.put(SEResultsEqualityProvider.SEEqualElementsActionType.SKIP, new ArrayList<>());
+    sameItemsMap.put(SEResultsEqualityProvider.SEEqualElementsActionType.REPLACE, new ArrayList<>());
 
     alreadyFound.forEach(info -> {
-      SEResultsEqualityProvider.Action action = equalityProvider.compareItems(newInfo, info);
-      if (action != SEResultsEqualityProvider.Action.DO_NOTHING) {
+      SEResultsEqualityProvider.SEEqualElementsActionType action = equalityProvider.compareItems(newInfo, info);
+      if (action != SEResultsEqualityProvider.SEEqualElementsActionType.DO_NOTHING) {
         sameItemsMap.get(action).add(info);
       }
     });
 
-    Collection<ElementInfo> toReplace = sameItemsMap.get(SEResultsEqualityProvider.Action.REPLACE);
+    Collection<SearchEverywhereFoundElementInfo> toReplace = sameItemsMap.get(SEResultsEqualityProvider.SEEqualElementsActionType.REPLACE);
     if (!toReplace.isEmpty()) {
       toReplace.forEach(info -> {
         res.removedElements.add(info);
@@ -137,7 +138,7 @@ class SingleThreadSearcher implements SESearcher {
       return true;
     }
 
-    return sameItemsMap.get(SEResultsEqualityProvider.Action.SKIP).isEmpty();
+    return sameItemsMap.get(SEResultsEqualityProvider.SEEqualElementsActionType.SKIP).isEmpty();
   }
 
   private static class SearchTask implements Runnable {
@@ -172,7 +173,7 @@ class SingleThreadSearcher implements SESearcher {
     @Override
     public void run() {
       Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors = new HashMap<>();
-      Collection<ElementInfo> alreadyFound = new ArrayList<>();
+      Collection<SearchEverywhereFoundElementInfo> alreadyFound = new ArrayList<>();
 
       myContributorsAndLimits.entrySet()
         .stream()
@@ -196,7 +197,7 @@ class SingleThreadSearcher implements SESearcher {
     private final String myPattern;
     private final boolean myUseNonProjectItems;
     private final SearchEverywhereContributorFilter<F> myFilter;
-    private final List<ElementInfo> myAlreadyFound;
+    private final List<SearchEverywhereFoundElementInfo> myAlreadyFound;
 
     private final ProgressIndicator myProgressIndicator;
     private final Executor notificationExecutor;
@@ -208,7 +209,7 @@ class SingleThreadSearcher implements SESearcher {
                          String pattern,
                          boolean useNonProjectItems,
                          SearchEverywhereContributorFilter<F> filter,
-                         List<ElementInfo> alreadyFound,
+                         List<SearchEverywhereFoundElementInfo> alreadyFound,
                          ProgressIndicator indicator,
                          Executor executor,
                          Listener listener,
