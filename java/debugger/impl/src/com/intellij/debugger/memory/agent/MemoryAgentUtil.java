@@ -37,6 +37,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -60,6 +61,7 @@ import java.util.jar.Attributes;
 
 public class MemoryAgentUtil {
   private static final Logger LOG = Logger.getInstance(MemoryAgentUtil.class);
+  private static final String MEMORY_AGENT_EXTRACT_DIRECTORY = "memory.agent.extract.dir";
   private static final Key<Boolean> LISTEN_MEMORY_AGENT_STARTUP_FAILED = Key.create("LISTEN_MEMORY_AGENT_STARTUP_FAILED");
   private static final int ESTIMATE_OBJECTS_SIZE_LIMIT = 2000;
 
@@ -101,7 +103,9 @@ public class MemoryAgentUtil {
     }
 
     LOG.info("Memory agent extracting took " + (System.currentTimeMillis() - start) + " ms");
-    String path = JavaExecutionUtil.handleSpacesInAgentPath(agentFile.getAbsolutePath(), "debugger-memory-agent", null);
+    String agentFileName = agentFile.getName();
+    String path = JavaExecutionUtil.handleSpacesInAgentPath(agentFile.getAbsolutePath(), "debugger-memory-agent",
+                                                            MEMORY_AGENT_EXTRACT_DIRECTORY, f -> agentFileName.equals(f.getName()));
     if (path == null) {
       LOG.error("Could not use memory agent file. Spaces are found.");
       return;
@@ -198,7 +202,8 @@ public class MemoryAgentUtil {
       }
     }
 
-    return ApplicationManager.getApplication().executeOnPooledThread(() -> new AgentExtractor().extract(detectAgentKind(jdkPath)))
+    return ApplicationManager.getApplication()
+      .executeOnPooledThread(() -> new AgentExtractor().extract(detectAgentKind(jdkPath), getAgentDirectory()))
       .get(1, TimeUnit.SECONDS);
   }
 
@@ -212,6 +217,22 @@ public class MemoryAgentUtil {
     }
 
     return Bitness.x32.equals(versionInfo.bitness) ? AgentExtractor.AgentLibraryType.WINDOWS32 : AgentExtractor.AgentLibraryType.WINDOWS64;
+  }
+
+  @NotNull
+  private static File getAgentDirectory() {
+    String agentDirectory = System.getProperty(MEMORY_AGENT_EXTRACT_DIRECTORY);
+    if (agentDirectory != null) {
+      File file = new File(agentDirectory);
+      if (file.exists() || file.mkdirs()) {
+        return file;
+      }
+
+      LOG.info("Directory specified in property \"" + MEMORY_AGENT_EXTRACT_DIRECTORY +
+               "\" not found. Default tmp directory will be used");
+    }
+
+    return new File(FileUtil.getTempDirectory());
   }
 
   private static void listenIfStartupFailed() {

@@ -7,8 +7,8 @@ import java.io.File
 import java.io.FileNotFoundException
 
 class AgentExtractor {
-  fun extract(agentType: AgentLibraryType): File {
-    val file = FileUtil.createTempFile("${agentType.prefix}memory_agent", agentType.suffix, true)
+  fun extract(agentType: AgentLibraryType, directory: File): File {
+    val file = FileUtil.createTempFile(directory, "${agentType.prefix}memory_agent", agentType.suffix, true)
     val agentFileName = "${agentType.prefix}memory_agent${agentType.suffix}"
     val inputStream = AgentExtractor::class.java.classLoader.getResourceAsStream("bin/$agentFileName")
     if (inputStream == null) throw FileNotFoundException(agentFileName)
