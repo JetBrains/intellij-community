@@ -107,7 +107,6 @@ public class MemoryAgentUtil {
     String path = JavaExecutionUtil.handleSpacesInAgentPath(agentFile.getAbsolutePath(), "debugger-memory-agent",
                                                             MEMORY_AGENT_EXTRACT_DIRECTORY, f -> agentFileName.equals(f.getName()));
     if (path == null) {
-      LOG.error("Could not use memory agent file. Spaces are found.");
       return;
     }
 
