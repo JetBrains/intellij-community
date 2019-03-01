@@ -423,6 +423,21 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     if (progressIndicator != null) {
       progressIndicator.setText(VcsBundle.message("shelve.changes.progress.title"));
     }
+
+    ShelvedChangeList shelveList = createShelfFromChanges(changes, commitMessage, markToBeDeleted, honorExcludedFromCommit);
+    notifyStateChanged();
+    if (rollback) {
+      rollbackChangesAfterShelve(changes);
+    }
+    return shelveList;
+  }
+
+  @NotNull
+  private ShelvedChangeList createShelfFromChanges(@NotNull Collection<? extends Change> changes,
+                                                   String commitMessage,
+                                                   boolean markToBeDeleted,
+                                                   boolean honorExcludedFromCommit)
+    throws IOException, VcsException {
     File schemePatchDir = generateUniqueSchemePatchDir(commitMessage, true);
     final List<Change> textChanges = new ArrayList<>();
     final List<ShelvedBinaryFile> binaryFiles = new ArrayList<>();
@@ -437,33 +452,21 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
         textChanges.add(change);
       }
     }
+    File patchFile = getPatchFileInConfigDir(schemePatchDir);
+    ProgressManager.checkCanceled();
+    final List<FilePatch> patches =
+      IdeaTextPatchBuilder.buildPatch(myProject, textChanges, myProject.getBaseDir().getPresentableUrl(), false, honorExcludedFromCommit);
+    ProgressManager.checkCanceled();
 
-    final ShelvedChangeList changeList;
-    try {
-      File patchFile = getPatchFileInConfigDir(schemePatchDir);
-      ProgressManager.checkCanceled();
-      final List<FilePatch> patches =
-        IdeaTextPatchBuilder.buildPatch(myProject, textChanges, myProject.getBaseDir().getPresentableUrl(), false, honorExcludedFromCommit);
-      ProgressManager.checkCanceled();
+    CommitContext commitContext = new CommitContext();
+    baseRevisionsOfDvcsIntoContext(textChanges, commitContext);
+    ShelfFileProcessorUtil.savePatchFile(myProject, patchFile, patches, null, commitContext);
 
-      CommitContext commitContext = new CommitContext();
-      baseRevisionsOfDvcsIntoContext(textChanges, commitContext);
-      ShelfFileProcessorUtil.savePatchFile(myProject, patchFile, patches, null, commitContext);
-
-      changeList = new ShelvedChangeList(patchFile.toString(), commitMessage.replace('\n', ' '), binaryFiles);
-      changeList.markToDelete(markToBeDeleted);
-      changeList.setName(schemePatchDir.getName());
-      ProgressManager.checkCanceled();
-      mySchemeManager.addScheme(changeList, false);
-
-      if (rollback) {
-        rollbackChangesAfterShelve(changes);
-      }
-    }
-    finally {
-      notifyStateChanged();
-    }
-
+    final ShelvedChangeList changeList = new ShelvedChangeList(patchFile.toString(), commitMessage.replace('\n', ' '), binaryFiles);
+    changeList.markToDelete(markToBeDeleted);
+    changeList.setName(schemePatchDir.getName());
+    ProgressManager.checkCanceled();
+    mySchemeManager.addScheme(changeList, false);
     return changeList;
   }
 
@@ -877,7 +880,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
 
       if (!changesForChangelist.isEmpty()) {
         try {
-          result.add(shelveChanges(changesForChangelist, list.getName(), false));
+          result.add(createShelfFromChanges(changesForChangelist, list.getName(), false, false));
           shelvedChanges.addAll(changesForChangelist);
         }
         catch (Exception e) {
@@ -887,6 +890,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
       }
     }
 
+    notifyStateChanged();
     rollbackChangesAfterShelve(shelvedChanges);
 
     if (!failedChangeLists.isEmpty()) {
