@@ -14,7 +14,6 @@ import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import com.intellij.util.ThreeState;
-import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonOriginalPsiWalker;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
@@ -62,7 +61,7 @@ public class JsonSpellcheckerStrategy extends SpellcheckingStrategy {
     String value = element.getValue();
     if (StringUtil.isEmpty(value)) return false;
 
-    JsonOriginalPsiWalker walker = JsonLikePsiWalker.JSON_ORIGINAL_PSI_WALKER;
+    JsonOriginalPsiWalker walker = JsonOriginalPsiWalker.INSTANCE;
     final PsiElement checkable = walker.findElementToCheck(element);
     if (checkable == null) return false;
     final ThreeState isName = walker.isName(checkable);
