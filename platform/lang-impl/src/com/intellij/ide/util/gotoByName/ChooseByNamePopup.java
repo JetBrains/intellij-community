@@ -483,7 +483,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       semaphore.up();
     });
     long start = System.currentTimeMillis();
-    while (!semaphore.waitFor(10) && System.currentTimeMillis() - start < 1_000_000) {
+    while (!semaphore.waitFor(10) && System.currentTimeMillis() - start < 20_000) {
       UIUtil.dispatchAllInvocationEvents();
     }
     if (!semaphore.waitFor(10)) {
