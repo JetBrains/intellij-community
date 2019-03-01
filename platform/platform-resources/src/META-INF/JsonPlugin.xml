@@ -56,7 +56,6 @@
     <liveTemplateContext implementation="com.intellij.json.liveTemplates.JsonInPropertyKeysContextType"/>
     <spellchecker.support language="JSON" implementationClass="com.intellij.json.JsonSpellcheckerStrategy"/>
     <extendWordSelectionHandler implementation="com.intellij.json.editor.selection.JsonStringLiteralSelectionHandler"/>
-    <basicWordSelectionFilter implementation="com.intellij.json.editor.selection.JsonBasicWordSelectionFilter"/>
 
     <json.jsonLiteralChecker implementation="com.intellij.json.codeinsight.StandardJsonLiteralChecker"/>
     <json.jsonLiteralChecker implementation="com.intellij.json.json5.codeinsight.Json5JsonLiteralChecker"/>
