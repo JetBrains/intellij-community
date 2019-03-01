@@ -21,6 +21,7 @@ import com.intellij.openapi.project.impl.JBProtocolNavigateCommand.Companion.PAT
 import com.intellij.openapi.project.impl.JBProtocolNavigateCommand.Companion.PROJECT_NAME_KEY
 import com.intellij.openapi.project.impl.JBProtocolNavigateCommand.Companion.REFERENCE_TARGET
 import com.intellij.openapi.project.impl.JBProtocolNavigateCommand.Companion.SELECTION
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
@@ -120,6 +121,7 @@ class CopyTBXReferenceAction : DumbAwareAction() {
         IntArray(elements.size) { i -> i }
           .associateBy({ it }, { elementToFqn(elements[it], editor) })
           .filter { it.value != null }
+          .mapValues { FileUtil.getLocationRelativeToUserHome(it.value, false) }
           .entries
           .ifEmpty { return null }
           .joinToString("") { createRefs(isFile(elements[it.key]), it.value, parameterIndex(it.key, elements.size)) }
