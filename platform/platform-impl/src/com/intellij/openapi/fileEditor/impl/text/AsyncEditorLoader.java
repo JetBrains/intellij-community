@@ -17,7 +17,6 @@ import com.intellij.ui.EditorNotifications;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.CancellablePromise;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,7 +52,7 @@ public class AsyncEditorLoader {
   void start() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    CancellablePromise<Runnable> asyncLoading = scheduleLoading();
+    Future<Runnable> asyncLoading = scheduleLoading();
 
     boolean showProgress = true;
     if (worthWaiting()) {
@@ -76,18 +75,25 @@ public class AsyncEditorLoader {
     }
   }
 
-  private CancellablePromise<Runnable> scheduleLoading() {
+  private Future<Runnable> scheduleLoading() {
     long commitDeadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(DOCUMENT_COMMIT_WAITING_TIME_MS);
 
-    return ReadAction
+    // we can't return the result of "nonBlocking" call below because it's only finished on EDT later,
+    // but we need to get the result of bg calculation in the same EDT event, if it's quick
+    CompletableFuture<Runnable> future = new CompletableFuture<>();
+
+    ReadAction
       .nonBlocking(() -> {
         waitForCommit(commitDeadline);
-        return myTextEditor.loadEditorInBackground();
+        Runnable runnable = myTextEditor.loadEditorInBackground();
+        future.complete(runnable);
+        return runnable;
       })
       .expireWith(myEditorComponent)
       .expireWith(myProject)
       .finishOnUiThread(ModalityState.any(), result -> loadingFinished(result))
       .submit(ourExecutor);
+    return future;
   }
 
   private void waitForCommit(long commitDeadlineNs) {
