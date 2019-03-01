@@ -20,8 +20,6 @@ import java.util.Set;
  * @author Irina.Chernushina on 2/15/2017.
  */
 public interface JsonLikePsiWalker {
-  JsonOriginalPsiWalker JSON_ORIGINAL_PSI_WALKER = new JsonOriginalPsiWalker();
-
   /**
    * Returns YES in place where a property name is expected,
    *         NO in place where a property value is expected,
@@ -60,7 +58,7 @@ public interface JsonLikePsiWalker {
 
   @Nullable
   static JsonLikePsiWalker getWalker(@NotNull final PsiElement element, JsonSchemaObject schemaObject) {
-    if (JSON_ORIGINAL_PSI_WALKER.handles(element)) return JSON_ORIGINAL_PSI_WALKER;
+    if (JsonOriginalPsiWalker.INSTANCE.handles(element)) return JsonOriginalPsiWalker.INSTANCE;
 
     return JsonLikePsiWalkerFactory.EXTENSION_POINT_NAME.getExtensionList().stream()
       .filter(extension -> extension.handles(element))

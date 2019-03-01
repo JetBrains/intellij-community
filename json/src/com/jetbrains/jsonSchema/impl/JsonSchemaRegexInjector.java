@@ -11,7 +11,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.intellij.lang.regexp.ecmascript.EcmaScriptRegexpLanguage;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +21,7 @@ public class JsonSchemaRegexInjector implements MultiHostInjector {
   @Override
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
     if (!JsonSchemaService.isSchemaFile(context.getContainingFile())) return;
-    JsonOriginalPsiWalker walker = JsonLikePsiWalker.JSON_ORIGINAL_PSI_WALKER;
+    JsonOriginalPsiWalker walker = JsonOriginalPsiWalker.INSTANCE;
     if (!(context instanceof JsonStringLiteral)) return;
     ThreeState isName = walker.isName(context);
     JsonPointerPosition position = walker.findPosition(context, isName == ThreeState.NO);
