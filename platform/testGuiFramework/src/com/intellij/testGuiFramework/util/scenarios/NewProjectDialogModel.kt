@@ -617,7 +617,7 @@ fun NewProjectDialogModel.selectSdk(sdk: String, sdkField: String = "Project SDK
 
 fun NewProjectDialogModel.checkDownloadingDialog() {
   val progressDownloadingDialog = "Downloading"
-  GuiTestUtilKt.waitUntil("Wait for downloading finishing", timeout = Timeouts.minutes05) {
+  GuiTestUtilKt.waitUntil("Wait for downloading finishing", timeout = Timeouts.minutes10) {
     val dialog = try {
       guiTestCase.dialog(
         title = progressDownloadingDialog,
