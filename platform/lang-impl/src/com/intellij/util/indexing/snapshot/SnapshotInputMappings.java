@@ -51,6 +51,7 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotIndex
     return byteSequence == null ? null : deserializeSavedPersistentData(byteSequence);
   }
 
+  @NotNull
   @Override
   public Map<Key, Value> readOrPutSnapshot(int hashId, @NotNull FileContent content) throws IOException {
     Map<Key, Value> data = null;

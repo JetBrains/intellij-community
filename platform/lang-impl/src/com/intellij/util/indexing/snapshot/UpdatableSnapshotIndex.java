@@ -8,5 +8,6 @@ import java.io.IOException;
 import java.util.Map;
 
 public interface UpdatableSnapshotIndex<Key, Value> extends AbstractSnapshotIndex<Key, Value> {
+  @NotNull
   Map<Key, Value> readOrPutSnapshot(int hashId, @NotNull FileContent content) throws IOException;
 }

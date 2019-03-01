@@ -22,17 +22,17 @@ public class VfsAwareMapReduceIndex<Key, Value> extends VfsAwareMapReduceIndexBa
   private static final Logger LOG = Logger.getInstance(VfsAwareMapReduceIndex.class);
 
   @Nullable
-  private final AbstractSnapshotIndex<Key, Value> mySnapshotInputIndex;
+  private final UpdatableSnapshotIndex<Key, Value> mySnapshotInputIndex;
+  @Nullable
   private final FileContentHasher myHasher;
 
   public VfsAwareMapReduceIndex(@NotNull FileBasedIndexExtension<Key, Value> extension,
                                 @NotNull IndexStorage<Key, Value> storage) throws IOException {
     super(extension, storage, getForwardIndex(extension), getForwardIndexAccessor(extension));
     SharedIndicesData.registerIndex((ID<Key, Value>)myIndexId, extension);
-    mySnapshotInputIndex = myForwardIndex == null && hasSnapshotMapping(extension) ?
-                           new SnapshotInputMappings<>(extension) :
-                           null;
-    myHasher = new Sha1FileContentHasher(extension instanceof PsiDependentIndex);
+    mySnapshotInputIndex = myForwardIndexAccessor instanceof ContentHashForwardIndexAccessor ? ((ContentHashForwardIndexAccessor<Key, Value>)myForwardIndexAccessor).getSnapshotInputMappings()
+                                                                                             : null;
+    myHasher = mySnapshotInputIndex == null ? null : new Sha1FileContentHasher(extension instanceof PsiDependentIndex);
   }
 
   private static <Key, Value> boolean hasSnapshotMapping(@NotNull FileBasedIndexExtension<Key, Value> indexExtension) {
@@ -45,7 +45,7 @@ public class VfsAwareMapReduceIndex<Key, Value> extends VfsAwareMapReduceIndexBa
     if (mySnapshotInputIndex != null) {
       try {
         if (content == null) return Collections.emptyMap();
-        mySnapshotInputIndex.readSnapshot(myHasher.getEnumeratedHash(content));
+        return mySnapshotInputIndex.readOrPutSnapshot(myHasher.getEnumeratedHash(content), content);
       }
       catch (IOException e) {
         LOG.error(e);

@@ -16,7 +16,7 @@ public class ContentHashForwardIndexAccessor<Key, Value> extends AbstractMapProv
   @NotNull
   private final FileContentHasher myHasher;
   @NotNull
-  private final AbstractSnapshotIndex<Key, Value> mySnapshotInputMappings;
+  private final UpdatableSnapshotIndex<Key, Value> mySnapshotInputMappings;
 
   public ContentHashForwardIndexAccessor(@NotNull FileBasedIndexExtension<Key, Value> extension) throws IOException {
     super(EnumeratorIntegerDescriptor.INSTANCE);
@@ -34,5 +34,10 @@ public class ContentHashForwardIndexAccessor<Key, Value> extends AbstractMapProv
   @Override
   public Map<Key, Value> getMapFromData(@Nullable Integer hashId) throws IOException {
     return hashId == null ? null : mySnapshotInputMappings.readSnapshot(hashId);
+  }
+
+  @NotNull
+  public UpdatableSnapshotIndex<Key, Value> getSnapshotInputMappings() {
+    return mySnapshotInputMappings;
   }
 }
