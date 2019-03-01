@@ -1,10 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.execution.ExecutorRegistryImpl;
-import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.LineMarkerActionWrapper;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -17,16 +14,17 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -85,22 +83,12 @@ public class GutterIntentionMenuContributor implements IntentionMenuContributor 
     // however i need ExecutorGroup's children to be flatten and shown right after run/debug executors action
     // children wrapped into `LineMarkerActionWrapper` to be sorted correctly and placed as usual executor actions
     // furthermore, we shouldn't show parent action in actions list
+    // as quickfix for IDEA-208231, action wrapping was moved into `com.intellij.execution.lineMarker.LineMarkerActionWrapper.getChildren`
     if (action instanceof LineMarkerActionWrapper) {
-      final AnAction delegate = ((LineMarkerActionWrapper)action).getDelegate();
-      if (delegate instanceof ExecutorAction &&
-          ((ExecutorAction)delegate).getOrigin() instanceof ExecutorRegistryImpl.ExecutorGroupActionGroup) {
-        final ActionGroup group = (ExecutorRegistryImpl.ExecutorGroupActionGroup)((ExecutorAction)delegate).getOrigin();
-        // put location wrapper into dataContext
-        ((LineMarkerActionWrapper)action).canBePerformed(dataContext);
-        final PsiElement location =
-          DataManager.getInstance().loadFromDataContext(dataContext, LineMarkerActionWrapper.LOCATION_WRAPPER).first;
-        for (AnAction child : group.getChildren(null)) {
-          if (location != null) {
-            addActions(new LineMarkerActionWrapper(location, child), descriptors, renderer, order, dataContext);
-          }
-          else {
-            addActions(child, descriptors, renderer, order, dataContext);
-          }
+      final List<AnAction> children = Arrays.asList(((LineMarkerActionWrapper)action).getChildren(null));
+      if (ContainerUtil.all(children, o -> o instanceof LineMarkerActionWrapper)) {
+        for (AnAction child : children) {
+          addActions(child, descriptors, renderer, order, dataContext);
         }
         return;
       }
