@@ -519,10 +519,10 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinx-coroutines-jdk8"),
     jetbrainsLibrary("Maven Embedder"),
     jetbrainsLibrary("precompiled_jshell-frontend"),
-    jetbrainsLibrary("tcServiceMessages"),
     jetbrainsLibrary("rd-core"),
     jetbrainsLibrary("rd-framework"),
     jetbrainsLibrary("rd-text"),
     jetbrainsLibrary("rd-swing"),
+    jetbrainsLibrary("tcServiceMessages"),
   ] as List<LibraryLicense>
 }
