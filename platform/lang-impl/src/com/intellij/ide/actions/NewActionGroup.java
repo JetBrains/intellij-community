@@ -16,12 +16,14 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * @author Dmitry Avdeev
@@ -46,5 +48,14 @@ public class NewActionGroup extends ActionGroup {
       }
     }
     return actions;
+  }
+
+  public static boolean isActionInNewPopupMenu(@NotNull AnAction action) {
+    ActionManager actionManager = ActionManager.getInstance();
+    ActionGroup fileGroup = (ActionGroup)actionManager.getAction(IdeActions.GROUP_FILE);
+    if (!ActionUtil.anyActionFromGroupMatches(fileGroup, false, child -> child instanceof NewActionGroup)) return false;
+
+    ActionGroup newGroup = (ActionGroup)actionManager.getAction(IdeActions.GROUP_NEW);
+    return ActionUtil.anyActionFromGroupMatches(newGroup, false, Predicate.isEqual(action));
   }
 }
