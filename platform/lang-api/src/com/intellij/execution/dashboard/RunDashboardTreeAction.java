@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +33,8 @@ import java.util.Set;
 /**
  * @author konstantin.aleev
  */
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
 public abstract class RunDashboardTreeAction<T, C extends TreeContent> extends AnAction {
   protected RunDashboardTreeAction(String text, String description, Icon icon) {
     super(text, description, icon);

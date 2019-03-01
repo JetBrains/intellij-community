@@ -349,12 +349,15 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
 
     myTree.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, (DataProvider)dataId -> {
       if (KEY.getName().equals(dataId)) {
-        return ServersToolWindowContent.this;
+        return this;
+      }
+      else if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)) {
+        return myBuilder.getSelectedElements().toArray();
       }
       else if (PlatformDataKeys.HELP_ID.is(dataId)) {
         return myContribution.getContextHelpId();
       }
-      return myContribution.getData(dataId, ServersToolWindowContent.this);
+      return myContribution.getData(dataId, this);
     });
     actionToolBar.setTargetComponent(myTree);
     return actionToolBar.getComponent();

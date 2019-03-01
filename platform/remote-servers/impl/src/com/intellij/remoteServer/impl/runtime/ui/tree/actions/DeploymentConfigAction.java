@@ -15,26 +15,25 @@
  */
 package com.intellij.remoteServer.impl.runtime.ui.tree.actions;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure;
+import org.jetbrains.annotations.NotNull;
 
-public class DeploymentConfigAction extends EditConfigurationActionBase<ServersTreeStructure.DeploymentNodeImpl> {
+import static com.intellij.execution.services.ServiceViewActionUtils.getTarget;
 
-  public DeploymentConfigAction() {
-    super("Edit the selected deployment run configuration");
+public class DeploymentConfigAction extends DumbAwareAction {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    ServersTreeStructure.DeploymentNodeImpl node = getTarget(e, ServersTreeStructure.DeploymentNodeImpl.class);
+    e.getPresentation().setEnabledAndVisible(node != null && node.isEditConfigurationActionVisible());
   }
 
   @Override
-  protected Class<ServersTreeStructure.DeploymentNodeImpl> getTargetNodeClass() {
-    return ServersTreeStructure.DeploymentNodeImpl.class;
-  }
-
-  @Override
-  protected boolean isVisible4(ServersTreeStructure.DeploymentNodeImpl node) {
-    return node.isEditConfigurationActionVisible();
-  }
-
-  @Override
-  protected void doActionPerformed(ServersTreeStructure.DeploymentNodeImpl node) {
-    node.editConfiguration();
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    ServersTreeStructure.DeploymentNodeImpl node = getTarget(e, ServersTreeStructure.DeploymentNodeImpl.class);
+    if (node != null) {
+      node.editConfiguration();
+    }
   }
 }
