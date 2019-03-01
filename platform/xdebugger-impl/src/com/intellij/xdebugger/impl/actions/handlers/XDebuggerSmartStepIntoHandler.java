@@ -38,6 +38,7 @@ import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -48,6 +49,7 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -201,52 +203,82 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     editor.putUserData(SMART_STEP_INPLACE_DATA, data);
 
     EditorHyperlinkSupport hyperlinkSupport = EditorHyperlinkSupport.get(editor);
-    for (V variant : variants) {
-      PsiElement element = variant.getHighlightElement();
+    for (SmartStepData.VariantInfo info : data.myVariants) {
+      PsiElement element = info.myVariant.getHighlightElement();
       if (element != null) {
         List<RangeHighlighter> highlighters = ContainerUtil.newSmartList();
         highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{element}, attributes, true, highlighters);
-        hyperlinkSupport.createHyperlink(highlighters.get(0), project -> data.stepInto(variant));
+        hyperlinkSupport.createHyperlink(highlighters.get(0), project -> data.stepInto(info));
       }
     }
 
-    data.select(ContainerUtil.getFirstItem(variants));
+    data.select(ContainerUtil.getFirstItem(data.myVariants));
  }
 
   static final Key<SmartStepData> SMART_STEP_INPLACE_DATA = Key.create("SMART_STEP_INPLACE_DATA");
 
   static class SmartStepData<V extends XSmartStepIntoVariant> {
+    enum Direction {UP, DOWN, LEFT, RIGHT}
     private final XSmartStepIntoHandler<V> myHandler;
-    private final List<V> myVariants;
+    private final List<VariantInfo> myVariants;
     private final XDebugSession mySession;
     private final Editor myEditor;
-    private V myCurrentVariant;
+    private VariantInfo myCurrentVariant;
     private RangeHighlighter myCurrentVariantHl;
 
     SmartStepData(final XSmartStepIntoHandler<V> handler, List<V> variants, final XDebugSession session, Editor editor) {
       myHandler = handler;
-      myVariants = variants;
       mySession = session;
       myEditor = editor;
+      myVariants =
+        StreamEx.of(variants)
+          .map(VariantInfo::new)
+          .sorted(Comparator.<VariantInfo>comparingInt(v -> v.myVariant.getHighlightElement().getTextRange().getStartOffset())
+                    .thenComparingInt(v -> v.myVariant.getHighlightElement().getTextRange().getLength()))
+          .toList();
     }
 
-    void selectNext() {
-      int i = myVariants.indexOf(myCurrentVariant) + 1;
-      if (i >= myVariants.size()) {
-        i = 0;
+    final Comparator<VariantInfo> DISTANCE_TO_CURRENT_COMPARATOR =
+      Comparator.comparingInt(a -> Math.abs(a.myStartPoint.x - myCurrentVariant.myStartPoint.x));
+
+    void selectNext(Direction direction) {
+      int currentIndex = myVariants.indexOf(myCurrentVariant);
+      int currentLineY = myCurrentVariant.myStartPoint.y;
+      switch (direction) {
+        case LEFT:
+          if (currentIndex > 0) {
+            select(myVariants.get(currentIndex - 1));
+          }
+          break;
+        case RIGHT:
+          if (currentIndex < myVariants.size() - 1) {
+            select(myVariants.get(currentIndex + 1));
+          }
+          break;
+        case UP:
+          if (currentIndex > 0) {
+            int previousLineY = myVariants.stream().mapToInt(v -> v.myStartPoint.y).filter(v -> v < currentLineY).max().orElse(-1);
+            VariantInfo bestMatch = myVariants.stream()
+              .filter(v -> v.myStartPoint.y == previousLineY)
+              .min(DISTANCE_TO_CURRENT_COMPARATOR)
+              .orElse(myVariants.get(currentIndex - 1));
+            select(bestMatch);
+          }
+          break;
+        case DOWN:
+          if (currentIndex < myVariants.size() - 1) {
+            int nextLineY = myVariants.stream().mapToInt(v -> v.myStartPoint.y).filter(v -> v > currentLineY).min().orElse(-1);
+            VariantInfo bestMatch = myVariants.stream()
+              .filter(v -> v.myStartPoint.y == nextLineY)
+              .min(DISTANCE_TO_CURRENT_COMPARATOR)
+              .orElse(myVariants.get(currentIndex + 1));
+            select(bestMatch);
+          }
+          break;
       }
-      select(myVariants.get(i));
     }
 
-    void selectPrevious() {
-      int i = myVariants.indexOf(myCurrentVariant) - 1;
-      if (i < 0) {
-        i = myVariants.size() - 1;
-      }
-      select(myVariants.get(i));
-    }
-
-    void select(V variant) {
+    void select(VariantInfo variant) {
       HighlightManager highlightManager = HighlightManager.getInstance(mySession.getProject());
       myCurrentVariant = variant;
       EditorColorsManager manager = EditorColorsManager.getInstance();
@@ -259,15 +291,25 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
       }
       List<RangeHighlighter> highlighters = ContainerUtil.newSmartList();
       highlightManager
-        .addOccurrenceHighlights(myEditor, new PsiElement[]{variant.getHighlightElement()}, attributes, true, highlighters);
+        .addOccurrenceHighlights(myEditor, new PsiElement[]{variant.myVariant.getHighlightElement()}, attributes, true, highlighters);
       myCurrentVariantHl = ContainerUtil.getFirstItem(highlighters);
     }
 
-    void stepInto(V variant) {
+    void stepInto(VariantInfo variant) {
       myEditor.putUserData(SMART_STEP_INPLACE_DATA, null);
       HighlightManagerImpl highlightManager = (HighlightManagerImpl)HighlightManager.getInstance(mySession.getProject());
       highlightManager.hideHighlights(myEditor, HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_ANY_KEY);
-      mySession.smartStepInto(myHandler, variant);
+      mySession.smartStepInto(myHandler, variant.myVariant);
+    }
+
+    class VariantInfo {
+      final V myVariant;
+      final Point myStartPoint;
+
+      VariantInfo(V variant) {
+        myVariant = variant;
+        myStartPoint = myEditor.offsetToXY(variant.getHighlightElement().getTextRange().getStartOffset());
+      }
     }
   }
 
@@ -310,7 +352,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
                              @Nullable Caret caret,
                              DataContext dataContext,
                              SmartStepData stepData) {
-      stepData.selectPrevious();
+      stepData.selectNext(SmartStepData.Direction.UP);
     }
   }
 
@@ -324,7 +366,35 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
                              @Nullable Caret caret,
                              DataContext dataContext,
                              SmartStepData stepData) {
-      stepData.selectNext();
+      stepData.selectNext(SmartStepData.Direction.DOWN);
+    }
+  }
+
+  static class LeftHandler extends SmartStepEditorActionHandler {
+    LeftHandler(EditorActionHandler original) {
+      super(original);
+    }
+
+    @Override
+    protected void myPerform(@NotNull Editor editor,
+                             @Nullable Caret caret,
+                             DataContext dataContext,
+                             SmartStepData stepData) {
+      stepData.selectNext(SmartStepData.Direction.LEFT);
+    }
+  }
+
+  static class RightHandler extends SmartStepEditorActionHandler {
+    RightHandler(EditorActionHandler original) {
+      super(original);
+    }
+
+    @Override
+    protected void myPerform(@NotNull Editor editor,
+                             @Nullable Caret caret,
+                             DataContext dataContext,
+                             SmartStepData stepData) {
+      stepData.selectNext(SmartStepData.Direction.RIGHT);
     }
   }
 

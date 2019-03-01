@@ -56,9 +56,9 @@
                          id="smart-step-into-up"/>
     <editorActionHandler action="EditorDown" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$DownHandler"
                          id="smart-step-into-down"/>
-    <editorActionHandler action="EditorLeft" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$UpHandler"
+    <editorActionHandler action="EditorLeft" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$LeftHandler"
                          id="smart-step-into-left"/>
-    <editorActionHandler action="EditorRight" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$DownHandler"
+    <editorActionHandler action="EditorRight" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$RightHandler"
                          id="smart-step-into-right"/>
     <editorActionHandler action="EditorEnter" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$EnterHandler"
                          id="smart-step-into-enter"/>
