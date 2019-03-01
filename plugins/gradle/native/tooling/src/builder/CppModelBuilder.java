@@ -38,6 +38,7 @@ import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.SourceFile;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.*;
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
+import org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil;
 
 import java.io.File;
 import java.lang.reflect.Field;
@@ -53,7 +54,9 @@ import java.util.*;
  */
 @Deprecated
 public class CppModelBuilder implements ModelBuilderService {
-  private static final boolean IS_410_OR_BETTER = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.10")) >= 0;
+  private static final boolean IS_51_OR_BETTER = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("5.1")) >= 0;
+  private static final boolean IS_410_OR_BETTER = IS_51_OR_BETTER ||
+                                                  GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.10")) >= 0;
   private static final boolean IS_48_OR_BETTER = IS_410_OR_BETTER ||
                                                  GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.8")) >= 0;
   private static final boolean IS_47_OR_BETTER = IS_48_OR_BETTER ||
@@ -199,7 +202,10 @@ public class CppModelBuilder implements ModelBuilderService {
         ((DefaultProject)project).getServices().getAll(CompilerOutputFileNamingSchemeFactory.class).iterator();
       if (it.hasNext()) {
         CompilerOutputFileNamingSchemeFactory outputFileNamingSchemeFactory = it.next();
-        String objectFileExtension = cppBinary.getTargetPlatform().getOperatingSystem().isWindows() ? ".obj" : ".o";
+        boolean isTargetWindows = IS_51_OR_BETTER
+                                  ? cppBinary.getTargetPlatform().getTargetMachine().getOperatingSystemFamily().isWindows()
+                                  : isWindowsOld(cppBinary.getTargetPlatform());
+        String objectFileExtension = isTargetWindows ? ".obj" : ".o";
         CompilerOutputFileNamingScheme outputFileNamingScheme = outputFileNamingSchemeFactory.create();
         outputFileNamingScheme.withOutputBaseFolder(objectFileDir).withObjectFileNameSuffix(objectFileExtension);
 
@@ -210,6 +216,15 @@ public class CppModelBuilder implements ModelBuilderService {
       }
     }
     return sources;
+  }
+
+  private static boolean isWindowsOld(CppPlatform platform) {
+    Object operatingSystem = ReflectionUtil.callByReflection(platform, "getOperatingSystem");
+    if (operatingSystem == null) {
+      return false;
+    }
+    Object isWindowsNullable = ReflectionUtil.callByReflection(operatingSystem, "isWindows");
+    return Boolean.TRUE.equals(isWindowsNullable);
   }
 
   @Nullable
