@@ -11,7 +11,7 @@ pydev_log.debug("Using Cython speedups")
 # from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
-version = 14
+version = 15
 
 if not hasattr(sys, '_current_frames'):
 
@@ -765,6 +765,7 @@ cdef class PyDBFrame:
                         frame_skips_cache[line_cache_key] = 0
             except KeyboardInterrupt:
                 self.clear_run_state(info)
+                raise
             except:
                 traceback.print_exc()
                 raise

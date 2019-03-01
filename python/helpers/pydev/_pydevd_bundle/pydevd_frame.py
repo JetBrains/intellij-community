@@ -636,6 +636,7 @@ class PyDBFrame:
                         frame_skips_cache[line_cache_key] = 0
             except KeyboardInterrupt:
                 self.clear_run_state(info)
+                raise
             except:
                 traceback.print_exc()
                 raise
