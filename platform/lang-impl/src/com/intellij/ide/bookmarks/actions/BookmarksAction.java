@@ -195,7 +195,6 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     JLabel mnemonicLabel = new JLabel() {
       @Override
       public void setFont(Font font) {
-        new Throwable(font.toString()).printStackTrace();
         super.setFont(font);
         String oldText = getText();
         try {
