@@ -32,7 +32,7 @@ import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.CompilationRound;
-import org.jetbrains.jps.incremental.storage.Timestamps;
+import org.jetbrains.jps.incremental.storage.StampsStorage;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
@@ -86,7 +86,7 @@ public class FSOperations {
     final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
     if (rd != null) {
       final ProjectDescriptor pd = context.getProjectDescriptor();
-      pd.fsState.markDirty(context, round, file, rd, pd.timestamps.getStorage(), false);
+      pd.fsState.markDirty(context, round, file, rd, pd.projectStamps.getStorage(), false);
     }
   }
 
@@ -102,7 +102,7 @@ public class FSOperations {
     final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
     if (rd != null) {
       final ProjectDescriptor pd = context.getProjectDescriptor();
-      pd.fsState.markDirtyIfNotDeleted(context, round, file, rd, pd.timestamps.getStorage());
+      pd.fsState.markDirtyIfNotDeleted(context, round, file, rd, pd.projectStamps.getStorage());
     }
   }
 
@@ -110,7 +110,7 @@ public class FSOperations {
     final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
     if (rd != null) {
       final ProjectDescriptor pd = context.getProjectDescriptor();
-      pd.fsState.registerDeleted(context, rd.target, file, pd.timestamps.getStorage());
+      pd.fsState.registerDeleted(context, rd.target, file, pd.projectStamps.getStorage());
     }
   }
 
@@ -130,7 +130,7 @@ public class FSOperations {
 
   public static void markDirty(CompileContext context, final CompilationRound round, final ModuleBuildTarget target, @Nullable FileFilter filter) throws IOException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
-    markDirtyFiles(context, target, round, pd.timestamps.getStorage(), true, null, filter);
+    markDirtyFiles(context, target, round, pd.projectStamps.getStorage(), true, null, filter);
   }
 
   /**
@@ -189,9 +189,9 @@ public class FSOperations {
 
     removeTargetsAlreadyMarkedDirty(context, dirtyTargets);
 
-    final Timestamps timestamps = context.getProjectDescriptor().timestamps.getStorage();
+    final StampsStorage stampsStorage = context.getProjectDescriptor().projectStamps.getStorage();
     for (ModuleBuildTarget target : dirtyTargets) {
-      markDirtyFiles(context, target, round, timestamps, true, null, filter);
+      markDirtyFiles(context, target, round, stampsStorage, true, null, filter);
     }
 
   }
@@ -213,7 +213,7 @@ public class FSOperations {
   static void markDirtyFiles(CompileContext context,
                              BuildTarget<?> target,
                              final CompilationRound round,
-                             Timestamps timestamps,
+                             StampsStorage stampsStorage,
                              boolean forceMarkDirty,
                              @Nullable THashSet<File> currentFiles,
                              @Nullable FileFilter filter) throws IOException {
@@ -228,7 +228,7 @@ public class FSOperations {
         context.getProjectDescriptor().fsState.clearRecompile(rd);
       }
       //final FSCache fsCache = rd.canUseFileCache() ? context.getProjectDescriptor().getFSCache() : FSCache.NO_CACHE;
-      completelyMarkedDirty &= traverseRecursively(context, rd, round, rd.getRootFile(), timestamps, forceMarkDirty, currentFiles, filter);
+      completelyMarkedDirty &= traverseRecursively(context, rd, round, rd.getRootFile(), stampsStorage, forceMarkDirty, currentFiles, filter);
     }
 
     if (completelyMarkedDirty) {
@@ -245,7 +245,7 @@ public class FSOperations {
                                              final BuildRootDescriptor rd,
                                              final CompilationRound round,
                                              final File file,
-                                             @NotNull final Timestamps tsStorage,
+                                             @NotNull final StampsStorage<?> tsStorage,
                                              final boolean forceDirty,
                                              @Nullable Set<File> currentFiles, @Nullable FileFilter filter) throws IOException {
 
@@ -285,13 +285,12 @@ public class FSOperations {
         else {
           boolean markDirty = forceDirty;
           if (!markDirty) {
-            // for symlinks the attr structure reflects the symlink's timestamp and not symlink's target timestamp
-            markDirty = tsStorage.getStamp(_file, rd.getTarget()) != (attrs.isRegularFile()? attrs.lastModifiedTime().toMillis() : lastModified(f));;
+            markDirty = !tsStorage.getStamp(_file, rd.getTarget()).equals(tsStorage.lastModified(f.toFile(), attrs));
           }
           if (markDirty) {
             // if it is full project rebuild, all storages are already completely cleared;
             // so passing null because there is no need to access the storage to clear non-existing data
-            final Timestamps marker = context.isProjectRebuild() ? null : tsStorage;
+            final StampsStorage marker = context.isProjectRebuild() ? null : tsStorage;
             context.getProjectDescriptor().fsState.markDirty(context, round, _file, rd, marker, false);
           }
           if (currentFiles != null) {
@@ -313,7 +312,7 @@ public class FSOperations {
                                              final BuildRootDescriptor rd,
                                              final CompilationRound round,
                                              final File file,
-                                             @NotNull final Timestamps tsStorage,
+                                             @NotNull final StampsStorage<? extends StampsStorage.Stamp> tsStorage,
                                              final boolean forceDirty,
                                              @Nullable Set<File> currentFiles, @Nullable FileFilter filter) throws IOException {
     BuildRootIndex rootIndex = context.getProjectDescriptor().getBuildRootIndex();
@@ -338,12 +337,12 @@ public class FSOperations {
 
     boolean markDirty = forceDirty;
     if (!markDirty) {
-      markDirty = tsStorage.getStamp(file, rd.getTarget()) != lastModified(file);
+      markDirty = !(tsStorage.getStamp(file, rd.getTarget()).equals(tsStorage.lastModified(file)));
     }
     if (markDirty) {
       // if it is full project rebuild, all storages are already completely cleared;
       // so passing null because there is no need to access the storage to clear non-existing data
-      final Timestamps marker = context.isProjectRebuild() ? null : tsStorage;
+      final StampsStorage marker = context.isProjectRebuild() ? null : tsStorage;
       context.getProjectDescriptor().fsState.markDirty(context, round, file, rd, marker, false);
     }
     if (currentFiles != null) {

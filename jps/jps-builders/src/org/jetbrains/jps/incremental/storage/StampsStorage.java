@@ -15,22 +15,33 @@
  */
 package org.jetbrains.jps.incremental.storage;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.attribute.BasicFileAttributes;
+
+import static org.jetbrains.jps.incremental.storage.StampsStorage.Stamp;
 
 /**
  * @author Eugene Zhuravlev
  */
-public interface Timestamps {
+public interface StampsStorage<T extends Stamp> {
   void force();
 
-  void saveStamp(File file, BuildTarget<?> buildTarget, long timestamp) throws IOException;
+  void saveStamp(File file, BuildTarget<?> buildTarget, T stamp) throws IOException;
 
   void removeStamp(File file, BuildTarget<?> buildTarget) throws IOException;
 
   void clean() throws IOException;
 
-  long getStamp(File file, BuildTarget<?> target) throws IOException;
+  T getStamp(File file, BuildTarget<?> target) throws IOException;
+
+  T lastModified(File file) throws IOException; // todo: rename
+
+  T lastModified(File file, @NotNull BasicFileAttributes attrs); // todo: rename
+
+  interface Stamp {
+  }
 }
