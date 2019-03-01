@@ -82,7 +82,9 @@ internal fun createReview(projectId: String, branch: String, head: String, commi
   }""")
   val review = UpsourceReview(reviewId, projectId, asUrl(reviewId, projectId))
   val conf = System.getProperty("teamcity.buildConfName")
-  postComment(projectId, review, "$conf. Please review changes and cherry-pick into $head with `Delete the source branch` box checked")
+  postComment(projectId, review, "$conf. Please review changes and cherry-pick them into $head. " +
+                                 "Temporary branch $branch was created for this review: please delete it manually " +
+                                 "or using Upsource (select `Delete the source branch` checkbox in the cherry-pick dialog)")
   return review
 }
 

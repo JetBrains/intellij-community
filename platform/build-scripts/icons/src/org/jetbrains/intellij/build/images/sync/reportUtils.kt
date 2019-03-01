@@ -301,7 +301,7 @@ private fun notifySlackChannel(investigator: Investigator?, context: Context) {
     investigator.isAssigned -> "Investigation is assigned to ${investigator.email}\n"
     else -> "Unable to assign investigation to ${investigator.email}\n"
   }
-  val reaction = if (context.isFail()) ":scream:" else ":white_check_mark:"
+  val reaction = if (context.isFail()) ":sadfrog:" else ":white_check_mark:"
   val build = "See <${thisBuildReportableLink()}|build log>"
   val text = "*${context.devRepoName}* $reaction\n" + investigation + build
   val response = post(CHANNEL_WEB_HOOK, """{ "text": "$text" }""")
