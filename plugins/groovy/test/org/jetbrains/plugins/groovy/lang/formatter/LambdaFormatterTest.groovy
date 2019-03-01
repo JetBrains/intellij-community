@@ -47,17 +47,21 @@ class LambdaFormatterTest extends GroovyFormatterTestCase {
 
   void testChainCall2() { doTest() }
 
-  //TODO: IDEA-207367
-  void _testChainCall3() { doTest() }
+  void testChainCall3() { doTest() }
 
-  //TODO: IDEA-207367
-  void _testChainCall4() { doTest() }
+  void testChainCall4() { doTest() }
 
   void testChainCall5() { doTest() }
 
   void testChainCall6() { doTest() }
 
   void testChainCall7() { doTest() }
+
+  void testChainCall8() { doTest() }
+
+  void testChainCall9() { doTest() }
+
+  void testChainCall10() { doTest() }
 
   void testChainCallWithSingleExpressionLambda1() { doTest() }
 

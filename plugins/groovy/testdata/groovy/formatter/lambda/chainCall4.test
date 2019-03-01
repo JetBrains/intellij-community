@@ -3,11 +3,11 @@ foo( (a)->{
 })
   .   bar( (b)->{
   body
-}). baz (()->{})
+})
 -----
 foo((a) -> {
   body
 })
-.bar((b) -> {
-  body
-})
+    .bar((b) -> {
+      body
+    })
