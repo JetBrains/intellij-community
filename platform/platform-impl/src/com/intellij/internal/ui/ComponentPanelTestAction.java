@@ -3,7 +3,7 @@ package com.intellij.internal.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -44,6 +44,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
 public class ComponentPanelTestAction extends DumbAwareAction {
@@ -126,6 +127,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       });
 
       BorderLayoutPanel panel = JBUI.Panels.simplePanel(pane);
+
+      panel.addToTop(createToolbar());
 
       JPanel southPanel = new JPanel();
       southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.X_AXIS));
@@ -673,5 +676,136 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       return JBUI.Panels.simplePanel().addToTop(panel);
     }
+
+    private JComponent createToolbar() {
+      DefaultActionGroup actions = new DefaultActionGroup("Simple group", false);
+      BiConsumer<PlaybackAction, AnActionEvent> handler = (action, event) -> {
+        AnAction[] children = actions.getChildren(event);
+        for (AnAction a : children) {
+          if (a != action && a instanceof PlaybackAction) {
+            ((PlaybackAction)a).validate();
+          }
+        }
+      };
+
+      actions.add(new PlaybackAction("Play first", AllIcons.Actions.Play_first, handler, Operator.First));
+      actions.add(new PlaybackAction("Play previous", AllIcons.Actions.Play_back, handler, Operator.Prev));
+      actions.add(new PlaybackAction("Play", AllIcons.Actions.Execute, handler, Operator.Noop));
+      actions.add(new PlaybackAction("Stop", AllIcons.Actions.Suspend, handler, Operator.Noop));
+      actions.add(new PlaybackAction("Play next", AllIcons.Actions.Play_forward, handler, Operator.Next));
+      actions.add(new PlaybackAction("Play last", AllIcons.Actions.Play_last, handler, Operator.Last));
+
+      DefaultActionGroup subActions = new DefaultActionGroup("Sub actions", true);
+      subActions.add(new MyAction("Bottom left", AllIcons.Actions.MoveToBottomLeft));
+      subActions.add(new MyAction("Bottom right", AllIcons.Actions.MoveToBottomRight));
+      subActions.add(new MyAction("Left bottom", AllIcons.Actions.MoveToLeftBottom));
+      subActions.add(new MyAction("Left top", AllIcons.Actions.MoveToLeftTop));
+      subActions.add(new MyAction("Right bottom", AllIcons.Actions.MoveToRightBottom));
+      subActions.add(new MyAction("Right top", AllIcons.Actions.MoveToRightTop));
+      subActions.add(new MyAction("Top left", AllIcons.Actions.MoveToTopLeft));
+      subActions.add(new MyAction("Top right", AllIcons.Actions.MoveToTopRight));
+      actions.add(subActions);
+
+      DefaultActionGroup toolbarActions = new DefaultActionGroup();
+      toolbarActions.add(new SplitButtonAction(actions));
+
+      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("TOP", toolbarActions, true);
+      JComponent toolbarComponent = toolbar.getComponent();
+      toolbarComponent.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
+      return toolbarComponent;
+    }
+
+    private int trackIndex;
+
+    private class PlaybackAction extends MyAction {
+      private final Operator operator;
+      private final BiConsumer<PlaybackAction, AnActionEvent> handler;
+
+      private PlaybackAction(String name, Icon icon, BiConsumer<PlaybackAction, AnActionEvent> handler, Operator operator) {
+        super(name, icon);
+        this.operator = operator;
+        this.handler = handler;
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        super.actionPerformed(e);
+        if (operator.valid(trackIndex)) {
+          trackIndex = operator.exec(trackIndex);
+        } else {
+          getTemplatePresentation().setEnabled(false);
+        }
+        handler.accept(this, e);
+      }
+
+      public void validate() {
+        getTemplatePresentation().setEnabled(operator.valid(trackIndex));
+      }
+    }
+  }
+
+  private static class MyAction extends DumbAwareAction {
+    private MyAction(String name, Icon icon) {
+      super(name, name + " track", icon);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      System.out.println(e.getPresentation().getDescription());
+    }
+  }
+
+  private static final int MIN_VALUE = 0;
+  private static final int MAX_VALUE = 5;
+
+  public abstract static class Operator {
+    public abstract int exec(int v);
+    public abstract boolean valid(int v);
+
+    public final static Operator First = new Operator() {
+      @Override public int exec(int v) {
+        return MIN_VALUE;
+      }
+
+      @Override public boolean valid(int v) {
+        return v > MIN_VALUE;
+      }
+    };
+    public final static Operator Prev = new Operator() {
+      @Override public int exec(int v) {
+        return v - 1;
+      }
+
+      @Override public boolean valid(int v) {
+        return v > MIN_VALUE;
+      }
+    };
+    public final static Operator Next = new Operator() {
+      @Override public int exec(int v) {
+        return v + 1;
+      }
+
+      @Override public boolean valid(int v) {
+        return v < MAX_VALUE;
+      }
+    };
+    public final static Operator Last = new Operator() {
+      @Override public int exec(int v) {
+        return MAX_VALUE;
+      }
+
+      @Override public boolean valid(int v) {
+        return v < MAX_VALUE;
+      }
+    };
+    public final static Operator Noop = new Operator() {
+      @Override public int exec(int v) {
+        return v;
+      }
+
+      @Override public boolean valid(int v) {
+        return v > MIN_VALUE && v < MAX_VALUE;
+      }
+    };
   }
 }
