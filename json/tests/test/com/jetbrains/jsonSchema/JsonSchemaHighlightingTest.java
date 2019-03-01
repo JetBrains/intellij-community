@@ -1086,4 +1086,28 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
            "    }\n" +
            "  }}", "{ <weak_warning descr=\"Property 'myPropertyXxx' is deprecated: Baz\">\"myPropertyXxx\"</weak_warning>: \"a\" }");
   }
+
+  public void testIfThenElseFlat() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/ifThenElseFlatSchema.json"));
+    doTest(schemaText, "{\n" +
+                       "  \"street_address\": \"24 Sussex Drive\",\n" +
+                       "  \"country\": \"Canada\",\n" +
+                       "  \"postal_code\": \"K1M 1M4\" \n" +
+                       "}");
+    doTest(schemaText, "{\n" +
+                       "  \"street_address\": \"24 Sussex Drive\",\n" +
+                       "  \"country\": \"Canada\",\n" +
+                       "  \"postal_code\": <warning descr=\"String is violating the pattern: '[A-Z][0-9][A-Z] [0-9][A-Z][0-9]'\">\"1K1M1M4\"</warning> \n" +
+                       "}");
+    doTest(schemaText, "{\n" +
+                       "  \"street_address\": \"24 Madison Cube Garden NYC\",\n" +
+                       "  \"country\": \"United States of America\",\n" +
+                       "  \"postal_code\": \"11222-1111-1111\"\n" +
+                       "}");
+    doTest(schemaText, "{\n" +
+                       "  \"street_address\": \"24 Madison Cube Garden NYC\",\n" +
+                       "  \"country\": \"United States of America\",\n" +
+                       "  \"postal_code\": <warning descr=\"String is violating the pattern: '[0-9]{5}(-[0-9]{4})?'\">\"1-1111-1111\"</warning>\n" +
+                       "}");
+  }
 }

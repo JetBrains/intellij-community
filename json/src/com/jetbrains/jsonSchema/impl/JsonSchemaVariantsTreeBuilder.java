@@ -59,7 +59,7 @@ public class JsonSchemaVariantsTreeBuilder {
         node.nothingChild();
         continue;
       }
-      final Pair<ThreeState, JsonSchemaObject> pair = doSingleStep(step, node.getSchema(), acceptAdditional);
+      final Pair<ThreeState, JsonSchemaObject> pair = doSingleStep(step, node.getSchema(), acceptAdditional, true);
       if (ThreeState.NO.equals(pair.getFirst())) node.nothingChild();
       else if (ThreeState.YES.equals(pair.getFirst())) node.anyChild();
       else {
@@ -112,10 +112,11 @@ public class JsonSchemaVariantsTreeBuilder {
   @NotNull
   public static Pair<ThreeState, JsonSchemaObject> doSingleStep(@NotNull JsonPointerPosition step,
                                                                 @NotNull JsonSchemaObject parent,
-                                                                boolean acceptAdditionalPropertiesSchemas) {
+                                                                boolean acceptAdditionalPropertiesSchemas,
+                                                                boolean processAllBranches) {
     final String name = step.getFirstName();
     if (name != null) {
-      return propertyStep(name, parent, acceptAdditionalPropertiesSchemas);
+      return propertyStep(name, parent, acceptAdditionalPropertiesSchemas, processAllBranches);
     } else {
       final int index = step.getFirstIndex();
       assert index >= 0;
@@ -383,7 +384,8 @@ public class JsonSchemaVariantsTreeBuilder {
   @NotNull
   private static Pair<ThreeState, JsonSchemaObject> propertyStep(@NotNull String name,
                                                                  @NotNull JsonSchemaObject parent,
-                                                                 boolean acceptAdditionalPropertiesSchemas) {
+                                                                 boolean acceptAdditionalPropertiesSchemas,
+                                                                 boolean processAllBranches) {
     final JsonSchemaObject child = parent.getProperties().get(name);
     if (child != null) {
       return Pair.create(ThreeState.UNSURE, child);
@@ -398,7 +400,7 @@ public class JsonSchemaVariantsTreeBuilder {
       }
 
       List<IfThenElse> ifThenElseList = parent.getIfThenElse();
-      if (ifThenElseList != null) {
+      if (ifThenElseList != null && processAllBranches) {
         for (IfThenElse ifThenElse : ifThenElseList) {
           // resolve inside V7 if-then-else conditionals
           JsonSchemaObject childObject;
