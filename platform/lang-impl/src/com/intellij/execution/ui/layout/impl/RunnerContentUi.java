@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
+import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -180,14 +181,13 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     tb.setTargetComponent(myComponent);
     myToolbar.setContent(tb.getComponent());
     myLeftToolbarActions = group;
-
+    tb.getComponent().setBorder(JBUI.Borders.merge(tb.getComponent().getBorder(), JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, 0, 0, 0, 1), true));
     myComponent.revalidate();
     myComponent.repaint();
   }
 
   public void setLeftToolbarVisible(boolean value) {
     myToolbar.setVisible(value);
-    myTabs.getComponent().setBorder(new EmptyBorder(0, value ? 1 : 0, 0, 0));
 
     myComponent.revalidate();
     myComponent.repaint();
