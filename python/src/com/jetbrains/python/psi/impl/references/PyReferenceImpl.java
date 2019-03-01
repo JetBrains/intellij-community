@@ -3,7 +3,6 @@ package com.jetbrains.python.psi.impl.references;
 
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -11,7 +10,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -24,7 +22,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
-import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -696,26 +693,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           }
         }
       } else if (ScopeUtil.getScopeOwner(e) == ScopeUtil.getScopeOwner(element)) {
-        ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(e);
-        Ref<Boolean> definedBefore = Ref.create(false);
-        if (scopeOwner != null) {
-          Instruction[] instructions = ControlFlowCache.getControlFlow(scopeOwner).getInstructions();
-          int completionIndex = ControlFlowUtil.findInstructionNumberByElement(instructions, element);
-          if (completionIndex >= 0) {
-            ControlFlowUtil.iteratePrev(completionIndex, instructions, instruction -> {
-              if (instruction.getElement() == e) {
-                boolean isImport = e instanceof PyImportedNameDefiner;
-                boolean isWriteAccess = instruction instanceof ReadWriteInstruction && ((ReadWriteInstruction)instruction).getAccess().isWriteAccess();
-                if (isImport || isWriteAccess) {
-                  definedBefore.set(true);
-                  return ControlFlowUtil.Operation.BREAK;
-                }
-              }
-              return ControlFlowUtil.Operation.NEXT;
-            });
-          }
-        }
-        return definedBefore.get();
+        return PyDefUseUtil.isDefinedBefore(e, element);
       }
       return true;
     }, null);
