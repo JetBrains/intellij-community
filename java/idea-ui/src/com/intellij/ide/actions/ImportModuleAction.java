@@ -64,6 +64,7 @@ public class ImportModuleAction extends AnAction {
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(getEventProject(e) != null);
+    NewProjectAction.updatePresentationForNonJavaIdes(this, e);
   }
 
   @Override

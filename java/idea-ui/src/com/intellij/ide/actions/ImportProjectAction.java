@@ -35,5 +35,6 @@ public class ImportProjectAction extends ImportModuleAction {
     if (NewWelcomeScreen.isNewWelcomeScreen(e)) {
       e.getPresentation().setIcon(AllIcons.ToolbarDecorator.Import);
     }
+    NewProjectAction.updatePresentationForNonJavaIdes(this, e);
   }
 }

@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.vcs.checkout;
 
+import com.intellij.ide.actions.NewProjectAction;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsKey;
@@ -54,5 +56,11 @@ public class NewProjectFromVCSGroup extends CheckoutActionGroup {
         };
       }
     };
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    NewProjectAction.updatePresentationForNonJavaIdes(this, e);
   }
 }
