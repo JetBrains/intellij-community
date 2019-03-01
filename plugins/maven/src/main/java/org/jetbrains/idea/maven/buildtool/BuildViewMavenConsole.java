@@ -51,14 +51,17 @@ public class BuildViewMavenConsole extends MavenConsole {
   private final BuildView myBuildView;
   @NotNull
   private final String myTitle;
+  private final long myExecutionId;
 
   public BuildViewMavenConsole(@NotNull Project project,
                                @NotNull String title,
                                @NotNull String workingDir,
-                               @NotNull String toolWindowId) {
+                               @NotNull String toolWindowId,
+                               long executionId) {
     super(getSettings(project).getOutputLevel(), getSettings(project).isPrintErrorStackTraces());
     myProject = project;
     myTitle = title;
+    myExecutionId = executionId;
     ExternalSystemTaskId taskId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, EXECUTE_TASK, project);
     DefaultBuildDescriptor descriptor = new DefaultBuildDescriptor(taskId, "Run Maven task", workingDir, System.currentTimeMillis());
 
@@ -89,6 +92,7 @@ public class BuildViewMavenConsole extends MavenConsole {
         JComponent consolePanel = createConsolePanel(myBuildView, actions);
         RunContentDescriptor descriptor =
           new RunContentDescriptor(myBuildView, processHandler, consolePanel, myTitle, MavenIcons.MavenLogo);
+        descriptor.setExecutionId(myExecutionId);
         Disposer.register(descriptor, myBuildView);
         ExecutionManager.getInstance(myProject).getContentManager().showRunContent(DefaultRunExecutor.getRunExecutorInstance(), descriptor);
       });
@@ -163,6 +167,11 @@ public class BuildViewMavenConsole extends MavenConsole {
                            public boolean isBuildContentView() {
                              return true;
                            }
-                         });
+                         }){
+      @Override
+      public void dispose() {
+        super.dispose();
+      }
+    };
   }
 }
