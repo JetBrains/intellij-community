@@ -521,8 +521,8 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("precompiled_jshell-frontend"),
     jetbrainsLibrary("rd-core"),
     jetbrainsLibrary("rd-framework"),
-    jetbrainsLibrary("rd-text"),
     jetbrainsLibrary("rd-swing"),
+    jetbrainsLibrary("rd-text"),
     jetbrainsLibrary("tcServiceMessages"),
   ] as List<LibraryLicense>
 }
