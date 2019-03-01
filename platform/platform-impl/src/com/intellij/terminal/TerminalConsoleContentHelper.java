@@ -45,13 +45,12 @@ class TerminalConsoleContentHelper implements Disposable {
     myRequested.set(false);
     List<ConsoleViewContentType> contentTypes = new ArrayList<>(myContentTypes);
     myContentTypes.removeAll(contentTypes);
-    for (ConsoleViewContentType contentType : contentTypes) {
-      fireContentAdded(contentType);
+    if (!contentTypes.isEmpty()) {
+      fireContentAdded(contentTypes);
     }
   }
 
-  private void fireContentAdded(@NotNull ConsoleViewContentType contentType) {
-    List<ConsoleViewContentType> contentTypes = Collections.singletonList(contentType);
+  private void fireContentAdded(@NotNull List<ConsoleViewContentType> contentTypes) {
     for (ObservableConsoleView.ChangeListener listener : myChangeListeners) {
       listener.contentAdded(contentTypes);
     }
