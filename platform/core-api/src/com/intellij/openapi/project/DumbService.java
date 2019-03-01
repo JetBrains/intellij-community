@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -30,7 +29,6 @@ import java.util.List;
  * @author peter
  */
 public abstract class DumbService {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.DumbService");
 
   /**
    * @see Project#getMessageBus()
@@ -85,7 +83,7 @@ public abstract class DumbService {
   /**
    * Pause the current thread until dumb mode ends and then continue execution.
    * NOTE: there are no guarantees that a new dumb mode won't begin before the next statement.
-   * Hence: use with care. Consider using {@link #runWhenSmart(Runnable)}, {@link #runReadActionInSmartMode(Runnable)} or {@link #repeatUntilPassesInSmartMode(Runnable)} instead
+   * Hence: use with care. Consider using {@link #runWhenSmart(Runnable)} or {@link #runReadActionInSmartMode(Runnable)} instead
    */
   public abstract void waitForSmartMode();
 
@@ -152,11 +150,9 @@ public abstract class DumbService {
   /**
    * Pause the current thread until dumb mode ends, and then attempt to execute the runnable. If it fails due to another dumb mode having started,
    * try again until the runnable can complete successfully.
-   * It makes sense to use this method when you have a long-running activity consisting of many small read actions, and you don't want to
-   * use a single long read action to keep the IDE responsive.
-   *
-   * @see #runReadActionInSmartMode(Runnable)
+   * This method provides no guarantees and should be avoided, please use {@link #runReadActionInSmartMode} instead.
    */
+  @Deprecated
   public void repeatUntilPassesInSmartMode(@NotNull final Runnable r) {
     while (true) {
       waitForSmartMode();
@@ -164,8 +160,7 @@ public abstract class DumbService {
         r.run();
         return;
       }
-      catch (IndexNotReadyException e) {
-        LOG.info(e);
+      catch (IndexNotReadyException ignored) {
       }
     }
   }
