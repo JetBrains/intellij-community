@@ -86,7 +86,7 @@ public class GutterIntentionMenuContributor implements IntentionMenuContributor 
     // as quickfix for IDEA-208231, action wrapping was moved into `com.intellij.execution.lineMarker.LineMarkerActionWrapper.getChildren`
     if (action instanceof LineMarkerActionWrapper) {
       final List<AnAction> children = Arrays.asList(((LineMarkerActionWrapper)action).getChildren(null));
-      if (ContainerUtil.all(children, o -> o instanceof LineMarkerActionWrapper)) {
+      if (children.size() > 0 && ContainerUtil.all(children, o -> o instanceof LineMarkerActionWrapper)) {
         for (AnAction child : children) {
           addActions(child, descriptors, renderer, order, dataContext);
         }
