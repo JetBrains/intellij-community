@@ -334,7 +334,7 @@
       <reference id="SliceBackward"/>
       <reference id="SliceForward"/>
       <separator/>
-      <action id="Unscramble" class="com.intellij.unscramble.UnscrambleAction"/>
+      <action id="Unscramble" class="com.intellij.unscramble.UnscrambleAction" overrides="true"/>
       <add-to-group group-id="AnalyzeMenu" anchor="last"/>
     </group>
 
