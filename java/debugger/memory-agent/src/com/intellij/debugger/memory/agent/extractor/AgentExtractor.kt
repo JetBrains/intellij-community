@@ -16,7 +16,7 @@ class AgentExtractor {
     return file
   }
 
-  public enum class AgentLibraryType(val prefix: String, val suffix: String) {
+  enum class AgentLibraryType(val prefix: String, val suffix: String) {
     WINDOWS32("", "32.dll"),
     WINDOWS64("", ".dll"),
     LINUX("lib", ".so"),

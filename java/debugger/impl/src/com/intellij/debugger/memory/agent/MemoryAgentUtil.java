@@ -237,7 +237,7 @@ public class MemoryAgentUtil {
 
   private static void listenIfStartupFailed() {
     Project project = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
-    if (project == null || Boolean.TRUE.equals(project.getUserData(LISTEN_MEMORY_AGENT_STARTUP_FAILED))) return;
+    if (Boolean.TRUE.equals(project.getUserData(LISTEN_MEMORY_AGENT_STARTUP_FAILED))) return;
 
     project.getMessageBus().connect().subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
       @Override
@@ -267,7 +267,7 @@ public class MemoryAgentUtil {
             String windowId = ExecutionManager.getInstance(project).getContentManager().getToolWindowIdByEnvironment(env);
 
             Attachment[] mentionsInOutput = StreamEx.of(mentions).map(x -> new Attachment("agent_mention.txt", x))
-              .toArray(new Attachment[0]);
+              .toArray(Attachment.EMPTY_ARRAY);
             RuntimeExceptionWithAttachments exception =
               new RuntimeExceptionWithAttachments("Could not start debug process with memory agent", mentionsInOutput);
             String checkboxName = DebuggerBundle.message("label.debugger.general.configurable.enable.memory.agent");
