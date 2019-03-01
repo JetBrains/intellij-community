@@ -133,7 +133,7 @@ object ExecUtil {
       }
       SystemInfo.isMac -> {
         val escapedCommand = StringUtil.join(command, { escapeAppleScriptArgument(it) }, " & \" \" & ")
-        val messageArg = if (SystemInfo.isMacOSYosemite) " with prompt \"${prompt}\"" else ""
+        val messageArg = if (SystemInfo.isMacOSYosemite) " with prompt \"${prompt.replace("\"", "\\\"")}\"" else ""
         val escapedScript =
           "tell current application\n" +
           "   activate\n" +
