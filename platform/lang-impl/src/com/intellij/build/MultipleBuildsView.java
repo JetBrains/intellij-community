@@ -226,7 +226,10 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
           buildInfo.statusMessage = event.getMessage();
         }
 
-        myViewMap.get(buildInfo).onEvent(event);
+        BuildView view = myViewMap.get(buildInfo);
+        if (view != null) {
+          view.onEvent(event);
+        }
       }
     });
 
