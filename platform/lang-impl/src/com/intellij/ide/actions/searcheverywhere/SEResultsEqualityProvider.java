@@ -12,12 +12,12 @@ public interface SEResultsEqualityProvider {
 
   ExtensionPointName<SEResultsEqualityProvider> EP_NAME = ExtensionPointName.create("com.intellij.searchEverywhereResultsEqualityProvider");
 
-  enum Action {
+  enum SEEqualElementsActionType {
     DO_NOTHING, SKIP, REPLACE
   }
 
   @NotNull
-  Action compareItems(@NotNull SESearcher.ElementInfo newItem, @NotNull SESearcher.ElementInfo alreadyFoundItem);
+  SEEqualElementsActionType compareItems(@NotNull SearchEverywhereFoundElementInfo newItem, @NotNull SearchEverywhereFoundElementInfo alreadyFoundItem);
 
   @NotNull
   static List<SEResultsEqualityProvider> getProviders() {
@@ -29,12 +29,12 @@ public interface SEResultsEqualityProvider {
     return new SEResultsEqualityProvider() {
       @NotNull
       @Override
-      public Action compareItems(@NotNull SESearcher.ElementInfo newItem, @NotNull SESearcher.ElementInfo alreadyFoundItem) {
+      public SEEqualElementsActionType compareItems(@NotNull SearchEverywhereFoundElementInfo newItem, @NotNull SearchEverywhereFoundElementInfo alreadyFoundItem) {
         return providers.stream()
           .map(provider -> provider.compareItems(newItem, alreadyFoundItem))
-          .filter(action -> action != SEResultsEqualityProvider.Action.DO_NOTHING)
+          .filter(action -> action != SEEqualElementsActionType.DO_NOTHING)
           .findFirst()
-          .orElse(SEResultsEqualityProvider.Action.DO_NOTHING);
+          .orElse(SEEqualElementsActionType.DO_NOTHING);
       }
     };
   }

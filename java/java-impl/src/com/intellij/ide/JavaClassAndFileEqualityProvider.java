@@ -1,39 +1,46 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.actions.searcheverywhere;
+package com.intellij.ide;
 
 import com.intellij.ide.actions.SearchEverywhereClassifier;
+import com.intellij.ide.actions.searcheverywhere.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ClassAndFileEqualityProvider implements SEResultsEqualityProvider {
+public class JavaClassAndFileEqualityProvider implements SEResultsEqualityProvider {
   @NotNull
   @Override
-  public Action compareItems(@NotNull SESearcher.ElementInfo newItemInfo, @NotNull SESearcher.ElementInfo alreadyFoundItemInfo) {
+  public SEEqualElementsActionType compareItems(@NotNull SearchEverywhereFoundElementInfo newItemInfo, @NotNull SearchEverywhereFoundElementInfo alreadyFoundItemInfo) {
     PsiElement newElementPsi = PsiElementsEqualityProvider.toPsi(newItemInfo.getElement());
     PsiElement alreadyFoundPsi = PsiElementsEqualityProvider.toPsi(alreadyFoundItemInfo.getElement());
 
     if (newElementPsi == null || alreadyFoundPsi == null) {
-      return Action.DO_NOTHING;
+      return SEEqualElementsActionType.DO_NOTHING;
     }
 
     if (isClassAndFile(newItemInfo, alreadyFoundItemInfo) && isSameFile(newElementPsi, alreadyFoundPsi)) {
-      return newItemInfo.priority > alreadyFoundItemInfo.priority ? Action.REPLACE : Action.SKIP;
+      return newItemInfo.priority > alreadyFoundItemInfo.priority ? SEEqualElementsActionType.REPLACE : SEEqualElementsActionType.SKIP;
     }
 
-    return Action.DO_NOTHING;
+    return SEEqualElementsActionType.DO_NOTHING;
   }
 
-  private static boolean isClassAndFile(@NotNull SESearcher.ElementInfo newItemInfo, @NotNull SESearcher.ElementInfo alreadyFoundItemInfo) {
-    SearchEverywhereContributor<?> c1 = newItemInfo.getContributor();
-    SearchEverywhereContributor<?> c2 = alreadyFoundItemInfo.getContributor();
-    return c1 instanceof ClassSearchEverywhereContributor && c2 instanceof FileSearchEverywhereContributor
-           || c2 instanceof ClassSearchEverywhereContributor && c1 instanceof FileSearchEverywhereContributor;
+  private static boolean isClassAndFile(@NotNull SearchEverywhereFoundElementInfo newItemInfo, @NotNull SearchEverywhereFoundElementInfo alreadyFoundItemInfo) {
+    Object newElement = newItemInfo.getElement();
+    Object oldElement = alreadyFoundItemInfo.getElement();
+
+    return isClass(newElement) && isFile(oldElement)
+           || isClass(oldElement) && isFile(newElement);
+  }
+
+  private static boolean isFile(Object element) {
+    return element instanceof PsiFile || element instanceof VirtualFile;
+  }
+
+  private static boolean isClass(Object element) {
+    return element instanceof PsiClass;
   }
 
   private static boolean isSameFile(@NotNull PsiElement newItem, @NotNull PsiElement alreadyFound) {

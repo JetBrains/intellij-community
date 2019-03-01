@@ -26,15 +26,15 @@ public class SearchModelTest extends LightPlatformCodeInsightFixtureTestCase {
 
     // adding to empty -----------------------------------------------------------------------
     model.addElements(Arrays.asList(
-      new SESearcher.ElementInfo("item_2_20", 250, STUB_CONTRIBUTOR_2),
-      new SESearcher.ElementInfo("item_3_20", 340, STUB_CONTRIBUTOR_3),
-      new SESearcher.ElementInfo("item_1_20", 160, STUB_CONTRIBUTOR_1),
-      new SESearcher.ElementInfo("item_3_30", 330, STUB_CONTRIBUTOR_3),
-      new SESearcher.ElementInfo("item_2_10", 280, STUB_CONTRIBUTOR_2),
-      new SESearcher.ElementInfo("item_1_10", 180, STUB_CONTRIBUTOR_1),
-      new SESearcher.ElementInfo("item_2_30", 230, STUB_CONTRIBUTOR_2),
-      new SESearcher.ElementInfo("item_3_10", 350, STUB_CONTRIBUTOR_3),
-      new SESearcher.ElementInfo("item_1_30", 140, STUB_CONTRIBUTOR_1)
+      new SearchEverywhereFoundElementInfo("item_2_20", 250, STUB_CONTRIBUTOR_2),
+      new SearchEverywhereFoundElementInfo("item_3_20", 340, STUB_CONTRIBUTOR_3),
+      new SearchEverywhereFoundElementInfo("item_1_20", 160, STUB_CONTRIBUTOR_1),
+      new SearchEverywhereFoundElementInfo("item_3_30", 330, STUB_CONTRIBUTOR_3),
+      new SearchEverywhereFoundElementInfo("item_2_10", 280, STUB_CONTRIBUTOR_2),
+      new SearchEverywhereFoundElementInfo("item_1_10", 180, STUB_CONTRIBUTOR_1),
+      new SearchEverywhereFoundElementInfo("item_2_30", 230, STUB_CONTRIBUTOR_2),
+      new SearchEverywhereFoundElementInfo("item_3_10", 350, STUB_CONTRIBUTOR_3),
+      new SearchEverywhereFoundElementInfo("item_1_30", 140, STUB_CONTRIBUTOR_1)
     ));
 
     List<Object> actualItems = model.getItems();
@@ -53,16 +53,16 @@ public class SearchModelTest extends LightPlatformCodeInsightFixtureTestCase {
 
     // adding to existing -----------------------------------------------------------------------
     model.addElements(Arrays.asList(
-      new SESearcher.ElementInfo("item_3_03", 370, STUB_CONTRIBUTOR_3),
-      new SESearcher.ElementInfo("item_2_23", 250, STUB_CONTRIBUTOR_2),
-      new SESearcher.ElementInfo("item_1_35", 130, STUB_CONTRIBUTOR_1),
-      new SESearcher.ElementInfo("item_2_25", 245, STUB_CONTRIBUTOR_2),
-      new SESearcher.ElementInfo("item_1_25", 150, STUB_CONTRIBUTOR_1),
-      new SESearcher.ElementInfo("item_3_50", 310, STUB_CONTRIBUTOR_3),
-      new SESearcher.ElementInfo("item_2_40", 210, STUB_CONTRIBUTOR_2),
-      new SESearcher.ElementInfo("item_3_40", 320, STUB_CONTRIBUTOR_3),
-      new SESearcher.ElementInfo("item_2_05", 290, STUB_CONTRIBUTOR_2),
-      new SESearcher.ElementInfo("item_3_05", 360, STUB_CONTRIBUTOR_3)
+      new SearchEverywhereFoundElementInfo("item_3_03", 370, STUB_CONTRIBUTOR_3),
+      new SearchEverywhereFoundElementInfo("item_2_23", 250, STUB_CONTRIBUTOR_2),
+      new SearchEverywhereFoundElementInfo("item_1_35", 130, STUB_CONTRIBUTOR_1),
+      new SearchEverywhereFoundElementInfo("item_2_25", 245, STUB_CONTRIBUTOR_2),
+      new SearchEverywhereFoundElementInfo("item_1_25", 150, STUB_CONTRIBUTOR_1),
+      new SearchEverywhereFoundElementInfo("item_3_50", 310, STUB_CONTRIBUTOR_3),
+      new SearchEverywhereFoundElementInfo("item_2_40", 210, STUB_CONTRIBUTOR_2),
+      new SearchEverywhereFoundElementInfo("item_3_40", 320, STUB_CONTRIBUTOR_3),
+      new SearchEverywhereFoundElementInfo("item_2_05", 290, STUB_CONTRIBUTOR_2),
+      new SearchEverywhereFoundElementInfo("item_3_05", 360, STUB_CONTRIBUTOR_3)
     ));
 
     actualItems = model.getItems();
@@ -74,16 +74,16 @@ public class SearchModelTest extends LightPlatformCodeInsightFixtureTestCase {
     // expiring results -----------------------------------------------------------------------
     model.expireResults();
     model.addElements(Arrays.asList(
-      new SESearcher.ElementInfo("item_3_50", 310, STUB_CONTRIBUTOR_3),
-      new SESearcher.ElementInfo("item_1_20", 160, STUB_CONTRIBUTOR_1),
-      new SESearcher.ElementInfo("item_3_10", 350, STUB_CONTRIBUTOR_3),
-      new SESearcher.ElementInfo("item_2_23", 250, STUB_CONTRIBUTOR_2),
-      new SESearcher.ElementInfo("item_3_30", 330, STUB_CONTRIBUTOR_3),
-      new SESearcher.ElementInfo("item_2_05", 290, STUB_CONTRIBUTOR_2),
-      new SESearcher.ElementInfo("item_2_10", 280, STUB_CONTRIBUTOR_2),
-      new SESearcher.ElementInfo("item_1_35", 130, STUB_CONTRIBUTOR_1),
-      new SESearcher.ElementInfo("item_3_20", 340, STUB_CONTRIBUTOR_3),
-      new SESearcher.ElementInfo("item_1_25", 150, STUB_CONTRIBUTOR_1)
+      new SearchEverywhereFoundElementInfo("item_3_50", 310, STUB_CONTRIBUTOR_3),
+      new SearchEverywhereFoundElementInfo("item_1_20", 160, STUB_CONTRIBUTOR_1),
+      new SearchEverywhereFoundElementInfo("item_3_10", 350, STUB_CONTRIBUTOR_3),
+      new SearchEverywhereFoundElementInfo("item_2_23", 250, STUB_CONTRIBUTOR_2),
+      new SearchEverywhereFoundElementInfo("item_3_30", 330, STUB_CONTRIBUTOR_3),
+      new SearchEverywhereFoundElementInfo("item_2_05", 290, STUB_CONTRIBUTOR_2),
+      new SearchEverywhereFoundElementInfo("item_2_10", 280, STUB_CONTRIBUTOR_2),
+      new SearchEverywhereFoundElementInfo("item_1_35", 130, STUB_CONTRIBUTOR_1),
+      new SearchEverywhereFoundElementInfo("item_3_20", 340, STUB_CONTRIBUTOR_3),
+      new SearchEverywhereFoundElementInfo("item_1_25", 150, STUB_CONTRIBUTOR_1)
     ));
     model.setHasMore(STUB_CONTRIBUTOR_1, true);
     model.setHasMore(STUB_CONTRIBUTOR_2, true);
