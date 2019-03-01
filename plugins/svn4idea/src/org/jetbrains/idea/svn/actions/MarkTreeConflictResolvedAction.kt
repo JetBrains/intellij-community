@@ -10,37 +10,38 @@ import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAfterPath
 import com.intellij.openapi.vcs.changes.ChangesUtil.getBeforePath
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
-import org.jetbrains.idea.svn.ConflictedSvnChange
-import org.jetbrains.idea.svn.SvnBundle
-import org.jetbrains.idea.svn.SvnVcs
+import com.intellij.openapi.vcs.changes.ui.ChangesListView
+import org.jetbrains.idea.svn.*
 import org.jetbrains.idea.svn.api.Depth
 
-private fun getConflictedChange(e: AnActionEvent) = e.getData(VcsDataKeys.CHANGE_LEAD_SELECTION)?.singleOrNull() as? ConflictedSvnChange
+private fun getConflict(e: AnActionEvent): Conflict? {
+  val changes = e.getData(VcsDataKeys.CHANGE_LEAD_SELECTION)
+  val locallyDeletedChanges = e.getData(ChangesListView.LOCALLY_DELETED_CHANGES)
 
-private fun getDistinctFiles(change: Change): Collection<FilePath> {
-  val beforePath = getBeforePath(change)
-  val afterPath = getAfterPath(change)
-  val isAddMoveRename = beforePath == null || change.isMoved || change.isRenamed
-
-  return listOfNotNull(beforePath, if (isAddMoveRename) afterPath else null)
+  if (locallyDeletedChanges.isNullOrEmpty()) {
+    return (changes?.singleOrNull() as? ConflictedSvnChange)?.let { ChangeConflict(it) }
+  }
+  if (changes.isNullOrEmpty()) {
+    return (locallyDeletedChanges.singleOrNull() as? SvnLocallyDeletedChange)?.let { LocallyDeletedChangeConflict(it) }
+  }
+  return null
 }
 
 class MarkTreeConflictResolvedAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val project = e.project
-    val conflictedChange = getConflictedChange(e)
-    val enabled = project != null && conflictedChange?.conflictState?.isTree == true
+    val conflict = getConflict(e)
+    val enabled = project != null && conflict?.conflictState?.isTree == true
 
     e.presentation.isEnabledAndVisible = enabled
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
-    val conflictedChange = getConflictedChange(e)!!
+    val conflict = getConflict(e)!!
 
     val markText = SvnBundle.message("action.mark.tree.conflict.resolved.confirmation.title")
     val result = Messages.showYesNoDialog(project, SvnBundle.message("action.mark.tree.conflict.resolved.confirmation.text"), markText,
@@ -50,7 +51,7 @@ class MarkTreeConflictResolvedAction : DumbAwareAction() {
         private var exception: VcsException? = null
 
         override fun run(indicator: ProgressIndicator) {
-          val path = conflictedChange.treeConflictMarkHolder
+          val path = conflict.path
           val vcs = SvnVcs.getInstance(project)
 
           try {
@@ -60,7 +61,7 @@ class MarkTreeConflictResolvedAction : DumbAwareAction() {
             exception = e
           }
 
-          VcsDirtyScopeManager.getInstance(project).filePathsDirty(getDistinctFiles(conflictedChange), null)
+          VcsDirtyScopeManager.getInstance(project).filePathsDirty(conflict.getPathsToRefresh(), null)
         }
 
         override fun onSuccess() {
@@ -71,4 +72,31 @@ class MarkTreeConflictResolvedAction : DumbAwareAction() {
       }.queue()
     }
   }
+}
+
+private interface Conflict {
+  val path: FilePath
+  val conflictState: ConflictState
+
+  fun getPathsToRefresh(): Collection<FilePath>
+}
+
+private class ChangeConflict(val change: ConflictedSvnChange) : Conflict {
+  override val path: FilePath get() = change.treeConflictMarkHolder
+  override val conflictState: ConflictState get() = change.conflictState
+
+  override fun getPathsToRefresh(): Collection<FilePath> {
+    val beforePath = getBeforePath(change)
+    val afterPath = getAfterPath(change)
+    val isAddMoveRename = beforePath == null || change.isMoved || change.isRenamed
+
+    return listOfNotNull(beforePath, if (isAddMoveRename) afterPath else null)
+  }
+}
+
+private class LocallyDeletedChangeConflict(val change: SvnLocallyDeletedChange) : Conflict {
+  override val path: FilePath get() = change.path
+  override val conflictState: ConflictState get() = change.conflictState
+
+  override fun getPathsToRefresh(): Collection<FilePath> = listOf(path)
 }
