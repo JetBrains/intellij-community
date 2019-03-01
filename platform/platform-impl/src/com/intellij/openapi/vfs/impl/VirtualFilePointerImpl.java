@@ -83,6 +83,11 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
   public String getUrl() {
     FilePointerPartNode node = myNode;
     if (isDisposed(node)) return "";
+    // optimization: when file is null we shouldn't try to do expensive findFileByUrl() just to return the url
+    Pair<VirtualFile, String> fileAndUrl = node.myFileAndUrl;
+    if (fileAndUrl != null && fileAndUrl.getFirst() == null) {
+      return fileAndUrl.getSecond();
+    }
     Pair<VirtualFile, String> result = update(node);
     return result == null ? "" : result.second;
   }
