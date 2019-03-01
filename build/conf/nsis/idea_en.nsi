@@ -26,3 +26,4 @@ LangString uninstall_previous_installations_prompt ${LANG_ENGLISH} "Select the $
 LangString uninstaller_relocated ${LANG_ENGLISH} "Uninstall hasn't detected folder of ${MUI_PRODUCT} installation. Probably uninstall.exe was moved from the installation folder."
 LangString empty_or_upgrade_folder ${LANG_ENGLISH} "Please select an empty folder."
 LangString application_running ${LANG_ENGLISH} "$INSTDIR is running. Close the application and retry the installation."
+LangString download_jre_32bit_version ${LANG_ENGLISH} "Download and install JBR x86"
