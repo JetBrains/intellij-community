@@ -81,6 +81,11 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     }
 
     @Override
+    protected int getPreferredRowsCount() {
+      return 4;
+    }
+
+    @Override
     protected void addPatternFilter() {
       PackageChooser chooser =
         new PackageChooserDialog(CodeInsightBundle.message("coverage.pattern.filter.editor.choose.package.title"), myProject);
