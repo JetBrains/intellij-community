@@ -97,7 +97,9 @@ class JsonSchemaAnnotatorChecker {
           String propertyName = ((JsonValidationError.ProhibitedPropertyIssueData)error.getIssueData()).propertyName;
           boolean skip = false;
           for (Collection<? extends JsonSchemaObject> objects : excludingSchemas) {
-            Set<String> keys = objects.stream().map(o -> o.getProperties().keySet()).flatMap(Set::stream).collect(Collectors.toSet());
+            Set<String> keys = objects.stream()
+              .filter(o -> !o.hasOwnExtraPropertyProhibition())
+              .map(o -> o.getProperties().keySet()).flatMap(Set::stream).collect(Collectors.toSet());
             if (keys.contains(propertyName)) skip = true;
           }
           if (skip) continue;
