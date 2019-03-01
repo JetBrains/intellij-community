@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
@@ -23,6 +24,7 @@ public interface JsonSchemaService {
   }
 
   static boolean isSchemaFile(@NotNull PsiFile psiFile) {
+    if (JsonLikePsiWalker.getWalker(psiFile, JsonSchemaObject.NULL_OBJ) == null) return false;
     final VirtualFile file = psiFile.getViewProvider().getVirtualFile();
     JsonSchemaService service = Impl.get(psiFile.getProject());
     return service.isSchemaFile(file) && service.isApplicableToFile(file);
