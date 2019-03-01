@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import static com.intellij.execution.dashboard.actions.RunDashboardActionUtils.getTargets;
+import static com.intellij.execution.services.ServiceViewActionUtils.getTargets;
 
 /**
  * @author Konstantin Aleev
