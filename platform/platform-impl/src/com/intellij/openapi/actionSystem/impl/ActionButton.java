@@ -459,6 +459,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
   }
 
+  // used in OnAir
+  public Presentation getPresentation() {
+    return myPresentation;
+  }
+
   // Accessibility
 
   @Override
