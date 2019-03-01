@@ -101,7 +101,7 @@ internal class GithubPullRequestChangesComponent(project: Project,
     override fun buildTreeModel(): DefaultTreeModel {
       val builder = MyTreeModelBuilder(myProject, grouping)
       if (projectUiSettings.zipChanges) {
-        val zipped = CommittedChangesTreeBrowser.zipChanges(commits.reversed().flatMap { it.changes })
+        val zipped = CommittedChangesTreeBrowser.zipChanges(commits.flatMap { it.changes })
         builder.setChanges(zipped, null)
       }
       else {
