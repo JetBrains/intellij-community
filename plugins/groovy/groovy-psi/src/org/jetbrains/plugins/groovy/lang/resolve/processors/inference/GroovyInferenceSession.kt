@@ -34,10 +34,7 @@ class GroovyInferenceSession(
 
   fun inferSubst(result: GroovyResolveResult): PsiSubstitutor {
     repeatInferencePhases()
-    findSession(result)?.let {
-      return it.result()
-    }
-    return PsiSubstitutor.EMPTY
+    return findSession(result)?.result() ?: PsiSubstitutor.EMPTY
   }
 
   private fun findSession(result: GroovyResolveResult): GroovyInferenceSession? {
