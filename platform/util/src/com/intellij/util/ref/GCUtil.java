@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 
+@SuppressWarnings("CallToSystemGC")
 public class GCUtil {
   /**
    * Try to force VM to collect soft references if possible.
@@ -32,7 +33,7 @@ public class GCUtil {
    * In tests, if you can exactly point to objects you want to GC, use {@code GCWatcher.tracking(objects).tryGc()}
    * which is faster and has more chances to succeed.
    * <p></p>
-   * Commits / hours of tweaking method code: 11 / 6.5
+   * Commits / hours of tweaking method code: 12 / 7
    */
   @TestOnly
   public static void tryGcSoftlyReachableObjects() {
@@ -41,12 +42,12 @@ public class GCUtil {
     SoftReference<Object> ref = new SoftReference<>(new Object(), q);
     reachabilityFence(ref.get());
 
-    //noinspection CallToSystemGC
     System.gc();
 
-    if (!allocateTonsOfMemory(() -> q.poll() != null)) {
+    StringBuilder log = new StringBuilder();
+    if (!allocateTonsOfMemory(log, () -> ref.isEnqueued())) {
       //noinspection UseOfSystemOutOrSystemErr
-      System.out.println("GCUtil.tryGcSoftlyReachableObjects: giving up");
+      System.out.println("GCUtil.tryGcSoftlyReachableObjects: giving up. Log:\n" + log);
     }
 
     // using ref is important as to loop to finish with several iterations: long runs of the method (~80 run of PsiModificationTrackerTest)
@@ -56,18 +57,32 @@ public class GCUtil {
     //System.out.println("Done gc'ing refs:" + ((System.nanoTime() - started) / 1000000));
   }
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  static boolean allocateTonsOfMemory(BooleanSupplier until) {
+  @SuppressWarnings({"UseOfSystemOutOrSystemErr", "StringConcatenationInsideStringBufferAppend"})
+  static boolean allocateTonsOfMemory(StringBuilder log, BooleanSupplier until) {
     long freeMemory = Runtime.getRuntime().freeMemory();
+    log.append("Free memory: " + freeMemory + "\n");
+
+    int liveChunks = 0;
+    ReferenceQueue<Object> queue = new ReferenceQueue<>();
 
     List<SoftReference<?>> list = new ArrayList<>();
     try {
       for (int i = 0; i < 1000 && !until.getAsBoolean(); i++) {
+        while (queue.poll() != null) {
+          liveChunks--;
+        }
+
         // full gc is caused by allocation of large enough array below, SoftReference will be cleared after two full gc
         int bytes = Math.min((int)(freeMemory / 20), Integer.MAX_VALUE / 2);
-        list.add(new SoftReference<Object>(new byte[bytes]));
-        if (i > 0 && i % 100 == 0) {
-          //noinspection CallToSystemGC
+        log.append("Iteration " + i + ", allocating new byte[" + bytes + "]" +
+                   ", live chunks: " + liveChunks +
+                   ", free memory: " + Runtime.getRuntime().freeMemory() + "\n");
+
+        list.add(new SoftReference<Object>(new byte[bytes], queue));
+        liveChunks++;
+
+        if (i > 0 && i % 100 == 0 && !until.getAsBoolean()) {
+          log.append("  Calling System.gc()\n");
           System.gc();
         }
       }
@@ -77,7 +92,7 @@ public class GCUtil {
       list.clear();
       //noinspection CallToPrintStackTrace
       e.printStackTrace();
-      System.err.println("Free memory before: " + freeMemory + "; .freeMemory() now: " + Runtime.getRuntime().freeMemory()+"; list.size(): "+size);
+      System.err.println("Log: " + log + "freeMemory() now: " + Runtime.getRuntime().freeMemory()+"; list.size(): "+size);
       System.err.println(ThreadDumper.dumpThreadsToString());
       throw e;
     } finally {

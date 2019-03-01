@@ -73,7 +73,8 @@ public class GCWatcher {
    * this method gives up after some time.
    */
   public void tryGc() {
-    if (!GCUtil.allocateTonsOfMemory(this::isEverythingCollected)) {
+    StringBuilder log = new StringBuilder();
+    if (!GCUtil.allocateTonsOfMemory(log, this::isEverythingCollected)) {
       String message = "Couldn't garbage-collect some objects, they might still be reachable from GC roots: " +
                        ContainerUtil.mapNotNull(myReferences, SoftReference::dereference);
 
@@ -81,16 +82,16 @@ public class GCWatcher {
         File file = new File(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir")), "GCWatcher.hprof.zip");
         MemoryDumpHelper.captureMemoryDumpZipped(file);
 
-        if (isEverythingCollected()) {
-          message += "\nEverything is collected after taking the heap dump.";
-        }
-
         //noinspection UseOfSystemOutOrSystemErr
         System.out.println("##teamcity[publishArtifacts '" + file.getPath() + "']");
       }
       catch (Exception e) {
         throw new RuntimeException(e);
       }
+      if (isEverythingCollected()) {
+        message += "\nEverything is collected after taking the heap dump.";
+      }
+      message += "Log:\n" + log;
       throw new IllegalStateException(message);
     }
   }
