@@ -1,0 +1,105 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+import org.gradle.internal.os.OperatingSystem
+
+/*
+  To publish on Bintray:
+    - sign in to Bintray and locate your API Key under Edit Your Profile -> API Key
+    - run gradlew bintrayUpload -PbintrayUser=.. and -PbintrayKey=..
+  To publish on Artifactory:
+    - sign in to Artifactory and locate your API Key under Edit Profile -> API Key
+    - run gradlew artifactoryPublish -PartifactoryKey=..
+  To use binaries from Artifactory:
+    - specify version of published binaries
+    - run gradlew setupAndroidSdk -PuseArtifactoryRepo=true
+*/
+buildscript {
+  repositories {
+    maven { url 'https://cache-redirector.jetbrains.com/jcenter' }
+  }
+  dependencies {
+    classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
+    classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:4.7.0'
+  }
+}
+
+subprojects { subproject ->
+  apply plugin: 'com.jfrog.bintray'
+  def pkgName = subproject.name
+  String bintrayVersion
+  String archive
+  String path
+  switch (pkgName) {
+    case 'android-sdk':
+      bintrayVersion = "${OperatingSystem.current()}.3.3.1"
+      archive = "android-sdk.tar.gz"
+      path = "${rootProject.buildDir}/android-sdk/prebuilts/studio/sdk"
+      break
+    case 'android-sdk-kotlin-plugin':
+      bintrayVersion = '1.3.21-release-IJ2019.1'
+      archive = "android-sdk-kotlin-plugin.zip"
+      path = "${rootProject.buildDir}/android-sdk/prebuilts/tools/common/kotlin-plugin"
+      break
+    case 'android-sdk-offline-repo':
+      bintrayVersion = '3.3.0'
+      archive = "android-sdk-offline-repo.zip"
+      path = "${rootProject.buildDir}/android-sdk/prebuilts/tools/common/m2/repository"
+      break
+  }
+  task zip(type: Zip) {
+    archiveName = archive
+    destinationDir = file("${rootProject.buildDir}/android-sdk")
+    from path
+  }
+  bintrayUpload.dependsOn zip
+  bintray {
+    user = subproject.findProperty('bintrayUser')
+    key = subproject.findProperty('bintrayKey')
+    publish = true
+    pkg {
+      userOrg = 'jetbrains'
+      repo = 'intellij-third-party-dependencies'
+      name = pkgName
+      version {
+        name = bintrayVersion
+      }
+    }
+    filesSpec {
+      def bintrayPath = file(archive)
+      from bintrayPath
+      into "./$pkgName/$bintrayVersion/"
+      rename {
+        pkgName + bintrayPath.substring(bintrayPath.indexOf('.'))
+      }
+    }
+  }
+  task artifactoryPublish(dependsOn: zip, group: 'publishing') {
+    doLast {
+      def payload = file("${rootProject.buildDir}/android-sdk/$archive")
+      new URL("https://repo.labs.intellij.net/thirdparty/$pkgName/$bintrayVersion/$archive").openConnection().with {
+        requestMethod = 'PUT'
+        doOutput = true
+        setRequestProperty('X-JFrog-Art-Api', subproject.findProperty('artifactoryKey'))
+        setFixedLengthStreamingMode(payload.length())
+        connect()
+        def fileReader = new BufferedInputStream(new FileInputStream(payload))
+        try {
+          def buffer = new byte[8 * 1024]
+          int bytesRead
+          while ((bytesRead = fileReader.read(buffer)) != -1) {
+            if (bytesRead < buffer.size()) {
+              outputStream.write(Arrays.copyOf(buffer, bytesRead))
+            }
+            else {
+              outputStream.write(buffer)
+            }
+          }
+        }
+        finally {
+          outputStream.close()
+          fileReader.close()
+          project.logger.quiet(responseCode.toString())
+        }
+      }
+    }
+  }
+}

@@ -13,5 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+pluginManagement {
+  repositories {
+    maven {
+      url = 'https://cache-redirector.jetbrains.com/plugins.gradle.org'
+    }
+    maven {
+      url = 'https://cache-redirector.jetbrains.com/jcenter.bintray.com'
+    }
+  }
+}
+
 rootProject.name = 'dependencies'
-//include 'gradle-api-deps'
+include 'android-sdk-upload', 
+        'android-sdk-upload:android-sdk', 
+        'android-sdk-upload:android-sdk-kotlin-plugin', 
+        'android-sdk-upload:android-sdk-offline-repo'
