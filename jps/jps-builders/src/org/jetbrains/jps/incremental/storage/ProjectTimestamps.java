@@ -26,39 +26,27 @@ import java.io.IOException;
  */
 public class ProjectTimestamps {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.ProjectTimestamps");
-  private static final String TIMESTAMP_STORAGE = "timestamps";
-  private final StampsStorage<? extends StampsStorage.Stamp> myTimestamps;
-  private final File myTimestampsRoot;
+  private final StampsStorage<? extends StampsStorage.Stamp> myStampsStorage;
 
   public ProjectTimestamps(final File dataStorageRoot, BuildTargetsState targetsState) throws IOException {
-    myTimestampsRoot = new File(dataStorageRoot, TIMESTAMP_STORAGE);
-    myTimestamps = new TimestampStorage(new File(myTimestampsRoot, "data"), targetsState);
+    myStampsStorage = new TimestampStorage(dataStorageRoot, targetsState);
   }
 
   public StampsStorage<? extends StampsStorage.Stamp> getStorage() {
-    return myTimestamps;
+    return myStampsStorage;
   }
 
   public void clean() {
-    final StampsStorage<? extends StampsStorage.Stamp> timestamps = myTimestamps;
-    if (timestamps != null) {
-      timestamps.wipe();
-    }
-    else {
-      FileUtil.delete(myTimestampsRoot);
-    }
+    myStampsStorage.wipe();
   }
 
   public void close() {
-    final StampsStorage<? extends StampsStorage.Stamp> timestamps = myTimestamps;
-    if (timestamps != null) {
-      try {
-        timestamps.close();
-      }
-      catch (IOException e) {
-        LOG.error(e);
-        FileUtil.delete(myTimestampsRoot);
-      }
+    try {
+      myStampsStorage.close();
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      FileUtil.delete(myStampsStorage.getStorageRoot());
     }
   }
 }
