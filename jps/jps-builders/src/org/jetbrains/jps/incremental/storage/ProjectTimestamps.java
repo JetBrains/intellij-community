@@ -25,11 +25,15 @@ import java.io.IOException;
  * @author Eugene Zhuravlev
  */
 public class ProjectTimestamps {
+  private final static boolean USE_TIMESTAMPS = true;
+
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.ProjectTimestamps");
   private final StampsStorage<? extends StampsStorage.Stamp> myStampsStorage;
 
   public ProjectTimestamps(final File dataStorageRoot, BuildTargetsState targetsState) throws IOException {
-    myStampsStorage = new TimestampStorage(dataStorageRoot, targetsState);
+    myStampsStorage = USE_TIMESTAMPS
+                      ? new TimestampStorage(dataStorageRoot, targetsState)
+                      : new HashStorage(dataStorageRoot, targetsState);
   }
 
   public StampsStorage<? extends StampsStorage.Stamp> getStorage() {
