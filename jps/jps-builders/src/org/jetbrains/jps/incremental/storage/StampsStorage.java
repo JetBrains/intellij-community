@@ -28,6 +28,8 @@ import static org.jetbrains.jps.incremental.storage.StampsStorage.Stamp;
  * @author Eugene Zhuravlev
  */
 public interface StampsStorage<T extends Stamp> {
+  File getStorageRoot();
+
   void force();
 
   void saveStamp(File file, BuildTarget<?> buildTarget, T stamp) throws IOException;

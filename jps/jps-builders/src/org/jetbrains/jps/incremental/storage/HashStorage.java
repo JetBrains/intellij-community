@@ -20,10 +20,12 @@ import static org.jetbrains.jps.incremental.storage.HashStorage.HashPerTarget;
 public class HashStorage extends AbstractStateStorage<File, HashPerTarget[]> implements StampsStorage<HashStorage.Hash> {
   public static final int MD5_SIZE = 16;
   private final BuildTargetsState myTargetsState;
+  private final File myHashesRoot;
   private final MessageDigest md;
 
-  public HashStorage(File storePath, BuildTargetsState targetsState) throws IOException {
-    super(storePath, new FileKeyDescriptor(), new StateExternalizer());
+  public HashStorage(File dataStorageRoot, BuildTargetsState targetsState) throws IOException {
+    super(new File(calcStorageRoot(dataStorageRoot), "data"), new FileKeyDescriptor(), new StateExternalizer());
+    myHashesRoot = calcStorageRoot(dataStorageRoot);
     myTargetsState = targetsState;
     try {
       md = MessageDigest.getInstance("MD5");
@@ -31,6 +33,16 @@ public class HashStorage extends AbstractStateStorage<File, HashPerTarget[]> imp
     catch (NoSuchAlgorithmException e) {
       throw new IOException(e);
     }
+  }
+
+  @NotNull
+  private static File calcStorageRoot(File dataStorageRoot) {
+    return new File(dataStorageRoot, "hashes");
+  }
+
+  @Override
+  public File getStorageRoot() {
+    return myHashesRoot;
   }
 
   @Override

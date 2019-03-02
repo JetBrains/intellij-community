@@ -21,10 +21,22 @@ import static org.jetbrains.jps.incremental.storage.TimestampStorage.TimestampPe
  */
 public class TimestampStorage extends AbstractStateStorage<File, TimestampPerTarget[]> implements StampsStorage<Timestamp> {
   private final BuildTargetsState myTargetsState;
+  private final File myTimestampsRoot;
 
-  public TimestampStorage(File storePath, BuildTargetsState targetsState) throws IOException {
-    super(storePath, new FileKeyDescriptor(), new StateExternalizer());
+  public TimestampStorage(File dataStorageRoot, BuildTargetsState targetsState) throws IOException {
+    super(new File(calcStorageRoot(dataStorageRoot), "data"), new FileKeyDescriptor(), new StateExternalizer());
+    myTimestampsRoot = calcStorageRoot(dataStorageRoot);
     myTargetsState = targetsState;
+  }
+
+  @NotNull
+  private static File calcStorageRoot(File dataStorageRoot) {
+    return new File(dataStorageRoot, "timestamps");
+  }
+
+  @Override
+  public File getStorageRoot() {
+    return myTimestampsRoot;
   }
 
   @Override
