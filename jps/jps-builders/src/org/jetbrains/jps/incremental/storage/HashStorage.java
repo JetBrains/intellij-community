@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 
 import static org.jetbrains.jps.incremental.storage.HashStorage.HashPerTarget;
 
@@ -115,12 +116,13 @@ public class HashStorage extends AbstractStateStorage<File, HashPerTarget[]> imp
   public Hash lastModified(File file) throws IOException {
     // todo: check file size ad ready with buffered reader
     byte[] bytes = Files.readAllBytes(file.toPath());
-    return Hash.fromBytes(md.digest(bytes));
+    byte[] digest = md.digest(bytes);
+    return Hash.fromBytes(digest);
   }
 
   @Override
-  public Hash lastModified(File file, @NotNull BasicFileAttributes attrs) {
-    return null;
+  public Hash lastModified(File file, @NotNull BasicFileAttributes attrs) throws IOException {
+    return lastModified(file);
   }
 
   static class HashPerTarget {
@@ -148,6 +150,23 @@ public class HashStorage extends AbstractStateStorage<File, HashPerTarget[]> imp
 
     static Hash fromBytes(byte[] bytes) {
       return new Hash(bytes);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      Hash hash = (Hash)o;
+
+      if (!Arrays.equals(myBytes, hash.myBytes)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return Arrays.hashCode(myBytes);
     }
   }
 
