@@ -1,36 +1,36 @@
 {
   "name": "start-up-visualizer",
+  "version": "0.1.0",
   "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build"
+  },
   "dependencies": {
-    "@amcharts/amcharts4": "4.1.13"
+    "@amcharts/amcharts4": "4.1.14",
+    "element-ui": "^2.6.0",
+    "vue": "^2.6.7",
+    "vue-class-component": "^7.0.1",
+    "vue-property-decorator": "^7.3.0",
+    "vue-router": "^3.0.2",
+    "vuex": "^3.1.0",
+    "vuex-persist": "^2.0.0"
   },
   "devDependencies": {
-    "@types/jest": "^24.0.9",
-    "@types/webpack-env": "^1.13.7",
-    "clean-webpack-plugin": "^1.0.1",
-    "copy-webpack-plugin": "^5.0.0",
-    "fork-ts-checker-notifier-webpack-plugin": "^1.0.0-alpha.1",
-    "fork-ts-checker-webpack-plugin": "^1.0.0-alpha.8",
-    "html-webpack-plugin": "^3.2.0",
-    "jest": "^24.1.0",
-    "ts-jest": "^24.0.0",
-    "ts-loader": "^5.3.3",
+    "@vue/cli-plugin-typescript": "^3.4.1",
+    "@vue/cli-service": "^3.4.1",
     "typescript": "^3.3.3333",
-    "webpack": "^4.29.5",
-    "webpack-cli": "^3.2.3",
-    "webpack-dev-server": "^3.2.1",
-    "webpack-subresource-integrity": "^1.3.2"
+    "vue-template-compiler": "^2.6.7",
+    "vuex-module-decorators": "^0.9.8"
   },
-  "scripts": {
-    "//": "chrome://flags/#allow-insecure-localhost to tell Chrome to ignore cert warnings on localhost",
-    "dist": "webpack --mode=production",
-    "dist-ij": "webpack --mode=production --optimize-minimize=false",
-    "dev": "webpack-dev-server",
-    "dev-one": "webpack-dev-server",
-    "test": "jest"
+  "postcss": {
+    "plugins": {
+      "autoprefixer": {}
+    }
   },
-  "jest": {
-    "preset": "ts-jest",
-    "testEnvironment": "node"
-  }
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not ie <= 8"
+  ]
 }

@@ -1,9 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-import {XYChartManager} from "./core"
+import {XYChartManager} from "@/core"
 import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
 import {computeLevels, disableGridButKeepBorderLines, TimeLineItem} from "./timeLineChartHelper"
-import {DataManager, InputData} from "./data"
+import {InputData} from "@/data"
+import {DataManager} from "@/state"
 
 export class TimelineChartManager extends XYChartManager {
   private maxRowIndex = 0
@@ -115,13 +116,11 @@ export class TimelineChartManager extends XYChartManager {
         this.maxRowIndex = rowIndex
       }
 
-      const result: any = {
+      transformedItems[i] = {
         ...item,
         rowIndex: rowIndex++,
         color: colorSet.getIndex(item.colorIndex),
       }
-
-      transformedItems[i] = result
     }
 
     transformedItems.sort((a, b) => a.rowIndex - b.rowIndex)

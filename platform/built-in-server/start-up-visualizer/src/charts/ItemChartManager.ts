@@ -1,12 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import * as am4charts from "@amcharts/amcharts4/charts"
-import {XYChartManager} from "./core"
 import * as am4core from "@amcharts/amcharts4/core"
-import {DataManager, Item} from "./data"
+import {DataManager} from "@/state"
+import {XYChartManager} from "@/core"
+import {Item} from "@/data"
 
 export type ComponentProviderSourceNames = "appComponents" | "projectComponents"
 export type ServiceProviderSourceNames = "appServices" | "projectServices"
 export type TopHitProviderSourceNames = "appOptionsTopHitProviders" | "projectOptionsTopHitProviders"
+
+export type ItemChartType = "components" | "services" | "topHitProviders"
 
 export abstract class ItemChartManager extends XYChartManager {
   // isUseYForName - if true, names are more readable, but not possible to see all components because layout from top to bottom (so, opposite from left to right some data can be out of current screen)
@@ -159,8 +162,9 @@ export abstract class ItemChartManager extends XYChartManager {
     range.label.adapter.add("dy", (_y, _target) => {
       return -this.chart.yAxes.getIndex(0)!!.pixelHeight
     })
-    range.label.adapter.add("x", (_x, _target) => {
-      return range.point.x
+    range.label.adapter.add("x", (x, _target) => {
+      const rangePoint = range.point
+      return rangePoint == null ? x : rangePoint.x
     })
   }
 
