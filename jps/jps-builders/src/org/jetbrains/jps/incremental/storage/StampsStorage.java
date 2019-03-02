@@ -42,6 +42,10 @@ public interface StampsStorage<T extends Stamp> {
 
   T lastModified(File file, @NotNull BasicFileAttributes attrs); // todo: rename
 
+  boolean wipe();
+
+  void close() throws IOException;
+
   interface Stamp {
   }
 }

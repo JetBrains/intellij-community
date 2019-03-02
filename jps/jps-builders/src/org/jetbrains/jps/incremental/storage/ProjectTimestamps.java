@@ -27,7 +27,7 @@ import java.io.IOException;
 public class ProjectTimestamps {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.ProjectTimestamps");
   private static final String TIMESTAMP_STORAGE = "timestamps";
-  private final TimestampStorage myTimestamps;
+  private final StampsStorage<? extends StampsStorage.Stamp> myTimestamps;
   private final File myTimestampsRoot;
 
   public ProjectTimestamps(final File dataStorageRoot, BuildTargetsState targetsState) throws IOException {
@@ -39,8 +39,8 @@ public class ProjectTimestamps {
     return myTimestamps;
   }
 
-  public void clean() throws IOException {
-    final TimestampStorage timestamps = myTimestamps;
+  public void clean() {
+    final StampsStorage<? extends StampsStorage.Stamp> timestamps = myTimestamps;
     if (timestamps != null) {
       timestamps.wipe();
     }
@@ -50,7 +50,7 @@ public class ProjectTimestamps {
   }
 
   public void close() {
-    final TimestampStorage timestamps = myTimestamps;
+    final StampsStorage<? extends StampsStorage.Stamp> timestamps = myTimestamps;
     if (timestamps != null) {
       try {
         timestamps.close();
