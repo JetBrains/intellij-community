@@ -784,10 +784,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
           }
         }, action));
     }
-    AnAction helpAction = notification.getContextHelpAction();
-    if (helpAction != null) {
-      Presentation presentation = helpAction.getTemplatePresentation();
-      ContextHelpLabel helpLabel = new ContextHelpLabel(presentation.getText(), presentation.getDescription());
+    Pair<String, String> contextHelp = notification.getContextHelp();
+    if (contextHelp != null) {
+      ContextHelpLabel helpLabel = new ContextHelpLabel(contextHelp.first, contextHelp.second);
       helpLabel.setForeground(UIUtil.getLabelDisabledForeground());
       actionPanel.add(HorizontalLayout.LEFT, helpLabel);
     }

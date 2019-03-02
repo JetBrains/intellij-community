@@ -1,7 +1,6 @@
 package com.intellij.tasks.context;
 
 import com.intellij.notification.*;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.project.Project;
@@ -76,12 +75,9 @@ public class BranchContextTracker implements BranchChangeListener {
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
         new ConfigureBranchContextDialog(myProject).show();
       }
-    }).setContextHelpAction(new AnAction("What is a workspace?", "A workspace is a set of opened files, the current run configuration, and breakpoints.", null) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-
-      }
-    }).notify(myProject);
+    }).setContextHelp("What is a workspace?",
+                      "A workspace is a set of opened files, the current run configuration, and breakpoints.")
+      .notify(myProject);
   }
 
   @NotNull
@@ -89,7 +85,7 @@ public class BranchContextTracker implements BranchChangeListener {
     return "__branch_context_" + branchName;
   }
 
-  public static class TrackerStartupActivity implements StartupActivity{
+  public static class TrackerStartupActivity implements StartupActivity {
 
     @Override
     public void runActivity(@NotNull Project project) {

@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.ContainerUtil;
@@ -54,7 +55,7 @@ public class Notification {
   private NotificationListener myListener;
   private String myDropDownText;
   private List<AnAction> myActions;
-  private AnAction myContextHelpAction;
+  private Pair<String, String> myContextHelp;
 
   private final AtomicBoolean myExpired = new AtomicBoolean(false);
   private Runnable myWhenExpired;
@@ -260,13 +261,15 @@ public class Notification {
     return this;
   }
 
-  public Notification setContextHelpAction(AnAction action) {
-    myContextHelpAction = action;
+  @NotNull
+  public Notification setContextHelp(@NotNull String question, @NotNull String explanation) {
+    myContextHelp = Pair.create(question, explanation);
     return this;
   }
 
-  public AnAction getContextHelpAction() {
-    return myContextHelpAction;
+  @Nullable
+  public Pair<String, String> getContextHelp() {
+    return myContextHelp;
   }
 
   @NotNull
