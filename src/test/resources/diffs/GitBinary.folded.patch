@@ -1,4 +1,4 @@
-<fold text='From 32fff2fbb9ef79e9496794c565da791d16a772d8 Mon Sep 17 00:00:00 2001' expand='true'>From 32fff2fbb9ef79e9496794c565da791d16a772d8 Mon Sep 17 00:00:00 2001
+<fold text='Changed icon' expand='true'>From 32fff2fbb9ef79e9496794c565da791d16a772d8 Mon Sep 17 00:00:00 2001
 From: ThomasR <thomasr@fantasymail.de>
 Date: Tue, 12 Feb 2019 23:07:02 +0100
 Subject: [PATCH] Changed icon
@@ -44,8 +44,8 @@ zVtyeBYU@Yf4*`O8bu=|KZJKkH%c5zb>w<7Nj3xx3P>65ef8aPyWdT-}SD0CyLoX=8
 zTy7NrDSur)&CX)@3~bx-OkNfMKt7+}G3M9~j_sXzT{SPl{{XcCaFtz4fP|j+zgxfY
 z?1C8cR#NO~uS8}I&2h5950CHk{wxY$XnH(4a=a@6OjZJ5JM9Xfkne}4<1^(hZrgh2
 zgZ8f9{)CGL0Ky86l?z~y@jT*c7GXZyXl1-i8!3cRceBD3bCt=ht)kT3vBUkgm-81`
-W?c)mnghkx|0000<MNUMnLSTYb0zyLo</fold>
-</fold>
+W?c)mnghkx|0000<MNUMnLSTYb0zyLo</fold></fold>
+
 <fold text='diff --git a/.idea/icon_dark.png b/.idea/icon_dark.png' expand='true'>diff --git a/.idea/icon_dark.png b/.idea/icon_dark.png
 deleted file mode 100644
 index a7fea0010f6c031a4db99a3e0b5548b03ef34171..0000000000000000000000000000000000000000
@@ -67,8 +67,8 @@ zdqo%s7_>$rn~E^Cw9KMu0)pti7J`8QdCOvcAqi^hN8k?uf^~H?H8pLTbCt`YX`<_b
 za5#)61ffufZ{L65I8J2&R+d+oS)D^KD8gKB6#yw+KF!Wz_zY~@@=RV906;#U-!bOc
 z4vy`ecwIFw!v6rZ0dSRFOMrx)_rF`e@$7;a^Hx&qX|F_P4b5?~!4Hq`^!_XgU}$<g
 zI&!=#0Zdi`U_0#!ppfr}rsFf^E^ga;=Y#gH-~NP)1^~hej+F~wknud?Y8GKW+h}FH
-uOdEt!ceBD3bCt=ht)kT3vBUkgm-81`?c)mnghkx|0000<MNUMnLSTXm8A7B0</fold>
-</fold>
+uOdEt!ceBD3bCt=ht)kT3vBUkgm-81`?c)mnghkx|0000<MNUMnLSTXm8A7B0</fold></fold>
+
 <fold text='diff --git a/src/main/java/de/thomasrosenau/diffplugin/DiffIcons.java b/src/main/java/de/thomasrosenau/diffplugin/DiffIcons.java' expand='true'>diff --git a/src/main/java/de/thomasrosenau/diffplugin/DiffIcons.java b/src/main/java/de/thomasrosenau/diffplugin/DiffIcons.java
 index 2e16fb9..8956f5d 100644
 --- a/src/main/java/de/thomasrosenau/diffplugin/DiffIcons.java
@@ -205,8 +205,8 @@ z4Q6kEi0=hcb|Ja7ba7^8{Rz}&?Zi{maxARwcTEFeqU6}b^qp`cBR1?S=?YRY46v6Q
 zok~26PtN4mQl{yz@JGeL00@IU0r9wjeqHbIt)_+7Lcy=4fO@SC*Ks?1$7#Ew{11c>
 z2!%rMm{IwxKoG&QEYutASCRr$H40tRplN+z5Hwwbq9`4G(iMuOGK!_LUq3y+be~iP
 z_^tj8Am9-Qu0R}hVIQfap7siRu)R!brwahI7n>hmkw-awJiC0@>VyG+fhqyTA5WE}
-d9cJW%<`>;pbntjpC7J*L002ovPDHLkV1kq6xo-df</fold>
-</fold>
+d9cJW%<`>;pbntjpC7J*L002ovPDHLkV1kq6xo-df</fold></fold>
+
 <fold text='diff --git a/src/main/resources/icons/paper@2x.png b/src/main/resources/icons/paper@2x.png' expand='true'>diff --git a/src/main/resources/icons/paper@2x.png b/src/main/resources/icons/paper@2x.png
 deleted file mode 100644
 index a7fea0010f6c031a4db99a3e0b5548b03ef34171..0000000000000000000000000000000000000000
@@ -228,8 +228,8 @@ zdqo%s7_>$rn~E^Cw9KMu0)pti7J`8QdCOvcAqi^hN8k?uf^~H?H8pLTbCt`YX`<_b
 za5#)61ffufZ{L65I8J2&R+d+oS)D^KD8gKB6#yw+KF!Wz_zY~@@=RV906;#U-!bOc
 z4vy`ecwIFw!v6rZ0dSRFOMrx)_rF`e@$7;a^Hx&qX|F_P4b5?~!4Hq`^!_XgU}$<g
 zI&!=#0Zdi`U_0#!ppfr}rsFf^E^ga;=Y#gH-~NP)1^~hej+F~wknud?Y8GKW+h}FH
-uOdEt!ceBD3bCt=ht)kT3vBUkgm-81`?c)mnghkx|0000<MNUMnLSTXm8A7B0</fold>
-</fold>
+uOdEt!ceBD3bCt=ht)kT3vBUkgm-81`?c)mnghkx|0000<MNUMnLSTXm8A7B0</fold></fold>
+
 -- 
 2.20.1
 

@@ -31,6 +31,8 @@
     <lang.foldingBuilder language="Diff" implementationClass="de.thomasrosenau.diffplugin.DiffFoldingBuilder" />
     <stripTrailingSpacesFilterFactory
         implementation="de.thomasrosenau.diffplugin.DontStripTrailingSpacesFilterFactory" />
+    <lang.psiStructureViewFactory language="Diff"
+        implementationClass="de.thomasrosenau.diffplugin.DiffStructureViewFactory" />
   </extensions>
 
 </idea-plugin>

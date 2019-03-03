@@ -1,6 +1,6 @@
-Only in tzu: intro
+<fold text='diff -ur lao/quote tzu/quote' expand='true'>Only in tzu: intro
 Only in lao: preamble
-<fold text='diff -ur lao/quote tzu/quote' expand='true'>diff -ur lao/quote tzu/quote
+diff -ur lao/quote tzu/quote
 --- lao/quote	2019-02-23 14:40:37.000000000 +0100
 +++ tzu/quote	2019-02-23 14:45:39.000000000 +0100
 <fold text='@@ -1,7 +1,6 @@' expand='true'>@@ -1,7 +1,6 @@
@@ -20,6 +20,5 @@ Only in lao: preamble
 +They both may be called deep and profound.
 +Deeper and more profound,
 +The door of all subtleties!
-\ No newline at end of file</fold>
+\ No newline at end of file</fold></fold>
 Only in tzu: unquote
-</fold>

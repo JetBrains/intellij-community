@@ -1,4 +1,4 @@
-/*
+<!--
  Copyright 2019 Thomas Rosenau
 
  Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,13 @@
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  See the License for the specific language governing permissions and
  limitations under the License.
- */
-
-package de.thomasrosenau.diffplugin;
-
-import javax.swing.*;
-
-import com.intellij.openapi.util.IconLoader;
-
-public class DiffIcons {
-    public static final Icon FILE = IconLoader.getIcon("META-INF/pluginIcon.svg");
-    public static final Icon MULTI_DIFF_PART = IconLoader.getIcon("multiPartIcon.svg");;
-    public static final Icon HUNK = IconLoader.getIcon("hunkIcon.svg");
-    public static final Icon BINARY_PATCH = IconLoader.getIcon("binaryPatchIcon.svg");
-}
+ -->
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1"
+    viewBox="0 2 16 16" width="16px" height="16px">
+    <path fill="#d3d3d3" d="M2,16H14V5H2z" />
+    <path fill="#ffffff" d="M3,6V15h10V6H3z" />
+    <path fill="#ffebf1" d="M5,7v3h6v-3z" />
+    <path fill="#cb2431" d="M4,8v1h3v-1z" />
+    <path fill="#daffe3" d="M5,11v3h6v-3z" />
+    <path fill="#2cbe4e" d="M4,12v1h1v1h1v-1h1v-1h-1v-1h-1v1z" />
+</svg>

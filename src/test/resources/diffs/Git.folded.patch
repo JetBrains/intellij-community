@@ -1,4 +1,4 @@
-<fold text='From dc32f3823bd6f530708a08de4611a1d058337fda Mon Sep 17 00:00:00 2001' expand='true'>From dc32f3823bd6f530708a08de4611a1d058337fda Mon Sep 17 00:00:00 2001
+<fold text='Improved lexer and parser' expand='true'>From dc32f3823bd6f530708a08de4611a1d058337fda Mon Sep 17 00:00:00 2001
 From: ThomasR <thomasr@fantasymail.de>
 Date: Mon, 18 Feb 2019 21:47:43 +0100
 Subject: [PATCH] Improved lexer and parser

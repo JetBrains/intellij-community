@@ -14,15 +14,20 @@
  limitations under the License.
  */
 
-package de.thomasrosenau.diffplugin;
+package de.thomasrosenau.diffplugin.psi;
 
-import javax.swing.*;
+import com.intellij.extapi.psi.ASTWrapperPsiElement;
+import com.intellij.lang.ASTNode;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.NavigationItem;
+import org.jetbrains.annotations.NotNull;
 
-import com.intellij.openapi.util.IconLoader;
+public abstract class DiffNavigationItem extends ASTWrapperPsiElement implements NavigationItem {
+    public DiffNavigationItem(@NotNull ASTNode node) {
+        super(node);
+    }
 
-public class DiffIcons {
-    public static final Icon FILE = IconLoader.getIcon("META-INF/pluginIcon.svg");
-    public static final Icon MULTI_DIFF_PART = IconLoader.getIcon("multiPartIcon.svg");;
-    public static final Icon HUNK = IconLoader.getIcon("hunkIcon.svg");
-    public static final Icon BINARY_PATCH = IconLoader.getIcon("binaryPatchIcon.svg");
+    public ItemPresentation getPresentation() {
+        return new DiffNavigationItemPresentation(this);
+    }
 }

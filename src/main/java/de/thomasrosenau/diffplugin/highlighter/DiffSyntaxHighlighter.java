@@ -30,7 +30,6 @@ import de.thomasrosenau.diffplugin.lexer.DiffLexerAdapter;
 import de.thomasrosenau.diffplugin.psi.DiffTypes;
 import org.jetbrains.annotations.NotNull;
 
-// TODO: add tests
 class DiffSyntaxHighlighter extends SyntaxHighlighterBase {
     public static final TextAttributesKey COMMAND = createTextAttributesKey("PATCH_COMMAND",
             ConsoleViewContentType.USER_INPUT_KEY);

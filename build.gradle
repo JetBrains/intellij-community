@@ -76,6 +76,7 @@ patchPluginXml {
     changeNotes '''
     <h5>2.1.0</h5>
     <ul>
+      <li>Structure View</li>
       <li>Support for git binary patches</li>
       <li>Fix git patch footer detection</li>
     </ul>

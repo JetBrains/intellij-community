@@ -1,0 +1,31 @@
+<!--
+ Copyright 2019 Thomas Rosenau
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ -->
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1"
+    viewBox="0 0 16 16" width="16px" height="16px">
+  <defs>
+    <clipPath id="clip">
+      <path d="M2,10l2,-2l2,2l2,-2l2,2l2,-2l2,2V0H6.7l-4.7,4.7z" />
+    </clipPath>
+  </defs>
+  <path fill="#d3d3d3" d="M2,11.75l2,-2l2,2l2,-2l2,2l2,-2l2,2V0H6.7l-4.7,4.7z" />
+  <g clip-path="url(#clip)">
+    <path fill="#ffffff" d="M3,6V15h10V1h-5v5zM3,5h4v-4z" />
+    <path fill="#ffebf1" d="M5,7v3h6v-3z" />
+    <path fill="#cb2431" d="M4,8v1h3v-1z" />
+    <path fill="#daffe3" d="M5,11v3h6v-3z" />
+    <path fill="#2cbe4e" d="M4,12v1h1v1h1v-1h1v-1h-1v-1h-1v1z" />
+  </g>
+</svg>
