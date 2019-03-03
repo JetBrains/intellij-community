@@ -28,7 +28,6 @@ import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
-import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -170,7 +169,6 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
 
         final MavenExplicitProfiles explicitProfiles = MavenProjectsManager.getInstance(project).getExplicitProfiles();
         final MavenRunner mavenRunner = MavenRunner.getInstance(project);
-        final MavenConsole console = MavenRunner.createConsole(myProject, myProject.getBasePath(), "Maven: " + task.getGoal(), env.getExecutionId());
 
         targetDone.down();
         new Task.Backgroundable(project, TasksBundle.message("maven.tasks.executing"), true) {
@@ -189,8 +187,7 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
                                             null,
                                             null,
                                             TasksBundle.message("maven.tasks.executing"),
-                                            indicator,
-                                            console);
+                                            indicator);
             }
             finally {
               targetDone.up();

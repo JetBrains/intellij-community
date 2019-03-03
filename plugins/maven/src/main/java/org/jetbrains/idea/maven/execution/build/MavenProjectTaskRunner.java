@@ -224,8 +224,7 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       AtomicInteger errors = new AtomicInteger();
       AtomicInteger warnings = new AtomicInteger();
-      MavenConsole console = MavenConsole.createGuiMavenConsole(project, title, project.getBasePath(), ToolWindowId.BUILD, 0);
-
+      MavenConsole console = MavenConsole.createGuiMavenConsole(project, title, project.getBasePath(), ToolWindowId.BUILD);
       console.addProcessListener(new ProcessAdapter() {
 
         @Override

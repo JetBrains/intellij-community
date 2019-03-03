@@ -39,10 +39,9 @@ public abstract class MavenConsole {
   public static MavenConsole createGuiMavenConsole(@NotNull Project project,
                                                    @NotNull String title,
                                                    @NotNull String workingDir,
-                                                   @NotNull String toolWindowId,
-                                                   long executionId) {
+                                                   @NotNull String toolWindowId) {
     if (Registry.is("maven.build.tool.window.enabled")) {
-      return new BuildViewMavenConsole(project, title, workingDir, toolWindowId, executionId);
+      return new BuildViewMavenConsole(project, title, workingDir, toolWindowId);
     } else {
       return new MavenConsoleImpl(title, project);
     }
