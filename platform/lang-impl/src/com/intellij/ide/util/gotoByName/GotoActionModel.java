@@ -207,34 +207,6 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       return 0;
     }
 
-    public int compareWeights(@NotNull MatchedValue o) {
-      if (o == this) return 0;
-      int diff = o.getMatchingDegree() - getMatchingDegree();
-      if (diff != 0) return diff;
-
-      diff = getTypeWeight(o.value) - getTypeWeight(value);
-      if (diff != 0) return diff;
-
-      if (value instanceof ActionWrapper && o.value instanceof ActionWrapper) {
-        ActionWrapper value1 = (ActionWrapper)value;
-        ActionWrapper value2 = (ActionWrapper)o.value;
-        int compared = value1.compareWeights(value2);
-        if (compared != 0) return compared;
-      }
-
-      diff = StringUtil.notNullize(getValueText()).length() - StringUtil.notNullize(o.getValueText()).length();
-      if (diff != 0) return diff;
-
-      if (value instanceof OptionDescription && o.value instanceof OptionDescription) {
-        OptionDescription value1 = (OptionDescription)value;
-        OptionDescription value2 = (OptionDescription)o.value;
-        diff = value1.compareTo(value2);
-        if (diff != 0) return diff;
-      }
-
-      return o.hashCode() - hashCode();
-    }
-
     private static int getTypeWeight(@NotNull Object value) {
       if (value instanceof ActionWrapper) {
         ActionWrapper actionWrapper = (ActionWrapper)value;
@@ -264,6 +236,36 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     public int hashCode() {
       return Objects.hash(value, pattern);
     }
+
+    private static final Comparator<ActionWrapper> ACTION_WRAPPER_COMPARATOR =
+      Comparator.<ActionWrapper, MatchMode>comparing(w -> w.myMode)
+        .thenComparing(w -> {
+          Presentation presentation = w.myAction.getTemplatePresentation();
+          return StringUtil.trimEnd(StringUtil.notNullize(presentation.getText()), "...");
+        }, String::compareToIgnoreCase)
+        .thenComparing(w -> {
+          Presentation presentation = w.myAction.getTemplatePresentation();
+          return StringUtil.length(presentation.getText());
+        })
+        .thenComparing(w -> w.myGroupMapping, Comparing::compare)
+        .thenComparing(w -> {
+          Presentation presentation = w.myAction.getTemplatePresentation();
+          return StringUtil.notNullize(presentation.getDescription());
+        }, String::compareToIgnoreCase)
+        .thenComparing(w -> w.myAction.getClass().hashCode())
+        .thenComparing(w -> w.myAction.hashCode());
+
+    public static final Comparator<MatchedValue> WEIGHT_COMPARATOR =
+      Comparator.<MatchedValue>comparingInt(v -> v.getMatchingDegree()).reversed()
+        .thenComparing(v -> getTypeWeight(v.value))
+        .thenComparing(v -> v.value,
+                       (o1, o2) -> o1 instanceof ActionWrapper && o2 instanceof ActionWrapper ?
+                                   ACTION_WRAPPER_COMPARATOR.compare((ActionWrapper)o1, (ActionWrapper)o2) : 0)
+        .thenComparing(v -> StringUtil.length(v.getValueText()))
+        .thenComparing(v -> v.value,
+                       (o1, o2) -> o1 instanceof OptionDescription && o2 instanceof OptionDescription ?
+                                   ((OptionDescription)o1).compareTo(o2) : 0)
+        .thenComparing(v -> v.hashCode());
   }
 
   @Override
@@ -298,7 +300,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   public int compare(@NotNull Object o1, @NotNull Object o2) {
     if (ChooseByNameBase.EXTRA_ELEM.equals(o1)) return 1;
     if (ChooseByNameBase.EXTRA_ELEM.equals(o2)) return -1;
-    return ((MatchedValue)o1).compareWeights((MatchedValue)o2);
+    return MatchedValue.WEIGHT_COMPARATOR.compare((MatchedValue)o1, (MatchedValue)o2);
   }
 
   @NotNull
@@ -614,28 +616,6 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     @NotNull
     public MatchMode getMode() {
       return myMode;
-    }
-
-    public int compareWeights(@NotNull ActionWrapper o) {
-      int compared = myMode.compareTo(o.getMode());
-      if (compared != 0) return compared;
-      Presentation myPresentation = myAction.getTemplatePresentation();
-      Presentation oPresentation = o.getAction().getTemplatePresentation();
-      String myText = StringUtil.notNullize(myPresentation.getText());
-      String oText = StringUtil.notNullize(oPresentation.getText());
-      int byText = StringUtil.compare(StringUtil.trimEnd(myText, "..."), StringUtil.trimEnd(oText, "..."), true);
-      if (byText != 0) return byText;
-      int byTextLength = StringUtil.notNullize(myText).length() - StringUtil.notNullize(oText).length();
-      if (byTextLength != 0) return byTextLength;
-      int byGroup = Comparing.compare(myGroupMapping, o.myGroupMapping);
-      if (byGroup != 0) return byGroup;
-      int byDesc = StringUtil.compare(myPresentation.getDescription(), oPresentation.getDescription(), true);
-      if (byDesc != 0) return byDesc;
-      int byClassHashCode = Comparing.compare(myAction.getClass().hashCode(), o.myAction.getClass().hashCode());
-      if (byClassHashCode != 0) return byClassHashCode;
-      int byInstanceHashCode = Comparing.compare(myAction.hashCode(), o.myAction.hashCode());
-      if (byInstanceHashCode != 0) return byInstanceHashCode;
-      return 0;
     }
 
     public boolean isAvailable() {

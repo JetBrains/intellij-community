@@ -227,7 +227,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
   private static boolean processItems(String pattern, JBIterable<?> items, Processor<? super MatchedValue> consumer) {
     List<MatchedValue> matched = ContainerUtil.newArrayList(items.map(o -> o instanceof MatchedValue ? (MatchedValue)o : new MatchedValue(o, pattern)));
     try {
-      Collections.sort(matched, (o1, o2) -> o1.compareWeights(o2));
+      Collections.sort(matched, MatchedValue.WEIGHT_COMPARATOR);
     }
     catch (IllegalArgumentException e) {
       LOG.error("Comparison method violates its general contract with pattern '" + pattern + "'", e);

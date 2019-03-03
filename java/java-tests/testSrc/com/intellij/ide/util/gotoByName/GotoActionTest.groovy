@@ -27,8 +27,7 @@ import java.util.concurrent.TimeUnit
 @CompileStatic
 class GotoActionTest extends LightCodeInsightFixtureTestCase {
   private static final DataKey<Boolean> SHOW_HIDDEN_KEY = DataKey.create("GotoActionTest.DataKey")
-  private static final Comparator<MatchedValue> MATCH_COMPARATOR =
-    { MatchedValue item1, MatchedValue item2 -> return item1.compareWeights(item2) } as Comparator<MatchedValue>
+  private static final Comparator<MatchedValue> MATCH_COMPARATOR = MatchedValue.WEIGHT_COMPARATOR
   private static final Equality<MatchedValue> MATCH_EQUALITY =
     { MatchedValue item1, MatchedValue item2 -> item1 == item2 } as Equality<MatchedValue>
 
