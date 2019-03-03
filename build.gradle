@@ -20,8 +20,9 @@ import org.jetbrains.grammarkit.tasks.GenerateParser
 plugins {
     id 'idea'
     id 'java'
-    id 'org.jetbrains.intellij' version '0.4.2'
+    id 'org.jetbrains.intellij' version '0.4.4'
     id 'org.jetbrains.grammarkit' version '2018.3'
+    id 'com.github.ManifestClasspath' version '0.1.0-RELEASE' // required in Windows
 }
 
 group 'de.thomasrosenau'
@@ -40,7 +41,8 @@ intellij {
     version = 'LATEST-EAP-SNAPSHOT'
 }
 
-def intellijPublishToken = project.properties['intellijPublishToken'] ?: 'see http://www.jetbrains.org/intellij/sdk/docs/tutorials/build_system/deployment.html'
+def intellijPublishToken = project.properties['intellijPublishToken'] ?:
+        'see http://www.jetbrains.org/intellij/sdk/docs/tutorials/build_system/deployment.html'
 publishPlugin {
     token intellijPublishToken
     channels 'alpha'

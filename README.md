@@ -2,7 +2,11 @@
 
 Syntax highlighting for .diff and .patch files in IntelliJ IDEA and [other JetBrains IDEs](https://www.jetbrains.com/products.html).
 
-[Download from plugins.jetbrains.com](https://plugins.jetbrains.com/plugin/11957-diff--patch-file-support).
+## Download
+
+- [Download from plugins.jetbrains.com](https://plugins.jetbrains.com/plugin/11957-diff--patch-file-support)
+- [Download from github](https://github.com/ThomasR/intellij-diff-plugin/releases)
+- or simply use IntelliJ's plugin manager and search for *Diff / Patch File Support*
 
 
 ## Development
@@ -26,3 +30,14 @@ Now, there are two [run configurations](https://www.jetbrains.com/help/idea/crea
 
 To find out more about plugin development, please refer to the excellent official documentation:
 http://www.jetbrains.org/intellij/sdk/docs/
+
+### Troubleshooting
+
+If you develop under Windows, and see the warning
+
+```
+WARNING: Could not open/create prefs root node Software\JavaSoft\Prefs
+at root 0x80000002. Windows RegCreateKeyEx(...) returned error code 5.
+```
+
+then simply run the file [`fix-jdk-warning-in-windows.reg`](fix-jdk-warning-in-windows.reg), and confirm the dialogs.
