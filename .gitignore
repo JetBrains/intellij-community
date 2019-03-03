@@ -5,6 +5,7 @@ gradlew.bat
 gradle/
 build/
 out/
+src/main/generated-java/
 .idea/**
 !.idea/compiler.xml
 !.idea/encodings.xml
@@ -13,6 +14,7 @@ out/
 !.idea/icon.png
 !.idea/icon_dark.png
 !.idea/misc.xml
+!.idea/startup.xml
 !.idea/vcs.xml
 !.idea/codeStyles
 !.idea/codeStyles/**
