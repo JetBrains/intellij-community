@@ -6,7 +6,6 @@ import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.ReopenProjectAction
 import com.intellij.ide.util.gotoByName.*
 import com.intellij.navigation.NavigationItem
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.JBProtocolCommand
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.LogicalPosition
@@ -14,9 +13,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.util.messages.MessageBusConnection
 
 class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
   override fun perform(target: String, parameters: Map<String, String>) {
@@ -44,10 +42,12 @@ class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
           ProjectManager.getInstance().openProjects.find { project -> project.name == projectName }?.let {
             findAndNavigateToReference(it, parameters)
           } ?: run {
-            RecentProjectsManagerBase.getInstanceEx().doOpenProject(recentProjectAction.projectPath, null, false)
-
-            val appConnection = ApplicationManager.getApplication().messageBus.connect()
-            appConnection.subscribe(ProjectManager.TOPIC, NavigatableProjectListener(appConnection, parameters))
+            RecentProjectsManagerBase.getInstanceEx().doOpenProject(recentProjectAction.projectPath, null, false)?.let {
+              StartupManager.getInstance(it).registerPostStartupActivity(Runnable { findAndNavigateToReference(it, parameters) })
+            }
+            ?: run {
+              LOG.warn("Cannot open project by path: " + recentProjectAction.projectPath)
+            }
           }
         }
       }
@@ -129,14 +129,6 @@ class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
       catch (e: Exception) {
         return null
       }
-    }
-  }
-
-  private class NavigatableProjectListener(private val appConnection: MessageBusConnection,
-                                           private val parameters: Map<String, String>) : ProjectManagerListener {
-    override fun projectOpened(project: Project) {
-      findAndNavigateToReference(project, parameters)
-      appConnection.disconnect()
     }
   }
 
