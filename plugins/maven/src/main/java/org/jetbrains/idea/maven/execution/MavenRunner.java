@@ -56,7 +56,7 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
   public void run(final MavenRunnerParameters parameters, final MavenRunnerSettings settings, final Runnable onComplete) {
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    final MavenConsole console = createConsole(myProject, parameters.getWorkingDirPath(), StringUtil.join(parameters.getGoals(), ", "), 0);
+    final MavenConsole console = createConsole(StringUtil.join(parameters.getGoals(), ", "), parameters.getWorkingDirPath());
     try {
       final MavenExecutor executor = createExecutor(parameters, null, settings, console);
 
@@ -112,8 +112,7 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
                           @Nullable MavenRunnerSettings runnerSettings,
                           @Nullable final String action,
                           @Nullable ProgressIndicator indicator) {
-
-    return runBatch(commands, coreSettings, runnerSettings, action, indicator, createConsole(myProject, myProject.getBasePath(), "Maven Batch", 0));
+    return runBatch(commands, coreSettings, runnerSettings, action, indicator, null);
   }
 
   public boolean runBatch(List<MavenRunnerParameters> commands,
@@ -121,10 +120,17 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
                           @Nullable MavenRunnerSettings runnerSettings,
                           @Nullable final String action,
                           @Nullable ProgressIndicator indicator,
-                          @NotNull MavenConsole mavenConsole) {
+                          @Nullable MavenConsole mavenConsole) {
     LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed());
 
     if (commands.isEmpty()) return true;
+
+    MavenConsole console = mavenConsole != null ? mavenConsole
+      : ReadAction.compute(() -> {
+          if (myProject.isDisposed()) return null;
+          return createConsole("Maven Batch", myProject.getBasePath());
+        });
+    if (console == null) return false;
 
     try {
       int count = 0;
@@ -133,9 +139,12 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
           indicator.setFraction(((double)count++) / commands.size());
         }
 
-        MavenExecutor executor = ReadAction.compute(() -> {
+        MavenExecutor executor
+
+        = ReadAction.compute(()-> {
+
           if (myProject.isDisposed()) return null;
-          return createExecutor(command, coreSettings, runnerSettings, mavenConsole);
+          return createExecutor(command, coreSettings, runnerSettings, console);
         });
         if (executor == null) break;
 
@@ -149,20 +158,10 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
       updateTargetFolders();
     }
     finally {
-      mavenConsole.finish();
+      console.finish();
     }
 
     return true;
-  }
-
-  public static MavenConsole createConsole(@NotNull Project project,
-                                           @NotNull String workingDirPath,
-                                           @NotNull String title,
-                                           long executionId) {
-    return ReadAction.compute(() -> {
-      if (project.isDisposed()) return null;
-      return doCreateConsole(title, workingDirPath, project, executionId);
-    });
   }
 
   private void updateTargetFolders() {
@@ -170,17 +169,17 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
     MavenProjectsManager.getInstance(myProject).updateProjectTargetFolders();
   }
 
-  private static MavenConsole doCreateConsole(@NotNull String title, @NotNull String workingDirPath, Project project, long executionId) {
+  private MavenConsole createConsole(@NotNull String title,@NotNull String workingDirPath) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return new SoutMavenConsole();
     }
-    return MavenConsole.createGuiMavenConsole(project, title, workingDirPath, ToolWindowId.RUN, executionId);
+    return MavenConsole.createGuiMavenConsole(myProject, title, workingDirPath, ToolWindowId.RUN);
   }
 
   private MavenExecutor createExecutor(MavenRunnerParameters taskParameters,
                                        @Nullable MavenGeneralSettings coreSettings,
                                        @Nullable MavenRunnerSettings runnerSettings,
-                                       @NotNull MavenConsole console) {
+                                       MavenConsole console) {
     return new MavenExternalExecutor(myProject, taskParameters, coreSettings, runnerSettings, console);
   }
 }
