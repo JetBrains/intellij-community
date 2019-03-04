@@ -122,6 +122,10 @@ class CachedValueStabilityChecker {
 
       if (areEqual(v1, v2)) continue;
 
+      if (v1 != null && v2 != null && seemConcurrentlyCreatedLambdas(v1.getClass(), v2.getClass())) {
+        continue;
+      }
+
       if (v1 != null && v2 != null && v1.getClass() == v2.getClass() && shouldGoDeeper(v1)) {
         if (!checkFieldEquivalence(v1, v2, key, depth + 1)) {
           return false;
