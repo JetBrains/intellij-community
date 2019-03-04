@@ -4,26 +4,34 @@ package com.intellij.openapi.project.impl
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.ReopenProjectAction
-import com.intellij.ide.util.gotoByName.*
+import com.intellij.ide.util.gotoByName.ChooseByNameModel
+import com.intellij.ide.util.gotoByName.ChooseByNameViewModel
+import com.intellij.ide.util.gotoByName.DefaultChooseByNameItemProvider
+import com.intellij.ide.util.gotoByName.GotoSymbolModel2
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.application.JBProtocolCommand
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.IdeFocusManager
+import java.io.File
+import java.util.regex.Pattern
 
 class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
   override fun perform(target: String, parameters: Map<String, String>) {
     // handles URLs of the following types:
 
     // jetbrains://idea/navigate/reference?project=IDEA
-    // [&reference=com.intellij.openapi.project.impl.JBProtocolNavigateCommand[.perform][#perform]]+
-    // [&path=com/intellij/openapi/project/impl/JBProtocolNavigateCommand.kt:23:1]+
-    // [&selectionX=25:5-26:6]+
+    // [&reference[X]=com.intellij.openapi.project.impl.JBProtocolNavigateCommand[.perform][#perform]]+
+    // [&path[X]=com/intellij/openapi/project/impl/JBProtocolNavigateCommand.kt[:23[:1]]]+
+    // [&selection[X]=25:5-26:6]+
 
     val projectName = parameters[PROJECT_NAME_KEY]
     if (projectName.isNullOrEmpty()) {
@@ -62,41 +70,65 @@ class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
     const val PATH_KEY = "path"
     const val FQN_KEY = "fqn"
     const val SELECTION = "selection"
+    const val FILE_PROTOCOL = "file://"
+    private const val PATH_GROUP = "path"
+    private const val LINE_GROUP = "line"
+    private const val COLUMN_GROUP = "column"
+    private val PATH_WITH_LOCATION: Pattern = Pattern.compile("(?<$PATH_GROUP>[^:]*)(?<$LINE_GROUP>:[\\d]+)?(?<$COLUMN_GROUP>:[\\d]+)?")
 
     private fun findAndNavigateToReference(project: Project, parameters: Map<String, String>) {
-      val selections = parseSelections(parameters)
-      navigateToReference(parameters, project, selections, FQN_KEY, GotoSymbolModel2(project))
-      navigateToReference(parameters, project, selections, PATH_KEY, GotoFileModel(project))
-
+      navigateByFQNs(project, parameters)
+      navigateByPaths(project, parameters)
     }
 
-    private fun navigateToReference(parameters: Map<String, String>,
-                                    project: Project,
-                                    selections: List<Pair<LogicalPosition, LogicalPosition>>,
-                                    parameterKey: String,
-                                    model: ChooseByNameModel) {
-      parameters.filter { it.key.startsWith(parameterKey) }.forEach {
-        navigate(model, it.value, project, selections)
-      }
-    }
+    private fun navigateByPaths(project: Project, parameters: Map<String, String>) {
+      parameters.filter { it.key.startsWith(PATH_KEY) }.forEach {
+        val matcher = PATH_WITH_LOCATION.matcher(it.value)
+        var path: String? = matcher.group(PATH_GROUP)
+        val line: String? = matcher.group(LINE_GROUP)
+        val column: String? = matcher.group(COLUMN_GROUP)
 
-    private fun navigate(model: ChooseByNameModel,
-                         pattern: String,
-                         project: Project,
-                         selections: List<Pair<LogicalPosition, LogicalPosition>>) {
-      DefaultChooseByNameItemProvider.filterElements(MySearchModel(project, model), pattern, true, EmptyProgressIndicator(), null) {
-        if (it !is NavigationItem) {
-          return@filterElements true
+        if (path == null) {
+          return@forEach
         }
 
-        if (it.canNavigate()) {
-          IdeFocusManager.getInstance(project).doWhenFocusSettlesDown {
-            it.navigate(true)
-            selections.forEach { selection -> setSelection(project, selection) }
+        path = FileUtil.expandUserHome(path)
+        if (!FileUtil.isAbsolute(path)) {
+          path = File(project.basePath, path).absolutePath
+        }
+
+        val virtualFile = VirtualFileManager.getInstance().findFileByUrl(FILE_PROTOCOL + path) ?: return@forEach
+        FileEditorManager.getInstance(project).openFile(virtualFile, true)
+          .filterIsInstance<TextEditor>().first().let { textEditor ->
+            val editor = textEditor.editor
+            editor.caretModel.moveToOffset(editor.logicalPositionToOffset(LogicalPosition(line?.toInt() ?: 0, column?.toInt() ?: 0)))
+            setSelections(parameters, project)
           }
-        }
-        true
       }
+    }
+
+    private fun navigateByFQNs(project: Project, parameters: Map<String, String>) {
+      parameters.filter { it.key.startsWith(FQN_KEY) }.forEach {
+        val model = MySearchModel(project, GotoSymbolModel2(project))
+        DefaultChooseByNameItemProvider.filterElements(model, it.value, true, EmptyProgressIndicator(), null)
+        { navigationItem ->
+          if (navigationItem !is NavigationItem) {
+            return@filterElements true
+          }
+
+          if (navigationItem.canNavigate()) {
+            IdeFocusManager.getInstance(project).doWhenFocusSettlesDown {
+              navigationItem.navigate(true)
+              setSelections(parameters, project)
+            }
+          }
+          true
+        }
+      }
+    }
+
+    private fun setSelections(parameters: Map<String, String>, project: Project) {
+      parseSelections(parameters).forEach { selection -> setSelection(project, selection) }
     }
 
     private fun setSelection(project: Project, selection: Pair<LogicalPosition, LogicalPosition>) {
