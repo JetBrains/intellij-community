@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class IdempotenceChecker {
@@ -98,6 +99,9 @@ public class IdempotenceChecker {
       return whichIsField("size", existing, fresh, checkCollectionSizes(((Set)existing).size(), ((Set)fresh).size()));
     }
     if (existing instanceof Map) {
+      if (existing instanceof ConcurrentMap) {
+        return null; // likely to be filled lazily
+      }
       return whichIsField("size", existing, fresh, checkCollectionSizes(((Map)existing).size(), ((Map)fresh).size()));
     }
     if (existing instanceof PsiNamedElement) {
