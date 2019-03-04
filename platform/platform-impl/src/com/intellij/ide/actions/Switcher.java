@@ -442,8 +442,6 @@ public class Switcher extends AnAction implements DumbAware {
                                                       boolean hasFocus) {
           assert value instanceof FileInfo;
           final Component c = super.getListCellRendererComponent(list, value, index, selected, selected);
-          final Color bg = UIUtil.getListBackground();
-          final Color fg = UIUtil.getListForeground();
           myPanel.removeAll();
           myPanel.add(c, BorderLayout.CENTER);
 
