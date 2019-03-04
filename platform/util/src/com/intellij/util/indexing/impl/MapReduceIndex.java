@@ -24,6 +24,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataOutputStream;
 import org.jetbrains.annotations.ApiStatus;
@@ -73,6 +74,13 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
       }
     }
   });
+
+  protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
+                           @NotNull IndexStorage<Key, Value> storage,
+                           @Nullable com.intellij.util.indexing.impl.forward.ForwardIndex forwardIndex,
+                           @Nullable ForwardIndexAccessor<Key, Value, Input> forwardIndexAccessor) {
+    this(extension, storage, forwardIndex == null && forwardIndexAccessor == null ? null : wrapWithOldForwardIndex(forwardIndex, forwardIndexAccessor));
+  }
 
   protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
                            @NotNull IndexStorage<Key, Value> storage,
@@ -354,6 +362,40 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
         }
       }
     }
+  }
+
+  @NotNull
+  private static <Key, Value, Input> ForwardIndex<Key, Value> wrapWithOldForwardIndex(com.intellij.util.indexing.impl.forward.ForwardIndex forwardIndex,
+                                                                                      ForwardIndexAccessor<Key, Value, Input> forwardIndexAccessor) {
+    LOG.assertTrue(forwardIndex != null);
+    LOG.assertTrue(forwardIndexAccessor != null);
+    return new ForwardIndex<Key, Value>() {
+      @NotNull
+      @Override
+      public InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId) throws IOException {
+        return forwardIndexAccessor.getDiffBuilder(inputId, forwardIndex.get(inputId));
+      }
+
+      @Override
+      public void putInputData(int inputId, @NotNull Map<Key, Value> data) throws IOException {
+        forwardIndex.put(inputId, forwardIndexAccessor.serializeIndexedData(data, null));
+      }
+
+      @Override
+      public void flush() {
+        forwardIndex.force();
+      }
+
+      @Override
+      public void clear() throws IOException {
+        forwardIndex.clear();
+      }
+
+      @Override
+      public void close() throws IOException {
+        forwardIndex.close();
+      }
+    };
   }
 }
 
