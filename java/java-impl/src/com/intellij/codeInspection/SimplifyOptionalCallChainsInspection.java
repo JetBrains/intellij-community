@@ -95,7 +95,6 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     return new OptionalChainVisitor(level) {
       @Override
       protected void handleSimplification(@NotNull PsiMethodCallExpression call, @NotNull OptionalSimplificationFix fix) {
-        // TODO not exactly call, but name
         PsiElement element = call.getMethodExpression().getReferenceNameElement();
         holder.registerProblem(element != null ? element : call, fix.getDescription(), fix);
       }
