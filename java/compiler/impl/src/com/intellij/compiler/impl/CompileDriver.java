@@ -590,8 +590,7 @@ public class CompileDriver {
           }
           catch (Throwable t) {
             LOG.error("Error executing task", t);
-            context.addMessage(CompilerMessageCategory.ERROR, t.getMessage(), null, -1, -1);
-            return false;
+            context.addMessage(CompilerMessageCategory.WARNING, "Task "  + task.toString()  + " failed", null, -1, -1);
           }
 
         }
