@@ -2,6 +2,7 @@
 package com.intellij.execution.configuration
 
 import com.intellij.execution.ExecutionException
+import com.intellij.execution.Executor
 import com.intellij.execution.Location
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.RunConfigurationBase
@@ -125,6 +126,18 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
   fun extendTemplateConfiguration(configuration: U) {
     processApplicableExtensions(configuration) {
       it.extendTemplateConfiguration(configuration)
+    }
+  }
+
+  @Throws(ExecutionException::class)
+  open fun patchCommandLine(configuration: U,
+                            runnerSettings: RunnerSettings?,
+                            cmdLine: GeneralCommandLine,
+                            runnerId: String,
+                            executor: Executor) {
+    // only for enabled extensions
+    processEnabledExtensions(configuration, runnerSettings) {
+      it.patchCommandLine(configuration, runnerSettings, cmdLine, runnerId, executor)
     }
   }
 
