@@ -44,7 +44,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
 public class ComponentPanelTestAction extends DumbAwareAction {
@@ -677,33 +676,56 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       return JBUI.Panels.simplePanel().addToTop(panel);
     }
 
+    private int counter = 5;
     private JComponent createToolbar() {
-      DefaultActionGroup actions = new DefaultActionGroup("Simple group", false);
-      BiConsumer<PlaybackAction, AnActionEvent> handler = (action, event) -> {
-        AnAction[] children = actions.getChildren(event);
-        for (AnAction a : children) {
-          if (a != action && a instanceof PlaybackAction) {
-            ((PlaybackAction)a).validate();
+      AnAction[] actionsArray = new AnAction[3];
+      actionsArray[0] = new MyAction("Play", AllIcons.Actions.Execute) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          if (--counter == 0) {
+            getTemplatePresentation().setEnabled(false);
           }
+          System.out.println(e.getPresentation().getDescription() + ", counter = " + counter);
         }
       };
 
-      actions.add(new PlaybackAction("Play first", AllIcons.Actions.Play_first, handler, Operator.First));
-      actions.add(new PlaybackAction("Play previous", AllIcons.Actions.Play_back, handler, Operator.Prev));
-      actions.add(new PlaybackAction("Play", AllIcons.Actions.Execute, handler, Operator.Noop));
-      actions.add(new PlaybackAction("Stop", AllIcons.Actions.Suspend, handler, Operator.Noop));
-      actions.add(new PlaybackAction("Play next", AllIcons.Actions.Play_forward, handler, Operator.Next));
-      actions.add(new PlaybackAction("Play last", AllIcons.Actions.Play_last, handler, Operator.Last));
+      actionsArray[1] = new MyAction("Stop", AllIcons.Actions.Suspend) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          counter = 5;
+          actionsArray[0].getTemplatePresentation().setEnabled(true);
+          System.out.println(e.getPresentation().getDescription() + ", counter = " + counter);
+        }
+      };
 
-      DefaultActionGroup subActions = new DefaultActionGroup("Sub actions", true);
-      subActions.add(new MyAction("Bottom left", AllIcons.Actions.MoveToBottomLeft));
-      subActions.add(new MyAction("Bottom right", AllIcons.Actions.MoveToBottomRight));
-      subActions.add(new MyAction("Left bottom", AllIcons.Actions.MoveToLeftBottom));
-      subActions.add(new MyAction("Left top", AllIcons.Actions.MoveToLeftTop));
-      subActions.add(new MyAction("Right bottom", AllIcons.Actions.MoveToRightBottom));
-      subActions.add(new MyAction("Right top", AllIcons.Actions.MoveToRightTop));
-      subActions.add(new MyAction("Top left", AllIcons.Actions.MoveToTopLeft));
-      subActions.add(new MyAction("Top right", AllIcons.Actions.MoveToTopRight));
+      actionsArray[2] = new MyToggleAction("Mute", AllIcons.Debugger.MuteBreakpoints) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          selected = !selected;
+          if (selected) {
+            System.out.println("Unmute buttons");
+            actionsArray[0].getTemplatePresentation().setEnabled(true);
+            actionsArray[1].getTemplatePresentation().setEnabled(true);
+          }
+          else {
+            System.out.println("Mute buttons");
+            actionsArray[0].getTemplatePresentation().setEnabled(false);
+            actionsArray[1].getTemplatePresentation().setEnabled(false);
+          }
+
+          getTemplatePresentation().putClientProperty(Toggleable.SELECTED_PROPERTY, selected);
+        }
+      };
+
+      DefaultActionGroup actions = new DefaultActionGroup("Simple group", false);
+      actions.addAll(actionsArray);
+
+      DefaultActionGroup subActions = new DefaultActionGroup("Ratings", true);
+      subActions.getTemplatePresentation().setIcon(AllIcons.Ide.Rating);
+      subActions.addAll(new MyAction("Rating one", AllIcons.Ide.Rating1),
+                        new MyAction("Rating two", AllIcons.Ide.Rating2),
+                        new MyAction("Rating three", AllIcons.Ide.Rating3),
+                        new MyAction("Rating four", AllIcons.Ide.Rating4));
       actions.add(subActions);
 
       DefaultActionGroup toolbarActions = new DefaultActionGroup();
@@ -713,34 +735,6 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       JComponent toolbarComponent = toolbar.getComponent();
       toolbarComponent.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
       return toolbarComponent;
-    }
-
-    private int trackIndex;
-
-    private class PlaybackAction extends MyAction {
-      private final Operator operator;
-      private final BiConsumer<PlaybackAction, AnActionEvent> handler;
-
-      private PlaybackAction(String name, Icon icon, BiConsumer<PlaybackAction, AnActionEvent> handler, Operator operator) {
-        super(name, icon);
-        this.operator = operator;
-        this.handler = handler;
-      }
-
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        super.actionPerformed(e);
-        if (operator.valid(trackIndex)) {
-          trackIndex = operator.exec(trackIndex);
-        } else {
-          getTemplatePresentation().setEnabled(false);
-        }
-        handler.accept(this, e);
-      }
-
-      public void validate() {
-        getTemplatePresentation().setEnabled(operator.valid(trackIndex));
-      }
     }
   }
 
@@ -755,57 +749,10 @@ public class ComponentPanelTestAction extends DumbAwareAction {
     }
   }
 
-  private static final int MIN_VALUE = 0;
-  private static final int MAX_VALUE = 5;
-
-  public abstract static class Operator {
-    public abstract int exec(int v);
-    public abstract boolean valid(int v);
-
-    public final static Operator First = new Operator() {
-      @Override public int exec(int v) {
-        return MIN_VALUE;
-      }
-
-      @Override public boolean valid(int v) {
-        return v > MIN_VALUE;
-      }
-    };
-    public final static Operator Prev = new Operator() {
-      @Override public int exec(int v) {
-        return v - 1;
-      }
-
-      @Override public boolean valid(int v) {
-        return v > MIN_VALUE;
-      }
-    };
-    public final static Operator Next = new Operator() {
-      @Override public int exec(int v) {
-        return v + 1;
-      }
-
-      @Override public boolean valid(int v) {
-        return v < MAX_VALUE;
-      }
-    };
-    public final static Operator Last = new Operator() {
-      @Override public int exec(int v) {
-        return MAX_VALUE;
-      }
-
-      @Override public boolean valid(int v) {
-        return v < MAX_VALUE;
-      }
-    };
-    public final static Operator Noop = new Operator() {
-      @Override public int exec(int v) {
-        return v;
-      }
-
-      @Override public boolean valid(int v) {
-        return v > MIN_VALUE && v < MAX_VALUE;
-      }
-    };
+  private static class MyToggleAction extends MyAction implements Toggleable {
+    protected boolean selected;
+    private MyToggleAction(String name, Icon icon) {
+      super(name, icon);
+    }
   }
 }
