@@ -162,7 +162,7 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
 
     @Override
     public int compareTo(@NotNull GenericChangesBrowserNode o) {
-      return myFilePath.getPath().compareToIgnoreCase(o.myFilePath.getPath());
+      return compareFilePaths(myFilePath, o.myFilePath);
     }
   }
 }

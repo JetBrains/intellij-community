@@ -58,7 +58,7 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
 
   @Override
   public int compareUserObjects(final Module o2) {
-    return getUserObject().getName().compareToIgnoreCase(o2.getName());
+    return compareFileNames(getUserObject().getName(), o2.getName());
   }
 
   @NotNull
