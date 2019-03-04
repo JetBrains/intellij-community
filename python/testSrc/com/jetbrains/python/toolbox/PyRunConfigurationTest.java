@@ -23,7 +23,7 @@ public class PyRunConfigurationTest extends CodeInsightFixtureTestCase {
 
   public void testPythonPathPreservesAdditionOrderOfSourceRoots() {
     myFixture.copyDirectoryToProject(getTestName(false), "");
-    String root = myFixture.getTempDirPath();
+    final String root = PathUtil.toSystemIndependentName(myFixture.getTempDirPath());
     final VirtualFile sourceRoot1 = myFixture.findFileInTempDir("src1");
     final VirtualFile sourceRoot2 = myFixture.findFileInTempDir("src2");
 
