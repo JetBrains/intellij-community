@@ -26,7 +26,6 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
@@ -915,17 +914,8 @@ public class Switcher extends AnAction implements DumbAware {
       }
     }
 
-    private static void removeElementAt(@NotNull JList jList, int index) {
-      final ListModel model = jList.getModel();
-      if (model instanceof CollectionListModel) {
-        ((CollectionListModel)model).remove(index);
-      }
-      else if (model instanceof NameFilteringListModel) {
-        ((NameFilteringListModel)model).remove(index);
-      }
-      else {
-        throw new IllegalArgumentException("Wrong list model " + model.getClass());
-      }
+    private static void removeElementAt(@NotNull JList<?> jList, int index) {
+      ListUtil.removeItem(jList.getModel(), index);
     }
 
     private void pack() {
@@ -1010,13 +1000,9 @@ public class Switcher extends AnAction implements DumbAware {
         project, collectFiles(project, onlyEdited), toolWindows.getModel().getSize(), isPinnedMode());
       final int selectionIndex = filesAndSelection.getSecond();
 
-      final ListModel model = files.getModel();
-      if (model instanceof CollectionListModel) {
-        ((CollectionListModel)model).replaceAll(filesAndSelection.getFirst());
-      }
-      else if (model instanceof NameFilteringListModel) {
-        ((NameFilteringListModel)model).replaceAll(filesAndSelection.getFirst());
-      }
+      ListModel model = files.getModel();
+      ListUtil.removeAllItems(model);
+      ListUtil.addAllItems(model, filesAndSelection.getFirst());
 
       if (selectionIndex > -1 && listWasSelected) {
         files.setSelectedIndex(selectionIndex);
@@ -1383,18 +1369,5 @@ public class Switcher extends AnAction implements DumbAware {
       }
       return myNameForRendering;
     }
-  }
-
-  @NotNull
-  public static JLabel createPaleLabel(@NotNull String text) {
-    return new JLabel(text) {
-      @Override
-      protected void paintComponent(@NotNull Graphics g) {
-        GraphicsConfig config = new GraphicsConfig(g);
-        ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
-        super.paintComponent(g);
-        config.restore();
-      }
-    };
   }
 }
