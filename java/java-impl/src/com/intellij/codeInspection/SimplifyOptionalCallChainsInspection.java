@@ -2,6 +2,8 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.value.DfaFactMapValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalRefactoringUtil;
 import com.intellij.openapi.project.Project;
@@ -23,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -55,6 +58,13 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       CallMatcher.exactInstanceCall(OPTIONAL_LONG, "isPresent").parameterCount(0),
       CallMatcher.exactInstanceCall(OPTIONAL_DOUBLE, "isPresent").parameterCount(0)
     );
+  private static final CallMatcher OPTIONAL_IF_PRESENT =
+    CallMatcher.anyOf(
+      CallMatcher.exactInstanceCall(JAVA_UTIL_OPTIONAL, "ifPresent").parameterCount(1),
+      CallMatcher.exactInstanceCall(OPTIONAL_INT, "ifPresent").parameterCount(1),
+      CallMatcher.exactInstanceCall(OPTIONAL_LONG, "ifPresent").parameterCount(1),
+      CallMatcher.exactInstanceCall(OPTIONAL_DOUBLE, "ifPresent").parameterCount(1)
+    );
   private static final CallMatcher OPTIONAL_IS_EMPTY =
     CallMatcher.anyOf(
       CallMatcher.exactInstanceCall(JAVA_UTIL_OPTIONAL, "isEmpty").parameterCount(0),
@@ -77,7 +87,9 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       new RewrappingCase(RewrappingCase.Type.OptionalGet),
       new RewrappingCase(RewrappingCase.Type.OrElseNull),
       new MapOrElseCase(OrElseType.OrElseGet),
-      new MapOrElseCase(OrElseType.OrElse)
+      new MapOrElseCase(OrElseType.OrElse),
+      new IfPresentFoldedCase(),
+      new MapUnwrappingCase()
     );
     ourMapper = new CallMapper<>();
     for (CallSimplificationCase<?> inspection : cases) {
@@ -720,6 +732,148 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
         myStatement = statement;
         myVariable = variable;
         myOrElseCall = call;
+      }
+    }
+  }
+
+
+  /**
+   * Converts
+   * <pre>opt.map(a -> a.getOptional().orElse(null)).ifPresent(System.out::println);</pre>
+   * into
+   * <pre>opt.flatMap(Fra::getOptional).ifPresent(System.out::println);</pre>
+   */
+  private static class MapUnwrappingCase implements CallSimplificationCase<MapUnwrappingCase.Context> {
+    @NotNull
+    @Override
+    public String getName(@NotNull Context context) {
+      return "Replace 'map()' with 'flatMap()'";
+    }
+
+    @NotNull
+    @Override
+    public String getDescription(@NotNull Context context) {
+      return "'map()' can be replaced with 'flatMap()'";
+    }
+
+    @Nullable
+    @Override
+    public Context extractContext(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
+      PsiLambdaExpression lambda = getLambda(call.getArgumentList().getExpressions()[0]);
+      if (lambda == null) return null;
+      PsiParameter[] parameters = lambda.getParameterList().getParameters();
+      if (parameters.length != 1) return null;
+      PsiParameter mapLambdaParameter = parameters[0];
+      PsiExpression argument = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
+      PsiMethodCallExpression insideLambdaCall = tryCast(argument, PsiMethodCallExpression.class);
+      if (insideLambdaCall == null) return null;
+      PsiExpression optionalQualifier = insideLambdaCall.getMethodExpression().getQualifierExpression();
+      if (optionalQualifier == null) return null;
+      if (!OPTIONAL_OR_ELSE.test(insideLambdaCall)) {
+        if (!OPTIONAL_GET.test(insideLambdaCall)) return null;
+        PsiExpression qualifier = insideLambdaCall.getMethodExpression().getQualifierExpression();
+        if (!isPresentOptional(qualifier)) return null;
+        return new Context(optionalQualifier, call, mapLambdaParameter);
+      }
+      if (!ExpressionUtils.isNullLiteral(insideLambdaCall.getArgumentList().getExpressions()[0])) return null;
+      return new Context(optionalQualifier, call, mapLambdaParameter);
+    }
+
+    @Override
+    public void apply(@NotNull Project project, @NotNull PsiMethodCallExpression call, @NotNull Context context) {
+      CommentTracker ct = new CommentTracker();
+      String text = ct.text(context.myMapLambdaParameter) + " ->" + ct.text(context.myOptionalExpression);
+      PsiExpression qualifier = context.myMapCall.getMethodExpression().getQualifierExpression();
+      ct.replaceAndRestoreComments(context.myMapCall, Objects.requireNonNull(qualifier).getText() + ".flatMap(" + text + ")");
+    }
+
+    @NotNull
+    @Override
+    public CallMatcher getMatcher() {
+      return OPTIONAL_MAP;
+    }
+
+    private static boolean isPresentOptional(PsiExpression optionalExpression) {
+      CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(optionalExpression);
+      if (result == null || !result.expressionWasAnalyzed(optionalExpression)) return false;
+      SpecialFieldValue fact = result.getExpressionFact(optionalExpression, DfaFactType.SPECIAL_FIELD_VALUE);
+      DfaValue value = SpecialField.OPTIONAL_VALUE.extract(fact);
+      if (!(value instanceof DfaFactMapValue)) return false;
+      DfaNullability nullability = ((DfaFactMapValue)value).get(DfaFactType.NULLABILITY);
+      return nullability == DfaNullability.NOT_NULL;
+    }
+
+    private static class Context {
+      private final PsiExpression myOptionalExpression;
+      private final PsiMethodCallExpression myMapCall;
+      private final PsiParameter myMapLambdaParameter;
+
+      private Context(PsiExpression expression, PsiMethodCallExpression call, PsiParameter parameter) {
+        myOptionalExpression = expression;
+        myMapCall = call;
+        myMapLambdaParameter = parameter;
+      }
+    }
+  }
+
+  private static class IfPresentFoldedCase implements CallSimplificationCase<IfPresentFoldedCase.Context> {
+    @NotNull
+    @Override
+    public String getName(@NotNull Context context) {
+      return "Replace 'map()' with 'flatMap()'";
+    }
+
+    @NotNull
+    @Override
+    public String getDescription(@NotNull Context context) {
+      return "'map' can be replaced with 'flatMap'";
+    }
+
+    @Nullable
+    @Override
+    public Context extractContext(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
+      PsiLambdaExpression mapLambda = getLambda(call.getArgumentList().getExpressions()[0]);
+      if (mapLambda == null) return null;
+      PsiMethodCallExpression maybeIfPresentCall = ExpressionUtils.getCallForQualifier(call);
+      if (!OPTIONAL_IF_PRESENT.test(maybeIfPresentCall)) return null;
+      PsiLambdaExpression ifPresentOuterLambda = getLambda(maybeIfPresentCall.getArgumentList().getExpressions()[0]);
+      if (ifPresentOuterLambda == null) return null;
+      PsiExpression argument = LambdaUtil.extractSingleExpressionFromBody(ifPresentOuterLambda.getBody());
+      PsiMethodCallExpression insideLambdaCall = tryCast(argument, PsiMethodCallExpression.class);
+      if (insideLambdaCall == null) return null;
+      if (!OPTIONAL_IF_PRESENT.test(insideLambdaCall)) return null;
+      return new Context(mapLambda, call, insideLambdaCall, maybeIfPresentCall);
+    }
+
+    @Override
+    public void apply(@NotNull Project project, @NotNull PsiMethodCallExpression call, @NotNull Context context) {
+      CommentTracker ct = new CommentTracker();
+      PsiExpression qualifier = Objects.requireNonNull(context.myMapCall.getMethodExpression().getQualifierExpression());
+      String text = ct.text(qualifier) + ".flatMap(" + ct.text(context.myMapLambda) + ")" + ".ifPresent" + ct.text(context.myInnerIfPresentCall.getArgumentList());
+      PsiElement result = ct.replaceAndRestoreComments(context.myOuterIfPresentCall, text);
+      LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
+    }
+
+    @NotNull
+    @Override
+    public CallMatcher getMatcher() {
+      return OPTIONAL_MAP;
+    }
+
+    private static class Context {
+      private final @NotNull PsiExpression myMapLambda;
+      private final @NotNull PsiMethodCallExpression myMapCall;
+      private final @NotNull PsiMethodCallExpression myInnerIfPresentCall;
+      private final @NotNull PsiMethodCallExpression myOuterIfPresentCall;
+
+      private Context(@NotNull PsiExpression lambda,
+                      @NotNull PsiMethodCallExpression mapCall,
+                      @NotNull PsiMethodCallExpression innerIfPresentCall,
+                      @NotNull PsiMethodCallExpression outerIfPresentCall) {
+        myMapLambda = lambda;
+        myMapCall = mapCall;
+        myInnerIfPresentCall = innerIfPresentCall;
+        myOuterIfPresentCall = outerIfPresentCall;
       }
     }
   }
