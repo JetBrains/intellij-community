@@ -95,7 +95,7 @@ public class MemoryAgentUtil {
       errorMessage = "Timeout";
     }
     catch (CantRunException e) {
-      errorMessage = "JDK home not found";
+      errorMessage = e.getMessage();
     }
     if (errorMessage != null || agentFile == null) {
       LOG.warn("Could not extract agent: " + errorMessage);
