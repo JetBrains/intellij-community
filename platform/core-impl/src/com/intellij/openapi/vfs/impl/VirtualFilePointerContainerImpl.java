@@ -34,6 +34,7 @@ import java.util.function.Predicate;
  */
 public class VirtualFilePointerContainerImpl extends TraceableDisposable implements VirtualFilePointerContainer, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer");
+  private static final int UNINITIALIZED = -1;
   @NotNull private final ConcurrentList<VirtualFilePointer> myList = ContainerUtil.createConcurrentList();
   @NotNull private final ConcurrentList<VirtualFilePointer> myJarDirectories = ContainerUtil.createConcurrentList();
   @NotNull private final ConcurrentList<VirtualFilePointer> myJarRecursiveDirectories = ContainerUtil.createConcurrentList();
@@ -41,7 +42,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
   @NotNull private final Disposable myParent;
   private final VirtualFilePointerListener myListener;
   private volatile Trinity<String[], VirtualFile[], VirtualFile[]> myCachedThings;
-  private volatile long myTimeStampOfCachedThings = -1;
+  private volatile long myTimeStampOfCachedThings = UNINITIALIZED;
   @NonNls public static final String URL_ATTR = "url";
   private boolean myDisposed;
   private static final boolean TRACE_CREATION = LOG.isDebugEnabled() || ApplicationManager.getApplication().isUnitTestMode();
@@ -187,6 +188,10 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
   @Override
   @NotNull
   public String[] getUrls() {
+    if (myTimeStampOfCachedThings == UNINITIALIZED) {
+      // optimization: when querying urls, and nothing was cached yet, do not access disk (in cacheThings()) - can be expensive
+      return myList.stream().map(VirtualFilePointer::getUrl).toArray(String[]::new);
+    }
     return getOrCache().first;
   }
 
@@ -266,9 +271,9 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
           });
         }
       }
+      String[] urlsArray = ArrayUtil.toStringArray(cachedUrls);
       VirtualFile[] directories = VfsUtilCore.toVirtualFileArray(cachedDirectories);
       VirtualFile[] files = allFilesAreDirs ? directories : VfsUtilCore.toVirtualFileArray(cachedFiles);
-      String[] urlsArray = ArrayUtil.toStringArray(cachedUrls);
       result = Trinity.create(urlsArray, files, directories);
     }
     myCachedThings = result;
