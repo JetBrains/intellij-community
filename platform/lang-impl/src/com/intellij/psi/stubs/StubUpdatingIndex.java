@@ -102,8 +102,6 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     return builder != null && builder.acceptsFile(file);
   }
 
-  private static final KeyDescriptor<Integer> DATA_DESCRIPTOR = new IntInlineKeyDescriptor();
-
   @NotNull
   @Override
   public ID<Integer, SerializedStubTree> getName() {
@@ -326,7 +324,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
   @NotNull
   @Override
   public KeyDescriptor<Integer> getKeyDescriptor() {
-    return DATA_DESCRIPTOR;
+    return EnumeratorIntegerDescriptor.INSTANCE;
   }
 
   @NotNull

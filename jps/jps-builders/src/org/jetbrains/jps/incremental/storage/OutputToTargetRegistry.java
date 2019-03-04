@@ -4,6 +4,7 @@ package org.jetbrains.jps.incremental.storage;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.IntInlineKeyDescriptor;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +50,7 @@ public class OutputToTargetRegistry extends AbstractStateStorage<Integer, TIntHa
   };
 
   OutputToTargetRegistry(File storePath) throws IOException {
-    super(storePath, new IntInlineKeyDescriptor(), DATA_EXTERNALIZER);
+    super(storePath, EnumeratorIntegerDescriptor.INSTANCE, DATA_EXTERNALIZER);
   }
 
   protected void addMapping(String outputPath, int buildTargetId) throws IOException {
