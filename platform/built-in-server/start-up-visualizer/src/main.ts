@@ -3,7 +3,7 @@ import Vue from "vue"
 import App from "./App.vue"
 import ElementUI from "element-ui"
 import router from "./router"
-import {store} from "./state"
+import {store} from "./state/state"
 import locale from "element-ui/lib/locale/lang/en"
 
 Vue.use(ElementUI, {locale})

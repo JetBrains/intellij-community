@@ -1,15 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
-import {DataManager} from "@/state"
-import {XYChartManager} from "@/core"
-import {Item} from "@/data"
+import {XYChartManager} from "@/charts/ChartManager"
+import {DataManager} from "@/state/DataManager"
+import {Item} from "@/state/data"
 
 export type ComponentProviderSourceNames = "appComponents" | "projectComponents"
 export type ServiceProviderSourceNames = "appServices" | "projectServices"
 export type TopHitProviderSourceNames = "appOptionsTopHitProviders" | "projectOptionsTopHitProviders"
-
-export type ItemChartType = "components" | "services" | "topHitProviders"
 
 export abstract class ItemChartManager extends XYChartManager {
   // isUseYForName - if true, names are more readable, but not possible to see all components because layout from top to bottom (so, opposite from left to right some data can be out of current screen)
@@ -55,94 +53,80 @@ export abstract class ItemChartManager extends XYChartManager {
     // base unit the values are in (https://www.amcharts.com/docs/v4/reference/durationformatter/)
     durationAxis.durationFormatter.baseUnit = "millisecond"
     durationAxis.durationFormatter.durationFormat = "S"
-    durationAxis.strictMinMax = true
+    // do not set strictMinMax because otherwise zooming will not work
+    // (axis will not reflect currently selected items, but always the whole set and so, will be not convenient to see items with small values)
 
     // cursor tooltip is distracting
     durationAxis.cursorTooltipEnabled = false
   }
 
   protected configureSeries(): void {
-    const a = this.addSeries()
-    const p = this.addSeries()
-
-    a.name = "Application-level"
-    p.name = "Project-level"
-  }
-
-  protected addSeries(): am4charts.ColumnSeries {
     const series = this.chart.series.push(new am4charts.ColumnSeries())
-    series.dataFields.dateX = "start"
     series.dataFields.categoryX = "shortName"
     series.dataFields.valueY = "duration"
+    series.columns.template.configField = "chartConfig"
     series.columns.template.tooltipText = "{name}: {duration} ms\nrange: {start}-{end}"
-    series.clustered = false
-
-    // noinspection SpellCheckingInspection
-    series.events.on("visibilitychanged", event => {
-      const nameAxis = this.nameAxis
-
-      const seriesList = this.chart.series
-      let offset = 0
-      let length = 0
-      for (let i = 0; i < seriesList.length; i++) {
-        const otherSeries = seriesList.getIndex(i)!!
-        if (otherSeries === series) {
-          length = series.data.length
-          break
-        }
-
-        if (!otherSeries.visible) {
-          // do not take in account because if not visible, data is already removed from axis data
-          continue
-        }
-
-        offset += otherSeries.data.length
-      }
-
-      if (event.visible) {
-        nameAxis.data.splice(offset, 0, ...series.data)
-      }
-      else {
-        nameAxis.data.splice(offset, length)
-      }
-      // trigger update
-      nameAxis.data = nameAxis.data
-
-      // without this call items is not rendered correctly (overlapped)
-      this.chart.invalidateData()
-    })
-    return series
   }
 
+  // https://www.amcharts.com/docs/v4/concepts/series/#Note_about_Series_data_and_Category_axis
   render(data: DataManager) {
-    const sources: Array<Array<Item>> = []
-    const series = this.chart.series
-    let seriesIndex = 0
-    const axisData = []
+    const concatenatedData: Array<ClassItem> = []
+    let colorIndex = 0
+    const legendData: Array<LegendItem> = []
+    const applicableSources = new Set<string>()
     for (const sourceName of this.sourceNames) {
-      const items = data.data[sourceName] || []
-      sources.push(items)
-      ItemChartManager.assignShortName(items)
-      series.getIndex(seriesIndex++)!!.data = items
+      // see XYChart.handleSeriesAdded method - fill and stroke are required to be set, and stroke is set to fill if not set otherwise (in our case fill and stroke are equals)
+      // do not use XYChart.handleSeriesAdded because on add series it is already called, so, we need to reuse already generated color for first index
+      const color = this.chart.colors.getIndex(colorIndex++)
+      const chartConfig: ClassItemChartConfig = {
+        fill: color,
+        stroke: color,
+      }
 
-      axisData.push(...items)
+      const legendItem: LegendItem = {
+        name: (sourceName.startsWith("app") ? "Application" : "Project") + "-level",
+        fill: color,
+        sourceName,
+      }
+      legendData.push(legendItem)
+      applicableSources.add(sourceName)
+
+      // generate color before - even if no data for this type of items, still color should be the same regardless of current data set
+      // so, if currently no data for project, but there is data for modules, color for modules should use index 3 and not 2
+      const items = data.data[sourceName] || []
+      for (const item of items) {
+        concatenatedData.push({
+          ...item,
+          shortName: getShortName(item),
+          chartConfig,
+          sourceName,
+        })
+      }
     }
 
-    // https://www.amcharts.com/docs/v4/concepts/series/#Note_about_Series_data_and_Category_axis
-    const nameAxis = this.nameAxis
-    nameAxis.data = axisData
+    this.chart.legend.data = legendData
+    this.chart.legend.itemContainers.template.events.on("hit", event => {
+      const target = event!!.target!!
+      const legendItem = target!!.dataItem!!.dataContext as LegendItem
+      if (target.isActive) {
+        applicableSources.delete(legendItem.sourceName)
+      }
+      else {
+        applicableSources.add(legendItem.sourceName)
+      }
+      // maybe there is a more effective way to hide data, but this one is reliable and simple
+      this.chart.data = concatenatedData.filter(it => applicableSources.has(it.sourceName))
+    })
 
-    this.computeRangeMarkers(data)
-
-    // since we don't set chart data, but set data to series and axis explicitly, amcharts doesn't re-zoom on new data, so, needed to be called explicitly
-    this.chart.invalidateData()
+    concatenatedData.sort((a, b) => a.start - b.start)
+    this.computeRangeMarkers(data, concatenatedData)
+    this.chart.data = concatenatedData
   }
 
-  protected computeRangeMarkers(data: DataManager) {
+  protected computeRangeMarkers(data: DataManager, items: Array<ClassItem>) {
     const nameAxis = this.nameAxis
-
     nameAxis.axisRanges.clear()
-    for (const guideLineDescriptor of data.computeGuides(nameAxis.data)) {
+    for (const guideLineDescriptor of data.computeGuides(items)) {
       this.createRangeMarker(nameAxis, guideLineDescriptor.item as ClassItem, guideLineDescriptor.label)
     }
   }
@@ -167,14 +151,11 @@ export abstract class ItemChartManager extends XYChartManager {
       return rangePoint == null ? x : rangePoint.x
     })
   }
+}
 
-  private static assignShortName(items: Array<Item>) {
-    for (const component of items) {
-      const componentItem = component as ClassItem
-      const lastDotIndex = component.name.lastIndexOf(".")
-      componentItem.shortName = lastDotIndex < 0 ? component.name : component.name.substring(lastDotIndex + 1)
-    }
-  }
+function getShortName(item: Item): string {
+  const lastDotIndex = item.name.lastIndexOf(".")
+  return lastDotIndex < 0 ? item.name : item.name.substring(lastDotIndex + 1)
 }
 
 export class ComponentChartManager extends ItemChartManager {
@@ -200,6 +181,20 @@ export class TopHitProviderChart extends ItemChartManager {
   }
 }
 
+interface LegendItem {
+  readonly name: string
+  readonly sourceName: string
+  readonly fill: am4core.Color
+}
+
 interface ClassItem extends Item {
-  shortName: string
+  readonly shortName: string
+  readonly chartConfig: ClassItemChartConfig
+
+  readonly sourceName: string
+}
+
+interface ClassItemChartConfig {
+  readonly fill: am4core.Color
+  readonly stroke: am4core.Color
 }

@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
-import {DataManager} from "@/state"
+import {DataManager} from "@/state/DataManager"
 
 export interface ChartManager {
   render(data: DataManager): void
@@ -28,52 +28,10 @@ export abstract class XYChartManager implements ChartManager {
     configureCommonChartSettings(this.chart)
 
     // this.addDisposeHandler(childHot)
+  }
 
-    // if (module != null && module.hot != null) {
-    //   this.addDisposeHandler(module.hot)
-    //
-    //   let devState: DevState | null = null
-    //   const handler = () => {
-    //     const axis = this.chart.xAxes.getIndex(0)!!
-    //     if (devState == null) {
-    //       devState = {
-    //         start: axis.start,
-    //         end: axis.end,
-    //       }
-    //     }
-    //     else {
-    //       devState.start = axis.start
-    //       devState.end = axis.end
-    //     }
-    //
-    //     sessionStorage.setItem("devState", JSON.stringify(devState))
-    //   }
-    //   setTimeout(() => {
-    //     // noinspection SpellCheckingInspection
-    //     this.chart.xAxes.getIndex(0)!!.events.on("startchanged", handler)
-    //     // noinspection SpellCheckingInspection
-    //     this.chart.xAxes.getIndex(0)!!.events.on("endchanged", handler)
-    //   }, 1000)
-    //
-    //   // module.hot.dispose(() => {
-    //   //   if (devState == null) {
-    //   //     sessionStorage.removeItem("devState")
-    //   //   }
-    //   //   else {
-    //   //     sessionStorage.setItem("devState", JSON.stringify(devState))
-    //   //   }
-    //   // })
-    //
-    //   const devStateRaw = sessionStorage.getItem("devState")
-    //   if (devStateRaw != null) {
-    //     this.chart.events.on("ready", () => {
-    //       const devState = JSON.parse(devStateRaw)
-    //       const axis = this.chart.xAxes.getIndex(0)!!
-    //       axis.start = devState.start
-    //       axis.end = devState.end
-    //     })
-    //   }
-    // }
+  dispose(): void {
+    this.chart.dispose()
   }
 
   // module.hot must be passed here explicitly, because module in this context related only to this module
@@ -99,8 +57,3 @@ export abstract class XYChartManager implements ChartManager {
 
   abstract render(data: DataManager): void
 }
-
-// interface DevState {
-//   start: number
-//   end: number
-// }

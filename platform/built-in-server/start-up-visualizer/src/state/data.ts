@@ -1,12 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 export interface Item {
-  name: string
-  description?: string
+  readonly name: string
+  readonly description?: string
 
-  start: number
-  end: number
+  readonly start: number
+  readonly end: number
 
-  duration: number
+  readonly duration: number
 }
 
 export interface InputData {
