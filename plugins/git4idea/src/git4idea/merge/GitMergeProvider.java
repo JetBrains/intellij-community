@@ -257,8 +257,22 @@ public class GitMergeProvider implements MergeProvider2 {
   private static class Conflict {
     VirtualFile myFile;
     VirtualFile myRoot;
-    Status myStatusTheirs;
-    Status myStatusYours;
+    GitConflict.Status myStatusTheirs;
+    GitConflict.Status myStatusYours;
+  }
+
+  private static class GitConflict {
+    @NotNull public final FilePath myPath;
+    @NotNull public final VirtualFile myRoot;
+    @NotNull public final Status myStatusTheirs;
+    @NotNull public final Status myStatusYours;
+
+    private GitConflict(@NotNull FilePath path, @NotNull VirtualFile root, @NotNull Status statusTheirs, @NotNull Status statusYours) {
+      myPath = path;
+      myRoot = root;
+      myStatusTheirs = statusTheirs;
+      myStatusYours = statusYours;
+    }
 
     enum Status {
       MODIFIED, // modified on the branch
@@ -266,14 +280,13 @@ public class GitMergeProvider implements MergeProvider2 {
     }
   }
 
-
   /**
    * The merge session, it queries conflict information.
    */
   private class MyMergeSession implements MergeSessionEx {
-    Map<VirtualFile, Conflict> myConflicts = new HashMap<>();
-    String currentBranchName;
-    String mergeHeadBranchName;
+    private final Map<VirtualFile, GitConflict> myConflicts = new HashMap<>();
+    private final String currentBranchName;
+    private final String mergeHeadBranchName;
 
     MyMergeSession(List<VirtualFile> filesToMerge) {
       // get conflict type by the file
@@ -306,15 +319,16 @@ public class GitMergeProvider implements MergeProvider2 {
               cs.put(file, c);
             }
             if (source == THEIRS_REVISION_NUM) {
-              c.myStatusTheirs = Conflict.Status.MODIFIED;
+              c.myStatusTheirs = GitConflict.Status.MODIFIED;
             }
             else if (source == YOURS_REVISION_NUM) {
-              c.myStatusYours = Conflict.Status.MODIFIED;
+              c.myStatusYours = GitConflict.Status.MODIFIED;
             }
             else if (source != ORIGINAL_REVISION_NUM) {
               throw new IllegalStateException("Unknown revision " + source + " for the file: " + file);
             }
           }
+
           for (VirtualFile f : files) {
             String path = VcsFileUtil.relativePath(root, f);
             Conflict c = cs.get(path);
@@ -325,12 +339,12 @@ public class GitMergeProvider implements MergeProvider2 {
             }
             c.myFile = f;
             if (c.myStatusTheirs == null) {
-              c.myStatusTheirs = Conflict.Status.DELETED;
+              c.myStatusTheirs = GitConflict.Status.DELETED;
             }
             if (c.myStatusYours == null) {
-              c.myStatusYours = Conflict.Status.DELETED;
+              c.myStatusYours = GitConflict.Status.DELETED;
             }
-            myConflicts.put(f, c);
+            myConflicts.put(f, new GitConflict(VcsUtil.getFilePath(f), root, c.myStatusTheirs, c.myStatusYours));
           }
         }
         currentBranchName = getSingleCurrentBranchName(filesByRoot.keySet());
@@ -349,7 +363,7 @@ public class GitMergeProvider implements MergeProvider2 {
 
     @Override
     public boolean canMerge(@NotNull VirtualFile file) {
-      Conflict c = myConflicts.get(file);
+      GitConflict c = myConflicts.get(file);
       return c != null && !file.isDirectory();
     }
 
@@ -360,18 +374,18 @@ public class GitMergeProvider implements MergeProvider2 {
 
     @Override
     public void conflictResolvedForFiles(@NotNull List<VirtualFile> files, @NotNull Resolution resolution) {
-      MultiMap<VirtualFile, Conflict> byRoot = groupConflictsByRoot(files);
+      MultiMap<VirtualFile, GitConflict> byRoot = groupConflictsByRoot(files);
 
       for (VirtualFile root : byRoot.keySet()) {
-        Collection<Conflict> conflicts = byRoot.get(root);
+        Collection<GitConflict> conflicts = byRoot.get(root);
 
-        List<VirtualFile> toAdd = new ArrayList<>();
-        List<VirtualFile> toDelete = new ArrayList<>();
+        List<FilePath> toAdd = new ArrayList<>();
+        List<FilePath> toDelete = new ArrayList<>();
 
-        for (Conflict c: conflicts) {
+        for (GitConflict c : conflicts) {
           boolean isReversed = myReverseRoots.contains(c.myRoot);
 
-          Conflict.Status status;
+          GitConflict.Status status;
           switch (resolution) {
             case AcceptedTheirs:
               status = !isReversed ? c.myStatusTheirs : c.myStatusYours;
@@ -380,23 +394,23 @@ public class GitMergeProvider implements MergeProvider2 {
               status = isReversed ? c.myStatusTheirs : c.myStatusYours;
               break;
             case Merged:
-              status = Conflict.Status.MODIFIED;
+              status = GitConflict.Status.MODIFIED;
               break;
             default:
               throw new IllegalArgumentException("Unsupported resolution: " + resolution);
           }
 
-          if (status == Conflict.Status.MODIFIED) {
-            toAdd.add(c.myFile);
+          if (status == GitConflict.Status.MODIFIED) {
+            toAdd.add(c.myPath);
           }
           else {
-            toDelete.add(c.myFile);
+            toDelete.add(c.myPath);
           }
         }
 
         try {
-          GitFileUtils.addFilesForce(myProject, root, toAdd);
-          GitFileUtils.deleteFiles(myProject, root, toDelete);
+          GitFileUtils.addPathsForce(myProject, root, toAdd);
+          GitFileUtils.deletePaths(myProject, root, toDelete);
         }
         catch (VcsException e) {
           LOG.error(String.format("Unexpected exception during the git operation: modified - %s deleted - %s)", toAdd, toDelete), e);
@@ -408,22 +422,22 @@ public class GitMergeProvider implements MergeProvider2 {
     public void acceptFilesRevisions(@NotNull List<VirtualFile> files, @NotNull Resolution resolution) throws VcsException {
       assert resolution == Resolution.AcceptedYours || resolution == Resolution.AcceptedTheirs;
 
-      MultiMap<VirtualFile, Conflict> byRoot = groupConflictsByRoot(files);
+      MultiMap<VirtualFile, GitConflict> byRoot = groupConflictsByRoot(files);
 
       for (VirtualFile root : byRoot.keySet()) {
-        Collection<Conflict> conflicts = byRoot.get(root);
+        Collection<GitConflict> conflicts = byRoot.get(root);
         boolean isReversed = myReverseRoots.contains(root);
         boolean acceptYours = !isReversed ? resolution == Resolution.AcceptedYours
                                           : resolution == Resolution.AcceptedTheirs;
 
-        List<VirtualFile> filesToCheckout = ContainerUtil.mapNotNull(conflicts, c -> {
-          Conflict.Status status = acceptYours ? c.myStatusYours : c.myStatusTheirs;
-          return status == Conflict.Status.MODIFIED ? c.myFile : null;
+        List<FilePath> filesToCheckout = ContainerUtil.mapNotNull(conflicts, c -> {
+          GitConflict.Status status = acceptYours ? c.myStatusYours : c.myStatusTheirs;
+          return status == GitConflict.Status.MODIFIED ? c.myPath : null;
         });
 
         String parameter = acceptYours ? "--ours" : "--theirs";
 
-        for (List<String> paths : VcsFileUtil.chunkFiles(root, filesToCheckout)) {
+        for (List<String> paths : VcsFileUtil.chunkPaths(root, filesToCheckout)) {
           GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.CHECKOUT);
           handler.addParameters(parameter);
           handler.endOptions();
@@ -435,10 +449,10 @@ public class GitMergeProvider implements MergeProvider2 {
     }
 
     @NotNull
-    private MultiMap<VirtualFile, Conflict> groupConflictsByRoot(@NotNull List<VirtualFile> files) {
-      MultiMap<VirtualFile, Conflict> byRoot = MultiMap.create();
+    private MultiMap<VirtualFile, GitConflict> groupConflictsByRoot(@NotNull List<VirtualFile> files) {
+      MultiMap<VirtualFile, GitConflict> byRoot = MultiMap.create();
       for (VirtualFile file: files) {
-        Conflict c = myConflicts.get(file);
+        GitConflict c = myConflicts.get(file);
         if (c == null) {
           LOG.error("Conflict was not loaded for the file: " + file.getPath());
           continue;
@@ -462,15 +476,15 @@ public class GitMergeProvider implements MergeProvider2 {
 
       @Override
       public String valueOf(VirtualFile file) {
-        Conflict c = myConflicts.get(file);
+        GitConflict c = myConflicts.get(file);
         if (c == null) {
           LOG.error("No conflict for the file " + file);
           return "";
         }
         boolean isReversed = myReverseRoots.contains(c.myRoot);
-        Conflict.Status currentStatus = !isReversed ? c.myStatusYours : c.myStatusTheirs;
-        Conflict.Status lastStatus = isReversed ? c.myStatusYours : c.myStatusTheirs;
-        Conflict.Status status = myIsLast ? lastStatus : currentStatus;
+        GitConflict.Status currentStatus = !isReversed ? c.myStatusYours : c.myStatusTheirs;
+        GitConflict.Status lastStatus = isReversed ? c.myStatusYours : c.myStatusTheirs;
+        GitConflict.Status status = myIsLast ? lastStatus : currentStatus;
         switch (status) {
           case MODIFIED:
             return GitBundle.message("merge.tool.column.status.modified");
