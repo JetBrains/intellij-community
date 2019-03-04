@@ -226,6 +226,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   // ensure that flat roots set via symbolic paths behave correctly and do not report dirty files returned from other recursive roots
   @Test fun testSymbolicLinkIntoFlatRoot() {
     IoTestUtil.assumeSymLinkCreationIsSupported()
+
     val root = tempDir.newFolder("root")
     val cDir = tempDir.newFolder("root/A/B/C")
     val aLink = File(root, "aLink")
@@ -262,6 +263,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
   @Test fun testSymbolicLinkWatchRoot() {
     IoTestUtil.assumeSymLinkCreationIsSupported()
+
     val top = tempDir.newFolder("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
     val link = Files.createSymbolicLink(Paths.get(top.path, "link"), Paths.get("${top.path}/dir1/dir2")).toFile()
@@ -276,6 +278,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
   @Test fun testSymbolicLinkAboveWatchRoot() {
     IoTestUtil.assumeSymLinkCreationIsSupported()
+
     val top = tempDir.newFolder("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
     val link = Files.createSymbolicLink(Paths.get(top.path, "link"), Paths.get("${top.path}/dir1/dir2")).toFile()
