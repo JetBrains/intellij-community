@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class WrapImpl extends Wrap {
-  public static final int MAX_WRAP_NESTING_LEVELS = 50;
+  private static final int MAX_IS_CHILD_OF_CALCULATION_ITERATIONS = 50;
 
   /**
    * The block where the wrap needs to happen if the CHOP wrap mode is used and the chain of blocks exceeds the right margin.
@@ -44,7 +44,7 @@ public class WrapImpl extends Wrap {
 
 
   public boolean isChildOf(@Nullable final WrapImpl wrap, LeafBlockWrapper leaf) {
-    return isChildOf(wrap, leaf, new FormatterIterationMonitor<>(MAX_WRAP_NESTING_LEVELS, false));
+    return isChildOf(wrap, leaf, new FormatterIterationMonitor<>(MAX_IS_CHILD_OF_CALCULATION_ITERATIONS, false));
   }
 
   public boolean isChildOf(@Nullable final WrapImpl wrap, LeafBlockWrapper leaf, @NotNull FormatterIterationMonitor<Boolean> iterationMonitor) {
@@ -74,7 +74,7 @@ public class WrapImpl extends Wrap {
   void registerParent(@Nullable WrapImpl parent) {
     if (parent == this) return;
     if (parent == null) return;
-    if (parent.isChildOf(this, null, new FormatterIterationMonitor<>(MAX_WRAP_NESTING_LEVELS, true))) return;
+    if (parent.isChildOf(this, null, new FormatterIterationMonitor<>(MAX_IS_CHILD_OF_CALCULATION_ITERATIONS, true))) return;
     if (myParents == emptyParentsSet) myParents = new HashSet<>(5);
     myParents.add(parent);
   }
