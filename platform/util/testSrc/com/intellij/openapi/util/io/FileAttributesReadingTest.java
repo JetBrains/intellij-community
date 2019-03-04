@@ -466,6 +466,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void hardLink() throws IOException {
+    IoTestUtil.assumeSymLinkCreationIsSupported();
     File target = tempDir.newFile("file.txt");
     File link = new File(tempDir.getRoot(), "link");
     Files.createLink(link.toPath(), target.toPath());
