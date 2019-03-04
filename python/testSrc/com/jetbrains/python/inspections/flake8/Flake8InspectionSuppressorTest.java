@@ -1,79 +1,43 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.flake8;
 
-import com.google.common.collect.Sets;
-import com.intellij.codeInspection.InspectionEP;
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.LocalInspectionEP;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase;
-import org.junit.Before;
-import org.junit.ComparisonFailure;
-import org.junit.Test;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
+import com.jetbrains.python.inspections.PyInspection;
+import com.jetbrains.python.inspections.PyUnusedLocalInspection;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
+public class Flake8InspectionSuppressorTest extends PyInspectionTestCase {
 
-public class Flake8InspectionSuppressorTest extends LightPlatformCodeInsightFixture4TestCase {
-  private Set<String> excluded =
-    Sets.newHashSet("PyInterpreterInspection", "PyMandatoryEncodingInspection", "PyMissingOrEmptyDocstringInspection");
-
-  @Before
-  public void setup() {
-    InspectionProfileEntry[] inspections = LocalInspectionEP.LOCAL_INSPECTION.extensions()
-      .map(InspectionEP::instantiateTool)
-      .filter(e -> e.getShortName().startsWith("Py"))
-      .filter(e -> !excluded.contains(e.getShortName()))
-      .toArray(InspectionProfileEntry[]::new);
-    myFixture.enableInspections(inspections);
+  public void testInlineComment() {
+    doTestByText("def foo():\n" +
+                 "    x = 1 # noqa");
   }
 
-  /**
-   * Test that markers are suppressing errors
-   */
-  @Test
-  public void testErrorSuppression() {
-    //language=Python
-    assertNoErrors("def foo():\n    x = 1 # noqa");
-
-    // testing prefix matching # noqa
-    //language=Python
-    assertNoErrors("def foo():\n    x = 1 # noqa123   ");
-
-    //language=Python
-    assertNoErrors("# flake8: noqa\ndef foo():\n    x = 1");
-
-    // testing prefix matching # flake8: noqa
-    //language=Python
-    assertNoErrors("# flake8: noqa123   \ndef foo():\n    x = 1");
+  public void testInlineCommentWithSuffix() {
+    doTestByText("def foo():\n" +
+                 "    x = 1 # noqa123   ");
   }
 
-  /**
-   * Tests that we're not suppressing more than we should
-   */
-  @Test
-  public void testNoErrorSuppression() {
-    //language=Python
-    assertErrors("def foo():\n    x = 1");
-
-    // noq instead of noqa must not suppress inspections
-    //language=Python
-    assertErrors("def foo():\n    x = 1 # noq");
-
-    //language=Python
-    assertErrors("def foo():\n    x = 1");
+  public void testTopLevelComment() {
+    doTestByText("# flake8: noqa\n" +
+                 "def foo():\n" +
+                 "    x = 1");
   }
 
-  private void assertNoErrors(String code) {
-    myFixture.configureByText("file.py", code);
-    myFixture.checkHighlighting();
+  public void testTopLevelCommentWithSuffix() {
+    doTestByText("# flake8: noqa123   \n" +
+                 "def foo():\n" +
+                 "    x = 1");
   }
 
-  private void assertErrors(String code) {
-    try {
-      myFixture.configureByText("file.py", code);
-      myFixture.checkHighlighting();
-    }
-    catch (ComparisonFailure ignored) {
-      // this is expected because errors must be added by inspections
-    }
+  public void testIncompleteInlineComment() {
+    doTestByText("def foo():\n" +
+                 "    <weak_warning descr=\"Local variable 'x' value is not used\">x</weak_warning> = 1 # noq");
+  }
+
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyUnusedLocalInspection.class;
   }
 }
