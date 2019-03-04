@@ -57,7 +57,7 @@ public class IconScaleTest extends BareTestFixtureTestCase {
     //
     overrideJreHiDPIEnabled(true);
     if (SystemInfo.IS_AT_LEAST_JAVA9 || !SystemInfo.isLinux) {
-      //for (double s : SCALES) test(1, s);
+      for (double s : SCALES) test(1, s);
     }
 
     //
