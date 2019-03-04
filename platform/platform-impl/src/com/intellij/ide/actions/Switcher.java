@@ -48,6 +48,7 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.*;
@@ -426,11 +427,9 @@ public class Switcher extends AnAction implements DumbAware {
       }
 
       final VirtualFilesRenderer filesRenderer = new VirtualFilesRenderer(this) {
-        final JPanel myPanel = new JPanel(new BorderLayout());
-        final JLabel myLabel = createPaleLabel("* ");
+        final JPanel myPanel = new NonOpaquePanel(new BorderLayout());
 
         {
-          myPanel.setOpaque(false);
           myPanel.setBackground(UIUtil.getListBackground());
         }
 
@@ -445,11 +444,7 @@ public class Switcher extends AnAction implements DumbAware {
           final Component c = super.getListCellRendererComponent(list, value, index, selected, selected);
           final Color bg = UIUtil.getListBackground();
           final Color fg = UIUtil.getListForeground();
-          myLabel.setFont(list.getFont());
-          myLabel.setForeground(open ? fg : bg);
-
           myPanel.removeAll();
-          myPanel.add(myLabel, BorderLayout.WEST);
           myPanel.add(c, BorderLayout.CENTER);
 
           // Note: Name=name rendered in cell, Description=path to file, as displayed in bottom panel
