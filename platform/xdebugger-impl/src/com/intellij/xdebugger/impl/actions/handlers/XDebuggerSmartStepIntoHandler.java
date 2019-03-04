@@ -33,6 +33,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
@@ -217,6 +218,43 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
 
     session.updateExecutionPosition();
     IdeFocusManager.getGlobalInstance().requestFocus(editor.getContentComponent(), true);
+
+    session.addSessionListener(new XDebugSessionListener() {
+      void onAnyEvent() {
+        session.removeSessionListener(this);
+        UIUtil.invokeLaterIfNeeded(() -> {
+          SmartStepData stepData = editor.getUserData(SMART_STEP_INPLACE_DATA);
+          if (stepData != null) {
+            stepData.clear();
+          }
+        });
+      }
+
+      @Override
+      public void sessionPaused() {
+        onAnyEvent();
+      }
+
+      @Override
+      public void sessionResumed() {
+        onAnyEvent();
+      }
+
+      @Override
+      public void sessionStopped() {
+        onAnyEvent();
+      }
+
+      @Override
+      public void stackFrameChanged() {
+        onAnyEvent();
+      }
+
+      @Override
+      public void settingsChanged() {
+        onAnyEvent();
+      }
+    });
  }
 
   static final Key<SmartStepData> SMART_STEP_INPLACE_DATA = Key.create("SMART_STEP_INPLACE_DATA");
@@ -300,10 +338,14 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     }
 
     void stepInto(VariantInfo variant) {
+      clear();
+      mySession.smartStepInto(myHandler, variant.myVariant);
+    }
+
+    void clear() {
       myEditor.putUserData(SMART_STEP_INPLACE_DATA, null);
       HighlightManagerImpl highlightManager = (HighlightManagerImpl)HighlightManager.getInstance(mySession.getProject());
       highlightManager.hideHighlights(myEditor, HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_ANY_KEY);
-      mySession.smartStepInto(myHandler, variant.myVariant);
     }
 
     class VariantInfo {
