@@ -560,34 +560,28 @@ public class GradleProjectResolverUtil {
           }
         }
         else {
-          String moduleId = getModuleId(projectDependency);
-          Pair<DataNode<GradleSourceSetData>, ExternalSourceSet> projectPair = sourceSetMap.get(moduleId);
-          if (projectPair == null) {
-            MultiMap<Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>, File> projectPairs =
-              new LinkedMultiMap<Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>, File>() {
-                @Override
-                protected EqualityPolicy<Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> getEqualityPolicy() {
-                  //noinspection unchecked
-                  return (EqualityPolicy<Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>>)EqualityPolicy.IDENTITY;
-                }
-              };
+          String moduleId;
+          Pair<DataNode<GradleSourceSetData>, ExternalSourceSet> projectPair;
+          MultiMap<Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>, File> projectPairs =
+            new LinkedMultiMap<Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>, File>() {
+              @Override
+              protected EqualityPolicy<Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> getEqualityPolicy() {
+                //noinspection unchecked
+                return (EqualityPolicy<Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>>)EqualityPolicy.IDENTITY;
+              }
+            };
 
-            for (File file: projectDependency.getProjectDependencyArtifacts()) {
-              moduleId = artifactsMap.get(ExternalSystemApiUtil.toCanonicalPath(file.getAbsolutePath()));
-              if (moduleId == null) continue;
-              projectPair = sourceSetMap.get(moduleId);
+          for (File file: projectDependency.getProjectDependencyArtifacts()) {
+            moduleId = artifactsMap.get(ExternalSystemApiUtil.toCanonicalPath(file.getAbsolutePath()));
+            if (moduleId == null) continue;
+            projectPair = sourceSetMap.get(moduleId);
 
-              if (projectPair == null) continue;
-              projectPairs.putValue(projectPair, file);
-            }
-            for (Map.Entry<Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>, Collection<File>> entry : projectPairs.entrySet()) {
-              projectDependencyInfos.add(new ProjectDependencyInfo(
-                entry.getKey().first.getData(), entry.getKey().second, entry.getValue()));
-            }
+            if (projectPair == null) continue;
+            projectPairs.putValue(projectPair, file);
           }
-          else {
-            projectDependencyInfos.add(new ProjectDependencyInfo(projectPair.first.getData(), projectPair.second,
-                                                                 projectDependency.getProjectDependencyArtifacts()));
+          for (Map.Entry<Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>, Collection<File>> entry : projectPairs.entrySet()) {
+            projectDependencyInfos.add(new ProjectDependencyInfo(
+              entry.getKey().first.getData(), entry.getKey().second, entry.getValue()));
           }
         }
 
