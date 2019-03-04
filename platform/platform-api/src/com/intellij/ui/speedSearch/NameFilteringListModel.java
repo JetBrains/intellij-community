@@ -53,10 +53,11 @@ public class NameFilteringListModel<T> extends FilteringListModel<T> {
   }
 
   public NameFilteringListModel(JList<T> list, final Function<? super T, String> namer, final Condition<? super String> filter, Computable<String> pattern) {
-    super(list);
+    super(list.getModel());
     myPattern = pattern;
     myNamer = namer;
     setFilter(namer != null ? (Condition<T>)t -> filter.value(namer.fun(t)) : null);
+    list.setModel(this);
   }
 
   @Override
