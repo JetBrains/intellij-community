@@ -49,25 +49,28 @@ public class IconScaleTest extends BareTestFixtureTestCase {
 
   @Test
   public void test() throws MalformedURLException {
-    final double[] SCALES = {1, 2, 2.5};
+    // 0.75 is impractical system scale factor, however it's used to stress-test the scale subsystem.
+    final double[] SCALES = {0.75f, 1, 2, 2.5f};
 
     //
     // 1) JRE-HiDPI
     //
     overrideJreHiDPIEnabled(true);
-    if (!SystemInfo.isLinux) { // Linux doesn't support JRE-HiDPI yet
-      for (double s : SCALES) test(1, s);
+    if (SystemInfo.IS_AT_LEAST_JAVA9 || !SystemInfo.isLinux) {
+      //for (double s : SCALES) test(1, s);
     }
 
     //
     // 2) IDE-HiDPI
     //
     overrideJreHiDPIEnabled(false);
-    for (double s : SCALES) test(s, 1);
+    for (double s : SCALES) test(s, s); // the system scale repeats the default user scale in IDE-HiDPI
   }
 
   public void test(double usrScale, double sysScale) throws MalformedURLException {
     JBUI.setUserScaleFactor((float)usrScale);
+    JBUI.setSystemScaleFactor((float)sysScale);
+
     ScaleContext ctx = ScaleContext.create(SYS_SCALE.of(sysScale), USR_SCALE.of(usrScale));
 
     //
@@ -97,8 +100,11 @@ public class IconScaleTest extends BareTestFixtureTestCase {
 
     ScaleContext ctx = ScaleContext.create(bctx);
 
-    int usrSize = (int)Math.round(ICON_BASE_SIZE * ctx.getScale(USR_SCALE));
-    int devSize = (int)Math.round(usrSize * ctx.getScale(SYS_SCALE));
+    double sysScale = UIUtil.isJreHiDPI(ctx) ? ctx.getScale(SYS_SCALE) : 1;
+
+    double usrSize2D = ICON_BASE_SIZE * ctx.getScale(USR_SCALE);
+    int usrSize = (int)Math.round(usrSize2D);
+    int devSize = (int)Math.round(usrSize2D * sysScale);
 
     assertEquals("unexpected icon user width " + bctx, usrSize, icon.getIconWidth());
     assertEquals("unexpected icon user height " + bctx, usrSize, icon.getIconHeight());
@@ -110,8 +116,9 @@ public class IconScaleTest extends BareTestFixtureTestCase {
     assertNotSame("scaled instance of the icon " + bctx, icon, scaledIcon);
     assertEquals("ScaleContext of the original icon changed " + bctx, bctx, ((ScaleContextAware)icon).getScaleContext());
 
-    int scaledUsrSize = Math.round(usrSize * ICON_OBJ_SCALE);
-    int scaledDevSize = Math.round(devSize * ICON_OBJ_SCALE);
+    double scaledUsrSize2D = usrSize2D * ICON_OBJ_SCALE;
+    int scaledUsrSize = (int)Math.round(scaledUsrSize2D);
+    int scaledDevSize = (int)Math.round(scaledUsrSize2D * sysScale);
 
     assertEquals("unexpected scaled icon user width " + bctx, scaledUsrSize, scaledIcon.getIconWidth());
     assertEquals("unexpected scaled icon user height " + bctx, scaledUsrSize, scaledIcon.getIconHeight());
@@ -119,7 +126,7 @@ public class IconScaleTest extends BareTestFixtureTestCase {
     assertEquals("unexpected scaled icon real height " + bctx, scaledDevSize, ImageUtil.getRealHeight(IconUtil.toImage(scaledIcon, ctx)));
 
     // Additionally check that the original image hasn't changed after scaling
-    Pair<BufferedImage, Graphics2D> pair = createImageAndGraphics(ctx.getScale(SYS_SCALE), icon.getIconWidth(), icon.getIconHeight());
+    Pair<BufferedImage, Graphics2D> pair = createImageAndGraphics(sysScale, icon.getIconWidth(), icon.getIconHeight());
     BufferedImage iconImage = pair.first;
     Graphics2D g2d = pair.second;
 

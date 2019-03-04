@@ -302,12 +302,18 @@ public final class IconLoader {
     else {
       BufferedImage image;
       if (GraphicsEnvironment.isHeadless()) { // for testing purpose
-        image = UIUtil.createImage(ctx, icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB, RoundingMode.FLOOR);
+        image = UIUtil.createImage(ctx, icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB, RoundingMode.ROUND);
       } else {
-        // [tav] todo: match the screen with the provided ctx
+        if (ctx == null) ctx = ScaleContext.create();
+        boolean jreHiDPi = UIUtil.isJreHiDPI(ctx);
+        double sysScale = jreHiDPi ? ctx.getScale(SYS_SCALE) : 1;
         image = GraphicsEnvironment.getLocalGraphicsEnvironment()
                                    .getDefaultScreenDevice().getDefaultConfiguration()
-                                   .createCompatibleImage(icon.getIconWidth(), icon.getIconHeight(), Transparency.TRANSLUCENT);
+                                   .createCompatibleImage((int)Math.round(icon.getIconWidth() * sysScale),
+                                                          (int)Math.round(icon.getIconHeight() * sysScale), Transparency.TRANSLUCENT);
+        if (jreHiDPi) {
+          image = (BufferedImage)ImageUtil.ensureHiDPI(image, ctx, icon.getIconWidth(), icon.getIconHeight());
+        }
       }
       Graphics2D g = image.createGraphics();
       try {

@@ -3,17 +3,14 @@ package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.CopyableIcon;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ScalableIcon;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.Function;
-import com.intellij.util.LazyInitializer.NotNullValue;
+import com.intellij.util.LazyInitializer.MutableNotNullValue;
 import com.intellij.util.LazyInitializer.NullableValue;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
@@ -21,6 +18,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import gnu.trove.TDoubleObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -130,9 +128,15 @@ public class JBUI {
     SYS_SCALE,
     /**
      * An extra scale factor of a particular UI object, which doesn't affect any other UI object, as opposed
-     * to the user scale and the system scale factors. Doesn't depend on the HiDPI mode and is 1.0 by default.
+     * to the user scale and the system scale factors. This scale factor affects the user space size of the object
+     * and doesn't depend on the HiDPI mode. By default it is set to 1.0.
      */
     OBJ_SCALE,
+    /**
+     * The effective user scale factor. Combines all the user space scale factors which are: {@code USR_SCALE} and {@code OBJ_SCALE}.
+     * So, basically it equals {@code USR_SCALE} * {@code OBJ_SCALE}.
+     */
+    EFF_USR_SCALE,
     /**
      * The pixel scale factor "combines" all the other scale factors (user, system and object) and defines the
      * effective scale of a particular UI object.
@@ -140,7 +144,7 @@ public class JBUI {
      * For instance, on Mac Retina monitor (JRE-managed HiDPI) in the Presentation mode (which, say,
      * doubles the UI scale) the pixel scale would equal 4.0 (provided the object scale is 1.0). The value
      * is the product of the user scale 2.0 and the system scale 2.0. In the IDE-managed HiDPI mode,
-     * the pixel scale is the product of the user scale and the object scale.
+     * the pixel scale equals {@link #EFF_USR_SCALE}.
      *
      * @see #pixScale()
      * @see #pixScale(GraphicsConfiguration)
@@ -210,7 +214,7 @@ public class JBUI {
   /**
    * The system scale factor, corresponding to the default monitor device.
    */
-  private static final NotNullValue<Float> SYSTEM_SCALE_FACTOR = new NotNullValue<Float>() {
+  private static final MutableNotNullValue<Float> SYSTEM_SCALE_FACTOR = new MutableNotNullValue<Float>() {
     @NotNull
     @Override
     public Float initialize() {
@@ -238,7 +242,18 @@ public class JBUI {
     protected void onInitialized(@NotNull Float scale) {
       LOG.info("System scale factor: " + scale + " (" + (UIUtil.isJreHiDPIEnabled() ? "JRE" : "IDE") + "-managed HiDPI)");
     }
+
+    @TestOnly
+    @Override
+    public void set(@NotNull Float value) {
+      super.set(value);
+    }
   };
+
+  @TestOnly
+  public static void setSystemScaleFactor(float sysScale) {
+    SYSTEM_SCALE_FACTOR.set(sysScale);
+  }
 
   /**
    * For internal usage.
@@ -438,7 +453,7 @@ public class JBUI {
 
     // Downgrading user scale below 1.0 may be uncomfortable (tiny icons),
     // whereas some users prefer font size slightly below normal which is ok.
-    if (scale < 1 && sysScale() >= 1) scale = 1;
+    if (!Disposer.isDebugMode() && scale < 1 && sysScale() >= 1) scale = 1;
 
     // Ignore the correction when UIUtil.DEF_SYSTEM_FONT_SIZE is overridden, see UIUtil.initSystemFontData.
     if (SystemInfo.isLinux && scale == 1.25f && UIUtil.DEF_SYSTEM_FONT_SIZE == 12) {
@@ -615,7 +630,10 @@ public class JBUI {
    * Returns whether the provided scale assumes HiDPI-awareness.
    */
   public static boolean isHiDPI(double scale) {
-    return scale > 1f;
+    // Scale below 1.0 is impractical, it's rather accepted for debug purpose.
+    // Treat it as "hidpi" to correctly manage images which have different user and real size
+    // (for scale below 1.0 the real size will be smaller).
+    return scale != 1f;
   }
 
   public static class Fonts {
@@ -854,7 +872,9 @@ public class JBUI {
         case USR_SCALE: return usrScale.value;
         case SYS_SCALE: return 1d;
         case OBJ_SCALE: return objScale.value;
-        case PIX_SCALE: return pixScale.value;
+        case PIX_SCALE:
+        case EFF_USR_SCALE:
+          return pixScale.value;
       }
       return 1f; // unreachable
     }
@@ -901,9 +921,11 @@ public class JBUI {
       boolean updated = false;
       switch (scale.type) {
         case USR_SCALE: updated = update(usrScale, scale.value); break;
-        case SYS_SCALE: break;
         case OBJ_SCALE: updated = update(objScale, scale.value); break;
-        case PIX_SCALE: break;
+        case SYS_SCALE:
+        case PIX_SCALE:
+        case EFF_USR_SCALE:
+          break;
       }
       return onUpdated(updated);
     }
@@ -976,6 +998,7 @@ public class JBUI {
         case USR_SCALE: usrScale = newScale; break;
         case OBJ_SCALE: objScale = newScale; break;
         case PIX_SCALE: pixScale = newScale; break;
+        case EFF_USR_SCALE: break;
       }
       return true;
     }
@@ -1042,6 +1065,7 @@ public class JBUI {
    * @see ScaleContextAware
    * @author tav
    */
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static class ScaleContext extends BaseScaleContext {
     protected Scale sysScale = SYS_SCALE.of(sysScale());
 
@@ -1057,7 +1081,9 @@ public class JBUI {
         case USR_SCALE: update(usrScale, scale.value); break;
         case SYS_SCALE: update(sysScale, scale.value); break;
         case OBJ_SCALE: update(objScale, scale.value); break;
-        case PIX_SCALE: break;
+        case PIX_SCALE:
+        case EFF_USR_SCALE:
+          break;
       }
       update(pixScale, derivePixScale());
     }
@@ -1075,7 +1101,7 @@ public class JBUI {
      */
     @NotNull
     public static ScaleContext create(@Nullable BaseScaleContext ctx) {
-      ScaleContext c = createIdentity();
+      ScaleContext c = create();
       c.update(ctx);
       return c;
     }
@@ -1172,6 +1198,7 @@ public class JBUI {
     @Override
     public double getScale(@NotNull ScaleType type) {
       if (type == SYS_SCALE) return sysScale.value;
+      if (type == EFF_USR_SCALE) return usrScale.value * objScale.value;
       return super.getScale(type);
     }
 
@@ -1453,11 +1480,12 @@ public class JBUI {
     }
 
     /**
-     * Updates the context and scales the provided value according to the provided type
+     * Returns the value scaled according to the provided scale type
      */
     protected double scaleVal(double value, @NotNull ScaleType type) {
       switch (type) {
         case USR_SCALE: return super.scaleVal(value);
+        case EFF_USR_SCALE: return super.scaleVal(value) * getScale(OBJ_SCALE);
         case SYS_SCALE: return value * getScale(SYS_SCALE);
         case OBJ_SCALE: return value * getScale(OBJ_SCALE);
         case PIX_SCALE: return super.scaleVal(value * getScale(OBJ_SCALE));
