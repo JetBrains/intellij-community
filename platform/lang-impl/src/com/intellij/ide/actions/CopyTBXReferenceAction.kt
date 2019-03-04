@@ -3,6 +3,12 @@ package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.CopyReferenceUtil.*
+import com.intellij.navigation.JBProtocolNavigateCommand.Companion.FQN_KEY
+import com.intellij.navigation.JBProtocolNavigateCommand.Companion.NAVIGATE_COMMAND
+import com.intellij.navigation.JBProtocolNavigateCommand.Companion.PATH_KEY
+import com.intellij.navigation.JBProtocolNavigateCommand.Companion.PROJECT_NAME_KEY
+import com.intellij.navigation.JBProtocolNavigateCommand.Companion.REFERENCE_TARGET
+import com.intellij.navigation.JBProtocolNavigateCommand.Companion.SELECTION
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -15,12 +21,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.JBProtocolNavigateCommand.Companion.FQN_KEY
-import com.intellij.openapi.project.impl.JBProtocolNavigateCommand.Companion.NAVIGATE_COMMAND
-import com.intellij.openapi.project.impl.JBProtocolNavigateCommand.Companion.PATH_KEY
-import com.intellij.openapi.project.impl.JBProtocolNavigateCommand.Companion.PROJECT_NAME_KEY
-import com.intellij.openapi.project.impl.JBProtocolNavigateCommand.Companion.REFERENCE_TARGET
-import com.intellij.openapi.project.impl.JBProtocolNavigateCommand.Companion.SELECTION
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement

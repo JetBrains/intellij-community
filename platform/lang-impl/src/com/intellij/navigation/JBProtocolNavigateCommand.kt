@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.project.impl
+package com.intellij.navigation
 
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
@@ -8,7 +8,6 @@ import com.intellij.ide.util.gotoByName.ChooseByNameModel
 import com.intellij.ide.util.gotoByName.ChooseByNameViewModel
 import com.intellij.ide.util.gotoByName.DefaultChooseByNameItemProvider
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2
-import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.application.JBProtocolCommand
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.LogicalPosition
@@ -29,7 +28,7 @@ class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
     // handles URLs of the following types:
 
     // jetbrains://idea/navigate/reference?project=IDEA
-    // [&reference[X]=com.intellij.openapi.project.impl.JBProtocolNavigateCommand[.perform][#perform]]+
+    // [&reference[X]=com.intellij.navigation.JBProtocolNavigateCommand[.perform][#perform]]+
     // [&path[X]=com/intellij/openapi/project/impl/JBProtocolNavigateCommand.kt[:23[:1]]]+
     // [&selection[X]=25:5-26:6]+
 
