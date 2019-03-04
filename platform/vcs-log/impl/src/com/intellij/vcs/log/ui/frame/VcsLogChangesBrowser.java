@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
@@ -32,10 +33,7 @@ import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.index.IndexedDetails;
 import com.intellij.vcs.log.history.FileHistoryKt;
 import com.intellij.vcs.log.history.FileHistoryUtil;
-import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
-import com.intellij.vcs.log.impl.MergedChange;
-import com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider;
-import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
@@ -161,42 +159,76 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
   }
 
   public void setSelectedDetails(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
+    setSelectedDetails(detailsList, false);
+  }
+
+  private void setSelectedDetails(@NotNull List<? extends VcsFullCommitDetails> detailsList, boolean showBigCommits) {
     myChanges.clear();
     myChangesToParents.clear();
     myRoots.clear();
 
-    myRoots.addAll(ContainerUtil.map(detailsList, detail -> detail.getRoot()));
-
     if (detailsList.isEmpty()) {
       myViewer.setEmptyText(EMPTY_SELECTION_TEXT);
     }
-    else if (detailsList.size() == 1) {
-      VcsFullCommitDetails detail = notNull(getFirstItem(detailsList));
-      myChanges.addAll(detail.getChanges());
-
-      if (detail.getParents().size() > 1) {
-        for (int i = 0; i < detail.getParents().size(); i++) {
-          THashSet<Change> changesSet = ContainerUtil.newIdentityTroveSet(detail.getChanges(i));
-          myChangesToParents.put(new CommitId(detail.getParents().get(i), detail.getRoot()), changesSet);
-        }
-      }
-
-      if (myChanges.isEmpty() && detail.getParents().size() > 1) {
-        myViewer.getEmptyText().setText("No merged conflicts.").
-          appendSecondaryText("Show changes to parents", VcsLogUiUtil.getLinkAttributes(),
-                              e -> myUiProperties.set(SHOW_CHANGES_FROM_PARENTS, true));
+    else {
+      int maxSize = getMaxSize(detailsList);
+      if (maxSize > Registry.intValue("vcs.log.max.changes.shown") && !showBigCommits) {
+        String commitText = detailsList.size() == 1 ? "This commit" : "One of the selected commits";
+        myViewer.getEmptyText().setText(commitText + " has " + maxSize + " changes").
+          appendSecondaryText("Show anyway", VcsLogUiUtil.getLinkAttributes(), e -> setSelectedDetails(detailsList, true));
       }
       else {
-        myViewer.setEmptyText("");
+        myRoots.addAll(ContainerUtil.map(detailsList, detail -> detail.getRoot()));
+
+        if (detailsList.size() == 1) {
+          VcsFullCommitDetails detail = notNull(getFirstItem(detailsList));
+          myChanges.addAll(detail.getChanges());
+
+          if (detail.getParents().size() > 1) {
+            for (int i = 0; i < detail.getParents().size(); i++) {
+              THashSet<Change> changesSet = ContainerUtil.newIdentityTroveSet(detail.getChanges(i));
+              myChangesToParents.put(new CommitId(detail.getParents().get(i), detail.getRoot()), changesSet);
+            }
+          }
+
+          if (myChanges.isEmpty() && detail.getParents().size() > 1) {
+            myViewer.getEmptyText().setText("No merged conflicts.").
+              appendSecondaryText("Show changes to parents", VcsLogUiUtil.getLinkAttributes(),
+                                  e -> myUiProperties.set(SHOW_CHANGES_FROM_PARENTS, true));
+          }
+          else {
+            myViewer.setEmptyText("");
+          }
+        }
+        else {
+          myChanges.addAll(VcsLogUtil.collectChanges(detailsList, VcsFullCommitDetails::getChanges));
+          myViewer.setEmptyText("");
+        }
       }
-    }
-    else {
-      myChanges.addAll(VcsLogUtil.collectChanges(detailsList, VcsFullCommitDetails::getChanges));
-      myViewer.setEmptyText("");
     }
 
     myViewer.rebuildTree();
     if (myModelUpdateListener != null) myModelUpdateListener.run();
+  }
+
+  private static int getMaxSize(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
+    int maxSize = 0;
+    for (VcsFullCommitDetails details : detailsList) {
+      int size = 0;
+      if (details instanceof VcsIndexableDetails) {
+        for (int i = 0; i < details.getParents().size(); i++) {
+          size += ((VcsIndexableDetails)details).getModifiedPaths(i).size();
+          size += ((VcsIndexableDetails)details).getRenamedPaths(i).size();
+        }
+      }
+      else {
+        for (int i = 0; i < details.getParents().size(); i++) {
+          size += details.getChanges(i).size();
+        }
+      }
+      maxSize = Math.max(size, maxSize);
+    }
+    return maxSize;
   }
 
   @NotNull
