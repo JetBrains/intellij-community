@@ -3,6 +3,7 @@ package com.intellij.openapi.application.impl;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.async.AsyncExecution;
 import com.intellij.openapi.application.async.InSmartMode;
@@ -12,6 +13,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -67,6 +69,12 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
   @Override
   public NonBlockingReadAction<T> expireWhen(@NotNull BooleanSupplier expireCondition) {
     return new NonBlockingReadActionImpl<>(myEdtFinish, myConstraints, () -> myExpireCondition.getAsBoolean() || expireCondition.getAsBoolean(), myComputation);
+  }
+
+  @Override
+  public NonBlockingReadAction<T> expireWith(@NotNull Disposable parentDisposable) {
+    // This is a stub implementation backported to 191 in order to ease cherry-picks from master
+    return expireWhen(() -> Disposer.isDisposed(parentDisposable));
   }
 
   @Override

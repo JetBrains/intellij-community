@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.Contract;
@@ -38,6 +39,14 @@ public interface NonBlockingReadAction<T> {
    */
   @Contract(pure=true)
   NonBlockingReadAction<T> expireWhen(@NotNull BooleanSupplier expireCondition);
+
+  /**
+   * NOTE: This has a stub implementation delegating to {@link #expireWhen(BooleanSupplier)},
+   *       which is backported to 191 in order to ease cherry-picks from master.
+   * @return a copy of this builder that cancels submitted read actions once the specified disposable is disposed.
+   */
+  @Contract(pure=true)
+  NonBlockingReadAction<T> expireWith(@NotNull Disposable parentDisposable);
 
   /**
    * @return a copy of this builder that completes submitted read actions on UI thread with the given modality state.
