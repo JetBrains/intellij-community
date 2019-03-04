@@ -2,6 +2,8 @@ package circlet.auth
 
 import circlet.client.api.*
 import circlet.common.oauth.*
+import circlet.components.*
+import circlet.utils.*
 import circlet.workspaces.*
 import io.ktor.application.*
 import io.ktor.request.*
@@ -63,12 +65,13 @@ class IdeaAuthenticator(val lifetime: Lifetime, val config: WorkspaceConfigurati
     }
 
     suspend fun localAuthToken(): OAuthTokenResponse {
-        val state = persis
+        // todo: handle nulls.
+        val state = circletWorkspace.workspaces.value!!.workspaceStateFromPersistence()!!
         return refreshTokenFlow(
             circletURL = config.server,
             clientId = config.clientId,
             clientSecret = config.clientSecret,
-            refreshToken = refreshToken
+            refreshToken = state.token.refreshToken!!
         )
     }
 }

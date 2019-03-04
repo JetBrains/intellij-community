@@ -18,7 +18,7 @@ val circletWorkspace get() = application.getComponent<CircletWorkspaceComponent>
 class CircletWorkspaceComponent : ApplicationComponent, LifetimedComponent by SimpleLifetimedComponent(), WorkspaceHost {
 
     private val workspacesLifetimes = SequentialLifetimes(lifetime)
-    private val workspaces = mutableProperty<Workspaces?>(null)
+    val workspaces = mutableProperty<Workspaces?>(null)
 
     val workspace = flatMap(workspaces, null) {
         (it?.workspace ?: mutableProperty<Workspace?>(null)) as MutableProperty<Workspace?>
@@ -72,7 +72,7 @@ class CircletWorkspaceComponent : ApplicationComponent, LifetimedComponent by Si
             wss.signInWithWorkspaceState(state)
         }
         else {
-
+            workspaces.value = null
         }
     }
 
