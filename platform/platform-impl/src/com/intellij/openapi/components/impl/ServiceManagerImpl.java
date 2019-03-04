@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.StartUpMeasurer;
+import com.intellij.util.StartUpMeasurer.Activities;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.pico.AssignableToComponentAdapter;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
@@ -43,7 +44,9 @@ import java.util.function.Consumer;
 public final class ServiceManagerImpl implements Disposable {
   private static final Logger LOG = Logger.getInstance(ServiceManagerImpl.class);
 
-  static void registerServices(@NotNull List<ServiceDescriptor> services, @NotNull IdeaPluginDescriptor pluginDescriptor, @NotNull ComponentManagerEx componentManager) {
+  static void registerServices(@NotNull List<ServiceDescriptor> services,
+                               @NotNull IdeaPluginDescriptor pluginDescriptor,
+                               @NotNull ComponentManagerEx componentManager) {
     MutablePicoContainer picoContainer = (MutablePicoContainer)componentManager.getPicoContainer();
     for (ServiceDescriptor descriptor : services) {
       // Allow to re-define service implementations in plugins.
@@ -97,7 +100,8 @@ public final class ServiceManagerImpl implements Disposable {
     return result;
   }
 
-  public static void processAllImplementationClasses(@NotNull ComponentManagerImpl componentManager, @NotNull BiPredicate<? super Class<?>, ? super PluginDescriptor> processor) {
+  public static void processAllImplementationClasses(@NotNull ComponentManagerImpl componentManager,
+                                                     @NotNull BiPredicate<? super Class<?>, ? super PluginDescriptor> processor) {
     @SuppressWarnings("unchecked")
     Collection<ComponentAdapter> adapters = componentManager.getPicoContainer().getComponentAdapters();
     if (adapters.isEmpty()) {
@@ -228,7 +232,8 @@ public final class ServiceManagerImpl implements Disposable {
     @NotNull
     private Object createAndInitialize(@NotNull PicoContainer container) {
       // if it will be module service, then get rid of such component instead of measurement
-      StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(myComponentManager instanceof Application ? StartUpMeasurer.Activities.APP_SERVICE : StartUpMeasurer.Activities.PROJECT_SERVICE);
+      boolean appComponent = myComponentManager instanceof Application;
+      StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(appComponent ? Activities.APP_SERVICE : Activities.PROJECT_SERVICE);
       Object instance = getDelegate().getComponentInstance(container);
       if (instance instanceof Disposable) {
         Disposer.register(myComponentManager, (Disposable)instance);

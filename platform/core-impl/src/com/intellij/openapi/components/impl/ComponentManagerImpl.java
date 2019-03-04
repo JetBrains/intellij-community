@@ -26,6 +26,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.StartUpMeasurer;
+import com.intellij.util.StartUpMeasurer.Activities;
+import com.intellij.util.StartUpMeasurer.Phases;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
@@ -79,14 +81,19 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return null;
   }
 
-  protected final void init(@NotNull List<? extends IdeaPluginDescriptor> plugins, @Nullable ProgressIndicator indicator, @Nullable Runnable componentsRegistered, boolean isNeededToMeasure) {
-    StartUpMeasurer.MeasureToken totalMeasureToken = isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix() + StartUpMeasurer.Phases.INITIALIZE_COMPONENTS_SUFFIX) : null;
+  protected final void init(@NotNull List<? extends IdeaPluginDescriptor> plugins,
+                            @Nullable ProgressIndicator indicator,
+                            @Nullable Runnable componentsRegistered,
+                            boolean isNeededToMeasure) {
+    StartUpMeasurer.MeasureToken totalMeasureToken =
+      isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix() + Phases.INITIALIZE_COMPONENTS_SUFFIX) : null;
 
     final Application app = ApplicationManager.getApplication();
     boolean headless = app == null || app.isHeadlessEnvironment();
 
     String measureTokenNamePrefix = StringUtil.notNullize(measureTokenNamePrefix());
-    StartUpMeasurer.MeasureToken measureToken = isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix + StartUpMeasurer.Phases.REGISTER_COMPONENTS_SUFFIX) : null;
+    StartUpMeasurer.MeasureToken measureToken =
+      isNeededToMeasure ? StartUpMeasurer.start(measureTokenNamePrefix + Phases.REGISTER_COMPONENTS_SUFFIX) : null;
     int componentConfigCount = 0;
     for (IdeaPluginDescriptor plugin : plugins) {
       for (ComponentConfig config : getMyComponentConfigsFromDescriptor(plugin)) {
@@ -109,14 +116,14 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myComponentConfigCount = componentConfigCount;
 
     if (componentsRegistered != null) {
-      measureToken = isNeededToMeasure ? totalMeasureToken.startChild(measureTokenNamePrefix + StartUpMeasurer.Phases.COMPONENTS_REGISTERED_CALLBACK_SUFFIX) : null;
+      measureToken = isNeededToMeasure ? totalMeasureToken.startChild(measureTokenNamePrefix + Phases.COMPONENTS_REGISTERED_CALLBACK_SUFFIX) : null;
       componentsRegistered.run();
       if (measureToken != null) {
         measureToken.end();
       }
     }
 
-    measureToken = isNeededToMeasure ? totalMeasureToken.startChild(measureTokenNamePrefix + StartUpMeasurer.Phases.CREATE_COMPONENTS_SUFFIX) : null;
+    measureToken = isNeededToMeasure ? totalMeasureToken.startChild(measureTokenNamePrefix + Phases.CREATE_COMPONENTS_SUFFIX) : null;
     createComponents(indicator);
     if (measureToken != null) {
       measureToken.end();
@@ -220,7 +227,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @TestOnly
-  public void registerComponentImplementation(@NotNull Class<?> componentKey, @NotNull Class<?> componentImplementation, boolean shouldBeRegistered) {
+  public void registerComponentImplementation(@NotNull Class<?> componentKey,
+                                              @NotNull Class<?> componentImplementation,
+                                              boolean shouldBeRegistered) {
     MutablePicoContainer picoContainer = getPicoContainer();
     ComponentConfigComponentAdapter adapter = (ComponentConfigComponentAdapter)picoContainer.unregisterComponent(componentKey);
     if (shouldBeRegistered) LOG.assertTrue(adapter != null);
@@ -256,7 +265,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     List<T> result = null;
     // we must use instances only from our adapter (could be service or extension point or something else)
     for (ComponentAdapter componentAdapter : ((DefaultPicoContainer)getPicoContainer()).getComponentAdapters()) {
-      if (componentAdapter instanceof ComponentConfigComponentAdapter && ReflectionUtil.isAssignable(baseClass, componentAdapter.getComponentImplementation())) {
+      if (componentAdapter instanceof ComponentConfigComponentAdapter &&
+          ReflectionUtil.isAssignable(baseClass, componentAdapter.getComponentImplementation())) {
         //noinspection unchecked
         T instance = (T)((ComponentConfigComponentAdapter)componentAdapter).myInitializedComponentInstance;
         if (instance != null) {
@@ -419,7 +429,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       BaseComponent loadedComponent = myNameToComponent.get(componentName);
       // component may have been already loaded by PicoContainer, so fire error only if components are really different
       if (!instance.equals(loadedComponent)) {
-        String errorMessage = "Component name collision: " + componentName + " " + (loadedComponent == null ? "null" : loadedComponent.getClass()) + " and " + instance.getClass();
+        String errorMessage = "Component name collision: " + componentName +
+                              ' ' + (loadedComponent == null ? "null" : loadedComponent.getClass()) + " and " + instance.getClass();
         PluginException.logPluginError(LOG, errorMessage, null, instance.getClass());
       }
     }
@@ -453,7 +464,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
 
     @Override
-    public Object getComponentInstance(@NotNull PicoContainer picoContainer) throws PicoInitializationException, PicoIntrospectionException, ProcessCanceledException {
+    public Object getComponentInstance(@NotNull PicoContainer picoContainer)
+      throws PicoInitializationException, PicoIntrospectionException, ProcessCanceledException {
+
       Object instance = myInitializedComponentInstance;
       // getComponent could be called during some component.dispose() call, in this case we don't attempt to instantiate component
       if (instance != null || myDisposed) {
@@ -469,7 +482,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
           }
 
           // if it will be module component, then get rid of such component instead of measurement
-          StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(ComponentManagerImpl.this instanceof Application ? StartUpMeasurer.Activities.APP_COMPONENT : StartUpMeasurer.Activities.PROJECT_COMPONENT);
+          boolean appComponent = ComponentManagerImpl.this instanceof Application;
+          StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(appComponent ? Activities.APP_COMPONENT : Activities.PROJECT_COMPONENT);
           instance = super.getComponentInstance(picoContainer);
 
           if (myInitializing) {

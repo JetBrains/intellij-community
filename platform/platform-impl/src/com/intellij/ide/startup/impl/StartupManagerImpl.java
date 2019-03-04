@@ -89,7 +89,8 @@ public class StartupManagerImpl extends StartupManagerEx {
   public synchronized void registerPostStartupActivity(@NotNull Runnable runnable) {
     checkNonDefaultProject();
     LOG.assertTrue(!myPostStartupActivitiesPassed, "Registering post-startup activity that will never be run:" +
-                                                   " disposed=" + myProject.isDisposed() + "; open=" + myProject.isOpen() + "; passed=" + myStartupActivitiesPassed);
+                                                   " disposed=" + myProject.isDisposed() + "; open=" + myProject.isOpen() +
+                                                   "; passed=" + myStartupActivitiesPassed);
     (DumbService.isDumbAware(runnable) ? myDumbAwarePostStartupActivities : myNotDumbAwarePostStartupActivities).add(runnable);
   }
 
@@ -156,7 +157,8 @@ public class StartupManagerImpl extends StartupManagerEx {
     if (duration > 100 && !app.isUnitTestMode()) {
       boolean edt = app.isDispatchThread();
       if (edt && uiFreezeWarned.compareAndSet(false, true)) {
-        LOG.info("Some post-startup activities freeze UI for noticeable time. Please consider making them DumbAware to do them in background under modal progress, or just making them faster to speed up project opening.");
+        LOG.info("Some post-startup activities freeze UI for noticeable time. Please consider making them DumbAware to run them in background" +
+                 " under modal progress, or just making them faster to speed up project opening.");
       }
       LOG.info(extension.getClass().getSimpleName() + " run in " + duration + "ms " + (edt ? "on UI thread" : "under project opening modal progress"));
     }
