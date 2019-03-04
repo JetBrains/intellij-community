@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -213,6 +214,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     }
 
     data.select(ContainerUtil.getFirstItem(data.myVariants));
+    IdeFocusManager.getGlobalInstance().requestFocus(editor.getContentComponent(), true);
  }
 
   static final Key<SmartStepData> SMART_STEP_INPLACE_DATA = Key.create("SMART_STEP_INPLACE_DATA");
