@@ -54,7 +54,7 @@ class CircletConfigurable : SearchableConfigurable {
                                 addActionListener {
                                     connectButton.isEnabled = false
                                     val servername = server.text
-                                    connect(servername, { it.authToken() }, false)
+                                    connect(servername, { it.authTokenInteractive() }, false)
                                 }
                             })
                             if (st.error != null) {
@@ -115,7 +115,7 @@ class CircletConfigurable : SearchableConfigurable {
                         is OAuthTokenResponse.Success -> {
                             connectLt.using { probleLt ->
                                 val client = KCircletClient(probleLt, wsConfig.server, ps)
-                                client.start(accessToken.accessToken)
+                                client.start(accessToken.toTokenInfo())
                                 val nState = fetchState(client)
                                 state.value = LoginState.Connected(servername, nState)
                             }
@@ -146,12 +146,12 @@ class CircletConfigurable : SearchableConfigurable {
 
     override fun isModified(): Boolean {
         val stateFromSettings = circletSettings.settings.value
-        val stateFromUi = stateFromUi(state.value)
+        val stateFromUi = settingsFromUi(state.value)
         return stateFromSettings.server != stateFromUi.server ||
             stateFromSettings.enabled != stateFromUi.enabled
     }
 
-    private fun stateFromUi(state: LoginState): CircletServerSettings {
+    private fun settingsFromUi(state: LoginState): CircletServerSettings {
         return CircletServerSettings(
             state is LoginState.Connected,
             state.server
@@ -165,12 +165,15 @@ class CircletConfigurable : SearchableConfigurable {
     override fun apply() {
         launch(Lifetime.Eternal, Ui) {
             val st = state.value
+
+            // 1. save workspace settings
+            val settings = settingsFromUi(st)
+            circletSettings.applySettings(settings)
+
+            // 2. apply login information
             val state = if (st is LoginState.Connected) st.workspaceState else null
-            val stateFromUi = stateFromUi(st)
-            circletSettings.applySettings(stateFromUi)
-            if (state != null) {
-                circletWorkspace.applyState(state)
-            }
+
+            circletWorkspace.applyState(state)
         }
     }
 

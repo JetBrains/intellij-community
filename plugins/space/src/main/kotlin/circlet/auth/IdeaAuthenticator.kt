@@ -2,9 +2,7 @@ package circlet.auth
 
 import circlet.client.api.*
 import circlet.common.oauth.*
-import circlet.utils.*
 import circlet.workspaces.*
-import circlet.workspaces.Authenticator
 import io.ktor.application.*
 import io.ktor.request.*
 import io.ktor.response.*
@@ -22,9 +20,9 @@ import kotlin.coroutines.*
 
 val log = logger<IdeaAuthenticator>()
 
-class IdeaAuthenticator(val lifetime: Lifetime, val config: WorkspaceConfiguration) : Authenticator {
+class IdeaAuthenticator(val lifetime: Lifetime, val config: WorkspaceConfiguration) {
 
-    suspend fun authToken(): OAuthTokenResponse {
+    suspend fun authTokenInteractive(): OAuthTokenResponse {
 
         val port = selectFreePort(10000)
         val redirectUri = "http://localhost:$port/auth"
@@ -36,12 +34,13 @@ class IdeaAuthenticator(val lifetime: Lifetime, val config: WorkspaceConfigurati
                     routing {
                         get("auth") {
                             val token = token(call.request.uri, redirectUri)
-                            call.respondText("<script>close()</script>",io.ktor.http.ContentType("text", "html"))
+                            call.respondText("<script>close()</script>", io.ktor.http.ContentType("text", "html"))
                             cnt.resume(token)
                         }
                     }
                 }.start(wait = false)
-            } catch (th : Throwable) {
+            }
+            catch (th: Throwable) {
                 log.error(th, "Can't start server at: $redirectUri")
                 throw th
             }
@@ -63,9 +62,8 @@ class IdeaAuthenticator(val lifetime: Lifetime, val config: WorkspaceConfigurati
         return codeFlowToken(config.server, config.clientId, redirectUri, config.clientSecret, code)
     }
 
-    override suspend fun localAuthToken(): OAuthTokenResponse {
-        val refreshToken = IdeaPasswordSafePersistence.get("refresh_token") ?: return OAuthTokenResponse.Error("", "")
-
+    suspend fun localAuthToken(): OAuthTokenResponse {
+        val state = persis
         return refreshTokenFlow(
             circletURL = config.server,
             clientId = config.clientId,

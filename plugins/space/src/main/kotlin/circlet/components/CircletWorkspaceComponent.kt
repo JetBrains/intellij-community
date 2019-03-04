@@ -24,19 +24,16 @@ class CircletWorkspaceComponent : ApplicationComponent, LifetimedComponent by Si
         (it?.workspace ?: mutableProperty<Workspace?>(null)) as MutableProperty<Workspace?>
     }
 
-    override suspend fun getTokenInteractive(lifetime: Lifetime, authPersistence: Persistence, wsConfig: WorkspaceConfiguration): String {
-        val token = IdeaAuthenticator(lifetime, wsConfig).authToken()
+    override suspend fun getTokenInteractive(lifetime: Lifetime, authPersistence: Persistence, wsConfig: WorkspaceConfiguration): TokenInfo {
+        val token = IdeaAuthenticator(lifetime, wsConfig).authTokenInteractive()
         return when (token) {
             is OAuthTokenResponse.Success -> {
-                token.accessToken
+                token.toTokenInfo()
             }
             is OAuthTokenResponse.Error -> {
                 error("no token, todo:")
             }
         }
-    }
-
-    override fun signOut() {
     }
 
     override fun initComponent() {
@@ -65,9 +62,18 @@ class CircletWorkspaceComponent : ApplicationComponent, LifetimedComponent by Si
         }
     }
 
-    fun applyState(state: WorkspaceState) {
+    suspend fun applyState(state: WorkspaceState?) {
+        val lt = workspacesLifetimes.next()
+        val settings = circletSettings.settings.value
+        val wsConfig = ideaConfig(settings.server)
+        if (state != null && settings.server.isNotBlank() && settings.enabled) {
+            val wss = Workspaces(lt, this@CircletWorkspaceComponent, IdeaPasswordSafePersistence, wsConfig)
+            workspaces.value = wss
+            wss.signInWithWorkspaceState(state)
+        }
+        else {
 
-
+        }
     }
 
 }
