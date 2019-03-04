@@ -26,6 +26,7 @@ iml_module(
     ],
     test_srcs = ["testSrc"],
     test_tags = [
+        "manual",  # b/127523123
         "no_test_mac",  # b/127274100
         "no_test_windows",  # b/123974530
     ],
