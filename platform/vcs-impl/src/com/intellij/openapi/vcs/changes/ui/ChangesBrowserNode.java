@@ -1,12 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.ide.util.treeView.FileNameComparator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.NaturalFileNameComparator;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
@@ -320,7 +320,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   }
 
   protected static int compareFileNames(@NotNull String name1, @NotNull String name2) {
-    return NaturalFileNameComparator.INSTANCE.compare(name1, name2);
+    return FileNameComparator.INSTANCE.compare(name1, name2);
   }
 
   protected static int compareFilePaths(@NotNull FilePath path1, @NotNull FilePath path2) {

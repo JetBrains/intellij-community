@@ -15,8 +15,6 @@
  */
 package com.intellij.ide.util.treeView;
 
-import com.intellij.openapi.util.text.NaturalFileNameComparator;
-
 import java.util.Comparator;
 
 public class AlphaComparator implements Comparator<NodeDescriptor>{
@@ -37,6 +35,6 @@ public class AlphaComparator implements Comparator<NodeDescriptor>{
     if (s1 == null) return s2 == null ? 0 : -1;
     if (s2 == null) return +1;
 
-    return NaturalFileNameComparator.INSTANCE.compare(s1, s2);
+    return FileNameComparator.INSTANCE.compare(s1, s2);
   }
 }
