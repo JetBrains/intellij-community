@@ -24,7 +24,6 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
   public static final String continuationSizeKey = "continuation_indent_size";
   public static final String tabWidthKey = "tab_width";
   public static final String indentStyleKey = "indent_style";
-  public static final String INDENT_OPTION_VALUE_TAB = "tab";
 
   @Nullable
   @Override
@@ -50,19 +49,10 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
                                                       final VirtualFile file,
                                                       final CodeStyleSettings settings) {
     // Apply indent options
-    String indentSize = Utils.configValueForKey(outPairs, indentSizeKey);
+    final String indentSize = Utils.configValueForKey(outPairs, indentSizeKey);
     final String continuationIndentSize = Utils.configValueForKey(outPairs, continuationSizeKey);
     final String tabWidth = Utils.configValueForKey(outPairs, tabWidthKey);
-    String indentStyle = Utils.configValueForKey(outPairs, indentStyleKey);
-    if (!indentStyle.isEmpty()) {
-      if (INDENT_OPTION_VALUE_TAB.equalsIgnoreCase(indentStyle)) {
-        indentSize = "";
-      }
-    }
-    else if (INDENT_OPTION_VALUE_TAB.equalsIgnoreCase(indentSize)) {
-      indentStyle = INDENT_OPTION_VALUE_TAB;
-      indentSize = "";
-    }
+    final String indentStyle = Utils.configValueForKey(outPairs, indentStyleKey);
     final IndentOptions indentOptions = (IndentOptions)settings.getIndentOptions(file.getFileType()).clone();
     if (applyIndentOptions(project, indentOptions, indentSize, continuationIndentSize, tabWidth, indentStyle, file.getCanonicalPath())) {
       indentOptions.setOverrideLanguageOptions(true);
@@ -113,7 +103,7 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
   }
 
   private static String calculateIndentSize(final String tabWidth, final String indentSize) {
-    return indentSize.equals(INDENT_OPTION_VALUE_TAB) ? tabWidth : indentSize;
+    return indentSize.equals("tab") ? tabWidth : indentSize;
   }
 
   private static String calculateContinuationIndentSize(final String indentSize, final String continuationIndentSize) {
@@ -121,7 +111,7 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
   }
 
   private static String calculateTabWidth(final String tabWidth, final String indentSize) {
-    if (tabWidth.isEmpty() && indentSize.equals(INDENT_OPTION_VALUE_TAB)) {
+    if (tabWidth.isEmpty() && indentSize.equals("tab")) {
       return "";
     }
     else if (tabWidth.isEmpty()) {
@@ -162,8 +152,8 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
   }
 
   private static boolean applyIndentStyle(IndentOptions indentOptions, String indentStyle) {
-    if (indentStyle.equals(INDENT_OPTION_VALUE_TAB) || indentStyle.equals("space")) {
-      indentOptions.USE_TAB_CHARACTER = indentStyle.equals(INDENT_OPTION_VALUE_TAB);
+    if (indentStyle.equals("tab") || indentStyle.equals("space")) {
+      indentOptions.USE_TAB_CHARACTER = indentStyle.equals("tab");
       return true;
     }
     return false;

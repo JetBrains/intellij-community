@@ -19,6 +19,13 @@ public class EditorConfigStandardSettingsTest extends EditorConfigFileSettingsTe
     assertTrue("Expected Tab character for indentation", indentOptions.USE_TAB_CHARACTER);
   }
 
+  public void testIndentSizeTabWidth() {
+    PsiFile javaFile = findPsiFile("source.java");
+    final CommonCodeStyleSettings.IndentOptions indentOptions = CodeStyle.getIndentOptions(javaFile);
+    assertTrue("Expected Tab character for indentation", indentOptions.USE_TAB_CHARACTER);
+    assertEquals(2, indentOptions.TAB_SIZE);
+  }
+
   @Override
   protected String getRelativePath() {
     return "/plugins/editorconfig/testData/org/editorconfig/configmanagement/fileSettings";
