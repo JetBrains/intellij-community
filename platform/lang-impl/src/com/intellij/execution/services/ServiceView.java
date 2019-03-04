@@ -168,7 +168,7 @@ class ServiceView extends JPanel implements Disposable {
       @Override
       protected boolean onDoubleClick(MouseEvent event) {
         if (myLastSelection != null && myTreeModel.isLeaf(myLastSelection)) {
-          return myViewDescriptors.get(myLastSelection).handleDoubleClick();
+          return myViewDescriptors.get(myLastSelection).handleDoubleClick(event);
         }
         return false;
       }
@@ -421,6 +421,9 @@ class ServiceView extends JPanel implements Disposable {
 
       List<Object> result = new SmartList<>();
       for (Object item : subtree.getItems()) {
+        if (item instanceof NodeDescriptor) {
+          ((NodeDescriptor)item).update();
+        }
         myViewDescriptors.put(item, subtree.getItemDescriptor(item));
         mySubtrees.put(item, subtree.getNodeSubtree(item));
         myContributors.put(item, myContributors.get(parent));
@@ -443,14 +446,16 @@ class ServiceView extends JPanel implements Disposable {
           myContributors.put(node, contributor);
           List<Object> groups = contributor.getGroups(node);
           Object child = node;
-          TreePath path = new TreePath(groups.toArray()).pathByAddingChild(node);
-          while (path.getParentPath() != null) {
-            GroupNode groupNode = groupNodes.get(path.getParentPath());
-            myViewDescriptors.put(groupNode, contributor.getGroupDescriptor(groupNode.path.getLastPathComponent()));
-            myContributors.put(groupNode, contributor);
-            groupNode.children.add(child);
-            child = groupNode;
-            path = path.getParentPath();
+          if (!groups.isEmpty()) {
+            TreePath path = new TreePath(groups.toArray()).pathByAddingChild(node);
+            while (path.getParentPath() != null) {
+              GroupNode groupNode = groupNodes.get(path.getParentPath());
+              myViewDescriptors.put(groupNode, contributor.getGroupDescriptor(groupNode.path.getLastPathComponent()));
+              myContributors.put(groupNode, contributor);
+              groupNode.children.add(child);
+              child = groupNode;
+              path = path.getParentPath();
+            }
           }
           rootChildren.add(child);
         }
