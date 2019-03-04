@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.*;
@@ -265,11 +266,13 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
 
   @NotNull
   @Override
-  public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests,
-                                               @Nullable Collection<String> recursiveRoots,
-                                               @Nullable Collection<String> flatRoots) {
-    recursiveRoots = ObjectUtils.notNull(recursiveRoots, Collections.emptyList());
-    flatRoots = ObjectUtils.notNull(flatRoots, Collections.emptyList());
+  public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> _watchRequests,
+                                               @Nullable Collection<String> _recursiveRoots,
+                                               @Nullable Collection<String> _flatRoots) {
+    Collection<WatchRequest> watchRequests = ContainerUtil.skipNulls(_watchRequests);
+    LOG.assertTrue(watchRequests.size() == _watchRequests.size(), "watch requests collection should not contain `null` elements");
+    Collection<String> recursiveRoots = ObjectUtils.notNull(_recursiveRoots, Collections.emptyList());
+    Collection<String> flatRoots = ObjectUtils.notNull(_flatRoots, Collections.emptyList());
 
     Set<String> recursiveWatches = new HashSet<>(watchRequests.size());
     Set<String> flatWatches = new HashSet<>(watchRequests.size());
