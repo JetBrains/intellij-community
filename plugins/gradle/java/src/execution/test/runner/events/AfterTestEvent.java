@@ -88,9 +88,8 @@ public class AfterTestEvent extends AbstractTestEvent {
             comparisonPair = parseComparisonMessage(exceptionMsg, "\nExpected: \"(.*)\"\n\\s*but: was \"(.*)\"");
           }
 
-          final Couple<String> finalComparisonPair = comparisonPair;
-          if (finalComparisonPair != null) {
-            testProxy.setTestComparisonFailed(exceptionMsg, stackTrace, finalComparisonPair.second, finalComparisonPair.first);
+          if (comparisonPair != null) {
+            testProxy.setTestComparisonFailed(exceptionMsg, stackTrace, comparisonPair.second, comparisonPair.first);
           }
           else {
             testProxy.setTestFailed(exceptionMsg, stackTrace, "error".equals(failureType));
