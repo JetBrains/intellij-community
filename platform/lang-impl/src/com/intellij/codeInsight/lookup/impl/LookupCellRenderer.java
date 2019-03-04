@@ -167,7 +167,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     }
     myTailComponent.setFont(font);
     myTypeLabel.setFont(font);
-    myNameComponent.setIcon(augmentIcon(myLookup.getEditor(), presentation.getIcon(), myEmptyIcon));
+    myNameComponent.setIcon(augmentIcon(myLookup.getTopLevelEditor(), presentation.getIcon(), myEmptyIcon));
 
     final Color grayedForeground = nonFocusedSelection ? SELECTED_NON_FOCUSED_FOREGROUND_COLOR : getGrayedForeground(isSelected);
     myTypeLabel.clear();
