@@ -1290,6 +1290,7 @@ public class IdeEventQueue extends EventQueue {
       if (keymap != null) {
         if (!keymap.equals(lastActiveKeymap.get())) {
           String actionsAwareTypeaheadActionsList = Registry.get("action.aware.typeahead.actions.list").asString();
+          shortcutsShowingPopups.clear();
           actionsShowingPopupsList.addAll(StringUtil.split(actionsAwareTypeaheadActionsList, ","));
           actionsShowingPopupsList.forEach(actionId -> {
             List<Shortcut> shortcuts = Arrays.asList(keymap.getShortcuts(actionId));
