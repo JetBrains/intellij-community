@@ -21,12 +21,7 @@ class CircletSettingsComponent : PersistentStateComponent<CircletServerSettings>
         settings.value = state
     }
 
-    suspend fun connect(refreshToken: String?, state: CircletServerSettings) {
-        if (refreshToken != null) {
-            IdeaPasswordSafePersistence.put("refresh_token", refreshToken)
-        } else {
-            IdeaPasswordSafePersistence.put("refresh_token", "")
-        }
+    fun applySettings(state: CircletServerSettings) {
         settings.value = state
     }
 

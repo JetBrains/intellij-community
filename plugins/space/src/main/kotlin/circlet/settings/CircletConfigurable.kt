@@ -1,12 +1,12 @@
 package circlet.settings
 
 import circlet.auth.*
-import circlet.client.*
 import circlet.client.api.*
 import circlet.common.oauth.*
 import circlet.components.*
 import circlet.messages.*
 import circlet.platform.client.*
+import circlet.workspaces.*
 import com.intellij.openapi.options.*
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.wm.*
@@ -20,11 +20,6 @@ import javax.swing.*
 import javax.swing.Action.*
 
 val log = logger<CircletConfigurable>()
-
-class WorkspaceState(
-    val refreshToken: String?,
-    val profile: TD_MemberProfile
-)
 
 sealed class LoginState(val server: String) {
     class Disconnected(server: String, val error: String?) : LoginState(server)
@@ -114,7 +109,6 @@ class CircletConfigurable : SearchableConfigurable {
                     val wsConfig = ideaConfig(servername)
                     val host = IdeaAuthenticator(connectLt, wsConfig)
                     val ps = InMemoryPersistence()
-
                     val accessToken = getToken(host)
 
                     when (accessToken) {
@@ -122,8 +116,8 @@ class CircletConfigurable : SearchableConfigurable {
                             connectLt.using { probleLt ->
                                 val client = KCircletClient(probleLt, wsConfig.server, ps)
                                 client.start(accessToken.accessToken)
-                                val profile = client.me.info().profile.resolve()
-                                state.value = LoginState.Connected(servername, WorkspaceState(accessToken.refreshToken, profile))
+                                val nState = fetchState(client)
+                                state.value = LoginState.Connected(servername, nState)
                             }
 
                         }
@@ -171,9 +165,12 @@ class CircletConfigurable : SearchableConfigurable {
     override fun apply() {
         launch(Lifetime.Eternal, Ui) {
             val st = state.value
-            val refreshToken = if (st is LoginState.Connected) st.workspaceState.refreshToken else null
+            val state = if (st is LoginState.Connected) st.workspaceState else null
             val stateFromUi = stateFromUi(st)
-            circletSettings.connect(refreshToken, stateFromUi)
+            circletSettings.applySettings(stateFromUi)
+            if (state != null) {
+                circletWorkspace.applyState(state)
+            }
         }
     }
 
