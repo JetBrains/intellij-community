@@ -30,13 +30,13 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.vcs.ViewUpdateInfoNotification;
 import com.intellij.vcsUtil.VcsFileUtil;
+import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.commands.Git;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitLineHandler;
-import git4idea.commands.GitLineHandlerListener;
+import git4idea.commands.*;
+import git4idea.conflicts.GitConflict;
+import git4idea.conflicts.GitConflict.Status;
 import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.index.GitIndexUtil;
@@ -50,6 +50,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -449,5 +450,91 @@ public class GitMergeUtil {
 
     if (pathAmbiguous[0]) return null;
     return result[0];
+  }
+
+  @NotNull
+  public static List<GitConflict> getConflicts(@NotNull Project project,
+                                               @NotNull VirtualFile root,
+                                               boolean isReversed) throws VcsException {
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.STATUS);
+    h.setSilent(true);
+    h.addParameters("--porcelain", "-z", "--untracked-files=no", "--ignored=no", "--no-renames");
+    h.endOptions();
+    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
+
+    List<GitConflict> conflicts = new ArrayList<>();
+
+    StringScanner s = new StringScanner(output);
+    while (s.hasMoreData()) {
+      String line = s.boundedToken('\u0000'); // "XY <filepath>"
+      if (line.length() < 4 || line.charAt(2) != ' ') {
+        throw new VcsException("Can't parse conflicts near line: " + line);
+      }
+      final char xStatus = line.charAt(0);
+      final char yStatus = line.charAt(1);
+      final String path = line.substring(3);
+
+      if (xStatus == 'U' ||
+          yStatus == 'U' ||
+          (xStatus == 'A' && yStatus == 'A') ||
+          (xStatus == 'D' && yStatus == 'D')) {
+        FilePath filePath = GitContentRevision.createPath(root, path, true);
+        Status yoursStatus = xStatus == 'D' ? Status.DELETED : Status.MODIFIED;
+        Status theirsStatus = yStatus == 'D' ? Status.DELETED : Status.MODIFIED;
+        conflicts.add(new GitConflict(root, filePath, yoursStatus, theirsStatus, isReversed));
+      }
+    }
+
+    return conflicts;
+  }
+
+  public static void acceptOneVersion(@NotNull Project project,
+                                      @NotNull VirtualFile root,
+                                      @NotNull Collection<GitConflict> conflicts,
+                                      @NotNull GitConflict.ConflictSide side) throws VcsException {
+    boolean isCurrent = side == GitConflict.ConflictSide.OURS;
+
+    for (GitConflict conflict : conflicts) {
+      assert root.equals(conflict.getRoot());
+    }
+
+    List<FilePath> toCheckout = new ArrayList<>();
+    List<FilePath> toAdd = new ArrayList<>();
+    List<FilePath> toDelete = new ArrayList<>();
+
+    for (GitConflict conflict : conflicts) {
+      GitConflict.Status status = conflict.getStatus(side);
+      FilePath filePath = conflict.getFilePath();
+
+      if (status == GitConflict.Status.MODIFIED) {
+        toCheckout.add(filePath);
+        toAdd.add(filePath);
+      }
+      else {
+        toDelete.add(filePath);
+      }
+    }
+
+    for (List<String> paths : VcsFileUtil.chunkPaths(root, toCheckout)) {
+      GitLineHandler handler = new GitLineHandler(project, root, GitCommand.CHECKOUT);
+      handler.addParameters(isCurrent ? "--ours" : "--theirs");
+      handler.endOptions();
+      handler.addParameters(paths);
+
+      GitCommandResult result = Git.getInstance().runCommand(handler);
+      if (!result.success()) throw new VcsException(result.getErrorOutputAsJoinedString());
+    }
+
+    try {
+      GitFileUtils.addPathsForce(project, root, toAdd);
+      GitFileUtils.deletePaths(project, root, toDelete);
+    }
+    catch (VcsException e) {
+      LOG.error(String.format("Unexpected exception during the git operation: modified - %s deleted - %s)", toAdd, toDelete), e);
+    }
+  }
+
+  public static boolean isReverseRoot(@NotNull GitRepository repository) {
+    return repository.getState().equals(GitRepository.State.REBASING);
   }
 }
