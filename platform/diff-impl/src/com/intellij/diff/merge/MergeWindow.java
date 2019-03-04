@@ -32,19 +32,17 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class MergeWindow {
+public abstract class MergeWindow {
   private static final Logger LOG = Logger.getInstance(MergeWindow.class);
 
   @Nullable private final Project myProject;
-  @NotNull private final MergeRequest myMergeRequest;
   @NotNull private final DiffDialogHints myHints;
 
   private MergeRequestProcessor myProcessor;
   private WindowWrapper myWrapper;
 
-  public MergeWindow(@Nullable Project project, @NotNull MergeRequest mergeRequest, @NotNull DiffDialogHints hints) {
+  public MergeWindow(@Nullable Project project, @NotNull DiffDialogHints hints) {
     myProject = project;
-    myMergeRequest = mergeRequest;
     myHints = hints;
   }
 
@@ -61,7 +59,7 @@ public class MergeWindow {
       .setParent(myHints.getParent())
       .setDimensionServiceKey(dialogGroupKey)
       .setPreferredFocusedComponent(() -> myProcessor.getPreferredFocusedComponent())
-      .setOnShowCallback(() -> myProcessor.init())
+      .setOnShowCallback(() -> initProcessor(myProcessor))
       .setOnCloseHandler(() -> myProcessor.checkCloseAction())
       .build();
     myWrapper.setImages(DiffUtil.DIFF_FRAME_ICONS);
@@ -82,7 +80,7 @@ public class MergeWindow {
 
   @NotNull
   private MergeRequestProcessor createProcessor() {
-    return new MergeRequestProcessor(myProject, myMergeRequest) {
+    return new MergeRequestProcessor(myProject) {
       @Override
       public void closeDialog() {
         myWrapper.close();
@@ -102,6 +100,8 @@ public class MergeWindow {
     };
   }
 
+  protected abstract void initProcessor(@NotNull MergeRequestProcessor processor);
+
   private static class MyPanel extends JPanel {
     MyPanel(@NotNull JComponent content) {
       super(new BorderLayout());
@@ -113,6 +113,36 @@ public class MergeWindow {
       Dimension windowSize = DiffUtil.getDefaultDiffWindowSize();
       Dimension size = super.getPreferredSize();
       return new Dimension(Math.max(windowSize.width, size.width), Math.max(windowSize.height, size.height));
+    }
+  }
+
+  public static class ForRequest extends MergeWindow {
+    @NotNull private final MergeRequest myMergeRequest;
+
+    public ForRequest(@Nullable Project project, @NotNull MergeRequest mergeRequest, @NotNull DiffDialogHints hints) {
+      super(project, hints);
+      myMergeRequest = mergeRequest;
+    }
+
+
+    @Override
+    protected void initProcessor(@NotNull MergeRequestProcessor processor) {
+      processor.init(myMergeRequest);
+    }
+  }
+
+  public static class ForProducer extends MergeWindow {
+    @NotNull private final MergeRequestProducer myMergeRequestProducer;
+
+    public ForProducer(@Nullable Project project, @NotNull MergeRequestProducer mergeRequestProducer, @NotNull DiffDialogHints hints) {
+      super(project, hints);
+      myMergeRequestProducer = mergeRequestProducer;
+    }
+
+
+    @Override
+    protected void initProcessor(@NotNull MergeRequestProcessor processor) {
+      processor.init(myMergeRequestProducer);
     }
   }
 }

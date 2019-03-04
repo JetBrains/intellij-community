@@ -17,6 +17,7 @@ package com.intellij.diff;
 
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.merge.MergeRequest;
+import com.intellij.diff.merge.MergeRequestProducer;
 import com.intellij.diff.merge.MergeTool;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.components.ServiceManager;
@@ -51,7 +52,7 @@ public abstract class DiffManagerEx extends DiffManager {
   public abstract void showMergeBuiltin(@Nullable Project project, @NotNull MergeRequest request);
 
   @CalledInAwt
-  public abstract void showMergeBuiltin(@Nullable Project project, @NotNull MergeRequest request, @NotNull DiffDialogHints hints);
+  public abstract void showMergeBuiltin(@Nullable Project project, @NotNull MergeRequestProducer request, @NotNull DiffDialogHints hints);
 
   @NotNull
   public abstract List<DiffTool> getDiffTools();

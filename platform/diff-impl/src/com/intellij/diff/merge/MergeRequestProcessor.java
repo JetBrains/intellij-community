@@ -16,6 +16,8 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -62,15 +64,14 @@ public abstract class MergeRequestProcessor implements Disposable {
   @NotNull private final Wrapper myToolbarStatusPanel;
   @NotNull private final Wrapper myButtonsPanel;
 
-  @NotNull private final MergeRequest myRequest;
+  @Nullable private MergeRequest myRequest;
 
   @NotNull private MergeTool.MergeViewer myViewer;
   @Nullable private BooleanGetter myCloseHandler;
   private boolean myConflictResolved = false;
 
-  public MergeRequestProcessor(@Nullable Project project, @NotNull MergeRequest request) {
+  public MergeRequestProcessor(@Nullable Project project) {
     myProject = project;
-    myRequest = request;
 
     myContext = new MyDiffContext();
     myContext.putUserData(DiffUserDataKeys.PLACE, DiffPlaces.MERGE);
@@ -95,16 +96,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     myMainPanel.setFocusTraversalPolicyProvider(true);
     myMainPanel.setFocusTraversalPolicy(new MyFocusTraversalPolicy());
 
-    MergeTool.MergeViewer viewer;
-    try {
-      viewer = getFittedTool().createComponent(myContext, myRequest);
-    }
-    catch (Throwable e) {
-      LOG.error(e);
-      viewer = ErrorMergeTool.INSTANCE.createComponent(myContext, myRequest);
-    }
-
-    myViewer = viewer;
+    myViewer = new MessageMergeViewer(myContext, "Loading...");
   }
 
   //
@@ -112,9 +104,48 @@ public abstract class MergeRequestProcessor implements Disposable {
   //
 
   @CalledInAwt
-  public void init() {
-    setTitle(myRequest.getTitle());
+  public void init(@NotNull MergeRequest request) {
+    setTitle(request.getTitle());
+
+    myRequest = request;
+    myViewer = createViewerFor(request);
     initViewer();
+  }
+
+  @CalledInAwt
+  public void init(@NotNull MergeRequestProducer request) {
+    setTitle(request.getName());
+    initViewer();
+
+    ModalityState modality = ModalityState.stateForComponent(myPanel);
+    BackgroundTaskUtil.executeOnPooledThread(this, () -> {
+      try {
+        MergeRequest mergeRequest = request.process(myContext, ProgressManager.getInstance().getProgressIndicator());
+        ApplicationManager.getApplication().invokeLater(
+          () -> {
+            myRequest = mergeRequest;
+            swapViewer(createViewerFor(mergeRequest));
+          },
+          modality);
+      }
+      catch (Throwable e) {
+        LOG.warn(e);
+        ApplicationManager.getApplication().invokeLater(
+          () -> swapViewer(new MessageMergeViewer(myContext, "Can't show merge: " + e.getMessage())),
+          modality);
+      }
+    });
+  }
+
+  @NotNull
+  private MergeTool.MergeViewer createViewerFor(@NotNull MergeRequest request) {
+    try {
+      return getFittedTool(request).createComponent(myContext, request);
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+      return ErrorMergeTool.INSTANCE.createComponent(myContext, request);
+    }
   }
 
   @CalledInAwt
@@ -194,7 +225,7 @@ public abstract class MergeRequestProcessor implements Disposable {
 
     DiffUtil.addActionBlock(group, viewerActions);
 
-    List<AnAction> requestContextActions = myRequest.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS);
+    List<AnAction> requestContextActions = myRequest != null ? myRequest.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS) : null;
     DiffUtil.addActionBlock(group, requestContextActions);
 
     List<AnAction> contextActions = myContext.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS);
@@ -218,10 +249,10 @@ public abstract class MergeRequestProcessor implements Disposable {
   }
 
   @NotNull
-  private MergeTool getFittedTool() {
+  private MergeTool getFittedTool(@NotNull MergeRequest request) {
     for (MergeTool tool : myAvailableTools) {
       try {
-        if (tool.canShow(myContext, myRequest)) return tool;
+        if (tool.canShow(myContext, request)) return tool;
       }
       catch (Throwable e) {
         LOG.error(e);
@@ -252,7 +283,7 @@ public abstract class MergeRequestProcessor implements Disposable {
 
   @CalledInAwt
   private void applyRequestResult(@NotNull MergeResult result) {
-    if (myConflictResolved) return;
+    if (myConflictResolved || myRequest == null) return;
     myConflictResolved = true;
     try {
       myRequest.applyResult(result);
@@ -265,6 +296,7 @@ public abstract class MergeRequestProcessor implements Disposable {
 
   @CalledInAwt
   private void reopenWithTool(@NotNull MergeTool tool) {
+    if (myRequest == null) return;
     if (myConflictResolved) {
       LOG.warn("Can't reopen with " + tool + " - conflict already resolved");
       return;
@@ -284,6 +316,10 @@ public abstract class MergeRequestProcessor implements Disposable {
       return;
     }
 
+    swapViewer(newViewer);
+  }
+
+  private void swapViewer(@NotNull MergeTool.MergeViewer newViewer) {
     DiffUtil.runPreservingFocus(myContext, () -> {
       destroyViewer();
       myViewer = newViewer;
@@ -438,7 +474,7 @@ public abstract class MergeRequestProcessor implements Disposable {
         return myProject;
       }
       else if (PlatformDataKeys.HELP_ID.is(dataId)) {
-        if (myRequest.getUserData(DiffUserDataKeys.HELP_ID) != null) {
+        if (myRequest != null && myRequest.getUserData(DiffUserDataKeys.HELP_ID) != null) {
           return myRequest.getUserData(DiffUserDataKeys.HELP_ID);
         }
         else {
@@ -449,7 +485,7 @@ public abstract class MergeRequestProcessor implements Disposable {
         return myViewer;
       }
 
-      DataProvider requestProvider = myRequest.getUserData(DiffUserDataKeys.DATA_PROVIDER);
+      DataProvider requestProvider = myRequest != null ? myRequest.getUserData(DiffUserDataKeys.DATA_PROVIDER) : null;
       if (requestProvider != null) {
         data = requestProvider.getData(dataId);
         if (data != null) return data;
