@@ -147,8 +147,8 @@ class CachedValueStabilityChecker {
   private static String nonEquivalence(Class<?> objectClass, Field field, Object v1, Object v2) {
     return "Incorrect CachedValue use: same CV with different captured context, this can cause unstable results and invalid PSI access." +
            "\nField " + field.getName() + " in " + objectClass + " has non-equivalent values:" +
-           "\n  " + v1 + " and" +
-           "\n  " + v2 +
+           "\n  " + v1 + " (" + v1.getClass().getName() + ") and" +
+           "\n  " + v2 + " (" + v2.getClass().getName() + ")" +
            "\nEither make `equals()` hold for these values, or avoid this dependency, e.g. by extracting CV provider into a static method.";
   }
 
