@@ -67,17 +67,19 @@ public class FileListeningTest extends IntegrationTestCase {
   }
 
   public void testIgnoringFilesRecursively() throws Exception {
-    addExcludedDir(myRoot.getPath() + "/dir/subdir");
-    addContentRoot(createModule("foo"), myRoot.getPath() + "/dir/subdir/subsubdir1");
+    String excluded = "dir/subdir";
+    addExcludedDir(myRoot.getPath() + "/" + excluded);
+    String contentUnderExcluded = excluded + "/subsubdir1";
+    addContentRoot(createModule("foo"), myRoot.getPath() + "/" + contentUnderExcluded);
 
     String dir = createDirectoryExternally("dir");
     String dir1_file = createFileExternally("dir/f.txt");
     createFileExternally("dir/f.class");
     createFileExternally("dir/subdir/f.txt");
-    String subsubdir1 = createDirectoryExternally("dir/subdir/subsubdir1");
-    String subsubdir1_file = createFileExternally("dir/subdir/subsubdir1/f.txt");
-    createDirectoryExternally("dir/subdir/subsubdir2");
-    createFileExternally("dir/subdir/subsubdir2/f.txt");
+    String subsubdir1 = createDirectoryExternally(contentUnderExcluded);
+    String subsubdir1_file = createFileExternally(contentUnderExcluded + "/f.txt");
+    createDirectoryExternally(excluded + "/subsubdir2");
+    createFileExternally(excluded + "/subsubdir2/f.txt");
 
     myRoot.refresh(false, true);
 

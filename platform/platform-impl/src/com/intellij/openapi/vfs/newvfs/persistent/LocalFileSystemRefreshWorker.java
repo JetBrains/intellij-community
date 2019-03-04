@@ -78,7 +78,9 @@ class LocalFileSystemRefreshWorker {
   }
 
   @NotNull
-  private RefreshContext createRefreshContext(@NotNull NewVirtualFileSystem fs, @NotNull PersistentFS persistentFS, @NotNull TObjectHashingStrategy<String> strategy) {
+  private RefreshContext createRefreshContext(@NotNull NewVirtualFileSystem fs,
+                                              @NotNull PersistentFS persistentFS,
+                                              @NotNull TObjectHashingStrategy<String> strategy) {
     int parallelism = Registry.intValue("vfs.use.nio-based.local.refresh.worker.parallelism", Runtime.getRuntime().availableProcessors() - 1);
     
     if (myIsRecursive && parallelism > 0 && !ApplicationManager.getApplication().isDispatchThread()) {
@@ -195,7 +197,7 @@ class LocalFileSystemRefreshWorker {
     addAllEventsFrom(refreshingFileVisitor);
   }
 
-  private void addAllEventsFrom(RefreshingFileVisitor refreshingFileVisitor) {
+  private void addAllEventsFrom(@NotNull RefreshingFileVisitor refreshingFileVisitor) {
     synchronized (myHelper) {
       myHelper.addAllEventsFrom(refreshingFileVisitor.getHelper());
     }
@@ -473,14 +475,15 @@ class LocalFileSystemRefreshWorker {
     }
   }
 
-  private static Path fixCaseIfNeeded(Path path, VirtualFile file) throws IOException {
+  @NotNull
+  private static Path fixCaseIfNeeded(@NotNull Path path, @NotNull VirtualFile file) throws IOException {
     if (SystemInfo.isFileSystemCaseSensitive) return path;
     // Mac: toRealPath() will return current file's name wrt case
     // Win: toRealPath(LinkOption.NOFOLLOW_LINKS) will return current file's name wrt case
     return file.is(VFileProperty.SYMLINK) ? path.toRealPath(LinkOption.NOFOLLOW_LINKS) : path.toRealPath();
   }
 
-  private static boolean isWritable(Path file, BasicFileAttributes a, boolean directory) {
+  private static boolean isWritable(@NotNull Path file, @NotNull BasicFileAttributes a, boolean directory) {
     boolean isWritable;
 
     if (a instanceof DosFileAttributes) {
@@ -496,12 +499,12 @@ class LocalFileSystemRefreshWorker {
     return isWritable;
   }
 
-  private static boolean isEmptyDir(Path path, BasicFileAttributes a) {
+  static boolean isEmptyDir(@NotNull Path path, @NotNull BasicFileAttributes a) {
     return a.isDirectory() && !LocalFileSystemBase.hasChildren(path);
   }
   
   @NotNull
-  private static FileAttributes toFileAttributes(Path path, BasicFileAttributes a, boolean isSymlink) {
+  static FileAttributes toFileAttributes(@NotNull Path path, @NotNull BasicFileAttributes a, boolean isSymlink) {
     if (isSymlink && a == brokenSymlinkAttributes) return FileAttributes.BROKEN_SYMLINK;
     
     long lastModified = a.lastModifiedTime().toMillis();
