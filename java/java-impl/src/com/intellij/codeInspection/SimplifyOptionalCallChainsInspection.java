@@ -44,7 +44,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
   private static final CallMatcher OPTIONAL_OR_ELSE_OR_ELSE_GET = CallMatcher.anyOf(
     OPTIONAL_OR_ELSE,
     OPTIONAL_OR_ELSE_GET
-    );
+  );
   private static final CallMatcher OPTIONAL_MAP =
     CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "map").parameterCount(1);
   private static final CallMatcher OPTIONAL_OF_NULLABLE =
@@ -78,6 +78,8 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
 
   static {
     List<CallSimplificationCase<?>> cases = Arrays.asList(
+      new IfPresentFoldedCase(),
+      new MapUnwrappingCase(),
       new OrElseNonNullCase(OrElseType.OrElse),
       new OrElseNonNullCase(OrElseType.OrElseGet),
       new FlipPresentOrEmptyCase(true),
@@ -87,13 +89,12 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       new RewrappingCase(RewrappingCase.Type.OptionalGet),
       new RewrappingCase(RewrappingCase.Type.OrElseNull),
       new MapOrElseCase(OrElseType.OrElseGet),
-      new MapOrElseCase(OrElseType.OrElse),
-      new IfPresentFoldedCase(),
-      new MapUnwrappingCase()
+      new MapOrElseCase(OrElseType.OrElse)
     );
     ourMapper = new CallMapper<>();
-    for (CallSimplificationCase<?> inspection : cases) {
-      ourMapper.register(CallHandler.of(inspection.getMatcher(), call -> getFix(call, inspection)));
+    for (CallSimplificationCase<?> theCase : cases) {
+      CallHandler<OptionalSimplificationFix> handler = CallHandler.of(theCase.getMatcher(), call -> getFix(call, theCase));
+      ourMapper.register(handler);
     }
   }
 
