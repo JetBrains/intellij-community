@@ -88,6 +88,23 @@ class AutomaticModuleUnloaderTest : ModuleTestCase() {
     doTest("b", listOf("c"), {}, "b", "c")
   }
 
+  fun `test deleted iml file`() = runBlocking {
+    createModule("a")
+    createModule("b")
+    val deletedIml = createModule("deleted")
+    val moduleManager = ModuleManager.getInstance(project)
+    moduleManager.setUnloadedModules(listOf("a"))
+    createModule("c")
+
+    val moduleFiles = createNewModuleFiles(listOf("d")) {}
+    reloadProjectWithNewModules(moduleFiles) {
+      File(deletedIml.moduleFilePath).delete()
+    }
+
+    ModuleTestCase.assertSameElements(moduleManager.unloadedModuleDescriptions.map { it.name }, "a", "d")
+  }
+
+
   private suspend fun doTest(initiallyUnloaded: String,
                      newModulesName: List<String>,
                      setup: (Map<String, Module>) -> Unit,
@@ -125,13 +142,14 @@ class AutomaticModuleUnloaderTest : ModuleTestCase() {
     return moduleFiles
   }
 
-  private suspend fun reloadProjectWithNewModules(moduleFiles: List<File>) {
+  private suspend fun reloadProjectWithNewModules(moduleFiles: List<File>, beforeReload: () -> Unit = {}) {
     val moduleManager = ModuleManagerImpl.getInstanceImpl(myProject)
     val modulePaths = LinkedHashSet<ModulePath>()
     moduleManager.modules.forEach { it.stateStore.save() }
     moduleManager.modules.mapTo(modulePaths) { ModulePath(it.moduleFilePath, null) }
     moduleManager.unloadedModuleDescriptions.mapTo(modulePaths) { (it as UnloadedModuleDescriptionImpl).modulePath }
     moduleFiles.mapTo(modulePaths) { ModulePath(FileUtil.toSystemIndependentName(it.absolutePath), null) }
+    beforeReload()
     moduleManager.loadStateFromModulePaths(modulePaths)
   }
 
