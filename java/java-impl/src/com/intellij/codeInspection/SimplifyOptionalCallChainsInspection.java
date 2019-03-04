@@ -12,6 +12,8 @@ import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
+import com.siyeh.ig.callMatcher.CallHandler;
+import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Contract;
@@ -19,7 +21,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 import static com.intellij.codeInspection.util.OptionalUtil.*;
@@ -34,6 +38,10 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "get").parameterCount(0);
   private static final CallMatcher OPTIONAL_OR_ELSE_GET =
     CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "orElseGet").parameterCount(1);
+  private static final CallMatcher OPTIONAL_OR_ELSE_OR_ELSE_GET = CallMatcher.anyOf(
+    OPTIONAL_OR_ELSE,
+    OPTIONAL_OR_ELSE_GET
+    );
   private static final CallMatcher OPTIONAL_MAP =
     CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "map").parameterCount(1);
   private static final CallMatcher OPTIONAL_OF_NULLABLE =
@@ -56,6 +64,27 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     );
 
 
+  private static final CallMapper<OptionalSimplificationFix> ourMapper;
+
+  static {
+    List<CallSimplificationCase<?>> cases = Arrays.asList(
+      new OrElseNonNullCase(OrElseType.OrElse),
+      new OrElseNonNullCase(OrElseType.OrElseGet),
+      new FlipPresentOrEmptyCase(true),
+      new FlipPresentOrEmptyCase(false),
+      new OrElseReturnCase(OrElseType.OrElse),
+      new OrElseReturnCase(OrElseType.OrElseGet),
+      new RewrappingCase(RewrappingCase.Type.OptionalGet),
+      new RewrappingCase(RewrappingCase.Type.OrElseNull),
+      new MapOrElseCase(OrElseType.OrElseGet),
+      new MapOrElseCase(OrElseType.OrElse)
+    );
+    ourMapper = new CallMapper<>();
+    for (CallSimplificationCase<?> inspection : cases) {
+      ourMapper.register(CallHandler.of(inspection.getMatcher(), call -> getFix(call, inspection)));
+    }
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -65,136 +94,29 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     }
     return new OptionalChainVisitor(level) {
       @Override
-      protected void handleSimplification(@NotNull PsiElement element,
-                                          @NotNull OptionalChainSimplification simplification) {
-        holder.registerProblem(element, simplification.getDescription(), new OptionalChainFix(simplification));
+      protected void handleSimplification(@NotNull PsiMethodCallExpression call, @NotNull OptionalSimplificationFix fix) {
+        // TODO not exactly call, but name
+        PsiElement element = call.getMethodExpression().getReferenceNameElement();
+        holder.registerProblem(element != null ? element : call, fix.getDescription(), fix);
       }
     };
   }
 
-  private static abstract class OptionalChainVisitor extends JavaElementVisitor {
-    private final LanguageLevel myLevel;
+  @Nullable
+  private static <T> OptionalSimplificationFix getFix(PsiMethodCallExpression call, CallSimplificationCase<T> inspection) {
+    T context = inspection.extractContext(call.getProject(), call);
+    if (context == null) return null;
+    String name = inspection.getName(context);
+    String description = inspection.getDescription(context);
+    return new OptionalSimplificationFix(inspection, name, description);
+  }
 
-    private OptionalChainVisitor(LanguageLevel level) {
-      myLevel = level;
+  private static <T> void handleSimplification(CallSimplificationCase<T> inspection, Project project, PsiMethodCallExpression call) {
+    if (!inspection.getMatcher().matches(call)) return;
+    T context = inspection.extractContext(project, call);
+    if (context != null) {
+      inspection.apply(project, call, context);
     }
-
-    @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression call) {
-      if (OPTIONAL_GET.test(call)) {
-        handleRewrapping(call, OPTIONAL_OF_OF_NULLABLE);
-        return;
-      }
-      handleInvertedPresentOrEmpty(call);
-      PsiExpression falseArg = null;
-      boolean useOrElseGet = false;
-      if (OPTIONAL_OR_ELSE.test(call)) {
-        falseArg = call.getArgumentList().getExpressions()[0];
-      }
-      else if (OPTIONAL_OR_ELSE_GET.test(call)) {
-        useOrElseGet = true;
-        PsiLambdaExpression lambda = getLambda(call.getArgumentList().getExpressions()[0]);
-        if (lambda == null || !lambda.getParameterList().isEmpty()) return;
-        falseArg = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
-      }
-      if (falseArg == null) return;
-      handleMapOrElse(call, useOrElseGet, falseArg);
-      if (ExpressionUtils.isNullLiteral(falseArg)) {
-        handleRewrapping(call, OPTIONAL_OF_NULLABLE);
-      }
-      handleOrElseNullConditionalReturn(call, falseArg);
-      handleOrElseNullConditionalAction(call, falseArg);
-    }
-
-    private void handleInvertedPresentOrEmpty(PsiMethodCallExpression call) {
-      if (myLevel.isLessThan(LanguageLevel.JDK_11)) return;
-      if (!BoolUtils.isNegated(call)) return;
-      PsiElement nameElement = call.getMethodExpression().getReferenceNameElement();
-      if (nameElement == null) return;
-      if (OPTIONAL_IS_EMPTY.test(call)) {
-        handleSimplification(nameElement, new FlipEmptyPresentFix("isPresent"));
-      }
-      else if (OPTIONAL_IS_PRESENT.test(call)) {
-        handleSimplification(nameElement, new FlipEmptyPresentFix("isEmpty"));
-      }
-    }
-
-    private void handleRewrapping(PsiMethodCallExpression call, CallMatcher wrapper) {
-      PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
-      if (!(parent instanceof PsiExpressionList)) return;
-      PsiMethodCallExpression parentCall = tryCast(parent.getParent(), PsiMethodCallExpression.class);
-      if (!wrapper.test(parentCall)) return;
-      PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
-      if (qualifier == null ||
-          !EquivalenceChecker.getCanonicalPsiEquivalence().typesAreEquivalent(qualifier.getType(), parentCall.getType())) {
-        return;
-      }
-      if ("get".equals(call.getMethodExpression().getReferenceName())) {
-        SpecialFieldValue fact = CommonDataflow.getExpressionFact(qualifier, DfaFactType.SPECIAL_FIELD_VALUE);
-        if (DfaFactType.NULLABILITY.fromDfaValue(SpecialField.OPTIONAL_VALUE.extract(fact)) != DfaNullability.NOT_NULL) return;
-      }
-      SimplifyOptionalChainFix fix = new SimplifyOptionalChainFix(qualifier.getText(), "Unwrap", "Unnecessary Optional rewrapping");
-      handleSimplification(Objects.requireNonNull(parentCall.getMethodExpression().getReferenceNameElement()), fix);
-    }
-
-    private void handleMapOrElse(PsiMethodCallExpression call, boolean useOrElseGet, PsiExpression falseArg) {
-      PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
-      if (!OPTIONAL_MAP.test(qualifierCall)) return;
-      PsiLambdaExpression lambda = getLambda(qualifierCall.getArgumentList().getExpressions()[0]);
-      if (lambda == null) return;
-      PsiExpression trueArg = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
-      if (trueArg == null) return;
-      PsiParameter[] parameters = lambda.getParameterList().getParameters();
-      if (parameters.length != 1) return;
-      PsiExpression qualifier = qualifierCall.getMethodExpression().getQualifierExpression();
-      if (qualifier == null) return;
-      String opt = qualifier.getText();
-      PsiParameter parameter = parameters[0];
-      String proposed = OptionalRefactoringUtil.generateOptionalUnwrap(opt, parameter, trueArg, falseArg, call.getType(), useOrElseGet);
-      String canonicalOrElse;
-      if (useOrElseGet && !ExpressionUtils.isSafelyRecomputableExpression(falseArg)) {
-        canonicalOrElse = ".orElseGet(() -> " + falseArg.getText() + ")";
-      }
-      else {
-        canonicalOrElse = ".orElse(" + falseArg.getText() + ")";
-      }
-      String canonical = opt + ".map(" + LambdaUtil.createLambda(parameter, trueArg) + ")" + canonicalOrElse;
-      if (proposed.length() < canonical.length()) {
-        String displayCode;
-        if(proposed.equals(opt)) {
-          displayCode = "";
-        } else if(opt.length() > 10) {
-          // should be a parseable expression
-          opt = "(($))";
-          String template = OptionalRefactoringUtil.generateOptionalUnwrap(opt, parameter, trueArg, falseArg, call.getType(), useOrElseGet);
-          displayCode =
-            PsiExpressionTrimRenderer.render(JavaPsiFacade.getElementFactory(parameter.getProject()).createExpressionFromText(template, call));
-          displayCode = displayCode.replaceFirst(Pattern.quote(opt), "..");
-        } else {
-          displayCode =
-            PsiExpressionTrimRenderer.render(JavaPsiFacade.getElementFactory(parameter.getProject()).createExpressionFromText(proposed, call));
-        }
-        String message = displayCode.isEmpty() ? "Remove redundant steps from optional chain" :
-                         "Simplify optional chain to '" + displayCode + "'";
-        SimplifyOptionalChainFix fix = new SimplifyOptionalChainFix(proposed, message, "Optional chain can be simplified");
-        handleSimplification(Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement()), fix);
-      }
-    }
-
-    private void handleOrElseNullConditionalReturn(PsiMethodCallExpression call, PsiExpression falseArg) {
-      OrElseReturnStreamFix.Context context = OrElseReturnStreamFix.Context.extract(call, falseArg);
-      if (context == null) return;
-      OrElseReturnStreamFix fix = new OrElseReturnStreamFix(context.getDefaultExpression(), context.isSimple());
-      handleSimplification(Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement()), fix);
-    }
-
-    private void handleOrElseNullConditionalAction(PsiMethodCallExpression call, PsiExpression falseArg) {
-      if (OrElseNonNullActionFix.Context.extract(call, falseArg) == null) return;
-      OrElseNonNullActionFix fix = new OrElseNonNullActionFix();
-      handleSimplification(Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement()), fix);
-    }
-
-    protected abstract void handleSimplification(@NotNull PsiElement element, @NotNull OptionalChainSimplification simplification);
   }
 
 
@@ -215,12 +137,14 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     return null;
   }
 
-  @Nullable
-  private static PsiExpression extractFalseArg(@NotNull PsiMethodCallExpression call) {
-    if (OPTIONAL_OR_ELSE.test(call)) {
+  /**
+   * @return argument expression in case of absence of optional value
+   */
+  private static PsiExpression getOrElseArgument(PsiMethodCallExpression call, OrElseType type) {
+    if (type == OrElseType.OrElse) {
       return call.getArgumentList().getExpressions()[0];
     }
-    if (OPTIONAL_OR_ELSE_GET.test(call)) {
+    if (type == OrElseType.OrElseGet) {
       PsiLambdaExpression lambda = getLambda(call.getArgumentList().getExpressions()[0]);
       if (lambda == null || !lambda.getParameterList().isEmpty()) return null;
       return LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
@@ -228,150 +152,409 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     return null;
   }
 
-  interface OptionalChainSimplification {
-    @NotNull
-    String getName();
-
-    @NotNull
-    String getDescription();
-
-    void applyFix(@NotNull Project project, @NotNull PsiElement element);
+  private static CallMatcher getMatcherByType(OrElseType type) {
+    if (type == OrElseType.OrElse) {
+      return OPTIONAL_OR_ELSE;
+    }
+    if (type == OrElseType.OrElseGet) {
+      return OPTIONAL_OR_ELSE_GET;
+    }
+    throw new IllegalStateException();
   }
 
-
-  private static class OptionalChainFix implements LocalQuickFix {
-
-    private final @NotNull OptionalChainSimplification mySimplification;
-
-    OptionalChainFix(@NotNull OptionalChainSimplification simplification) {mySimplification = simplification;}
-
-    @Nls
-    @NotNull
-    @Override
-    public String getName() {
-      return mySimplification.getName();
-    }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return "Simplify optional call chain";
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      mySimplification.applyFix(project, descriptor.getStartElement());
-    }
-  }
-
-
-  private static class OrElseReturnStreamFix implements OptionalChainSimplification {
-    private final @NotNull String defaultExpression;
-    private final boolean myIsSimple;
-
-    private OrElseReturnStreamFix(@NotNull PsiExpression expression, boolean simple) {
-      defaultExpression = PsiExpressionTrimRenderer.render(expression);
-      myIsSimple = simple;
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-      String method = myIsSimple ? "orElse" : "orElseGet";
-      return "Replace null check with " + method + "(" + defaultExpression + ")";
-    }
-
-    @NotNull
-    @Override
-    public String getDescription() {
-      return "Remove redundant null check";
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull PsiElement element) {
-      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class, false);
-      if (call == null) return;
-      PsiExpression falseArg = extractFalseArg(call);
-      if (!ExpressionUtils.isNullLiteral(falseArg)) return;
-      Context context = Context.extract(call, falseArg);
-      if (context == null) return;
-      PsiExpression receiver = context.getOrElseCall().getMethodExpression().getQualifierExpression();
-      if (receiver == null) return;
-      String methodWithArg = context.isSimple()
-                      ? ".orElse(" + context.getDefaultExpression().getText() + ")"
-                      : ".orElseGet(()->" + context.getDefaultExpression().getText() + ")";
-      String expressionText;
-      expressionText = receiver.getText() + methodWithArg;
-      PsiStatement finalStatement = JavaPsiFacade.getElementFactory(project).createStatementFromText("return " + expressionText + ";", receiver);
-      PsiStatement current = PsiTreeUtil.getParentOfType(context.getOrElseCall(), PsiStatement.class, false);
-      if (current == null) return;
-      PsiElement result = new CommentTracker().replaceAndRestoreComments(current, finalStatement);
-      new CommentTracker().deleteAndRestoreComments(context.getNextStatement());
-      LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
-    }
-
-    /*
+  /*
     if(optValue != null) {return optValue;} else {return "default";}
     or
     return optValue == null? "default" : optValue;
      */
+  @Nullable
+  private static PsiExpression extractConditionalDefaultValue(@NotNull PsiStatement statement, @NotNull PsiVariable optValue) {
+    if (statement instanceof PsiIfStatement) {
+      PsiIfStatement ifStatement = (PsiIfStatement)statement;
+      PsiExpression condition = ifStatement.getCondition();
+      if (condition == null) return null;
+      PsiExpression thenExpr = getReturnExpression(ifStatement.getThenBranch());
+      PsiExpression elseExpr = getReturnExpression(ifStatement.getElseBranch());
+      if (thenExpr == null || elseExpr == null) return null;
+      return extractConditionalDefaultValue(thenExpr, elseExpr, condition, optValue);
+    }
+    else if (statement instanceof PsiReturnStatement) {
+      PsiExpression returnValue = ((PsiReturnStatement)statement).getReturnValue();
+      PsiConditionalExpression ternary = tryCast(PsiUtil.skipParenthesizedExprDown(returnValue), PsiConditionalExpression.class);
+      if (ternary == null) return null;
+      PsiExpression thenExpression = ternary.getThenExpression();
+      PsiExpression elseExpression = ternary.getElseExpression();
+      if (thenExpression == null || elseExpression == null) return null;
+      return extractConditionalDefaultValue(thenExpression, elseExpression, ternary.getCondition(), optValue);
+    }
+    return null;
+  }
+
+  @Contract("null -> null")
+  @Nullable
+  private static PsiExpression getReturnExpression(@Nullable PsiStatement block) {
+    if (block == null) return null;
+    PsiStatement statement = ControlFlowUtils.stripBraces(block);
+    PsiReturnStatement returnStatement = tryCast(statement, PsiReturnStatement.class);
+    if (returnStatement == null) return null;
+    return returnStatement.getReturnValue();
+  }
+
+  @Nullable
+  private static PsiExpression extractConditionalDefaultValue(@NotNull PsiExpression thenExpr,
+                                                              @NotNull PsiExpression elseExpr,
+                                                              @NotNull PsiExpression condition,
+                                                              @NotNull PsiVariable optValue) {
+    PsiVariable nullChecked = ExpressionUtils.getVariableFromNullComparison(condition, true);
+    boolean inverted = false;
+    if (nullChecked == null) {
+      nullChecked = ExpressionUtils.getVariableFromNullComparison(condition, false);
+      if (nullChecked == null) return null;
+      inverted = true;
+    }
+    if (!nullChecked.equals(optValue) || !ExpressionUtils.isReferenceTo(inverted ? thenExpr : elseExpr, optValue)) return null;
+    PsiExpression defaultExpression = inverted ? elseExpr : thenExpr;
+    if (VariableAccessUtils.variableIsUsed(optValue, defaultExpression)) return null;
+    return defaultExpression;
+  }
+
+  private enum OrElseType {
+    OrElse,
+    OrElseGet
+  }
+
+  /**
+   * Stateless component, that can suggest simplification for call chain
+   *
+   * @param <C> context of the simplification
+   */
+  interface CallSimplificationCase<C> {
+    @NotNull
+    String getName(@NotNull C context);
+
+    @NotNull
+    String getDescription(@NotNull C context);
+
+    /**
+     * Gathers context for handling simplification
+     * Called only if call matches to matcher returned by getMatcher call.
+     */
     @Nullable
-    private static PsiExpression extractConditionalDefaultValue(@NotNull PsiStatement statement, @NotNull PsiVariable optValue) {
-      if (statement instanceof PsiIfStatement) {
-        PsiIfStatement ifStatement = (PsiIfStatement)statement;
-        PsiExpression condition = ifStatement.getCondition();
-        if (condition == null) return null;
-        PsiExpression thenExpr = getReturnExpression(ifStatement.getThenBranch());
-        PsiExpression elseExpr = getReturnExpression(ifStatement.getElseBranch());
-        if (thenExpr == null || elseExpr == null) return null;
-        return extractConditionalDefaultValue(thenExpr, elseExpr, condition, optValue);
+    C extractContext(@NotNull Project project, @NotNull PsiMethodCallExpression call);
+
+    void apply(@NotNull Project project, @NotNull PsiMethodCallExpression call, @NotNull C context);
+
+    default boolean isAvailable(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
+      return extractContext(project, call) != null;
+    }
+
+    @NotNull
+    CallMatcher getMatcher();
+
+    default boolean isAppropriateLanguageLevel(@NotNull LanguageLevel level) {
+      return true;
+    }
+  }
+
+  private static abstract class OptionalChainVisitor extends JavaElementVisitor {
+    private final LanguageLevel myLevel;
+
+    private OptionalChainVisitor(LanguageLevel level) {
+      myLevel = level;
+    }
+
+    @Override
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      Optional<OptionalSimplificationFix> fix = ourMapper
+        .mapAll(expression)
+        .filter(f -> f.myInspection.isAppropriateLanguageLevel(myLevel))
+        .findAny();
+      if (!fix.isPresent()) return;
+      handleSimplification(expression, fix.get());
+    }
+
+    protected abstract void handleSimplification(@NotNull PsiMethodCallExpression call, @NotNull OptionalSimplificationFix fix);
+  }
+
+  private static class MapOrElseCase extends BasicSimplificationInspection {
+    private final OrElseType myType;
+
+    private MapOrElseCase(OrElseType type) {myType = type;}
+
+    @Nullable
+    @Override
+    public StringReplacement extractContext(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
+      PsiExpression falseArg = getOrElseArgument(call, myType);
+      if (falseArg == null) return null;
+      PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
+      if (!OPTIONAL_MAP.test(qualifierCall)) return null;
+      PsiLambdaExpression lambda = getLambda(qualifierCall.getArgumentList().getExpressions()[0]);
+      if (lambda == null) return null;
+      PsiExpression trueArg = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
+      if (trueArg == null) return null;
+      PsiParameter[] parameters = lambda.getParameterList().getParameters();
+      if (parameters.length != 1) return null;
+      PsiExpression qualifier = qualifierCall.getMethodExpression().getQualifierExpression();
+      if (qualifier == null) return null;
+      String opt = qualifier.getText();
+      PsiParameter parameter = parameters[0];
+      boolean useOrElseGet = myType == OrElseType.OrElseGet;
+      String proposed = OptionalRefactoringUtil.generateOptionalUnwrap(opt, parameter, trueArg, falseArg, call.getType(), useOrElseGet);
+      String canonicalOrElse;
+      if (useOrElseGet && !ExpressionUtils.isSafelyRecomputableExpression(falseArg)) {
+        canonicalOrElse = ".orElseGet(() -> " + falseArg.getText() + ")";
       }
-      else if (statement instanceof PsiReturnStatement) {
-        PsiExpression returnValue = ((PsiReturnStatement)statement).getReturnValue();
-        PsiConditionalExpression ternary = tryCast(PsiUtil.skipParenthesizedExprDown(returnValue), PsiConditionalExpression.class);
-        if (ternary == null) return null;
-        PsiExpression thenExpression = ternary.getThenExpression();
-        PsiExpression elseExpression = ternary.getElseExpression();
-        if(thenExpression == null || elseExpression == null) return null;
-        return extractConditionalDefaultValue(thenExpression, elseExpression, ternary.getCondition(), optValue);
+      else {
+        canonicalOrElse = ".orElse(" + falseArg.getText() + ")";
+      }
+      String canonical = opt + ".map(" + LambdaUtil.createLambda(parameter, trueArg) + ")" + canonicalOrElse;
+      if (proposed.length() < canonical.length()) {
+        String displayCode;
+        if (proposed.equals(opt)) {
+          displayCode = "";
+        }
+        else if (opt.length() > 10) {
+          // should be a parseable expression
+          opt = "(($))";
+          String template =
+            OptionalRefactoringUtil.generateOptionalUnwrap(opt, parameter, trueArg, falseArg, call.getType(), useOrElseGet);
+          displayCode =
+            PsiExpressionTrimRenderer
+              .render(JavaPsiFacade.getElementFactory(parameter.getProject()).createExpressionFromText(template, call));
+          displayCode = displayCode.replaceFirst(Pattern.quote(opt), "..");
+        }
+        else {
+          displayCode =
+            PsiExpressionTrimRenderer
+              .render(JavaPsiFacade.getElementFactory(parameter.getProject()).createExpressionFromText(proposed, call));
+        }
+        String message = displayCode.isEmpty() ? "Remove redundant steps from optional chain" :
+                         "Simplify optional chain to '" + displayCode + "'";
+        String description = "Optional chain can be simplified";
+        return new StringReplacement(proposed, message, description);
       }
       return null;
     }
 
-    @Contract("null -> null")
-    @Nullable
-    private static PsiExpression getReturnExpression(@Nullable PsiStatement block) {
-      if (block == null) return null;
-      PsiStatement statement = ControlFlowUtils.stripBraces(block);
-      PsiReturnStatement returnStatement = tryCast(statement, PsiReturnStatement.class);
-      if (returnStatement == null) return null;
-      return returnStatement.getReturnValue();
+    @NotNull
+    @Override
+    public CallMatcher getMatcher () {
+      return getMatcherByType(myType);
+    }
+  }
+
+  static class OptionalSimplificationFix implements LocalQuickFix {
+    private final CallSimplificationCase<?> myInspection;
+    private final String myName;
+    private final String myDescription;
+
+    OptionalSimplificationFix(CallSimplificationCase<?> inspection, String name, String description) {
+      myInspection = inspection;
+      this.myName = name;
+      myDescription = description;
+    }
+
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return myName;
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class, false);
+      //PsiMethodCallExpression call = tryCast(descriptor.getStartElement(), PsiMethodCallExpression.class);
+      handleSimplification(myInspection, project, call);
+    }
+
+    String getDescription() {
+      return myDescription;
+    }
+  }
+
+  private abstract static class BasicSimplificationInspection
+    implements CallSimplificationCase<BasicSimplificationInspection.StringReplacement> {
+    @NotNull
+    @Override
+    public String getName(@NotNull StringReplacement context) {
+      return context.myMessage;
+    }
+
+    @NotNull
+    @Override
+    public String getDescription(@NotNull StringReplacement context) {
+      return context.myDescription;
+    }
+
+
+    @Override
+    public void apply(@NotNull Project project, @NotNull PsiMethodCallExpression call, @NotNull StringReplacement context) {
+      PsiExpression replacementExpression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(context.myReplacement, call);
+      PsiElement result = call.replace(replacementExpression);
+      LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
+      RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(result);
+    }
+
+    protected static class StringReplacement {
+      private final String myReplacement;
+      private final String myMessage;
+      private final String myDescription;
+
+      StringReplacement(String replacement, String message, String description) {
+        myReplacement = replacement;
+        myMessage = message;
+        myDescription = description;
+      }
+    }
+  }
+
+  private static class RewrappingCase implements CallSimplificationCase<RewrappingCase.Context> {
+    private final CallMatcher myWrapper;
+    private final Type myType;
+
+    private RewrappingCase(Type type) {
+      myType = type;
+      if (myType == Type.OrElseNull) {
+        myWrapper = OPTIONAL_OF_NULLABLE;
+      } else {
+        myWrapper = OPTIONAL_OF_OF_NULLABLE;
+      }
+    }
+
+    @NotNull
+    @Override
+    public String getName(@NotNull Context context) {
+      return "Unwrap";
+    }
+
+    @NotNull
+    @Override
+    public String getDescription(@NotNull Context context) {
+      return "Unnecessary Optional rewrapping";
     }
 
     @Nullable
-    private static PsiExpression extractConditionalDefaultValue(@NotNull PsiExpression thenExpr,
-                                                                @NotNull PsiExpression elseExpr,
-                                                                @NotNull PsiExpression condition,
-                                                                @NotNull PsiVariable optValue) {
-      PsiVariable nullChecked = ExpressionUtils.getVariableFromNullComparison(condition, true);
-      boolean inverted = false;
-      if (nullChecked == null) {
-        nullChecked = ExpressionUtils.getVariableFromNullComparison(condition, false);
-        if (nullChecked == null) return null;
-        inverted = true;
+    @Override
+    public Context extractContext(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
+      if (!(parent instanceof PsiExpressionList)) return null;
+      PsiMethodCallExpression parentCall = tryCast(parent.getParent(), PsiMethodCallExpression.class);
+      if (!myWrapper.test(parentCall)) return null;
+      PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
+      if (qualifier == null ||
+          !EquivalenceChecker.getCanonicalPsiEquivalence().typesAreEquivalent(qualifier.getType(), parentCall.getType())) {
+        return null;
       }
-      if (!nullChecked.equals(optValue) || !ExpressionUtils.isReferenceTo(inverted ? thenExpr : elseExpr, optValue)) return null;
-      PsiExpression defaultExpression = inverted ? elseExpr : thenExpr;
-      if (VariableAccessUtils.variableIsUsed(optValue, defaultExpression)) return null;
-      return defaultExpression;
+      if ("get".equals(call.getMethodExpression().getReferenceName())) {
+        SpecialFieldValue fact = CommonDataflow.getExpressionFact(qualifier, DfaFactType.SPECIAL_FIELD_VALUE);
+        if (DfaFactType.NULLABILITY.fromDfaValue(SpecialField.OPTIONAL_VALUE.extract(fact)) != DfaNullability.NOT_NULL) return null;
+      }
+      return new Context(qualifier, parentCall);
+    }
+
+    @Override
+    public void apply(@NotNull Project project, @NotNull PsiMethodCallExpression call, @NotNull Context context) {
+      PsiElement result = context.myCallToReplace.replace(context.myQualifier);
+      LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
+      RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(result);
+    }
+
+    @NotNull
+    @Override
+    public CallMatcher getMatcher() {
+      if (myType == Type.OptionalGet) {
+        return OPTIONAL_GET;
+      }
+      return OPTIONAL_OR_ELSE_OR_ELSE_GET;
+    }
+
+    private static class Context {
+      private final PsiExpression myQualifier;
+      private final PsiExpression myCallToReplace;
+
+      private Context(PsiExpression qualifier, PsiExpression callToReplace) {
+        myQualifier = qualifier;
+        myCallToReplace = callToReplace;
+      }
+    }
+
+    enum Type {
+      OrElseNull,
+      OptionalGet
+    }
+  }
+
+  private static class OrElseReturnCase implements CallSimplificationCase<OrElseReturnCase.Context> {
+    private final OrElseType myType;
+
+    private OrElseReturnCase(OrElseType type) {myType = type;}
+
+    @NotNull
+    @Override
+    public String getName(@NotNull Context context) {
+      String method = context.myIsSimple ? "orElse" : "orElseGet";
+      return "Replace null check with " + method + "(" + PsiExpressionTrimRenderer.render(context.myDefaultExpression) + ")";
+    }
+
+    @NotNull
+    @Override
+    public String getDescription(@NotNull Context context) {
+      return "Remove redundant null check";
+    }
+
+    @Nullable
+    @Override
+    public Context extractContext(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
+      PsiExpression falseArg = getOrElseArgument(call, myType);
+      if (!ExpressionUtils.isNullLiteral(falseArg)) return null;
+      PsiLocalVariable returnVar = PsiTreeUtil.getParentOfType(call, PsiLocalVariable.class, true);
+      if (returnVar == null) return null;
+      PsiStatement nextStatement =
+        tryCast(PsiTreeUtil.skipWhitespacesForward(returnVar.getParent()), PsiStatement.class);
+      if (nextStatement == null) return null;
+      PsiExpression defaultValue = extractConditionalDefaultValue(nextStatement, returnVar);
+      boolean isSimple = ExpressionUtils.isSafelyRecomputableExpression(defaultValue);
+      if (defaultValue == null || (!isSimple && !LambdaGenerationUtil.canBeUncheckedLambda(defaultValue))) return null;
+      PsiType type = defaultValue.getType();
+      PsiType methodCallReturnValue = call.getMethodExpression().getType();
+      if (type == null || methodCallReturnValue == null || !methodCallReturnValue.isAssignableFrom(type)) return null;
+      return new Context(call, defaultValue, nextStatement, isSimple);
+    }
+
+    @Override
+    public void apply(@NotNull Project project, @NotNull PsiMethodCallExpression call, @NotNull Context context) {
+      PsiExpression receiver = context.myOrElseCall.getMethodExpression().getQualifierExpression();
+      if (receiver == null) return;
+      String methodWithArg = context.myIsSimple
+                             ? ".orElse(" + context.myDefaultExpression.getText() + ")"
+                             : ".orElseGet(()->" + context.myDefaultExpression.getText() + ")";
+      String expressionText;
+      expressionText = receiver.getText() + methodWithArg;
+      PsiStatement finalStatement =
+        JavaPsiFacade.getElementFactory(project).createStatementFromText("return " + expressionText + ";", receiver);
+      PsiStatement current = PsiTreeUtil.getParentOfType(context.myOrElseCall, PsiStatement.class, false);
+      if (current == null) return;
+      PsiElement result = new CommentTracker().replaceAndRestoreComments(current, finalStatement);
+      new CommentTracker().deleteAndRestoreComments(context.myNextStatement);
+      LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
+    }
+
+    @NotNull
+    @Override
+    public CallMatcher getMatcher() {
+      if (myType == OrElseType.OrElse) {
+        return OPTIONAL_OR_ELSE;
+      }
+      return OPTIONAL_OR_ELSE_GET;
     }
 
     private static class Context {
       @NotNull private final PsiMethodCallExpression myOrElseCall;
       @NotNull private final PsiExpression myDefaultExpression;
       @NotNull private final PsiStatement myNextStatement;
-      private final boolean mySimple;
+      private final boolean myIsSimple;
 
       private Context(@NotNull PsiMethodCallExpression call,
                       @NotNull PsiExpression defaultExpression,
@@ -379,147 +562,133 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
         myOrElseCall = call;
         myDefaultExpression = defaultExpression;
         myNextStatement = nextStatement;
-        mySimple = simple;
-      }
-
-      @NotNull
-      public PsiStatement getNextStatement() {
-        return myNextStatement;
-      }
-
-
-      @NotNull
-      public PsiMethodCallExpression getOrElseCall() {
-        return myOrElseCall;
-      }
-
-      @NotNull
-      public PsiExpression getDefaultExpression() {
-        return myDefaultExpression;
-      }
-
-      public boolean isSimple() {
-        return mySimple;
-      }
-
-      @Nullable
-      static Context extract(@NotNull PsiMethodCallExpression call, @NotNull PsiExpression falseArg) {
-        if (!ExpressionUtils.isNullLiteral(falseArg)) return null;
-        PsiLocalVariable returnVar = PsiTreeUtil.getParentOfType(call, PsiLocalVariable.class, true);
-        if (returnVar == null) return null;
-        PsiStatement nextStatement =
-          tryCast(PsiTreeUtil.skipWhitespacesForward(returnVar.getParent()), PsiStatement.class);
-        if (nextStatement == null) return null;
-        PsiExpression defaultValue = extractConditionalDefaultValue(nextStatement, returnVar);
-        boolean isSimple = ExpressionUtils.isSafelyRecomputableExpression(defaultValue);
-        if (defaultValue == null || (!isSimple && !LambdaGenerationUtil.canBeUncheckedLambda(defaultValue))) return null;
-        PsiType type = defaultValue.getType();
-        PsiType methodCallReturnValue = call.getMethodExpression().getType();
-        if(type == null || methodCallReturnValue == null || !methodCallReturnValue.isAssignableFrom(type)) return null;
-        return new Context(call, defaultValue, nextStatement, isSimple);
+        myIsSimple = simple;
       }
     }
   }
 
+  private static class FlipPresentOrEmptyCase implements CallSimplificationCase<FlipPresentOrEmptyCase.Context> {
+    // Type of the inspection (may be either present or empty)
+    private final boolean myIsPresent;
 
-  private static class OrElseNonNullActionFix implements OptionalChainSimplification {
+    private FlipPresentOrEmptyCase(boolean present) {myIsPresent = present;}
+
     @NotNull
     @Override
-    public String getName() {
+    public String getName(@NotNull Context context) {
+      return CommonQuickFixBundle.message("fix.replace.with.x", context.myReplacement + "()");
+    }
+
+    @NotNull
+    @Override
+    public String getDescription(@NotNull Context context) {
+      return "'" + context.myReplacement + "()' can be used instead";
+    }
+
+    @Nullable
+    @Override
+    public Context extractContext(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
+      if (!BoolUtils.isNegated(call)) return null;
+      PsiElement nameElement = call.getMethodExpression().getReferenceNameElement();
+      if (nameElement == null) return null;
+      if (myIsPresent) {
+        return new Context("isEmpty");
+      }
+      return new Context("isPresent");
+    }
+
+    @Override
+    public boolean isAppropriateLanguageLevel(@NotNull LanguageLevel level) {
+      return level.isAtLeast(LanguageLevel.JDK_11);
+    }
+
+    @Override
+    public void apply(@NotNull Project project, @NotNull PsiMethodCallExpression call, @NotNull Context context) {
+      PsiPrefixExpression negation = tryCast(PsiUtil.skipParenthesizedExprUp(call.getParent()), PsiPrefixExpression.class);
+      if (negation == null || BoolUtils.getNegated(negation) != call) return;
+      ExpressionUtils.bindCallTo(call, context.myReplacement);
+      new CommentTracker().replaceAndRestoreComments(negation, call);
+    }
+
+    @NotNull
+    @Override
+    public CallMatcher getMatcher() {
+      if (myIsPresent) {
+        return OPTIONAL_IS_PRESENT;
+      }
+      return OPTIONAL_IS_EMPTY;
+    }
+
+    private static class Context {
+      private final String myReplacement;
+
+      private Context(String replacement) {myReplacement = replacement;}
+    }
+  }
+
+  private static class OrElseNonNullCase implements CallSimplificationCase<OrElseNonNullCase.Context> {
+    private final OrElseType myType;
+
+    private OrElseNonNullCase(OrElseType type) {myType = type;}
+
+    @NotNull
+    @Override
+    public String getName(@NotNull Context context) {
       return "Replace null check with ifPresent()";
     }
 
     @NotNull
     @Override
-    public String getDescription() {
+    public String getDescription(@NotNull Context context) {
       return "Remove redundant null check";
     }
 
+    @Nullable
     @Override
-    public void applyFix(@NotNull Project project, @NotNull PsiElement element) {
-      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class, false);
-      if (call == null) return;
-      PsiExpression falseArg = extractFalseArg(call);
-      if (!ExpressionUtils.isNullLiteral(falseArg)) return;
-      Context context = Context.extract(call, falseArg);
-      if(context == null) return;
-      PsiExpression receiver = context.getOrElseCall().getMethodExpression().getQualifierExpression();
+    public Context extractContext(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
+      PsiExpression orElseArgument = getOrElseArgument(call, myType);
+      if (!ExpressionUtils.isNullLiteral(orElseArgument)) return null;
+      PsiLocalVariable returnVar = tryCast(call.getParent(), PsiLocalVariable.class);
+      if (returnVar == null) return null;
+      PsiStatement statement = PsiTreeUtil.getParentOfType(returnVar, PsiStatement.class, true);
+      if (statement == null) return null;
+      PsiStatement nextStatement =
+        tryCast(PsiTreeUtil.skipWhitespacesForward(returnVar.getParent()), PsiStatement.class);
+      if (nextStatement == null) return null;
+      PsiExpression lambdaExpr = extractMappingExpression(nextStatement, returnVar);
+      if (!LambdaGenerationUtil.canBeUncheckedLambda(lambdaExpr)) return null;
+      if (!ReferencesSearch.search(returnVar).allMatch(reference ->
+                                                         PsiTreeUtil.isAncestor(statement, reference.getElement(), false) ||
+                                                         PsiTreeUtil.isAncestor(nextStatement, reference.getElement(), false))) {
+        return null;
+      }
+      return new Context(lambdaExpr, nextStatement, statement, returnVar, call);
+    }
+
+    @Override
+    public void apply(@NotNull Project project, @NotNull PsiMethodCallExpression call, @NotNull Context context) {
+      PsiExpression receiver = context.myOrElseCall.getMethodExpression().getQualifierExpression();
       if(receiver == null) return;
-      String statementText = receiver.getText() + ".ifPresent(" + LambdaUtil.createLambda(context.getVariable(), context.getAction()) + ");";
-      PsiStatement finalStatement = JavaPsiFacade.getElementFactory(project).createStatementFromText(statementText, context.getStatement());
-      PsiElement result = context.getStatement().replace(finalStatement);
-      context.getConditionStatement().delete();
+      String statementText = receiver.getText() + ".ifPresent(" + LambdaUtil.createLambda(context.myVariable, context.myAction) + ");";
+      PsiStatement finalStatement = JavaPsiFacade.getElementFactory(project).createStatementFromText(statementText, context.myStatement);
+      PsiElement result = context.myStatement.replace(finalStatement);
+      context.myConditionStatement.delete();
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
     }
 
-    private static class Context {
-      private final @NotNull PsiExpression myAction;
-      private final @NotNull PsiStatement myConditionStatement;
-      private final @NotNull PsiStatement myStatement;
-      private final @NotNull PsiVariable myVariable;
-      private final @NotNull PsiMethodCallExpression myOrElseCall;
-
-      @NotNull
-      public PsiExpression getAction() {
-        return myAction;
-      }
-
-      @NotNull
-      public PsiStatement getConditionStatement() {
-        return myConditionStatement;
-      }
-
-      @NotNull
-      public PsiStatement getStatement() {
-        return myStatement;
-      }
-
-      @NotNull
-      public PsiMethodCallExpression getOrElseCall() {
-        return myOrElseCall;
-      }
-
-      private Context(@NotNull PsiExpression action,
-                      @NotNull PsiStatement conditionStatement,
-                      @NotNull PsiStatement statement,
-                      @NotNull PsiVariable variable, @NotNull PsiMethodCallExpression call) {
-        myAction = action;
-        myConditionStatement = conditionStatement;
-        myStatement = statement;
-        myVariable = variable;
-        myOrElseCall = call;
-      }
-
-      @NotNull
-      public PsiVariable getVariable() {
-        return myVariable;
-      }
-
-      @Nullable
-      static Context extract(@NotNull PsiMethodCallExpression orElseCall, @NotNull PsiExpression orElseArgument) {
-        if (!ExpressionUtils.isNullLiteral(orElseArgument)) return null;
-        PsiLocalVariable returnVar = tryCast(orElseCall.getParent(), PsiLocalVariable.class);
-        if (returnVar == null) return null;
-        PsiStatement statement = PsiTreeUtil.getParentOfType(returnVar, PsiStatement.class, true);
-        if(statement == null) return null;
-        PsiStatement nextStatement =
-          tryCast(PsiTreeUtil.skipWhitespacesForward(returnVar.getParent()), PsiStatement.class);
-        if (nextStatement == null) return null;
-        PsiExpression lambdaExpr = extractMappingExpression(nextStatement, returnVar);
-        if (!LambdaGenerationUtil.canBeUncheckedLambda(lambdaExpr)) return null;
-        if(!ReferencesSearch.search(returnVar).allMatch(reference ->
-                                                     PsiTreeUtil.isAncestor(statement, reference.getElement(), false) ||
-                                                     PsiTreeUtil.isAncestor(nextStatement, reference.getElement(), false))) return null;
-        return new Context(lambdaExpr, nextStatement, statement, returnVar, orElseCall);
-      }
+    @NotNull
+    @Override
+    public CallMatcher getMatcher() {
+      return getMatcherByType(myType);
     }
 
 
-    /*
-      if(optValue != null) {
-        System.out.println(optValue);
-      }
-     */
+
+    /**
+     * if(optValue != null) {
+     * System.out.println(optValue);
+     * }
+     **/
     @Nullable
     private static PsiExpression extractMappingExpression(@NotNull PsiStatement statement, @NotNull PsiVariable optValue) {
       PsiIfStatement ifStatement = tryCast(statement, PsiIfStatement.class);
@@ -534,69 +703,25 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       if (expressionStatement == null) return null;
       return expressionStatement.getExpression();
     }
-  }
 
-  private static class FlipEmptyPresentFix implements OptionalChainSimplification {
-    private final String myReplacement;
+    private static class Context {
+      private final @NotNull PsiExpression myAction;
+      private final @NotNull PsiStatement myConditionStatement;
+      private final @NotNull PsiStatement myStatement;
+      private final @NotNull PsiVariable myVariable;
+      private final @NotNull PsiMethodCallExpression myOrElseCall;
 
-    private FlipEmptyPresentFix(String replacement) {
-      myReplacement = replacement;
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-      return CommonQuickFixBundle.message("fix.replace.with.x", myReplacement + "()");
-    }
-
-    @NotNull
-    @Override
-    public String getDescription() {
-      return "'" + myReplacement + "()' can be used instead";
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull PsiElement element) {
-      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
-      if (call == null) return;
-      PsiPrefixExpression negation = tryCast(PsiUtil.skipParenthesizedExprUp(call.getParent()), PsiPrefixExpression.class);
-      if (negation == null || BoolUtils.getNegated(negation) != call) return;
-      ExpressionUtils.bindCallTo(call, myReplacement);
-      new CommentTracker().replaceAndRestoreComments(negation, call);
-    }
-  }
-
-  private static class SimplifyOptionalChainFix implements OptionalChainSimplification {
-    private final String myReplacement;
-    private final String myMessage;
-    private final String myDescription;
-
-    private SimplifyOptionalChainFix(String replacement, String message, String description) {
-      myReplacement = replacement;
-      myMessage = message;
-      myDescription = description;
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-      return myMessage;
-    }
-
-    @NotNull
-    @Override
-    public String getDescription() {
-      return myDescription;
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull PsiElement element) {
-      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
-      if (call == null) return;
-      PsiExpression replacementExpression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(myReplacement, call);
-      PsiElement result = call.replace(replacementExpression);
-      LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
-      RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(result);
+      private Context(@NotNull PsiExpression action,
+                      @NotNull PsiStatement conditionStatement,
+                      @NotNull PsiStatement statement,
+                      @NotNull PsiVariable variable,
+                      @NotNull PsiMethodCallExpression call) {
+        myAction = action;
+        myConditionStatement = conditionStatement;
+        myStatement = statement;
+        myVariable = variable;
+        myOrElseCall = call;
+      }
     }
   }
 }
