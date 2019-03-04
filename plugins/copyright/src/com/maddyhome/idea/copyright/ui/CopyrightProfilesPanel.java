@@ -19,7 +19,6 @@ import com.intellij.copyright.CopyrightManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -27,6 +26,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -39,8 +39,13 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.ui.CommonActionsPanel;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.StatusText;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.ExternalOptionHelper;
 import org.jetbrains.annotations.Nls;
@@ -48,10 +53,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.tree.TreePath;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -64,6 +66,21 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
   CopyrightProfilesPanel(Project project) {
     myProject = project;
     initTree();
+  }
+
+  @Override
+  protected void initTree() {
+    super.initTree();
+    new TreeSpeedSearch(myTree, treePath ->
+      ObjectUtils.doIfNotNull((MyNode)treePath.getLastPathComponent(), c -> c.getDisplayName()), true);
+
+    StatusText emptyText = myTree.getEmptyText();
+    emptyText.setText("No copyright profiles added.");
+    emptyText.appendSecondaryText("Add profile", SimpleTextAttributes.LINK_ATTRIBUTES, __ -> doAddProfile());
+    String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD));
+    if (!shortcutText.isEmpty()) {
+      emptyText.appendSecondaryText(" (" + shortcutText + ")", StatusText.DEFAULT_ATTRIBUTES, null);
+    }
   }
 
   void setUpdate(Runnable update) {
@@ -153,27 +170,31 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
     myInitialized.set(false);
   }
 
+  private void doAddProfile() {
+    String name = askForProfileName("Create Copyright Profile", "");
+    if (name != null) {
+      addProfileNode(new CopyrightProfile(name));
+    }
+  }
+
   @Override
   @Nullable
   protected ArrayList<AnAction> createActions(boolean fromPopup) {
     ArrayList<AnAction> result = new ArrayList<>();
     result.add(new DumbAwareAction("Add", "Add", IconUtil.getAddIcon()) {
       {
-        registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
+        registerCustomShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD), myTree);
       }
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent event) {
-        String name = askForProfileName("Create Copyright Profile", "");
-        if (name != null) {
-          addProfileNode(new CopyrightProfile(name));
-        }
+        doAddProfile();
       }
     });
     result.add(new MyDeleteAction());
     result.add(new DumbAwareAction("Copy", "Copy", PlatformIcons.COPY_ICON) {
       {
-        registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK)), myTree);
+        registerCustomShortcutSet(CommonShortcuts.getDuplicate(), myTree);
       }
 
       @Override
