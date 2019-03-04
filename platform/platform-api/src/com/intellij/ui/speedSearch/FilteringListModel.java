@@ -20,7 +20,6 @@
 package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ListUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,7 +36,6 @@ public class FilteringListModel<T> extends AbstractListModel<T> {
   private final ListModel<T> myOriginalModel;
   private final List<T> myData = new ArrayList<>();
   private Condition<? super T> myCondition = null;
-
 
   private final ListDataListener myListDataListener = new ListDataListener() {
     @Override
@@ -136,8 +134,8 @@ public class FilteringListModel<T> extends AbstractListModel<T> {
 
   public void replaceAll(List<T> elements) {
     myData.clear();
-    myData.addAll(elements);
-    ((CollectionListModel<T>)myOriginalModel).replaceAll(elements);
+    ListUtil.removeAllItems(myOriginalModel);
+    ListUtil.addAllItems(myOriginalModel, elements);
   }
 
   public void remove(int index) {
