@@ -21,11 +21,11 @@ import java.awt.*;
 
 /**
  * Represents the stack of active modal dialogs. Used in calls to {@link Application#invokeAndWait(Runnable, ModalityState)} to specify
- * that the corresponding runnable is to be executed within the given modality state, i.e. when the same set modal dialogs is present, or its subset.<p/>
+ * that the corresponding runnable is to be executed within the given modality state, i.e., when the same set modal dialogs is present, or its subset.<p/>
  *
  * Modality state is used to prevent the following scenario. Someone does SwingUtilities.invokeAndWait, but there are already other runnables in
- * Swing queue, so they are executed before and show a dialog (e.g. asking a yes/no question). While this dialog is shown, further events are pumped
- * from the queue, including the one scheduled before, which does something very dramatic, e.g. removes a module from the project, deletes some files,
+ * Swing queue, so they are executed before and show a dialog (e.g., asking a yes/no question). While this dialog is shown, further events are pumped
+ * from the queue, including the one scheduled before, which does something very dramatic, e.g., removes a module from the project, deletes some files,
  * invalidates PSI. It's executed, and only then the user closes the dialog. The code that invoked that dialog now has to deal with the completely
  * changed world, where PSI that it worked with might be already invalid, dumb mode (see {@link com.intellij.openapi.project.DumbService})
  * might have unexpectedly begun, etc. But normally clients of yes/no question dialogs aren't prepared to this at all, so exceptions are likely to arise.
