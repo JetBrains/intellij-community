@@ -5,7 +5,6 @@ import com.intellij.execution.services.ServiceViewActionUtils;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.remoteServer.configuration.RemoteServer;
-import com.intellij.remoteServer.impl.runtime.ui.ServersToolWindowContent;
 import com.intellij.remoteServer.impl.runtime.ui.tree.DeploymentNode;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeNodeSelector;
 import com.intellij.remoteServer.runtime.Deployment;
@@ -44,11 +43,6 @@ public class ApplicationActionUtils {
   public static <T> T getApplicationRuntime(@NotNull AnActionEvent e, @NotNull Class<T> clazz) {
     Deployment deployment = getDeployment(getDeploymentTarget(e));
     return deployment == null ? null : ObjectUtils.tryCast(deployment.getRuntime(), clazz);
-  }
-
-  @Nullable
-  public static ServersTreeNodeSelector getSelector(@NotNull AnActionEvent e) {
-    return e.getData(ServersToolWindowContent.KEY);
   }
 
   @NotNull
