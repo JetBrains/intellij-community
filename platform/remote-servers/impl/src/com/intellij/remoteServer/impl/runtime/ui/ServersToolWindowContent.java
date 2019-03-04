@@ -434,6 +434,10 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
            && node.getDeployment().getName().equals(deploymentName);
   }
 
+  public static MessagePanel createMessagePanel() {
+    return new ServersToolWindowMessagePanel();
+  }
+
   public interface MessagePanel {
     void setEmptyText(@NotNull String text);
 
