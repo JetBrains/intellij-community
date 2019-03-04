@@ -25,7 +25,10 @@ iml_module(
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
     ],
     test_srcs = ["testSrc"],
-    test_tags = ["no_test_windows"],  # b/123974530
+    test_tags = [
+        "no_test_mac",  # b/127274100
+        "no_test_windows",  # b/123974530
+    ],
     visibility = ["//visibility:public"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/it/unimi/dsi/fastutil/7.2.1:jar"],
     # do not sort: must match IML order
