@@ -165,7 +165,8 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
     private final PsiSwitchBlock mySwitchBlock;
     final PsiElementFactory myFactory;
 
-    SwitchGenerator(PsiSwitchBlock switchBlock) {mySwitchBlock = switchBlock;
+    SwitchGenerator(PsiSwitchBlock switchBlock) {
+      mySwitchBlock = switchBlock;
       myFactory = JavaPsiFacade.getElementFactory(mySwitchBlock.getProject());
     }
 
@@ -181,6 +182,7 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
       List<CommentTracker> branchTrackers = new ArrayList<>();
       TIntArrayList caseCounts = new TIntArrayList();
       StringJoiner joiner = new StringJoiner("\n");
+      boolean addDefaultBranch = mySwitchBlock instanceof PsiSwitchExpression;
       for (PsiSwitchLabeledRuleStatement rule : rules) {
         CommentTracker ct = new CommentTracker();
         branchTrackers.add(ct);
@@ -190,6 +192,10 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
         caseCounts.add(caseCount);
         joiner.add(generate);
         mainCommentTracker.markUnchanged(rule);
+        addDefaultBranch &= !rule.isDefaultCase();
+      }
+      if (addDefaultBranch) {
+        joiner.add("default:throw new java.lang.IllegalArgumentException();");
       }
       String bodyText = joiner.toString();
       String switchText = "switch(" + mainCommentTracker.text(expression) + "){" + bodyText + "}";
