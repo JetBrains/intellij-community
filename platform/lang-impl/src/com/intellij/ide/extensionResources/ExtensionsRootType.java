@@ -20,9 +20,11 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
@@ -300,13 +302,22 @@ public class ExtensionsRootType extends RootType {
     FileUtil.rename(file, newName);
   }
 
-  private void extractBundledExtensionsIfNeeded(@NotNull PluginId pluginId) throws IOException {
-    if (!ApplicationManager.getApplication().isDispatchThread()) return;
-
+  private void extractBundledExtensionsIfNeeded(@NotNull PluginId pluginId) {
     IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
     if (plugin == null || !ResourceVersions.getInstance().shouldUpdateResourcesOf(plugin)) return;
 
-    extractBundledResources(pluginId, "");
+    Task.Backgroundable extractResourcesInBackground = new Task.Backgroundable(null, "Extracting bundled extensions for plugin: " + pluginId.getIdString()) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          extractBundledResources(pluginId, "");
+        }
+        catch (IOException ex) {
+          LOG.warn("Failed to extract bundled extensions for plugin: " + plugin.getName(), ex);
+        }
+      }
+    };
+    ProgressManager.getInstance().run(extractResourcesInBackground);
     ResourceVersions.getInstance().resourcesUpdated(plugin);
   }
 }
