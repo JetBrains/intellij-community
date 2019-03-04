@@ -18,6 +18,7 @@ package com.siyeh.ipp.commutative;
 import com.intellij.psi.*;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -54,20 +55,18 @@ public class FlipCommutativeMethodCallIntention extends MutablyNamedIntention {
     final PsiExpressionList argumentList = expression.getArgumentList();
     final PsiExpression argument = argumentList.getExpressions()[0];
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-    final PsiExpression qualifier = methodExpression.getQualifierExpression();
+    final PsiExpression qualifier = ExpressionUtils.getQualifierOrThis(methodExpression);
     final PsiExpression strippedQualifier = ParenthesesUtils.stripParentheses(qualifier);
     final PsiExpression strippedArgument = ParenthesesUtils.stripParentheses(argument);
-    if (strippedArgument == null) {
+    if (strippedQualifier == null || strippedArgument == null) {
       return;
     }
     CommentTracker tracker = new CommentTracker();
-    if (qualifier != null) tracker.grabComments(qualifier);
-    if (strippedQualifier != null) tracker.markUnchanged(strippedQualifier);
+    tracker.grabComments(qualifier);
+    tracker.markUnchanged(strippedQualifier);
     tracker.grabComments(argument);
     tracker.markUnchanged(strippedArgument);
-    final PsiElement newArgument = strippedQualifier == null
-                                   ? JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText("this", expression)
-                                   : strippedQualifier.copy();
+    final PsiElement newArgument = strippedQualifier.copy();
     methodExpression.setQualifierExpression(strippedArgument);
     argument.replace(newArgument);
     tracker.insertCommentsBefore(expression);

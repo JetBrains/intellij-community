@@ -16,7 +16,9 @@
 package com.siyeh.ipp.commutative;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
@@ -36,32 +38,42 @@ class FlipCommutativeMethodCallPredicate implements PsiElementPredicate {
     if (arguments.length != 1) {
       return false;
     }
+    final PsiExpression argument = PsiUtil.skipParenthesizedExprDown(arguments[0]);
+    if (argument == null) {
+      return false;
+    }
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-    final PsiExpression qualifier = methodExpression.getQualifierExpression();
-    final PsiType callerType;
+    final PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(methodExpression.getQualifierExpression());
+    final PsiType qualifierType;
     if (qualifier == null) {
+      if (argument instanceof PsiThisExpression) {
+        return false;
+      }
       final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
+      if (method == null || method.hasModifierProperty(PsiModifier.STATIC)) {
         return false;
       }
       final PsiClass aClass = method.getContainingClass();
       if (aClass == null) {
         return false;
       }
-      callerType = JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass);
+      qualifierType = JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass);
     }
     else {
-      callerType = qualifier.getType();
-      if (!(callerType instanceof PsiClassType)) {
+      if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(argument, qualifier)) {
+        return false;
+      }
+      qualifierType = qualifier.getType();
+      if (!(qualifierType instanceof PsiClassType)) {
         return false;
       }
     }
     final String methodName = methodExpression.getReferenceName();
-    final PsiType argumentType = arguments[0].getType();
+    final PsiType argumentType = argument.getType();
     if (!(argumentType instanceof PsiClassType)) {
       return false;
     }
-    if (callerType.equals(argumentType)) {
+    if (qualifierType.equals(argumentType)) {
       return true;
     }
     final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)argumentType).resolveGenerics();
@@ -80,7 +92,7 @@ class FlipCommutativeMethodCallPredicate implements PsiElementPredicate {
             TypeConversionUtil.getClassSubstitutor(containingClass, argumentClass, resolveResult.getSubstitutor());
           if (substitutor != null) {
             final PsiType type = substitutor.substitute(parameter.getType());
-            if (type != null && type.isAssignableFrom(callerType)) {
+            if (type != null && type.isAssignableFrom(qualifierType)) {
               return true;
             }
           }
