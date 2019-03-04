@@ -19,11 +19,7 @@ package com.intellij.openapi.vcs.changes.patch;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -33,10 +29,8 @@ import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Date;
@@ -89,8 +83,8 @@ public class DefaultPatchBaseVersionProvider {
         final VcsRevisionNumber finalRevision = revision;
         try {
           if (finalRevision != null) {
-            final boolean loadedExactRevision =
-              computeInBackgroundTask(myProject, message("progress.text2.loading.revision", finalRevision.asString()), true, () -> {
+            String message = message("progress.text2.loading.revision", finalRevision.asString());
+            boolean loadedExactRevision = VcsUtil.computeWithModalProgress(myProject, message, true, indicator -> {
                 if (historyProvider instanceof VcsBaseRevisionAdviser) {
                   VcsBaseRevisionAdviser revisionAdviser = (VcsBaseRevisionAdviser)historyProvider;
                   return revisionAdviser.getBaseVersionContent(filePath, processor, finalRevision.asString());
@@ -131,8 +125,8 @@ public class DefaultPatchBaseVersionProvider {
 
     final VcsHistorySession historySession;
     try {
-      historySession = computeInBackgroundTask(myProject, message("loading.file.history.progress"), true,
-                                               () -> historyProvider.createSessionFor(filePath));
+      historySession = VcsUtil.computeWithModalProgress(myProject, message("loading.file.history.progress"), true,
+                                                        indicator -> historyProvider.createSessionFor(filePath));
     }
     catch (ProcessCanceledException e) {
       return;
@@ -202,17 +196,5 @@ public class DefaultPatchBaseVersionProvider {
       }
     }
     return null;
-  }
-
-  public static <T, E extends Exception> T computeInBackgroundTask(@Nullable Project project,
-                                                                   @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title,
-                                                                   boolean canBeCancelled,
-                                                                   @NotNull ThrowableComputable<T, E> computable) throws E {
-    return ProgressManager.getInstance().run(new Task.WithResult<T, E>(project, title, canBeCancelled) {
-      @Override
-      protected T compute(@NotNull ProgressIndicator indicator) throws E {
-        return computable.compute();
-      }
-    });
   }
 }
