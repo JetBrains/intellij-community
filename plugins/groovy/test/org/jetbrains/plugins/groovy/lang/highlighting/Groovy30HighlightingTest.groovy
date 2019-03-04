@@ -76,4 +76,8 @@ I i = {3}
   void 'test reassigned var in lambda 2'() {
     highlightingTest GrUnresolvedAccessInspection
   }
+
+  void 'test illegal single argument lambda'() {
+    highlightingTest ()
+  }
 }

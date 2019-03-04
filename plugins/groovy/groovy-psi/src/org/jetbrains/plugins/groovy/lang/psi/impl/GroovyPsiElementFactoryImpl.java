@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
@@ -359,6 +360,17 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     final GrExpression initializer = ((GrVariableDeclaration)st).getVariables()[0].getInitializerGroovy();
     LOG.assertTrue(initializer instanceof GrClosableBlock, closureText);
     return ((GrClosableBlock)initializer);
+  }
+
+  @NotNull
+  @Override
+  public GrLambdaExpression createLambdaFromText(@NotNull String lambdaText, PsiElement context) throws IncorrectOperationException {
+    GroovyFile psiFile = createGroovyFileChecked("def __hdsjfghkl_sdhjfshglk_foo  = " + lambdaText, false, context);
+    final GrStatement st = psiFile.getStatements()[0];
+    LOG.assertTrue(st instanceof GrVariableDeclaration, lambdaText);
+    final GrExpression initializer = ((GrVariableDeclaration)st).getVariables()[0].getInitializerGroovy();
+    LOG.assertTrue(initializer instanceof GrLambdaExpression, lambdaText);
+    return ((GrLambdaExpression)initializer);
   }
 
   private GroovyFileImpl createDummyFile(@NotNull CharSequence text, boolean physical) {

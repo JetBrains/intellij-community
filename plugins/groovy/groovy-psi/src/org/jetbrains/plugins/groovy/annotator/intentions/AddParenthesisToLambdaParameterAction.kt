@@ -9,45 +9,39 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.createSmartPointer
 import org.jetbrains.plugins.groovy.GroovyBundle.message
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
-import org.jetbrains.plugins.groovy.lang.psi.api.GrBlockLambdaBody
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression
 
-class ConvertLambdaToClosureAction(lambda: GrLambdaExpression) : IntentionAction {
+class AddParenthesisToLambdaParameterAction(parameterList: GrLambdaExpression) : IntentionAction {
 
-  private val myLambda: SmartPsiElementPointer<GrLambdaExpression> = lambda.createSmartPointer()
+  private val myLambda: SmartPsiElementPointer<GrLambdaExpression> = parameterList.createSmartPointer()
 
   override fun getText(): String = familyName
 
-  override fun getFamilyName(): String = message("action.convert.lambda.to.closure")
+  override fun getFamilyName(): String = message("add.parenthesis.to.lambda.parameter.list")
 
   override fun startInWriteAction(): Boolean = true
 
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = myLambda.element != null
+  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
+    val parameterList = myLambda.element?.parameterList ?: return false
+    parameterList.lParen ?: return true
+    return false
+  }
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
     val lambda = myLambda.element ?: return
     val closureText = closureText(lambda) ?: return
-    val closure = GroovyPsiElementFactory.getInstance(project).createClosureFromText(closureText)
+    val closure = GroovyPsiElementFactory.getInstance(project).createLambdaFromText(closureText)
     lambda.replaceWithExpression(closure, false)
   }
 
   private fun closureText(lambda: GrLambdaExpression): String? {
-    val parameterList = lambda.parameterList
-    val body = lambda.body ?: return null
-
     val closureText = StringBuilder()
-    closureText.append("{")
-    if (parameterList.parametersCount != 0) {
-      appendTextBetween(closureText, parameterList.text, parameterList.lParen, parameterList.rParen)
-    }
-    appendElements(closureText, parameterList, body)
-    if (body is GrBlockLambdaBody) {
-      appendTextBetween(closureText, body.text, body.lBrace, body.rBrace)
-    }
-    else {
-      closureText.append(body.text)
-    }
-    closureText.append("}")
+    closureText.append("(")
+    val parameterList = lambda.parameterList
+    appendTextBetween(closureText, parameterList.text, parameterList.lParen, parameterList.rParen)
+    closureText.append(")")
+    appendTextBetween(closureText, lambda.text, parameterList, null)
+
     return closureText.toString()
   }
 }
