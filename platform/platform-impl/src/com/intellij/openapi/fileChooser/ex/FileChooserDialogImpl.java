@@ -511,7 +511,9 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
             final String rootPath = file.getPath();
             if (myRequests.get(rootPath) == null) {
               final LocalFileSystem.WatchRequest watchRequest = LocalFileSystem.getInstance().addRootToWatch(rootPath, true);
-              myRequests.put(rootPath, watchRequest);
+              if (watchRequest != null) {
+                myRequests.put(rootPath, watchRequest);
+              }
             }
           }
         }
