@@ -28,14 +28,11 @@ import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ThrowableConvertor;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,7 +85,7 @@ public class ExternalDiffTool {
   private static List<DiffRequest> loadRequestsUnderProgress(@Nullable Project project,
                                                              @NotNull DiffRequestChain chain) throws Throwable {
     if (chain instanceof AsyncDiffRequestChain) {
-      return loadInBackground(project, "Loading Requests", indicator -> {
+      return VcsUtil.computeWithModalProgress(project, "Loading Requests", true, indicator -> {
         ListSelection<? extends DiffRequestProducer> listSelection = ((AsyncDiffRequestChain)chain).loadRequestsInBackground();
         return collectRequests(project, listSelection.getList(), listSelection.getSelectedIndex(), indicator);
       });
@@ -97,7 +94,9 @@ public class ExternalDiffTool {
       List<? extends DiffRequestProducer> allProducers = chain.getRequests();
       int index = chain.getIndex();
 
-      return loadInBackground(project, "Loading Requests", indicator -> collectRequests(project, allProducers, index, indicator));
+      return VcsUtil.computeWithModalProgress(project, "Loading Requests", true, indicator -> {
+        return collectRequests(project, allProducers, index, indicator);
+      });
     }
   }
 
@@ -160,29 +159,5 @@ public class ExternalDiffTool {
       if (!ExternalDiffToolUtil.canCreateFile(content)) return false;
     }
     return true;
-  }
-
-
-  @Nullable
-  private static <T> T loadInBackground(@Nullable Project project,
-                                        @NotNull String title,
-                                        @NotNull ThrowableConvertor<ProgressIndicator, T, Throwable> computable) throws Throwable {
-    final Ref<T> requestsRef = new Ref<>();
-    final Ref<Throwable> exceptionRef = new Ref<>();
-
-    ProgressManager.getInstance().run(new Task.Modal(project, title, true) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          requestsRef.set(computable.convert(indicator));
-        }
-        catch (Throwable e) {
-          exceptionRef.set(e);
-        }
-      }
-    });
-
-    if (!exceptionRef.isNull()) throw exceptionRef.get();
-    return requestsRef.get();
   }
 }
