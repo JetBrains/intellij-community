@@ -33,7 +33,7 @@ public class GCUtil {
    * In tests, if you can exactly point to objects you want to GC, use {@code GCWatcher.tracking(objects).tryGc()}
    * which is faster and has more chances to succeed.
    * <p></p>
-   * Commits / hours of tweaking method code: 12 / 7
+   * Commits / hours of tweaking method code: 13 / 7
    */
   @TestOnly
   public static void tryGcSoftlyReachableObjects() {
@@ -73,7 +73,7 @@ public class GCUtil {
         }
 
         // full gc is caused by allocation of large enough array below, SoftReference will be cleared after two full gc
-        int bytes = Math.min((int)(freeMemory / 20), Integer.MAX_VALUE / 2);
+        int bytes = Math.min((int)(Runtime.getRuntime().totalMemory() / 20), Integer.MAX_VALUE / 2);
         log.append("Iteration " + i + ", allocating new byte[" + bytes + "]" +
                    ", live chunks: " + liveChunks +
                    ", free memory: " + Runtime.getRuntime().freeMemory() + "\n");
