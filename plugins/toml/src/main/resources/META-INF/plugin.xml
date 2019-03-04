@@ -11,7 +11,7 @@
     <!-- TODO: create normal change note list -->
     <change-notes><![CDATA[
         <ul>
-            <li>Support multiline todo in comments.</li>
+            <li>New icon for general Toml files.</li>
         </ul>
     ]]>
     </change-notes>
