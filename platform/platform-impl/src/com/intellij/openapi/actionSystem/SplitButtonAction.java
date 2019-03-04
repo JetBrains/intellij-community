@@ -33,8 +33,7 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
   }
 
   @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-  }
+  public void actionPerformed(@NotNull AnActionEvent e) {}
 
   @Override
   public boolean isDumbAware() {
@@ -90,13 +89,13 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
       Rectangle baseRect = new Rectangle(getSize());
       JBInsets.removeFrom(baseRect, getInsets());
 
-      if (getPopState() == PUSHED && mousePressType != MousePressType.None) {
+      if (getPopState() == PUSHED && mousePressType != MousePressType.None || isToggleActionPushed()) {
         int arrowWidth = ARROW_DOWN.getIconWidth() + JBUI.scale(7);
 
         Shape clip = g.getClip();
         Area buttonClip = new Area(clip);
         Rectangle execButtonRect = new Rectangle(baseRect.x, baseRect.y, baseRect.width - arrowWidth, baseRect.height);
-        if (mousePressType == MousePressType.Action) {
+        if (mousePressType == MousePressType.Action || isToggleActionPushed()) {
           buttonClip.intersect(new Area(execButtonRect));
         }
         else if (mousePressType == MousePressType.Popup) {
@@ -129,6 +128,11 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
       x = x > baseRect.x ? x : baseRect.x;
       look.paintIconAt(g, actionIcon, x, y);
       look.paintBorder(g, this);
+    }
+
+    private boolean isToggleActionPushed() {
+      return selectedAction instanceof Toggleable &&
+             selectedAction.getTemplatePresentation().getClientProperty(Toggleable.SELECTED_PROPERTY) == Boolean.TRUE;
     }
 
     @Override
@@ -177,6 +181,8 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
     public void afterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
       if (selectedAction != action && myAction != action) {
         selectedAction = action;
+        repaint();
+      } else if (action instanceof Toggleable) {
         repaint();
       }
     }
