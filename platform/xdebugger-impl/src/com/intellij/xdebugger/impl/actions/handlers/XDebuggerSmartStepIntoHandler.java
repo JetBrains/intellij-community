@@ -214,6 +214,8 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     }
 
     data.select(ContainerUtil.getFirstItem(data.myVariants));
+
+    session.updateExecutionPosition();
     IdeFocusManager.getGlobalInstance().requestFocus(editor.getContentComponent(), true);
  }
 
