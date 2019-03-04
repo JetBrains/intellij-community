@@ -771,6 +771,7 @@ List<PsiExpression> builderStrInitializers = null;
         List<PsiStatement> statements = Arrays.asList(terminalBlock.getStatements());
         List<PsiExpression> mainJoinParts = extractJoinParts(statements);
         if (mainJoinParts == null || mainJoinParts.isEmpty()) return null;
+        if (statements.isEmpty()) return null;
         PsiVariable targetBuilder = extractStringBuilder(statements.get(0));
         if (targetBuilder == null) return null;
         PsiStatement loop = terminalBlock.getStreamSourceStatement();
@@ -1173,7 +1174,7 @@ List<PsiExpression> builderStrInitializers = null;
         JoinData joinData = JoinData.extractLeftDelimiter(otherIterationJoinParts);
         if (!joinPartsAreEquivalent(joinData.getMainJoinParts(), firstIterationJoinParts)) return null;
 
-
+        if (firstIterationStatements.isEmpty()) return null;
         PsiVariable targetBuilder = extractStringBuilder(firstIterationStatements.get(0));
         if (targetBuilder == null) return null;
         PsiStatement loop = terminalBlock.getStreamSourceStatement();
