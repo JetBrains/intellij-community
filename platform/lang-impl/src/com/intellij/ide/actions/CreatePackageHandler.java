@@ -19,15 +19,15 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
 
-public class CreatePackageHandler extends CreateGroupHandler {
+class CreatePackageHandler extends CreateGroupHandler {
 
   private static final String DELIMITER = ".";
   private static final String REGEX_DELIMITER = Pattern.quote(DELIMITER);
 
   @NotNull private final PsiDirectory myPackageRoot;
-  @NotNull private String myInitialText;
+  @NotNull private final String myInitialText;
 
-  public CreatePackageHandler(@NotNull Project project, @NotNull PsiDirectory directory) {
+  CreatePackageHandler(@NotNull Project project, @NotNull PsiDirectory directory) {
     super(project, directory);
     myPackageRoot = getPackageRoot();
     myInitialText = buildInitialText();
@@ -115,7 +115,7 @@ public class CreatePackageHandler extends CreateGroupHandler {
 
   @NotNull
   @Override
-  public String getInitialText() {
+  String getInitialText() {
     return myInitialText;
   }
 

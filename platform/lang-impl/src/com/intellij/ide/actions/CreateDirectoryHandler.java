@@ -7,18 +7,18 @@ import com.intellij.psi.PsiFileSystemItem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CreateDirectoryHandler extends CreateGroupHandler {
+class CreateDirectoryHandler extends CreateGroupHandler {
 
   @NotNull private final CreateDirectoryOrPackageHandler myDelegate;
 
-  public CreateDirectoryHandler(@NotNull Project project, @NotNull PsiDirectory directory) {
+  CreateDirectoryHandler(@NotNull Project project, @NotNull PsiDirectory directory) {
     super(project, directory);
     myDelegate = new CreateDirectoryOrPackageHandler(project, directory, true, "\\/");
   }
 
   @NotNull
   @Override
-  public String getInitialText() {
+  String getInitialText() {
     return "";
   }
 
@@ -34,7 +34,7 @@ public class CreateDirectoryHandler extends CreateGroupHandler {
 
   @Nullable
   @Override
-  public PsiFileSystemItem getCreatedElement() {
+  PsiFileSystemItem getCreatedElement() {
     return myDelegate.getCreatedElement();
   }
 

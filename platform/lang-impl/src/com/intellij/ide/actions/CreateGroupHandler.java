@@ -8,7 +8,7 @@ import com.intellij.psi.PsiFileSystemItem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class CreateGroupHandler implements InputValidatorEx {
+abstract class CreateGroupHandler implements InputValidatorEx {
 
   @NotNull protected final Project myProject;
   @NotNull protected final PsiDirectory myDirectory;
@@ -16,7 +16,7 @@ public abstract class CreateGroupHandler implements InputValidatorEx {
   @Nullable protected PsiFileSystemItem createdElement;
   @Nullable protected String errorText;
 
-  public CreateGroupHandler(@NotNull Project project, @NotNull PsiDirectory directory) {
+  CreateGroupHandler(@NotNull Project project, @NotNull PsiDirectory directory) {
     myProject = project;
     myDirectory = directory;
   }
@@ -28,10 +28,10 @@ public abstract class CreateGroupHandler implements InputValidatorEx {
   }
 
   @Nullable
-  public PsiFileSystemItem getCreatedElement() {
+  PsiFileSystemItem getCreatedElement() {
     return createdElement;
   }
 
   @NotNull
-  public abstract String getInitialText();
+  abstract String getInitialText();
 }
