@@ -411,6 +411,7 @@
 
     <group id="RevealGroup">
       <action id="RevealIn" class="com.intellij.ide.actions.RevealFileAction"/>
+      <reference ref="ShowFilePath"/>
 
       <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
     </group>
@@ -519,7 +520,6 @@
       <reference ref="VersionControlsGroup"/>
       <action id="SynchronizeCurrentFile" class="com.intellij.ide.actions.SynchronizeCurrentFileAction" icon="AllIcons.Actions.Refresh"/>
       <separator/>
-      <reference ref="ShowFilePath"/>
       <action id="GoToLinkTarget" class="com.intellij.ide.actions.GoToLinkTargetAction"/>
       <separator/>
       <reference ref="CompareTwoFiles"/>
