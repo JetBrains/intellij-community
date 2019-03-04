@@ -320,20 +320,24 @@ public class JBTabsImpl extends JComponent
     }
     boolean oldHideTabsIfNeed = mySingleRowLayout instanceof ScrollableSingleRowLayout;
     boolean newHideTabsIfNeed = UISettings.getInstance().getHideTabsIfNeed();
-    boolean wasSingleRow = isSingleRow();
     if (oldHideTabsIfNeed != newHideTabsIfNeed) {
-      if (mySingleRowLayout != null) {
-        remove(mySingleRowLayout.myLeftGhost);
-        remove(mySingleRowLayout.myRightGhost);
-      }
-      mySingleRowLayout = createSingleRowLayout();
-      if (wasSingleRow) {
-        myLayout = mySingleRowLayout;
-      }
-      add(mySingleRowLayout.myLeftGhost);
-      add(mySingleRowLayout.myRightGhost);
-      relayout(true, true);
+      updateRowLayout();
     }
+  }
+
+  private void updateRowLayout() {
+    boolean wasSingleRow = isSingleRow();
+    if (mySingleRowLayout != null) {
+      remove(mySingleRowLayout.myLeftGhost);
+      remove(mySingleRowLayout.myRightGhost);
+    }
+    mySingleRowLayout = createSingleRowLayout();
+    if (wasSingleRow) {
+      myLayout = mySingleRowLayout;
+    }
+    add(mySingleRowLayout.myLeftGhost);
+    add(mySingleRowLayout.myRightGhost);
+    relayout(true, true);
   }
 
   protected SingleRowLayout createSingleRowLayout() {
@@ -3292,6 +3296,7 @@ public class JBTabsImpl extends JComponent
   @Override
   public JBTabsPresentation setSupportsCompression(boolean supportsCompression) {
     mySupportsCompression = supportsCompression;
+    updateRowLayout();
     return this;
   }
 
