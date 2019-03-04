@@ -274,4 +274,10 @@
                     interface="git4idea.push.GitPushProcessCustomizationFactory" />
     <extensionPoint qualifiedName="Git4Idea.GitCheckinExplicitMovementProvider" interface="git4idea.checkin.GitCheckinExplicitMovementProvider"/>
   </extensionPoints>
+
+  <project-components>
+    <component>
+      <implementation-class>git4idea.conflicts.GitConflictsToolWindowManager</implementation-class>
+    </component>
+  </project-components>
 </idea-plugin>
