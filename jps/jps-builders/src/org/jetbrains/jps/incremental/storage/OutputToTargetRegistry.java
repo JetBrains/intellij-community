@@ -5,7 +5,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
-import com.intellij.util.io.IntInlineKeyDescriptor;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
